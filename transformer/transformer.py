@@ -17,19 +17,22 @@ class Transformer(ABC):
 	friendly
 	"""
 
-	def __init__(self, meta_type):
+	def __init__(self):
 		""" initialize preprocessor """
-		self.type = meta_type
 		self.params = None
+		super().__init__()
 
-	def hyper_process(self, table):
+	@abstractmethod
+	def process(self):
 		""" Returns the processed table """
 		pass
 
-	def hyper_transform(self, table, params):
+	@abstractmethod
+	def transform(self, params):
 		""" Does the required transformations to the data """
 		pass
 
-	def hyper_reverse_transform(self, table, params):
+	@abstractmethod
+	def reverse_transform(self, params):
 		""" Converts data back into original format """
 		pass
