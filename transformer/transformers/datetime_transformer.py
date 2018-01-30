@@ -17,11 +17,16 @@ class DT_Transformer(Transformer):
 	friendly
 	"""
 
-	def __init__(self, date_format):
+	def __init__(self, meta_file, table_name):
 		""" initialize transformer """
-		super().__init__()
-		self.format = date_format
+		super(DT_Transformer, self).__init__(meta_file, table_name)
 		self.type = 'datetime'
+		# get meta info for table
+		with open(meta_file, 'r') as f:
+			meta = json.load(f)
+		for table in meta['tables']:
+			if table['name'] == table_name:
+				self.table_meta = table
 
 	def process(self, col_name, data):
 		""" Returns the processed table """
@@ -49,10 +54,15 @@ class DT_Transformer(Transformer):
 		""" Does the required transformations to the data """
 		return self.process(col_name, data)
 
-	def reverse_transform(self, col_name, data, params, output):
+	def reverse_transform(self, col_name, data, params, output=None):
 		""" Converts data back into original format """
-		fn = self.get_date_converter(data[col_name], missing, self.date_format)
-		output[col_name] = data[col_name].apply(fn, axis=1)
+		if output == None:
+			output = pd.DataFrame(columns=[])
+		for field in self.table_meta['fields']:
+			if field['name'] == col_name:
+				date_format = field['format']
+		fn = self.get_date_converter(col_name, date_format)
+		output[col_name] = data.apply(fn, axis=1)
 		return output
 
 	def get_val(self, x):
@@ -65,7 +75,7 @@ class DT_Transformer(Transformer):
 			# when calculating covariance, so just use np.nan
 			return np.nan
 
-	def get_date_converter(self, col, missing, meta):
+	def get_date_converter(self, col, meta):
 		'''Returns a converter that takes in an integer representing ms
 		   and turns it into a string date
 
@@ -80,6 +90,11 @@ class DT_Transformer(Transformer):
 		'''
 
 		def safe_date(x):
+			if '?' + col in x:
+				missing = True
+			else:
+				missing = False
+
 			if missing and x['?' + col] == 0:
 				return np.nan
 
