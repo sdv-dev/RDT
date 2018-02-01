@@ -16,20 +16,18 @@ class Transformer(object):
 	friendly
 	"""
 
-	def __init__(self, meta_file, table_name):
+	def __init__(self):
 		""" initialize preprocessor """
-		self.meta_file = meta_file
-		self.table_name = table_name
-		self.params = None
+		pass
 
-	def process(self):
+	def process(self, data, meta):
 		""" Returns the processed table """
 		raise NotImplementedError
 
-	def transform(self, params):
+	def transform(self, data, meta):
 		""" Does the required transformations to the data """
 		raise NotImplementedError
 
-	def reverse_transform(self, params):
+	def reverse_transform(self, data, meta):
 		""" Converts data back into original format """
 		raise NotImplementedError

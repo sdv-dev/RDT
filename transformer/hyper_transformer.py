@@ -48,13 +48,27 @@ class HyperTransformer:
 						res.append(transformer.process(col_name, self.tables[table]))
 		return res
 
-	def hyper_transform(self):
+	def hyper_transform(self, data, params):
 		""" Does the required transformations to the data """
-		pass
+		res = []
+		for table in self.tables:
+			for col_name in list(self.tables[table]):
+				for trans in self.transformers_list:
+					transformer = trans(self.meta_file, table)
+					if transformer.type == self.type_map[table][col_name]:
+						res.append(transformer.process(col_name, self.tables[table]))
+		return res
 
-	def hyper_reverse_transform(self):
+	def hyper_reverse_transform(self, data, params):
 		""" Converts data back into original format """
-		pass
+		res = []
+		for table in self.tables:
+			for col_name in list(self.tables[table]):
+				for trans in self.transformers_list:
+					transformer = trans(self.meta_file, table)
+					if transformer.type == self.type_map[table][col_name]:
+						res.append(transformer.process(col_name, self.tables[table]))
+		return res
 
 	def get_types(self, table):
 		""" Maps every field name to a type """
@@ -62,3 +76,6 @@ class HyperTransformer:
 		for field in table['fields']:
 			res[field['name']] = field['type']
 		return res
+
+if __name__ == "__main__":
+	pass
