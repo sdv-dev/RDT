@@ -24,12 +24,12 @@ class Transformer(object):
 
 	def process(self):
 		""" Returns the processed table """
-		pass
+		raise NotImplementedError
 
 	def transform(self, params):
 		""" Does the required transformations to the data """
-		pass
+		raise NotImplementedError
 
 	def reverse_transform(self, params):
 		""" Converts data back into original format """
-		pass
+		raise NotImplementedError
