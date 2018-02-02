@@ -11,7 +11,7 @@ import os.path as op
 
 from dateutil import parser
 
-class Transformer(object):
+class BaseTransformer(object):
 	""" This class is responsible for formatting the input table in a way that is machine learning
 	friendly
 	"""
@@ -20,14 +20,14 @@ class Transformer(object):
 		""" initialize preprocessor """
 		pass
 
-	def process(self, data, meta):
+	def fit_transform(self, table, table_meta):
 		""" Returns the processed table """
 		raise NotImplementedError
 
-	def transform(self, data, meta):
+	def transform(self, table, table_meta):
 		""" Does the required transformations to the data """
 		raise NotImplementedError
 
-	def reverse_transform(self, data, meta):
+	def reverse_transform(self, table, table_meta):
 		""" Converts data back into original format """
 		raise NotImplementedError

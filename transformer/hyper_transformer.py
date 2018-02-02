@@ -78,4 +78,15 @@ class HyperTransformer:
 		return res
 
 if __name__ == "__main__":
-	pass
+	meta_file = '../data/Airbnb_demo_meta.json'
+	with open(meta_file, 'r') as f:
+		meta = json.load(f)
+	tables = {}
+	type_map = {}
+	for table in meta['tables']:
+		# get each table
+		if table['use']:
+			prefix = op.dirname(meta_file)
+			relative_path = op.join(prefix, self.meta['path'], table['path'])
+			data_table = pd.read_csv(relative_path)
+			tables[table['name']] = (data_table, table)
