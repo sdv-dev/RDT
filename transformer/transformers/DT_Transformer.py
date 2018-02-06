@@ -66,7 +66,7 @@ class DT_Transformer(BaseTransformer):
 	def get_val(self, x):
 		""" Converts datetime to number """
 		try:
-			tmp = parser.parse(x).timetuple()
+			tmp = parser.parse(str(x)).timetuple()
 			return time.mktime(tmp)*1e9
 		except (ValueError, AttributeError, TypeError):
 			# if we return pd.NaT, pandas will exclude the column
