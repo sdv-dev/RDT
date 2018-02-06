@@ -97,8 +97,11 @@ class DT_Transformer(BaseTransformer):
 				return np.nan
 			# TODO: Figure out right way to check missing
 			t = x[col]
-			if np.isnan(t):
-				return np.nan
+			try:
+				if np.isnan(t):
+					return np.nan
+			except:
+				print(t)
 			tmp = time.gmtime(float(t)/1e9)
 			return time.strftime(meta, tmp)
 
