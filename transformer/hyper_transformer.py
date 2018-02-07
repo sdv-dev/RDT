@@ -38,6 +38,9 @@ class HyperTransformer:
 		# print(self.type_map)
 		self.transformers = []
 
+	def get_class(self, class_name):
+		return getattr(globals()[class_name], class_name)
+
 	def hyper_fit_transform(self, transformers_list, table, table_meta):
 		""" Returns the processed table after going through each transform 
 		and adds fitted transformers to the hyper class
@@ -52,7 +55,8 @@ class HyperTransformer:
 		# return res
 		data = table
 		for transformer in transformers_list:
-			t = transformer()
+			trans_class = self.get_class(transformer)
+			t = trans_class()
 			data = t.fit_transform(data, table_meta)
 			self.transformers.append(t)
 		return data
@@ -112,7 +116,7 @@ if __name__ == "__main__":
 
 	# test out hyper_transformer
 	ht_map = {}
-	tl = [DT_Transformer]
+	tl = ['DT_Transformer']
 	transformed = {}
 	for table_name in tables:
 		table, table_meta = tables[table_name]
