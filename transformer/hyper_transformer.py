@@ -36,7 +36,7 @@ class HyperTransformer:
 		# 		data_table = pd.read_csv(relative_path)
 		# 		self.tables[table['name']] = data_table
 		# print(self.type_map)
-		self.transformers = []
+		self.transformers = {} # key=(table_name, col_name) val=transformer
 
 	def get_class(self, class_name):
 		return getattr(globals()[class_name], class_name)
@@ -53,13 +53,22 @@ class HyperTransformer:
 		# 			if transformer.type == self.type_map[table][col_name]:
 		# 				res.append(transformer.process(col_name, self.tables[table]))
 		# return res
-		data = table
-		for transformer in transformers_list:
-			trans_class = self.get_class(transformer)
-			t = trans_class()
-			data = t.fit_transform(data, table_meta)
-			self.transformers.append(t)
-		return data
+		out = pd.DataFrame(columns=[])
+		table_name = table_meta['name']
+		for field in table_meta['fields']:
+			col_name = field['name']
+			col = table[col_name]
+			for transformer_name in transformers_list:
+				transformer = self.get_class(transformer_name)
+				t = transformer()
+				if field['type'] == t.type:
+					new_col = t.fit_transform(col, field)
+					self.transformers[(table_name, col_name)] = t
+					out = pd.concat([out,new_col], axis=1)
+			# if transformed hasn't been added add original
+			if col_name not in out:
+				out = pd.concat([out,col], axis=1)
+		return out
 
 	def hyper_transform(self, table, table_meta):
 		""" Does the required transformations to the table """
@@ -71,9 +80,13 @@ class HyperTransformer:
 		# 			if transformer.type == self.type_map[table][col_name]:
 		# 				res.append(transformer.process(col_name, self.tables[table]))
 		# return res
-		data = table
-		for transformer in self.transformers:
-			data = transformer.transform(data, table_meta)
+		out = pd.DataFrame(columns=[])
+		table_name = table_meta['name']
+		for field in table_meta['fields']:
+			col_name = field['name']
+			col = table[col_name]
+			transformer = self.transformers[(table_name, col_name)]
+			out = pd.concat([out,transformer.transform(col, field)], axis=1)
 		return data
 
 	def hyper_reverse_transform(self, table, table_meta):
@@ -88,10 +101,17 @@ class HyperTransformer:
 		# 			if transformer.type == self.type_map[table][col_name]:
 		# 				res.append(transformer.process(col_name, self.tables[table]))
 		# return res
-		data = table
-		for transformer in self.transformers:
-			data = transformer.reverse_transform(data, table_meta)
-		return data
+		out = pd.DataFrame(columns=[])
+		table_name = table_meta['name']
+		for field in table_meta['fields']:
+			col_name = field['name']
+			col = table[col_name]
+			if (table_name, col_name) in self.transformers:
+				transformer = self.transformers[(table_name, col_name)]
+				out = pd.concat([out,transformer.reverse_transform(col, field)], axis=1)
+			else:
+				out = pd.concat([out,col], axis=1)
+		return out
 
 	def get_types(self, table):
 		""" Maps every field name to a type """
@@ -123,9 +143,12 @@ if __name__ == "__main__":
 		ht = HyperTransformer()
 		transformed[table_name] = ht.hyper_fit_transform(tl, table, table_meta)
 		ht_map[table_name] = ht
+	print('############# TRANSFORMED #############')
+	print(transformed)
 	for key in transformed:
 		ht = ht_map[key]
 		table = transformed[key]
 		# print(table)
 		table_meta = tables[key][1]
+		print('########## REVERSE #############')
 		print(ht.hyper_reverse_transform(table, table_meta))

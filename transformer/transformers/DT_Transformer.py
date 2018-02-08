@@ -21,46 +21,31 @@ class DT_Transformer(BaseTransformer):
 		super(DT_Transformer, self).__init__()
 		self.type = 'datetime'
 
-	def fit_transform(self, table, table_meta):
+	def fit_transform(self, col, col_meta):
 		""" Returns a tuple (transformed_table, new_table_meta) """
 		out = pd.DataFrame(columns=[])
-		for field in table_meta['fields']:
-			col_name = field['name']
-			if field['type'] == self.type:
-				# convert datetime values
-				col = table[col_name]
-				out[col_name] = col.apply(self.get_val)
+		col_name = col_meta['name']
+		out[col_name] = col.apply(self.get_val)
 
-				# replace missing values
-				# create an extra column for missing values if they exist in the data
-				new_name = '?' + col_name
-				# if are just processing child rows, then the name is already known
-				if new_name in list(table):
-					out[new_name] = pd.notnull(col) * 1
-				# if this is our first time processing child rows, then need to see
-				# if this should be broken down
-				elif pd.isnull(col).any() and not pd.isnull(col).all():
-					out[new_name] = pd.notnull(col) * 1
-			else:
-				out[col_name] = table[col_name] 
+		# replace missing values
+		# create an extra column for missing values if they exist in the data
+		new_name = '?' + col_name
+		# if are just processing child rows, then the name is already known
+		out[new_name] = pd.notnull(col) * 1
 		return out
 
-	def transform(self, table, table_meta):
+	def transform(self, col, col_meta):
 		""" Does the required transformations to the data """
-		return self.process(table, table_meta)
+		return self.fit_transform(col, col_meta)
 
-	def reverse_transform(self, table, table_meta):
+	def reverse_transform(self, col, col_meta):
 		""" Converts data back into original format """
 		output = pd.DataFrame(columns=[])
-		for field in table_meta['fields']:
-			col_name = field['name']
-			if field['type'] == self.type:
-				date_format = field['format']
-				fn = self.get_date_converter(col_name, date_format)
-				data = table[col_name].to_frame()
-				output[col_name] = data.apply(fn, axis=1)
-			else:
-				output[col_name] = table[col_name]
+		date_format = col_meta['format']
+		col_name = col_meta['name']
+		fn = self.get_date_converter(col_name, date_format)
+		data = col.to_frame()
+		output[col_name] = data.apply(fn, axis=1)
 		return output
 
 	def get_val(self, x):
