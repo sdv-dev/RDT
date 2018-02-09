@@ -19,3 +19,24 @@ def get_table_dict(meta_file):
 			table_dict[table['name']] = (data_table, table)
 	return table_dict
 
+def get_transformers_dict(meta_file):
+	"""
+	This function parses through a meta file and extracts the transformer info
+	
+	Returns dictionary mapping (table_name, col_name) => transformer
+	"""
+	transformer_dict = {}
+	with open(meta_file, 'r') as f:
+		meta = json.load(f)
+	for table in meta['tables']:
+		table_name = table['name']
+		for field in table['fields']:
+			col_name = field['name']
+			if 'transformer' in field:
+				transformer_dict[(table_name, col_name)] = field['transformer']
+	return transformer_dict
+
+def get_col_meta(col_name, table_meta):
+	""" gets the meta corresponding to a specific column """
+	pass
+
