@@ -11,6 +11,7 @@ import os.path as op
 
 from transformers import *
 from dateutil import parser
+from utils import *
 
 class HyperTransformer:
 	""" This class is responsible for formatting the input table in a way that is machine learning
@@ -41,7 +42,50 @@ class HyperTransformer:
 	def get_class(self, class_name):
 		return getattr(globals()[class_name], class_name)
 
-	def hyper_fit_transform(self, transformers_list, table, table_meta):
+	def hyper_fit_transform(self, meta_file, tables=None, transformer_list=None):
+		"""
+		This function loops applies all the specified transformers to the
+		tables and return a dict of transformed tables
+
+		:param metafile: the path to the meta_file
+
+		:param tables: mapping of table names to tables to be transformed. If not specified, 
+		the tables will be retrieved using the meta_file.
+
+		:param transformer_list: list of transformers to use. If not 
+		specified, the transformers in the meta_file will be used.
+
+		:returns: dict mapping table name to transformed tables
+		"""
+		pass
+
+	def hyper_transform(self, meta_file, tables=None):
+		"""
+		This function applies all the saved transformers to the
+		tables and returns a dict of transformed tables
+
+		:param metafile: the path to the meta_file
+
+		:param tables: mapping of table names to tables to be transformed. If not specified, 
+		the tables will be retrieved using the meta_file.
+
+		:returns: dict mapping table name to transformed tables
+		"""
+		pass
+
+	def hyper_reverse_transform(self, meta_file, tables=None):
+		"""Loops through the list of reverse transform functions and puts data 
+		back into original format.
+					
+		:param metafile: the path to the meta_file
+					
+		:param tables: mapping of table names to tables to be transformed. If not specified, 
+		the tables will be retrieved using the meta_file.
+					
+		:returns: dict mapping table name to transformed tables"""
+		pass
+
+	def fit_transform_table(self, transformers_list, table, table_meta):
 		""" Returns the processed table after going through each transform 
 		and adds fitted transformers to the hyper class
 		"""
@@ -70,7 +114,7 @@ class HyperTransformer:
 				out = pd.concat([out,col], axis=1)
 		return out
 
-	def hyper_transform(self, table, table_meta):
+	def transform_table(self, table, table_meta):
 		""" Does the required transformations to the table """
 		# res = []
 		# for table in self.tables:
@@ -89,7 +133,7 @@ class HyperTransformer:
 			out = pd.concat([out,transformer.transform(col, field)], axis=1)
 		return data
 
-	def hyper_reverse_transform(self, table, table_meta):
+	def reverse_transform_table(self, table, table_meta):
 		""" Converts data back into original format by looping
 		over all transformers and doing the reverse
 		"""
@@ -119,6 +163,8 @@ class HyperTransformer:
 		for field in table['fields']:
 			res[field['name']] = field['type']
 		return res
+
+########## MAIN ############
 
 if __name__ == "__main__":
 	meta_file = '../data/Airbnb_demo_meta.json'
