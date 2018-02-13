@@ -55,7 +55,7 @@ class HyperTransformer:
 		return transformed
 
 
-	def hyper_transform(self, tables=None):
+	def hyper_transform(self, tables, table_metas=None):
 		"""
 		This function applies all the saved transformers to the
 		tables and returns a dict of transformed tables
@@ -65,9 +65,17 @@ class HyperTransformer:
 
 		:returns: dict mapping table name to transformed tables
 		"""
-		pass
+		transformed = {}
+		for table_name in tables:
+			table = tables[table_name]
+			if table_metas is None:
+				table_meta = self.table_dict[table_name][1]
+			else:
+				table_meta = table_metas[table_name]
+			transformed[table_name] = self.transform_table(table, table_meta)
+		return transformed
 
-	def hyper_reverse_transform(self, tables=None):
+	def hyper_reverse_transform(self, tables, table_metas = None):
 		"""Loops through the list of reverse transform functions and puts data 
 		back into original format.
 										
@@ -75,7 +83,15 @@ class HyperTransformer:
 		the tables will be retrieved using the meta_file.
 					
 		:returns: dict mapping table name to transformed tables"""
-		pass
+		reverse = {}
+		for table_name in tables:
+			table = tables[table_name]
+			if table_metas is None:
+				table_meta = self.table_dict[table_name][1]
+			else:
+				table_meta = table_metas[table_name]
+			reverse[table_name] = self.reverse_transform_table(table, table_meta)
+		return reverse
 
 	def fit_transform_table(self, table, table_meta, transformer_dict=None, transformer_list=None):
 		""" Returns the processed table after going through each transform 
@@ -162,33 +178,39 @@ class HyperTransformer:
 
 if __name__ == "__main__":
 	meta_file = '../data/Airbnb_demo_meta.json'
-	with open(meta_file, 'r') as f:
-		meta = json.load(f)
-	tables = {}
-	type_map = {}
-	for table in meta['tables']:
-		# get each table
-		if table['use']:
-			prefix = op.dirname(meta_file)
-			relative_path = op.join(prefix, meta['path'], table['path'])
-			data_table = pd.read_csv(relative_path)
-			tables[table['name']] = (data_table, table)
-
-	# test out hyper_transformer
-	ht_map = {}
+	ht = HyperTransformer(meta_file)
 	tl = ['DT_Transformer']
-	transformed = {}
-	for table_name in tables:
-		table, table_meta = tables[table_name]
-		ht = HyperTransformer()
-		transformed[table_name] = ht.hyper_fit_transform(tl, table, table_meta)
-		ht_map[table_name] = ht
-	print('############# TRANSFORMED #############')
+	transformed = ht.hyper_fit_transform(transformer_list=tl)
 	print(transformed)
-	for key in transformed:
-		ht = ht_map[key]
-		table = transformed[key]
-		# print(table)
-		table_meta = tables[key][1]
-		print('########## REVERSE #############')
-		print(ht.hyper_reverse_transform(table, table_meta))
+	res = ht.hyper_reverse_transform(tables=transformed)
+	print(res)
+	# with open(meta_file, 'r') as f:
+	# 	meta = json.load(f)
+	# tables = {}
+	# type_map = {}
+	# for table in meta['tables']:
+	# 	# get each table
+	# 	if table['use']:
+	# 		prefix = op.dirname(meta_file)
+	# 		relative_path = op.join(prefix, meta['path'], table['path'])
+	# 		data_table = pd.read_csv(relative_path)
+	# 		tables[table['name']] = (data_table, table)
+
+	# # test out hyper_transformer
+	# ht_map = {}
+	# tl = ['DT_Transformer']
+	# transformed = {}
+	# for table_name in tables:
+	# 	table, table_meta = tables[table_name]
+	# 	ht = HyperTransformer()
+	# 	transformed[table_name] = ht.hyper_fit_transform(tl, table, table_meta)
+	# 	ht_map[table_name] = ht
+	# print('############# TRANSFORMED #############')
+	# print(transformed)
+	# for key in transformed:
+	# 	ht = ht_map[key]
+	# 	table = transformed[key]
+	# 	# print(table)
+	# 	table_meta = tables[key][1]
+	# 	print('########## REVERSE #############')
+	# 	print(ht.hyper_reverse_transform(table, table_meta))
