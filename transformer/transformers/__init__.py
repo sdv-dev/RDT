@@ -6,14 +6,12 @@ from os.path import isfile, join, realpath, dirname
 mypath = realpath(__file__)
 directory = dirname(mypath)
 onlyfiles = [f for f in listdir(directory) if isfile(join(directory, f))]
-l = []
+array = []
 for file in onlyfiles:
-	if file.split('.')[1] == 'py' and file.split('.')[0] != '__init__':
-		l.append(file.split('.')[0])
-# l = ['DT_Transformer']
+    if file.split('.')[1] == 'py' and file.split('.')[0] != '__init__':
+        array.append(file.split('.')[0])
 prefix = 'transformers.'
 
-for transformer in l:
-	mod = prefix + transformer
-	importlib.import_module(mod)
-	
+for transformer in array:
+    mod = prefix + transformer
+    importlib.import_module(mod)
