@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from BaseTransformer import *
+from transformers.BaseTransformer import *
 
 
 class NumberTransformer(BaseTransformer):

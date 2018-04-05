@@ -2,7 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from BaseTransformer import *
+from transformers.BaseTransformer import *
 from dateutil import parser
 
 
