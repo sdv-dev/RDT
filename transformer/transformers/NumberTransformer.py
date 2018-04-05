@@ -9,24 +9,25 @@ import os.path as op
 import sys
 
 from BaseTransformer import *
-from dateutil import parser
 
-class DT_Transformer(BaseTransformer):
+class NumberTransformer(BaseTransformer):
 	""" 
 	This class represents the datetime transformer for SDV 
 	"""
 
 	def __init__(self):
 		""" initialize transformer """
-		super(DT_Transformer, self).__init__()
-		self.type = 'datetime'
+		super(NumberTransformer, self).__init__()
+		self.type = 'number'
 
 	def fit_transform(self, col, col_meta):
 		""" Returns a tuple (transformed_table, new_table_meta) """
 		out = pd.DataFrame(columns=[])
 		col_name = col_meta['name']
-		out[col_name] = col.apply(self.get_val)
-
+		print(col_meta)
+		subtype = col_meta['subtype']
+		if subtype == 'integer':
+			out[col_name] = col.apply(self.get_val)
 		# replace missing values
 		# create an extra column for missing values if they exist in the data
 		new_name = '?' + col_name
@@ -41,26 +42,23 @@ class DT_Transformer(BaseTransformer):
 	def reverse_transform(self, col, col_meta):
 		""" Converts data back into original format """
 		output = pd.DataFrame(columns=[])
-		date_format = col_meta['format']
+		subtype = col_meta['subtype']
 		col_name = col_meta['name']
-		fn = self.get_date_converter(col_name, date_format)
+		fn = self.get_number_converter(col_name, subtype)
 		data = col.to_frame()
 		output[col_name] = data.apply(fn, axis=1)
 		return output
-
+			
 	def get_val(self, x):
-		""" Converts datetime to number """
+
 		try:
-			tmp = parser.parse(str(x)).timetuple()
-			return time.mktime(tmp)*1e9
-		except (ValueError, AttributeError, TypeError):
-			# if we return pd.NaT, pandas will exclude the column
-			# when calculating covariance, so just use np.nan
+			return int(round(x))
+		except (ValueError, TypeError):
 			return np.nan
 
-	def get_date_converter(self, col, meta):
-		'''Returns a converter that takes in an integer representing ms
-		   and turns it into a string date
+	def get_number_converter(self, col, meta):
+		'''Returns a converter that takes in a value and turns it into an
+		   integer, if necessary
 
 		:param col: name of column
 		:type col: str
@@ -72,23 +70,11 @@ class DT_Transformer(BaseTransformer):
 		:returns: function
 		'''
 
-		def safe_date(x):
-			if '?' + col in x:
-				print('hey')
-				missing = True
-			else:
-				missing = False
-
-			if missing and x['?' + col] == 0:
-				return np.nan
-			# TODO: Figure out right way to check missing
-			t = x[col]
-			try:
-				if np.isnan(t):
+		def safe_round(x):
+			if meta == 'integer':
+				if x[col] == 'NaN' or np.isnan(x[col]):
 					return np.nan
-			except:
-				print(t)
-			tmp = time.gmtime(float(t)/1e9)
-			return time.strftime(meta, tmp)
+				return int(round(x[col]))
+			return x[col]
 
-		return safe_date
+		return safe_round
