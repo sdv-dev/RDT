@@ -116,22 +116,10 @@ class HyperTransformer:
                     new_col = t.fit_transform(col, field)
                     self.transformers[(table_name, col_name)] = t
                     out = pd.concat([out, new_col], axis=1)
-            # if transformed hasn't been added add original
-            if col_name not in out:
-                out = pd.concat([out, col], axis=1)
         return out
 
     def transform_table(self, table, table_meta):
         """ Does the required transformations to the table """
-        # res = []
-        # for table in self.tables:
-        #   for col_name in list(self.tables[table]):
-        #       for trans in self.transformers_list:
-        #           transformer = trans(self.meta_file, table)
-        #           if transformer.type == self.type_map[table][col_name]:
-        #               res.append(transformer.process(col_name,
-        #                                              self.tables[table]))
-        # return res
         out = pd.DataFrame(columns=[])
         table_name = table_meta['name']
         for field in table_meta['fields']:
@@ -145,26 +133,18 @@ class HyperTransformer:
         """ Converts data back into original format by looping
         over all transformers and doing the reverse
         """
-        # res = []
-        # for table in self.tables:
-        #   for col_name in list(self.tables[table]):
-        #       for trans in self.transformers_list:
-        #           transformer = trans(self.meta_file, table)
-        #           if transformer.type == self.type_map[table][col_name]:
-        #               res.append(transformer.process(col_name,
-        #                                              self.tables[table]))
-        # return res
         out = pd.DataFrame(columns=[])
         table_name = table_meta['name']
         for field in table_meta['fields']:
             col_name = field['name']
+            # only add transformed columns
+            if col_name not in table:
+                continue
             col = table[col_name]
             if (table_name, col_name) in self.transformers:
                 transformer = self.transformers[(table_name, col_name)]
                 out_list = [out, transformer.reverse_transform(col, field)]
                 out = pd.concat(out_list, axis=1)
-            else:
-                out = pd.concat([out, col], axis=1)
         return out
 
     def get_types(self, table):
