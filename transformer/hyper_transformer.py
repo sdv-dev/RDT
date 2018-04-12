@@ -1,7 +1,7 @@
-import utils
+import transformer.utils as utils
 import pandas as pd
 
-from transformers import *
+from transformer.transformers import *
 
 
 class HyperTransformer:
@@ -153,47 +153,3 @@ class HyperTransformer:
         for field in table['fields']:
             res[field['name']] = field['type']
         return res
-
-# Main
-
-
-if __name__ == "__main__":
-    meta_file = '../data/Airbnb_demo_meta.json'
-    ht = HyperTransformer(meta_file)
-    # tl = ['NumberTransformer']
-    tl = ['DTTransformer', 'NumberTransformer']
-    transformed = ht.hyper_fit_transform(transformer_list=tl)
-    print(transformed)
-    res = ht.hyper_reverse_transform(tables=transformed)
-    print(res)
-
-    # with open(meta_file, 'r') as f:
-    #   meta = json.load(f)
-    # tables = {}
-    # type_map = {}
-    # for table in meta['tables']:
-    #   # get each table
-    #   if table['use']:
-    #       prefix = op.dirname(meta_file)
-    #       relative_path = op.join(prefix, meta['path'], table['path'])
-    #       data_table = pd.read_csv(relative_path)
-    #       tables[table['name']] = (data_table, table)
-
-    # # test out hyper_transformer
-    # ht_map = {}
-    # tl = ['DT_Transformer']
-    # transformed = {}
-    # for table_name in tables:
-    #   table, table_meta = tables[table_name]
-    #   ht = HyperTransformer()
-    #   transformed[table_name] = ht.hyper_fit_transform(tl, table, table_meta)
-    #   ht_map[table_name] = ht
-    # print('############# TRANSFORMED #############')
-    # print(transformed)
-    # for key in transformed:
-    #   ht = ht_map[key]
-    #   table = transformed[key]
-    #   # print(table)
-    #   table_meta = tables[key][1]
-    #   print('########## REVERSE #############')
-    #   print(ht.hyper_reverse_transform(table, table_meta))

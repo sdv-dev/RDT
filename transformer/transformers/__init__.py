@@ -10,7 +10,7 @@ array = []
 for file in onlyfiles:
     if file.split('.')[1] == 'py' and file.split('.')[0] != '__init__':
         array.append(file.split('.')[0])
-prefix = 'transformers.'
+prefix = 'transformer.transformers.'
 
 for transformer in array:
     mod = prefix + transformer
