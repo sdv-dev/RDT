@@ -99,3 +99,35 @@ You can then reverse transform the output to get a table in the original format,
 6             2014-01-01         20140101052742         2014-01-07  32.0
 ```
 ### Transforming a dataset
+The hyper transformer is also capable of transforming all of the tables specified in your meta.json at once.
+```bash
+>>> from transformer.hyper_transformer import *
+>>> meta_file = 'data/Airbnb_demo_meta.json'
+>>> ht = HyperTransformer(meta_file)
+>>> tl = ['DTTransformer', 'NumberTransformer']
+>>> transformed = ht.hyper_fit_transform(transformer_list=tl)
+>>> 
+{'sessions':        secs_elapsed  ?secs_elapsed
+0             319.0              1
+1           67753.0              1
+2             301.0              1
+3           22141.0              1
+4             435.0              1
+5            7703.0              1
+6             115.0              1
+7             831.0              1
+...
+>>> reversed = ht.hyper_reverse_transform(tables=transformed)
+>>> print(reversed)
+{'sessions':        secs_elapsed
+0             319.0
+1           67753.0
+2             301.0
+3           22141.0
+4             435.0
+5            7703.0
+6             115.0
+7             831.0
+8           20842.0
+...
+```
