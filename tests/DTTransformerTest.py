@@ -1,8 +1,6 @@
 import unittest
-import pandas as pd
-import numpy as np
 
-from transformer.transformers.DTTransformer import DTTransformer
+from transformer.transformers.DTTransformer import *
 
 
 class DTTransformerTest(unittest.TestCase):

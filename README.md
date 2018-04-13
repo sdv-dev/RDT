@@ -10,8 +10,58 @@ $ pip install -r requirements.txt
 
 ## Usage
 This library is used to apply desired transformations to individual tables or entire datasets all at once, with the goal of getting completely numeric tables as the output. The desired transformations can be specified at the column level, or dataset level. For example, you can apply a datetime transformation to only select columns, r you can specify that you want every datetime column in the dataset to go through that transformation.
+### Downloading demo data
+If you don't have data to work with right away, you can download our demo data by running the following command from the root directory of this project.
+```bash
+$ python demo_downloader.py
+```
 ### Transforming a column
+The base class of this library is the BaseTransformer class. This class provides method to fit a transformer to your data and transform it, a method to transform new data with an already fitted transformer and a method to reverse a transform and get data that looks like the original input. Each transformer class inherits from the BaseTransformer class, and thus has all these methods. 
 
+Transformers take in a column and the meta data for that column as an input. Below we will demonstrate how to use a datetime transformer to transform and reverse transform a column.
+
+First load the data. 
+```bash
+>>> from transformer.transformers.DTTransformer import *
+>>> from transformer.utils import *
+>>> col, col_meta = get_col_info('users', 'date_account_created', 'demo/Airbnb_demo_meta.json')
+>>> print(col)
+0      2014-01-01
+1      2014-01-01
+2      2014-01-01
+3      2014-01-01
+4      2014-01-01
+5      2014-01-01
+6      2014-01-01
+...
+>>> print(col_meta)
+{'type': 'datetime', 'name': 'date_account_created', 'uniques': 1634, 'format': '%Y-%m-%d'}
+```
+Now we can transform the column.
+```bash
+>>> transformer = DTTransformer()
+>>> transformed_data = transformer.fit_transform(col, col_meta)
+>>> print(transformed_data)
+     date_account_created  ?date_account_created
+0            1.388552e+18                      1
+1            1.388552e+18                      1
+2            1.388552e+18                      1
+3            1.388552e+18                      1
+4            1.388552e+18                      1
+5            1.388552e+18                      1
+6            1.388552e+18                      1
+```
+If you want to reverse the transformation and get the original data back, you can run the following command.
+```bash
+>>> reversed = transformer.reverse_transform(transformed_data['date_account_created'], col_meta)
+>>> print(reversed)
+    date_account_created
+0             2014-01-01
+1             2014-01-01
+2             2014-01-01
+3             2014-01-01
+4             2014-01-01
+```
 ### Transforming a table
 
 ### Transforming a dataset
