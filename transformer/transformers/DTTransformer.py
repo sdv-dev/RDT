@@ -46,9 +46,8 @@ class DTTransformer(BaseTransformer):
         """ Converts datetime to number """
         try:
             tmp = parser.parse(str(x)).timetuple()
-            print('this is x: ', x)
             return time.mktime(tmp)*1e9
-        except (ValueError, AttributeError, TypeError):
+        except:
             # if we return pd.NaT, pandas will exclude the column
             # when calculating covariance, so just use np.nan
             print('catches error')

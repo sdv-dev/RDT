@@ -20,8 +20,6 @@ class DTTransformerTest(unittest.TestCase):
                     "format": "%m/%d/%y",
                 }
         self.normal_data = self.normal_data[self.normal_meta['name']]
-        print('normal_data', self.normal_data)
-        print('missing_data', self.missing_data)
         self.missing_data = self.missing_data[self.missing_meta['name']]
         self.transformer = DTTransformer()
 
@@ -38,7 +36,7 @@ class DTTransformerTest(unittest.TestCase):
         print('result', result)
         print('predicted', predicted)
         # load correct answer
-        self.assertTrue(result.equals(predicted))
+        self.assertTrue(np.allclose(result, predicted, 1e-03))
 
     def test_reverse_transform(self):
         transformed = self.transformer.fit_transform(self.normal_data,
@@ -66,7 +64,13 @@ class DTTransformerTest(unittest.TestCase):
         transformed = self.transformer.fit_transform(self.missing_data,
                                                      self.missing_meta)
         predicted = transformed[self.missing_meta['name']]
-        self.assertTrue(result.equals(predicted))
+        for i in range(len(result)):
+            if not np.isnan(result[i]):
+                self.assertTrue(np.allclose(result[i],
+                                            predicted[i],
+                                            1e-03))
+            else:
+                self.assertFalse(predicted[i] == predicted[i])
 
     def test_reverse_transform_missing(self):
         transformed = self.transformer.fit_transform(self.missing_data,
