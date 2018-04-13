@@ -33,8 +33,6 @@ class DTTransformerTest(unittest.TestCase):
         transformed = self.transformer.fit_transform(self.normal_data,
                                                      self.normal_meta)
         predicted = transformed[self.normal_meta['name']]
-        print('result', result)
-        print('predicted', predicted)
         # load correct answer
         self.assertTrue(np.allclose(result, predicted, 1e-03))
 

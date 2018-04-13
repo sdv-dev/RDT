@@ -50,7 +50,6 @@ class DTTransformer(BaseTransformer):
         except:
             # if we return pd.NaT, pandas will exclude the column
             # when calculating covariance, so just use np.nan
-            print('catches error')
             return np.nan
 
     def get_date_converter(self, col, meta):
