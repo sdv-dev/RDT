@@ -15,18 +15,32 @@ class DTTransformer(BaseTransformer):
         """ initialize transformer """
         super(DTTransformer, self).__init__()
         self.type = 'datetime'
+        self.missing = None
+        self.col_name = None
+        self.default_val = None
 
     def fit_transform(self, col, col_meta):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame(columns=[])
-        col_name = col_meta['name']
-        out[col_name] = col.apply(self.get_val)
+        self.col_name = col_meta['name']
+        # get default val
+        for x in col:
+            if x is not None:
+                try:
+                    tmp = parser.parse(str(x)).timetuple()
+                    self.default_val = time.mktime(tmp)*1e9
+                    break
+                except Exception as inst:
+                    continue
         # replace missing values
         # create an extra column for missing values if they exist in the data
-        new_name = '?' + col_name
+        new_name = '?' + self.col_name
         # if are just processing child rows, then the name is already known
-        out[new_name] = pd.notnull(col) * 1
-        return out
+        self.missing = pd.notnull(col) * 1
+        out[self.col_name] = col
+        out[new_name] = self.missing
+        out = out.apply(self.get_val, axis=1)
+        return out.to_frame(self.col_name)
 
     def transform(self, col, col_meta):
         """ Does the required transformations to the data """
@@ -39,18 +53,20 @@ class DTTransformer(BaseTransformer):
         col_name = col_meta['name']
         fn = self.get_date_converter(col_name, date_format)
         data = col.to_frame()
+        data['?'+col_name] = self.missing
         output[col_name] = data.apply(fn, axis=1)
         return output
 
     def get_val(self, x):
         """ Converts datetime to number """
         try:
-            tmp = parser.parse(str(x)).timetuple()
+            tmp = parser.parse(str(x[self.col_name])).timetuple()
             return time.mktime(tmp)*1e9
         except:
             # if we return pd.NaT, pandas will exclude the column
             # when calculating covariance, so just use np.nan
-            return np.nan
+            # return np.nan
+            return self.default_val
 
     def get_date_converter(self, col, meta):
         '''Returns a converter that takes in an integer representing ms
@@ -69,7 +85,7 @@ class DTTransformer(BaseTransformer):
         def safe_date(x):
             t = x[col]
             try:
-                if np.isnan(t):
+                if x['?' + col] == 0:
                     return np.nan
             except Exception as inst:
                 print(t)

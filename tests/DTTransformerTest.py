@@ -66,7 +66,7 @@ class DTTransformerTest(unittest.TestCase):
                                             predicted[i],
                                             1e-03))
             else:
-                self.assertFalse(predicted[i] == predicted[i])
+                self.assertTrue(predicted[i] in result.values)
 
     def test_reverse_transform_missing(self):
         transformed = self.transformer.fit_transform(self.missing_data,

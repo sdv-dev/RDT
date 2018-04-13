@@ -1,17 +1,20 @@
 from dataprep.hyper_transformer import *
 
 if __name__ == "__main__":
-    meta_file = 'data/Airbnb_demo_meta.json'
+    meta_file = 'demo/Airbnb_demo_meta.json'
     ht = HyperTransformer(meta_file)
-    tl = ['DTTransformer', 'NumberTransformer', 'CatTransformer']
+    tl = ['DTTransformer', 'NumberTransformer']
     transformed = ht.hyper_fit_transform(transformer_list=tl)
     print(transformed)
     res = ht.hyper_reverse_transform(tables=transformed)
     print(res)
 
-# from dataprep.transformers.CatTransformer import *
+# from dataprep.transformers.DTTransformer import *
 # from dataprep.utils import *
-# col, col_meta = get_col_info('users', 'gender', 'demo/Airbnb_demo_meta.json')
-# transformer = CatTransformer()
+# col, col_meta = get_col_info('users', 'timestamp_first_active', 'demo/Airbnb_demo_meta.json')
+# transformer = DTTransformer()
+# print(col)
 # transformed_data = transformer.fit_transform(col, col_meta)
-# reversed = transformer.reverse_transform(transformed_data['gender'], col_meta)
+# print(type(transformed_data['timestamp_first_active']))
+# reversed = transformer.reverse_transform(transformed_data['timestamp_first_active'], col_meta)
+# print(reversed)
