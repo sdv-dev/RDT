@@ -1,6 +1,6 @@
 import unittest
 
-from transformer.transformers.DTTransformer import *
+from dataprep.transformers.DTTransformer import *
 
 
 class DTTransformerTest(unittest.TestCase):

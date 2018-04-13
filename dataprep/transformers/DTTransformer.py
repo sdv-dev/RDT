@@ -1,26 +1,26 @@
+import time
 import numpy as np
 import pandas as pd
 
-from transformer.transformers.BaseTransformer import *
+from dataprep.transformers.BaseTransformer import *
+from dateutil import parser
 
 
-class NumberTransformer(BaseTransformer):
+class DTTransformer(BaseTransformer):
     """
     This class represents the datetime transformer for SDV
     """
 
     def __init__(self):
         """ initialize transformer """
-        super(NumberTransformer, self).__init__()
-        self.type = 'number'
+        super(DTTransformer, self).__init__()
+        self.type = 'datetime'
 
     def fit_transform(self, col, col_meta):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame(columns=[])
         col_name = col_meta['name']
-        subtype = col_meta['subtype']
-        if subtype == 'integer':
-            out[col_name] = col.apply(self.get_val)
+        out[col_name] = col.apply(self.get_val)
         # replace missing values
         # create an extra column for missing values if they exist in the data
         new_name = '?' + col_name
@@ -35,23 +35,26 @@ class NumberTransformer(BaseTransformer):
     def reverse_transform(self, col, col_meta):
         """ Converts data back into original format """
         output = pd.DataFrame(columns=[])
-        subtype = col_meta['subtype']
+        date_format = col_meta['format']
         col_name = col_meta['name']
-        fn = self.get_number_converter(col_name, subtype)
+        fn = self.get_date_converter(col_name, date_format)
         data = col.to_frame()
         output[col_name] = data.apply(fn, axis=1)
         return output
 
     def get_val(self, x):
-        """ Converts to int """
+        """ Converts datetime to number """
         try:
-            return int(round(x))
-        except (ValueError, TypeError):
+            tmp = parser.parse(str(x)).timetuple()
+            return time.mktime(tmp)*1e9
+        except:
+            # if we return pd.NaT, pandas will exclude the column
+            # when calculating covariance, so just use np.nan
             return np.nan
 
-    def get_number_converter(self, col, meta):
-        '''Returns a converter that takes in a value and turns it into an
-           integer, if necessary
+    def get_date_converter(self, col, meta):
+        '''Returns a converter that takes in an integer representing ms
+           and turns it into a string date
 
         :param col: name of column
         :type col: str
@@ -63,11 +66,15 @@ class NumberTransformer(BaseTransformer):
         :returns: function
         '''
 
-        def safe_round(x):
-            if meta == 'integer':
-                if x[col] == 'NaN' or np.isnan(x[col]):
+        def safe_date(x):
+            t = x[col]
+            try:
+                if np.isnan(t):
                     return np.nan
-                return int(round(x[col]))
-            return x[col]
+            except Exception as inst:
+                print(t)
+                print(inst)
+            tmp = time.gmtime(float(t)/1e9)
+            return time.strftime(meta, tmp)
 
-        return safe_round
+        return safe_date

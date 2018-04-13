@@ -1,7 +1,7 @@
-import transformer.utils as utils
+import dataprep.utils as utils
 import pandas as pd
 
-from transformer.transformers import *
+from dataprep.transformers import *
 
 
 class HyperTransformer:

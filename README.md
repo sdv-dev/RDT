@@ -22,8 +22,8 @@ Transformers take in a column and the meta data for that column as an input. Bel
 
 First load the data. 
 ```bash
->>> from transformer.transformers.DTTransformer import *
->>> from transformer.utils import *
+>>> from dataprep.transformers.DTTransformer import *
+>>> from dataprep.utils import *
 >>> col, col_meta = get_col_info('users', 'date_account_created', 'demo/Airbnb_demo_meta.json')
 >>> print(col)
 0      2014-01-01
@@ -65,8 +65,8 @@ If you want to reverse the transformation and get the original data back, you ca
 ### Transforming a table
 You can also transform an entire table using the HyperTransformer class. Again, we can start by loading the data.
 ```bash
->>> from transformer.hyper_transformer import *
->>> from transformer.utils import *
+>>> from dataprep.hyper_transformer import *
+>>> from dataprep.utils import *
 >>> meta_file = 'data/Airbnb_demo_meta.json'
 >>> table_dict = get_table_dict(meta_file)
 >>> table, table_meta = table_dict['users']
@@ -101,7 +101,7 @@ You can then reverse transform the output to get a table in the original format,
 ### Transforming a dataset
 The hyper transformer is also capable of transforming all of the tables specified in your meta.json at once.
 ```bash
->>> from transformer.hyper_transformer import *
+>>> from dataprep.hyper_transformer import *
 >>> meta_file = 'data/Airbnb_demo_meta.json'
 >>> ht = HyperTransformer(meta_file)
 >>> tl = ['DTTransformer', 'NumberTransformer']
