@@ -18,7 +18,6 @@ class NumberTransformer(BaseTransformer):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame(columns=[])
         col_name = col_meta['name']
-        print(col_meta)
         subtype = col_meta['subtype']
         if subtype == 'integer':
             out[col_name] = col.apply(self.get_val)

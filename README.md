@@ -63,5 +63,39 @@ If you want to reverse the transformation and get the original data back, you ca
 4             2014-01-01
 ```
 ### Transforming a table
-
+You can also transform an entire table using the HyperTransformer class. Again, we can start by loading the data.
+```bash
+>>> from transformer.hyper_transformer import *
+>>> from transformer.utils import *
+>>> meta_file = 'data/Airbnb_demo_meta.json'
+>>> table_dict = get_table_dict(meta_file)
+>>> table, table_meta = table_dict['users']
+```
+Now you can pass a list of the desired transformers into the fit_transform_table function to transform the whole table.
+```bash
+>>> ht = HyperTransformer(meta_file)
+>>> tl = ['DTTransformer', 'NumberTransformer']
+>>> transformed = ht.fit_transform_table(table, table_meta, transformer_list = tl)
+>>> print(transformed)
+     date_account_created  ?date_account_created  timestamp_first_active  \
+0            1.388552e+18                      1            1.388553e+18   
+1            1.388552e+18                      1            1.388553e+18   
+2            1.388552e+18                      1            1.388553e+18   
+3            1.388552e+18                      1            1.388554e+18   
+4            1.388552e+18                      1            1.388554e+18   
+5            1.388552e+18                      1            1.388554e+18   
+6            1.388552e+18                      1            1.388554e+18   
+```
+You can then reverse transform the output to get a table in the original format, but it will only contain the columns corresponding to those that were transformed (ie. numeric columns).
+```bash
+>>> reversed = ht.reverse_transform_table(transformed, table_meta)
+    date_account_created timestamp_first_active date_first_booking   age
+0             2014-01-01         20140101050936         2014-01-04  62.0
+1             2014-01-01         20140101051558                NaN   NaN
+2             2014-01-01         20140101051639                NaN   NaN
+3             2014-01-01         20140101052146                NaN   NaN
+4             2014-01-01         20140101052619         2014-01-02   NaN
+5             2014-01-01         20140101052626                NaN   NaN
+6             2014-01-01         20140101052742         2014-01-07  32.0
+```
 ### Transforming a dataset
