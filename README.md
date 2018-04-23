@@ -9,7 +9,7 @@ $ pip install -r requirements.txt
 ```
 
 ## Usage
-This library is used to apply desired transformations to individual tables or entire datasets all at once, with the goal of getting completely numeric tables as the output. The desired transformations can be specified at the column level, or dataset level. For example, you can apply a datetime transformation to only select columns, r you can specify that you want every datetime column in the dataset to go through that transformation.
+This library is used to apply desired transformations to individual tables or entire datasets all at once, with the goal of getting completely numeric tables as the output. The desired transformations can be specified at the column level, or dataset level. For example, you can apply a datetime transformation to only select columns, or you can specify that you want every datetime column in the dataset to go through that transformation.
 ### Downloading demo data
 If you don't have data to work with right away, you can download our demo data by running the following command from the root directory of this project.
 ```bash
