@@ -1,5 +1,5 @@
-# data-prep
-This a a python library used to clean up and prepare data for use with other data science libraries.
+# Reversible data transforms
+This a a python library used to transform data for data science libraries and preserve the transformations in order to reverse them as needed.
 ## Installation
 You can create a virtual environment and install the dependencies using the following commands.
 ```bash
