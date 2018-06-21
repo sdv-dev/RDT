@@ -1,4 +1,4 @@
-from dataprep.hyper_transformer import *
+from rdt.hyper_transformer import HyperTransformer
 
 if __name__ == "__main__":
     meta_file = 'demo/Airbnb_demo_meta.json'
@@ -11,7 +11,8 @@ if __name__ == "__main__":
 
 # from dataprep.transformers.DTTransformer import *
 # from dataprep.utils import *
-# col, col_meta = get_col_info('users', 'timestamp_first_active', 'demo/Airbnb_demo_meta.json')
+# col, col_meta = get_col_info('users', 'timestamp_first_active',
+#                              'demo/Airbnb_demo_meta.json')
 # transformer = DTTransformer()
 # print(col)
 # transformed_data = transformer.fit_transform(col, col_meta)

@@ -1,44 +1,38 @@
-import time
 import numpy as np
 import pandas as pd
 
-from dataprep.transformers.BaseTransformer import *
-from dateutil import parser
+from rdt.transformers.BaseTransformer import BaseTransformer
 
 
-class DTTransformer(BaseTransformer):
+class NumberTransformer(BaseTransformer):
     """
     This class represents the datetime transformer for SDV
     """
 
     def __init__(self):
         """ initialize transformer """
-        super(DTTransformer, self).__init__()
-        self.type = 'datetime'
-        self.missing = None
+        super(NumberTransformer, self).__init__()
+        self.type = 'number'
         self.col_name = None
         self.default_val = None
+        self.subtype = None
 
     def fit_transform(self, col, col_meta):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame(columns=[])
         self.col_name = col_meta['name']
+        self.subtype = col_meta['subtype']
         # get default val
         for x in col:
             if x is not None:
                 try:
-                    tmp = parser.parse(str(x)).timetuple()
-                    self.default_val = time.mktime(tmp)*1e9
+                    tmp = int(round(x))
+                    self.default_val = tmp
                     break
                 except Exception as inst:
                     continue
-        # replace missing values
-        # create an extra column for missing values if they exist in the data
-        new_name = '?' + self.col_name
         # if are just processing child rows, then the name is already known
-        self.missing = pd.notnull(col) * 1
         out[self.col_name] = col
-        out[new_name] = self.missing
         out = out.apply(self.get_val, axis=1)
         return out.to_frame(self.col_name)
 
@@ -49,27 +43,28 @@ class DTTransformer(BaseTransformer):
     def reverse_transform(self, col, col_meta):
         """ Converts data back into original format """
         output = pd.DataFrame(columns=[])
-        date_format = col_meta['format']
+        subtype = col_meta['subtype']
         col_name = col_meta['name']
-        fn = self.get_date_converter(col_name, date_format)
+        fn = self.get_number_converter(col_name, subtype)
         data = col.to_frame()
-        data['?'+col_name] = self.missing
         output[col_name] = data.apply(fn, axis=1)
         return output
 
     def get_val(self, x):
-        """ Converts datetime to number """
+        """ Converts to int """
         try:
-            tmp = parser.parse(str(x[self.col_name])).timetuple()
-            return time.mktime(tmp)*1e9
-        except:
-            # if we return pd.NaT, pandas will exclude the column
-            # when calculating covariance, so just use np.nan
+            if self.subtype == 'integer':
+                return int(round(x[self.col_name]))
+            else:
+                if np.isnan(x[self.col_name]):
+                    return self.default_val
+                return x[self.col_name]
+        except (ValueError, TypeError):
             return self.default_val
 
-    def get_date_converter(self, col, meta):
-        '''Returns a converter that takes in an integer representing ms
-           and turns it into a string date
+    def get_number_converter(self, col, meta):
+        '''Returns a converter that takes in a value and turns it into an
+           integer, if necessary
 
         :param col: name of column
         :type col: str
@@ -81,15 +76,9 @@ class DTTransformer(BaseTransformer):
         :returns: function
         '''
 
-        def safe_date(x):
-            t = x[col]
-            try:
-                if x['?' + col] == 0:
-                    return np.nan
-            except Exception as inst:
-                print(t)
-                print(inst)
-            tmp = time.gmtime(float(t)/1e9)
-            return time.strftime(meta, tmp)
+        def safe_round(x):
+            if meta == 'integer':
+                return int(round(x[col]))
+            return x[col]
 
-        return safe_date
+        return safe_round

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from dataprep.transformers.BaseTransformer import *
+from rdt.transformers.BaseTransformer import BaseTransformer
 
 
 class CatTransformer(BaseTransformer):
