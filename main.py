@@ -3,7 +3,7 @@ from rdt.hyper_transformer import HyperTransformer
 if __name__ == "__main__":
     meta_file = 'demo/Airbnb_demo_meta.json'
     ht = HyperTransformer(meta_file)
-    tl = ['DTTransformer', 'NumberTransformer']
+    tl = ['NumberTransformer', 'DTTransformer', 'CatTransformer']
     transformed = ht.hyper_fit_transform(transformer_list=tl)
     print(transformed)
     res = ht.hyper_reverse_transform(tables=transformed)

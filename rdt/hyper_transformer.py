@@ -22,7 +22,7 @@ class HyperTransformer:
         return getattr(globals()[class_name], class_name)
 
     def hyper_fit_transform(self, tables=None, transformer_dict=None,
-                            transformer_list=None):
+                            transformer_list=None, missing=True):
         """
         This function loops applies all the specified transformers to the
         tables and return a dict of transformed tables
@@ -46,11 +46,12 @@ class HyperTransformer:
             transformed_table = self.fit_transform_table(table,
                                                          table_meta,
                                                          transformer_dict,
-                                                         transformer_list)
+                                                         transformer_list,
+                                                         missing)
             transformed[table_name] = transformed_table
         return transformed
 
-    def hyper_transform(self, tables, table_metas=None):
+    def hyper_transform(self, tables, table_metas=None, missing=True):
         """
         This function applies all the saved transformers to the
         tables and returns a dict of transformed tables
@@ -67,10 +68,12 @@ class HyperTransformer:
                 table_meta = self.table_dict[table_name][1]
             else:
                 table_meta = table_metas[table_name]
-            transformed[table_name] = self.transform_table(table, table_meta)
+            transformed[table_name] = self.transform_table(table,
+                                                           table_meta,
+                                                           missing)
         return transformed
 
-    def hyper_reverse_transform(self, tables, table_metas=None):
+    def hyper_reverse_transform(self, tables, table_metas=None, missing=True):
         """Loops through the list of reverse transform functions and puts data
         back into original format.
 
@@ -86,7 +89,8 @@ class HyperTransformer:
             else:
                 table_meta = table_metas[table_name]
             reverse[table_name] = self.reverse_transform_table(table,
-                                                               table_meta)
+                                                               table_meta,
+                                                               missing)
         return reverse
 
     def fit_transform_table(self, table, table_meta, transformer_dict=None,
@@ -96,8 +100,6 @@ class HyperTransformer:
         """
         out = pd.DataFrame(columns=[])
         table_name = table_meta['name']
-        # get class for handling missing values
-        null_class = self.get_class('NullTransformer')
         for field in table_meta['fields']:
             col_name = field['name']
             col = table[col_name]
@@ -106,11 +108,11 @@ class HyperTransformer:
                     transformer = self.get_class(transformer_name)
                     t = transformer()
                     if field['type'] == t.type:
-                        new_col = t.fit_transform(col, field)
+                        new_col = t.fit_transform(col, field, missing)
                         # handle missing
-                        if missing:
-                            null_t = null_class()
-                            new_col = null_t.fit_transform(new_col, field)
+                        # if missing:
+                        #     null_t = null_class()
+                        #     new_col = null_t.fit_transform(new_col, field)
                         self.transformers[(table_name, col_name)] = t
                         out = pd.concat([out, new_col], axis=1)
             else:
@@ -119,7 +121,7 @@ class HyperTransformer:
                     transformer_name = transformer_dict((table_name, col_name))
                     transformer = self.get_class(transformer_name)
                     t = transformer()
-                    new_col = t.fit_transform(col, field)
+                    new_col = t.fit_transform(col, field, missing)
                     self.transformers[(table_name, col_name)] = t
                     out = pd.concat([out, new_col], axis=1)
         return out
@@ -140,7 +142,6 @@ class HyperTransformer:
         over all transformers and doing the reverse
         """
         # to check for missing value class
-        null_class = self.get_class('NullTransformer')
         out = pd.DataFrame(columns=[])
         table_name = table_meta['name']
         for field in table_meta['fields']:
@@ -151,14 +152,17 @@ class HyperTransformer:
             col = table[col_name]
             if (table_name, col_name) in self.transformers:
                 transformer = self.transformers[(table_name, col_name)]
-                new_col = transformer.reverse_transform(col, field)
-                # handle missing
                 if missing:
-                    null_t = null_class()
                     missing_col = table['?' + col_name]
-                    data = pd.concat([new_col, missing_col], axis=1)
-                    out_list = [out, null_t.reverse_transform(data, field)]
+                    data = pd.concat([col, missing_col], axis=1)
+                    print('data', data)
+                    out_list = [out, transformer.reverse_transform(data,
+                                                                   field,
+                                                                   missing)]
                 else:
+                    new_col = transformer.reverse_transform(col,
+                                                            field,
+                                                            missing)
                     out_list = [out, new_col]
                 out = pd.concat(out_list, axis=1)
         return out

@@ -3,6 +3,7 @@ import pandas as pd
 from scipy.stats import norm
 
 from rdt.transformers.BaseTransformer import BaseTransformer
+from rdt.transformers.NullTransformer import NullTransformer
 
 
 class CatTransformer(BaseTransformer):
@@ -16,25 +17,37 @@ class CatTransformer(BaseTransformer):
         self.type = 'categorical'
         self.probability_map = {}  # val -> ((a,b), mean, std)
 
-    def fit_transform(self, col, col_meta):
+    def fit_transform(self, col, col_meta, missing=True):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame(columns=[])
         col_name = col_meta['name']
         self.get_probability_map(col)
         out[col_name] = col.apply(self.get_val)
+        # Handle missing
+        if missing:
+            nt = NullTransformer()
+            res = nt.fit_transform(out, col_meta)
+            return res
         return out
 
-    def transform(self, col, col_meta):
+    def transform(self, col, col_meta, missing=True):
         """ Does the required transformations to the data """
-        return self.fit_transform(col, col_meta)
+        return self.fit_transform(col, col_meta, missing)
 
-    def reverse_transform(self, col, col_meta):
+    def reverse_transform(self, col, col_meta, missing=True):
         """ Converts data back into original format """
         output = pd.DataFrame(columns=[])
         col_name = col_meta['name']
         fn = self.get_reverse_cat(col)
-        data = col.to_frame()
-        output[col_name] = data.apply(fn, axis=1)
+        if missing:
+            new_col = col.apply(fn, axis=1)
+            new_col = new_col.rename(col_name)
+            data = pd.concat([new_col, col['?' + col_name]], axis=1)
+            nt = NullTransformer()
+            output[col_name] = nt.reverse_transform(data, col_meta)
+        else:
+            data = col.to_frame()
+            output[col_name] = data.apply(fn, axis=1)
         return output
 
     def get_val(self, x):

@@ -2,7 +2,8 @@ import time
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.BaseTransformer import *
+from rdt.transformers.BaseTransformer import BaseTransformer
+from rdt.transformers.NullTransformer import NullTransformer
 from dateutil import parser
 
 
@@ -18,36 +19,39 @@ class DTTransformer(BaseTransformer):
         self.col_name = None
         self.default_val = None
 
-    def fit_transform(self, col, col_meta):
+    def fit_transform(self, col, col_meta, missing=True):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame(columns=[])
         self.col_name = col_meta['name']
-        # get default val
-        for x in col:
-            if x is not None:
-                try:
-                    tmp = parser.parse(str(x)).timetuple()
-                    self.default_val = time.mktime(tmp)*1e9
-                    break
-                except Exception as inst:
-                    continue
         # if are just processing child rows, then the name is already known
         out[self.col_name] = col
         out = out.apply(self.get_val, axis=1)
+        # Handle missing
+        if missing:
+            nt = NullTransformer()
+            res = nt.fit_transform(out.to_frame(self.col_name), col_meta)
+            return res
         return out.to_frame(self.col_name)
 
-    def transform(self, col, col_meta):
+    def transform(self, col, col_meta, missing=True):
         """ Does the required transformations to the data """
-        return self.fit_transform(col, col_meta)
+        return self.fit_transform(col, col_meta, missing)
 
-    def reverse_transform(self, col, col_meta):
+    def reverse_transform(self, col, col_meta, missing=True):
         """ Converts data back into original format """
         output = pd.DataFrame(columns=[])
         date_format = col_meta['format']
         col_name = col_meta['name']
         fn = self.get_date_converter(col_name, date_format)
-        data = col.to_frame()
-        output[col_name] = data.apply(fn, axis=1)
+        if missing:
+            new_col = col.apply(fn, axis=1)
+            new_col = new_col.rename(col_name)
+            data = pd.concat([new_col, col['?' + col_name]], axis=1)
+            nt = NullTransformer()
+            output[col_name] = nt.reverse_transform(data, col_meta)
+        else:
+            data = col.to_frame()
+            output[col_name] = data.apply(fn, axis=1)
         return output
 
     def get_val(self, x):
@@ -57,7 +61,7 @@ class DTTransformer(BaseTransformer):
             return time.mktime(tmp)*1e9
         except Exception:
             # use default value
-            return self.default_val
+            return np.nan
 
     def get_date_converter(self, col, meta):
         '''Returns a converter that takes in an integer representing ms

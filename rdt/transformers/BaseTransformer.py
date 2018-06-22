@@ -7,14 +7,14 @@ class BaseTransformer(object):
         """ initialize preprocessor """
         pass
 
-    def fit_transform(self, col, col_meta):
+    def fit_transform(self, col, col_meta, missing=True):
         """ Returns the processed table """
         raise NotImplementedError
 
-    def transform(self, col, col_meta):
+    def transform(self, col, col_meta, missing=True):
         """ Does the required transformations to the data """
         raise NotImplementedError
 
-    def reverse_transform(self, col, col_meta):
+    def reverse_transform(self, col, col_meta, missing=True):
         """ Converts data back into original format """
         raise NotImplementedError
