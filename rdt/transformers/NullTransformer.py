@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from sklearn.preprocessing import Imputer
 from rdt.transformers.BaseTransformer import BaseTransformer
 
 
@@ -20,14 +19,15 @@ class NullTransformer(BaseTransformer):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame(columns=[])
         self.col_name = col_meta['name']
-        # replace missing values
         # create an extra column for missing values if they exist in the data
         new_name = '?' + self.col_name
-        # if are just processing child rows, then the name is already known
         out[new_name] = pd.notnull(col) * 1
-        imp = Imputer()
-        data = col.as_matrix().reshape(-1, 1)
-        out[self.col_name] = imp.fit_transform(data)
+        # replace missing values
+        if not pd.isnull(col.values.mean()):
+            clean_col = col.fillna(col.values.mean())
+        else:
+            clean_col = col.fillna(0)
+        out[self.col_name] = clean_col
         return out
 
     def transform(self, col, col_meta):
