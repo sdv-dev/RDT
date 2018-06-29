@@ -3,9 +3,22 @@
   <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
+[![][pypi-img]][pypi-url] [![][travis-img]][travis-url]
 
-# Reversible data transforms
+# Reversive Data Transforms
+
 This a python library used to transform data for data science libraries and preserve the transformations in order to reverse them as needed.
+
+- Free software: MIT license
+- Documentation: https://HDI-Project.github.io/RDT
+
+[travis-img]: https://travis-ci.org/HDI-Project/RDT.svg?branch=master
+[travis-url]: https://travis-ci.org/HDI-Project/RDT
+[pypi-img]: https://img.shields.io/pypi/v/RDT.svg
+[pypi-url]: https://pypi.python.org/pypi/RDT
+
+
+
 ## Installation
 You can create a virtual environment and install the dependencies using the following commands.
 ```bash
@@ -22,11 +35,11 @@ If you don't have data to work with right away, you can download our demo data b
 $ python demo_downloader.py
 ```
 ### Transforming a column
-The base class of this library is the BaseTransformer class. This class provides method to fit a transformer to your data and transform it, a method to transform new data with an already fitted transformer and a method to reverse a transform and get data that looks like the original input. Each transformer class inherits from the BaseTransformer class, and thus has all these methods. 
+The base class of this library is the BaseTransformer class. This class provides method to fit a transformer to your data and transform it, a method to transform new data with an already fitted transformer and a method to reverse a transform and get data that looks like the original input. Each transformer class inherits from the BaseTransformer class, and thus has all these methods.
 
 Transformers take in a column and the meta data for that column as an input. Below we will demonstrate how to use a datetime transformer to transform and reverse transform a column.
 
-First load the data. 
+First load the data.
 ```bash
 >>> from dataprep.transformers.DTTransformer import *
 >>> from dataprep.utils import *
@@ -112,7 +125,7 @@ The hyper transformer is also capable of transforming all of the tables specifie
 >>> ht = HyperTransformer(meta_file)
 >>> tl = ['DTTransformer', 'NumberTransformer']
 >>> transformed = ht.hyper_fit_transform(transformer_list=tl)
->>> 
+>>>
 {'sessions':        secs_elapsed  ?secs_elapsed
 0             319.0              1
 1           67753.0              1
