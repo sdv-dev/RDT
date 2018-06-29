@@ -1,7 +1,6 @@
-import rdt.utils as utils
 import pandas as pd
 
-from rdt.transformers import *
+from rdt import utils
 
 
 class HyperTransformer:

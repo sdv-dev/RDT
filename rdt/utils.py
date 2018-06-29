@@ -1,6 +1,7 @@
 import json
-import pandas as pd
 import os.path as op
+
+import pandas as pd
 
 
 def get_table_dict(meta_file):
@@ -43,7 +44,6 @@ def get_col_info(table_name, col_name, meta_file):
     This functions returns a tuple of a column and its
     corresponding meta info
     """
-    desired_table = None
     data_table = None
     col_meta = None
     col = None
@@ -53,7 +53,6 @@ def get_col_info(table_name, col_name, meta_file):
         if table['name'] == table_name:
             prefix = op.dirname(meta_file)
             relative_path = op.join(prefix, meta['path'], table['path'])
-            desired_table = table
             data_table = pd.read_csv(relative_path)
             break
     for field in table['fields']:

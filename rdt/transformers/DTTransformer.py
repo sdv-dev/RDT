@@ -1,10 +1,11 @@
 import time
+
 import numpy as np
 import pandas as pd
+from dateutil import parser
 
 from rdt.transformers.BaseTransformer import BaseTransformer
 from rdt.transformers.NullTransformer import NullTransformer
-from dateutil import parser
 
 
 class DTTransformer(BaseTransformer):
@@ -59,6 +60,7 @@ class DTTransformer(BaseTransformer):
         try:
             tmp = parser.parse(str(x[self.col_name])).timetuple()
             return time.mktime(tmp)*1e9
+
         except Exception:
             # use default value
             return np.nan
