@@ -5,7 +5,7 @@
 
 [![][pypi-img]][pypi-url] [![][travis-img]][travis-url]
 
-# Reversive Data Transforms
+# Reversible Data Transforms
 
 This a python library used to transform data for data science libraries and preserve the transformations in order to reverse them as needed.
 
