@@ -42,6 +42,5 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            pip install --upgrade pandas
             python -m unittest tests/DTTransformerTest.py
         

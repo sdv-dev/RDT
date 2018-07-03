@@ -39,8 +39,6 @@ class NullTransformer(BaseTransformer):
         output = pd.DataFrame(columns=[])
         col_name = col_meta['name']
         fn = self.get_null_converter(col_name)
-        print('column', col)
-        print('type', type(col))
         output[col_name] = col.apply(fn, axis=1)
         return output
 
