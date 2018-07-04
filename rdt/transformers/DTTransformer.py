@@ -1,3 +1,4 @@
+import sys
 import time
 
 import numpy as np
@@ -81,6 +82,10 @@ class DTTransformer(BaseTransformer):
 
         def safe_date(x):
             t = x[col]
+            if np.isposinf(t):
+                t = sys.maxsize
+            elif np.isneginf(t):
+                t = -sys.maxsize
             tmp = time.gmtime(float(t)/1e9)
             return time.strftime(meta, tmp)
 

@@ -154,7 +154,6 @@ class HyperTransformer:
                 if missing:
                     missing_col = table['?' + col_name]
                     data = pd.concat([col, missing_col], axis=1)
-                    print('data', data)
                     out_list = [out, transformer.reverse_transform(data,
                                                                    field,
                                                                    missing)]
