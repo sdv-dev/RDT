@@ -6,7 +6,6 @@
 import unittest
 from click.testing import CliRunner
 
-from rdt import rdt
 from rdt import cli
 
 

@@ -1,6 +1,9 @@
 import unittest
 
-from dataprep.transformers.DTTransformer import *
+import pandas as pd
+import numpy as np
+
+from rdt.transformers.DTTransformer import DTTransformer
 
 
 class DTTransformerTest(unittest.TestCase):
@@ -39,7 +42,8 @@ class DTTransformerTest(unittest.TestCase):
                                                      self.normal_meta)
         transformed = transformed[self.normal_meta['name']]
         predicted = self.transformer.reverse_transform(transformed,
-                                                       self.normal_meta)
+                                                       self.normal_meta,
+                                                       missing=False)
         predicted = predicted[self.normal_meta['name']]
         result = self.normal_data
         for i in range(len(result)):
@@ -71,7 +75,6 @@ class DTTransformerTest(unittest.TestCase):
     def test_reverse_transform_missing(self):
         transformed = self.transformer.fit_transform(self.missing_data,
                                                      self.missing_meta)
-        transformed = transformed[self.missing_meta['name']]
         predicted = self.transformer.reverse_transform(transformed,
                                                        self.missing_meta)
         predicted = predicted[self.missing_meta['name']]
