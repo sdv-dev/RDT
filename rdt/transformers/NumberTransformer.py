@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import sys
 
 from rdt.transformers.BaseTransformer import BaseTransformer
 from rdt.transformers.NullTransformer import NullTransformer
@@ -91,8 +92,13 @@ class NumberTransformer(BaseTransformer):
         '''
 
         def safe_round(x):
+            val = x[col]
+            if np.isposinf(val):
+                val = sys.maxsize
+            elif np.isneginf(val):
+                val = -sys.maxsize
             if meta == 'integer':
-                return int(round(x[col]))
-            return x[col]
+                return int(round(val))
+            return val
 
         return safe_round
