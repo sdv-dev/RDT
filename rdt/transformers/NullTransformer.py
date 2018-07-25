@@ -21,8 +21,8 @@ class NullTransformer(BaseTransformer):
         new_name = '?' + self.col_name
         out[new_name] = pd.notnull(col) * 1
         # replace missing values
-        if not pd.isnull(col.values.mean()):
-            clean_col = col.fillna(col.values.mean())
+        if not pd.isnull(col.mean()):
+            clean_col = col.fillna(col.mean())
         else:
             clean_col = col.fillna(0)
         out[self.col_name] = clean_col
