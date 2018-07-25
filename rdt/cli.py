@@ -2,6 +2,7 @@
 
 """Console script for rdt."""
 import sys
+
 import click
 
 

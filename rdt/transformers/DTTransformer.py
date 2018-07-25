@@ -1,11 +1,12 @@
+import sys
 import time
+
 import numpy as np
 import pandas as pd
-import sys
+from dateutil import parser
 
 from rdt.transformers.BaseTransformer import BaseTransformer
 from rdt.transformers.NullTransformer import NullTransformer
-from dateutil import parser
 
 
 class DTTransformer(BaseTransformer):
@@ -22,9 +23,11 @@ class DTTransformer(BaseTransformer):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame(columns=[])
         self.col_name = col_meta['name']
+
         # if are just processing child rows, then the name is already known
         out[self.col_name] = col
         out = out.apply(self.get_val, axis=1)
+
         # Handle missing
         if missing:
             nt = NullTransformer()
@@ -38,15 +41,18 @@ class DTTransformer(BaseTransformer):
         date_format = col_meta['format']
         col_name = col_meta['name']
         fn = self.get_date_converter(col_name, date_format)
+
         if missing:
             new_col = col.apply(fn, axis=1)
             new_col = new_col.rename(col_name)
             data = pd.concat([new_col, col['?' + col_name]], axis=1)
             nt = NullTransformer()
             output[col_name] = nt.reverse_transform(data, col_meta)
+
         else:
             data = col.to_frame()
             output[col_name] = data.apply(fn, axis=1)
+
         return output
 
     def get_val(self, x):
@@ -54,6 +60,7 @@ class DTTransformer(BaseTransformer):
         try:
             tmp = parser.parse(str(x[self.col_name])).timetuple()
             return time.mktime(tmp)*1e9
+
         except Exception:
             # use default value
             return np.nan
