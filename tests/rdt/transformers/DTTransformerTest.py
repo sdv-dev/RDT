@@ -1,12 +1,7 @@
 import unittest
 
-<<<<<<< HEAD:tests/rdt/transformers/DTTransformerTest.py
-import pandas as pd
-import numpy as np
-=======
 import numpy as np
 import pandas as pd
->>>>>>> master:tests/DTTransformerTest.py
 
 from rdt.transformers.DTTransformer import DTTransformer
 
