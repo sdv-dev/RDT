@@ -24,7 +24,7 @@ class HyperTransformer:
         return getattr(globals()[class_name], class_name)
 
     def fit_transform(self, tables=None, transformer_dict=None,
-                            transformer_list=None, missing=True):
+                      transformer_list=None, missing=True):
         """
         This function loops applies all the specified transformers to the
         tables and return a dict of transformed tables
