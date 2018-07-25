@@ -11,7 +11,7 @@ with open('README.md') as readme_file:
 with open('HISTORY.md') as history_file:
     history = history_file.read()
 
-requirements = [
+install_requires = [
     'Click>=6.0',
     'boto3==1.4.7',
     'numpy==1.13.1',
@@ -19,7 +19,7 @@ requirements = [
     'scipy==0.19.1'
 ]
 
-setup_requirements = ['pytest-runner', ]
+setup_requires = ['pytest-runner', ]
 
 tests_require = [
     'pytest',
@@ -45,7 +45,7 @@ setup(
     extras_require={
         'test': tests_require,
     },
-    install_requires=requirements,
+    install_requires=install_requires,
     license="MIT license",
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
@@ -54,7 +54,7 @@ setup(
     name='rdt',
     packages=find_packages(include=['rdt', 'rdt.*']),
     python_requires='>=3.5',
-    setup_requires=setup_requirements,
+    setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/HDI-Project/RDT',
