@@ -15,7 +15,7 @@ class NullTransformer(BaseTransformer):
         self.type = ['datetime', 'number']
         self.col_name = None
 
-    def fit_transform(self, col, col_meta):
+    def fit_transform(self, col, col_meta, **kwargs):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame(columns=[])
         self.col_name = col_meta['name']
@@ -29,10 +29,6 @@ class NullTransformer(BaseTransformer):
             clean_col = col.fillna(0)
         out[self.col_name] = clean_col
         return out
-
-    def transform(self, col, col_meta):
-        """ Does the required transformations to the data """
-        return self.fit_transform(col, col_meta)
 
     def reverse_transform(self, col, col_meta):
         """ Converts data back into original format """

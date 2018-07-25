@@ -13,7 +13,7 @@ class BaseTransformer(object):
 
     def transform(self, col, col_meta, missing=True):
         """ Does the required transformations to the data """
-        raise NotImplementedError
+        return self.fit_transform(col, col_meta, missing)
 
     def reverse_transform(self, col, col_meta, missing=True):
         """ Converts data back into original format """
