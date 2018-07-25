@@ -35,6 +35,7 @@ class DTTransformerTest(unittest.TestCase):
             ],
             name=self.normal_meta['name']
         )
+
         transformed = self.transformer.fit_transform(self.normal_data,
                                                      self.normal_meta)
         predicted = transformed[self.normal_meta['name']]

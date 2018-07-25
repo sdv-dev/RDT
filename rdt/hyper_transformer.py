@@ -91,6 +91,7 @@ class HyperTransformer:
                 table_meta = self.table_dict[table_name][1]
             else:
                 table_meta = table_metas[table_name]
+
             reverse[table_name] = self.reverse_transform_table(table, table_meta, missing)
         return reverse
 
