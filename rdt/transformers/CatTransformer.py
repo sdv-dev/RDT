@@ -24,10 +24,12 @@ class CatTransformer(BaseTransformer):
         self.get_probability_map(col)
         out[col_name] = col.apply(self.get_val)
         # Handle missing
+
         if missing:
             nt = NullTransformer()
             res = nt.fit_transform(out, col_meta)
             return res
+
         return out
 
     def transform(self, col, col_meta, missing=True):
@@ -39,15 +41,18 @@ class CatTransformer(BaseTransformer):
         output = pd.DataFrame(columns=[])
         col_name = col_meta['name']
         fn = self.get_reverse_cat(col)
+
         if missing:
             new_col = col.apply(fn, axis=1)
             new_col = new_col.rename(col_name)
             data = pd.concat([new_col, col['?' + col_name]], axis=1)
             nt = NullTransformer()
             output[col_name] = nt.reverse_transform(data, col_meta)
+
         else:
             data = col.to_frame()
             output[col_name] = data.apply(fn, axis=1)
+
         return output
 
     def get_val(self, x):
@@ -63,24 +68,29 @@ class CatTransformer(BaseTransformer):
 
         def reverse_cat(x):
             res = None
+
             for val in self.probability_map:
                 interval = self.probability_map[val][0]
                 if x[0] >= interval[0] and x[0] < interval[1]:
                     res = val
                     return res
+
             if res is None:
                 return list(self.probability_map.keys())[0]
+
         return reverse_cat
 
     def get_probability_map(self, col):
         """ Maps each unique value to probability of seeing it """
         self.probability_map = {}
+
         # first get count of values
         for val in col:
             if val not in self.probability_map:
                 self.probability_map[val] = 1
             else:
                 self.probability_map[val] += 1
+
         # next set probability ranges on interval [0,1]
         cur = 0
         num_vals = len(col)
