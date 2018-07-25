@@ -160,7 +160,7 @@ class Test_CatTransformer(unittest.TestCase):
 
         # Check
         # Keys are unique values of initial data
-        assert list(transformer.probability_map.keys()) == list(data.unique())
+        assert set(transformer.probability_map.keys()) == set(data.unique())
 
         frequency = {  # The frequency of the values in data
             'A': 0.4,
