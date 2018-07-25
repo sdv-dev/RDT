@@ -3,9 +3,10 @@ class BaseTransformer(object):
     a way that is machine learning friendly
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """ initialize preprocessor """
-        pass
+        self.type = kwargs.get('type')
+        self.col_name = None
 
     def fit_transform(self, col, col_meta, missing=True):
         """ Returns the processed table """

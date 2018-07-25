@@ -11,10 +11,9 @@ class CatTransformer(BaseTransformer):
     This class represents the categorical transformer for SDV
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """ initialize transformer """
-        super(CatTransformer, self).__init__()
-        self.type = 'categorical'
+        super().__init__(type='categorical', *args, **kwargs)
         self.probability_map = {}  # val -> ((a,b), mean, std)
 
     def fit_transform(self, col, col_meta, missing=True):

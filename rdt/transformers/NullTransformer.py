@@ -9,11 +9,9 @@ class NullTransformer(BaseTransformer):
     This class represents the datetime transformer for SDV
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """ initialize transformer """
-        super(NullTransformer, self).__init__()
-        self.type = ['datetime', 'number']
-        self.col_name = None
+        super().__init__(type=['datetime', 'number'], *args, **kwargs)
 
     def fit_transform(self, col, col_meta, **kwargs):
         """ Returns a tuple (transformed_table, new_table_meta) """

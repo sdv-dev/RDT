@@ -13,11 +13,9 @@ class DTTransformer(BaseTransformer):
     This class represents the datetime transformer for SDV
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """ initialize transformer """
-        super(DTTransformer, self).__init__()
-        self.type = 'datetime'
-        self.col_name = None
+        super().__init__(type='datetime', *args, **kwargs)
         self.default_val = None
 
     def fit_transform(self, col, col_meta, missing=True):
