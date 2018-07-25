@@ -74,13 +74,9 @@ class CatTransformer(BaseTransformer):
 
     def get_probability_map(self, col):
         """ Maps each unique value to probability of seeing it """
-        self.probability_map = {}
         # first get count of values
-        for val in col:
-            if val not in self.probability_map:
-                self.probability_map[val] = 1
-            else:
-                self.probability_map[val] += 1
+        self.probability_map = col.groupby(col).count().to_dict()
+
         # next set probability ranges on interval [0,1]
         cur = 0
         num_vals = len(col)
