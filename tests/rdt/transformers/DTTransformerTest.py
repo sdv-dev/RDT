@@ -1,7 +1,12 @@
 import unittest
 
+<<<<<<< HEAD:tests/rdt/transformers/DTTransformerTest.py
 import pandas as pd
 import numpy as np
+=======
+import numpy as np
+import pandas as pd
+>>>>>>> master:tests/DTTransformerTest.py
 
 from rdt.transformers.DTTransformer import DTTransformer
 
@@ -11,26 +16,31 @@ class DTTransformerTest(unittest.TestCase):
         self.normal_data = pd.read_csv('tests/data/normal_datetime.csv')
         self.missing_data = pd.read_csv('tests/data/missing_datetime.csv')
         self.normal_meta = {
-                    "name": "date_account_created",
-                    "type": "datetime",
-                    "format": "%m/%d/%y",
-                    }
+            "name": "date_account_created",
+            "type": "datetime",
+            "format": "%m/%d/%y",
+        }
         self.missing_meta = {
-                    "name": "date_first_booking",
-                    "type": "datetime",
-                    "format": "%m/%d/%y",
-                }
+            "name": "date_first_booking",
+            "type": "datetime",
+            "format": "%m/%d/%y",
+        }
         self.normal_data = self.normal_data[self.normal_meta['name']]
         self.missing_data = self.missing_data[self.missing_meta['name']]
         self.transformer = DTTransformer()
 
     def test_fit_transform(self):
         # get truncated column
-        result = pd.Series([1.3885524e+18,
-                            1.3886388e+18,
-                            1.3887252e+18,
-                            1.3888116e+18],
-                           name=self.normal_meta['name'])
+        result = pd.Series(
+            [
+                1.3885524e+18,
+                1.3886388e+18,
+                1.3887252e+18,
+                1.3888116e+18
+            ],
+            name=self.normal_meta['name']
+        )
+
         transformed = self.transformer.fit_transform(self.normal_data,
                                                      self.normal_meta)
         predicted = transformed[self.normal_meta['name']]
@@ -80,7 +90,7 @@ class DTTransformerTest(unittest.TestCase):
         predicted = predicted[self.missing_meta['name']]
         result = self.missing_data
         for i in range(len(result)):
-            if type(result[i]) == str:
+            if isinstance(result[i], str):
                 res_date = result[i].split('/')
                 pred_date = predicted[i].split('/')
                 for j in range(len(res_date)):

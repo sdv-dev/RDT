@@ -1,6 +1,7 @@
+import sys
+
 import numpy as np
 import pandas as pd
-import sys
 
 from rdt.transformers.BaseTransformer import BaseTransformer
 from rdt.transformers.NullTransformer import NullTransformer
@@ -24,6 +25,7 @@ class NumberTransformer(BaseTransformer):
         out = pd.DataFrame(columns=[])
         self.col_name = col_meta['name']
         self.subtype = col_meta['subtype']
+
         # get default val
         for x in col:
             if x is not None:
@@ -35,12 +37,14 @@ class NumberTransformer(BaseTransformer):
                     continue
         # if are just processing child rows, then the name is already known
         out[self.col_name] = col
+
         # Handle missing
         if missing:
             nt = NullTransformer()
             out = nt.fit_transform(out, col_meta)
             out[self.col_name] = out.apply(self.get_val, axis=1)
             return out
+
         out = out.apply(self.get_val, axis=1)
         return out.to_frame(self.col_name)
 
@@ -54,15 +58,18 @@ class NumberTransformer(BaseTransformer):
         subtype = col_meta['subtype']
         col_name = col_meta['name']
         fn = self.get_number_converter(col_name, subtype)
+
         if missing:
             new_col = col.apply(fn, axis=1)
             new_col = new_col.rename(col_name)
             data = pd.concat([new_col, col['?' + col_name]], axis=1)
             nt = NullTransformer()
             output[col_name] = nt.reverse_transform(data, col_meta)
+
         else:
             data = col.to_frame()
             output[col_name] = data.apply(fn, axis=1)
+
         return output
 
     def get_val(self, x):
@@ -73,7 +80,9 @@ class NumberTransformer(BaseTransformer):
             else:
                 if np.isnan(x[self.col_name]):
                     return self.default_val
+
                 return x[self.col_name]
+
         except (ValueError, TypeError):
             return self.default_val
 

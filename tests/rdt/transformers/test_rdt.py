@@ -4,6 +4,7 @@
 """Tests for `rdt` package."""
 
 import unittest
+
 from click.testing import CliRunner
 
 from rdt import cli
