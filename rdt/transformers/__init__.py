@@ -1,17 +1,13 @@
-# from DT_Transformer import DT_Transformer
-import importlib
-from os import listdir
-from os.path import isfile, join, realpath, dirname
+from rdt.transformers.BaseTransformer import BaseTransformer
+from rdt.transformers.CatTransformer import CatTransformer
+from rdt.transformers.DTTransformer import DTTransformer
+from rdt.transformers.NullTransformer import NullTransformer
+from rdt.transformers.NumberTransformer import NumberTransformer
 
-mypath = realpath(__file__)
-directory = dirname(mypath)
-onlyfiles = [f for f in listdir(directory) if isfile(join(directory, f))]
-array = []
-for file in onlyfiles:
-    if file.split('.')[1] == 'py' and file.split('.')[0] != '__init__':
-        array.append(file.split('.')[0])
-prefix = 'rdt.transformers.'
-
-for transformer in array:
-    mod = prefix + transformer
-    importlib.import_module(mod)
+__all__ = [
+    'BaseTransformer',
+    'CatTransformer',
+    'DTTransformer',
+    'NullTransformer',
+    'NumberTransformer'
+]

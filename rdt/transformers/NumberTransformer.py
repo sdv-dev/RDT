@@ -12,11 +12,9 @@ class NumberTransformer(BaseTransformer):
     This class represents the datetime transformer for SDV
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """ initialize transformer """
-        super(NumberTransformer, self).__init__()
-        self.type = 'number'
-        self.col_name = None
+        super().__init__(type='number', *args, **kwargs)
         self.default_val = None
         self.subtype = None
 
@@ -47,10 +45,6 @@ class NumberTransformer(BaseTransformer):
 
         out = out.apply(self.get_val, axis=1)
         return out.to_frame(self.col_name)
-
-    def transform(self, col, col_meta, missing=True):
-        """ Does the required transformations to the data """
-        return self.fit_transform(col, col_meta, missing)
 
     def reverse_transform(self, col, col_meta, missing=True):
         """ Converts data back into original format """

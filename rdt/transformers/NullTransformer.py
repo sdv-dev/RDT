@@ -9,13 +9,11 @@ class NullTransformer(BaseTransformer):
     This class represents the datetime transformer for SDV
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """ initialize transformer """
-        super(NullTransformer, self).__init__()
-        self.type = ['datetime', 'number']
-        self.col_name = None
+        super().__init__(type=['datetime', 'number'], *args, **kwargs)
 
-    def fit_transform(self, col, col_meta):
+    def fit_transform(self, col, col_meta, **kwargs):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame(columns=[])
         self.col_name = col_meta['name']
@@ -25,17 +23,13 @@ class NullTransformer(BaseTransformer):
         out[new_name] = pd.notnull(col) * 1
 
         # replace missing values
-        if not pd.isnull(col.values.mean()):
-            clean_col = col.fillna(col.values.mean())
+        if not pd.isnull(col.mean()):
+            clean_col = col.fillna(col.mean())
         else:
             clean_col = col.fillna(0)
 
         out[self.col_name] = clean_col
         return out
-
-    def transform(self, col, col_meta):
-        """ Does the required transformations to the data """
-        return self.fit_transform(col, col_meta)
 
     def reverse_transform(self, col, col_meta):
         """ Converts data back into original format """
