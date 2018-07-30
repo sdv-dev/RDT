@@ -124,7 +124,7 @@ The hyper transformer is also capable of transforming all of the tables specifie
 >>> meta_file = 'data/Airbnb_demo_meta.json'
 >>> ht = HyperTransformer(meta_file)
 >>> tl = ['DTTransformer', 'NumberTransformer']
->>> transformed = ht.hyper_fit_transform(transformer_list=tl)
+>>> transformed = ht.fit_transform(transformer_list=tl)
 >>>
 {'sessions':        secs_elapsed  ?secs_elapsed
 0             319.0              1
@@ -136,7 +136,7 @@ The hyper transformer is also capable of transforming all of the tables specifie
 6             115.0              1
 7             831.0              1
 ...
->>> reversed = ht.hyper_reverse_transform(tables=transformed)
+>>> reversed = ht.reverse_transform(tables=transformed)
 >>> print(reversed)
 {'sessions':        secs_elapsed
 0             319.0

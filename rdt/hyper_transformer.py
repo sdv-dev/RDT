@@ -13,16 +13,18 @@ class HyperTransformer:
 
         self.transformers = {}  # key=(table_name, col_name) val=transformer
 
-        if meta_file is not None:
-            self.table_dict = utils.get_table_dict(meta_file)
-            self.transformers_dict = utils.get_transformers_dict(meta_file)
+        if not meta_file:
+            raise ValueError("'meta_file' argument is needed to use HyperTransformer")
+
+        self.table_dict = utils.get_table_dict(meta_file)
+        self.transformers_dict = utils.get_transformers_dict(meta_file)
 
     def get_class(self, class_name):
         """ Gets class object of transformer from class name """
         return getattr(globals()[class_name], class_name)
 
-    def hyper_fit_transform(self, tables=None, transformer_dict=None,
-                            transformer_list=None, missing=True):
+    def fit_transform(self, tables=None, transformer_dict=None,
+                      transformer_list=None, missing=True):
         """
         This function loops applies all the specified transformers to the
         tables and return a dict of transformed tables
@@ -51,7 +53,7 @@ class HyperTransformer:
             transformed[table_name] = transformed_table
         return transformed
 
-    def hyper_transform(self, tables, table_metas=None, missing=True):
+    def transform(self, tables, table_metas=None, missing=True):
         """
         This function applies all the saved transformers to the
         tables and returns a dict of transformed tables
@@ -75,7 +77,7 @@ class HyperTransformer:
 
         return transformed
 
-    def hyper_reverse_transform(self, tables, table_metas=None, missing=True):
+    def reverse_transform(self, tables, table_metas=None, missing=True):
         """Loops through the list of reverse transform functions and puts data
         back into original format.
 
