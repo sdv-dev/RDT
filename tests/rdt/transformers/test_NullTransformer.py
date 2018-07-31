@@ -27,7 +27,7 @@ class Test_NullTransformer(unittest.TestCase):
         transformer = NullTransformer()
 
         expected_result = pd.DataFrame({
-            'age': [62.0, 0.0, 0.0, 0.0, 0.0],
+            'age': [62.0, 62.0, 62.0, 62.0, 62.0],
             '?age': [1, 0, 0, 0, 0]
         })
 
