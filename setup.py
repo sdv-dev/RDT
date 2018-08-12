@@ -19,13 +19,13 @@ install_requires = [
     'scipy==0.19.1'
 ]
 
-setup_requires = ['pytest-runner>=2.11.1',]
+setup_requires = ['pytest-runner==4.2',]
 
 tests_require = [
-    'pytest>=3.6.2',
+    'pytest==3.6.1',
     'coverage>=4.5.1',
-    'pytest>=3.4.2',
-    'tox>=2.9.1'
+    'tox>=2.9.1',
+    'pluggy==0.6.0'
 ]
 
 setup(
