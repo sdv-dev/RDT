@@ -1,4 +1,4 @@
-import unittest
+from unittest import TestCase
 
 import numpy as np
 import pandas as pd
@@ -6,7 +6,7 @@ import pandas as pd
 from rdt.transformers.DTTransformer import DTTransformer
 
 
-class DTTransformerTest(unittest.TestCase):
+class DTTransformerTest(TestCase):
     def setUp(self):
         self.normal_data = pd.read_csv('tests/data/normal_datetime.csv')
         self.missing_data = pd.read_csv('tests/data/missing_datetime.csv')
@@ -43,20 +43,28 @@ class DTTransformerTest(unittest.TestCase):
         self.assertTrue(np.allclose(result, predicted, 1e-03))
 
     def test_reverse_transform(self):
-        transformed = self.transformer.fit_transform(self.normal_data,
-                                                     self.normal_meta)
+        """ """
+
+        # Setup
+        raw = pd.Series([
+                '01/01/14',
+                '01/02/14',
+                '01/03/14',
+                '01/04/14',
+            ], name='date_account_created'
+        )
+        transformed = self.transformer.fit_transform(raw, self.normal_meta)
         transformed = transformed[self.normal_meta['name']]
-        predicted = self.transformer.reverse_transform(transformed,
-                                                       self.normal_meta,
-                                                       missing=False)
-        predicted = predicted[self.normal_meta['name']]
-        result = self.normal_data
-        for i in range(len(result)):
-            res_date = result[i].split('/')
-            pred_date = predicted[i].split('/')
-            for j in range(len(res_date)):
-                self.assertEqual(int(res_date[j]),
-                                 int(pred_date[j]))
+
+        # Run
+        result = self.transformer.reverse_transform(
+            transformed, self.normal_meta, missing=False)
+
+        # Check
+        result = result[self.normal_meta['name']]
+        expected_result = raw
+
+        assert result.equals(expected_result)
 
     def test_fit_transform_missing(self):
         # get truncated column
@@ -93,7 +101,3 @@ class DTTransformerTest(unittest.TestCase):
                                      int(pred_date[j]))
             else:
                 self.assertFalse(predicted[i] == predicted[i])
-
-
-if __name__ == '__main__':
-    unittest.main()
