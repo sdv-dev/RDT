@@ -23,7 +23,7 @@ class NullTransformer(BaseTransformer):
         out[new_name] = pd.notnull(col) * 1
 
         # replace missing values
-        if not pd.isnull(col.mean()):
+        if col_meta['type'] == 'number' and not pd.isnull(col.mean()).all():
             clean_col = col.fillna(col.mean())
         else:
             clean_col = col.fillna(0)

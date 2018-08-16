@@ -20,7 +20,7 @@ class NumberTransformer(BaseTransformer):
 
     def fit_transform(self, col, col_meta, missing=True):
         """ Returns a tuple (transformed_table, new_table_meta) """
-        out = pd.DataFrame(columns=[])
+        out = pd.DataFrame()
         self.col_name = col_meta['name']
         self.subtype = col_meta['subtype']
 
