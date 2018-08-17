@@ -6,6 +6,9 @@ import pandas as pd
 from rdt.transformers.DTTransformer import DTTransformer
 from rdt.utils import get_col_info
 
+# SKIPPED TESTS
+TESTS_WITH_DATA = True
+
 
 class DTTransformerTest(TestCase):
     def setUp(self):
@@ -103,6 +106,7 @@ class DTTransformerTest(TestCase):
             else:
                 self.assertFalse(predicted[i] == predicted[i])
 
+    @skipIf(TESTS_WITH_DATA, 'demo_downloader should have been run.')
     def test_reversibility_transforms(self):
         """Transforming and reverse transforming a column leaves it unchanged."""
         # Setup
