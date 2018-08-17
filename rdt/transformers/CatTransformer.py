@@ -18,7 +18,7 @@ class CatTransformer(BaseTransformer):
 
     def fit_transform(self, col, col_meta, missing=True):
         """ Returns a tuple (transformed_table, new_table_meta) """
-        out = pd.DataFrame(columns=[])
+        out = pd.DataFrame()
         col_name = col_meta['name']
         self.get_probability_map(col)
         out[col_name] = col.apply(self.get_val)
@@ -33,7 +33,7 @@ class CatTransformer(BaseTransformer):
 
     def reverse_transform(self, col, col_meta, missing=True):
         """ Converts data back into original format """
-        output = pd.DataFrame(columns=[])
+        output = pd.DataFrame()
         col_name = col_meta['name']
         fn = self.get_reverse_cat(col)
 
@@ -77,9 +77,13 @@ class CatTransformer(BaseTransformer):
 
     def get_probability_map(self, col):
         """ Maps each unique value to probability of seeing it """
-        # first get count of values
-        self.probability_map = col.groupby(col).count().to_dict()
+        # According to pandas docs, nan values are excluded on groupby:
+        # http://pandas.pydata.org/pandas-docs/stable/missing_data.html#na-values-in-groupby
+        # So we are replacing them with -1 and replace them back with np.nan after groupby
+        # Further discussion: https://github.com/pandas-dev/pandas/issues/3729
 
+        column = col.fillna(-1)
+        self.probability_map = column.groupby(column).count().rename({-1: np.nan}).to_dict()
         # next set probability ranges on interval [0,1]
         cur = 0
         num_vals = len(col)

@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers.DTTransformer import DTTransformer
+from rdt.utils import get_col_info
 
 
 class DTTransformerTest(TestCase):
@@ -101,3 +102,20 @@ class DTTransformerTest(TestCase):
                                      int(pred_date[j]))
             else:
                 self.assertFalse(predicted[i] == predicted[i])
+
+    def test_reversibility_transforms(self):
+        """Transforming and reverse transforming a column leaves it unchanged."""
+        # Setup
+        col, col_meta = get_col_info(
+            'users', 'date_account_created', 'demo/Airbnb_demo_meta.json')
+
+        transformer = DTTransformer()
+
+        # Run
+        transformed_data = transformer.fit_transform(col, col_meta)
+        reversed_data = transformer.reverse_transform(transformed_data, col_meta)
+
+        # Check
+        assert col.dtype == object
+        assert transformed_data['date_account_created'].dtype == float
+        assert reversed_data['date_account_created'].equals(col)
