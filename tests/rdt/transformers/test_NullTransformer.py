@@ -20,9 +20,10 @@ class Test_NullTransformer(unittest.TestCase):
         """ It will replace nan values with 0 and creats a new column """
 
         # Setup
-        col = pd.Series([62, np.nan, np.nan, np.nan, np.nan])
+        col = pd.Series([62, np.nan, np.nan, np.nan, np.nan], name='age')
         col_meta = {
-            "name": "age"
+            'name': 'age',
+            'type': 'number'
         }
         transformer = NullTransformer()
 
@@ -44,7 +45,8 @@ class Test_NullTransformer(unittest.TestCase):
         # Setup
         col = pd.Series([62, 53, 53, 45, np.nan])
         col_meta = {
-            "name": "age"
+            'name': 'age',
+            'type': 'number'
         }
         transformer = NullTransformer()
 
@@ -64,7 +66,8 @@ class Test_NullTransformer(unittest.TestCase):
 
         # Setup
         col_meta = {
-            'name': 'age'
+            'name': 'age',
+            'type': 'number'
         }
         transformer = NullTransformer()
         data = pd.DataFrame({

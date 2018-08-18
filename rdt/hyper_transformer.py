@@ -1,9 +1,15 @@
 import pandas as pd
 
-from rdt import utils
+from rdt import transformers, utils
+
+TRANSFORMERS = {
+    'datetime': 'DTTransformer',
+    'categorical': 'CatTransformer',
+    'number': 'NumberTransformer'
+}
 
 
-class HyperTransformer:
+class HyperTransformer(object):
     """ This class is responsible for formatting the input table in a way
     that is machine learning friendly
     """
@@ -17,11 +23,11 @@ class HyperTransformer:
             raise ValueError("'meta_file' argument is needed to use HyperTransformer")
 
         self.table_dict = utils.get_table_dict(meta_file)
-        self.transformers_dict = utils.get_transformers_dict(meta_file)
+        self.transformer_dict = utils.get_transformers_dict(meta_file)
 
     def get_class(self, class_name):
         """ Gets class object of transformer from class name """
-        return getattr(globals()[class_name], class_name)
+        return getattr(transformers, class_name)
 
     def fit_transform(self, tables=None, transformer_dict=None,
                       transformer_list=None, missing=True):

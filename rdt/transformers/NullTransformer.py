@@ -22,8 +22,12 @@ class NullTransformer(BaseTransformer):
         new_name = '?' + self.col_name
         out[new_name] = pd.notnull(col) * 1
 
+        if isinstance(col, pd.DataFrame):
+            null_mean = pd.isnull(col.mean()).all()
+        else:
+            null_mean = pd.isnull(col.mean())
         # replace missing values
-        if not pd.isnull(col.mean()):
+        if col_meta['type'] == 'number' and not null_mean:
             clean_col = col.fillna(col.mean())
         else:
             clean_col = col.fillna(0)
