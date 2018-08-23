@@ -79,6 +79,29 @@ class Test_NumberTransformer(unittest.TestCase):
         # Check
         assert result.equals(expected_result)
 
+    def test_reverse_transform_nan(self):
+        """FIXME: finish when number and null transformer are compatible"""
+        """ Checks the conversion of the data back into original format """
+
+        # Setup
+        col = pd.Series([34, 23, 27, 31, 39], name='age')
+        col_meta = {
+            'name': 'age',
+            'subtype': 'integer',
+            'type': 'number'
+        }
+        transformer = NumberTransformer()
+        transformer.fit_transform(col, col_meta, False)
+        col2 = pd.Series([34, 23, 27, 31, np.nan], name='age')
+
+        # Run
+        expected = pd.DataFrame({'age': [34, 23, 27, 31, transformer.default_val]})
+        print(expected)
+        result = transformer.reverse_transform(col2, col_meta, False)
+        print(result)
+        # Check
+        assert result.equals(expected)
+
     @unittest.skip("FIXME: when number and null transformer are compatible")
     def test_reverse_transform_missing(self):
         """FIXME: finish when number and null transformer are compatible"""
