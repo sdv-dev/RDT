@@ -100,6 +100,8 @@ class NumberTransformer(BaseTransformer):
                 val = sys.maxsize
             elif np.isneginf(val):
                 val = -sys.maxsize
+            if np.isnan(val):
+                val = self.default_val
             if meta == 'integer':
                 return int(round(val))
             return val
