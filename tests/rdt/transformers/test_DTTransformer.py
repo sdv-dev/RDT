@@ -51,11 +51,11 @@ class DTTransformerTest(TestCase):
 
         # Setup
         raw = pd.Series([
-                '01/01/14',
-                '01/02/14',
-                '01/03/14',
-                '01/04/14',
-            ], name='date_account_created'
+            '01/01/14',
+            '01/02/14',
+            '01/03/14',
+            '01/04/14',
+        ], name='date_account_created'
         )
         transformed = self.transformer.fit_transform(raw, self.normal_meta)
         transformed = transformed[self.normal_meta['name']]
