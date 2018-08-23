@@ -80,8 +80,7 @@ class Test_NumberTransformer(unittest.TestCase):
         assert result.equals(expected_result)
 
     def test_reverse_transform_nan(self):
-        """FIXME: finish when number and null transformer are compatible"""
-        """ Checks the conversion of the data back into original format """
+        """Checks that nans are handled correctly in reverse transformation"""
 
         # Setup
         col = pd.Series([34, 23, 27, 31, 39], name='age')
@@ -96,9 +95,7 @@ class Test_NumberTransformer(unittest.TestCase):
 
         # Run
         expected = pd.DataFrame({'age': [34, 23, 27, 31, transformer.default_val]})
-        print(expected)
         result = transformer.reverse_transform(col2, col_meta, False)
-        print(result)
         # Check
         assert result.equals(expected)
 
