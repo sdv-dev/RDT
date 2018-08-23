@@ -59,7 +59,7 @@ class DTTransformer(BaseTransformer):
         """ Converts datetime to number """
         try:
             tmp = parser.parse(str(x[self.col_name])).timetuple()
-            return time.mktime(tmp)*1e9
+            return time.mktime(tmp) * 1e9
 
         except Exception:
             # use default value
@@ -85,7 +85,7 @@ class DTTransformer(BaseTransformer):
                 t = sys.maxsize
             elif np.isneginf(t):
                 t = -sys.maxsize
-            tmp = time.localtime(float(t)/1e9)
+            tmp = time.localtime(float(t) / 1e9)
             return time.strftime(meta, tmp)
 
         return safe_date

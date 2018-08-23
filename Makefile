@@ -29,7 +29,7 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-clean: clean-build clean-pyc clean-test clean-docs ## remove all build, test, coverage, docs and Python artifacts
+clean: clean-build clean-pyc clean-coverage clean-test clean-docs ## remove all build, test, coverage, docs and Python artifacts
 
 clean-build: ## remove build artifacts
 	rm -fr build/
@@ -44,10 +44,13 @@ clean-pyc: ## remove Python file artifacts
 	find . -name '*~' -exec rm -f {} +
 	find . -name '__pycache__' -exec rm -fr {} +
 
+clean-coverage: ## remove coverage artifacts
+	rm -f .coverage
+	rm -f .coverage.*
+	rm -fr htmlcov/
+
 clean-test: ## remove test and coverage artifacts
 	rm -fr .tox/
-	rm -f .coverage
-	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8 and isort
@@ -69,7 +72,7 @@ test: ## run tests quickly with the default Python
 test-all: ## run tests on every Python version with tox
 	tox
 
-coverage: ## check code coverage quickly with the default Python
+coverage: clean-coverage ## check code coverage quickly with the default Python
 	coverage run --source rdt -m pytest
 	coverage report -m
 	coverage html
@@ -77,6 +80,7 @@ coverage: ## check code coverage quickly with the default Python
 
 clean-docs: ## remove previously built docs
 	rm -f docs/rdt.rst
+	rm -f docs/rdt.*.rst
 	rm -f docs/modules.rst
 	$(MAKE) -C docs clean
 

@@ -109,3 +109,6 @@ ENV/
 
 # Vim
 .*.swp
+
+# demo data
+examples/data/airbnb

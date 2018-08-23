@@ -88,9 +88,9 @@ class CatTransformer(BaseTransformer):
         cur = 0
         num_vals = len(col)
         for val in self.probability_map:
-            prob = self.probability_map[val]/num_vals
+            prob = self.probability_map[val] / num_vals
             interval = (cur, cur + prob)
             cur = cur + prob
             mean = np.mean(interval)
-            std = (interval[1]-interval[0])/6
+            std = (interval[1] - interval[0]) / 6
             self.probability_map[val] = (interval, mean, std)

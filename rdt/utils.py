@@ -1,5 +1,5 @@
 import json
-import os.path as op
+import os
 
 import pandas as pd
 
@@ -17,8 +17,8 @@ def get_table_dict(meta_file):
 
     for table in meta['tables']:
         if table['use']:
-            prefix = op.dirname(meta_file)
-            relative_path = op.join(prefix, meta['path'], table['path'])
+            prefix = os.path.dirname(meta_file)
+            relative_path = os.path.join(prefix, meta['path'], table['path'])
             data_table = pd.read_csv(relative_path)
             table_dict[table['name']] = (data_table, table)
 
@@ -48,8 +48,8 @@ def get_transformers_dict(meta_file):
 def load_data_table(table_name, meta_file, meta):
     for table in meta['tables']:
         if table['name'] == table_name:
-            prefix = op.dirname(meta_file)
-            relative_path = op.join(prefix, meta['path'], table['path'])
+            prefix = os.path.dirname(meta_file)
+            relative_path = os.path.join(prefix, meta['path'], table['path'])
             return pd.read_csv(relative_path), table
 
 
