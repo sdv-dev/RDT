@@ -25,7 +25,7 @@ class DTTransformer(BaseTransformer):
         self.col_name = col_meta['name']
 
         # if are just processing child rows, then the name is already known
-        out[self.col_name] = pd.to_datetime(col)
+        out[self.col_name] = pd.to_datetime(col, errors='coerce')
         out = out.apply(self.get_val, axis=1)
 
         # Handle missing

@@ -46,6 +46,23 @@ class DTTransformerTest(TestCase):
         # load correct answer
         self.assertTrue(np.allclose(result, predicted, 1e-03))
 
+    def test_fit_transform_out_of_bounds(self):
+        """Tests that out of bounds time stamps get transformed"""
+        out_of_bounds_data = pd.Series(['2262-04-11 23:47:16.854775807',
+                                        '2263-04-11 23:47:16.854775808'])
+        out_of_bounds_meta = {
+            "name": "date_first_booking",
+            "type": "datetime",
+            "format": "%Y-%m-%d",
+        }
+
+        transformed = self.transformer.fit_transform(out_of_bounds_data,
+                                                     out_of_bounds_meta)
+        predicted = transformed[out_of_bounds_meta['name']]
+        expected = pd.Series([9.223386e+18, 0.000000e+00])
+        # load correct answer
+        self.assertTrue(np.allclose(expected, predicted, 1e-03))
+
     def test_reverse_transform(self):
         """ """
 
