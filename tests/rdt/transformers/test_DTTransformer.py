@@ -70,6 +70,37 @@ class DTTransformerTest(TestCase):
 
         assert result.equals(expected_result)
 
+    def test_reverse_transform_nan(self):
+        """Checks that nans are handled correctly in reverse transformation"""
+
+        # Setup
+        raw = pd.Series([
+            '01/01/14',
+            '01/02/14',
+            '01/03/14',
+            '01/04/14',
+        ], name='date_account_created'
+        )
+        self.transformer.fit_transform(raw, self.normal_meta)
+
+        col = pd.Series([1.3885524e+18,
+                          1.3885524e+18,
+                          1.3887252e+18,
+                          1.3887252e+18,
+                          np.nan], name='date_account_created')
+
+        # Run
+        result = self.transformer.reverse_transform(col, self.normal_meta, False)
+        expected =  pd.DataFrame({'date_account_created': [
+            '01/01/14',
+            '01/01/14',
+            '01/03/14',
+            '01/03/14',
+            '01/01/14'
+        ]})
+        # Check
+        assert result.equals(expected)
+
     def test_fit_transform_missing(self):
         # get truncated column
         result = pd.Series([np.nan,
