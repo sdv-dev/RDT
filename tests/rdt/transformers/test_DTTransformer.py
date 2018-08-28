@@ -84,14 +84,14 @@ class DTTransformerTest(TestCase):
         self.transformer.fit_transform(raw, self.normal_meta)
 
         col = pd.Series([1.3885524e+18,
-                          1.3885524e+18,
-                          1.3887252e+18,
-                          1.3887252e+18,
-                          np.nan], name='date_account_created')
+                         1.3885524e+18,
+                         1.3887252e+18,
+                         1.3887252e+18,
+                         np.nan], name='date_account_created')
 
         # Run
         result = self.transformer.reverse_transform(col, self.normal_meta, False)
-        expected =  pd.DataFrame({'date_account_created': [
+        expected = pd.DataFrame({'date_account_created': [
             '01/01/14',
             '01/01/14',
             '01/03/14',
