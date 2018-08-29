@@ -191,7 +191,7 @@ class Test_CatTransformer(unittest.TestCase):
         }
         transformer = CatTransformer()
         # Run
-        output = transformer.fit_transform(data, col_meta)
+        transformer.fit_transform(data, col_meta)
 
         # Check
         # the  nan value in the data should be in probability map
