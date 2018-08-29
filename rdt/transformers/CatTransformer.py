@@ -20,9 +20,8 @@ class CatTransformer(BaseTransformer):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame()
         col_name = col_meta['name']
-        # Make sure all nans are handled the same by replacing
-        # with -1
-        column = col.fillna(-1)
+        # Make sure all nans are handled the same by replacing with None
+        column = col.replace({np.nan: None})
         self.get_probability_map(column)
         out[col_name] = column.apply(self.get_val)
         # Handle missing
@@ -81,7 +80,8 @@ class CatTransformer(BaseTransformer):
     def get_probability_map(self, col):
         """ Maps each unique value to probability of seeing it """
 
-        self.probability_map = col.groupby(col).count().to_dict()
+        column = col.replace({np.nan: np.inf})
+        self.probability_map = column.groupby(column).count().rename({np.inf: None}).to_dict()
         # next set probability ranges on interval [0,1]
         cur = 0
         num_vals = len(col)

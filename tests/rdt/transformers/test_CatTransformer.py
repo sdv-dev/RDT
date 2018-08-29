@@ -195,4 +195,4 @@ class Test_CatTransformer(unittest.TestCase):
 
         # Check
         # the  nan value in the data should be in probability map
-        assert output is not None
+        assert None in transformer.probability_map
