@@ -24,6 +24,10 @@ class DTTransformer(BaseTransformer):
         out = pd.DataFrame()
         self.col_name = col_meta['name']
 
+        # get default val
+        val = col.groupby(col).count().index[0]
+        tmp = parser.parse(str(val)).timetuple()
+        self.default_val = time.mktime(tmp) * 1e9
         # if are just processing child rows, then the name is already known
         out[self.col_name] = pd.to_datetime(col, errors='coerce')
         out = out.apply(self.get_val, axis=1)
@@ -81,6 +85,8 @@ class DTTransformer(BaseTransformer):
 
         def safe_date(x):
             t = x[col]
+            if np.isnan(t):
+                t = self.default_val
             if np.isposinf(t):
                 t = sys.maxsize
             elif np.isneginf(t):
