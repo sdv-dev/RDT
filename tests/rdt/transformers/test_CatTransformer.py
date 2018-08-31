@@ -1,6 +1,7 @@
 import unittest
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 
 from rdt.transformers.CatTransformer import CatTransformer
@@ -178,3 +179,20 @@ class Test_CatTransformer(unittest.TestCase):
             # Mean is middle point
             # We check this way because of floating point issues
             assert (mean - interval[0]) - (interval[1] - mean) < 1 / 1E9
+
+    def test_fit_transform_val_nan(self):
+        """Tests that nans are handled by fit_transform method"""
+
+        # Setup
+        data = pd.Series([np.nan, 1, 5])
+        col_meta = {
+            "name": "breakfast",
+            "type": "categorical"
+        }
+        transformer = CatTransformer()
+        # Run
+        transformer.fit_transform(data, col_meta)
+
+        # Check
+        # the  nan value in the data should be in probability map
+        assert None in transformer.probability_map

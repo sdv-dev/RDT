@@ -21,7 +21,10 @@ class CatTransformer(BaseTransformer):
         out = pd.DataFrame()
         col_name = col_meta['name']
         self.get_probability_map(col)
-        out[col_name] = col.apply(self.get_val)
+
+        # Make sure all nans are handled the same by replacing with None
+        column = col.replace({np.nan: None})
+        out[col_name] = column.apply(self.get_val)
         # Handle missing
 
         if missing:
@@ -77,13 +80,9 @@ class CatTransformer(BaseTransformer):
 
     def get_probability_map(self, col):
         """ Maps each unique value to probability of seeing it """
-        # According to pandas docs, nan values are excluded on groupby:
-        # http://pandas.pydata.org/pandas-docs/stable/missing_data.html#na-values-in-groupby
-        # So we are replacing them with -1 and replace them back with np.nan after groupby
-        # Further discussion: https://github.com/pandas-dev/pandas/issues/3729
 
-        column = col.fillna(-1)
-        self.probability_map = column.groupby(column).count().rename({-1: np.nan}).to_dict()
+        column = col.replace({np.nan: np.inf})
+        self.probability_map = column.groupby(column).count().rename({np.inf: None}).to_dict()
         # next set probability ranges on interval [0,1]
         cur = 0
         num_vals = len(col)
