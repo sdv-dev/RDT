@@ -20,9 +20,10 @@ class CatTransformer(BaseTransformer):
         """ Returns a tuple (transformed_table, new_table_meta) """
         out = pd.DataFrame()
         col_name = col_meta['name']
+        self.get_probability_map(col)
+
         # Make sure all nans are handled the same by replacing with None
         column = col.replace({np.nan: None})
-        self.get_probability_map(column)
         out[col_name] = column.apply(self.get_val)
         # Handle missing
 
