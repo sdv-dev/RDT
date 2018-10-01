@@ -8,9 +8,7 @@ from rdt.transformers.NullTransformer import NullTransformer
 
 
 class NumberTransformer(BaseTransformer):
-    """
-    This class represents the datetime transformer for SDV
-    """
+    """This class represents the numeric transformer for RDT."""
 
     def __init__(self, *args, **kwargs):
         """ initialize transformer """
