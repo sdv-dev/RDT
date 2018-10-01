@@ -8,7 +8,7 @@ from rdt.transformers.NullTransformer import NullTransformer
 
 class Test_NullTransformer(unittest.TestCase):
     def test___init__(self):
-        """ After parent init sets type to number and datetime"""
+        """On __init__ set type to number and datetime."""
 
         # Run
         transformer = NullTransformer()
@@ -17,7 +17,7 @@ class Test_NullTransformer(unittest.TestCase):
         assert transformer.type == ['datetime', 'number']
 
     def test_fit_transform_isnull(self):
-        """ It will replace nan values with 0 and creats a new column """
+        """It will replace nan values with 0 and creats a new column."""
 
         # Setup
         col = pd.Series([62, np.nan, np.nan, np.nan, np.nan], name='age')
@@ -38,9 +38,8 @@ class Test_NullTransformer(unittest.TestCase):
         # Check
         assert result.equals(expected_result)
 
-    @unittest.skip("FIXME: mean values check ")
     def test_fit_transform_notnull(self):
-        """ Creates a new column with the mean of the values """
+        """Creates a new column with the mean of the values."""
 
         # Setup
         col = pd.Series([62, 53, 53, 45, np.nan])
@@ -51,8 +50,8 @@ class Test_NullTransformer(unittest.TestCase):
         transformer = NullTransformer()
 
         expected_result = pd.DataFrame({
-            'age': [62.0, 53.0, 53.0, 45.0, 0.0],
-            '?age': [1, 0, 0, 0, 0]
+            'age': [62.0, 53.0, 53.0, 45.0, 53.25],
+            '?age': [1, 1, 1, 1, 0]
         })
 
         # Run
@@ -62,7 +61,7 @@ class Test_NullTransformer(unittest.TestCase):
         assert result.equals(expected_result)
 
     def test_reverse_transform(self):
-        """ Checks the conversion of the data back into original format """
+        """Checks the conversion of the data back into original format."""
 
         # Setup
         col_meta = {
