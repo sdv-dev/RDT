@@ -15,7 +15,7 @@ class HyperTransformer(object):
     """
 
     def __init__(self, meta_file=None):
-        """ initialize preprocessor """
+        """Initialize HyperTransformer."""
 
         self.transformers = {}  # key=(table_name, col_name) val=transformer
 
@@ -25,12 +25,13 @@ class HyperTransformer(object):
         self.table_dict = utils.get_table_dict(meta_file)
         self.transformer_dict = utils.get_transformers_dict(meta_file)
 
-    def get_class(self, class_name):
-        """ Gets class object of transformer from class name """
+    @staticmethod
+    def get_class(class_name):
+        """Gets class object of transformer from class name."""
         return getattr(transformers, class_name)
 
-    def fit_transform(self, tables=None, transformer_dict=None,
-                      transformer_list=None, missing=True):
+    def fit_transform(
+            self, tables=None, transformer_dict=None, transformer_list=None, missing=True):
         """
         This function loops applies all the specified transformers to the
         tables and return a dict of transformed tables
@@ -56,7 +57,9 @@ class HyperTransformer(object):
             table, table_meta = tables[table_name]
             transformed_table = self.fit_transform_table(
                 table, table_meta, transformer_dict, transformer_list, missing)
+
             transformed[table_name] = transformed_table
+
         return transformed
 
     def transform(self, tables, table_metas=None, missing=True):
@@ -128,8 +131,8 @@ class HyperTransformer(object):
             else:
                 # use transformer dict
                 if (table_name, col_name) in transformer_dict:
-                    transformer_name = transformer_dict((table_name, col_name))
-                    transformer = self.get_class(transformer_name)
+                    transformer_name = transformer_dict[(table_name, col_name)]
+                    transformer = self.get_class(TRANSFORMERS[transformer_name])
                     t = transformer()
                     new_col = t.fit_transform(col, field, missing)
                     self.transformers[(table_name, col_name)] = t

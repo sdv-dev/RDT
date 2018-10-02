@@ -6,7 +6,7 @@ import pandas as pd
 from rdt.transformers.NumberTransformer import NumberTransformer
 
 
-class Test_NumberTransformer(unittest.TestCase):
+class TestNumberTransformer(unittest.TestCase):
 
     def test___init__(self):
         """On init, sets type to number"""

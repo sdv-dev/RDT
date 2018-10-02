@@ -6,7 +6,7 @@ import pandas as pd
 from rdt.transformers.NullTransformer import NullTransformer
 
 
-class Test_NullTransformer(unittest.TestCase):
+class TestNullTransformer(unittest.TestCase):
     def test___init__(self):
         """On __init__ set type to number and datetime."""
 

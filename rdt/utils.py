@@ -39,8 +39,8 @@ def get_transformers_dict(meta_file):
 
         for field in table['fields']:
             col_name = field['name']
-            if 'transformer' in field:
-                transformer_dict[(table_name, col_name)] = field['transformer']
+            if 'type' in field:
+                transformer_dict[(table_name, col_name)] = field['type']
 
     return transformer_dict
 
