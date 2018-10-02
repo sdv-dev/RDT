@@ -50,7 +50,7 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer('tests/data/airbnb/airbnb_meta.json')
 
         # Check
-        assert list(ht.table_dict.keys()) == ['users', 'sessions']
+        assert set(ht.table_dict.keys()) == {'users', 'sessions'}
         assert ht.transformer_dict == expected_transformer_dict
 
     def test_get_class(self):
@@ -65,6 +65,7 @@ class TestHyperTransformer(TestCase):
         # Check
         assert transformer.__name__ == 'DTTransformer'
 
+    @skip('https://github.com/HDI-Project/RDT/issues/52')
     def test_fit_transform_table_transformer_dict(self):
         """Create and run the specified transforms in transformed_dict over the given table."""
         # Setup
@@ -168,7 +169,7 @@ class TestHyperTransformer(TestCase):
         result = ht.fit_transform()
 
         # Check
-        assert list(result.keys()) == ['users', 'sessions']
+        assert set(result.keys()) == {'users', 'sessions'}
         for name, table in result.items():
             values, meta = ht.table_dict[name]
             for column in values.columns:
