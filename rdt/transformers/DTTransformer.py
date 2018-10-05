@@ -1,5 +1,6 @@
 import sys
 import time
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -24,12 +25,22 @@ class DTTransformer(BaseTransformer):
         out = pd.DataFrame()
         self.col_name = col_meta['name']
 
+        # cast to datetime
+        date_format = col_meta['format']
+
+        casted_dates = pd.to_datetime(col, format=date_format, errors='coerce')
+
+        if len(casted_dates[casted_dates.isnull()]):
+            # This will raise an error for bad formatted data
+            # but not for out of bonds or missing dates.
+            col[casted_dates.isnull() & ~col.isnull()].apply(self.strptime_format(date_format))
+
+        out[self.col_name] = casted_dates
+
         # get default val
-        val = col.groupby(col).count().index[0]
-        tmp = parser.parse(str(val)).timetuple()
-        self.default_val = time.mktime(tmp) * 1e9
-        # if are just processing child rows, then the name is already known
-        out[self.col_name] = pd.to_datetime(col, errors='coerce')
+        val = out.groupby(self.col_name).count().index[0].timetuple()
+        self.default_val = time.mktime(val) * 1e9
+
         out = out.apply(self.get_val, axis=1)
 
         # Handle missing
@@ -37,7 +48,15 @@ class DTTransformer(BaseTransformer):
             nt = NullTransformer()
             res = nt.fit_transform(out, col_meta)
             return res
+
         return out.to_frame(self.col_name)
+
+    @staticmethod
+    def strptime_format(date_format):
+        def f(x):
+            return datetime.strptime(x, date_format)
+
+        return f
 
     def reverse_transform(self, col, col_meta, missing=True):
         """ Converts data back into original format """
@@ -87,11 +106,15 @@ class DTTransformer(BaseTransformer):
             t = x[col]
             if np.isnan(t):
                 t = self.default_val
-            if np.isposinf(t):
+
+            elif np.isposinf(t):
                 t = sys.maxsize
+
             elif np.isneginf(t):
                 t = -sys.maxsize
+
             tmp = time.localtime(float(t) / 1e9)
+
             return time.strftime(meta, tmp)
 
         return safe_date
