@@ -1,6 +1,9 @@
+import json
+import os
+
 import pandas as pd
 
-from rdt import transformers, utils
+from rdt import transformers
 
 TRANSFORMERS = {
     'datetime': 'DTTransformer',
@@ -22,8 +25,55 @@ class HyperTransformer(object):
         if not meta_file:
             raise ValueError("'meta_file' argument is needed to use HyperTransformer")
 
-        self.table_dict = utils.get_table_dict(meta_file)
-        self.transformer_dict = utils.get_transformers_dict(meta_file)
+        with open(meta_file, 'r') as f:
+            meta = json.load(f)
+
+        dir_name = os.path.dirname(meta_file)
+        self.table_dict = self.get_tables(meta, dir_name)
+        self.transformer_dict = self.get_transformers(meta)
+
+    @staticmethod
+    def get_tables(meta, base_dir):
+        """Load the contents of meta_file and the corresponding data.
+
+        Args:
+            meta(dict): Metadata for the dataset.
+            base_dir(str): Root folder of the dataset files.
+
+        Returns:
+            dict: Mapping str -> tuple(pandas.DataFrame, dict)
+        """
+        table_dict = {}
+
+        for table in meta['tables']:
+            if table['use']:
+                relative_path = os.path.join(base_dir, meta['path'], table['path'])
+                data_table = pd.read_csv(relative_path)
+                table_dict[table['name']] = (data_table, table)
+
+        return table_dict
+
+    @staticmethod
+    def get_transformers(meta):
+        """Load the contents of meta_file and extract information about the transformers.
+
+        Args:
+            meta(dict): Metadata for the dataset.
+
+        Returns:
+            dict: tuple(str, str) -> Transformer.
+        """
+        transformer_dict = {}
+
+        for table in meta['tables']:
+            table_name = table['name']
+
+            for field in table['fields']:
+                col_name = field['name']
+                if 'transformer' in field:
+                    transformer_dict[(table_name, col_name)] = field['transformer']
+
+        return transformer_dict
 
     def get_class(self, class_name):
         """ Gets class object of transformer from class name """

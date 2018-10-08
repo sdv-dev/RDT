@@ -3,8 +3,8 @@ from unittest import TestCase, skipIf
 import numpy as np
 import pandas as pd
 
+from rdt.transformers import get_col_info
 from rdt.transformers.DTTransformer import DTTransformer
-from rdt.utils import get_col_info
 
 # SKIPPED TESTS
 TESTS_WITH_DATA = True
