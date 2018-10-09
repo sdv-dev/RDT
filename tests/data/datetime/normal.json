@@ -1,0 +1,5 @@
+{
+    "name": "date_account_created",
+    "type": "datetime",
+    "format": "%m/%d/%y"
+}
