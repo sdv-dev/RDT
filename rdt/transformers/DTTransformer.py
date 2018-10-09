@@ -11,17 +11,30 @@ from rdt.transformers.NullTransformer import NullTransformer
 
 
 class DTTransformer(BaseTransformer):
-    """
-    This class represents the datetime transformer for SDV
-    """
+    """Transformer for datetime data."""
 
     def __init__(self, *args, **kwargs):
-        """ initialize transformer """
+        """Initialize transformer."""
         super().__init__(type='datetime', *args, **kwargs)
         self.default_val = None
 
-    def fit_transform(self, col, col_meta, missing=True):
-        """ Returns a tuple (transformed_table, new_table_meta) """
+    def fit_transform(self, col, col_meta=None, missing=None):
+        """Prepare the transformer to convert data and return the processed table.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+        Returns:
+            pandas.DataFrame
+        """
+
+        col_meta = col_meta or self.col_meta
+        missing = missing if missing is not None else self.missing
+
+        self.check_data_type(col_meta)
+
         out = pd.DataFrame()
         self.col_name = col_meta['name']
 
@@ -58,8 +71,23 @@ class DTTransformer(BaseTransformer):
 
         return f
 
-    def reverse_transform(self, col, col_meta, missing=True):
-        """ Converts data back into original format """
+    def reverse_transform(self, col, col_meta=None, missing=None):
+        """Converts data back into original format.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+        Returns:
+            pandas.DataFrame
+        """
+
+        col_meta = col_meta or self.col_meta
+        missing = missing if missing is not None else self.missing
+
+        self.check_data_type(col_meta)
+
         output = pd.DataFrame()
         date_format = col_meta['format']
         col_name = col_meta['name']
@@ -79,7 +107,14 @@ class DTTransformer(BaseTransformer):
         return output
 
     def get_val(self, x):
-        """ Converts datetime to number """
+        """Convert datetime to number.
+
+        Args:
+            x(pandas.Series/dict): Row of data
+
+        Returns:
+            float
+        """
         try:
             tmp = parser.parse(str(x[self.col_name])).timetuple()
             return time.mktime(tmp) * 1e9
@@ -88,22 +123,20 @@ class DTTransformer(BaseTransformer):
             # use default value
             return np.nan
 
-    def get_date_converter(self, col, meta):
-        '''Returns a converter that takes in an integer representing ms
-           and turns it into a string date
+    def get_date_converter(self, col_name, date_format):
+        """Return a function that takes in an integer representing ms and return a string date.
 
-        :param col: name of column
-        :type col: str
-        :param missing: true if column has NULL values
-        :type missing: bool
-        :param meta: type of column values
-        :type meta: str
+        Args:
+            col_name(str): Name of the column.
+            missing(bool): Wheter or not the column has null values.
+            date_format(str): Output date in strftime format.
 
-        :returns: function
-        '''
+        Returns:
+            function
+        """
 
         def safe_date(x):
-            t = x[col]
+            t = x[col_name]
             if np.isnan(t):
                 t = self.default_val
 
@@ -114,7 +147,6 @@ class DTTransformer(BaseTransformer):
                 t = -sys.maxsize
 
             tmp = time.localtime(float(t) / 1e9)
-
-            return time.strftime(meta, tmp)
+            return time.strftime(date_format, tmp)
 
         return safe_date
