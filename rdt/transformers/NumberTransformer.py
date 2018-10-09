@@ -8,9 +8,7 @@ from rdt.transformers.NullTransformer import NullTransformer
 
 
 class NumberTransformer(BaseTransformer):
-    """
-    This class represents the datetime transformer for SDV
-    """
+    """This class represents the numeric transformer for RDT."""
 
     def __init__(self, *args, **kwargs):
         """ initialize transformer """
@@ -44,6 +42,10 @@ class NumberTransformer(BaseTransformer):
             return out
 
         out = out.apply(self.get_val, axis=1)
+
+        if self.subtype == 'int':
+            out[self.col_name] = out[self.col_name].astype(int)
+
         return out.to_frame(self.col_name)
 
     def reverse_transform(self, col, col_meta, missing=True):
@@ -63,6 +65,9 @@ class NumberTransformer(BaseTransformer):
         else:
             data = col.to_frame()
             output[col_name] = data.apply(fn, axis=1)
+
+        if self.subtype == 'int':
+            output[self.col_name] = output[self.col_name].astype(int)
 
         return output
 

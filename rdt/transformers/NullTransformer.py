@@ -20,7 +20,7 @@ class NullTransformer(BaseTransformer):
 
         # create an extra column for missing values if they exist in the data
         new_name = '?' + self.col_name
-        out[new_name] = pd.notnull(col) * 1
+        out[new_name] = (pd.notnull(col) * 1).astype(int)
 
         if isinstance(col, pd.DataFrame):
             null_mean = pd.isnull(col.mean()).all()

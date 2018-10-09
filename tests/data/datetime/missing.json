@@ -1,0 +1,5 @@
+{
+    "name": "date_first_booking",
+    "type": "datetime",
+    "format": "%m/%d/%y"
+}
