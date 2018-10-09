@@ -7,17 +7,30 @@ from rdt.transformers.NullTransformer import NullTransformer
 
 
 class CatTransformer(BaseTransformer):
-    """
-    This class represents the categorical transformer for SDV
-    """
+    """Transformer for categorical data."""
 
     def __init__(self, *args, **kwargs):
-        """ initialize transformer """
+        """Initialize transformer."""
         super().__init__(type='categorical', *args, **kwargs)
         self.probability_map = {}  # val -> ((a,b), mean, std)
 
-    def fit_transform(self, col, col_meta, missing=True):
-        """ Returns a tuple (transformed_table, new_table_meta) """
+    def fit_transform(self, col, col_meta=None, missing=None):
+        """Prepare the transformer to convert data and return the processed table.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+        Returns:
+            pandas.DataFrame
+        """
+
+        col_meta = col_meta or self.col_meta
+        missing = missing if missing is not None else self.missing
+
+        self.check_data_type(col_meta)
+
         out = pd.DataFrame()
         col_name = col_meta['name']
         self.get_probability_map(col)
@@ -34,44 +47,55 @@ class CatTransformer(BaseTransformer):
 
         return out
 
-    def reverse_transform(self, col, col_meta, missing=True):
-        """ Converts data back into original format """
+    def reverse_transform(self, col, col_meta=None, missing=None):
+        """Converts data back into original format.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+        Returns:
+            pandas.DataFrame
+        """
+
+        col_meta = col_meta or self.col_meta
+        missing = missing if missing is not None else self.missing
+
+        self.check_data_type(col_meta)
+
         output = pd.DataFrame()
         col_name = col_meta['name']
-        fn = self.get_reverse_cat(col)
+        fn = self.get_reverse_cat(col_name)
+        new_col = col.apply(fn, axis=1)
 
         if missing:
-            new_col = col.apply(fn, axis=1)
             new_col = new_col.rename(col_name)
             data = pd.concat([new_col, col['?' + col_name]], axis=1)
             nt = NullTransformer()
             output[col_name] = nt.reverse_transform(data, col_meta)
 
         else:
-            data = col.to_frame()
-            output[col_name] = data.apply(fn, axis=1)
+            output[col_name] = new_col
 
         return output
 
     def get_val(self, x):
-        """ Converts cat value into num between 0 and 1 """
+        """Convert cat value into num between 0 and 1."""
         interval, mean, std = self.probability_map[x]
         new_val = norm.rvs(mean, std)
         return new_val
 
-    def get_reverse_cat(self, col):
-        '''Returns a converter that takes in a value and turns
-        it back into a category
-        '''
+    def get_reverse_cat(self, col_name):
+        """Returns a converter that takes in a value and turns it back into a category."""
 
         def reverse_cat(x):
             res = None
 
             for val in self.probability_map:
                 interval = self.probability_map[val][0]
-                if x[0] >= interval[0] and x[0] < interval[1]:
-                    res = val
-                    return res
+                if x[col_name] >= interval[0] and x[col_name] < interval[1]:
+                    return val
 
             if res is None:
                 return list(self.probability_map.keys())[0]
@@ -79,7 +103,7 @@ class CatTransformer(BaseTransformer):
         return reverse_cat
 
     def get_probability_map(self, col):
-        """ Maps each unique value to probability of seeing it """
+        """Maps each unique value to probability of seeing it."""
 
         column = col.replace({np.nan: np.inf})
         self.probability_map = column.groupby(column).count().rename({np.inf: None}).to_dict()

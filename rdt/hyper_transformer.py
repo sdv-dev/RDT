@@ -18,7 +18,7 @@ class HyperTransformer(object):
     """
 
     def __init__(self, meta_file=None):
-        """ initialize preprocessor """
+        """Initialize HyperTransformer."""
 
         self.transformers = {}  # key=(table_name, col_name) val=transformer
 
@@ -75,12 +75,13 @@ class HyperTransformer(object):
 
         return transformer_dict
 
-    def get_class(self, class_name):
-        """ Gets class object of transformer from class name """
+    @staticmethod
+    def get_class(class_name):
+        """Gets class object of transformer from class name."""
         return getattr(transformers, class_name)
 
-    def fit_transform(self, tables=None, transformer_dict=None,
-                      transformer_list=None, missing=True):
+    def fit_transform(
+            self, tables=None, transformer_dict=None, transformer_list=None, missing=True):
         """
         This function loops applies all the specified transformers to the
         tables and return a dict of transformed tables
@@ -106,7 +107,9 @@ class HyperTransformer(object):
             table, table_meta = tables[table_name]
             transformed_table = self.fit_transform_table(
                 table, table_meta, transformer_dict, transformer_list, missing)
+
             transformed[table_name] = transformed_table
+
         return transformed
 
     def transform(self, tables, table_metas=None, missing=True):
@@ -178,8 +181,8 @@ class HyperTransformer(object):
             else:
                 # use transformer dict
                 if (table_name, col_name) in transformer_dict:
-                    transformer_name = transformer_dict((table_name, col_name))
-                    transformer = self.get_class(transformer_name)
+                    transformer_name = transformer_dict[(table_name, col_name)]
+                    transformer = self.get_class(TRANSFORMERS[transformer_name])
                     t = transformer()
                     new_col = t.fit_transform(col, field, missing)
                     self.transformers[(table_name, col_name)] = t
@@ -230,26 +233,3 @@ class HyperTransformer(object):
                 out = pd.concat(out_list, axis=1)
 
         return out
-
-    def impute_table(self, table):
-        """ Fills in any NaN values in a table """
-        values = {}
-
-        for label in table:
-            if not pd.isnull(table[label].mean()):
-                values[label] = table[label].mean()
-            else:
-                values[label] = 0
-
-        imputed_table = table.fillna(values)
-
-        return imputed_table
-
-    def get_types(self, table):
-        """ Maps every field name to a type """
-        res = {}
-
-        for field in table['fields']:
-            res[field['name']] = field['type']
-
-        return res

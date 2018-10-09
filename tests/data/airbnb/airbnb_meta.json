@@ -1,0 +1,236 @@
+{
+    "path": "",
+    "tables": [
+        {
+            "path": "users_demo.csv",
+            "name": "users",
+            "use": true,
+            "headers": true,
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "categorical",
+                    "uniques": 213451
+                },
+                {
+                    "name": "date_account_created",
+                    "type": "datetime",
+                    "format": "%Y-%m-%d",
+                    "uniques": 1634
+                },
+                {
+                    "name": "timestamp_first_active",
+                    "type": "datetime",
+                    "format": "%Y%m%d%H%M%S",
+                    "uniques": 213451
+                },
+                {
+                    "name": "date_first_booking",
+                    "type": "datetime",
+                    "format": "%Y-%m-%d",
+                    "uniques": 1977
+                },
+                {
+                    "name": "gender",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 4
+                },
+                {
+                    "name": "age",
+                    "type": "number",
+                    "subtype": "integer",
+                    "uniques": 128
+                },
+                {
+                    "name": "signup_method",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 3
+                },
+                {
+                    "name": "signup_flow",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 17
+                },
+                {
+                    "name": "language",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 25
+                },
+                {
+                    "name": "affiliate_channel",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 8
+                },
+                {
+                    "name": "affiliate_provider",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 18
+                },
+                {
+                    "name": "first_affiliate_tracked",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 8
+                },
+                {
+                    "name": "signup_app",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 4
+                },
+                {
+                    "name": "first_device_type",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 9
+                },
+                {
+                    "name": "first_browser",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 52
+                }
+            ],
+            "primary_key": "id",
+            "number_of_rows": 213451
+        },
+        {
+            "path": "countries.csv",
+            "name": "countries",
+            "use": false,
+            "headers": true,
+            "fields": [
+                {
+                    "name": "country_destination",
+                    "type": "categorical",
+                    "uniques": 10
+                },
+                {
+                    "name": "lat_destination",
+                    "type": "number",
+                    "subtype": "float",
+                    "uniques": 10
+                },
+                {
+                    "name": "lng_destination",
+                    "type": "number",
+                    "subtype": "float",
+                    "uniques": 10
+                },
+                {
+                    "name": "distance_km",
+                    "type": "number",
+                    "subtype": "float",
+                    "uniques": 10
+                },
+                {
+                    "name": "destination_km2",
+                    "type": "categorical",
+                    "uniques": 10
+                },
+                {
+                    "name": "destination_language ",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 7
+                },
+                {
+                    "name": "language_levenshtein_distance",
+                    "type": "number",
+                    "subtype": "float",
+                    "uniques": 7
+                }
+            ],
+            "primary_key": "country_destination",
+            "number_of_rows": 10
+        },
+        {
+            "path": "sessions_demo.csv",
+            "name": "sessions",
+            "use": true,
+            "headers": true,
+            "fields": [
+                {
+                    "name": "user_id",
+                    "type": "categorical",
+                    "uniques": 135484
+                },
+                {
+                    "name": "action",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 360
+                },
+                {
+                    "name": "action_type",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 11
+                },
+                {
+                    "name": "action_detail",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 156
+                },
+                {
+                    "name": "device_type",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 14
+                },
+                {
+                    "name": "secs_elapsed",
+                    "type": "number",
+                    "subtype": "integer",
+                    "uniques": 337662
+                }
+            ],
+            "number_of_rows": 10567737
+        },
+        {
+            "path": "age_gender_bkts.csv",
+            "name": "age_gender_bkts",
+            "use": false,
+            "headers": true,
+            "fields": [
+                {
+                    "name": "age_bucket",
+                    "type": "categorical",
+                    "subtype": "categorical",
+                    "uniques": 21
+                },
+                {
+                    "name": "country_destination",
+                    "type": "categorical",
+                    "uniques": 10
+                },
+                {
+                    "name": "gender",
+                    "type": "categorical",
+                    "subtype": "boolean",
+                    "uniques": 2
+                },
+                {
+                    "name": "population_in_thousands",
+                    "type": "number",
+                    "subtype": "integer",
+                    "uniques": 381
+                },
+                {
+                    "name": "year",
+                    "type": "datetime",
+                    "format": "%Y",
+                    "uniques": 1
+                }
+            ],
+            "number_of_rows": 420
+        }
+    ]
+}
