@@ -69,9 +69,10 @@ class HyperTransformer(object):
             table_name = table['name']
 
             for field in table['fields']:
-                col_name = field['name']
-                if 'transformer' in field:
-                    transformer_dict[(table_name, col_name)] = field['transformer']
+                transformer_type = field.get('type')
+                if transformer_type:
+                    col_name = field['name']
+                    transformer_dict[(table_name, col_name)] = transformer_type
 
         return transformer_dict
 

@@ -4,7 +4,6 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 
-from rdt.transformers import get_col_info
 from rdt.transformers.DTTransformer import DTTransformer
 
 
