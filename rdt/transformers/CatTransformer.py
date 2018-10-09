@@ -66,18 +66,17 @@ class CatTransformer(BaseTransformer):
 
         output = pd.DataFrame()
         col_name = col_meta['name']
-        fn = self.get_reverse_cat(col)
+        fn = self.get_reverse_cat(col_name)
+        new_col = col.apply(fn, axis=1)
 
         if missing:
-            new_col = col.apply(fn, axis=1)
             new_col = new_col.rename(col_name)
             data = pd.concat([new_col, col['?' + col_name]], axis=1)
             nt = NullTransformer()
             output[col_name] = nt.reverse_transform(data, col_meta)
 
         else:
-            data = col.to_frame()
-            output[col_name] = data.apply(fn, axis=1)
+            output[col_name] = new_col
 
         return output
 
@@ -87,7 +86,7 @@ class CatTransformer(BaseTransformer):
         new_val = norm.rvs(mean, std)
         return new_val
 
-    def get_reverse_cat(self, col):
+    def get_reverse_cat(self, col_name):
         """Returns a converter that takes in a value and turns it back into a category."""
 
         def reverse_cat(x):
@@ -95,9 +94,8 @@ class CatTransformer(BaseTransformer):
 
             for val in self.probability_map:
                 interval = self.probability_map[val][0]
-                if x[0] >= interval[0] and x[0] < interval[1]:
-                    res = val
-                    return res
+                if x[col_name] >= interval[0] and x[col_name] < interval[1]:
+                    return val
 
             if res is None:
                 return list(self.probability_map.keys())[0]
