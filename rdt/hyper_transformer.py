@@ -183,26 +183,3 @@ class HyperTransformer(object):
                 out = pd.concat(out_list, axis=1)
 
         return out
-
-    def impute_table(self, table):
-        """ Fills in any NaN values in a table """
-        values = {}
-
-        for label in table:
-            if not pd.isnull(table[label].mean()):
-                values[label] = table[label].mean()
-            else:
-                values[label] = 0
-
-        imputed_table = table.fillna(values)
-
-        return imputed_table
-
-    def get_types(self, table):
-        """ Maps every field name to a type """
-        res = {}
-
-        for field in table['fields']:
-            res[field['name']] = field['type']
-
-        return res
