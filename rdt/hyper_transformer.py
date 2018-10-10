@@ -1,6 +1,9 @@
+import json
+import os
+
 import pandas as pd
 
-from rdt import transformers, utils
+from rdt import transformers
 
 TRANSFORMERS = {
     'datetime': 'DTTransformer',
@@ -13,34 +16,73 @@ class HyperTransformer(object):
     """Multitable transformer.
 
     Arguments:
-        meta_file(str): Path to the meta.json file
-        table_dict(dict): Dict with the table structure (table_name -> (data, meta))
-
-    Returns:
-        HyperTransformer
+        metadata(str or dict): Path to the meta.json file or its parsed contents.
 
     The main propouse of the HyperTransformer class is to easily manage transformations
     for a whole dataset.
-
-    It's required that one of `table_dict` or `meta_file` to be not null. In case both were
-    present `meta_file` takes precedence over `table_dict`.
     """
 
-    def __init__(self, meta_file=None, table_dict=None):
+    def __init__(self, metadata):
 
         self.transformers = {}  # key=(table_name, col_name) val=transformer
+        tables = None
 
-        if meta_file:
-            self.table_dict = utils.get_table_dict(meta_file)
+        if isinstance(metadata, str):
+            dir_name = os.path.dirname(metadata)
+            with open(metadata, 'r') as f:
+                metadata = json.load(f)
 
-        elif table_dict:
-            self.table_dict = table_dict
+            tables = self.get_tables(metadata, dir_name)
 
-        else:
-            raise ValueError(
-                "'meta_file' or 'table_dict' arguments are needed to use HyperTransformer")
+        elif not isinstance(metadata, dict):
+            raise ValueError('Incorrect type for metadata: It can only be either dict or str.')
 
-        self.transformer_dict = utils.get_transformers_dict(meta_file)
+        self.table_dict = tables or metadata
+        self.transformer_dict = self.get_transformers(metadata)
+
+    @staticmethod
+    def get_tables(meta, base_dir):
+        """Load the contents of meta_file and the corresponding data.
+
+        Args:
+            meta(dict): Metadata for the dataset.
+            base_dir(str): Root folder of the dataset files.
+
+        Returns:
+            dict: Mapping str -> tuple(pandas.DataFrame, dict)
+        """
+        table_dict = {}
+
+        for table in meta['tables']:
+            if table['use']:
+                relative_path = os.path.join(base_dir, meta['path'], table['path'])
+                data_table = pd.read_csv(relative_path)
+                table_dict[table['name']] = (data_table, table)
+
+        return table_dict
+
+    @staticmethod
+    def get_transformers(meta):
+        """Load the contents of meta_file and extract information about the transformers.
+
+        Args:
+            meta(dict): Metadata for the dataset.
+
+        Returns:
+            dict: tuple(str, str) -> Transformer.
+        """
+        transformer_dict = {}
+
+        for table in meta['tables']:
+            table_name = table['name']
+
+            for field in table['fields']:
+                transformer_type = field.get('type')
+                if transformer_type:
+                    col_name = field['name']
+                    transformer_dict[(table_name, col_name)] = transformer_type
+
+        return transformer_dict
 
     def get_class(self, class_name):
         """Get class object of transformer from its class name.
@@ -86,6 +128,7 @@ class HyperTransformer(object):
             table, table_meta = tables[table_name]
             transformed_table = self.fit_transform_table(
                 table, table_meta, transformer_dict, transformer_list, missing)
+
             transformed[table_name] = transformed_table
 
         return transformed
@@ -187,10 +230,10 @@ class HyperTransformer(object):
                         #     new_col = null_t.fit_transform(new_col, field)
                         self.transformers[(table_name, col_name)] = t
                         out = pd.concat([out, new_col], axis=1)
-            # use transformer dict
+
             elif (table_name, col_name) in transformer_dict:
-                transformer_name = transformer_dict((table_name, col_name))
-                transformer = self.get_class(transformer_name)
+                transformer_name = transformer_dict[(table_name, col_name)]
+                transformer = self.get_class(TRANSFORMERS[transformer_name])
                 t = transformer()
                 new_col = t.fit_transform(col, field, missing)
                 self.transformers[(table_name, col_name)] = t
