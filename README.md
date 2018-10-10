@@ -68,7 +68,7 @@ tar -xvzf examples/data/airbnb.tar.gz -C examples/data/
 Afterwards, we can proceed to open a python interpreter and load the data
 
 ```python
->>> from rdt.utils import get_col_info
+>>> from rdt.transfomers import get_col_info
 >>> demo_data = 'examples/data/airbnb/Airbnb_demo_meta.json'
 >>> column, column_metadata = get_col_info('users', 'date_account_created', demo_data)
 >>> column.head(5)
