@@ -45,8 +45,8 @@ class TestDTTransformer(TestCase):
         """Out of bounds values should be transformed too."""
         # Setup
         out_of_bounds_data = pd.Series([
-            '2262-04-11 23:47:16.854775807',
-            '2263-04-11 23:47:16.854775808'
+            '2262-04-11 23:47:16.854775',
+            '2263-04-11 23:47:16.854776'
         ])
 
         expected_result = pd.Series([
@@ -54,8 +54,14 @@ class TestDTTransformer(TestCase):
             0.000000e+00
         ])
 
+        out_of_bounds_meta = {
+            "name": "date_first_booking",
+            "type": "datetime",
+            "format": "%Y-%m-%d %H:%M:%S.%f"
+        }
+
         # Run
-        transformed = self.transformer.fit_transform(out_of_bounds_data, self.missing_meta)
+        transformed = self.transformer.fit_transform(out_of_bounds_data, out_of_bounds_meta)
         result = transformed[self.missing_meta['name']]
 
         # Check
