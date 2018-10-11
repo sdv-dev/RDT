@@ -150,15 +150,19 @@ class TestCatTransformer(TestCase):
         # Check
         assert (result == original_column['breakfast']).all()
 
-    def test_get_probability_map(self):
+    def test_fit(self):
         """Maps the values to probabilities."""
 
         # Setup
         data = pd.Series(['A', 'B', 'A', 'B', 'B'])
+        col_meta = {
+            "name": "breakfast",
+            "type": "categorical"
+        }
         transformer = CatTransformer()
 
         # Run
-        transformer.get_probability_map(data)
+        transformer.fit(data, col_meta)
 
         # Check
         # Keys are unique values of initial data
