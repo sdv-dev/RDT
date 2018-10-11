@@ -17,31 +17,32 @@ class HyperTransformer(object):
 
     Arguments:
         metadata(str or dict): Path to the meta.json file or its parsed contents.
+        dir_name(str): Path to the root directory of meta.json.
 
     The main propouse of the HyperTransformer class is to easily manage transformations
     for a whole dataset.
     """
 
-    def __init__(self, metadata):
+    def __init__(self, metadata, dir_name=None):
 
         self.transformers = {}  # key=(table_name, col_name) val=transformer
-        tables = None
 
         if isinstance(metadata, str):
             dir_name = os.path.dirname(metadata)
             with open(metadata, 'r') as f:
                 metadata = json.load(f)
 
-            tables = self.get_tables(metadata, dir_name)
-
         elif not isinstance(metadata, dict):
             raise ValueError('Incorrect type for metadata: It can only be either dict or str.')
 
-        self.table_dict = tables or metadata
-        self.transformer_dict = self.get_transformers(metadata)
+        elif dir_name is None:
+            raise ValueError('dir_name is required when metadata is a dict.')
+
+        self.table_dict = self._get_tables(metadata, dir_name)
+        self.transformer_dict = self._get_transformers(metadata)
 
     @staticmethod
-    def get_tables(meta, base_dir):
+    def _get_tables(meta, base_dir):
         """Load the contents of meta_file and the corresponding data.
 
         Args:
@@ -62,7 +63,7 @@ class HyperTransformer(object):
         return table_dict
 
     @staticmethod
-    def get_transformers(meta):
+    def _get_transformers(meta):
         """Load the contents of meta_file and extract information about the transformers.
 
         Args:
