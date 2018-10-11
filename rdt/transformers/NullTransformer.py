@@ -11,7 +11,10 @@ class NullTransformer(BaseTransformer):
         """ initialize transformer """
         super().__init__(type=['datetime', 'number'], *args, **kwargs)
 
-    def fit_transform(self, col, col_meta, **kwargs):
+    def fit(self, col, col_meta, *args):
+        return
+
+    def transform(self, col, col_meta, *args):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
