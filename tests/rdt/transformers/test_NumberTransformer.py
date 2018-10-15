@@ -20,7 +20,10 @@ class TestNumberTransformer(unittest.TestCase):
     def test_fit_transform(self):
         """fit_transform sets internal state and transforms data."""
         # Setup
-        col = pd.Series([62, 27, 5, 34, 62])
+        col = pd.DataFrame({
+            'age': [62, 27, 5, 34, 62]
+        })
+
         col_meta = {
             "name": "age",
             "type": "number",
@@ -38,7 +41,9 @@ class TestNumberTransformer(unittest.TestCase):
     def test_fit_transform_missing(self):
         """Sets internal state and transforms data with missing values."""
         # Setup
-        col = pd.Series([62, 27, np.nan, 34, 62])
+        col = pd.DataFrame({
+            'age': [62, 27, np.nan, 34, 62],
+        })
         col_meta = {
             "name": "age",
             "type": "number",
@@ -59,7 +64,9 @@ class TestNumberTransformer(unittest.TestCase):
     def test_reverse_transform(self):
         """Checks the conversion of the data back into original format."""
         # Setup
-        col = pd.Series([34, 23, 27, 31, 39], name='age')
+        col = pd.DataFrame({
+            'age': [34, 23, 27, 31, 39]
+        })
         col_meta = {
             'name': 'age',
             'subtype': 'integer',
@@ -77,7 +84,9 @@ class TestNumberTransformer(unittest.TestCase):
     def test_reverse_transform_nan(self):
         """Checks that nans are handled correctly in reverse transformation."""
         # Setup
-        col = pd.Series([34, 23, 27, 31, 39], name='age')
+        col = pd.DataFrame({
+            'age': [34, 23, 27, 31, 39]
+        })
         col_meta = {
             'name': 'age',
             'subtype': 'integer',
@@ -86,7 +95,10 @@ class TestNumberTransformer(unittest.TestCase):
         transformer = NumberTransformer()
         transformer.fit_transform(col, col_meta, False)
 
-        col2 = pd.Series([0, 10, 20, 30, np.nan], name='age')
+        col2 = pd.DataFrame({
+            'age': [0, 10, 20, 30, np.nan]
+        })
+
         expected_result = pd.DataFrame({
             'age': [0, 10, 20, 30, transformer.default_val]
         })
