@@ -5,22 +5,29 @@ from rdt.transformers.BaseTransformer import BaseTransformer
 
 
 class NullTransformer(BaseTransformer):
-    """
-    This class represents the datetime transformer for SDV
-    """
+    """Transformer for missing/null data."""
 
     def __init__(self, *args, **kwargs):
         """ initialize transformer """
         super().__init__(type=['datetime', 'number'], *args, **kwargs)
 
     def fit_transform(self, col, col_meta, **kwargs):
-        """ Returns a tuple (transformed_table, new_table_meta) """
+        """Prepare the transformer to convert data and return the processed table.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+        Returns:
+            pandas.DataFrame
+        """
         out = pd.DataFrame(columns=[])
         self.col_name = col_meta['name']
 
         # create an extra column for missing values if they exist in the data
         new_name = '?' + self.col_name
-        out[new_name] = pd.notnull(col) * 1
+        out[new_name] = (pd.notnull(col) * 1).astype(int)
 
         if isinstance(col, pd.DataFrame):
             null_mean = pd.isnull(col.mean()).all()
@@ -36,28 +43,36 @@ class NullTransformer(BaseTransformer):
         return out
 
     def reverse_transform(self, col, col_meta):
-        """ Converts data back into original format """
+        """Converts data back into original format.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+        Returns:
+            pandas.DataFrame
+        """
         output = pd.DataFrame(columns=[])
         col_name = col_meta['name']
         fn = self.get_null_converter(col_name)
         output[col_name] = col.apply(fn, axis=1)
         return output
 
-    def get_null_converter(self, col):
-        '''Returns a converter that takes a value and replaces
-        it with null if it's supposed to be missing
-        :param col: name of column
-        :type col: str
-        :param meta: type of column values
-        :type meta: str
+    def get_null_converter(self, col_name):
+        """Return a function that take a row replaces it with null if it's supposed to be missing.
 
-        :returns: function
-        '''
+        Args:
+            col_name(str): Name of the column.
+
+        Returns:
+            function
+        """
 
         def nullify(x):
-            val = x[col]
+            val = x[col_name]
             try:
-                if x['?' + col] == 0:
+                if x['?' + col_name] == 0:
                     return np.nan
             except Exception as inst:
                 print(inst)

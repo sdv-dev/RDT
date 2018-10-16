@@ -1,0 +1,6 @@
+user_id,action,action_type,action_detail,device_type,secs_elapsed
+d1mm9tcy42,lookup,,,Windows Desktop,319.0
+d1mm9tcy42,search_results,click,view_search_results,Windows Desktop,67753.0
+d1mm9tcy42,lookup,,,Windows Desktop,301.0
+d1mm9tcy42,search_results,click,view_search_results,Windows Desktop,22141.0
+d1mm9tcy42,lookup,,,Windows Desktop,435.0

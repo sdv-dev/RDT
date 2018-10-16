@@ -1,6 +1,9 @@
+import json
+import os
+
 import pandas as pd
 
-from rdt import transformers, utils
+from rdt import transformers
 
 TRANSFORMERS = {
     'datetime': 'DTTransformer',
@@ -15,22 +18,71 @@ class HyperTransformer(object):
     """
 
     def __init__(self, meta_file=None):
-        """ initialize preprocessor """
+        """Initialize HyperTransformer."""
 
         self.transformers = {}  # key=(table_name, col_name) val=transformer
 
         if not meta_file:
             raise ValueError("'meta_file' argument is needed to use HyperTransformer")
 
-        self.table_dict = utils.get_table_dict(meta_file)
-        self.transformer_dict = utils.get_transformers_dict(meta_file)
+        with open(meta_file, 'r') as f:
+            meta = json.load(f)
 
-    def get_class(self, class_name):
-        """ Gets class object of transformer from class name """
+        dir_name = os.path.dirname(meta_file)
+        self.table_dict = self.get_tables(meta, dir_name)
+        self.transformer_dict = self.get_transformers(meta)
+
+    @staticmethod
+    def get_tables(meta, base_dir):
+        """Load the contents of meta_file and the corresponding data.
+
+        Args:
+            meta(dict): Metadata for the dataset.
+            base_dir(str): Root folder of the dataset files.
+
+        Returns:
+            dict: Mapping str -> tuple(pandas.DataFrame, dict)
+        """
+        table_dict = {}
+
+        for table in meta['tables']:
+            if table['use']:
+                relative_path = os.path.join(base_dir, meta['path'], table['path'])
+                data_table = pd.read_csv(relative_path)
+                table_dict[table['name']] = (data_table, table)
+
+        return table_dict
+
+    @staticmethod
+    def get_transformers(meta):
+        """Load the contents of meta_file and extract information about the transformers.
+
+        Args:
+            meta(dict): Metadata for the dataset.
+
+        Returns:
+            dict: tuple(str, str) -> Transformer.
+        """
+        transformer_dict = {}
+
+        for table in meta['tables']:
+            table_name = table['name']
+
+            for field in table['fields']:
+                transformer_type = field.get('type')
+                if transformer_type:
+                    col_name = field['name']
+                    transformer_dict[(table_name, col_name)] = transformer_type
+
+        return transformer_dict
+
+    @staticmethod
+    def get_class(class_name):
+        """Gets class object of transformer from class name."""
         return getattr(transformers, class_name)
 
-    def fit_transform(self, tables=None, transformer_dict=None,
-                      transformer_list=None, missing=True):
+    def fit_transform(
+            self, tables=None, transformer_dict=None, transformer_list=None, missing=True):
         """
         This function loops applies all the specified transformers to the
         tables and return a dict of transformed tables
@@ -56,7 +108,9 @@ class HyperTransformer(object):
             table, table_meta = tables[table_name]
             transformed_table = self.fit_transform_table(
                 table, table_meta, transformer_dict, transformer_list, missing)
+
             transformed[table_name] = transformed_table
+
         return transformed
 
     def transform(self, tables, table_metas=None, missing=True):
@@ -118,7 +172,7 @@ class HyperTransformer(object):
                     transformer = self.get_class(transformer_name)
                     t = transformer()
                     if field['type'] == t.type:
-                        new_col = t.fit_transform(col, field, missing)
+                        new_col = t.fit_transform(col.to_frame(), field, missing)
                         # handle missing
                         # if missing:
                         #     null_t = null_class()
@@ -128,10 +182,10 @@ class HyperTransformer(object):
             else:
                 # use transformer dict
                 if (table_name, col_name) in transformer_dict:
-                    transformer_name = transformer_dict((table_name, col_name))
-                    transformer = self.get_class(transformer_name)
+                    transformer_name = transformer_dict[(table_name, col_name)]
+                    transformer = self.get_class(TRANSFORMERS[transformer_name])
                     t = transformer()
-                    new_col = t.fit_transform(col, field, missing)
+                    new_col = t.fit_transform(col.to_frame(), field, missing)
                     self.transformers[(table_name, col_name)] = t
                     out = pd.concat([out, new_col], axis=1)
         return out
@@ -145,7 +199,7 @@ class HyperTransformer(object):
             col_name = field['name']
             col = table[col_name]
             transformer = self.transformers[(table_name, col_name)]
-            out = pd.concat([out, transformer.transform(col, field)], axis=1)
+            out = pd.concat([out, transformer.transform(col.to_frame(), field)], axis=1)
 
         return out
 
@@ -174,32 +228,9 @@ class HyperTransformer(object):
                     out_list = [out, transformer.reverse_transform(data, field, missing)]
 
                 else:
-                    new_col = transformer.reverse_transform(col, field, missing)
+                    new_col = transformer.reverse_transform(col.to_frame(), field, missing)
                     out_list = [out, new_col]
 
                 out = pd.concat(out_list, axis=1)
 
         return out
-
-    def impute_table(self, table):
-        """ Fills in any NaN values in a table """
-        values = {}
-
-        for label in table:
-            if not pd.isnull(table[label].mean()):
-                values[label] = table[label].mean()
-            else:
-                values[label] = 0
-
-        imputed_table = table.fillna(values)
-
-        return imputed_table
-
-    def get_types(self, table):
-        """ Maps every field name to a type """
-        res = {}
-
-        for field in table['fields']:
-            res[field['name']] = field['type']
-
-        return res
