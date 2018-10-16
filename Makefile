@@ -118,11 +118,6 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-clean-docs: ## remove previously built docs
-	rm -f docs/rdt.rst
-	rm -f docs/rdt.*.rst
-	rm -f docs/modules.rst
-	$(MAKE) -C docs clean
 
 # DOCS TARGETS
 
