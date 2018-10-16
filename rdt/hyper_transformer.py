@@ -224,7 +224,7 @@ class HyperTransformer(object):
                     transformer = self.get_class(transformer_name)
                     t = transformer()
                     if field['type'] == t.type:
-                        new_col = t.fit_transform(col, field, missing)
+                        new_col = t.fit_transform(col.to_frame(), field, missing)
                         # handle missing
                         # if missing:
                         #     null_t = null_class()
@@ -260,7 +260,7 @@ class HyperTransformer(object):
             col_name = field['name']
             col = table[col_name]
             transformer = self.transformers[(table_name, col_name)]
-            out = pd.concat([out, transformer.transform(col, field)], axis=1)
+            out = pd.concat([out, transformer.transform(col.to_frame(), field)], axis=1)
 
         return out
 
@@ -296,7 +296,7 @@ class HyperTransformer(object):
                     out_list = [out, transformer.reverse_transform(data, field, missing)]
 
                 else:
-                    new_col = transformer.reverse_transform(col, field, missing)
+                    new_col = transformer.reverse_transform(col.to_frame(), field, missing)
                     out_list = [out, new_col]
 
                 out = pd.concat(out_list, axis=1)

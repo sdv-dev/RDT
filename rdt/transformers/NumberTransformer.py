@@ -36,16 +36,8 @@ class NumberTransformer(BaseTransformer):
         out = pd.DataFrame()
         self.col_name = col_meta['name']
         self.subtype = col_meta['subtype']
+        self.default_val = self.get_default_value(col)
 
-        # get default val
-        for x in col:
-            if x is not None:
-                try:
-                    tmp = int(round(x))
-                    self.default_val = tmp
-                    break
-                except Exception as inst:
-                    continue
         # if are just processing child rows, then the name is already known
         out[self.col_name] = col
 
@@ -61,7 +53,7 @@ class NumberTransformer(BaseTransformer):
         if self.subtype == 'int':
             out[self.col_name] = out[self.col_name].astype(int)
 
-        return out.to_frame(self.col_name)
+        return out
 
     def reverse_transform(self, col, col_meta=None, missing=None):
         """Converts data back into original format.
@@ -93,13 +85,22 @@ class NumberTransformer(BaseTransformer):
             output[col_name] = nt.reverse_transform(data, col_meta)
 
         else:
-            data = col.to_frame()
-            output[col_name] = data.apply(fn, axis=1)
+            output[col_name] = col.apply(fn, axis=1)
 
         if self.subtype == 'int':
             output[self.col_name] = output[self.col_name].astype(int)
 
         return output
+
+    def get_default_value(self, data):
+        """ """
+        col = data[self.col_name]
+        value = col[~col.isnull()].unique()[0]
+
+        if self.subtype == 'integer':
+            value = int(value)
+
+        return value
 
     def get_val(self, x):
         """Converts to int."""
