@@ -48,7 +48,7 @@ class NumberTransformer(BaseTransformer):
             out[self.col_name] = out.apply(self.get_val, axis=1)
             return out
 
-        out = out.apply(self.get_val, axis=1)
+        out[self.col_name] = out.apply(self.get_val, axis=1)
 
         if self.subtype == 'int':
             out[self.col_name] = out[self.col_name].astype(int)

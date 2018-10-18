@@ -236,7 +236,7 @@ class HyperTransformer(object):
                 transformer_name = transformer_dict[(table_name, col_name)]
                 transformer = self.get_class(TRANSFORMERS[transformer_name])
                 t = transformer()
-                new_col = t.fit_transform(col, field, missing)
+                new_col = t.fit_transform(col.to_frame(), field, missing)
                 self.transformers[(table_name, col_name)] = t
                 out = pd.concat([out, new_col], axis=1)
 
