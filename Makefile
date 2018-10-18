@@ -135,8 +135,6 @@ view-docs: docs ## view docs in browser
 serve-docs: view-docs ## compile the docs watching for changes
 	watchmedo shell-command -W -R -D -p '*.rst;*.md' -c '$(MAKE) -C docs html' .
 
-release: dist ## package and upload a release
-	twine upload dist/*
 
 # RELEASE TARGETS
 
