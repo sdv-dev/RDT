@@ -16,7 +16,22 @@ class NumberTransformer(BaseTransformer):
         self.default_val = None
         self.subtype = None
 
-    def fit_transform(self, col, col_meta=None, missing=None):
+    def fit(self, col, col_meta=None, missing=None):
+        """Prepare the transformer to convert data.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+        Returns:
+            pandas.DataFrame
+        """
+        self.col_name = col_meta['name']
+        self.subtype = col_meta['subtype']
+        self.default_val = self.get_default_value(col)
+
+    def transform(self, col, col_meta=None, missing=None):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
@@ -30,13 +45,9 @@ class NumberTransformer(BaseTransformer):
 
         col_meta = col_meta or self.col_meta
         missing = missing if missing is not None else self.missing
-
         self.check_data_type(col_meta)
 
         out = pd.DataFrame()
-        self.col_name = col_meta['name']
-        self.subtype = col_meta['subtype']
-        self.default_val = self.get_default_value(col)
 
         # if are just processing child rows, then the name is already known
         out[self.col_name] = col
