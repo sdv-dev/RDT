@@ -76,25 +76,22 @@ class CatTransformer(BaseTransformer):
         Returns:
             pandas.DataFrame
         """
-
         col_meta = col_meta or self.col_meta
         missing = missing if missing is not None else self.missing
 
         self.check_data_type(col_meta)
 
         output = pd.DataFrame()
-        col_name = col_meta['name']
-        fn = self.get_reverse_cat(col_name)
-        new_col = col.apply(fn, axis=1)
+        new_col = self.get_category(col[self.col_name])
 
         if missing:
-            new_col = new_col.rename(col_name)
-            data = pd.concat([new_col, col['?' + col_name]], axis=1)
+            new_col = new_col.rename(self.col_name)
+            data = pd.concat([new_col, col['?' + self.col_name]], axis=1)
             nt = NullTransformer()
-            output[col_name] = nt.reverse_transform(data, col_meta)
+            output[self.col_name] = nt.reverse_transform(data, col_meta)
 
         else:
-            output[col_name] = new_col
+            output[self.col_name] = new_col
 
         return output
 
@@ -104,18 +101,19 @@ class CatTransformer(BaseTransformer):
         new_val = norm.rvs(mean, std)
         return new_val
 
-    def get_reverse_cat(self, col_name):
-        """Returns a converter that takes in a value and turns it back into a category."""
+    def get_category(self, column):
+        """Returns categories for the specified numeric values
 
-        def reverse_cat(x):
-            res = None
+        Args:
+            column(pandas.Series): Values to transform into categories
 
-            for val in self.probability_map:
-                interval = self.probability_map[val][0]
-                if x[col_name] >= interval[0] and x[col_name] < interval[1]:
-                    return val
+        Returns:
+            pandas.Series
+        """
+        result = pd.Series(index=column.index)
 
-            if res is None:
-                return list(self.probability_map.keys())[0]
+        for category, stats in self.probability_map.items():
+            start, end = stats[0]
+            result[(start < column) & (column < end)] = category
 
-        return reverse_cat
+        return result

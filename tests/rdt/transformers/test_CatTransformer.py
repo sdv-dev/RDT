@@ -62,15 +62,17 @@ class TestCatTransformer(TestCase):
         """reverse_transform change back the data into original format."""
 
         # Setup
-        transformer = CatTransformer()
-        transformer.probability_map = {
-            'A': ((0.6, 1.0), 0.8, 0.0666),
-            'B': ((0, 0.6), 0.3, 0.0999)
-        }
         col_meta = {
             "name": "breakfast",
             "type": "categorical"
         }
+        transformer = CatTransformer(col_meta=col_meta, missing=False)
+        transformer.probability_map = {
+            'A': ((0.6, 1.0), 0.8, 0.0666),
+            'B': ((0, 0.6), 0.3, 0.0999)
+        }
+        transformer.col_name = 'breakfast'
+
         col = pd.DataFrame({
             'breakfast': [0.1, 0.4, 0.8, 0.3, 0.7]
         })
@@ -79,7 +81,7 @@ class TestCatTransformer(TestCase):
         })
 
         # Run
-        result = transformer.reverse_transform(col, col_meta, False)
+        result = transformer.reverse_transform(col)
 
         # Check
         assert result.equals(expected_result)
@@ -88,15 +90,17 @@ class TestCatTransformer(TestCase):
         """Changes back the data into original format."""
 
         # Setup
-        transformer = CatTransformer()
-        transformer.probability_map = {
-            'A': ((0.6, 1.0), 0.8, 0.0666),
-            'B': ((0, 0.6), 0.3, 0.0999)
-        }
         col_meta = {
             "name": "breakfast",
             "type": "categorical"
         }
+        transformer = CatTransformer(col_meta=col_meta, missing=False)
+        transformer.probability_map = {
+            'A': ((0.6, 1.0), 0.8, 0.0666),
+            'B': ((0, 0.6), 0.3, 0.0999)
+        }
+        transformer.col_name = 'breakfast'
+
         col = pd.DataFrame({
             'breakfast': [0.2, 0.4, 0.8, 0.3, 0.7],
             '?breakfast': [1, 1, 1, 1, 1]
@@ -106,7 +110,7 @@ class TestCatTransformer(TestCase):
         })
 
         # Run
-        result = transformer.reverse_transform(col, col_meta, True)
+        result = transformer.reverse_transform(col)
 
         # Check
         assert result.equals(expected_result)
@@ -129,8 +133,8 @@ class TestCatTransformer(TestCase):
         # Check
         assert result == 1
 
-    def test_get_reverse_cat(self):
-        """get_reverse_cat return a function that returns the category from a numerical value."""
+    def test_get_category(self):
+        """get_category return the category from a numerical value."""
 
         # Setup
         original_column = pd.DataFrame({
@@ -144,8 +148,7 @@ class TestCatTransformer(TestCase):
         transformed_data = transformer.fit_transform(original_column, col_meta, False)
 
         # Run
-        converter = transformer.get_reverse_cat('breakfast')
-        result = transformed_data.apply(converter, axis=1)
+        result = transformer.get_category(transformed_data['breakfast'])
 
         # Check
         assert (result == original_column['breakfast']).all()
