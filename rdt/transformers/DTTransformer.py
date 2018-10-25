@@ -18,7 +18,20 @@ class DTTransformer(BaseTransformer):
         super().__init__(type='datetime', *args, **kwargs)
         self.default_val = None
 
-    def fit_transform(self, col, col_meta=None, missing=None):
+    def fit(self, col, col_meta=None, missing=None):
+        """Prepare the transformer to convert data.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+        Returns:
+            pandas.DataFrame
+        """
+        pass
+
+    def transform(self, col, col_meta=None, missing=None):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
