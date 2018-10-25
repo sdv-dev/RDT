@@ -48,12 +48,12 @@ class NumberTransformer(BaseTransformer):
             out[self.col_name] = out.apply(self.get_val, axis=1)
             return out
 
-        out = out.apply(self.get_val, axis=1)
+        out[self.col_name] = out.apply(self.get_val, axis=1)
 
         if self.subtype == 'int':
             out[self.col_name] = out[self.col_name].astype(int)
 
-        return out.to_frame(self.col_name)
+        return out
 
     def reverse_transform(self, col, col_meta=None, missing=None):
         """Converts data back into original format.
@@ -95,7 +95,12 @@ class NumberTransformer(BaseTransformer):
     def get_default_value(self, data):
         """ """
         col = data[self.col_name]
-        value = col[~col.isnull()].unique()[0]
+        uniques = col[~col.isnull()].unique()
+        if not len(uniques):
+            value = 0
+
+        else:
+            value = uniques[0]
 
         if self.subtype == 'integer':
             value = int(value)
