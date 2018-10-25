@@ -38,7 +38,7 @@ class BaseTransformer(object):
         Returns:
             pandas.DataFrame
         """
-        return self.fit_transform(col, col_meta, missing)
+        raise NotImplementedError
 
     def fit_transform(self, col, col_meta=None, missing=None):
         """Prepare the transformer to convert data and return the processed table.
