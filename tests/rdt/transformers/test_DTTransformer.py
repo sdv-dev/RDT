@@ -18,8 +18,6 @@ class TestDTTransformer(TestCase):
         with open('tests/data/datetime/missing.json') as f:
             self.missing_meta = json.load(f)
 
-        self.normal_data = self.normal_data[self.normal_meta['name']]
-        self.missing_data = self.missing_data[self.missing_meta['name']]
         self.transformer = DTTransformer()
 
     def test_fit_transform(self):
@@ -44,10 +42,12 @@ class TestDTTransformer(TestCase):
     def test_fit_transform_out_of_bounds(self):
         """Out of bounds values should be transformed too."""
         # Setup
-        out_of_bounds_data = pd.Series([
-            '2262-04-11 23:47:16.854775',
-            '2263-04-11 23:47:16.854776'
-        ])
+        out_of_bounds_data = pd.DataFrame({
+            'date_first_booking': [
+                '2262-04-11 23:47:16.854775',
+                '2263-04-11 23:47:16.854776'
+            ]
+        })
 
         expected_result = pd.Series([
             9.223386e+18,
@@ -79,7 +79,7 @@ class TestDTTransformer(TestCase):
             transformed[column_name], self.normal_meta, missing=False)
 
         # Check
-        assert result[column_name].equals(self.normal_data)
+        assert result.equals(self.normal_data)
 
     def test_reverse_transform_nan(self):
         """Checks that nans are handled correctly in reverse transformation"""
@@ -137,7 +137,7 @@ class TestDTTransformer(TestCase):
     def test_reverse_transform_missing(self):
         # Setup
         transformed = self.transformer.fit_transform(self.missing_data, self.missing_meta)
-        expected_result = self.missing_data
+        expected_result = self.missing_data['date_first_booking']
 
         # Run
         result = self.transformer.reverse_transform(transformed, self.missing_meta)
@@ -156,4 +156,4 @@ class TestDTTransformer(TestCase):
         reversed_data = transformer.reverse_transform(transformed_data, self.normal_meta)
 
         # Check
-        assert reversed_data['date_account_created'].equals(self.normal_data)
+        assert reversed_data.equals(self.normal_data)

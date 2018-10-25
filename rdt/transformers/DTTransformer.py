@@ -40,13 +40,13 @@ class DTTransformer(BaseTransformer):
 
         # cast to datetime
         date_format = col_meta['format']
-
-        casted_dates = pd.to_datetime(col, format=date_format, errors='coerce')
+        casted_dates = pd.to_datetime(col[self.col_name], format=date_format, errors='coerce')
 
         if len(casted_dates[casted_dates.isnull()]):
             # This will raise an error for bad formatted data
             # but not for out of bonds or missing dates.
-            col[casted_dates.isnull() & ~col.isnull()].apply(self.strptime_format(date_format))
+            slice_ = casted_dates.isnull() & ~col[self.col_name].isnull()
+            col[slice_][self.col_name].apply(self.strptime_format(date_format))
 
         out[self.col_name] = casted_dates
 

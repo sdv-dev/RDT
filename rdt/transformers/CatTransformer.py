@@ -19,8 +19,9 @@ class CatTransformer(BaseTransformer):
 
         col_meta = col_meta or self.col_meta
         self.check_data_type(col_meta)
+        self.col_name = col_meta['name']
 
-        column = col.replace({np.nan: np.inf})
+        column = col[self.col_name].replace({np.nan: np.inf})
         self.probability_map = column.groupby(column).count().rename({np.inf: None}).to_dict()
         # next set probability ranges on interval [0,1]
         cur = 0
@@ -51,11 +52,10 @@ class CatTransformer(BaseTransformer):
         self.check_data_type(col_meta)
 
         out = pd.DataFrame()
-        col_name = col_meta['name']
 
         # Make sure all nans are handled the same by replacing with None
-        column = col.replace({np.nan: None})
-        out[col_name] = column.apply(self.get_val)
+        column = col[self.col_name].replace({np.nan: None})
+        out[self.col_name] = column.apply(self.get_val)
         # Handle missing
 
         if missing:

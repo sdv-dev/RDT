@@ -141,7 +141,7 @@ class TestCatTransformer(TestCase):
             "type": "categorical"
         }
         transformer = CatTransformer()
-        transformed_data = transformer.fit_transform(original_column['breakfast'], col_meta, False)
+        transformed_data = transformer.fit_transform(original_column, col_meta, False)
 
         # Run
         converter = transformer.get_reverse_cat('breakfast')
@@ -154,11 +154,13 @@ class TestCatTransformer(TestCase):
         """Maps the values to probabilities."""
 
         # Setup
-        data = pd.Series(['A', 'B', 'A', 'B', 'B'])
         col_meta = {
             "name": "breakfast",
             "type": "categorical"
         }
+        data = pd.DataFrame({
+            'breakfast': ['A', 'B', 'A', 'B', 'B']
+        })
         transformer = CatTransformer()
 
         # Run
@@ -166,7 +168,7 @@ class TestCatTransformer(TestCase):
 
         # Check
         # Keys are unique values of initial data
-        assert set(transformer.probability_map.keys()) == set(data.unique())
+        assert set(transformer.probability_map.keys()) == set(data['breakfast'].unique())
 
         frequency = {  # The frequency of the values in data
             'A': 0.4,
@@ -190,7 +192,9 @@ class TestCatTransformer(TestCase):
         """Tests that nans are handled by fit_transform method."""
 
         # Setup
-        data = pd.Series([np.nan, 1, 5])
+        data = pd.DataFrame({
+            'breakfast': [np.nan, 1, 5]
+        })
         col_meta = {
             "name": "breakfast",
             "type": "categorical"
