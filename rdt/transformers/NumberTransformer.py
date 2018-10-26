@@ -50,7 +50,7 @@ class NumberTransformer(BaseTransformer):
         out = pd.DataFrame()
 
         # if are just processing child rows, then the name is already known
-        out[self.col_name] = col
+        out[self.col_name] = col[self.col_name]
 
         # Handle missing
         if missing:
