@@ -1,3 +1,5 @@
+import json
+import os
 from unittest import TestCase, skip
 
 import pandas as pd
@@ -48,6 +50,56 @@ class TestHyperTransformer(TestCase):
 
         # Run
         ht = HyperTransformer('tests/data/airbnb/airbnb_meta.json')
+
+        # Check
+        assert set(ht.table_dict.keys()) == {'users', 'sessions'}
+        assert ht.transformer_dict == expected_transformer_dict
+
+    def test___init__metadata_dict(self):
+        """On init, meta file is the only required argument, other attributes are setup."""
+        # Setup
+        expected_transformer_dict = {
+            ('users', 'id'): 'categorical',
+            ('users', 'date_account_created'): 'datetime',
+            ('users', 'timestamp_first_active'): 'datetime',
+            ('users', 'date_first_booking'): 'datetime',
+            ('users', 'gender'): 'categorical',
+            ('users', 'age'): 'number',
+            ('users', 'signup_method'): 'categorical',
+            ('users', 'signup_flow'): 'categorical',
+            ('users', 'language'): 'categorical',
+            ('users', 'affiliate_channel'): 'categorical',
+            ('users', 'affiliate_provider'): 'categorical',
+            ('users', 'first_affiliate_tracked'): 'categorical',
+            ('users', 'signup_app'): 'categorical',
+            ('users', 'first_device_type'): 'categorical',
+            ('users', 'first_browser'): 'categorical',
+            ('countries', 'country_destination'): 'categorical',
+            ('countries', 'lat_destination'): 'number',
+            ('countries', 'lng_destination'): 'number',
+            ('countries', 'distance_km'): 'number',
+            ('countries', 'destination_km2'): 'categorical',
+            ('countries', 'destination_language '): 'categorical',
+            ('countries', 'language_levenshtein_distance'): 'number',
+            ('sessions', 'user_id'): 'categorical',
+            ('sessions', 'action'): 'categorical',
+            ('sessions', 'action_type'): 'categorical',
+            ('sessions', 'action_detail'): 'categorical',
+            ('sessions', 'device_type'): 'categorical',
+            ('sessions', 'secs_elapsed'): 'number',
+            ('age_gender_bkts', 'age_bucket'): 'categorical',
+            ('age_gender_bkts', 'country_destination'): 'categorical',
+            ('age_gender_bkts', 'gender'): 'categorical',
+            ('age_gender_bkts', 'population_in_thousands'): 'number',
+            ('age_gender_bkts', 'year'): 'datetime'
+        }
+
+        # Run
+        path = 'tests/data/airbnb/airbnb_meta.json'
+        dir_name = os.path.dirname(path)
+        with open(path, 'r') as f:
+            metadata = json.load(f)
+        ht = HyperTransformer(metadata, dir_name)
 
         # Check
         assert set(ht.table_dict.keys()) == {'users', 'sessions'}
