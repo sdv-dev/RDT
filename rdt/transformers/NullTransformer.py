@@ -12,7 +12,18 @@ class NullTransformer(BaseTransformer):
         super().__init__(type=['datetime', 'number'], *args, **kwargs)
 
     def fit(self, col, col_meta, *args):
-        return
+        self.col_name = col_meta['name']
+        self.new_name = '?' + self.col_name
+
+        if isinstance(col, pd.DataFrame):
+            col = col[self.col_name]
+
+        mean = col.mean()
+
+        if not pd.isnull(mean) and col_meta['type'] == 'number':
+            self.default_value = mean
+        else:
+            self.default_value = 0
 
     def transform(self, col, col_meta, *args):
         """Prepare the transformer to convert data and return the processed table.
@@ -25,24 +36,9 @@ class NullTransformer(BaseTransformer):
         Returns:
             pandas.DataFrame
         """
-        out = pd.DataFrame(columns=[])
-        self.col_name = col_meta['name']
-
-        # create an extra column for missing values if they exist in the data
-        new_name = '?' + self.col_name
-        out[new_name] = (pd.notnull(col) * 1).astype(int)
-
-        if isinstance(col, pd.DataFrame):
-            null_mean = pd.isnull(col.mean()).all()
-        else:
-            null_mean = pd.isnull(col.mean())
-        # replace missing values
-        if col_meta['type'] == 'number' and not null_mean:
-            clean_col = col.fillna(col.mean())
-        else:
-            clean_col = col.fillna(0)
-
-        out[self.col_name] = clean_col
+        out = pd.DataFrame()
+        out[self.new_name] = (pd.notnull(col) * 1).astype(int)
+        out[self.col_name] = col.fillna(self.default_value)
         return out
 
     def reverse_transform(self, col, col_meta):
@@ -56,29 +52,10 @@ class NullTransformer(BaseTransformer):
         Returns:
             pandas.DataFrame
         """
-        output = pd.DataFrame(columns=[])
+        output = pd.DataFrame()
         col_name = col_meta['name']
-        fn = self.get_null_converter(col_name)
-        output[col_name] = col.apply(fn, axis=1)
+        new_name = '?' + col_name
+
+        col.loc[col[new_name] == 0, col_name] = np.nan
+        output[col_name] = col[col_name]
         return output
-
-    def get_null_converter(self, col_name):
-        """Return a function that take a row replaces it with null if it's supposed to be missing.
-
-        Args:
-            col_name(str): Name of the column.
-
-        Returns:
-            function
-        """
-
-        def nullify(x):
-            val = x[col_name]
-            try:
-                if x['?' + col_name] == 0:
-                    return np.nan
-            except Exception as inst:
-                print(inst)
-            return val
-
-        return nullify
