@@ -4,7 +4,6 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from dateutil import parser
 
 from rdt.transformers.BaseTransformer import BaseTransformer
 from rdt.transformers.NullTransformer import NullTransformer
@@ -111,7 +110,7 @@ class DTTransformer(BaseTransformer):
 
     def safe_datetime_cast(self, col, col_meta):
         """Parses string values into datetime.
-        
+
         Args:
             col(pandas.DataFrame): Data to transform.
             col_meta(dict): Meta information of the column.
