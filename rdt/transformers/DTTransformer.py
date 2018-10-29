@@ -89,6 +89,9 @@ class DTTransformer(BaseTransformer):
         col_meta = col_meta or self.col_meta
         missing = missing if missing is not None else self.missing
 
+        if isinstance(col, pd.Series):
+            col = col.to_frame()
+
         self.check_data_type(col_meta)
 
         output = pd.DataFrame()
@@ -141,7 +144,7 @@ class DTTransformer(BaseTransformer):
         result = pd.Series(index=data.index)
         _slice = ~data[self.col_name].isnull()
 
-        result[_slice] = data[_slice][self.col_name].apply(datetime.timestamp) * 1e9
+        result[_slice] = data[_slice][self.col_name].astype('int64')
         return result
 
     def get_date_converter(self, col_name, date_format):
