@@ -95,7 +95,12 @@ class NumberTransformer(BaseTransformer):
     def get_default_value(self, data):
         """ """
         col = data[self.col_name]
-        value = col[~col.isnull()].unique()[0]
+        uniques = col[~col.isnull()].unique()
+        if not len(uniques):
+            value = 0
+
+        else:
+            value = uniques[0]
 
         if self.subtype == 'integer':
             value = int(value)
