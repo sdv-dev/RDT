@@ -36,9 +36,9 @@ class NullTransformer(BaseTransformer):
         Returns:
             pandas.DataFrame
         """
-        out = pd.DataFrame()
-        out[self.new_name] = (pd.notnull(col) * 1).astype(int)
+        out = pd.DataFrame(index=col.index)
         out[self.col_name] = col.fillna(self.default_value)
+        out[self.new_name] = (pd.notnull(col) * 1).astype(int)
         return out
 
     def reverse_transform(self, col, col_meta):
