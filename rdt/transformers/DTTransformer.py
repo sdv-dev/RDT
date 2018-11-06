@@ -4,7 +4,6 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
-from dateutil import parser
 
 from rdt.transformers.BaseTransformer import BaseTransformer
 from rdt.transformers.NullTransformer import NullTransformer
@@ -18,7 +17,28 @@ class DTTransformer(BaseTransformer):
         super().__init__(type='datetime', *args, **kwargs)
         self.default_val = None
 
-    def fit_transform(self, col, col_meta=None, missing=None):
+    def fit(self, col, col_meta=None, missing=None):
+        """Prepare the transformer to convert data.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+        Returns:
+            None
+        """
+        col_meta = col_meta or self.col_meta
+        missing = missing if missing is not None else self.missing
+
+        self.check_data_type(col_meta)
+        self.col_name = col_meta['name']
+
+        # get default val
+        dates = self.safe_datetime_cast(col, col_meta)
+        self.default_val = dates.groupby(dates).count().index[0].timestamp() * 1e9
+
+    def transform(self, col, col_meta=None, missing=None):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
@@ -36,25 +56,8 @@ class DTTransformer(BaseTransformer):
         self.check_data_type(col_meta)
 
         out = pd.DataFrame()
-        self.col_name = col_meta['name']
-
-        # cast to datetime
-        date_format = col_meta['format']
-        casted_dates = pd.to_datetime(col[self.col_name], format=date_format, errors='coerce')
-
-        if len(casted_dates[casted_dates.isnull()]):
-            # This will raise an error for bad formatted data
-            # but not for out of bonds or missing dates.
-            slice_ = casted_dates.isnull() & ~col[self.col_name].isnull()
-            col[slice_][self.col_name].apply(self.strptime_format(date_format))
-
-        out[self.col_name] = casted_dates
-
-        # get default val
-        val = out.groupby(self.col_name).count().index[0].timetuple()
-        self.default_val = time.mktime(val) * 1e9
-
-        out = out.apply(self.get_val, axis=1)
+        out[self.col_name] = self.safe_datetime_cast(col, col_meta)
+        out[self.col_name] = self.to_timestamp(out)
 
         # Handle missing
         if missing:
@@ -62,7 +65,7 @@ class DTTransformer(BaseTransformer):
             res = nt.fit_transform(out, col_meta)
             return res
 
-        return out.to_frame(self.col_name)
+        return out
 
     @staticmethod
     def strptime_format(date_format):
@@ -86,42 +89,63 @@ class DTTransformer(BaseTransformer):
         col_meta = col_meta or self.col_meta
         missing = missing if missing is not None else self.missing
 
+        if isinstance(col, pd.Series):
+            col = col.to_frame()
+
         self.check_data_type(col_meta)
 
         output = pd.DataFrame()
         date_format = col_meta['format']
-        col_name = col_meta['name']
-        fn = self.get_date_converter(col_name, date_format)
+
+        fn = self.get_date_converter(self.col_name, date_format)
+        reversed_column = col.apply(fn, axis=1)
 
         if missing:
-            new_col = col.apply(fn, axis=1)
-            new_col = new_col.rename(col_name)
-            data = pd.concat([new_col, col['?' + col_name]], axis=1)
+            reversed_column = reversed_column.rename(self.col_name)
+            data = pd.concat([reversed_column, col['?' + self.col_name]], axis=1)
             nt = NullTransformer()
-            output[col_name] = nt.reverse_transform(data, col_meta)
+            output[self.col_name] = nt.reverse_transform(data, col_meta)
 
         else:
-            data = col.to_frame()
-            output[col_name] = data.apply(fn, axis=1)
+            output[self.col_name] = reversed_column
 
         return output
 
-    def get_val(self, x):
-        """Convert datetime to number.
+    def safe_datetime_cast(self, col, col_meta):
+        """Parses string values into datetime.
 
         Args:
-            x(pandas.Series/dict): Row of data
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
 
         Returns:
-            float
+            pandas.Series
         """
-        try:
-            tmp = parser.parse(str(x[self.col_name])).timetuple()
-            return time.mktime(tmp) * 1e9
+        date_format = col_meta['format']
+        casted_dates = pd.to_datetime(col[self.col_name], format=date_format, errors='coerce')
 
-        except Exception:
-            # use default value
-            return np.nan
+        if len(casted_dates[casted_dates.isnull()]):
+            # This will raise an error for bad formatted data
+            # but not for out of bonds or missing dates.
+            slice_ = casted_dates.isnull() & ~col[self.col_name].isnull()
+            col[slice_][self.col_name].apply(self.strptime_format(date_format))
+
+        return casted_dates
+
+    def to_timestamp(self, data):
+        """Transform a datetime series into linux epoch.
+
+        Args:
+            data(pandas.DataFrame): DataFrame containins a column named as `self.col_name`.
+
+        Returns:
+            pandas.Series
+        """
+        result = pd.Series(index=data.index)
+        _slice = ~data[self.col_name].isnull()
+
+        result[_slice] = data[_slice][self.col_name].astype('int64')
+        return result
 
     def get_date_converter(self, col_name, date_format):
         """Return a function that takes in an integer representing ms and return a string date.

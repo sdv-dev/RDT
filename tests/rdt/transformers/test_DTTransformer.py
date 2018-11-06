@@ -70,18 +70,45 @@ class TestDTTransformer(TestCase):
     def test_reverse_transform(self):
         """reverse_transform reverse fit_transforms."""
         # Setup
-        column_name = self.normal_meta['name']
         transformed = self.transformer.fit_transform(
             self.normal_data, self.normal_meta, missing=False)
 
         # Run
         result = self.transformer.reverse_transform(
-            transformed[column_name], self.normal_meta, missing=False)
+            transformed, self.normal_meta, missing=False)
 
         # Check
         assert result.equals(self.normal_data)
 
-    def test_reverse_transform_nan(self):
+    def test_reverse_transform_nan_dataframe(self):
+        """Checks that nans are handled correctly in reverse transformation"""
+
+        # Setup
+        transformed = pd.DataFrame({
+            'date_account_created': [
+                1.3885524e+18,
+                1.3885524e+18,
+                1.3887252e+18,
+                1.3887252e+18,
+                np.nan
+            ],
+        })
+        expected_result = pd.DataFrame({'date_account_created': [
+            '01/01/14',
+            '01/01/14',
+            '01/03/14',
+            '01/03/14',
+            '01/01/14'
+        ]})
+        self.transformer.fit_transform(self.normal_data, self.normal_meta)
+
+        # Run
+        result = self.transformer.reverse_transform(transformed, self.normal_meta, False)
+
+        # Check
+        assert result.equals(expected_result)
+
+    def test_reverse_transform_nan_series(self):
         """Checks that nans are handled correctly in reverse transformation"""
 
         # Setup
@@ -92,16 +119,17 @@ class TestDTTransformer(TestCase):
                 1.3887252e+18,
                 1.3887252e+18,
                 np.nan
-            ],
-            name='date_account_created'
+            ], name='date_account_created'
         )
-        expected_result = pd.DataFrame({'date_account_created': [
-            '01/01/14',
-            '01/01/14',
-            '01/03/14',
-            '01/03/14',
-            '01/01/14'
-        ]})
+        expected_result = pd.DataFrame({
+            'date_account_created': [
+                '01/01/14',
+                '01/01/14',
+                '01/03/14',
+                '01/03/14',
+                '01/01/14'
+            ]
+        })
         self.transformer.fit_transform(self.normal_data, self.normal_meta)
 
         # Run

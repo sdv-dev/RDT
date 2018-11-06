@@ -14,7 +14,27 @@ class CatTransformer(BaseTransformer):
         super().__init__(type='categorical', *args, **kwargs)
         self.probability_map = {}  # val -> ((a,b), mean, std)
 
-    def fit_transform(self, col, col_meta=None, missing=None):
+    def fit(self, col, col_meta=None, missing=None):
+        """Maps each unique value to probability of seeing it."""
+
+        col_meta = col_meta or self.col_meta
+        self.check_data_type(col_meta)
+        self.col_name = col_meta['name']
+
+        column = col[self.col_name].replace({np.nan: np.inf})
+        self.probability_map = column.groupby(column).count().rename({np.inf: None}).to_dict()
+        # next set probability ranges on interval [0,1]
+        cur = 0
+        num_vals = len(col)
+        for val in self.probability_map:
+            prob = self.probability_map[val] / num_vals
+            interval = (cur, cur + prob)
+            cur = cur + prob
+            mean = np.mean(interval)
+            std = (interval[1] - interval[0]) / 6
+            self.probability_map[val] = (interval, mean, std)
+
+    def transform(self, col, col_meta=None, missing=None):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
@@ -32,8 +52,6 @@ class CatTransformer(BaseTransformer):
         self.check_data_type(col_meta)
 
         out = pd.DataFrame()
-        self.col_name = col_meta['name']
-        self.get_probability_map(col)
 
         # Make sure all nans are handled the same by replacing with None
         column = col[self.col_name].replace({np.nan: None})
@@ -58,25 +76,22 @@ class CatTransformer(BaseTransformer):
         Returns:
             pandas.DataFrame
         """
-
         col_meta = col_meta or self.col_meta
         missing = missing if missing is not None else self.missing
 
         self.check_data_type(col_meta)
 
         output = pd.DataFrame()
-        col_name = col_meta['name']
-        fn = self.get_reverse_cat(col_name)
-        new_col = col.apply(fn, axis=1)
+        new_col = self.get_category(col[self.col_name])
 
         if missing:
-            new_col = new_col.rename(col_name)
-            data = pd.concat([new_col, col['?' + col_name]], axis=1)
+            new_col = new_col.rename(self.col_name)
+            data = pd.concat([new_col, col['?' + self.col_name]], axis=1)
             nt = NullTransformer()
-            output[col_name] = nt.reverse_transform(data, col_meta)
+            output[self.col_name] = nt.reverse_transform(data, col_meta)
 
         else:
-            output[col_name] = new_col
+            output[self.col_name] = new_col
 
         return output
 
@@ -86,33 +101,19 @@ class CatTransformer(BaseTransformer):
         new_val = norm.rvs(mean, std)
         return new_val
 
-    def get_reverse_cat(self, col_name):
-        """Returns a converter that takes in a value and turns it back into a category."""
+    def get_category(self, column):
+        """Returns categories for the specified numeric values
 
-        def reverse_cat(x):
-            res = None
+        Args:
+            column(pandas.Series): Values to transform into categories
 
-            for val in self.probability_map:
-                interval = self.probability_map[val][0]
-                if x[col_name] >= interval[0] and x[col_name] < interval[1]:
-                    return val
+        Returns:
+            pandas.Series
+        """
+        result = pd.Series(index=column.index)
 
-            if res is None:
-                return list(self.probability_map.keys())[0]
+        for category, stats in self.probability_map.items():
+            start, end = stats[0]
+            result[(start < column) & (column < end)] = category
 
-        return reverse_cat
-
-    def get_probability_map(self, col):
-        """Maps each unique value to probability of seeing it."""
-        column = col[self.col_name].replace({np.nan: np.inf})
-        self.probability_map = column.groupby(column).count().rename({np.inf: None}).to_dict()
-        # next set probability ranges on interval [0,1]
-        cur = 0
-        num_vals = len(col)
-        for val in self.probability_map:
-            prob = self.probability_map[val] / num_vals
-            interval = (cur, cur + prob)
-            cur = cur + prob
-            mean = np.mean(interval)
-            std = (interval[1] - interval[0]) / 6
-            self.probability_map[val] = (interval, mean, std)
+        return result
