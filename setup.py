@@ -10,9 +10,9 @@ with open('HISTORY.md') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'numpy==1.13.1',
-    'pandas==0.22.0',
-    'scipy==0.19.1',
+    'numpy==1.15.4',
+    'pandas==0.23.4',
+    'scipy==1.1.0',
 ]
 
 setup_requires = [
@@ -49,6 +49,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     description="A repository with reversible data transforms",
     extras_require={
