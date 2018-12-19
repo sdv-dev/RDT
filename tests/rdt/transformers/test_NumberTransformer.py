@@ -50,10 +50,12 @@ class TestNumberTransformer(unittest.TestCase):
             "subtype": "integer",
         }
         transformer = NumberTransformer()
-        expected_result = pd.DataFrame({
-            'age': [62, 27, 46, 34, 62],
-            '?age': [1, 1, 0, 1, 1]
-        })
+        expected_result = pd.DataFrame(
+            {
+                'age': [62, 27, 46, 34, 62],
+                '?age': [1, 1, 0, 1, 1]
+            },
+            columns=['age', '?age'])
 
         # Run
         result = transformer.fit_transform(col, col_meta, True)

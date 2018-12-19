@@ -47,7 +47,7 @@ class NumberTransformer(BaseTransformer):
         missing = missing if missing is not None else self.missing
         self.check_data_type(col_meta)
 
-        out = pd.DataFrame()
+        out = pd.DataFrame(index=col.index)
 
         # if are just processing child rows, then the name is already known
         out[self.col_name] = col[self.col_name]
@@ -83,7 +83,7 @@ class NumberTransformer(BaseTransformer):
 
         self.check_data_type(col_meta)
 
-        output = pd.DataFrame(columns=[])
+        output = pd.DataFrame(index=col.index)
         subtype = col_meta['subtype']
         col_name = col_meta['name']
         fn = self.get_number_converter(col_name, subtype)

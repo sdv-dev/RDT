@@ -163,7 +163,7 @@ class TestHyperTransformer(TestCase):
                 '?age': [1, 0, 0, 0, 0],
                 'age': [62, 62, 62, 62, 62]
             },
-            columns=['?age', 'age']
+            columns=['age', '?age']
         )
 
         # Run

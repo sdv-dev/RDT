@@ -27,10 +27,13 @@ class TestNullTransformer(unittest.TestCase):
         }
         transformer = NullTransformer()
 
-        expected_result = pd.DataFrame({
-            'age': [62.0, 62.0, 62.0, 62.0, 62.0],
-            '?age': [1, 0, 0, 0, 0]
-        })
+        expected_result = pd.DataFrame(
+            {
+                'age': [62.0, 62.0, 62.0, 62.0, 62.0],
+                '?age': [1, 0, 0, 0, 0]
+            },
+            columns=['age', '?age']
+        )
 
         # Run
         result = transformer.fit_transform(col, col_meta)
@@ -49,10 +52,13 @@ class TestNullTransformer(unittest.TestCase):
         }
         transformer = NullTransformer()
 
-        expected_result = pd.DataFrame({
-            'age': [62.0, 53.0, 53.0, 45.0, 53.25],
-            '?age': [1, 1, 1, 1, 0]
-        })
+        expected_result = pd.DataFrame(
+            {
+                'age': [62.0, 53.0, 53.0, 45.0, 53.25],
+                '?age': [1, 1, 1, 1, 0]
+            },
+            columns=['age', '?age']
+        )
 
         # Run
         result = transformer.fit_transform(col, col_meta)

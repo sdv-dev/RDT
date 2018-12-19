@@ -94,7 +94,7 @@ class DTTransformer(BaseTransformer):
 
         self.check_data_type(col_meta)
 
-        output = pd.DataFrame()
+        output = pd.DataFrame(index=col.index)
         date_format = col_meta['format']
 
         fn = self.get_date_converter(self.col_name, date_format)
