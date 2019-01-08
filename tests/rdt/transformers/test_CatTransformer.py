@@ -279,7 +279,7 @@ class TestCatTransformer(TestCase):
         result = transformer.fit_transform(data)
 
         # Check
-        assert list(transformer.probability_map.keys()) == ['Anthony', 'Charles', 'Mark']
+        assert set(transformer.probability_map.keys()) == set(['Anthony', 'Charles', 'Mark'])
         assert result.shape == data.shape
 
     def test_anonimize_not_reversible(self):
