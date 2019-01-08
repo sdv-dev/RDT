@@ -42,7 +42,7 @@ class CatTransformer(BaseTransformer):
         try:
             return getattr(faker, self.category)
 
-        except AttributeError as e:
+        except AttributeError:
             raise ValueError('Category {} couldn\'t be found on faker')
 
     def anonimize_column(self, col, col_meta):
