@@ -1,7 +1,9 @@
-from unittest import TestCase, mock, skip
+from unittest import TestCase, skip
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
+from faker import Faker
 
 from rdt.transformers.CatTransformer import CatTransformer
 
@@ -9,7 +11,7 @@ from rdt.transformers.CatTransformer import CatTransformer
 class TestCatTransformer(TestCase):
 
     def test___init__(self):
-        """After parent init set type and probability_map."""
+        """On init, anonimize and category args are set as attributes."""
 
         # Run
         transformer = CatTransformer()
@@ -17,6 +19,49 @@ class TestCatTransformer(TestCase):
         # Check
         assert transformer.type == 'categorical'
         assert transformer.probability_map == {}
+        assert transformer.anonimize is False
+        assert transformer.category is None
+
+    def test___init___anonimize_without_category_raises(self):
+        """On init, if anonimize is True, category is required."""
+        # Run / Check
+        with self.assertRaises(ValueError):
+            CatTransformer(anonimize=True)
+
+    def test___init___category_not_suported_raises(self):
+        """On init, if anonimize is True and category is not supported, and exception raises."""
+        # Run / Check
+        with self.assertRaises(ValueError):
+            CatTransformer(anonimize=True, category='blabla')
+
+    @patch('rdt.transformers.CatTransformer.Faker')
+    def test_get_generator(self, faker_mock):
+        """get_generator return a function to create new values for a category."""
+        # Setup
+        transformer = CatTransformer(anonimize=True, category='first_name')
+        faker_instance = MagicMock(spec=Faker())
+        faker_mock.return_value = faker_instance
+
+        expected_call_args_list = [(), ()]
+
+        # Run
+        result = transformer.get_generator()
+
+        # Check
+        assert faker_mock.call_args_list == expected_call_args_list
+        assert result == faker_instance.first_name
+
+    @patch('rdt.transformers.CatTransformer.Faker')
+    def test_get_generator_raises_unsupported(self, faker_mock):
+        """If the category is not supported, raise an exception."""
+        # Setup
+        transformer = CatTransformer(anonimize=True, category='superhero_identities')
+        faker_instance = MagicMock(spec=Faker())
+        faker_mock.return_value = faker_instance
+
+        # Run / Check
+        with self.assertRaises(ValueError):
+            transformer.get_generator()
 
     @skip("https://github.com/HDI-Project/RDT/issues/25")
     def test_fit_transform(self):
@@ -115,7 +160,7 @@ class TestCatTransformer(TestCase):
         # Check
         assert result.equals(expected_result)
 
-    @mock.patch('scipy.stats.norm.rvs')
+    @patch('scipy.stats.norm.rvs')
     def test_get_val(self, rvs_mock):
         """Checks the random value."""
 
@@ -210,3 +255,55 @@ class TestCatTransformer(TestCase):
         # Check
         # The nan value in the data should be in probability map
         assert None in transformer.probability_map
+
+    @patch('rdt.transformers.CatTransformer.Faker')
+    def test_fit_transform_anonimize(self, faker_mock):
+        """If anonimize is True the values are replaced before generating probability_map."""
+        # Setup
+        col_meta = {
+            'name': 'first_name',
+            'type': 'categorical'
+        }
+        transformer = CatTransformer(
+            col_meta=col_meta, missing=False, anonimize=True, category='first_name')
+
+        data = pd.DataFrame({
+            'first_name': ['Albert', 'John', 'Michael']
+        })
+
+        faker_instance = MagicMock()
+        faker_instance.first_name.side_effect = ['Anthony', 'Charles', 'Mark']
+        faker_mock.return_value = faker_instance
+
+        # Run
+        result = transformer.fit_transform(data)
+
+        # Check
+        assert list(transformer.probability_map.keys()) == ['Anthony', 'Charles', 'Mark']
+        assert result.shape == data.shape
+
+    def test_anonimize_not_reversible(self):
+        """If anonimize is True the operation is not reversible. """
+        # Setup
+        col_meta = {
+            'name': 'first_name',
+            'type': 'categorical'
+        }
+        transformer = CatTransformer(col_meta=col_meta, missing=False)
+        anon_transformer = CatTransformer(
+            col_meta=col_meta, missing=False, anonimize=True, category='first_name')
+
+        data = pd.DataFrame({
+            'first_name': ['Albert', 'John', 'Michael']
+        })
+
+        # Run
+        transformed = transformer.fit_transform(data)
+        reverse_transformed = transformer.reverse_transform(transformed)
+
+        transformed_anonimized = anon_transformer.fit_transform(data)
+        reverse_transformed_anonimized = anon_transformer.reverse_transform(transformed_anonimized)
+
+        # Check
+        assert data.equals(reverse_transformed)
+        assert not data.equals(reverse_transformed_anonimized)

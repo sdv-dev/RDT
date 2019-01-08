@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from faker import Faker
 from scipy.stats import norm
 
 from rdt.transformers.BaseTransformer import BaseTransformer
@@ -7,16 +8,78 @@ from rdt.transformers.NullTransformer import NullTransformer
 
 
 class CatTransformer(BaseTransformer):
-    """Transformer for categorical data."""
+    """Transformer for categorical data.
 
-    def __init__(self, *args, **kwargs):
+    Args:
+        col_meta(dict): Meta information of the column.
+        missing(bool): Wheter or not handle missing values using NullTransformer.
+        anonimize (bool): Wheter or not replace the values of col before generating the
+                          categorical_map.
+
+        category (str): The type of data to ask faker for when anonimizing.
+
+    """
+    Faker = Faker
+
+    def __init__(self, anonimize=False, category=None, *args, **kwargs):
         """Initialize transformer."""
         super().__init__(type='categorical', *args, **kwargs)
-        self.probability_map = {}  # val -> ((a,b), mean, std)
+
+        if anonimize and not category:
+            raise ValueError('`category` must be specified if `anonimize` is True')
+
+        self.anonimize = anonimize
+        self.category = category
+        self.probability_map = {}
+
+        if self.anonimize and self.category:
+            self.get_generator()
+
+    def get_generator(self):
+        """Return the generator object to anonimize data."""
+        faker = self.Faker()
+
+        try:
+            return getattr(faker, self.category)
+
+        except AttributeError as e:
+            raise ValueError('Category {} couldn\'t be found on faker')
+
+    def anonimize_column(self, col, col_meta):
+        """ """
+
+        col_meta = col_meta or self.col_meta
+        self.check_data_type(col_meta)
+        self.col_name = col_meta['name']
+        column = col[self.col_name]
+
+        generator = self.get_generator()
+        original_values = column[~pd.isnull(column)].unique()
+        new_values = [generator() for x in range(len(original_values))]
+
+        if len(new_values) != len(set(new_values)):
+            raise ValueError(
+                'There are not enought different values on faker provider'
+                'for category {}'.format(self.category)
+            )
+
+        value_map = dict(zip(original_values, new_values))
+        column = column.apply(value_map.get)
+
+        return column.to_frame()
 
     def fit(self, col, col_meta=None, missing=None):
         """Maps each unique value to probability of seeing it."""
 
+        if self.anonimize:
+            raise ValueError(
+                '`fit` method is disabled when `anonimize` is True, '
+                'please use fit_transform instead'
+            )
+        self._fit(col, col_meta, missing)
+
+    def _fit(self, col, col_meta=None, missing=None):
+        """ """
         col_meta = col_meta or self.col_meta
         self.check_data_type(col_meta)
         self.col_name = col_meta['name']
@@ -64,6 +127,24 @@ class CatTransformer(BaseTransformer):
             return res
 
         return out
+
+    def fit_transform(self, col, col_meta=None, missing=None):
+        """Prepare the transformer to convert data and return the processed table.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+
+        Returns:
+            pandas.DataFrame
+        """
+        if self.anonimize:
+            col = self.anonimize_column(col, col_meta)
+
+        self._fit(col, col_meta, missing)
+        return self.transform(col, col_meta, missing)
 
     def reverse_transform(self, col, col_meta=None, missing=None):
         """Converts data back into original format.
