@@ -21,9 +21,6 @@ class BaseTransformer(object):
             col(pandas.DataFrame): Data to transform.
             col_meta(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
-
-        Returns:
-            pandas.DataFrame
         """
         raise NotImplementedError
 

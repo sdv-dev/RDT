@@ -22,6 +22,7 @@ class CatTransformer(BaseTransformer):
 
     def __init__(self, anonimize=False, category=None, *args, **kwargs):
         """Initialize transformer."""
+
         super().__init__(type='categorical', *args, **kwargs)
 
         if anonimize and not category:
@@ -36,6 +37,7 @@ class CatTransformer(BaseTransformer):
 
     def get_generator(self):
         """Return the generator object to anonimize data."""
+
         faker = Faker()
 
         try:
@@ -45,7 +47,24 @@ class CatTransformer(BaseTransformer):
             raise ValueError('Category {} couldn\'t be found on faker')
 
     def anonimize_column(self, col, col_meta):
-        """ """
+        """Map the values of column to new ones of the same type.
+
+        It replaces the values from others generated using `faker`. It will however,
+        keep the original distribution. That mean that the generated `probability_map` for both
+        will have the same values, but different keys.
+
+        Args:
+            col (pandas.DataFrame): Dataframe containing the column to anonimize.
+            col_meta (dict): Meta information of the column.
+
+        Returns:
+            pd.DataFrame: DataFrame with its values mapped to new ones,
+                          keeping the original distribution.
+
+        Raises:
+            ValueError: A `ValueError` is raised if faker is not able to provide enought
+                        different values.
+        """
 
         col_meta = col_meta or self.col_meta
         self.check_data_type(col_meta)
@@ -68,7 +87,19 @@ class CatTransformer(BaseTransformer):
         return column.to_frame()
 
     def fit(self, col, col_meta=None, missing=None):
-        """Maps each unique value to probability of seeing it."""
+        """Prepare the transfomer to process data.
+
+        This method exist only to enforce the usage of `fit_transform` if `anonimize` is True.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+
+        Raises:
+            ValueError: If this method is called and `anonimize` is True.
+
+        """
 
         if self.anonimize:
             raise ValueError(
@@ -78,7 +109,14 @@ class CatTransformer(BaseTransformer):
         self._fit(col, col_meta, missing)
 
     def _fit(self, col, col_meta=None, missing=None):
-        """ """
+        """Prepare the transfomer to process data.
+
+        Args:
+            col(pandas.DataFrame): Data to transform.
+            col_meta(dict): Meta information of the column.
+            missing(bool): Wheter or not handle missing values using NullTransformer.
+        """
+
         col_meta = col_meta or self.col_meta
         self.check_data_type(col_meta)
         self.col_name = col_meta['name']
@@ -128,17 +166,17 @@ class CatTransformer(BaseTransformer):
         return out
 
     def fit_transform(self, col, col_meta=None, missing=None):
-        """Prepare the transformer to convert data and return the processed table.
+        """Prepare the transformer and return processed data.
 
         Args:
             col(pandas.DataFrame): Data to transform.
             col_meta(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
-
         Returns:
             pandas.DataFrame
         """
+
         if self.anonimize:
             col = self.anonimize_column(col, col_meta)
 
