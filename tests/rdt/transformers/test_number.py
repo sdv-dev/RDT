@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.NumberTransformer import NumberTransformer
+from rdt.transformers.number import NumberTransformer
 
 
 class TestNumberTransformer(unittest.TestCase):

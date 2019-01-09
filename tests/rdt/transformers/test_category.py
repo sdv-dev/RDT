@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from faker import Faker
 
-from rdt.transformers.CatTransformer import CatTransformer
+from rdt.transformers.category import CatTransformer
 
 
 class TestCatTransformer(TestCase):
@@ -34,7 +34,7 @@ class TestCatTransformer(TestCase):
         with self.assertRaises(ValueError):
             CatTransformer(anonimize=True, category='blabla')
 
-    @patch('rdt.transformers.CatTransformer.Faker')
+    @patch('rdt.transformers.category.Faker')
     def test_get_generator(self, faker_mock):
         """get_generator return a function to create new values for a category."""
         # Setup
@@ -51,7 +51,7 @@ class TestCatTransformer(TestCase):
         assert faker_mock.call_args_list == expected_call_args_list
         assert result == faker_instance.first_name
 
-    @patch('rdt.transformers.CatTransformer.Faker')
+    @patch('rdt.transformers.category.Faker')
     def test_get_generator_raises_unsupported(self, faker_mock):
         """If the category is not supported, raise an exception."""
         # Setup
@@ -256,7 +256,7 @@ class TestCatTransformer(TestCase):
         # The nan value in the data should be in probability map
         assert None in transformer.probability_map
 
-    @patch('rdt.transformers.CatTransformer.Faker')
+    @patch('rdt.transformers.category.Faker')
     def test_fit_transform_anonimize(self, faker_mock):
         """If anonimize is True the values are replaced before generating probability_map."""
         # Setup

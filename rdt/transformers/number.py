@@ -3,8 +3,8 @@ import sys
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.BaseTransformer import BaseTransformer
-from rdt.transformers.NullTransformer import NullTransformer
+from rdt.transformers.base import BaseTransformer
+from rdt.transformers.null import NullTransformer
 
 
 class NumberTransformer(BaseTransformer):

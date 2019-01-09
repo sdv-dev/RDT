@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.BaseTransformer import BaseTransformer
+from rdt.transformers.base import BaseTransformer
 
 
 class NullTransformer(BaseTransformer):

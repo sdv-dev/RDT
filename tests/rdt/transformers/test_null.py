@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.NullTransformer import NullTransformer
+from rdt.transformers.null import NullTransformer
 
 
 class TestNullTransformer(unittest.TestCase):

@@ -3,8 +3,8 @@ import pandas as pd
 from faker import Faker
 from scipy.stats import norm
 
-from rdt.transformers.BaseTransformer import BaseTransformer
-from rdt.transformers.NullTransformer import NullTransformer
+from rdt.transformers.base import BaseTransformer
+from rdt.transformers.null import NullTransformer
 
 
 class CatTransformer(BaseTransformer):
@@ -19,7 +19,6 @@ class CatTransformer(BaseTransformer):
         category (str): The type of data to ask faker for when anonimizing.
 
     """
-    Faker = Faker
 
     def __init__(self, anonimize=False, category=None, *args, **kwargs):
         """Initialize transformer."""
@@ -37,7 +36,7 @@ class CatTransformer(BaseTransformer):
 
     def get_generator(self):
         """Return the generator object to anonimize data."""
-        faker = self.Faker()
+        faker = Faker()
 
         try:
             return getattr(faker, self.category)
