@@ -10,42 +10,34 @@ from rdt.transformers.null import NullTransformer
 class NumberTransformer(BaseTransformer):
     """Transformer for numerical data."""
 
+    type = 'number'
+
     def __init__(self, *args, **kwargs):
         """Initialize transformer."""
-        super().__init__(type='number', *args, **kwargs)
+        super().__init__(*args, **kwargs)
+        self.subtype = self.column_metadata['subtype']
         self.default_val = None
-        self.subtype = None
 
-    def fit(self, col, column_metadata=None, missing=None):
-        """Prepare the transformer to convert data.
+    def fit(self, col):
+        """Sets the default value.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            column_metadata(dict): Meta information of the column.
-            missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
-        self.col_name = column_metadata['name']
-        self.subtype = column_metadata['subtype']
         self.default_val = self.get_default_value(col)
 
-    def transform(self, col, column_metadata=None, missing=None):
+    def transform(self, col):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            column_metadata(dict): Meta information of the column.
-            missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
-
-        column_metadata = column_metadata or self.column_metadata
-        missing = missing if missing is not None else self.missing
-        self.check_data_type(column_metadata)
 
         out = pd.DataFrame(index=col.index)
 
@@ -53,9 +45,9 @@ class NumberTransformer(BaseTransformer):
         out[self.col_name] = col[self.col_name]
 
         # Handle missing
-        if missing:
-            nt = NullTransformer()
-            out = nt.fit_transform(out, column_metadata)
+        if self.missing:
+            nt = NullTransformer(self.column_metadata)
+            out = nt.fit_transform(out)
             out[self.col_name] = out.apply(self.get_val, axis=1)
             return out
 
@@ -66,37 +58,27 @@ class NumberTransformer(BaseTransformer):
 
         return out
 
-    def reverse_transform(self, col, column_metadata=None, missing=None):
+    def reverse_transform(self, col):
         """Converts data back into original format.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            column_metadata(dict): Meta information of the column.
-            missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
 
-        column_metadata = column_metadata or self.column_metadata
-        missing = missing if missing is not None else self.missing
-
-        self.check_data_type(column_metadata)
-
         output = pd.DataFrame(index=col.index)
-        subtype = column_metadata['subtype']
-        col_name = column_metadata['name']
-        fn = self.get_number_converter(col_name, subtype)
 
-        if missing:
-            new_col = col.apply(fn, axis=1)
-            new_col = new_col.rename(col_name)
-            data = pd.concat([new_col, col['?' + col_name]], axis=1)
-            nt = NullTransformer()
-            output[col_name] = nt.reverse_transform(data, column_metadata)
+        if self.missing:
+            new_col = col.apply(self.safe_round, axis=1)
+            new_col = new_col.rename(self.col_name)
+            data = pd.concat([new_col, col['?' + self.col_name]], axis=1)
+            nt = NullTransformer(self.column_metadata)
+            output[self.col_name] = nt.reverse_transform(data)
 
         else:
-            output[col_name] = col.apply(fn, axis=1)
+            output[self.col_name] = col.apply(self.safe_round, axis=1)
 
         if self.subtype == 'int':
             output[self.col_name] = output[self.col_name].astype(int)
@@ -132,7 +114,7 @@ class NumberTransformer(BaseTransformer):
         except (ValueError, TypeError):
             return self.default_val
 
-    def get_number_converter(self, col_name, subtype):
+    def safe_round(self, x):
         """Returns a converter that takes in a value and turns it into an integer, if necessary.
 
         Args:
@@ -142,17 +124,13 @@ class NumberTransformer(BaseTransformer):
         Returns:
             function
         """
-
-        def safe_round(x):
-            val = x[col_name]
-            if np.isposinf(val):
-                val = sys.maxsize
-            elif np.isneginf(val):
-                val = -sys.maxsize
-            if np.isnan(val):
-                val = self.default_val
-            if subtype == 'integer':
-                return int(round(val))
-            return val
-
-        return safe_round
+        val = x[self.col_name]
+        if np.isposinf(val):
+            val = sys.maxsize
+        elif np.isneginf(val):
+            val = -sys.maxsize
+        if np.isnan(val):
+            val = self.default_val
+        if self.subtype == 'integer':
+            return int(round(val))
+        return val

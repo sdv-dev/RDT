@@ -1,7 +1,9 @@
 class BaseTransformer(object):
     """Base class for all transformers."""
 
-    def __init__(self, column_metadata=None, missing=True, type=None):
+    type = None
+
+    def __init__(self, column_metadata, missing=True):
         """Initialize preprocessor.
 
         Args:
@@ -9,62 +11,55 @@ class BaseTransformer(object):
             missing(bool): Wheter or not handle missing values using NullTransformer.
             transformer_type(str): Type of data the transformer is able to transform.
         """
-        self.type = type
-        self.col_name = None
         self.column_metadata = column_metadata
         self.missing = missing
+        self.col_name = column_metadata['name']
 
-    def fit(self, col, column_metadata=None, missing=None):
+        self.check_data_type()
+
+    def fit(self, col):
         """Prepare the transformer to convert data.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            column_metadata(dict): Meta information of the column.
-            missing(bool): Wheter or not handle missing values using NullTransformer.
         """
         raise NotImplementedError
 
-    def transform(self, col, column_metadata=None, missing=None):
+    def transform(self, col):
         """Does the required transformations to the data.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            column_metadata(dict): Meta information of the column.
-            missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
         raise NotImplementedError
 
-    def fit_transform(self, col, column_metadata=None, missing=None):
+    def fit_transform(self, col):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            column_metadata(dict): Meta information of the column.
-            missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
-        self.fit(col, column_metadata, missing)
-        return self.transform(col, column_metadata, missing)
+        self.fit(col)
+        return self.transform(col)
 
-    def reverse_transform(self, col, column_metadata=None, missing=None):
+    def reverse_transform(self, col):
         """Converts data back into original format.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            column_metadata(dict): Meta information of the column.
-            missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
         raise NotImplementedError
 
-    def check_data_type(self, column_metadata):
+    def check_data_type(self):
         """Check the type of the transformer and column match.
 
         Args:
@@ -72,6 +67,6 @@ class BaseTransformer(object):
 
         Raises a ValueError if the types don't match
         """
-
-        if self.type != column_metadata.get('type'):
+        metadata_type = self.column_metadata.get('type')
+        if self.type != metadata_type and metadata_type not in self.type:
             raise ValueError('Types of transformer don\'t match')

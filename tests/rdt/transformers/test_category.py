@@ -12,9 +12,14 @@ class TestCatTransformer(TestCase):
 
     def test___init__(self):
         """On init, anonymize and category args are set as attributes."""
+        # Setup
+        column_metadata = {
+            "name": "breakfast",
+            "type": "categorical"
+        }
 
         # Run
-        transformer = CatTransformer()
+        transformer = CatTransformer(column_metadata)
 
         # Check
         assert transformer.type == 'categorical'
@@ -24,21 +29,37 @@ class TestCatTransformer(TestCase):
 
     def test___init___anonymize_without_category_raises(self):
         """On init, if anonymize is True, category is required."""
+        # Setup
+        column_metadata = {
+            "name": "breakfast",
+            "type": "categorical"
+        }
+
         # Run / Check
         with self.assertRaises(ValueError):
-            CatTransformer(anonymize=True)
+            CatTransformer(column_metadata, anonymize=True)
 
     def test___init___category_not_suported_raises(self):
         """On init, if anonymize is True and category is not supported, and exception raises."""
+        # Setup
+        column_metadata = {
+            "name": "breakfast",
+            "type": "categorical"
+        }
+
         # Run / Check
         with self.assertRaises(ValueError):
-            CatTransformer(anonymize=True, category='blabla')
+            CatTransformer(column_metadata, anonymize=True, category='blabla')
 
     @patch('rdt.transformers.category.Faker')
     def test_get_generator(self, faker_mock):
         """get_generator return a function to create new values for a category."""
         # Setup
-        transformer = CatTransformer(anonymize=True, category='first_name')
+        column_metadata = {
+            "name": "breakfast",
+            "type": "categorical"
+        }
+        transformer = CatTransformer(column_metadata, anonymize=True, category='first_name')
         faker_instance = MagicMock(spec=Faker())
         faker_mock.return_value = faker_instance
 
@@ -55,7 +76,11 @@ class TestCatTransformer(TestCase):
     def test_get_generator_raises_unsupported(self, faker_mock):
         """If the category is not supported, raise an exception."""
         # Setup
-        transformer = CatTransformer(anonymize=True, category='superhero_identities')
+        column_metadata = {
+            "name": "breakfast",
+            "type": "categorical"
+        }
+        transformer = CatTransformer(column_metadata, anonymize=True, category='superhero_names')
         faker_instance = MagicMock(spec=Faker())
         faker_mock.return_value = faker_instance
 
@@ -68,7 +93,11 @@ class TestCatTransformer(TestCase):
         """fit_transform sets internal state and transforms data."""
 
         # Setup
-        transformer = CatTransformer()
+        column_metadata = {
+            "name": "breakfast",
+            "type": "categorical"
+        }
+        transformer = CatTransformer(column_metadata)
         col = pd.Series(['B', 'B', 'A', 'B', 'A'])
         column_metadata = {
             "name": "breakfast",
@@ -90,7 +119,11 @@ class TestCatTransformer(TestCase):
         """fit_transform sets internal state and transforms data with null values."""
 
         # Setup
-        transformer = CatTransformer()
+        column_metadata = {
+            "name": "breakfast",
+            "type": "categorical"
+        }
+        transformer = CatTransformer(column_metadata)
         original_column = pd.Series(['B', 'B', 'A', 'B', 'A'])
         column_metadata = {
             "name": "breakfast",
@@ -111,7 +144,7 @@ class TestCatTransformer(TestCase):
             "name": "breakfast",
             "type": "categorical"
         }
-        transformer = CatTransformer(column_metadata=column_metadata, missing=False)
+        transformer = CatTransformer(column_metadata, missing=False)
         transformer.probability_map = {
             'A': ((0.6, 1.0), 0.8, 0.0666),
             'B': ((0, 0.6), 0.3, 0.0999)
@@ -165,7 +198,11 @@ class TestCatTransformer(TestCase):
         """Checks the random value."""
 
         # Setup
-        transformer = CatTransformer()
+        column_metadata = {
+            "name": "breakfast",
+            "type": "categorical"
+        }
+        transformer = CatTransformer(column_metadata)
         transformer.probability_map = {
             'A': ((0.6, 1.0), 0.8, 0.0666),
             'B': ((0, 0.6), 0.3, 0.0999)
@@ -189,8 +226,8 @@ class TestCatTransformer(TestCase):
             "name": "breakfast",
             "type": "categorical"
         }
-        transformer = CatTransformer()
-        transformed_data = transformer.fit_transform(original_column, column_metadata, False)
+        transformer = CatTransformer(column_metadata, False)
+        transformed_data = transformer.fit_transform(original_column)
 
         # Run
         result = transformer.get_category(transformed_data['breakfast'])
@@ -200,7 +237,6 @@ class TestCatTransformer(TestCase):
 
     def test_fit(self):
         """Maps the values to probabilities."""
-
         # Setup
         column_metadata = {
             "name": "breakfast",
@@ -209,10 +245,10 @@ class TestCatTransformer(TestCase):
         data = pd.DataFrame({
             'breakfast': ['A', 'B', 'A', 'B', 'B']
         })
-        transformer = CatTransformer()
+        transformer = CatTransformer(column_metadata)
 
         # Run
-        transformer.fit(data, column_metadata)
+        transformer.fit(data)
 
         # Check
         # Keys are unique values of initial data
@@ -247,10 +283,10 @@ class TestCatTransformer(TestCase):
             "name": "breakfast",
             "type": "categorical"
         }
-        transformer = CatTransformer()
+        transformer = CatTransformer(column_metadata)
 
         # Run
-        transformer.fit_transform(data, column_metadata)
+        transformer.fit_transform(data)
 
         # Check
         # The nan value in the data should be in probability map

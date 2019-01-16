@@ -30,23 +30,23 @@ class HyperTransformer(object):
         if isinstance(metadata, str):
             dir_name = os.path.dirname(metadata)
             with open(metadata, 'r') as f:
-                metadata = json.load(f)
+                self.metadata = json.load(f)
 
-        elif not isinstance(metadata, dict):
+        elif isinstance(metadata, dict):
+            self.metadata = metadata
+            if dir_name is None:
+                raise ValueError('dir_name is required when metadata is a dict.')
+
+        else:
             raise ValueError('Incorrect type for metadata: It can only be either dict or str.')
 
-        elif dir_name is None:
-            raise ValueError('dir_name is required when metadata is a dict.')
+        self.table_dict = self._get_tables(dir_name)
+        self.transformer_dict = self._get_transformers()
 
-        self.table_dict = self._get_tables(metadata, dir_name)
-        self.transformer_dict = self._get_transformers(metadata)
-
-    @staticmethod
-    def _get_tables(meta, base_dir):
+    def _get_tables(self, base_dir):
         """Load the contents of meta_file and the corresponding data.
 
         Args:
-            meta(dict): Metadata for the dataset.
             base_dir(str): Root folder of the dataset files.
 
         Returns:
@@ -54,27 +54,23 @@ class HyperTransformer(object):
         """
         table_dict = {}
 
-        for table in meta['tables']:
+        for table in self.metadata['tables']:
             if table['use']:
-                relative_path = os.path.join(base_dir, meta['path'], table['path'])
+                relative_path = os.path.join(base_dir, self.metadata['path'], table['path'])
                 data_table = pd.read_csv(relative_path)
                 table_dict[table['name']] = (data_table, table)
 
         return table_dict
 
-    @staticmethod
-    def _get_transformers(meta):
+    def _get_transformers(self):
         """Load the contents of meta_file and extract information about the transformers.
-
-        Args:
-            meta(dict): Metadata for the dataset.
 
         Returns:
             dict: tuple(str, str) -> Transformer.
         """
         transformer_dict = {}
 
-        for table in meta['tables']:
+        for table in self.metadata['tables']:
             table_name = table['name']
 
             for field in table['fields']:
@@ -222,21 +218,17 @@ class HyperTransformer(object):
             if transformer_list is not None:
                 for transformer_name in transformer_list:
                     transformer = self.get_class(transformer_name)
-                    t = transformer()
-                    if field['type'] == t.type:
-                        new_col = t.fit_transform(col.to_frame(), field, missing)
-                        # handle missing
-                        # if missing:
-                        #     null_t = null_class()
-                        #     new_col = null_t.fit_transform(new_col, field)
+                    if field['type'] == transformer.type:
+                        t = transformer(field, missing)
+                        new_col = t.fit_transform(col.to_frame())
                         self.transformers[(table_name, col_name)] = t
                         out = pd.concat([out, new_col], axis=1)
 
             elif (table_name, col_name) in transformer_dict:
                 transformer_name = transformer_dict[(table_name, col_name)]
                 transformer = self.get_class(TRANSFORMERS[transformer_name])
-                t = transformer()
-                new_col = t.fit_transform(col.to_frame(), field, missing)
+                t = transformer(field, missing)
+                new_col = t.fit_transform(col.to_frame())
                 self.transformers[(table_name, col_name)] = t
                 out = pd.concat([out, new_col], axis=1)
 
@@ -260,7 +252,7 @@ class HyperTransformer(object):
             col_name = field['name']
             col = table[col_name]
             transformer = self.transformers[(table_name, col_name)]
-            out = pd.concat([out, transformer.transform(col.to_frame(), field)], axis=1)
+            out = pd.concat([out, transformer.transform(col.to_frame())], axis=1)
 
         return out
 
@@ -293,10 +285,10 @@ class HyperTransformer(object):
                 if missing:
                     missing_col = table['?' + col_name]
                     data = pd.concat([col, missing_col], axis=1)
-                    out_list = [out, transformer.reverse_transform(data, field, missing)]
+                    out_list = [out, transformer.reverse_transform(data)]
 
                 else:
-                    new_col = transformer.reverse_transform(col.to_frame(), field, missing)
+                    new_col = transformer.reverse_transform(col.to_frame())
                     out_list = [out, new_col]
 
                 out = pd.concat(out_list, axis=1)
