@@ -16,36 +16,36 @@ class NumberTransformer(BaseTransformer):
         self.default_val = None
         self.subtype = None
 
-    def fit(self, col, col_meta=None, missing=None):
+    def fit(self, col, column_metadata=None, missing=None):
         """Prepare the transformer to convert data.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
-        self.col_name = col_meta['name']
-        self.subtype = col_meta['subtype']
+        self.col_name = column_metadata['name']
+        self.subtype = column_metadata['subtype']
         self.default_val = self.get_default_value(col)
 
-    def transform(self, col, col_meta=None, missing=None):
+    def transform(self, col, column_metadata=None, missing=None):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
 
-        col_meta = col_meta or self.col_meta
+        column_metadata = column_metadata or self.column_metadata
         missing = missing if missing is not None else self.missing
-        self.check_data_type(col_meta)
+        self.check_data_type(column_metadata)
 
         out = pd.DataFrame(index=col.index)
 
@@ -55,7 +55,7 @@ class NumberTransformer(BaseTransformer):
         # Handle missing
         if missing:
             nt = NullTransformer()
-            out = nt.fit_transform(out, col_meta)
+            out = nt.fit_transform(out, column_metadata)
             out[self.col_name] = out.apply(self.get_val, axis=1)
             return out
 
@@ -66,26 +66,26 @@ class NumberTransformer(BaseTransformer):
 
         return out
 
-    def reverse_transform(self, col, col_meta=None, missing=None):
+    def reverse_transform(self, col, column_metadata=None, missing=None):
         """Converts data back into original format.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
 
-        col_meta = col_meta or self.col_meta
+        column_metadata = column_metadata or self.column_metadata
         missing = missing if missing is not None else self.missing
 
-        self.check_data_type(col_meta)
+        self.check_data_type(column_metadata)
 
         output = pd.DataFrame(index=col.index)
-        subtype = col_meta['subtype']
-        col_name = col_meta['name']
+        subtype = column_metadata['subtype']
+        col_name = column_metadata['name']
         fn = self.get_number_converter(col_name, subtype)
 
         if missing:
@@ -93,7 +93,7 @@ class NumberTransformer(BaseTransformer):
             new_col = new_col.rename(col_name)
             data = pd.concat([new_col, col['?' + col_name]], axis=1)
             nt = NullTransformer()
-            output[col_name] = nt.reverse_transform(data, col_meta)
+            output[col_name] = nt.reverse_transform(data, column_metadata)
 
         else:
             output[col_name] = col.apply(fn, axis=1)

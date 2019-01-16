@@ -11,32 +11,32 @@ class CatTransformer(BaseTransformer):
     """Transformer for categorical data.
 
     Args:
-        col_meta(dict): Meta information of the column.
+        column_metadata(dict): Meta information of the column.
         missing(bool): Wheter or not handle missing values using NullTransformer.
-        anonimize (bool): Wheter or not replace the values of col before generating the
+        anonymize (bool): Wheter or not replace the values of col before generating the
                           categorical_map.
 
         category (str): The type of data to ask faker for when anonimizing.
 
     """
 
-    def __init__(self, anonimize=False, category=None, *args, **kwargs):
+    def __init__(self, anonymize=False, category=None, *args, **kwargs):
         """Initialize transformer."""
 
         super().__init__(type='categorical', *args, **kwargs)
 
-        if anonimize and not category:
-            raise ValueError('`category` must be specified if `anonimize` is True')
+        if anonymize and not category:
+            raise ValueError('`category` must be specified if `anonymize` is True')
 
-        self.anonimize = anonimize
+        self.anonymize = anonymize
         self.category = category
         self.probability_map = {}
 
-        if self.anonimize and self.category:
+        if self.anonymize and self.category:
             self.get_generator()
 
     def get_generator(self):
-        """Return the generator object to anonimize data."""
+        """Return the generator object to anonymize data."""
 
         faker = Faker()
 
@@ -46,7 +46,7 @@ class CatTransformer(BaseTransformer):
         except AttributeError:
             raise ValueError('Category {} couldn\'t be found on faker')
 
-    def anonimize_column(self, col, col_meta):
+    def anonymize_column(self, col, column_metadata):
         """Map the values of column to new ones of the same type.
 
         It replaces the values from others generated using `faker`. It will however,
@@ -54,8 +54,8 @@ class CatTransformer(BaseTransformer):
         will have the same values, but different keys.
 
         Args:
-            col (pandas.DataFrame): Dataframe containing the column to anonimize.
-            col_meta (dict): Meta information of the column.
+            col (pandas.DataFrame): Dataframe containing the column to anonymize.
+            column_metadata (dict): Meta information of the column.
 
         Returns:
             pd.DataFrame: DataFrame with its values mapped to new ones,
@@ -66,9 +66,9 @@ class CatTransformer(BaseTransformer):
                         different values.
         """
 
-        col_meta = col_meta or self.col_meta
-        self.check_data_type(col_meta)
-        self.col_name = col_meta['name']
+        column_metadata = column_metadata or self.column_metadata
+        self.check_data_type(column_metadata)
+        self.col_name = column_metadata['name']
         column = col[self.col_name]
 
         generator = self.get_generator()
@@ -86,40 +86,40 @@ class CatTransformer(BaseTransformer):
 
         return column.to_frame()
 
-    def fit(self, col, col_meta=None, missing=None):
+    def fit(self, col, column_metadata=None, missing=None):
         """Prepare the transfomer to process data.
 
-        This method exist only to enforce the usage of `fit_transform` if `anonimize` is True.
+        This method exist only to enforce the usage of `fit_transform` if `anonymize` is True.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Raises:
-            ValueError: If this method is called and `anonimize` is True.
+            ValueError: If this method is called and `anonymize` is True.
 
         """
 
-        if self.anonimize:
+        if self.anonymize:
             raise ValueError(
-                '`fit` method is disabled when `anonimize` is True, '
+                '`fit` method is disabled when `anonymize` is True, '
                 'please use fit_transform instead'
             )
-        self._fit(col, col_meta, missing)
+        self._fit(col, column_metadata, missing)
 
-    def _fit(self, col, col_meta=None, missing=None):
+    def _fit(self, col, column_metadata=None, missing=None):
         """Prepare the transfomer to process data.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
         """
 
-        col_meta = col_meta or self.col_meta
-        self.check_data_type(col_meta)
-        self.col_name = col_meta['name']
+        column_metadata = column_metadata or self.column_metadata
+        self.check_data_type(column_metadata)
+        self.col_name = column_metadata['name']
 
         column = col[self.col_name].replace({np.nan: np.inf})
         self.probability_map = column.groupby(column).count().rename({np.inf: None}).to_dict()
@@ -134,22 +134,22 @@ class CatTransformer(BaseTransformer):
             std = (interval[1] - interval[0]) / 6
             self.probability_map[val] = (interval, mean, std)
 
-    def transform(self, col, col_meta=None, missing=None):
+    def transform(self, col, column_metadata=None, missing=None):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
 
-        col_meta = col_meta or self.col_meta
+        column_metadata = column_metadata or self.column_metadata
         missing = missing if missing is not None else self.missing
 
-        self.check_data_type(col_meta)
+        self.check_data_type(column_metadata)
 
         out = pd.DataFrame()
 
@@ -160,44 +160,44 @@ class CatTransformer(BaseTransformer):
 
         if missing:
             nt = NullTransformer()
-            res = nt.fit_transform(out, col_meta)
+            res = nt.fit_transform(out, column_metadata)
             return res
 
         return out
 
-    def fit_transform(self, col, col_meta=None, missing=None):
+    def fit_transform(self, col, column_metadata=None, missing=None):
         """Prepare the transformer and return processed data.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
 
-        if self.anonimize:
-            col = self.anonimize_column(col, col_meta)
+        if self.anonymize:
+            col = self.anonymize_column(col, column_metadata)
 
-        self._fit(col, col_meta, missing)
-        return self.transform(col, col_meta, missing)
+        self._fit(col, column_metadata, missing)
+        return self.transform(col, column_metadata, missing)
 
-    def reverse_transform(self, col, col_meta=None, missing=None):
+    def reverse_transform(self, col, column_metadata=None, missing=None):
         """Converts data back into original format.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
-        col_meta = col_meta or self.col_meta
+        column_metadata = column_metadata or self.column_metadata
         missing = missing if missing is not None else self.missing
 
-        self.check_data_type(col_meta)
+        self.check_data_type(column_metadata)
 
         output = pd.DataFrame()
         new_col = self.get_category(col[self.col_name])
@@ -206,7 +206,7 @@ class CatTransformer(BaseTransformer):
             new_col = new_col.rename(self.col_name)
             data = pd.concat([new_col, col['?' + self.col_name]], axis=1)
             nt = NullTransformer()
-            output[self.col_name] = nt.reverse_transform(data, col_meta)
+            output[self.col_name] = nt.reverse_transform(data, column_metadata)
 
         else:
             output[self.col_name] = new_col

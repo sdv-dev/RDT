@@ -17,52 +17,52 @@ class DTTransformer(BaseTransformer):
         super().__init__(type='datetime', *args, **kwargs)
         self.default_val = None
 
-    def fit(self, col, col_meta=None, missing=None):
+    def fit(self, col, column_metadata=None, missing=None):
         """Prepare the transformer to convert data.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             None
         """
-        col_meta = col_meta or self.col_meta
+        column_metadata = column_metadata or self.column_metadata
         missing = missing if missing is not None else self.missing
 
-        self.check_data_type(col_meta)
-        self.col_name = col_meta['name']
+        self.check_data_type(column_metadata)
+        self.col_name = column_metadata['name']
 
         # get default val
-        dates = self.safe_datetime_cast(col, col_meta)
+        dates = self.safe_datetime_cast(col, column_metadata)
         self.default_val = dates.groupby(dates).count().index[0].timestamp() * 1e9
 
-    def transform(self, col, col_meta=None, missing=None):
+    def transform(self, col, column_metadata=None, missing=None):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
 
-        col_meta = col_meta or self.col_meta
+        column_metadata = column_metadata or self.column_metadata
         missing = missing if missing is not None else self.missing
 
-        self.check_data_type(col_meta)
+        self.check_data_type(column_metadata)
 
         out = pd.DataFrame()
-        out[self.col_name] = self.safe_datetime_cast(col, col_meta)
+        out[self.col_name] = self.safe_datetime_cast(col, column_metadata)
         out[self.col_name] = self.to_timestamp(out)
 
         # Handle missing
         if missing:
             nt = NullTransformer()
-            res = nt.fit_transform(out, col_meta)
+            res = nt.fit_transform(out, column_metadata)
             return res
 
         return out
@@ -74,28 +74,28 @@ class DTTransformer(BaseTransformer):
 
         return f
 
-    def reverse_transform(self, col, col_meta=None, missing=None):
+    def reverse_transform(self, col, column_metadata=None, missing=None):
         """Converts data back into original format.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
             missing(bool): Wheter or not handle missing values using NullTransformer.
 
         Returns:
             pandas.DataFrame
         """
 
-        col_meta = col_meta or self.col_meta
+        column_metadata = column_metadata or self.column_metadata
         missing = missing if missing is not None else self.missing
 
         if isinstance(col, pd.Series):
             col = col.to_frame()
 
-        self.check_data_type(col_meta)
+        self.check_data_type(column_metadata)
 
         output = pd.DataFrame(index=col.index)
-        date_format = col_meta['format']
+        date_format = column_metadata['format']
 
         fn = self.get_date_converter(self.col_name, date_format)
         reversed_column = col.apply(fn, axis=1)
@@ -104,24 +104,24 @@ class DTTransformer(BaseTransformer):
             reversed_column = reversed_column.rename(self.col_name)
             data = pd.concat([reversed_column, col['?' + self.col_name]], axis=1)
             nt = NullTransformer()
-            output[self.col_name] = nt.reverse_transform(data, col_meta)
+            output[self.col_name] = nt.reverse_transform(data, column_metadata)
 
         else:
             output[self.col_name] = reversed_column
 
         return output
 
-    def safe_datetime_cast(self, col, col_meta):
+    def safe_datetime_cast(self, col, column_metadata):
         """Parses string values into datetime.
 
         Args:
             col(pandas.DataFrame): Data to transform.
-            col_meta(dict): Meta information of the column.
+            column_metadata(dict): Meta information of the column.
 
         Returns:
             pandas.Series
         """
-        date_format = col_meta['format']
+        date_format = column_metadata['format']
         casted_dates = pd.to_datetime(col[self.col_name], format=date_format, errors='coerce')
 
         if len(casted_dates[casted_dates.isnull()]):

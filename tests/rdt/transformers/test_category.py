@@ -11,7 +11,7 @@ from rdt.transformers.category import CatTransformer
 class TestCatTransformer(TestCase):
 
     def test___init__(self):
-        """On init, anonimize and category args are set as attributes."""
+        """On init, anonymize and category args are set as attributes."""
 
         # Run
         transformer = CatTransformer()
@@ -19,26 +19,26 @@ class TestCatTransformer(TestCase):
         # Check
         assert transformer.type == 'categorical'
         assert transformer.probability_map == {}
-        assert transformer.anonimize is False
+        assert transformer.anonymize is False
         assert transformer.category is None
 
-    def test___init___anonimize_without_category_raises(self):
-        """On init, if anonimize is True, category is required."""
+    def test___init___anonymize_without_category_raises(self):
+        """On init, if anonymize is True, category is required."""
         # Run / Check
         with self.assertRaises(ValueError):
-            CatTransformer(anonimize=True)
+            CatTransformer(anonymize=True)
 
     def test___init___category_not_suported_raises(self):
-        """On init, if anonimize is True and category is not supported, and exception raises."""
+        """On init, if anonymize is True and category is not supported, and exception raises."""
         # Run / Check
         with self.assertRaises(ValueError):
-            CatTransformer(anonimize=True, category='blabla')
+            CatTransformer(anonymize=True, category='blabla')
 
     @patch('rdt.transformers.category.Faker')
     def test_get_generator(self, faker_mock):
         """get_generator return a function to create new values for a category."""
         # Setup
-        transformer = CatTransformer(anonimize=True, category='first_name')
+        transformer = CatTransformer(anonymize=True, category='first_name')
         faker_instance = MagicMock(spec=Faker())
         faker_mock.return_value = faker_instance
 
@@ -55,7 +55,7 @@ class TestCatTransformer(TestCase):
     def test_get_generator_raises_unsupported(self, faker_mock):
         """If the category is not supported, raise an exception."""
         # Setup
-        transformer = CatTransformer(anonimize=True, category='superhero_identities')
+        transformer = CatTransformer(anonymize=True, category='superhero_identities')
         faker_instance = MagicMock(spec=Faker())
         faker_mock.return_value = faker_instance
 
@@ -70,7 +70,7 @@ class TestCatTransformer(TestCase):
         # Setup
         transformer = CatTransformer()
         col = pd.Series(['B', 'B', 'A', 'B', 'A'])
-        col_meta = {
+        column_metadata = {
             "name": "breakfast",
             "type": "categorical"
         }
@@ -80,7 +80,7 @@ class TestCatTransformer(TestCase):
         })
 
         # Run
-        result = transformer.fit_transform(col, col_meta, False)
+        result = transformer.fit_transform(col, column_metadata, False)
 
         # Check
         assert result.equals(expected_result)
@@ -92,13 +92,13 @@ class TestCatTransformer(TestCase):
         # Setup
         transformer = CatTransformer()
         original_column = pd.Series(['B', 'B', 'A', 'B', 'A'])
-        col_meta = {
+        column_metadata = {
             "name": "breakfast",
             "type": "categorical"
         }
 
         # Run
-        result = transformer.fit_transform(original_column, col_meta, missing=True)
+        result = transformer.fit_transform(original_column, column_metadata, missing=True)
 
         # Check
         assert original_column.equals(result)
@@ -107,11 +107,11 @@ class TestCatTransformer(TestCase):
         """reverse_transform change back the data into original format."""
 
         # Setup
-        col_meta = {
+        column_metadata = {
             "name": "breakfast",
             "type": "categorical"
         }
-        transformer = CatTransformer(col_meta=col_meta, missing=False)
+        transformer = CatTransformer(column_metadata=column_metadata, missing=False)
         transformer.probability_map = {
             'A': ((0.6, 1.0), 0.8, 0.0666),
             'B': ((0, 0.6), 0.3, 0.0999)
@@ -135,11 +135,11 @@ class TestCatTransformer(TestCase):
         """Changes back the data into original format."""
 
         # Setup
-        col_meta = {
+        column_metadata = {
             "name": "breakfast",
             "type": "categorical"
         }
-        transformer = CatTransformer(col_meta=col_meta, missing=False)
+        transformer = CatTransformer(column_metadata=column_metadata, missing=False)
         transformer.probability_map = {
             'A': ((0.6, 1.0), 0.8, 0.0666),
             'B': ((0, 0.6), 0.3, 0.0999)
@@ -185,12 +185,12 @@ class TestCatTransformer(TestCase):
         original_column = pd.DataFrame({
             'breakfast': ['B', 'B', 'A', 'B', 'A']
         })
-        col_meta = {
+        column_metadata = {
             "name": "breakfast",
             "type": "categorical"
         }
         transformer = CatTransformer()
-        transformed_data = transformer.fit_transform(original_column, col_meta, False)
+        transformed_data = transformer.fit_transform(original_column, column_metadata, False)
 
         # Run
         result = transformer.get_category(transformed_data['breakfast'])
@@ -202,7 +202,7 @@ class TestCatTransformer(TestCase):
         """Maps the values to probabilities."""
 
         # Setup
-        col_meta = {
+        column_metadata = {
             "name": "breakfast",
             "type": "categorical"
         }
@@ -212,7 +212,7 @@ class TestCatTransformer(TestCase):
         transformer = CatTransformer()
 
         # Run
-        transformer.fit(data, col_meta)
+        transformer.fit(data, column_metadata)
 
         # Check
         # Keys are unique values of initial data
@@ -243,29 +243,29 @@ class TestCatTransformer(TestCase):
         data = pd.DataFrame({
             'breakfast': [np.nan, 1, 5]
         })
-        col_meta = {
+        column_metadata = {
             "name": "breakfast",
             "type": "categorical"
         }
         transformer = CatTransformer()
 
         # Run
-        transformer.fit_transform(data, col_meta)
+        transformer.fit_transform(data, column_metadata)
 
         # Check
         # The nan value in the data should be in probability map
         assert None in transformer.probability_map
 
     @patch('rdt.transformers.category.Faker')
-    def test_fit_transform_anonimize(self, faker_mock):
-        """If anonimize is True the values are replaced before generating probability_map."""
+    def test_fit_transform_anonymize(self, faker_mock):
+        """If anonymize is True the values are replaced before generating probability_map."""
         # Setup
-        col_meta = {
+        column_metadata = {
             'name': 'first_name',
             'type': 'categorical'
         }
         transformer = CatTransformer(
-            col_meta=col_meta, missing=False, anonimize=True, category='first_name')
+            column_metadata=column_metadata, missing=False, anonymize=True, category='first_name')
 
         data = pd.DataFrame({
             'first_name': ['Albert', 'John', 'Michael']
@@ -282,16 +282,16 @@ class TestCatTransformer(TestCase):
         assert set(transformer.probability_map.keys()) == set(['Anthony', 'Charles', 'Mark'])
         assert result.shape == data.shape
 
-    def test_anonimize_not_reversible(self):
-        """If anonimize is True the operation is not reversible. """
+    def test_anonymize_not_reversible(self):
+        """If anonymize is True the operation is not reversible. """
         # Setup
-        col_meta = {
+        column_metadata = {
             'name': 'first_name',
             'type': 'categorical'
         }
-        transformer = CatTransformer(col_meta=col_meta, missing=False)
+        transformer = CatTransformer(column_metadata=column_metadata, missing=False)
         anon_transformer = CatTransformer(
-            col_meta=col_meta, missing=False, anonimize=True, category='first_name')
+            column_metadata=column_metadata, missing=False, anonymize=True, category='first_name')
 
         data = pd.DataFrame({
             'first_name': ['Albert', 'John', 'Michael']
@@ -301,9 +301,9 @@ class TestCatTransformer(TestCase):
         transformed = transformer.fit_transform(data)
         reverse_transformed = transformer.reverse_transform(transformed)
 
-        transformed_anonimized = anon_transformer.fit_transform(data)
-        reverse_transformed_anonimized = anon_transformer.reverse_transform(transformed_anonimized)
+        transformed_anonymized = anon_transformer.fit_transform(data)
+        reverse_transformed_anonymized = anon_transformer.reverse_transform(transformed_anonymized)
 
         # Check
         assert data.equals(reverse_transformed)
-        assert not data.equals(reverse_transformed_anonimized)
+        assert not data.equals(reverse_transformed_anonymized)

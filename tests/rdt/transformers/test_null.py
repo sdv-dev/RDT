@@ -21,7 +21,7 @@ class TestNullTransformer(unittest.TestCase):
 
         # Setup
         col = pd.Series([62, np.nan, np.nan, np.nan, np.nan], name='age')
-        col_meta = {
+        column_metadata = {
             'name': 'age',
             'type': 'number'
         }
@@ -36,7 +36,7 @@ class TestNullTransformer(unittest.TestCase):
         )
 
         # Run
-        result = transformer.fit_transform(col, col_meta)
+        result = transformer.fit_transform(col, column_metadata)
 
         # Check
         assert result.equals(expected_result)
@@ -46,7 +46,7 @@ class TestNullTransformer(unittest.TestCase):
 
         # Setup
         col = pd.Series([62, 53, 53, 45, np.nan])
-        col_meta = {
+        column_metadata = {
             'name': 'age',
             'type': 'number'
         }
@@ -61,7 +61,7 @@ class TestNullTransformer(unittest.TestCase):
         )
 
         # Run
-        result = transformer.fit_transform(col, col_meta)
+        result = transformer.fit_transform(col, column_metadata)
 
         # Check
         assert result.equals(expected_result)
@@ -70,7 +70,7 @@ class TestNullTransformer(unittest.TestCase):
         """Checks the conversion of the data back into original format."""
 
         # Setup
-        col_meta = {
+        column_metadata = {
             'name': 'age',
             'type': 'number'
         }
@@ -83,7 +83,7 @@ class TestNullTransformer(unittest.TestCase):
         expected_result = pd.Series([62, 35, np.nan, 24, 27], name='age')
 
         # Result
-        result = transformer.reverse_transform(data, col_meta)
+        result = transformer.reverse_transform(data, column_metadata)
 
         # Check
         assert result.age.equals(expected_result)
