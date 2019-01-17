@@ -3,19 +3,26 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.NumberTransformer import NumberTransformer
+from rdt.transformers.number import NumberTransformer
 
 
 class TestNumberTransformer(unittest.TestCase):
 
     def test___init__(self):
         """On init, sets type to number"""
-
+        # Setup
+        column_metadata = {
+            "name": "age",
+            "type": "number",
+            "subtype": "integer",
+        }
         # Run
-        transformer = NumberTransformer()
+        transformer = NumberTransformer(column_metadata)
 
         # Check
         assert transformer.type == 'number'
+        assert transformer.subtype == 'integer'
+        assert transformer.col_name == 'age'
 
     def test_fit_transform(self):
         """fit_transform sets internal state and transforms data."""
@@ -24,16 +31,16 @@ class TestNumberTransformer(unittest.TestCase):
             'age': [62, 27, 5, 34, 62]
         })
 
-        col_meta = {
+        column_metadata = {
             "name": "age",
             "type": "number",
             "subtype": "integer",
         }
-        transformer = NumberTransformer()
+        transformer = NumberTransformer(column_metadata, missing=False)
         expected_result = pd.DataFrame({'age': [62, 27, 5, 34, 62]})
 
         # Run
-        result = transformer.fit_transform(col, col_meta, False)
+        result = transformer.fit_transform(col)
 
         # Check
         assert result.equals(expected_result)
@@ -44,12 +51,12 @@ class TestNumberTransformer(unittest.TestCase):
         col = pd.DataFrame({
             'age': [62, 27, np.nan, 34, 62],
         })
-        col_meta = {
+        column_metadata = {
             "name": "age",
             "type": "number",
             "subtype": "integer",
         }
-        transformer = NumberTransformer()
+        transformer = NumberTransformer(column_metadata, missing=True)
         expected_result = pd.DataFrame(
             {
                 'age': [62, 27, 46, 34, 62],
@@ -58,7 +65,7 @@ class TestNumberTransformer(unittest.TestCase):
             columns=['age', '?age'])
 
         # Run
-        result = transformer.fit_transform(col, col_meta, True)
+        result = transformer.fit_transform(col)
 
         # Check
         assert result.equals(expected_result)
@@ -69,16 +76,16 @@ class TestNumberTransformer(unittest.TestCase):
         col = pd.DataFrame({
             'age': [34, 23, 27, 31, 39]
         })
-        col_meta = {
+        column_metadata = {
             'name': 'age',
             'subtype': 'integer',
             'type': 'number'
         }
-        transformer = NumberTransformer()
+        transformer = NumberTransformer(column_metadata, missing=False)
         expected_result = pd.DataFrame({'age': [34, 23, 27, 31, 39]})
 
         # Run
-        result = transformer.reverse_transform(col, col_meta, False)
+        result = transformer.reverse_transform(col)
 
         # Check
         assert result.equals(expected_result)
@@ -89,13 +96,13 @@ class TestNumberTransformer(unittest.TestCase):
         col = pd.DataFrame({
             'age': [34, 23, 27, 31, 39]
         })
-        col_meta = {
+        column_metadata = {
             'name': 'age',
             'subtype': 'integer',
             'type': 'number'
         }
-        transformer = NumberTransformer()
-        transformer.fit_transform(col, col_meta, False)
+        transformer = NumberTransformer(column_metadata, missing=False)
+        transformer.fit_transform(col)
 
         col2 = pd.DataFrame({
             'age': [0, 10, 20, 30, np.nan]
@@ -106,7 +113,7 @@ class TestNumberTransformer(unittest.TestCase):
         })
 
         # Run
-        result = transformer.reverse_transform(col2, col_meta, False)
+        result = transformer.reverse_transform(col2)
 
         # Check
         assert result.equals(expected_result)
@@ -118,16 +125,16 @@ class TestNumberTransformer(unittest.TestCase):
             'age': [34, 23, 0, 31, 39],
             '?age': [1, 1, 0, 1, 1]
         })
-        col_meta = {
+        column_metadata = {
             'name': 'age',
             'subtype': 'integer',
             'type': 'number'
         }
-        transformer = NumberTransformer()
+        transformer = NumberTransformer(column_metadata, missing=True)
         expected_result = pd.DataFrame({'age': [34, 23, np.nan, 31, 39]})
 
         # Run
-        result = transformer.reverse_transform(col, col_meta, True)
+        result = transformer.reverse_transform(col)
 
         # Check
         assert result.equals(expected_result)
@@ -139,11 +146,14 @@ class TestNumberTransformer(unittest.TestCase):
         col = pd.DataFrame({
             'age': [62, 35, 24]
         })
+        column_metadata = {
+            'name': 'age',
+            'subtype': 'integer',
+            'type': 'number'
+        }
 
-        transformer = NumberTransformer()
-        transformer.col_name = 'age'
-        transformer.subtype = 'integer'
-        transformer.default_val = col.age[0]
+        transformer = NumberTransformer(column_metadata, missing=False)
+        transformer.fit(col)
         expected_result = pd.Series([62, 35, 24])
 
         # Run
@@ -159,11 +169,14 @@ class TestNumberTransformer(unittest.TestCase):
         col = pd.DataFrame({
             'age': [62.5, 35.5, 24.3]
         })
+        column_metadata = {
+            'name': 'age',
+            'subtype': 'decimal',
+            'type': 'number'
+        }
 
-        transformer = NumberTransformer()
-        transformer.col_name = 'age'
-        transformer.subtype = 'decimal'
-        transformer.default_val = col.age[0]
+        transformer = NumberTransformer(column_metadata, missing=False)
+        transformer.fit(col)
         expected_result = pd.Series([62.5, 35.5, 24.3])
 
         # Run
@@ -179,12 +192,16 @@ class TestNumberTransformer(unittest.TestCase):
         col = pd.DataFrame({
             'age': [4, np.nan, np.nan]
         })
+        column_metadata = {
+            'name': 'age',
+            'subtype': 'decimal',
+            'type': 'number'
+        }
 
-        transformer = NumberTransformer()
-        transformer.col_name = 'age'
-        transformer.subtype = 'decimal'
+        transformer = NumberTransformer(column_metadata)
         transformer.default_val = 5.0
         expected_result = pd.Series([4.0, 5.0, 5.0])
+
         # Run
         result = col.apply(transformer.get_val, axis=1)
 
@@ -197,10 +214,13 @@ class TestNumberTransformer(unittest.TestCase):
         col = pd.DataFrame({
             'age': [4, 'hoo', 13]
         })
+        column_metadata = {
+            'name': 'age',
+            'subtype': 'integer',
+            'type': 'number'
+        }
 
-        transformer = NumberTransformer()
-        transformer.col_name = 'age'
-        transformer.subtype = 'integer'
+        transformer = NumberTransformer(column_metadata, missing=False)
         transformer.default_val = 999
         expected_result = pd.Series([4, 999, 13])
 
@@ -210,19 +230,22 @@ class TestNumberTransformer(unittest.TestCase):
         # Check
         assert result.equals(expected_result)
 
-    def test_get_number_converter(self):
+    def test_safe_round(self):
         """If meta 'integer', cast values to int."""
         # Setup
-        transformer = NumberTransformer()
-        col_name = 'age'
-        converter = transformer.get_number_converter(col_name, 'integer')
+        column_metadata = {
+            'name': 'age',
+            'subtype': 'integer',
+            'type': 'number'
+        }
+        transformer = NumberTransformer(column_metadata)
         data = pd.DataFrame({
             'age': [0.5, 10.1, 3]
         })
         expected_result = pd.Series([0, 10, 3], name='age')
 
         # Run
-        result = data.apply(converter, axis=1)
+        result = data.apply(transformer.safe_round, axis=1)
 
         # Check
         assert result.equals(expected_result)

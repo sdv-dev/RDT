@@ -3,29 +3,34 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.NullTransformer import NullTransformer
+from rdt.transformers.null import NullTransformer
 
 
 class TestNullTransformer(unittest.TestCase):
     def test___init__(self):
         """On __init__ set type to number and datetime."""
+        # Setup
+        column_metadata = {
+            'name': 'age',
+            'type': 'number'
+        }
 
         # Run
-        transformer = NullTransformer()
+        transformer = NullTransformer(column_metadata)
 
         # Check
-        assert transformer.type == ['datetime', 'number']
+        assert transformer.type == ['datetime', 'number', 'categorical']
 
     def test_fit_transform_isnull(self):
         """It will replace nan values with 0 and creats a new column."""
 
         # Setup
         col = pd.Series([62, np.nan, np.nan, np.nan, np.nan], name='age')
-        col_meta = {
+        column_metadata = {
             'name': 'age',
             'type': 'number'
         }
-        transformer = NullTransformer()
+        transformer = NullTransformer(column_metadata)
 
         expected_result = pd.DataFrame(
             {
@@ -36,7 +41,7 @@ class TestNullTransformer(unittest.TestCase):
         )
 
         # Run
-        result = transformer.fit_transform(col, col_meta)
+        result = transformer.fit_transform(col)
 
         # Check
         assert result.equals(expected_result)
@@ -46,11 +51,11 @@ class TestNullTransformer(unittest.TestCase):
 
         # Setup
         col = pd.Series([62, 53, 53, 45, np.nan])
-        col_meta = {
+        column_metadata = {
             'name': 'age',
             'type': 'number'
         }
-        transformer = NullTransformer()
+        transformer = NullTransformer(column_metadata)
 
         expected_result = pd.DataFrame(
             {
@@ -61,7 +66,7 @@ class TestNullTransformer(unittest.TestCase):
         )
 
         # Run
-        result = transformer.fit_transform(col, col_meta)
+        result = transformer.fit_transform(col)
 
         # Check
         assert result.equals(expected_result)
@@ -70,11 +75,11 @@ class TestNullTransformer(unittest.TestCase):
         """Checks the conversion of the data back into original format."""
 
         # Setup
-        col_meta = {
+        column_metadata = {
             'name': 'age',
             'type': 'number'
         }
-        transformer = NullTransformer()
+        transformer = NullTransformer(column_metadata)
         data = pd.DataFrame({
             'age': [62, 35, 0, 24, 27],
             '?age': [1, 1, 0, 1, 1]
@@ -83,7 +88,7 @@ class TestNullTransformer(unittest.TestCase):
         expected_result = pd.Series([62, 35, np.nan, 24, 27], name='age')
 
         # Result
-        result = transformer.reverse_transform(data, col_meta)
+        result = transformer.reverse_transform(data)
 
         # Check
         assert result.age.equals(expected_result)
