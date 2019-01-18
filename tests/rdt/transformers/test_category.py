@@ -109,7 +109,7 @@ class TestCatTransformer(TestCase):
         })
 
         # Run
-        result = transformer.fit_transform(col, column_metadata, False)
+        result = transformer.fit_transform(col)
 
         # Check
         assert result.equals(expected_result)
@@ -131,7 +131,7 @@ class TestCatTransformer(TestCase):
         }
 
         # Run
-        result = transformer.fit_transform(original_column, column_metadata, missing=True)
+        result = transformer.fit_transform(original_column)
 
         # Check
         assert original_column.equals(result)
@@ -144,7 +144,7 @@ class TestCatTransformer(TestCase):
             "name": "breakfast",
             "type": "categorical"
         }
-        transformer = CatTransformer(column_metadata, missing=False)
+        transformer = CatTransformer(column_metadata)
         transformer.probability_map = {
             'A': ((0.6, 1.0), 0.8, 0.0666),
             'B': ((0, 0.6), 0.3, 0.0999)
@@ -172,7 +172,7 @@ class TestCatTransformer(TestCase):
             "name": "breakfast",
             "type": "categorical"
         }
-        transformer = CatTransformer(column_metadata=column_metadata, missing=False)
+        transformer = CatTransformer(column_metadata=column_metadata)
         transformer.probability_map = {
             'A': ((0.6, 1.0), 0.8, 0.0666),
             'B': ((0, 0.6), 0.3, 0.0999)
@@ -301,7 +301,7 @@ class TestCatTransformer(TestCase):
             'type': 'categorical'
         }
         transformer = CatTransformer(
-            column_metadata=column_metadata, missing=False, anonymize=True, category='first_name')
+            column_metadata=column_metadata, anonymize=True, category='first_name')
 
         data = pd.DataFrame({
             'first_name': ['Albert', 'John', 'Michael']
@@ -325,9 +325,9 @@ class TestCatTransformer(TestCase):
             'name': 'first_name',
             'type': 'categorical'
         }
-        transformer = CatTransformer(column_metadata=column_metadata, missing=False)
+        transformer = CatTransformer(column_metadata=column_metadata)
         anon_transformer = CatTransformer(
-            column_metadata=column_metadata, missing=False, anonymize=True, category='first_name')
+            column_metadata=column_metadata, anonymize=True, category='first_name')
 
         data = pd.DataFrame({
             'first_name': ['Albert', 'John', 'Michael']

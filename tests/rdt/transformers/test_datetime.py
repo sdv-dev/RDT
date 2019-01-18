@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers.datetime import DTTransformer
+from tests import safe_compare_dataframes
 
 
 class TestDTTransformer(TestCase):
@@ -51,15 +52,15 @@ class TestDTTransformer(TestCase):
             ]
         })
 
-        expected_result = pd.Series([
-            9.223386e+18,
-            0.000000e+00
-        ])
+        expected_result = pd.Series(
+            [9223372036854774784, np.nan],
+            name='date_first_booking'
+        )
 
         out_of_bounds_meta = {
-            "name": "date_first_booking",
-            "type": "datetime",
-            "format": "%Y-%m-%d %H:%M:%S.%f"
+            'name': 'date_first_booking',
+            'type': 'datetime',
+            'format': '%Y-%m-%d %H:%M:%S.%f'
         }
 
         # Run
@@ -68,12 +69,12 @@ class TestDTTransformer(TestCase):
         result = transformed[self.missing_meta['name']]
 
         # Check
-        self.assertTrue(np.allclose(result, expected_result, 1e-03))
+        assert safe_compare_dataframes(result, expected_result)
 
     def test_reverse_transform(self):
         """reverse_transform reverse fit_transforms."""
         # Setup
-        transformer = DTTransformer(self.normal_meta, missing=False)
+        transformer = DTTransformer(self.normal_meta)
         transformed = transformer.fit_transform(self.normal_data)
 
         # Run
@@ -82,92 +83,8 @@ class TestDTTransformer(TestCase):
         # Check
         assert result.equals(self.normal_data)
 
-    def test_reverse_transform_nan_dataframe(self):
-        """Checks that nans are handled correctly in reverse transformation"""
-
-        # Setup
-        transformer = DTTransformer(self.normal_meta, missing=False)
-        transformer.fit_transform(self.normal_data)
-        transformed = pd.DataFrame({
-            'date_account_created': [
-                1.3885524e+18,
-                1.3885524e+18,
-                1.3887252e+18,
-                1.3887252e+18,
-                np.nan
-            ],
-        })
-        expected_result = pd.DataFrame({'date_account_created': [
-            '01/01/14',
-            '01/01/14',
-            '01/03/14',
-            '01/03/14',
-            '01/01/14'
-        ]})
-
-        # Run
-        result = transformer.reverse_transform(transformed)
-
-        # Check
-        assert result.equals(expected_result)
-
-    def test_reverse_transform_nan_series(self):
-        """Checks that nans are handled correctly in reverse transformation"""
-
-        # Setup
-        transformer = DTTransformer(self.normal_meta, missing=False)
-        transformed = pd.Series(
-            [
-                1.3885524e+18,
-                1.3885524e+18,
-                1.3887252e+18,
-                1.3887252e+18,
-                np.nan
-            ], name='date_account_created'
-        )
-        expected_result = pd.DataFrame({
-            'date_account_created': [
-                '01/01/14',
-                '01/01/14',
-                '01/03/14',
-                '01/03/14',
-                '01/01/14'
-            ]
-        })
-        transformer.fit_transform(self.normal_data)
-
-        # Run
-        result = transformer.reverse_transform(transformed)
-
-        # Check
-        assert result.equals(expected_result)
-
-    def test_fit_transform_missing(self):
-        """fit_transform will fill NaN values by default."""
-        # Setup
-        column_name = self.missing_meta['name']
-        expected_result = pd.Series(
-            [
-                0.00000000e+00,
-                1.41877080e+18,
-                0.00000000e+00,
-                1.38861720e+18,
-                1.39967280e+18
-            ],
-            name=column_name
-        )
-        transformer = DTTransformer(self.missing_meta)
-
-        # Run
-        transformed = transformer.fit_transform(self.missing_data)
-        result = transformed[column_name]
-
-        # Check
-        # There are no null values in the transformed data.
-        assert not result.isnull().any().any()
-        assert np.isclose(expected_result, result).all()
-
     def test_reverse_transform_missing(self):
+        """Missing values are left unchanged."""
         # Setup
         transformer = DTTransformer(self.missing_meta)
         transformed = transformer.fit_transform(self.missing_data)
@@ -177,12 +94,12 @@ class TestDTTransformer(TestCase):
         result = transformer.reverse_transform(transformed)[transformer.col_name]
 
         # Check
-        assert result.equals(expected_result)
+        assert safe_compare_dataframes(result, expected_result)
 
     def test_reversibility_transforms(self):
         """Transforming and reverse transforming a column leaves it unchanged."""
         # Setup
-        transformer = DTTransformer(self.normal_meta, missing=False)
+        transformer = DTTransformer(self.normal_meta)
 
         # Run
         transformed_data = transformer.fit_transform(self.normal_data)

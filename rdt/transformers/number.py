@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.null import NullTransformer
 
 
 class NumberTransformer(BaseTransformer):
@@ -40,18 +39,7 @@ class NumberTransformer(BaseTransformer):
         """
 
         out = pd.DataFrame(index=col.index)
-
-        # if are just processing child rows, then the name is already known
-        out[self.col_name] = col[self.col_name]
-
-        # Handle missing
-        if self.missing:
-            nt = NullTransformer(self.column_metadata)
-            out = nt.fit_transform(out)
-            out[self.col_name] = out.apply(self.get_val, axis=1)
-            return out
-
-        out[self.col_name] = out.apply(self.get_val, axis=1)
+        out[self.col_name] = col.apply(self.get_val, axis=1)
 
         if self.subtype == 'int':
             out[self.col_name] = out[self.col_name].astype(int)
@@ -69,16 +57,7 @@ class NumberTransformer(BaseTransformer):
         """
 
         output = pd.DataFrame(index=col.index)
-
-        if self.missing:
-            new_col = col.apply(self.safe_round, axis=1)
-            new_col = new_col.rename(self.col_name)
-            data = pd.concat([new_col, col['?' + self.col_name]], axis=1)
-            nt = NullTransformer(self.column_metadata)
-            output[self.col_name] = nt.reverse_transform(data)
-
-        else:
-            output[self.col_name] = col.apply(self.safe_round, axis=1)
+        output[self.col_name] = col.apply(self.safe_round, axis=1)
 
         if self.subtype == 'int':
             output[self.col_name] = output[self.col_name].astype(int)
@@ -125,12 +104,17 @@ class NumberTransformer(BaseTransformer):
             function
         """
         val = x[self.col_name]
+
         if np.isposinf(val):
             val = sys.maxsize
+
         elif np.isneginf(val):
             val = -sys.maxsize
+
         if np.isnan(val):
             val = self.default_val
+
         if self.subtype == 'integer':
             return int(round(val))
+
         return val

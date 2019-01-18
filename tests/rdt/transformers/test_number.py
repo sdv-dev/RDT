@@ -36,33 +36,8 @@ class TestNumberTransformer(unittest.TestCase):
             "type": "number",
             "subtype": "integer",
         }
-        transformer = NumberTransformer(column_metadata, missing=False)
+        transformer = NumberTransformer(column_metadata)
         expected_result = pd.DataFrame({'age': [62, 27, 5, 34, 62]})
-
-        # Run
-        result = transformer.fit_transform(col)
-
-        # Check
-        assert result.equals(expected_result)
-
-    def test_fit_transform_missing(self):
-        """Sets internal state and transforms data with missing values."""
-        # Setup
-        col = pd.DataFrame({
-            'age': [62, 27, np.nan, 34, 62],
-        })
-        column_metadata = {
-            "name": "age",
-            "type": "number",
-            "subtype": "integer",
-        }
-        transformer = NumberTransformer(column_metadata, missing=True)
-        expected_result = pd.DataFrame(
-            {
-                'age': [62, 27, 46, 34, 62],
-                '?age': [1, 1, 0, 1, 1]
-            },
-            columns=['age', '?age'])
 
         # Run
         result = transformer.fit_transform(col)
@@ -81,7 +56,7 @@ class TestNumberTransformer(unittest.TestCase):
             'subtype': 'integer',
             'type': 'number'
         }
-        transformer = NumberTransformer(column_metadata, missing=False)
+        transformer = NumberTransformer(column_metadata)
         expected_result = pd.DataFrame({'age': [34, 23, 27, 31, 39]})
 
         # Run
@@ -101,7 +76,7 @@ class TestNumberTransformer(unittest.TestCase):
             'subtype': 'integer',
             'type': 'number'
         }
-        transformer = NumberTransformer(column_metadata, missing=False)
+        transformer = NumberTransformer(column_metadata)
         transformer.fit_transform(col)
 
         col2 = pd.DataFrame({
@@ -114,27 +89,6 @@ class TestNumberTransformer(unittest.TestCase):
 
         # Run
         result = transformer.reverse_transform(col2)
-
-        # Check
-        assert result.equals(expected_result)
-
-    def test_reverse_transform_missing(self):
-        """Sets internal state and transforms data with missing values."""
-        # Setup
-        col = pd.DataFrame({
-            'age': [34, 23, 0, 31, 39],
-            '?age': [1, 1, 0, 1, 1]
-        })
-        column_metadata = {
-            'name': 'age',
-            'subtype': 'integer',
-            'type': 'number'
-        }
-        transformer = NumberTransformer(column_metadata, missing=True)
-        expected_result = pd.DataFrame({'age': [34, 23, np.nan, 31, 39]})
-
-        # Run
-        result = transformer.reverse_transform(col)
 
         # Check
         assert result.equals(expected_result)
@@ -152,7 +106,7 @@ class TestNumberTransformer(unittest.TestCase):
             'type': 'number'
         }
 
-        transformer = NumberTransformer(column_metadata, missing=False)
+        transformer = NumberTransformer(column_metadata)
         transformer.fit(col)
         expected_result = pd.Series([62, 35, 24])
 
@@ -175,7 +129,7 @@ class TestNumberTransformer(unittest.TestCase):
             'type': 'number'
         }
 
-        transformer = NumberTransformer(column_metadata, missing=False)
+        transformer = NumberTransformer(column_metadata)
         transformer.fit(col)
         expected_result = pd.Series([62.5, 35.5, 24.3])
 
@@ -220,7 +174,7 @@ class TestNumberTransformer(unittest.TestCase):
             'type': 'number'
         }
 
-        transformer = NumberTransformer(column_metadata, missing=False)
+        transformer = NumberTransformer(column_metadata)
         transformer.default_val = 999
         expected_result = pd.Series([4, 999, 13])
 
