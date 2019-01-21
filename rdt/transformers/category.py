@@ -168,7 +168,7 @@ class CatTransformer(BaseTransformer):
         self._fit(col)
         return self.transform(col)
 
-    def reverse_transform(self, col, column_metadata=None, missing=None):
+    def reverse_transform(self, col):
         """Converts data back into original format.
 
         Args:
@@ -181,7 +181,7 @@ class CatTransformer(BaseTransformer):
         output = pd.DataFrame()
         new_col = self.get_category(col[self.col_name])
 
-        if missing:
+        if self.missing:
             new_col = new_col.rename(self.col_name)
             data = pd.concat([new_col, col['?' + self.col_name]], axis=1)
             nt = NullTransformer(self.column_metadata)
