@@ -5,6 +5,7 @@ from unittest import TestCase, skip
 import pandas as pd
 
 from rdt.hyper_transformer import HyperTransformer
+from tests import safe_compare_dataframes
 
 
 class TestHyperTransformer(TestCase):
@@ -189,9 +190,11 @@ class TestHyperTransformer(TestCase):
             with self.subTest(column=column):
                 missing = '?' + column
                 assert column in result.columns
-                assert missing in result.columns
                 assert (result[column] == pd.to_numeric(result[column])).all()
-                assert (table[column].isnull() == (result[missing] == 0)).all()
+
+                if table[column].isnull().any():
+                    assert missing in result.columns
+                    assert (table[column].isnull() == (result[missing] == 0)).all()
 
     @skip('https://github.com/HDI-Project/RDT/issues/49')
     def test_reverse_transform_table(self):
@@ -215,7 +218,7 @@ class TestHyperTransformer(TestCase):
     def test_fit_transform(self):
         """Create transformers for each column/table pair and apply them on input data."""
         # Setup
-        ht = HyperTransformer('tests/data/airbnb/airbnb_meta.json')
+        ht = HyperTransformer('tests/data/airbnb/airbnb_meta.json', missing=True)
 
         # Run
         result = ht.fit_transform()
@@ -229,15 +232,14 @@ class TestHyperTransformer(TestCase):
                     missing = '?' + column
                     meta_col = [field for field in meta['fields'] if field['name'] == column][0]
                     assert column in table.columns
-                    assert missing in table.columns
                     assert (table[column] == pd.to_numeric(table[column])).all()
 
-                    if meta_col['type'] != 'categorical':
+                    if meta_col['type'] != 'categorical' and table[column].isnull().any():
                         # This is due to the fact that CatTransformer is able to handle
                         # nulls by itself without relying in NullTransformer.
+                        assert missing in table.columns
                         assert (values[column].isnull() == (table[missing] == 0)).all()
 
-    @skip('https://github.com/HDI-Project/RDT/issues/49')
     def test_reverse_transform(self):
         """reverse_transform leave transformed data in its original state."""
         # Setup
@@ -251,4 +253,4 @@ class TestHyperTransformer(TestCase):
         # Check
         for name, table in original_data.items():
             reversed_table = reverse_transformed[name]
-            assert table.equals(reversed_table)
+            assert safe_compare_dataframes(reversed_table, table)
