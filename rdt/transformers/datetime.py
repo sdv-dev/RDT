@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.null import NullTransformer
 
 
 class DTTransformer(BaseTransformer):
@@ -46,12 +45,6 @@ class DTTransformer(BaseTransformer):
         out[self.col_name] = self.safe_datetime_cast(col)
         out[self.col_name] = self.to_timestamp(out)
 
-        # Handle missing
-        if self.missing:
-            nt = NullTransformer(self.column_metadata)
-            res = nt.fit_transform(out)
-            return res
-
         return out
 
     def strptime_format(self, x):
@@ -70,18 +63,7 @@ class DTTransformer(BaseTransformer):
             col = col.to_frame()
 
         output = pd.DataFrame(index=col.index)
-
-        fn = self.get_date_converter()
-        reversed_column = col.apply(fn, axis=1)
-
-        if self.missing:
-            reversed_column = reversed_column.rename(self.col_name)
-            data = pd.concat([reversed_column, col['?' + self.col_name]], axis=1)
-            nt = NullTransformer(self.column_metadata)
-            output[self.col_name] = nt.reverse_transform(data)
-
-        else:
-            output[self.col_name] = reversed_column
+        output[self.col_name] = col.apply(self.safe_date, axis=1)
 
         return output
 
@@ -119,28 +101,25 @@ class DTTransformer(BaseTransformer):
         result[_slice] = data[_slice][self.col_name].astype('int64')
         return result
 
-    def get_date_converter(self):
-        """Return a function that takes in an integer representing ms and return a string date.
+    def safe_date(self, x):
+        """Transform x[self.col_name] into a date string.
 
         Args:
-            col_name(str): Name of the column.
+            x(dict like / pandas.Series): Row containing data to cast safely.
 
         Returns:
-            function
+            str
         """
 
-        def safe_date(x):
-            t = x[self.col_name]
-            if np.isnan(t):
-                t = self.default_val
+        t = x[self.col_name]
+        if np.isnan(t):
+            return t
 
-            elif np.isposinf(t):
-                t = sys.maxsize
+        elif np.isposinf(t):
+            t = sys.maxsize
 
-            elif np.isneginf(t):
-                t = -sys.maxsize
+        elif np.isneginf(t):
+            t = -sys.maxsize
 
-            tmp = time.localtime(float(t) / 1e9)
-            return time.strftime(self.date_format, tmp)
-
-        return safe_date
+        tmp = time.localtime(float(t) / 1e9)
+        return time.strftime(self.date_format, tmp)

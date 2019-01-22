@@ -18,30 +18,11 @@ class HyperTransformer(object):
     Arguments:
         metadata(str or dict): Path to the meta.json file or its parsed contents.
         dir_name(str): Path to the root directory of meta.json.
+        missing (bool): Wheter or not to handle missing values before transforming data.
 
     The main propouse of the HyperTransformer class is to easily manage transformations
     for a whole dataset.
     """
-
-    def __init__(self, metadata, dir_name=None):
-
-        self.transformers = {}  # key=(table_name, col_name) val=transformer
-
-        if isinstance(metadata, str):
-            dir_name = os.path.dirname(metadata)
-            with open(metadata, 'r') as f:
-                self.metadata = json.load(f)
-
-        elif isinstance(metadata, dict):
-            self.metadata = metadata
-            if dir_name is None:
-                raise ValueError('dir_name is required when metadata is a dict.')
-
-        else:
-            raise ValueError('Incorrect type for metadata: It can only be either dict or str.')
-
-        self.table_dict = self._get_tables(dir_name)
-        self.transformer_dict = self._get_transformers()
 
     def _get_tables(self, base_dir):
         """Load the contents of meta_file and the corresponding data.
@@ -81,6 +62,27 @@ class HyperTransformer(object):
 
         return transformer_dict
 
+    def __init__(self, metadata, dir_name=None, missing=True):
+
+        self.transformers = {}  # key=(table_name, col_name) val=transformer
+
+        if isinstance(metadata, str):
+            dir_name = os.path.dirname(metadata)
+            with open(metadata, 'r') as f:
+                self.metadata = json.load(f)
+
+        elif isinstance(metadata, dict):
+            self.metadata = metadata
+            if dir_name is None:
+                raise ValueError('dir_name is required when metadata is a dict.')
+
+        else:
+            raise ValueError('Incorrect type for metadata: It can only be either dict or str.')
+
+        self.table_dict = self._get_tables(dir_name)
+        self.transformer_dict = self._get_transformers()
+        self.missing = missing
+
     def get_class(self, class_name):
         """Get class object of transformer from its class name.
 
@@ -92,105 +94,77 @@ class HyperTransformer(object):
         """
         return getattr(transformers, class_name)
 
-    def fit_transform(
-            self, tables=None, transformer_dict=None, transformer_list=None, missing=True):
-        """Create, apply and store the specified transformers for the given tables.
+    def fit_transform_column(self, table, metadata, transformer_name, table_name):
+        """Transform a column from table using transformer and given parameters.
 
         Args:
-            tables(dict):   Mapping of table names to `tuple` where each tuple is on the form
-                            (`pandas.DataFrame`, `dict`). The `DataFrame` contains the table data
-                            and the `dict` the corresponding meta information.
-                            If not specified, the tables will be retrieved using the meta_file.
+            table (pandas.DataFrame): Dataframe containing column to transform.
+            metadata (dict): Metadata for given column.
+            transformer_name (str): Name of transformer to use on column.
+            table_name (str): Name of table in original dataset.
 
-            transformer_dict(dict):     Mapping  `tuple(str, str)` -> `str` where the tuple is
-                                        (table_name, column_name).
-
-            transformer_list(list):     List of transformers to use. Overrides the transformers in
-                                        the meta_file.
-
-            missing(bool): Wheter or not use NullTransformer to handle missing values.
 
         Returns:
-            dict: Map from `str` (table_names) to `pandas.DataFrame` (transformed data).
+            pandas.DataFrame: Dataframe containing the transformed column. If self.missing=True,
+                              it will contain a second column containing 0 and 1 marking if that
+                              value was originally null or not.
         """
-        transformed = {}
 
-        if tables is None:
-            tables = self.table_dict
+        column_name = metadata['name']
+        content = {}
+        columns = []
 
-        if transformer_dict is None and transformer_list is None:
-            transformer_dict = self.transformer_dict
+        if self.missing and table[column_name].isnull().any():
+            null_transformer = transformers.NullTransformer(metadata)
+            clean_column = null_transformer.fit_transform(table[column_name])
+            null_name = '?' + column_name
+            columns.append(null_name)
+            content[null_name] = clean_column[null_name].values
+            table[column_name] = clean_column[column_name]
 
-        for table_name in tables:
-            table, table_meta = tables[table_name]
-            transformed_table = self.fit_transform_table(
-                table, table_meta, transformer_dict, transformer_list, missing)
+        transformer_class = self.get_class(transformer_name)
+        transformer = transformer_class(metadata)
 
-            transformed[table_name] = transformed_table
+        self.transformers[(table_name, column_name)] = transformer
+        content[column_name] = transformer.fit_transform(table)[column_name].values
 
-        return transformed
+        columns = [column_name] + columns
+        return pd.DataFrame(content, columns=columns)
 
-    def transform(self, tables, table_metas=None, missing=True):
-        """Apply all the saved transformers to `tables`.
+    def reverse_transform_column(self, table, metadata, table_name):
+        """Reverses the transformtion on a column from table using the given parameters.
 
         Args:
-            tables(dict):   mapping of table names to `tuple` where each tuple is on the form
-                            (`pandas.DataFrame`, `dict`). The `DataFrame` contains the table data
-                            and the `dict` the corresponding meta information.
-                            If not specified, the tables will be retrieved using the meta_file.
+            table (pandas.DataFrame): Dataframe containing column to transform.
+            metadata (dict): Metadata for given column.
+            table_name (str): Name of table in original dataset.
 
-            table_metas(dict):  Full metadata file for the dataset.
-
-            missing(bool): Wheter or not use NullTransformer to handle missing values.
 
         Returns:
-            dict: Map from `str` (table_names) to `pandas.DataFrame` (transformed data).
+            pandas.DataFrame: Dataframe containing the transformed column. If self.missing=True,
+                              it will contain a second column containing 0 and 1 marking if that
+                              value was originally null or not.
+                              It will return None in the case the column is not in the table.
         """
-        transformed = {}
+        column_name = metadata['name']
 
-        for table_name in tables:
-            table = tables[table_name]
+        if column_name not in table:
+            return
 
-            if table_metas is None:
-                table_meta = self.table_dict[table_name][1]
-            else:
-                table_meta = table_metas[table_name]
+        null_name = '?' + column_name
+        content = pd.DataFrame(columns=[column_name], index=table.index)
+        transformer = self.transformers[(table_name, column_name)]
+        content[column_name] = transformer.reverse_transform(table[column_name].to_frame())
 
-            transformed[table_name] = self.transform_table(table, table_meta, missing)
+        if self.missing and null_name in table[column_name]:
+            content[null_name] = table.pop(null_name)
+            null_transformer = transformers.NullTransformer(metadata)
+            content[column_name] = null_transformer.reverse_transform(content)
 
-        return transformed
-
-    def reverse_transform(self, tables, table_metas=None, missing=True):
-        """Transform data back to its original format.
-
-        Args:
-            tables(dict):   mapping of table names to `tuple` where each tuple is on the form
-                            (`pandas.DataFrame`, `dict`). The `DataFrame` contains the transformed
-                            data and the `dict` the corresponding meta information.
-                            If not specified, the tables will be retrieved using the meta_file.
-
-            table_metas(dict):  Full metadata file for the dataset.
-
-            missing(bool): Wheter or not use NullTransformer to handle missing values.
-
-        Returns:
-            dict: Map from `str` (table_names) to `pandas.DataFrame` (transformed data).
-        """
-        reverse = {}
-
-        for table_name in tables:
-            table = tables[table_name]
-            if table_metas is None:
-                table_meta = self.table_dict[table_name][1]
-            else:
-                table_meta = table_metas[table_name]
-
-            reverse[table_name] = self.reverse_transform_table(table, table_meta, missing)
-
-        return reverse
+        return content
 
     def fit_transform_table(
-            self, table, table_meta, transformer_dict=None, transformer_list=None, missing=True):
+            self, table, table_meta, transformer_dict=None, transformer_list=None):
         """Create, apply and store the specified transformers for `table`.
 
         Args:
@@ -198,8 +172,9 @@ class HyperTransformer(object):
 
             table_meta(dict):   Metadata for the given table.
 
-            transformer_dict(dict):     Mapping  `tuple(str, str)` -> `str` where the tuple is
-                                        (table_name, column_name).
+            transformer_dict(dict):     Mapping  `tuple(str, str)` -> `str` where the tuple in the
+                                        keys represent the (table_name, column_name) and the value
+                                        the name of the assigned transformer.
 
             transformer_list(list):     List of transformers to use. Overrides the transformers in
                                         the meta_file.
@@ -209,30 +184,26 @@ class HyperTransformer(object):
         Returns:
             pandas.DataFrame: Transformed table.
         """
-        out = pd.DataFrame(columns=[])
+        result = pd.DataFrame()
         table_name = table_meta['name']
+
         for field in table_meta['fields']:
             col_name = field['name']
-            col = table[col_name]
 
-            if transformer_list is not None:
+            if transformer_list:
                 for transformer_name in transformer_list:
-                    transformer = self.get_class(transformer_name)
-                    if field['type'] == transformer.type:
-                        t = transformer(field, missing)
-                        new_col = t.fit_transform(col.to_frame())
-                        self.transformers[(table_name, col_name)] = t
-                        out = pd.concat([out, new_col], axis=1)
+                    if field['type'] == self.get_class(transformer_name).type:
+                        transformed = self.fit_transform_column(
+                            table, field, transformer_name, table_name)
+
+                        result = pd.concat([result, transformed], axis=1)
 
             elif (table_name, col_name) in transformer_dict:
-                transformer_name = transformer_dict[(table_name, col_name)]
-                transformer = self.get_class(TRANSFORMERS[transformer_name])
-                t = transformer(field, missing)
-                new_col = t.fit_transform(col.to_frame())
-                self.transformers[(table_name, col_name)] = t
-                out = pd.concat([out, new_col], axis=1)
+                transformer_name = TRANSFORMERS[transformer_dict[(table_name, col_name)]]
+                transformed = self.fit_transform_column(table, field, transformer_name, table_name)
+                result = pd.concat([result, transformed], axis=1)
 
-        return out
+        return result
 
     def transform_table(self, table, table_meta):
         """Apply the stored transformers to `table`.
@@ -256,7 +227,7 @@ class HyperTransformer(object):
 
         return out
 
-    def reverse_transform_table(self, table, table_meta, missing=True):
+    def reverse_transform_table(self, table, table_meta):
         """Transform a `table` back to its original format.
 
         Args:
@@ -268,29 +239,102 @@ class HyperTransformer(object):
             pandas.DataFrame: Table in original format.
         """
         # to check for missing value class
-        out = pd.DataFrame(columns=[])
+        result = pd.DataFrame(index=table.index)
         table_name = table_meta['name']
 
         for field in table_meta['fields']:
-            col_name = field['name']
+            new_column = self.reverse_transform_column(table, field, table_name)
+            if new_column is not None:
+                result[field['name']] = new_column
 
-            # only add transformed columns
-            if col_name not in table:
-                continue
+        return result
 
-            col = table[col_name]
-            if (table_name, col_name) in self.transformers:
-                transformer = self.transformers[(table_name, col_name)]
+    def fit_transform(self, tables=None, transformer_dict=None, transformer_list=None):
+        """Create, apply and store the specified transformers for the given tables.
 
-                if missing:
-                    missing_col = table['?' + col_name]
-                    data = pd.concat([col, missing_col], axis=1)
-                    out_list = [out, transformer.reverse_transform(data)]
+        Args:
+            tables(dict):   Mapping of table names to `tuple` where each tuple is on the form
+                            (`pandas.DataFrame`, `dict`). The `DataFrame` contains the table data
+                            and the `dict` the corresponding meta information.
+                            If not specified, the tables will be retrieved using the meta_file.
 
-                else:
-                    new_col = transformer.reverse_transform(col.to_frame())
-                    out_list = [out, new_col]
+            transformer_dict(dict):     Mapping  `tuple(str, str)` -> `str` where the tuple is
+                                        (table_name, column_name).
 
-                out = pd.concat(out_list, axis=1)
+            transformer_list(list):     List of transformers to use. Overrides the transformers in
+                                        the meta_file.
 
-        return out
+        Returns:
+            dict: Map from `str` (table_names) to `pandas.DataFrame` (transformed data).
+        """
+        transformed = {}
+
+        if tables is None:
+            tables = self.table_dict
+
+        if transformer_dict is None and transformer_list is None:
+            transformer_dict = self.transformer_dict
+
+        for table_name in tables:
+            table, table_meta = tables[table_name]
+            transformed_table = self.fit_transform_table(
+                table, table_meta, transformer_dict, transformer_list)
+
+            transformed[table_name] = transformed_table
+
+        return transformed
+
+    def transform(self, tables, table_metas=None, missing=True):
+        """Apply all the saved transformers to `tables`.
+
+        Args:
+            tables(dict):   mapping of table names to `tuple` where each tuple is on the form
+                            (`pandas.DataFrame`, `dict`). The `DataFrame` contains the table data
+                            and the `dict` the corresponding meta information.
+                            If not specified, the tables will be retrieved using the meta_file.
+
+            table_metas(dict):  Full metadata file for the dataset.
+
+        Returns:
+            dict: Map from `str` (table_names) to `pandas.DataFrame` (transformed data).
+        """
+        transformed = {}
+
+        for table_name in tables:
+            table = tables[table_name]
+
+            if table_metas is None:
+                table_meta = self.table_dict[table_name][1]
+            else:
+                table_meta = table_metas[table_name]
+
+            transformed[table_name] = self.transform_table(table, table_meta)
+
+        return transformed
+
+    def reverse_transform(self, tables, table_metas=None):
+        """Transform data back to its original format.
+
+        Args:
+            tables(dict):   mapping of table names to `tuple` where each tuple is on the form
+                            (`pandas.DataFrame`, `dict`). The `DataFrame` contains the transformed
+                            data and the `dict` the corresponding meta information.
+                            If not specified, the tables will be retrieved using the meta_file.
+
+            table_metas(dict):  Full metadata file for the dataset.
+
+        Returns:
+            dict: Map from `str` (table_names) to `pandas.DataFrame` (transformed data).
+        """
+        reverse = {}
+
+        for table_name in tables:
+            table = tables[table_name]
+            if table_metas is None:
+                table_meta = self.table_dict[table_name][1]
+            else:
+                table_meta = table_metas[table_name]
+
+            reverse[table_name] = self.reverse_transform_table(table, table_meta)
+
+        return reverse

@@ -19,12 +19,16 @@ class NullTransformer(BaseTransformer):
         if isinstance(col, pd.DataFrame):
             col = col[self.col_name]
 
-        mean = col.mean()
+        if self.column_metadata['type'] == 'number':
+            mean = col.mean()
 
-        if not pd.isnull(mean) and self.column_metadata['type'] == 'number':
-            self.default_value = mean
+            if pd.notnull(mean):
+                self.default_value = mean
+
+            else:
+                self.default_value = 0
         else:
-            self.default_value = 0
+            self.default_value = col.mode().iloc[0]
 
     def transform(self, col):
         """Prepare the transformer to convert data and return the processed table.

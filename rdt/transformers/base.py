@@ -3,16 +3,14 @@ class BaseTransformer(object):
 
     type = None
 
-    def __init__(self, column_metadata, missing=True):
+    def __init__(self, column_metadata):
         """Initialize preprocessor.
 
         Args:
             column_metadata(dict): Meta information of the column.
-            missing(bool): Wheter or not handle missing values using NullTransformer.
             transformer_type(str): Type of data the transformer is able to transform.
         """
         self.column_metadata = column_metadata
-        self.missing = missing
         self.col_name = column_metadata['name']
 
         self.check_data_type()

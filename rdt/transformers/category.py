@@ -4,7 +4,6 @@ from faker import Faker
 from scipy.stats import norm
 
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.null import NullTransformer
 
 
 class CatTransformer(BaseTransformer):
@@ -12,7 +11,6 @@ class CatTransformer(BaseTransformer):
 
     Args:
         column_metadata(dict): Meta information of the column.
-        missing(bool): Wheter or not handle missing values using NullTransformer.
         anonymize (bool): Wheter or not replace the values of col before generating the
                           categorical_map.
 
@@ -22,10 +20,10 @@ class CatTransformer(BaseTransformer):
 
     type = 'categorical'
 
-    def __init__(self, column_metadata, missing=True, anonymize=False, category=None):
+    def __init__(self, column_metadata, anonymize=False, category=None):
         """Initialize transformer."""
 
-        super().__init__(column_metadata, missing)
+        super().__init__(column_metadata)
 
         if anonymize and not category:
             raise ValueError('`category` must be specified if `anonymize` is True')
@@ -143,12 +141,6 @@ class CatTransformer(BaseTransformer):
         # Make sure all nans are handled the same by replacing with None
         column = col[self.col_name].replace({np.nan: None})
         out[self.col_name] = column.apply(self.get_val)
-        # Handle missing
-
-        if self.missing:
-            nt = NullTransformer(self.column_metadata)
-            res = nt.fit_transform(out)
-            return res
 
         return out
 
@@ -179,16 +171,7 @@ class CatTransformer(BaseTransformer):
         """
 
         output = pd.DataFrame()
-        new_col = self.get_category(col[self.col_name])
-
-        if self.missing:
-            new_col = new_col.rename(self.col_name)
-            data = pd.concat([new_col, col['?' + self.col_name]], axis=1)
-            nt = NullTransformer(self.column_metadata)
-            output[self.col_name] = nt.reverse_transform(data)
-
-        else:
-            output[self.col_name] = new_col
+        output[self.col_name] = self.get_category(col[self.col_name])
 
         return output
 
