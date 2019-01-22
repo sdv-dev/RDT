@@ -240,6 +240,7 @@ class TestHyperTransformer(TestCase):
                         assert missing in table.columns
                         assert (values[column].isnull() == (table[missing] == 0)).all()
 
+    @skip('https://github.com/HDI-Project/RDT/issues/49')
     def test_reverse_transform(self):
         """reverse_transform leave transformed data in its original state."""
         # Setup
