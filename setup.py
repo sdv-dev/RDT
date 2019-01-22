@@ -21,9 +21,8 @@ setup_requires = [
 ]
 
 tests_require = [
-    'coverage>=4.5.1',
     'pytest>=3.4.2',
-    'tox>=2.9.1',
+    'pytest-cov>=2.6.0',
 ]
 
 development_requires = [
