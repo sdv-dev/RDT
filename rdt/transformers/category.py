@@ -160,7 +160,7 @@ class CatTransformer(BaseTransformer):
         self._fit(col)
         return self.transform(col)
 
-    def reverse_transform(self, col, column_metadata=None):
+    def reverse_transform(self, col):
         """Converts data back into original format.
 
         Args:
@@ -171,8 +171,7 @@ class CatTransformer(BaseTransformer):
         """
 
         output = pd.DataFrame()
-        new_col = self.get_category(col[self.col_name])
-        output[self.col_name] = new_col
+        output[self.col_name] = self.get_category(col[self.col_name])
 
         return output
 
