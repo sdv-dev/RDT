@@ -54,5 +54,4 @@ class TestPositiveNumberTransformer(TestCase):
         result = transformer.reverse_transform(data)
 
         # Check
-        import ipdb; ipdb.set_trace()
         assert result.equals(expected_result)
