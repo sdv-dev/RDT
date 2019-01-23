@@ -25,15 +25,18 @@ class CatTransformer(BaseTransformer):
 
         super().__init__(column_metadata)
 
-        if anonymize and not category:
-            raise ValueError('`category` must be specified if `anonymize` is True')
+        self.anonymize = column_metadata.get('pii', False)
+        self.category = column_metadata.get('pii_category')
 
-        self.anonymize = anonymize
-        self.category = category
         self.probability_map = {}
 
-        if self.anonymize and self.category:
-            self.get_generator()
+        if self.anonymize:
+
+            if self.category:
+                self.get_generator()
+
+            else:
+                raise ValueError('`category` must be specified if `anonymize` is True')
 
     def get_generator(self):
         """Return the generator object to anonymize data."""
