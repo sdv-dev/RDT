@@ -32,24 +32,27 @@ class TestCatTransformer(TestCase):
         # Setup
         column_metadata = {
             "name": "breakfast",
-            "type": "categorical"
+            "type": "categorical",
+            "pii": True
         }
 
         # Run / Check
         with self.assertRaises(ValueError):
-            CatTransformer(column_metadata, anonymize=True)
+            CatTransformer(column_metadata)
 
     def test___init___category_not_suported_raises(self):
         """On init, if anonymize is True and category is not supported, and exception raises."""
         # Setup
         column_metadata = {
             "name": "breakfast",
-            "type": "categorical"
+            "type": "categorical",
+            "pii": True,
+            "pii_category": "blabla"
         }
 
         # Run / Check
         with self.assertRaises(ValueError):
-            CatTransformer(column_metadata, anonymize=True, category='blabla')
+            CatTransformer(column_metadata)
 
     @patch('rdt.transformers.category.Faker')
     def test_get_generator(self, faker_mock):
@@ -57,9 +60,11 @@ class TestCatTransformer(TestCase):
         # Setup
         column_metadata = {
             "name": "breakfast",
-            "type": "categorical"
+            "type": "categorical",
+            "pii": True,
+            "pii_category": "first_name"
         }
-        transformer = CatTransformer(column_metadata, anonymize=True, category='first_name')
+        transformer = CatTransformer(column_metadata)
         faker_instance = MagicMock(spec=Faker())
         faker_mock.return_value = faker_instance
 
@@ -78,9 +83,11 @@ class TestCatTransformer(TestCase):
         # Setup
         column_metadata = {
             "name": "breakfast",
-            "type": "categorical"
+            "type": "categorical",
+            "pii": True,
+            "pii_category": "superhero_names"
         }
-        transformer = CatTransformer(column_metadata, anonymize=True, category='superhero_names')
+        transformer = CatTransformer(column_metadata)
         faker_instance = MagicMock(spec=Faker())
         faker_mock.return_value = faker_instance
 
@@ -172,7 +179,7 @@ class TestCatTransformer(TestCase):
             "name": "breakfast",
             "type": "categorical"
         }
-        transformer = CatTransformer(column_metadata=column_metadata)
+        transformer = CatTransformer(column_metadata)
         transformer.probability_map = {
             'A': ((0.6, 1.0), 0.8, 0.0666),
             'B': ((0, 0.6), 0.3, 0.0999)
@@ -298,14 +305,13 @@ class TestCatTransformer(TestCase):
         # Setup
         column_metadata = {
             'name': 'first_name',
-            'type': 'categorical'
+            'type': 'categorical',
+            'pii': True,
+            'pii_category': 'first_name'
         }
-        transformer = CatTransformer(
-            column_metadata=column_metadata, anonymize=True, category='first_name')
+        transformer = CatTransformer(column_metadata)
 
-        data = pd.DataFrame({
-            'first_name': ['Albert', 'John', 'Michael']
-        })
+        data = pd.DataFrame({'first_name': ['Albert', 'John', 'Michael']})
 
         faker_instance = MagicMock()
         faker_instance.first_name.side_effect = ['Anthony', 'Charles', 'Mark']
@@ -321,13 +327,18 @@ class TestCatTransformer(TestCase):
     def test_anonymize_not_reversible(self):
         """If anonymize is True the operation is not reversible. """
         # Setup
-        column_metadata = {
+        regular_column_metadata = {
             'name': 'first_name',
             'type': 'categorical'
         }
-        transformer = CatTransformer(column_metadata=column_metadata)
-        anon_transformer = CatTransformer(
-            column_metadata=column_metadata, anonymize=True, category='first_name')
+        transformer = CatTransformer(regular_column_metadata)
+
+        pii_column_metadata = regular_column_metadata.copy()
+        pii_column_metadata.update({
+            'pii': True,
+            'pii_category': 'first_name'
+        })
+        anon_transformer = CatTransformer(pii_column_metadata)
 
         data = pd.DataFrame({
             'first_name': ['Albert', 'John', 'Michael']
