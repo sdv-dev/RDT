@@ -1,6 +1,7 @@
 import json
 import os
 from unittest import TestCase, skip
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -117,6 +118,166 @@ class TestHyperTransformer(TestCase):
 
         # Check
         assert transformer.__name__ == 'DTTransformer'
+
+    @patch('rdt.hyper_transformer.pd.read_csv')
+    def test__get_tables(self, read_mock):
+        """_get_tables loads the data from disk and structures it along its metadata."""
+
+        # Setup
+        metadata = {
+            'path': '',
+            'tables': [{
+                'fields': [
+                    {
+                        'name': 'A',
+                        'type': 'numerical',
+                    },
+                    {
+                        'name': 'B',
+                        'type': 'numerical',
+                    },
+                    {
+                        'name': 'primary_key',
+                        'type': 'numerical',
+                    },
+                ],
+                'headers': True,
+                'name': 'table_name',
+                'path': 'table.csv',
+                'primary_key': 'primary_key',
+                'use': True
+            }]
+        }
+        dir_name = ''
+        hyper_transformer = HyperTransformer(metadata, dir_name)
+
+        read_mock.return_value = pd.DataFrame({
+            'primary_key': [1, 2],
+            'A': [1, 0],
+            'B': [0, 1]
+        })
+
+        # We reset the mock because it's called on init
+        read_mock.reset_mock()
+
+        # We expect the data_table to be the read_mock unchanged because there are
+        # no fields with the pii key and the data should remain unchanged.
+        expected_result = {
+            'table_name': (read_mock.return_value, metadata['tables'][0])
+        }
+
+        # Run
+        result = hyper_transformer._get_tables(dir_name)
+
+        # Check
+        assert isinstance(result, dict)
+        assert len(result.keys()) == 1
+
+        # We check that both the dataframe and the metadata are the expected.
+        actual_table = result['table_name']
+        expected_table = expected_result['table_name']
+
+        actual_data = actual_table[0]
+        expected_data = expected_table[0]
+        assert actual_data.equals(expected_data)
+
+        actual_meta = actual_table[1]
+        expected_meta = expected_table[1]
+        assert actual_meta == expected_meta
+
+        # We check the mock has only been called once and with the expected path.
+        expected_path = 'table.csv'
+        read_mock.assert_called_once_with(expected_path)
+
+    @patch('rdt.hyper_transformer.transformers.CatTransformer')
+    @patch('rdt.hyper_transformer.pd.read_csv')
+    def test__get_tables_pii_fields(self, read_mock, transformer_mock):
+        """If some fields have the keyword pii, they are transformed to anonymize the data."""
+        # Setup
+        metadata = {
+            'path': '',
+            'tables': [{
+                'fields': [
+                    {
+                        'name': 'name',
+                        'type': 'categorical',
+                        'pii': True,
+                        'pii_category': 'first_name'
+                    },
+                    {
+                        'name': 'user_id',
+                        'type': 'numerical',
+                    },
+                ],
+                'headers': True,
+                'name': 'table_name',
+                'path': 'table.csv',
+                'primary_key': 'user_id',
+                'use': True
+            }]
+        }
+        dir_name = ''
+        hyper_transformer = HyperTransformer(metadata, dir_name)
+
+        read_mock.return_value = pd.DataFrame({
+            'name': ['Mike', 'John'],
+            'user_id': [1, 2]
+        })
+        instance_mock = transformer_mock.return_value
+        instance_mock.anonymize_column.return_value = pd.DataFrame({'name': ['Peter', 'David']})
+
+        # We reset the mocks because it's called on init
+        read_mock.reset_mock()
+        transformer_mock.reset_mock()
+        instance_mock.reset_mock()
+
+        expected_data_table = pd.DataFrame({
+            'name': ['Peter', 'David'],  # instance_mock.fit_transform.return_value
+            'user_id': [1, 2]
+        })
+        expected_result = {
+            'table_name': (expected_data_table, metadata['tables'][0])
+        }
+
+        # Run
+        result = hyper_transformer._get_tables(dir_name)
+
+        # Check
+        assert isinstance(result, dict)
+        assert len(result.keys()) == 1
+
+        # We check that both the dataframe and the metadata are the expected.
+        actual_table = result['table_name']
+        expected_table = expected_result['table_name']
+
+        actual_data = actual_table[0]
+        expected_data = expected_table[0]
+        assert actual_data.equals(expected_data)
+
+        actual_meta = actual_table[1]
+        expected_meta = expected_table[1]
+        assert actual_meta == expected_meta
+
+        # read_mock has only been called once as expected
+        expected_path = 'table.csv'
+        read_mock.assert_called_once_with(expected_path)
+
+        # transformer mock has been called only once, for field 'name'.
+        expected_field = {
+            'name': 'name',
+            'type': 'categorical',
+            'pii': True,
+            'pii_category': 'first_name'
+        }
+        transformer_mock.assert_called_once_with(expected_field)
+
+        # instance_mock.anonimize_column has been called once, and was passed the unmodified data.
+        df = pd.DataFrame({
+            'name': ['Mike', 'John'],
+            'user_id': [1, 2]
+        })
+        expected_call_args_list = ((df,), {})
+        instance_mock.anonymize_column.call_args_list == expected_call_args_list
 
     @skip('https://github.com/HDI-Project/RDT/issues/52')
     def test_fit_transform_table_transformer_dict(self):

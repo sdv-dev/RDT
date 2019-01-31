@@ -19,7 +19,7 @@ DEPRECATION_MESSAGE = (
 )
 
 
-class HyperTransformer(object):
+class HyperTransformer:
     """Multitable transformer.
 
     Arguments:
@@ -31,8 +31,23 @@ class HyperTransformer(object):
     for a whole dataset.
     """
 
+    @staticmethod
+    def get_class(class_name):
+        """Get class object of transformer from its class name.
+
+        Args:
+            class_name(str):    Name of the transform.
+
+        Returns:
+            BaseTransformer
+        """
+        return getattr(transformers, class_name)
+
     def _get_tables(self, base_dir):
         """Load the contents of meta_file and the corresponding data.
+
+        If fields containing Personally Identifiable Information are detected in the metadata
+        they are anonymized before asign them into `table_dict`.
 
         Args:
             base_dir(str): Root folder of the dataset files.
@@ -46,6 +61,13 @@ class HyperTransformer(object):
             if table['use']:
                 relative_path = os.path.join(base_dir, self.metadata['path'], table['path'])
                 data_table = pd.read_csv(relative_path)
+
+                pii_fields = [field for field in table['fields'] if field.get('pii')]
+                for pii_field in pii_fields:
+                    field_name = pii_field['name']
+                    transformer = self.get_class(TRANSFORMERS['categorical'])(pii_field)
+                    data_table[field_name] = transformer.anonymize_column(data_table)
+
                 table_dict[table['name']] = (data_table, table)
 
         return table_dict
@@ -89,17 +111,6 @@ class HyperTransformer(object):
         self.table_dict = self._get_tables(dir_name)
         self.transformer_dict = self._get_transformers()
         self.missing = missing
-
-    def get_class(self, class_name):
-        """Get class object of transformer from its class name.
-
-        Args:
-            class_name(str):    Name of the transform.
-
-        Returns:
-            BaseTransformer
-        """
-        return getattr(transformers, class_name)
 
     def _fit_transform_column(self, table, metadata, transformer_name, table_name, missing=None):
         """Transform a column from table using transformer and given parameters.
