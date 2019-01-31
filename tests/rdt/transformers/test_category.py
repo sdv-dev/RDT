@@ -24,7 +24,7 @@ class TestCatTransformer(TestCase):
         # Check
         assert transformer.type == 'categorical'
         assert transformer.probability_map == {}
-        assert transformer.anonymize is False
+        assert transformer.anonymize is None
         assert transformer.category is None
 
     def test___init___anonymize_without_category_raises(self):
