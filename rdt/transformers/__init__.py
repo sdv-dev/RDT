@@ -3,11 +3,11 @@ import os
 
 import pandas as pd
 
-from rdt.transformers.BaseTransformer import BaseTransformer
-from rdt.transformers.CatTransformer import CatTransformer
-from rdt.transformers.DTTransformer import DTTransformer
-from rdt.transformers.NullTransformer import NullTransformer
-from rdt.transformers.NumberTransformer import NumberTransformer
+from rdt.transformers.base import BaseTransformer
+from rdt.transformers.category import CatTransformer
+from rdt.transformers.datetime import DTTransformer
+from rdt.transformers.null import NullTransformer
+from rdt.transformers.number import NumberTransformer
 
 
 def load_data_table(table_name, meta_file, meta):

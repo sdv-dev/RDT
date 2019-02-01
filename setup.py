@@ -10,9 +10,10 @@ with open('HISTORY.md') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'numpy==1.13.1',
-    'pandas==0.22.0',
-    'scipy==0.19.1',
+    'numpy>=1.15.4',
+    'pandas>=0.23.4',
+    'scipy>=1.1.0',
+    'Faker>=1.0.1',
 ]
 
 setup_requires = [
@@ -20,9 +21,8 @@ setup_requires = [
 ]
 
 tests_require = [
-    'coverage>=4.5.1',
     'pytest>=3.4.2',
-    'tox>=2.9.1',
+    'pytest-cov>=2.6.0',
 ]
 
 development_requires = [
@@ -49,6 +49,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     description="A repository with reversible data transforms",
     extras_require={
@@ -68,6 +69,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/HDI-Project/RDT',
-    version='0.1.1',
+    version='0.1.2-dev',
     zip_safe=False,
 )

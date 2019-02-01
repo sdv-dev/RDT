@@ -69,8 +69,7 @@ Ready to contribute? Here's how to set up `RDT` for local development.
 
     $ mkvirtualenv RDT
     $ cd RDT/
-    $ pip install -e .
-    $ pip install -r requirements_dev.txt
+    $ make install-develop
 
 4. Create a branch for local development::
 
@@ -183,12 +182,15 @@ Normally this is just a list of the Pull Requests that have been merged since th
 
 Once this is done, just run the following commands::
 
-    git checkout stable
-    git merge --no-ff master    # This creates a merge commit
-    bumpversion release   # This creates a new commit and a TAG
-    git push --tags origin stable
+1. If you are releasing a patch version::
+
     make release
-    git checkout master
-    git merge stable
-    bumpversion --no-tag patch
-    git push
+
+2. If you are releasing a minor version::
+
+    make release-minor
+
+3. If you are releasing a major version::
+
+    make release-major
+

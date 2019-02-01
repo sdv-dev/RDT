@@ -1,4 +1,3 @@
-.PHONY: clean clean-test clean-pyc clean-build clean-docs docs help
 .DEFAULT_GOAL := help
 
 define BROWSER_PYSCRIPT
@@ -30,7 +29,6 @@ BROWSER := python -c "$$BROWSER_PYSCRIPT"
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
 
-clean: clean-build clean-pyc clean-coverage clean-test clean-docs ## remove all build, test, coverage, docs and Python artifacts
 
 # CLEAN TARGETS
 
@@ -105,7 +103,7 @@ fix-lint: ## fix lint issues using autoflake, autopep8, and isort
 
 .PHONY: test
 test: ## run tests quickly with the default Python
-	python -m pytest
+	python -m pytest --cov=rdt
 
 .PHONY: test-all
 test-all: ## run tests on every Python version with tox
@@ -123,7 +121,6 @@ coverage: ## check code coverage quickly with the default Python
 
 .PHONY: docs
 docs: clean-docs ## generate Sphinx HTML documentation, including API docs
-	sphinx-apidoc -o docs/ rdt
 	$(MAKE) -C docs html
 	touch docs/_build/html/.nojekyll
 
@@ -133,10 +130,8 @@ view-docs: docs ## view docs in browser
 
 .PHONY: serve-docs
 serve-docs: view-docs ## compile the docs watching for changes
-	watchmedo shell-command -W -R -D -p '*.rst;*.md' -c '$(MAKE) -C docs html' .
+	watchmedo shell-command -W -R -D -p '*.rst;*.md' -c '$(MAKE) -C docs html' docs
 
-release: dist ## package and upload a release
-	twine upload dist/*
 
 # RELEASE TARGETS
 
