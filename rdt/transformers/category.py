@@ -16,6 +16,21 @@ class CatTransformer(BaseTransformer):
 
         category (str): The type of data to ask faker for when anonimizing.
 
+    This transformer expects a `column` pandas.Series of any dtype in a pandas.DataFrame `table`.
+    On transform, it will map categorical values into the interval [0, 1], back and forth mapping
+    all the unique values close to their frequency in the fit data.
+    This mean, that two instances of the same category may not be transformed into the same number.
+
+    On reverse_transform it will transform any value close to the frenquency to their related
+    category. This behavior is to allow the transformed data to be modelled and the sampled
+    data to be reverse_transformed.
+
+    Please note the following behavior, for any column:
+
+    >>> result = transformer.fit_transform(column)
+    >>> assert result[0 <= result <= 1].all()
+
+
     """
 
     type = 'categorical'
@@ -25,8 +40,8 @@ class CatTransformer(BaseTransformer):
 
         super().__init__(column_metadata)
 
-        self.anonymize = column_metadata.get('pii', False)
-        self.category = column_metadata.get('pii_category')
+        self.anonymize = anonymize or column_metadata.get('pii')
+        self.category = category or column_metadata.get('pii_category')
 
         self.probability_map = {}
 
