@@ -138,17 +138,6 @@ class HyperTransformer:
         self.transformer_dict = self._get_transformers()
         self.missing = missing
 
-    def get_class(self, class_name):
-        """Get class object of transformer from its class name.
-
-        Args:
-            class_name(str):    Name of the transform.
-
-        Returns:
-            BaseTransformer
-        """
-        return getattr(transformers, class_name)
-
     def _fit_transform_column(self, table, metadata, transformer_name, table_name):
         """Transform a column from table using transformer and given parameters.
 
