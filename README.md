@@ -3,11 +3,9 @@
   <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
-[![][pypi-img]][pypi-url] [![][travis-img]][travis-url]
-
 # Reversible Data Transforms
 
-This a python library used to transform data for data science libraries and preserve the transformations in order to reverse them as needed.
+[![][pypi-img]][pypi-url] [![][travis-img]][travis-url]
 
 - Free software: MIT license
 - Documentation: https://HDI-Project.github.io/RDT
@@ -18,34 +16,83 @@ This a python library used to transform data for data science libraries and pres
 [pypi-url]: https://pypi.python.org/pypi/RDT
 
 
+## Overview
 
-## Installation
+This a python library used to transform data for data science libraries and preserve the transformations in order to reverse them as needed.
+
+## Install
+
+### Requirements
+
+**RDT** has been developed and tested on [Python 3.5, 3.6 and 3.7][python-downloads]
+
+Also, although it is not strictly required, the usage of a [virtualenv][virtualenv] is highly recommended in order to avoid interfering with other software installed in the system where **RDT** is fun.
+
+These are the minimum commands needed to create a virtualenv using python3.6 for **RDT**:
+
+	pip install virtualenv
+	virtualenv -p $(which python3.6) rdt-venv
+
+Afterwards, you have to execute this command to have the virtualenv activated:
+
+	source rdt-venv/bin/activate
+	
+Remember about executing it every time you start a new console to work on **RDT**!
+
+[python-downloads]: https://www.python.org/downloads
+[virtualenv]: https://virtualenv.pypa.io/en/latest/
 
 ### Install with pip
 
-The simplest and recommended way to install RDT is using `pip`:
+After creating the virtualenv and activating it, we recommend using [pip][pip] in order to install **RDT**:
 
-```
-pip install rdt
-```
+	pip install rdt
+
+This will pull and install the latest stable release from [PyPi][pypi].
+
+[pip]: https://pip.pypa.io/en/stable/
+[pypi]: https://pypi.org/
 
 ### Install from sources
 
-You can also clone the repository and install it from sources
+Alternatively, with your virtualenv activated, you can clone the repository and install it from source by running `make install` on the `stable` branch:
 
-```
-git clone git@github.com:HDI-Project/RDT.git
-cd RDT
-pip install -e .
-```
+	git clone https://github.com/HDI-Project/RDT
+	cd RDT
+	git checkout stable
+	make install
 
-## Usage
+### Install for development
+
+If you want to contribute to the project, a few more steps are required to make the project ready for development.
+
+First, please head to the GitHub page of the project and make a fork of the project under you own username by clicking on the **fork** button on the upper right corner of the page.
+
+Afterwards, clone your fork and create a branch from master with a descriptive name that includes the number of issues that you are going to work on:
+
+	git clone https://github.com/HDI-Project/RDT
+	cd RDT
+	git branch issue-xx-cool-new-feature master
+	git checkout issue-xx-cool-new-feature
+
+Finally, install the project with the following command, wich will install some additional dependencies for code linting and testing.
+
+	make install
+
+Make sure to use them regularly while developing by running the commands `make lint` and `make test`.
+
+## Quickstart
 
 This library is used to apply desired transformations to individual tables or entire datasets
 all at once, with the goal of getting completely numeric tables as the output. The desired
 transformations can be specified at the column level, or dataset level. For example, you can
 apply a datetime transformation to only select columns, or you can specify that you want every
 datetime column in the dataset to go through that transformation.
+
+To run the examples, we need to decompress the demo data included in the repository by running this
+command on a shell:
+
+	tar -xvzf examples/data/airbnb.tar.gz -C examples/data/
 
 ### Transforming a column
 
@@ -58,17 +105,8 @@ these methods.
 Transformers take in a column and the meta data for that column as an input. Below we will
 demonstrate how to use a datetime transformer to transform and reverse transform a column.
 
-First we need to decompress the demo data included in the repository by running this
-command on a shell:
-
-```
-tar -xvzf examples/data/airbnb.tar.gz -C examples/data/
-```
-
-Afterwards, we can proceed to open a python interpreter and load the data
-
 ```python
->>> from rdt.transfomers import get_col_info
+>>> from rdt.transformers import get_col_info
 >>> demo_data = 'examples/data/airbnb/Airbnb_demo_meta.json'
 >>> column, column_metadata = get_col_info('users', 'date_account_created', demo_data)
 >>> column.head(5)
@@ -90,9 +128,9 @@ Name: date_account_created, dtype: object
 Now we can transform the column.
 
 ```python
->>> from rdt.transformers.DTTransformer import DTTransformer
->>> transformer = DTTransformer()
->>> transformed_data = transformer.fit_transform(column, column_metadata)
+>>> from rdt.transformers import DTTransformer
+>>> transformer = DTTransformer(column_metadata)
+>>> transformed_data = transformer.fit_transform(column.to_frame())
 >>> transformed_data.head(5)
 0                      1          1.388531e+18
 1                      1          1.388531e+18
@@ -106,9 +144,8 @@ If you want to reverse the transformation and get the original data back, you ca
 following command.
 
 ```python
->>> reverse_transformed = transformer.reverse_transform(transformed_data, column_metadata)
+>>> reverse_transformed = transformer.reverse_transform(transformed_data)
 >>> reverse_transformed.head(5)
-  date_account_created
   date_account_created
 0           2014-01-01
 1           2014-01-01
@@ -123,10 +160,13 @@ You can also transform an entire table using the HyperTransformer class. Again, 
 loading the data.
 
 ```python
->>> from rdt.utils import get_table_dict
+>>> import json
+>>> from rdt.transformers import load_data_table
 >>> meta_file = 'examples/data/airbnb/Airbnb_demo_meta.json'
->>> table_dict = get_table_dict(meta_file)
->>> table, table_meta = table_dict['users']
+>>> with open(meta_file, "r") as f:
+...     meta_content = json.loads(f.read())
+>>> table_tuple = load_data_table('users', meta_file, meta_content)
+>>> table, table_meta = table_tuple
 ```
 
 Now you can pass a list of the desired transformers into the `fit_transform_table` function to
