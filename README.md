@@ -110,19 +110,26 @@ demonstrate how to use a datetime transformer to transform and reverse transform
 >>> demo_data = 'examples/data/airbnb/Airbnb_demo_meta.json'
 >>> column, column_metadata = get_col_info('users', 'date_account_created', demo_data)
 >>> column.head(5)
+```
+
+```
 0    2014-01-01
 1    2014-01-01
 2    2014-01-01
 3    2014-01-01
 4    2014-01-01
 Name: date_account_created, dtype: object
+```
 
+```python
 >>> column_metadata
+```
+
+```
 {'name': 'date_account_created',
  'type': 'datetime',
  'format': '%Y-%m-%d',
  'uniques': 1634}
-
 ```
 
 Now we can transform the column.
@@ -132,12 +139,14 @@ Now we can transform the column.
 >>> transformer = DTTransformer(column_metadata)
 >>> transformed_data = transformer.fit_transform(column.to_frame())
 >>> transformed_data.head(5)
+```
+
+```
 0                      1          1.388531e+18
 1                      1          1.388531e+18
 2                      1          1.388531e+18
 3                      1          1.388531e+18
 4                      1          1.388531e+18
-
 ```
 
 If you want to reverse the transformation and get the original data back, you can run the
@@ -146,6 +155,9 @@ following command.
 ```python
 >>> reverse_transformed = transformer.reverse_transform(transformed_data)
 >>> reverse_transformed.head(5)
+```
+
+```
   date_account_created
 0           2014-01-01
 1           2014-01-01
@@ -178,6 +190,9 @@ transform the whole table.
 >>> tl = ['DTTransformer', 'NumberTransformer', 'CatTransformer']
 >>> transformed = ht.fit_transform_table(table, table_meta, transformer_list=tl)
 >>> transformed.head(3).T
+```
+
+```
                                      0             1             2
 ?date_account_created     1.000000e+00  1.000000e+00  1.000000e+00
 date_account_created      1.388531e+18  1.388531e+18  1.388531e+18
@@ -207,7 +222,6 @@ signup_app                6.915504e-01  6.373492e-01  5.798949e-01
 first_device_type         6.271052e-01  2.611754e-01  6.828802e-01
 ?first_browser            1.000000e+00  1.000000e+00  1.000000e+00
 first_browser             2.481743e-01  5.087636e-01  5.023412e-01
-
 ```
 
 You can then reverse transform the output to get a table in the original format, but it will
@@ -216,6 +230,9 @@ only contain the columns corresponding to those that were transformed (ie. numer
 ```python
 >>> reverse_transformed = ht.reverse_transform_table(transformed, table_meta)
 >>> reverse_transformed.head(3).T
+```
+
+```
                                        0               1                2
 date_account_created          2014-01-01      2014-01-01       2014-01-01
 timestamp_first_active    19700101053540  19700101053540   19700101053540
@@ -231,7 +248,6 @@ first_affiliate_tracked              omg       untracked              omg
 signup_app                           Web             Web              Web
 first_device_type        Windows Desktop     Mac Desktop  Windows Desktop
 first_browser                     Chrome         Firefox          Firefox
-
 ```
 
 ### Transforming a dataset
@@ -246,6 +262,9 @@ meta.json at once.
 >>> tl = ['DTTransformer', 'NumberTransformer', 'CatTransformer']
 >>> transformed = ht.fit_transform(transformer_list=tl)
 >>> transformed['users'].head(3).T
+```
+
+```
                                      0             1             2
 ?date_account_created     1.000000e+00  1.000000e+00  1.000000e+00
 date_account_created      1.388531e+18  1.388531e+18  1.388531e+18
@@ -275,8 +294,13 @@ signup_app                3.583918e-01  2.627690e-01  4.544640e-01
 first_device_type         6.621950e-01  3.078130e-01  7.152115e-01
 ?first_browser            1.000000e+00  1.000000e+00  1.000000e+00
 first_browser             2.410379e-01  4.766930e-01  4.865389e-01
+```
 
+```python
 >>> transformed['sessions'].head(3).T
+```
+
+```
                          0             1           2
 ?action           1.000000      1.000000    1.000000
 action            0.361382      0.597891    0.353806
@@ -288,9 +312,14 @@ action_detail     0.070212      0.852246    0.107477
 device_type       0.726447      0.711231    0.710298
 ?secs_elapsed     1.000000      1.000000    1.000000
 secs_elapsed    319.000000  67753.000000  301.000000
+```
 
+```python
 >>> reverse_transformed = ht.reverse_transform(tables=transformed)
 >>> reverse_transformed['users'].head(3).T
+```
+
+```
                                        0               1                2
 date_account_created          2014-01-01      2014-01-01       2014-01-01
 timestamp_first_active    19700101053540  19700101053540   19700101053540
@@ -306,13 +335,17 @@ first_affiliate_tracked              omg       untracked              omg
 signup_app                           Web             Web              Web
 first_device_type        Windows Desktop     Mac Desktop  Windows Desktop
 first_browser                     Chrome         Firefox          Firefox
+```
 
+```pythnon
 >>> reverse_transformed['sessions'].head(3).T
+```
+
+```
                              0                    1                2
 action                  lookup       search_results           lookup
 action_type               None                click             None
 action_detail             None  view_search_results             None
 device_type    Windows Desktop      Windows Desktop  Windows Desktop
 secs_elapsed               319                67753              301
-
 ```
