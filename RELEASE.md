@@ -206,7 +206,7 @@ make test
 
 Also, execute the SDV README.md examples.
 
-# Making the release
+## Making the release
 
 At the end, we need to make the release. First, check if the release can be made:
 
@@ -215,7 +215,7 @@ make check-release
 ```
 
 
-## Tag and release to PyPi
+### Tag and release to PyPi
 
 Once we are sure that the release can be made we can use different commands depending on the type of release that we want to make:
 
@@ -225,7 +225,7 @@ Once we are sure that the release can be made we can use different commands depe
 
 * `make release-major`: This will release the next major version. Use this to if the changes modify the user API in a backwards incompatible way after the major version 1 has been released.
 
-## Update the release on GitHub
+### Update the release on GitHub
 
 Once the tag and the release to PyPi has been made, go to GitHub and edit the freshly created "tag" to add the title and release notes, which should be exactly the same that we added to the HISTORY.md file.
 
