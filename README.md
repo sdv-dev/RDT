@@ -41,16 +41,13 @@ Remember about executing it every time you start a new console to work on **RDT*
 
 ## Install with pip
 
-After creating the virtualenv and activating it, we recommend using [pip][pip] in order to install **RDT**:
+After creating the virtualenv and activating it, we recommend using [pip](https://pip.pypa.io/en/stable/) in order to install **RDT**:
 
 ```bash
 pip install rdt
 ```
 
-This will pull and install the latest stable release from [PyPi][pypi].
-
-[pip]: https://pip.pypa.io/en/stable/
-[pypi]: https://pypi.org/
+This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
 ## Install from sources
 
