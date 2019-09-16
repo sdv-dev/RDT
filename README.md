@@ -114,6 +114,9 @@ from rdt.transformers import get_col_info
 column, column_metadata = get_col_info('users', 'date_account_created', 'examples/data/airbnb/Airbnb_demo_meta.json')
 ```
 
+The `column` (pandas.DataFrame) variable contains the loaded column information and the `column_metadata` (dict) the field information from the meta.json.
+
+
 Now we can transform the column.
 
 ```python
@@ -121,6 +124,9 @@ from rdt.transformers import DTTransformer
 transformer = DTTransformer(column_metadata)
 transformed_data = transformer.fit_transform(column.to_frame())
 ```
+
+`transformer_data` (pandas.DataFrame) is the transformed data after fit and transform 
+he column with the `DTTransformer`.
 
 If you want to reverse the transformation and get the original data back, you can run the
 following command.
@@ -238,8 +244,20 @@ ht = HyperTransformer(meta_file)
 transformed = ht.fit_transform(transformer_list=['DTTransformer', 'NumberTransformer', 'CatTransformer'])
 ```
 
+`transformed` (dict) contains all the tables fitted and transformed
+ with the given transformers (DDTransformer, NumberTransformer, CatTransformer).
+
+`transformed['tablename']` (pandas.DataFrame) contains the table 'tablename' fitted
+ and transfromed data.
+
 And also can revers all the tables transformed:
 
 ```python
 reverse_transformed = ht.reverse_transform(tables=transformed)
 ```
+
+Finaly, the `reverse_transformed` (dict) is the reversed transformations
+ of the already transformed data.
+
+`reverse_transformed['tablename']` (pandas.DataFrame) contains the table 'tablename'
+ reversed data.
