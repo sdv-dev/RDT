@@ -84,17 +84,23 @@ tar -xvzf examples/data/airbnb.tar.gz -C examples/data/
 
 ### 1. Load column and its metadata
 
-With RDT, transform a column is as simple as specifying the table name,
-the column name and the metadata json file.
+In order to load the column and its metadata, you must call the `get_col_info` function passing it
+the table from which to load the column, the name of the column to load, and the path to the
+metadata json file.
 
-You can find the metadata format in [SDV documentation](https://hdi-project.github.io/SDV/usage.html#metadata-file-specification).
+You can find the metadata format in [MetaData.json](https://github.com/HDI-Project/MetaData.json).
 
 ```python
 from rdt.transformers import get_col_info
-column, column_metadata = get_col_info('users', 'date_account_created', 'examples/data/airbnb/Airbnb_demo_meta.json')
+
+column, column_metadata = get_col_info(
+    table_name='users',
+    col_name='date_account_created',
+    meta_file='examples/data/airbnb/Airbnb_demo_meta.json'
+)
 ```
 
-The output is the variable `column` which includes the specified column data:
+The output is the variable `column`, which is a `pandas.Series` with the column data:
 
 ```
 0    2014-01-01
@@ -105,29 +111,33 @@ The output is the variable `column` which includes the specified column data:
 Name: date_account_created, dtype: object
 ```
 
-And the other output is the variable `column_metadata` which includes the metadata
-that corresponds the specified column from the meta:
+The output is the variable `column_metadata`, which is a `dict` with the column metadata:
 
-```json
-{'name': 'date_account_created',
- 'type': 'datetime',
- 'format': '%Y-%m-%d',
- 'uniques': 1634}
+```
+{
+    'name': 'date_account_created',
+    'type': 'datetime',
+    'format': '%Y-%m-%d',
+    'uniques': 1634
+}
 ```
 
 ### 2. Load the transformer
 
-In this case in particular, the column correspond to a datetime field,
-we will use the 'from rdt.transformers import DTTransformer'.
+In this case, since the column is a datetime, we will use the DTTransformer.
 
 ```python
 from rdt.transformers import DTTransformer
 transformer = DTTransformer(column_metadata)
+```
+
+And call its `fit_transform` method passing the `column` data as a DataFrame:
+
+```python
 transformed_data = transformer.fit_transform(column.to_frame())
 ```
 
-The output is the variable `transformed_data` which includes
-the specified column data transformed:
+The output will be the transformed data:
 
 ```
    date_account_created
@@ -140,14 +150,14 @@ the specified column data transformed:
 
 ### 3. Reverse the transformed data
 
-If you want reverse the transformed data, you can do so by calling
-`transformer.reverse_transform` method:
+In order to reverse the transformed data call `reverse_transform` of the transformer
+with the transformed data.
 
 ```python
 transformer.reverse_transform(transformed_data).head(5)
 ```
 
-The output includes the specified column data transformed after the reverse:
+The output will be the transformed data reversed:
 
 ```
   date_account_created
@@ -162,25 +172,32 @@ The output includes the specified column data transformed after the reverse:
 
 ### 1. Load table and its metadata
 
-With RDT, transform a table is as simple as specifying the table name,
-the metadata json file and the metadata content.
+In order to load a table and its metadata, you must call the `load_data_table` function passing it
+the table name, the path to the metadata json file and the metadata content as a dict.
 
-You can find the metadata format in [SDV documentation](https://hdi-project.github.io/SDV/usage.html#metadata-file-specification).
+You can find the metadata format in [MetaData.json](https://github.com/HDI-Project/MetaData.json).
 
 ```python
 import json
 from rdt.transformers import load_data_table
+
 meta_file = 'examples/data/airbnb/Airbnb_demo_meta.json'
+
 with open(meta_file, "r") as f:
     meta_content = json.loads(f.read())
-table_tuple = load_data_table('users', meta_file, meta_content)
+
+table_tuple = load_data_table(
+    table_name='users',
+    meta_file=meta_file,
+    meta=meta_content
+)
+
 table, table_meta = table_tuple
 ```
 
-The output is the variable `table_tuple` which includes a tuple with
-the table data and its metadata.
+The variable `table_tuple`, which is a `tuple` with the table data and its metadata.
 
-The output of the variable `table` which includes the specified table data:
+The output is the variable `table`, which is a `pandas.DataFrame` with the table data:
 
 ```
            id date_account_created  ...  first_device_type first_browser
@@ -193,40 +210,57 @@ The output of the variable `table` which includes the specified table data:
 [5 rows x 15 columns]
 ```
 
-And the output of the variable `table_meta` which includes the metadata
-that corresponds the specified table the meta:
+The output is the variable `table_meta`, which is a `dict` with the table metadata:
 
 ```json
-{'path': 'users_demo.csv',
- 'name': 'users',
- 'use': True,
- 'headers': True,
- 'fields': [{'name': 'id',
-   'type': 'id',
-   'regex': '^.{10}$',
-   'uniques': 213451},
-   ...
-  {'name': 'first_browser',
-   'type': 'categorical',
-   'subtype': 'categorical',
-   'uniques': 52}],
- 'primary_key': 'id',
- 'number_of_rows': 213451}
+{
+    'path': 'users_demo.csv',
+    'name': 'users',
+    'use': True,
+    'headers': True,
+    'fields': [
+        {
+            'name': 'id',
+            'type': 'id',
+            'regex': '^.{10}$',
+            'uniques': 213451
+        },
+        ...
+        {
+            'name': 'first_browser',
+            'type': 'categorical',
+            'subtype': 'categorical',
+            'uniques': 52
+        }
+    ],
+    'primary_key': 'id',
+    'number_of_rows': 213451
+}
 ```
 
 ### 2. Load the transformer
 
-We will be transforming the table using the `from rdt.hyper_transformer import HyperTransformer`.
-When transforming a table you need specify the list of transformers to use:
+In this case, since we want transform a table, we will use the Hypertransformer passing
+the metadata json file.
 
 ```python
 from rdt.hyper_transformer import HyperTransformer
-ht = HyperTransformer(meta_file)
-transformed = ht.fit_transform_table(table, table_meta, transformer_list=['DTTransformer', 'NumberTransformer', 'CatTransformer'])
+ht = HyperTransformer(metadata=meta_file)
+```
+
+And call its `fit_transform_table` method passing the table data, the table metadata and
+`transformer_list` as a list of strings with the transformers to be used.
+
+```python
+transformed = ht.fit_transform_table(
+    table=table,
+    table_meta=table_meta,
+    transformer_list=['DTTransformer', 'NumberTransformer', 'CatTransformer']
+)
 transformed.head(3).T
 ```
 
-The output is the variable `transformed`, which includes the table transformed:
+The output will be the transformed data:
 
 ```
                                      0             1             2
@@ -251,14 +285,14 @@ first_browser             1.959058e-01  4.864128e-01  4.935550e-01
 
 ### 3. Reverse the transformed data
 
-If you want reverse the transformed data, you can do so by calling
-`ht.reverse_transform_table` method:
+In order to reverse the transformed data call `reverse_transform_table` of the transformer
+with the transformed data.
 
 ```python
 ht.reverse_transform_table(transformed, table_meta).head(3).T
 ```
 
-The output includes the data transformed after the reverse:
+The output will be the transformed data reversed:
 
 ```
                                        0               1                2
@@ -282,66 +316,103 @@ first_browser                     Chrome         Firefox          Firefox
 
 ### 1. Load the transformer
 
-With RDT, transform a dataset is as simple as specifying the metadata json file.
-Once we have created the instance with the desired metadata we can fit and transforme it.
+In order to load the dataset, you must instance a new HyperTransformer passing
+the metadata json file path.
 
-You can find the metadata format in [SDV documentation](https://hdi-project.github.io/SDV/usage.html#metadata-file-specification).
+You can find the metadata format in [MetaData.json](https://github.com/HDI-Project/MetaData.json).
 
 ```python
 from rdt.hyper_transformer import HyperTransformer
 meta_file = 'examples/data/airbnb/Airbnb_demo_meta.json'
-ht = HyperTransformer(meta_file)
-transformed = ht.fit_transform(transformer_list=['DTTransformer', 'NumberTransformer', 'CatTransformer'])
-transformed['users']
+ht = HyperTransformer(metadata=meta_file)
 ```
 
-The output of the variable `transformed['users']` which includes the specified table data:
+And call its `fit_transform_table` method passing the `transformer_list` as a list of strings
+with the transformers to be used.
+
+```python
+transformed = ht.fit_transform(
+    transformer_list=['DTTransformer', 'NumberTransformer', 'CatTransformer']
+)
+```
+
+The output will be the transformed data:
 
 ```
-                                    0             1             2
-date_account_created     1.388534e+18  1.388534e+18  1.388534e+18
-timestamp_first_active   1.388535e+18  1.388535e+18  1.388535e+18
-date_first_booking       1.388794e+18  1.388707e+18  1.388707e+18
-gender                   7.976607e-01  1.903103e-01  3.209892e-01
-age                      6.200000e+01  3.700000e+01  3.700000e+01
-signup_method            2.655825e-01  5.665843e-01  3.572366e-01
-signup_flow              4.169028e-01  3.415770e-01  4.911972e-01
-language                 4.790218e-01  6.853290e-01  5.380235e-01
-affiliate_channel        9.377552e-01  5.471765e-01  7.957746e-01
-affiliate_provider       7.279075e-01  2.566958e-01  7.450474e-01
-first_affiliate_tracked  4.225472e-01  7.396975e-01  3.239905e-01
-signup_app               4.597071e-01  3.912385e-01  2.820521e-01
-first_device_type        6.539733e-01  2.618580e-01  6.375842e-01
-first_browser            2.453285e-01  4.943993e-01  5.086062e-01
+{
+    'users': date_account_created  timestamp_first_active  ...  first_device_type  first_browser
+        0            1.388534e+18            1.388535e+18  ...           0.688490       0.310197
+        1            1.388534e+18            1.388535e+18  ...           0.138405       0.496897
+        2            1.388534e+18            1.388535e+18  ...           0.661271       0.497827
+        3            1.388534e+18            1.388536e+18  ...           0.607850       0.298108
+        4            1.388534e+18            1.388536e+18  ...           0.944871       0.063213
+        ..                    ...                     ...  ...                ...            ...
+        994          1.388794e+18            1.388872e+18  ...           0.245157       0.814368
+        995          1.388794e+18            1.388873e+18  ...           0.877496       0.698151
+        996          1.388794e+18            1.388873e+18  ...           0.297747       0.260010
+        997          1.388794e+18            1.388873e+18  ...           0.582963       0.226867
+        998          1.388794e+18            1.388874e+18  ...           0.273372       0.841499
+
+ [999 rows x 17 columns],
+
+    'sessions': action  ?action  action_type  ...  device_type  secs_elapsed  ?secs_elapsed
+       0      0.336516        1     0.152740  ...     0.726133           319              1
+       1      0.601945        1     0.500604  ...     0.766118         67753              1
+       2      0.346697        1     0.162124  ...     0.785091           301              1
+       3      0.573250        1     0.555400  ...     0.766361         22141              1
+       4      0.363343        1     0.223726  ...     0.702190           435              1
+       ...         ...      ...          ...  ...          ...           ...            ...
+       69491  0.718932        1     0.280253  ...     0.696064            65              1
+       69492  0.448234        1     0.729959  ...     0.719088           198              1
+       69493  0.722997        1     0.902251  ...     0.651095          4626              1
+       69494  0.899482        1     0.740102  ...     0.728140           151              1
+       69495  0.426971        1     0.726414  ...     0.445924           396              1
+
+ [69496 rows x 9 columns]
+}
 ```
 
 ### 2. Reverse the transformed data
 
-If you want reverse the transformed data, you can do so by calling
-`ht.reverse_transform` method:
+In order to reverse the transformed data call `reverse_transform` of the transformer
+with the transformed data.
 
 ```python
 reverse_transformed = ht.reverse_transform(tables=transformed)
-reverse_transformed['users']
 ```
 
-The output of the variable `reverse_transformed['users']` which includes the specified table
-data after the reverse:
+The output will be the transformed data reversed:
 
 ```
-                                       0               1                2
-date_account_created          2014-01-01      2014-01-01       2014-01-01
-timestamp_first_active    20140101010936  20140101011558   20140101011639
-date_first_booking            2014-01-04      2014-01-03       2014-01-03
-gender                              MALE       -unknown-        -unknown-
-age                                   62              37               37
-signup_method                      basic           basic            basic
-signup_flow                            0               0                0
-language                              en              en               en
-affiliate_channel          sem-non-brand          direct        sem-brand
-affiliate_provider                google          direct           google
-first_affiliate_tracked              omg       untracked              omg
-signup_app                           Web             Web              Web
-first_device_type        Windows Desktop     Mac Desktop  Windows Desktop
-first_browser                     Chrome         Firefox          Firefox
+{
+    'users': date_account_created timestamp_first_active  ... first_device_type  first_browser
+         0             2014-01-01         20140101010936  ...   Windows Desktop         Chrome
+         1             2014-01-01         20140101011558  ...       Mac Desktop        Firefox
+         2             2014-01-01         20140101011639  ...   Windows Desktop        Firefox
+         3             2014-01-01         20140101012146  ...   Windows Desktop         Chrome
+         4             2014-01-01         20140101012619  ...            iPhone      -unknown-
+         ..                   ...                    ...  ...               ...            ...
+         994           2014-01-04         20140104225038  ...       Mac Desktop         Safari
+         995           2014-01-04         20140104225645  ...              iPad  Mobile Safari
+         996           2014-01-04         20140104225702  ...       Mac Desktop         Chrome
+         997           2014-01-04         20140104230004  ...   Windows Desktop         Chrome
+         998           2014-01-04         20140104231731  ...       Mac Desktop         Safari
+
+ [999 rows x 14 columns],
+
+    'sessions':   action action_type            action_detail      device_type  secs_elapsed
+ 0                lookup   -unknown-                -unknown-  Windows Desktop           319
+ 1        search_results       click      view_search_results  Windows Desktop         67753
+ 2                lookup   -unknown-                -unknown-  Windows Desktop           301
+ 3        search_results       click      view_search_results  Windows Desktop         22141
+ 4                lookup   -unknown-                -unknown-  Windows Desktop           435
+ ...                 ...         ...                      ...              ...           ...
+ 69491              show   -unknown-                -unknown-  Windows Desktop            65
+ 69492       personalize        data  wishlist_content_update  Windows Desktop           198
+ 69493              show        view                       p3  Windows Desktop          4626
+ 69494  similar_listings        data         similar_listings  Windows Desktop           151
+ 69495       personalize        data  wishlist_content_update      Mac Desktop           396
+
+ [69496 rows x 5 columns]
+}
 ```
