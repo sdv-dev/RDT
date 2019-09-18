@@ -212,7 +212,7 @@ The output is the variable `table`, which is a `pandas.DataFrame` with the table
 
 The output is the variable `table_meta`, which is a `dict` with the table metadata:
 
-```json
+```
 {
     'path': 'users_demo.csv',
     'name': 'users',
