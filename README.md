@@ -16,7 +16,7 @@
 ## Overview
 
 **RDT** is a Python library used to transform data for data science libraries and preserve
-the transformations in order to reverse them as needed.
+the transformations in order to revert them as needed.
 
 # Install
 
@@ -132,6 +132,8 @@ from rdt.transformers import DTTransformer
 transformer = DTTransformer(column_metadata)
 ```
 
+### 3. Transform the column data
+
 In order to transform the data, we will call its `fit_transform` method passing the
 `column` data:
 
@@ -150,9 +152,9 @@ The output will be another `pandas.DataFrame` with the transformed data:
 4          1.388534e+18
 ```
 
-### 3. Reverse the transformed data
+### 4. Revert the column transformation
 
-In order to reverse the previous transformation, the transformed data can be passed to
+In order to revert the previous transformation, the transformed data can be passed to
 the `reverse_transform` method of the transformer:
 
 ```python
@@ -230,7 +232,7 @@ And the `table_metadata`, which will also contain all the information available 
 }
 ```
 
-### 2. Load the transformer
+### 2. Load the HyperTransformer
 
 In order to manuipulate a complete table we will need to import the `rdt.HyperTransformer` class
 and create an instance of it passing it the path to our metadata file.
@@ -265,9 +267,9 @@ The output, again, will be the transformed data:
 4  0.345691          1.388534e+18            1.388536e+18  ...    0.944064           0.847751       0.108216
 ```
 
-### 4. Reverse the transformation
+### 4. Revert the table transformation
 
-In order to reverse the transformation and recover the original data from the transformed one,
+In order to revert the transformation and recover the original data from the transformed one,
 we need to call `reverse_transform_table` of the `HyperTransformer` instance passing it the
 transformed data and the table metadata.
 
