@@ -1,114 +1,108 @@
 <p align="left"> 
 <img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt=“Copulas” />
-  <i>An open source project from Data to AI Lab at MIT.</i>
+<i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
-[![][pypi-img]][pypi-url] [![][travis-img]][travis-url]
+[![PyPi Shield](https://img.shields.io/pypi/v/RDT.svg)](https://pypi.python.org/pypi/RDT)
+[![Travis CI Shield](https://travis-ci.org/HDI-Project/RDT.svg?branch=master)](https://travis-ci.org/HDI-Project/RDT)
+[![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
 
-# Reversible Data Transforms
+# RDT: Reversible Data Transforms
 
-This a python library used to transform data for data science libraries and preserve the transformations in order to reverse them as needed.
-
-- Free software: MIT license
+- License: MIT
 - Documentation: https://HDI-Project.github.io/RDT
+- Homepage: https://github.com/HDI-Project/RDT
 
-[travis-img]: https://travis-ci.org/HDI-Project/RDT.svg?branch=master
-[travis-url]: https://travis-ci.org/HDI-Project/RDT
-[pypi-img]: https://img.shields.io/pypi/v/RDT.svg
-[pypi-url]: https://pypi.python.org/pypi/RDT
+## Overview
 
+**RDT** is a Python library used to transform data for data science libraries and preserve
+the transformations in order to revert them as needed.
 
+# Install
 
-## Installation
+## Requirements
 
-### Install with pip
+**RDT** has been developed and tested on [Python 3.5, 3.6 and 3.7](https://www.python.org/downloads)
 
-The simplest and recommended way to install RDT is using `pip`:
+Also, although it is not strictly required, the usage of a
+[virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
+interfering with other software installed in the system where **RDT** is run.
 
+These are the minimum commands needed to create a virtualenv using python3.6 for **RDT**:
+
+```bash
+pip install virtualenv
+virtualenv -p $(which python3.6) rdt-venv
 ```
+
+Afterwards, you have to execute this command to have the virtualenv activated:
+
+```bash
+source rdt-venv/bin/activate
+```
+
+Remember about executing it every time you start a new console to work on **RDT**!
+
+## Install with pip
+
+After creating the virtualenv and activating it, we recommend using
+[pip](https://pip.pypa.io/en/stable/) in order to install **RDT**:
+
+```bash
 pip install rdt
 ```
 
-### Install from sources
+This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
-You can also clone the repository and install it from sources
+## Install from sources
 
-```
-git clone git@github.com:HDI-Project/RDT.git
+Alternatively, with your virtualenv activated, you can clone the repository and install
+it from source by running `make install` on the `stable` branch:
+
+```bash
+git clone https://github.com/HDI-Project/RDT
 cd RDT
-pip install -e .
+git checkout stable
+make install
 ```
 
-## Usage
+For development, you can use `make install-develop` instead in order to install all
+the required dependencies for testing and code linting.
 
-This library is used to apply desired transformations to individual tables or entire datasets
-all at once, with the goal of getting completely numeric tables as the output. The desired
-transformations can be specified at the column level, or dataset level. For example, you can
-apply a datetime transformation to only select columns, or you can specify that you want every
-datetime column in the dataset to go through that transformation.
+# Quickstart
 
-### Transforming a column
+In this short series of tutorials we will guide you through a series of steps that will
+help you getting started using **RDT** to transform columns, tables and datasets.
 
-The base class of this library is the BaseTransformer class. This class provides method to fit
-a transformer to your data and transform it, a method to transform new data with an already
-fitted transformer and a method to reverse a transform and get data that looks like the original
-input. Each transformer class inherits from the BaseTransformer class, and thus has all
-these methods.
+## Transforming a column
 
-Transformers take in a column and the meta data for that column as an input. Below we will
-demonstrate how to use a datetime transformer to transform and reverse transform a column.
+In this first guide, you will learn how to use **RDT** in its simplest form, transforming
+a single column loaded as a `pandas.DataFrame` object.
 
-First we need to decompress the demo data included in the repository by running this
-command on a shell:
+### 1. Load the column and its metadata
 
-```
-tar -xvzf examples/data/airbnb.tar.gz -C examples/data/
-```
+In order to load a column and its metadata, you must call the `rdt.load_data` function passing
+it the path to the metadata json file, the name of the table from which to load the column,
+and the name of the column to load.
 
-Afterwards, we can proceed to open a python interpreter and load the data
+You can find documentation about the metadata format in [MetaData.json](
+https://github.com/HDI-Project/MetaData.json).
 
 ```python
->>> from rdt.transfomers import get_col_info
->>> demo_data = 'examples/data/airbnb/Airbnb_demo_meta.json'
->>> column, column_metadata = get_col_info('users', 'date_account_created', demo_data)
->>> column.head(5)
-0    2014-01-01
-1    2014-01-01
-2    2014-01-01
-3    2014-01-01
-4    2014-01-01
-Name: date_account_created, dtype: object
+from rdt import load_data
 
->>> column_metadata
-{'name': 'date_account_created',
- 'type': 'datetime',
- 'format': '%Y-%m-%d',
- 'uniques': 1634}
+metadata_path = 'tests/data/airbnb/airbnb_meta.json'
 
+column_data, column_metadata = load_data(
+    metadata_path=metadata_path,
+    table_name='users',
+    column_name='date_account_created',
+)
 ```
 
-Now we can transform the column.
-
-```python
->>> from rdt.transformers.DTTransformer import DTTransformer
->>> transformer = DTTransformer()
->>> transformed_data = transformer.fit_transform(column, column_metadata)
->>> transformed_data.head(5)
-0                      1          1.388531e+18
-1                      1          1.388531e+18
-2                      1          1.388531e+18
-3                      1          1.388531e+18
-4                      1          1.388531e+18
+The output will be the variable `column_data`, which is a `pandas.DataFrame` with the column data:
 
 ```
-
-If you want to reverse the transformation and get the original data back, you can run the
-following command.
-
-```python
->>> reverse_transformed = transformer.reverse_transform(transformed_data, column_metadata)
->>> reverse_transformed.head(5)
-  date_account_created
   date_account_created
 0           2014-01-01
 1           2014-01-01
@@ -117,162 +111,183 @@ following command.
 4           2014-01-01
 ```
 
-### Transforming a table
-
-You can also transform an entire table using the HyperTransformer class. Again, we can start by
-loading the data.
-
-```python
->>> from rdt.utils import get_table_dict
->>> meta_file = 'examples/data/airbnb/Airbnb_demo_meta.json'
->>> table_dict = get_table_dict(meta_file)
->>> table, table_meta = table_dict['users']
-```
-
-Now you can pass a list of the desired transformers into the `fit_transform_table` function to
-transform the whole table.
-
-```python
->>> from rdt.hyper_transformer import HyperTransformer
->>> ht = HyperTransformer(meta_file)
->>> tl = ['DTTransformer', 'NumberTransformer', 'CatTransformer']
->>> transformed = ht.fit_transform_table(table, table_meta, transformer_list=tl)
->>> transformed.head(3).T
-                                     0             1             2
-?date_account_created     1.000000e+00  1.000000e+00  1.000000e+00
-date_account_created      1.388531e+18  1.388531e+18  1.388531e+18
-?timestamp_first_active   1.000000e+00  1.000000e+00  1.000000e+00
-timestamp_first_active    1.654000e+13  1.654000e+13  1.654000e+13
-?date_first_booking       1.000000e+00  0.000000e+00  0.000000e+00
-date_first_booking        1.388790e+18  0.000000e+00  0.000000e+00
-?gender                   1.000000e+00  1.000000e+00  1.000000e+00
-gender                    8.522112e-01  3.412078e-01  1.408864e-01
-?age                      1.000000e+00  0.000000e+00  0.000000e+00
-age                       6.200000e+01  3.700000e+01  3.700000e+01
-?signup_method            1.000000e+00  1.000000e+00  1.000000e+00
-signup_method             3.282037e-01  3.500181e-01  4.183867e-01
-?signup_flow              1.000000e+00  1.000000e+00  1.000000e+00
-signup_flow               4.453093e-01  3.716032e-01  3.906801e-01
-?language                 1.000000e+00  1.000000e+00  1.000000e+00
-language                  2.927157e-01  5.682538e-01  6.622744e-01
-?affiliate_channel        1.000000e+00  1.000000e+00  1.000000e+00
-affiliate_channel         9.266169e-01  5.640470e-01  8.044208e-01
-?affiliate_provider       1.000000e+00  1.000000e+00  1.000000e+00
-affiliate_provider        7.717574e-01  2.539509e-01  7.288847e-01
-?first_affiliate_tracked  1.000000e+00  1.000000e+00  1.000000e+00
-first_affiliate_tracked   3.861429e-01  8.600605e-01  4.029200e-01
-?signup_app               1.000000e+00  1.000000e+00  1.000000e+00
-signup_app                6.915504e-01  6.373492e-01  5.798949e-01
-?first_device_type        1.000000e+00  1.000000e+00  1.000000e+00
-first_device_type         6.271052e-01  2.611754e-01  6.828802e-01
-?first_browser            1.000000e+00  1.000000e+00  1.000000e+00
-first_browser             2.481743e-01  5.087636e-01  5.023412e-01
+And the `column_metadata`, which is a `dict` containing the information from the metadata json
+that corresponds to this column:
 
 ```
-
-You can then reverse transform the output to get a table in the original format, but it will
-only contain the columns corresponding to those that were transformed (ie. numeric columns).
-
-```python
->>> reverse_transformed = ht.reverse_transform_table(transformed, table_meta)
->>> reverse_transformed.head(3).T
-                                       0               1                2
-date_account_created          2014-01-01      2014-01-01       2014-01-01
-timestamp_first_active    19700101053540  19700101053540   19700101053540
-date_first_booking            2014-01-04             NaN              NaN
-gender                              MALE       -unknown-        -unknown-
-age                                   62             NaN              NaN
-signup_method                      basic           basic            basic
-signup_flow                            0               0                0
-language                              en              en               en
-affiliate_channel          sem-non-brand          direct        sem-brand
-affiliate_provider                google          direct           google
-first_affiliate_tracked              omg       untracked              omg
-signup_app                           Web             Web              Web
-first_device_type        Windows Desktop     Mac Desktop  Windows Desktop
-first_browser                     Chrome         Firefox          Firefox
-
+{
+    'name': 'date_account_created',
+    'type': 'datetime',
+    'format': '%Y-%m-%d',
+    'uniques': 1634
+}
 ```
 
-### Transforming a dataset
+### 2. Load the transformer
 
-The hyper transformer is also capable of transforming all of the tables specified in your
-meta.json at once.
+In this case the column is a datetime, so we will use the `DTTransformer`.
 
 ```python
->>> from rdt.hyper_transformer import HyperTransformer
->>> meta_file = 'examples/data/airbnb/Airbnb_demo_meta.json'
->>> ht = HyperTransformer(meta_file)
->>> tl = ['DTTransformer', 'NumberTransformer', 'CatTransformer']
->>> transformed = ht.fit_transform(transformer_list=tl)
->>> transformed['users'].head(3).T
-                                     0             1             2
-?date_account_created     1.000000e+00  1.000000e+00  1.000000e+00
-date_account_created      1.388531e+18  1.388531e+18  1.388531e+18
-?timestamp_first_active   1.000000e+00  1.000000e+00  1.000000e+00
-timestamp_first_active    1.654000e+13  1.654000e+13  1.654000e+13
-?date_first_booking       1.000000e+00  0.000000e+00  0.000000e+00
-date_first_booking        1.388790e+18  0.000000e+00  0.000000e+00
-?gender                   1.000000e+00  1.000000e+00  1.000000e+00
-gender                    9.061832e-01  1.729590e-01  4.287514e-02
-?age                      1.000000e+00  0.000000e+00  0.000000e+00
-age                       6.200000e+01  3.700000e+01  3.700000e+01
-?signup_method            1.000000e+00  1.000000e+00  1.000000e+00
-signup_method             5.306912e-01  4.082081e-01  3.028973e-01
-?signup_flow              1.000000e+00  1.000000e+00  1.000000e+00
-signup_flow               4.597129e-01  4.751324e-01  5.495054e-01
-?language                 1.000000e+00  1.000000e+00  1.000000e+00
-language                  2.947847e-01  4.170684e-01  5.057820e-01
-?affiliate_channel        1.000000e+00  1.000000e+00  1.000000e+00
-affiliate_channel         9.213130e-01  4.712533e-01  8.231925e-01
-?affiliate_provider       1.000000e+00  1.000000e+00  1.000000e+00
-affiliate_provider        7.649791e-01  2.028804e-01  7.174262e-01
-?first_affiliate_tracked  1.000000e+00  1.000000e+00  1.000000e+00
-first_affiliate_tracked   3.716114e-01  6.723371e-01  3.710109e-01
-?signup_app               1.000000e+00  1.000000e+00  1.000000e+00
-signup_app                3.583918e-01  2.627690e-01  4.544640e-01
-?first_device_type        1.000000e+00  1.000000e+00  1.000000e+00
-first_device_type         6.621950e-01  3.078130e-01  7.152115e-01
-?first_browser            1.000000e+00  1.000000e+00  1.000000e+00
-first_browser             2.410379e-01  4.766930e-01  4.865389e-01
+from rdt.transformers import DTTransformer
+transformer = DTTransformer(column_metadata)
+```
 
->>> transformed['sessions'].head(3).T
-                         0             1           2
-?action           1.000000      1.000000    1.000000
-action            0.361382      0.597891    0.353806
-?action_type      1.000000      1.000000    1.000000
-action_type       0.089913      0.560351    0.046400
-?action_detail    1.000000      1.000000    1.000000
-action_detail     0.070212      0.852246    0.107477
-?device_type      1.000000      1.000000    1.000000
-device_type       0.726447      0.711231    0.710298
-?secs_elapsed     1.000000      1.000000    1.000000
-secs_elapsed    319.000000  67753.000000  301.000000
+### 3. Transform the column data
 
->>> reverse_transformed = ht.reverse_transform(tables=transformed)
->>> reverse_transformed['users'].head(3).T
-                                       0               1                2
-date_account_created          2014-01-01      2014-01-01       2014-01-01
-timestamp_first_active    19700101053540  19700101053540   19700101053540
-date_first_booking            2014-01-04             NaN              NaN
-gender                              MALE       -unknown-        -unknown-
-age                                   62             NaN              NaN
-signup_method                      basic           basic            basic
-signup_flow                            0               0                0
-language                              en              en               en
-affiliate_channel          sem-non-brand          direct        sem-brand
-affiliate_provider                google          direct           google
-first_affiliate_tracked              omg       untracked              omg
-signup_app                           Web             Web              Web
-first_device_type        Windows Desktop     Mac Desktop  Windows Desktop
-first_browser                     Chrome         Firefox          Firefox
+In order to transform the data, we will call its `fit_transform` method passing the
+`column` data:
 
->>> reverse_transformed['sessions'].head(3).T
-                             0                    1                2
-action                  lookup       search_results           lookup
-action_type               None                click             None
-action_detail             None  view_search_results             None
-device_type    Windows Desktop      Windows Desktop  Windows Desktop
-secs_elapsed               319                67753              301
+```python
+transformed_data = transformer.fit_transform(column_data)
+```
 
+The output will be another `pandas.DataFrame` with the transformed data:
+
+```
+   date_account_created
+0          1.388534e+18
+1          1.388534e+18
+2          1.388534e+18
+3          1.388534e+18
+4          1.388534e+18
+```
+
+### 4. Revert the column transformation
+
+In order to revert the previous transformation, the transformed data can be passed to
+the `reverse_transform` method of the transformer:
+
+```python
+reversed_data = transformer.reverse_transform(transformed_data)
+```
+
+The output will be a `pandas.DataFrame` containing the data from which the transformed data
+was generated with.
+
+In this case, of course, the obtained data should be identical to the original one:
+
+```
+  date_account_created
+0           2014-01-01
+1           2014-01-01
+2           2014-01-01
+3           2014-01-01
+4           2014-01-01
+```
+
+## Transforming a table
+
+Once we know how to transform a single column, we can try to go the next level and transform
+a table with multiple columns.
+
+### 1. Load the table data and its metadata
+
+In order to load a complete table, we will use the same `rdt.load_data` function as before,
+but omit the `column_name` from the call.
+
+```python
+table_data, table_metadata = load_data(
+    metadata_path=metadata_path,
+    table_name='users',
+)
+```
+
+The output, like before will be compsed by the `table_data`, which in this case will contain
+all the columns from the table:
+
+```
+           id date_account_created  timestamp_first_active  ... signup_app first_device_type  first_browser
+0  d1mm9tcy42           2014-01-01          20140101000936  ...        Web   Windows Desktop         Chrome
+1  yo8nz8bqcq           2014-01-01          20140101001558  ...        Web       Mac Desktop        Firefox
+2  4grx6yxeby           2014-01-01          20140101001639  ...        Web   Windows Desktop        Firefox
+3  ncf87guaf0           2014-01-01          20140101002146  ...        Web   Windows Desktop         Chrome
+4  4rvqpxoh3h           2014-01-01          20140101002619  ...        iOS            iPhone      -unknown-
+```
+
+And the `table_metadata`, which will also contain all the information available about the table:
+
+```
+{
+    'path': 'users_demo.csv',
+    'name': 'users',
+    'use': True,
+    'headers': True,
+    'fields': [
+        {
+            'name': 'id',
+            'type': 'id',
+            'regex': '^.{10}$',
+            'uniques': 213451
+        },
+        ...
+        {
+            'name': 'first_browser',
+            'type': 'categorical',
+            'subtype': 'categorical',
+            'uniques': 52
+        }
+    ],
+    'primary_key': 'id',
+    'number_of_rows': 213451
+}
+```
+
+### 2. Load the HyperTransformer
+
+In order to manuipulate a complete table we will need to import the `rdt.HyperTransformer` class
+and create an instance of it passing it the path to our metadata file.
+
+```python
+from rdt import HyperTransformer
+ht = HyperTransformer(metadata=metadata_path)
+```
+
+### 3. Transform the table data
+
+In order to transform the data, we will call the `fit_transform_table` method from our
+`HyperTransformer` instance passing it the table data, the table metadata and the names of the
+transformers that we want to apply.
+
+```python
+transformed = ht.fit_transform_table(
+    table=table_data,
+    table_meta=table_metadata,
+    transformer_list=['DTTransformer', 'NumberTransformer', 'CatTransformer']
+)
+```
+
+The output, again, will be the transformed data:
+
+```
+         id  date_account_created  timestamp_first_active  ...  signup_app  first_device_type  first_browser
+0  0.512195          1.388534e+18            1.388535e+18  ...    0.204759           0.417261       0.423842
+1  0.958701          1.388534e+18            1.388535e+18  ...    0.569893           0.115335       0.756304
+2  0.106468          1.388534e+18            1.388535e+18  ...    0.381164           0.571280       0.869942
+3  0.724346          1.388534e+18            1.388536e+18  ...    0.485542           0.668070       0.364122
+4  0.345691          1.388534e+18            1.388536e+18  ...    0.944064           0.847751       0.108216
+```
+
+### 4. Revert the table transformation
+
+In order to revert the transformation and recover the original data from the transformed one,
+we need to call `reverse_transform_table` of the `HyperTransformer` instance passing it the
+transformed data and the table metadata.
+
+```python
+reversed_data = ht.reverse_transform_table(
+    table=transformed,
+    table_meta=table_metadata
+)
+```
+
+The output will be the reversed data. Just like before, this should look exactly like the
+original data:
+
+```
+           id date_account_created timestamp_first_active  ... signup_app first_device_type  first_browser
+0  d1mm9tcy42           2014-01-01         20140101010936  ...        Web   Windows Desktop         Chrome
+1  yo8nz8bqcq           2014-01-01         20140101011558  ...        Web       Mac Desktop        Firefox
+2  4grx6yxeby           2014-01-01         20140101011639  ...        Web   Windows Desktop        Firefox
+3  ncf87guaf0           2014-01-01         20140101012146  ...        Web   Windows Desktop         Chrome
+4  4rvqpxoh3h           2014-01-01         20140101012619  ...        iOS            iPhone      -unknown-
 ```
