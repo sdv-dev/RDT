@@ -74,15 +74,6 @@ the required dependencies for testing and code linting.
 In this short series of tutorials we will guide you through a series of steps that will
 help you getting started using **RDT** to transform columns, tables and datasets.
 
-## Preparing the demo data
-
-Before starting, you will need to decompress the demo data included in the repository
-by running this command on a shell:
-
-```bash
-tar -xvzf examples/data/airbnb.tar.gz -C examples/data/
-```
-
 ## Transforming a column
 
 In this first guide, you will learn how to use **RDT** in its simplest form, transforming
