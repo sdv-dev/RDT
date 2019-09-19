@@ -9,20 +9,20 @@ from rdt.transformers.base import BaseTransformer
 class CatTransformer(BaseTransformer):
     """Transformer for categorical data.
 
-    This transformer expects a `column` pandas.Series of any dtype in a pandas.DataFrame `table`.
-    On transform, it will map categorical values into the interval [0, 1], back and forth mapping
-    all the unique values close to their frequency in the fit data.
+    This transformer expects a `column` `pandas.Series` of any dtype in a `pandas.DataFrame`
+    `table`. On transform, it will map categorical values into the interval [0, 1], back and forth
+    mapping all the unique values close to their frequency in the fit data.
     This mean, that two instances of the same category may not be transformed into the same number.
 
-    On reverse_transform it will transform any value close to the frenquency to their related
+    On `reverse_transform` it will transform any value close to the frenquency to their related
     category. This behavior is to allow the transformed data to be modelled and the sampled
-    data to be reverse_transformed.
+    data to be `reverse_transformed`.
 
     Args:
         column_metadata (dict):
             Meta information of the column.
         anonymize (bool):
-            Wheter or not replace the values of col before generating the categorical_map.
+            Wheter or not replace the values of col before generating the `categorical_map`.
         category (str):
             The type of data to ask faker for when anonimizing.
 
@@ -67,8 +67,8 @@ class CatTransformer(BaseTransformer):
     def anonymize_column(self, col):
         """Map the values of column to new ones of the same type.
 
-        It replaces the values from others generated using `faker`. It will however,
-        keep the original distribution. That mean that the generated `probability_map` for both
+        It replaces the values from others generated using `faker`. However, it will
+        keep the original distribution. That means that the generated `probability_map` for both
         will have the same values, but different keys.
 
         Args:
@@ -77,11 +77,11 @@ class CatTransformer(BaseTransformer):
 
         Returns:
             pandas.DataFrame:
-                DataFrame with its values mapped to new ones, keeping the original distribution.
+                DataFrame with it's values mapped to new ones, keeping the original distribution.
 
         Raises:
             ValueError:
-                A ``ValueError`` is raised if faker is not able to provide enought
+                A ``ValueError`` is raised if `faker` is not able to provide enought
                 different values.
         """
 

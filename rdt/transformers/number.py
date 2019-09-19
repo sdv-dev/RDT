@@ -101,11 +101,11 @@ class NumberTransformer(BaseTransformer):
         Args:
             col_name (str):
                 Name of the column.
-            subtype(str):
+            subtype (str):
                 Numeric subtype of the values.
 
         Returns:
-            function
+            int
         """
         val = x[self.col_name]
 
