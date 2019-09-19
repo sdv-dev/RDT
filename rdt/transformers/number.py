@@ -21,7 +21,8 @@ class NumberTransformer(BaseTransformer):
         """Sets the default value.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -32,7 +33,8 @@ class NumberTransformer(BaseTransformer):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -50,7 +52,8 @@ class NumberTransformer(BaseTransformer):
         """Converts data back into original format.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -65,7 +68,6 @@ class NumberTransformer(BaseTransformer):
         return output
 
     def get_default_value(self, data):
-        """ """
         col = data[self.col_name]
         uniques = col[~col.isnull()].unique()
         if not len(uniques):
@@ -97,8 +99,10 @@ class NumberTransformer(BaseTransformer):
         """Returns a converter that takes in a value and turns it into an integer, if necessary.
 
         Args:
-            col_name(str): Name of the column.
-            subtype(str): Numeric subtype of the values.
+            col_name (str):
+                Name of the column.
+            subtype(str):
+                Numeric subtype of the values.
 
         Returns:
             function

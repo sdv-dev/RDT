@@ -34,7 +34,8 @@ class NullTransformer(BaseTransformer):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -48,7 +49,8 @@ class NullTransformer(BaseTransformer):
         """Converts data back into original format.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
