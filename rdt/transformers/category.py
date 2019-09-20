@@ -9,28 +9,32 @@ from rdt.transformers.base import BaseTransformer
 class CatTransformer(BaseTransformer):
     """Transformer for categorical data.
 
+    This transformer expects a ``column`` ``pandas.Series`` of any dtype in
+    a ``pandas.DataFrame`` table. On transform, it will map categorical values
+    into the interval [0, 1], back and forth mapping all the unique values close
+    to their frequency in the fit data.
+
+    This means that two instances of the same category may not be transformed into
+    the same number.
+
+    On ``reverse_transform`` it will transform any value close to the frenquency
+    to their related category. This behavior is to allow the transformed data to be
+    modelled and the sampled data to be ``reverse_transformed``.
+
     Args:
-        column_metadata(dict): Meta information of the column.
-        anonymize (bool): Wheter or not replace the values of col before generating the
-                          categorical_map.
+        column_metadata (dict):
+            Meta information of the column.
+        anonymize (bool):
+            Wheter or not replace the values of col before generating the
+            ``categorical_map``.
+        category (str):
+            The type of data to ask faker for when anonimizing.
 
-        category (str): The type of data to ask faker for when anonimizing.
+    Example:
+        Please note the following behavior, for any column:
 
-    This transformer expects a `column` pandas.Series of any dtype in a pandas.DataFrame `table`.
-    On transform, it will map categorical values into the interval [0, 1], back and forth mapping
-    all the unique values close to their frequency in the fit data.
-    This mean, that two instances of the same category may not be transformed into the same number.
-
-    On reverse_transform it will transform any value close to the frenquency to their related
-    category. This behavior is to allow the transformed data to be modelled and the sampled
-    data to be reverse_transformed.
-
-    Please note the following behavior, for any column:
-
-    >>> result = transformer.fit_transform(column)
-    >>> assert result[0 <= result <= 1].all()
-
-
+        >>> result = transformer.fit_transform(column)
+        >>> assert result[0 <= result <= 1].all()
     """
 
     type = 'categorical'
@@ -67,20 +71,23 @@ class CatTransformer(BaseTransformer):
     def anonymize_column(self, col):
         """Map the values of column to new ones of the same type.
 
-        It replaces the values from others generated using `faker`. It will however,
-        keep the original distribution. That mean that the generated `probability_map` for both
-        will have the same values, but different keys.
+        It replaces the values from others generated using ``faker``. However,
+        it will keep the original distribution. That means that the generated
+        ``probability_map`` for both will have the same values, but different keys.
 
         Args:
-            col (pandas.DataFrame): Dataframe containing the column to anonymize.
+            col (pandas.DataFrame):
+                Dataframe containing the column to anonymize.
 
         Returns:
-            pd.DataFrame: DataFrame with its values mapped to new ones,
-                          keeping the original distribution.
+            pandas.DataFrame:
+                DataFrame with it's values mapped to new ones, keeping the original
+                distribution.
 
         Raises:
-            ValueError: A `ValueError` is raised if faker is not able to provide enought
-                        different values.
+            ValueError:
+                A ``ValueError`` is raised if ``faker`` is not able to provide enought
+                different values.
         """
 
         column = col[self.col_name]
@@ -103,15 +110,17 @@ class CatTransformer(BaseTransformer):
     def fit(self, col):
         """Prepare the transfomer to process data.
 
-        This method can only be used if `anonymize` is False.
-        Otherwise, please use `fit_transform`.
+        This method can only be used if ``anonymize`` is False.
+        Otherwise, please use ``fit_transform``.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Raises:
-            ValueError: If this method is called and `anonymize` is True.
-
+            ValueError:
+                A ``ValueError`` is raised if this method is called and
+                ``self.anonymize`` is True.
         """
 
         if self.anonymize:
@@ -125,7 +134,8 @@ class CatTransformer(BaseTransformer):
         """Create a map of the empirical probability for each category.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
         """
 
         column = col[self.col_name].replace({np.nan: np.inf})
@@ -148,7 +158,8 @@ class CatTransformer(BaseTransformer):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -166,7 +177,8 @@ class CatTransformer(BaseTransformer):
         """Prepare the transformer and return processed data.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -182,7 +194,8 @@ class CatTransformer(BaseTransformer):
         """Converts data back into original format.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -203,7 +216,8 @@ class CatTransformer(BaseTransformer):
         """Returns categories for the specified numeric values
 
         Args:
-            column(pandas.Series): Values to transform into categories
+            column (pandas.Series):
+                Values to transform into categories
 
         Returns:
             pandas.Series

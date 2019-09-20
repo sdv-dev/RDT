@@ -15,10 +15,11 @@ class PositiveNumberTransformer(BaseTransformer):
         """Applies an exponential to values to turn them positive numbers.
 
         Args:
-            column (pandas.DataFrame): Data to transform.
+            column (pandas.DataFrame):
+                Data to transform.
 
         Returns:
-            pd.DataFrame
+            pandas.DataFrame
         """
         self.check_data_type()
 
@@ -28,10 +29,11 @@ class PositiveNumberTransformer(BaseTransformer):
         """Applies the natural logarithm function to turn positive values into real ranged values.
 
         Args:
-            column (pandas.DataFrame): Data to transform.
+            column (pandas.DataFrame):
+                Data to transform.
 
         Returns:
-            pd.DataFrame
+            pandas.DataFrame
         """
         self.check_data_type()
 

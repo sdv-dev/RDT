@@ -114,7 +114,7 @@ The output will be the variable `column_data`, which is a `pandas.DataFrame` wit
 And the `column_metadata`, which is a `dict` containing the information from the metadata json
 that corresponds to this column:
 
-```
+```python
 {
     'name': 'date_account_created',
     'type': 'datetime',
@@ -206,7 +206,7 @@ all the columns from the table:
 
 And the `table_metadata`, which will also contain all the information available about the table:
 
-```
+```python
 {
     'path': 'users_demo.csv',
     'name': 'users',
