@@ -64,6 +64,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/api/
 docs/rdt.rst
 docs/rdt.*.rst
 docs/modules.rst
@@ -109,6 +110,3 @@ ENV/
 
 # Vim
 .*.swp
-
-# demo data
-examples/data/airbnb
