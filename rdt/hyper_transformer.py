@@ -36,8 +36,8 @@ class HyperTransformer:
 
     Raises:
         ValueError:
-            A ``ValueError`` is raised when the ``metadata` is a ``dict` and ``dir_name`
-            is ``None`` or when the instance of ``metadata`` is not a ``str` or a ``dict``.
+            A ``ValueError`` is raised when the ``metadata`` is a ``dict`` and ``dir_name``
+            is ``None`` or when the instance of ``metadata`` is not a ``str`` or a ``dict``.
     """
 
     @staticmethod
@@ -233,8 +233,8 @@ class HyperTransformer:
 
         return content
 
-    def fit_transform_table(
-            self, table, table_meta, transformer_dict=None, transformer_list=None, missing=None):
+    def fit_transform_table(self, table, table_meta, transformer_dict=None,
+                            transformer_list=None, missing=None):
         """Create, apply and store the specified transformers for ``table``.
 
         Args:
@@ -362,14 +362,14 @@ class HyperTransformer:
 
         return result
 
-    def fit_transform(
-            self, tables=None, transformer_dict=None, transformer_list=None, missing=None):
-        """Create, apply and store the specified transformers for the given ``tables``.
+    def fit_transform(self, tables=None, transformer_dict=None,
+                      transformer_list=None, missing=None):
+        """Create, apply and store the specified transformers for the given tables.
 
         Args:
             tables (dict):
                 Mapping of table names to ``tuple`` where each tuple is on the form
-                ``(pandas.DataFrame, dict)``. The `DataFrame` contains the table data
+                ``(pandas.DataFrame, dict)``. The ``DataFrame`` contains the table data
                 and the ``dict`` the corresponding meta information.
                 If not specified, the tables will be retrieved using the meta_file.
                 Defaults to ``None``.
@@ -380,7 +380,8 @@ class HyperTransformer:
                 List of transformers to use. Overrides the transformers in the ``meta_file``.
                 Defaults to ``None``.
             missing (bool):
-                Wheter or not use ``NullTransformer`` to handle missing values. Defaults to ``None``.
+                Wheter or not use ``NullTransformer`` to handle missing values.
+                Defaults to ``None``.
 
         Returns:
             dict:
