@@ -2,9 +2,8 @@
 Credits
 =======
 
-Contributors
-------------
-
-* Andrew Montanez <amontane@mit.edu>
-* Kalyan Veeramachaneni <kalyan@csail.mit.edu>
 * Manuel Alvarez <manuel@pythiac.com>
+* Carles Sala <csala@csail.mit.edu>
+* José David Pérez <jose@pythiac.com>
+* Kalyan Veeramachaneni <kalyan@csail.mit.edu>
+* Andrew Montanez <amontane@mit.edu>
