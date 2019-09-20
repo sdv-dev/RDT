@@ -5,6 +5,7 @@
 
 [![PyPi Shield](https://img.shields.io/pypi/v/RDT.svg)](https://pypi.python.org/pypi/RDT)
 [![Travis CI Shield](https://travis-ci.org/HDI-Project/RDT.svg?branch=master)](https://travis-ci.org/HDI-Project/RDT)
+[![Coverage Status](https://codecov.io/gh/HDI-Project/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/HDI-Project/RDT)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
 
 # RDT: Reversible Data Transforms
