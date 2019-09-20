@@ -92,7 +92,7 @@ class DTTransformer(BaseTransformer):
 
         Args:
             data (pandas.DataFrame):
-                DataFrame containins a column named as `self.col_name`.
+                DataFrame containins a column named as ``self.col_name``.
 
         Returns:
             pandas.Series
@@ -104,7 +104,7 @@ class DTTransformer(BaseTransformer):
         return result
 
     def safe_date(self, x):
-        """Transform `x[self.col_name]` into a date string.
+        """Transform ``x[self.col_name]`` into a date string.
 
         Args:
             x (dict-like or pandas.Series):
