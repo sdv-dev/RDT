@@ -52,8 +52,8 @@ master_doc = 'index'
 project = 'RDT'
 slug = 'rdt'
 title = project + ' Documentation',
-copyright = '2019, MIT - The Human Data Interaction Project'
-author = 'MIT - The Human Data Interaction Project'
+copyright = '2019, MIT Data To AI Lab'
+author = 'MIT Data To AI Lab'
 description = 'Reversable data transforms.'
 user = 'HDI-Project'
 
