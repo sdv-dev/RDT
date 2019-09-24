@@ -180,7 +180,7 @@ The process of releasing a new version involves several steps combining both ``g
 these changes are committed and available in ``master`` branch.
 Normally this is just a list of the Pull Requests that have been merged since the latest version.
 
-Once this is done, just run the following commands::
+Once this is done, just run the following commands:
 
 1. If you are releasing a patch version::
 

@@ -7,8 +7,10 @@ class BaseTransformer(object):
         """Initialize preprocessor.
 
         Args:
-            column_metadata(dict): Meta information of the column.
-            transformer_type(str): Type of data the transformer is able to transform.
+            column_metadata (dict):
+                Meta information of the column.
+            transformer_type (str):
+                Type of data the transformer is able to transform.
         """
         self.column_metadata = column_metadata
         self.col_name = column_metadata['name']
@@ -19,7 +21,8 @@ class BaseTransformer(object):
         """Prepare the transformer to convert data.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
         """
         raise NotImplementedError
 
@@ -27,7 +30,8 @@ class BaseTransformer(object):
         """Does the required transformations to the data.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -38,7 +42,8 @@ class BaseTransformer(object):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -50,7 +55,8 @@ class BaseTransformer(object):
         """Converts data back into original format.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -61,9 +67,12 @@ class BaseTransformer(object):
         """Check the type of the transformer and column match.
 
         Args:
-            column_metadata(dict): Metadata of the column.
+            column_metadata (dict):
+                Metadata of the column.
 
-        Raises a ValueError if the types don't match
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised if the types don't match.
         """
         metadata_type = self.column_metadata.get('type')
         if self.type != metadata_type and metadata_type not in self.type:

@@ -24,10 +24,8 @@ class DTTransformer(BaseTransformer):
         """Prepare the transformer to convert data.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
-
-        Returns:
-            None
+            col (pandas.DataFrame):
+                Data to transform.
         """
         dates = self.safe_datetime_cast(col)
         self.default_val = dates.groupby(dates).count().index[0].timestamp() * 1e9
@@ -36,7 +34,8 @@ class DTTransformer(BaseTransformer):
         """Prepare the transformer to convert data and return the processed table.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -54,7 +53,8 @@ class DTTransformer(BaseTransformer):
         """Converts data back into original format.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.DataFrame
@@ -71,7 +71,8 @@ class DTTransformer(BaseTransformer):
         """Parses string values into datetime.
 
         Args:
-            col(pandas.DataFrame): Data to transform.
+            col (pandas.DataFrame):
+                Data to transform.
 
         Returns:
             pandas.Series
@@ -90,7 +91,8 @@ class DTTransformer(BaseTransformer):
         """Transform a datetime series into linux epoch.
 
         Args:
-            data(pandas.DataFrame): DataFrame containins a column named as `self.col_name`.
+            data (pandas.DataFrame):
+                DataFrame containins a column named as ``self.col_name``.
 
         Returns:
             pandas.Series
@@ -102,10 +104,11 @@ class DTTransformer(BaseTransformer):
         return result
 
     def safe_date(self, x):
-        """Transform x[self.col_name] into a date string.
+        """Transform ``x[self.col_name]`` into a date string.
 
         Args:
-            x(dict like / pandas.Series): Row containing data to cast safely.
+            x (dict-like or pandas.Series):
+                Row containing data to cast safely.
 
         Returns:
             str

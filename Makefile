@@ -49,6 +49,7 @@ clean-pyc: ## remove Python file artifacts
 
 .PHONY: clean-docs
 clean-docs: ## remove previously built docs
+	rm -f docs/api/*.rst
 	-$(MAKE) -C docs clean 2>/dev/null  # this fails if sphinx is not yet installed
 
 .PHONY: clean-coverage
@@ -107,7 +108,7 @@ test: ## run tests quickly with the default Python
 
 .PHONY: test-all
 test-all: ## run tests on every Python version with tox
-	tox
+	tox -r
 
 .PHONY: coverage
 coverage: ## check code coverage quickly with the default Python
@@ -121,8 +122,8 @@ coverage: ## check code coverage quickly with the default Python
 
 .PHONY: docs
 docs: clean-docs ## generate Sphinx HTML documentation, including API docs
+	sphinx-apidoc --separate -T -o docs/api/ rdt
 	$(MAKE) -C docs html
-	touch docs/_build/html/.nojekyll
 
 .PHONY: view-docs
 view-docs: docs ## view docs in browser
@@ -171,8 +172,8 @@ bumpversion-minor: ## Bump the version the next minor skipping the release
 bumpversion-major: ## Bump the version the next major skipping the release
 	bumpversion --no-tag major
 
-CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
-CHANGELOG_LINES := $(shell git diff HEAD..stable HISTORY.md | wc -l)
+CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
+CHANGELOG_LINES := $(shell git diff HEAD..origin/stable HISTORY.md 2>&1 | wc -l)
 
 .PHONY: check-release
 check-release: ## Check if the release can be made
