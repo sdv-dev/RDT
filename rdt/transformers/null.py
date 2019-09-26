@@ -13,14 +13,14 @@ class NullTransformer(BaseTransformer):
         """ initialize transformer """
         super().__init__(column_metadata)
 
-    def fit(self, col):
+    def fit(self, data):
         self.new_name = '?' + self.col_name
 
-        if isinstance(col, pd.DataFrame):
-            col = col[self.col_name]
+        if isinstance(data, pd.DataFrame):
+            data = data[self.col_name]
 
         if self.column_metadata['type'] == 'number':
-            mean = col.mean()
+            mean = data.mean()
 
             if pd.notnull(mean):
                 self.default_value = mean
@@ -28,7 +28,7 @@ class NullTransformer(BaseTransformer):
             else:
                 self.default_value = 0
         else:
-            self.default_value = col.mode().iloc[0]
+            self.default_value = data.mode().iloc[0]
 
     def transform(self, col):
         """Prepare the transformer to convert data and return the processed table.

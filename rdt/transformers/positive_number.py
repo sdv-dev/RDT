@@ -8,9 +8,6 @@ class PositiveNumberTransformer(BaseTransformer):
 
     type = 'number'
 
-    def fit(self, column):
-        pass
-
     def transform(self, column):
         """Applies an exponential to values to turn them positive numbers.
 
