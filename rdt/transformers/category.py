@@ -4,13 +4,30 @@ from faker import Faker
 
 from rdt.transformers.base import BaseTransformer
 
-ANONYMIZE_MAP = {}
+MAPS = {}
 
 class CategoricalTransformer(BaseTransformer):
 
-    def __init__(self, anonymize=None):
-        self.anonymize = anonymize
+    def __init__(self, settings={}):
+        self.subtype = settings.get('subtype')
+        self.anonymize = settings.get('anonymize', False)
         self.mapping = dict()
+
+    def get_generator(self):
+        """Return the generator object to anonymize data."""
+        faker = Faker()
+
+        try:
+            return getattr(faker, self.subtype)
+        except AttributeError:
+            raise ValueError('Category "{}" couldn\'t be found on faker'.format(self.subtype))
+
+    def _get_fake_data(self, uniques):
+        """Generate fake data, map the anonymized data and return fake data."""
+        faker_generator = self.get_generator()
+        fake_data = [faker_generator() for x in range(len(uniques))]
+        MAPS[id(self)] = {k: v for k, v in zip(uniques, fake_data)}
+        return fake_data
 
     def fit(self, data):
         if isinstance(data, np.ndarray):
@@ -18,14 +35,10 @@ class CategoricalTransformer(BaseTransformer):
 
         uniques = data.unique()
 
-        if self.anonymize is not None:
-            fake_data = [self.anonymize() for x in range(len(uniques))]
-            ANONYMIZE_MAP[id(self)] = {k: v for k, v in zip(uniques, fake_data)}
-            mapping = dict(zip(fake_data, range(len(fake_data))))
+        if self.anonymize:
+            uniques = self._get_fake_data(uniques)
 
-        else:
-            mapping = dict(zip(uniques, range(len(uniques))))
-
+        mapping = dict(zip(uniques, range(len(uniques))))
         reverse_mapping = {v: k for k, v in mapping.items()}
 
         self.vect_func = np.vectorize(mapping.get)
@@ -35,8 +48,8 @@ class CategoricalTransformer(BaseTransformer):
         if isinstance(data, pd.Series):
             data = data.to_numpy()
 
-        if self.anonymize is not None:
-            vfunc = np.vectorize(ANONYMIZE_MAP[id(self)].get)
+        if self.anonymize:
+            vfunc = np.vectorize(MAPS[id(self)].get)
             data = vfunc(data)
 
         return self.vect_func(data)
