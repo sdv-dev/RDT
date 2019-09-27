@@ -1,63 +1,44 @@
 import numpy as np
-import pandas as pd
 
 from rdt.transformers.base import BaseTransformer
 
 
 class NullTransformer(BaseTransformer):
-    """Transformer for missing/null data."""
+    """Transformer for null data."""
 
-    type = ['datetime', 'number', 'categorical']
+    def __init__(self, **kwargs):
+        self.nan = kwargs.get('nan', 'mean')
+        self.null_column = kwargs.get('null_column', True)
 
-    def __init__(self, column_metadata):
-        """ initialize transformer """
-        super().__init__(column_metadata)
-
-    def fit(self, data):
-        self.new_name = '?' + self.col_name
-
-        if isinstance(data, pd.DataFrame):
-            data = data[self.col_name]
-
-        if self.column_metadata['type'] == 'number':
-            mean = data.mean()
-
-            if pd.notnull(mean):
-                self.default_value = mean
-
-            else:
-                self.default_value = 0
-        else:
-            self.default_value = data.mode().iloc[0]
-
-    def transform(self, col):
-        """Prepare the transformer to convert data and return the processed table.
+    def _get_null_column(self, data):
+        """Get null column with 0 or 1 values.
 
         Args:
-            col (pandas.DataFrame):
-                Data to transform.
+            data (numpy.ndarray):
+                Data used to generate a new column.
 
         Returns:
-            pandas.DataFrame
+            numpy.ndarray
         """
-        out = pd.DataFrame(index=col.index)
-        out[self.col_name] = col.fillna(self.default_value)
-        out[self.new_name] = (pd.notnull(col) * 1).astype(int)
-        return out
+        vfunc = np.vectorize(lambda x: 1 if x is True else 0)
+        return vfunc(data)
 
-    def reverse_transform(self, col):
-        """Converts data back into original format.
+    def _get_default(self, data):
+        """Get the value to replace null values in a column.
 
         Args:
-            col (pandas.DataFrame):
-                Data to transform.
-
-        Returns:
-            pandas.DataFrame
+            data (pandas.Series):
+                Data used to compute the default value.
         """
-        output = pd.DataFrame()
-        new_name = '?' + self.col_name
+        if self.nan == 'ignore':
+            return None
 
-        col.loc[col[new_name] == 0, self.col_name] = np.nan
-        output[self.col_name] = col[self.col_name]
-        return output
+        if self.nan == 'mean':
+            _slide = ~data.isnull()
+            return data[_slide].mean()
+
+        if self.nan == 'mode':
+            data_mode = data.mode()
+            return data_mode[data_mode.first_valid_index()]
+
+        return self.nan

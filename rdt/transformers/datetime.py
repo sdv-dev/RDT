@@ -3,37 +3,15 @@ import time
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.base import BaseTransformer
+from rdt.transformers.null import NullTransformer
 
 
-class DateTimeTransformer(BaseTransformer):
+class DateTimeTransformer(NullTransformer):
     """Transformer for datetime data."""
 
-    def __init__(self, settings={}):
-        self.datetime_format = settings['datetime_format']
-        self.nan = settings.get('nan', 'mean')
-        self.null_column = settings.get('null_column', True)
-
-    def _get_default(self, data):
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
-        if self.nan == 'ignore':
-            return None
-
-        if self.nan == 'mean':
-            _slide = ~data.isnull()
-            return data[_slide].mean()
-
-        if self.nan == 'mode':
-            data_mode = pd.to_datetime(data).mode()
-            return data_mode[data_mode.first_valid_index()]
-
-        return self.nan
-
-    def _get_null_column(self, data):
-        vfunc = np.vectorize(lambda x: 1 if x else 0)
-        return vfunc(data)
+    def __init__(self, **kwargs):
+        super(DateTimeTransformer, self).__init__(**kwargs)
+        self.datetime_format = kwargs.get('datetime_format')
 
     def transform(self, data):
         if isinstance(data, np.ndarray):
@@ -41,7 +19,7 @@ class DateTimeTransformer(BaseTransformer):
 
         extra_column = None
         if self.null_column:
-            extra_column = self._get_null_column(data.to_numpy())
+            extra_column = self._get_null_column(data.isnull())
 
         data = pd.to_datetime(data, format=self.datetime_format, errors='coerce')
 
