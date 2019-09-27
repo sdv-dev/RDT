@@ -24,10 +24,12 @@ class NumericalTransformer(NullTransformer):
                 extra_column = self._get_null_column(~data.astype('bool'))
             data = pd.Series(data)
 
-        transformed = data
         default = self._get_default(data)
         if default is not None:
             transformed = data.fillna(default)
+
+        else:
+            transformed = data
 
         return transformed.to_numpy(), extra_column
 
