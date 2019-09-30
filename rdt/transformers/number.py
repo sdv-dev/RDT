@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from rdt.transformers.null import NullTransformer
 
@@ -34,7 +34,4 @@ class NumericalTransformer(NullTransformer):
         return transformed.to_numpy(), extra_column
 
     def reverse_transform(self, data):
-        if not isinstance(data, np.ndarray):
-            raise ValueError
-
         return data.astype(self.dtype)

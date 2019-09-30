@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers import DateTimeTransformer
-from tests import safe_compare_dataframes
 
 
 class TestDTTransformer(TestCase):
@@ -112,7 +111,7 @@ class TestDTTransformer(TestCase):
 
         data = np.array([845510400000000000, -145497600000000000])
 
-        result = DateTimeTransformer.reverse_transform(transformer, data)
+        DateTimeTransformer.reverse_transform(transformer, data)
 
         # Asserts
         assert np_vectorize_mock.call_count == 1

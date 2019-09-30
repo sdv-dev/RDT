@@ -16,7 +16,7 @@ class HyperTransformer:
                     'subtype': 'integer'
                 }
             },
-            '<column_name>': 
+            '<column_name>':
                 'class': 'NumberTransformer',
                 'kwargs': {
                     'subtype': 'integer'
@@ -32,14 +32,27 @@ class HyperTransformer:
             Defaults to ``True``.
     """
 
+    @staticmethod
+    def get_class(name):
+        """Get transformer from its class name.
+
+        Args:
+            name (str):
+                Name of the transformer.
+
+        Returns:
+            BaseTransformer
+        """
+        return getattr(transformers, name)
+
     @classmethod
     def _load_transformer(cls, transformer):
         if isinstance(transformer, transformers.BaseTransformer):
             return transformer
 
         transformer_class = transformer['class']
-        if not issubclass(transformer_class, transformers.BaseTransformer):
-            transformer_class = getattr(transformers, transformer_class)
+        if not isinstance(transformer_class, transformers.BaseTransformer):
+            transformer_class = cls.get_class(transformer_class)
 
         transformer_kwargs = transformer.get('kwargs')
         if transformer_kwargs is None:
@@ -55,7 +68,7 @@ class HyperTransformer:
         self.copy = copy
 
     def fit(self, data):
-        for column_name, transformers in self.transformers.items():
+        for column_name, transformer in self.transformers.items():
             column = data[column_name]
             transformer.fit(column)
 
@@ -65,14 +78,12 @@ class HyperTransformer:
 
         for column_name, transformer in self.transformers.items():
             column = data.pop(column_name)
-            transformed = transformer.transform(column)
-            num_columns = transformed.shape[1]
-            if num_columns == 1:
-                data[column_name] = transformed
-            else:
-                for index in range(num_columns):
-                    new_column = '{}#{}'.format(column_name, index)
-                    data[new_column] = transformed[:, index]
+            transformed, null_column = transformer.transform(column)
+
+            data[column_name] = transformed
+            if null_column is not None:
+                new_column = '{}#{}'.format(column_name, 1)
+                data[new_column] = null_column
 
         return data
 
@@ -80,21 +91,11 @@ class HyperTransformer:
         self.fit(data)
         return self.transform(data)
 
-    @staticmethod
-    def _get_columns(column_name, data):
-        columns = list()
-        for column in data.columns:
-            if column_name in column:
-                columns.append(data.pop(column_name))
-
-        return pd.DataFrame(columns)
-
     def reverse_transform(self, data):
         if self.copy:
             data = data.copy()
 
         for column_name, transformer in self.transformers.items():
-            transformed = self._get_columns(column_name, data)
-            data[column_name] = transformer.reverse_transform(transformed)
+            data[column_name] = transformer.reverse_transform(data[column_name])
 
         return data

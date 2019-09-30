@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -101,6 +101,6 @@ class TestNumericalTransformer(TestCase):
         transformer.dtype = 'float64'
 
         data = None
-        
+
         with self.assertRaises(ValueError):
             NumericalTransformer.reverse_transform(transformer, data)

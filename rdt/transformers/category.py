@@ -6,11 +6,12 @@ from rdt.transformers.base import BaseTransformer
 
 MAPS = {}
 
+
 class CategoricalTransformer(BaseTransformer):
 
-    def __init__(self, settings={}):
-        self.subtype = settings.get('subtype')
-        self.anonymize = settings.get('anonymize', False)
+    def __init__(self, **kwargs):
+        self.subtype = kwargs.get('subtype')
+        self.anonymize = kwargs.get('anonymize', False)
         self.mapping = dict()
 
     def get_generator(self):
@@ -52,7 +53,7 @@ class CategoricalTransformer(BaseTransformer):
             vfunc = np.vectorize(MAPS[id(self)].get)
             data = vfunc(data)
 
-        return self.vect_func(data)
+        return self.vect_func(data), None
 
     def reverse_transform(self, data):
         return self.vect_revert_func(data)

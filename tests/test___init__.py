@@ -1,7 +1,6 @@
 from unittest import TestCase
-from unittest.mock import Mock, call, patch
+from unittest.mock import patch
 
-import numpy as np
 import pandas as pd
 
 from rdt import _lookup, load_data

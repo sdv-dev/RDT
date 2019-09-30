@@ -11,7 +11,7 @@ class DateTimeTransformer(NullTransformer):
 
     def __init__(self, **kwargs):
         super(DateTimeTransformer, self).__init__(**kwargs)
-        self.datetime_format = kwargs.get('datetime_format')
+        self.datetime_format = kwargs.get('format')
 
     def transform(self, data):
         if isinstance(data, np.ndarray):
@@ -27,7 +27,7 @@ class DateTimeTransformer(NullTransformer):
         if default is not None:
             default = pd.to_datetime(default, format=self.datetime_format, errors='coerce')
             data = data.fillna(default)
-        
+
         return data.to_numpy().astype('int64'), extra_column
 
     def _transform_to_date(self, data):
