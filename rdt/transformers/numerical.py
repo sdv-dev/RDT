@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 import pandas as pd
 
@@ -7,17 +5,24 @@ from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
 
-class DateTimeTransformer(BaseTransformer):
-    """Transformer for datetime data."""
+class NumericalTransformer(BaseTransformer):
+    """Transformer for numerical data."""
 
     def __init__(self, **kwargs):
-        self.datetime_format = kwargs.get('format')
         self.nan = kwargs.get('nan', 'mean')
+        self.dtype = None
 
         if kwargs.get('null_column', True):
             self.null_transformer = NullTransformer()
+
         else:
             self.null_transformer = None
+
+    def fit(self, data):
+        if isinstance(data, np.ndarray):
+            data = pd.Series(data)
+
+        self.dtype = data.dtype
 
     @classmethod
     def _get_null_column(cls, data):
@@ -49,24 +54,11 @@ class DateTimeTransformer(BaseTransformer):
         else:
             data = data.to_frame()
 
-        data[0] = pd.to_datetime(data[0], format=self.datetime_format, errors='coerce')
-
         default = self._get_default(data[0])
         if default is not None:
-            default = pd.to_datetime(default, format=self.datetime_format, errors='coerce')
             data[0] = data[0].fillna(default)
-
-        data[0] = data[0].astype('int64')
 
         return data
 
-    def _transform_to_date(self, data):
-        """Transform a numeric value into str datetime format."""
-        aux_time = time.localtime(float(data) / 1e9)
-
-        return time.strftime(self.datetime_format, aux_time)
-
     def reverse_transform(self, data):
-        vect_func = np.vectorize(self._transform_to_date)
-
-        return vect_func(data)
+        return data.astype(self.dtype)
