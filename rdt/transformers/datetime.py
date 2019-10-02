@@ -49,14 +49,14 @@ class DateTimeTransformer(BaseTransformer):
         else:
             data = data.to_frame()
 
-        data[0] = pd.to_datetime(data[0], format=self.datetime_format, errors='coerce')
+        data.iloc[:,0] = pd.to_datetime(data.iloc[:,0], format=self.datetime_format, errors='coerce')
 
-        default = self._get_default(data[0])
+        default = self._get_default(data.iloc[:,0])
         if default is not None:
             default = pd.to_datetime(default, format=self.datetime_format, errors='coerce')
-            data[0] = data[0].fillna(default)
+            data.iloc[:,0] = data.iloc[:,0].fillna(default)
 
-        data[0] = data[0].astype('int64')
+        data.iloc[:,0] = data.iloc[:,0].astype('int64')
 
         return data
 

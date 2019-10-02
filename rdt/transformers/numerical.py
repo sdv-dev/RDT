@@ -54,9 +54,9 @@ class NumericalTransformer(BaseTransformer):
         else:
             data = data.to_frame()
 
-        default = self._get_default(data[0])
+        default = self._get_default(data.iloc[:,0])
         if default is not None:
-            data[0] = data[0].fillna(default)
+            data.iloc[:,0] = data.iloc[:,0].fillna(default)
 
         return data
 

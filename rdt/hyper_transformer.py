@@ -78,12 +78,12 @@ class HyperTransformer:
 
         for column_name, transformer in self.transformers.items():
             column = data.pop(column_name)
-            transformed, null_column = transformer.transform(column)
+            transformed = transformer.transform(column)
 
-            data[column_name] = transformed
-            if null_column is not None:
+            data[column_name] = transformed.iloc[:,0]
+            if transformed.shape[1] == 2:
                 new_column = '{}#{}'.format(column_name, 1)
-                data[new_column] = null_column
+                data[new_column] = transformed.iloc[:,1]
 
         return data
 

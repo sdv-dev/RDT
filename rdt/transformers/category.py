@@ -53,7 +53,7 @@ class CategoricalTransformer(BaseTransformer):
             vfunc = np.vectorize(MAPS[id(self)].get)
             data = vfunc(data)
 
-        return self.vect_func(data), None
+        return pd.DataFrame({0: self.vect_func(data)})
 
     def reverse_transform(self, data):
         return self.vect_revert_func(data)
