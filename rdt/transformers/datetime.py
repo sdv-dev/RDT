@@ -10,58 +10,67 @@ from rdt.transformers.null import NullTransformer
 class DateTimeTransformer(BaseTransformer):
     """Transformer for datetime data."""
 
-    def __init__(self, **kwargs):
-        self.datetime_format = kwargs.get('format')
-        self.nan = kwargs.get('nan', 'mean')
+    def __init__(self, format, nan='mean', null_column=True):
+        self.datetime_format = format
+        self.nan = nan
+        self.null_column = null_column
+        self.null_transformer = None
 
-        if kwargs.get('null_column', True):
-            self.null_transformer = NullTransformer()
-        else:
-            self.null_transformer = None
+    def fit(self, data):
+        if isinstance(data, np.ndarray):
+            data = pd.Series(data)
 
-    @classmethod
-    def _get_null_column(cls, data):
-        vfunc = np.vectorize(lambda x: 1 if x is True else 0)
-
-        return vfunc(data)
-
-    def _get_default(self, data):
-        if self.nan == 'ignore':
-            return None
+        transformed = pd.to_datetime(data, format=self.datetime_format, errors='coerce')
+        transformed = transformed.astype('int64')
 
         if self.nan == 'mean':
-            _slice = ~data.isnull()
-            return data[_slice].mean()
+            fill_value = transformed.mean()
+        elif self.nan == 'mode':
+            fill_value = transformed.mode(dropna=True)[0]
+        elif self.nan == 'ignore':
+            fill_value = None
+        else:
+            fill_value = self.nan
 
-        if self.nan == 'mode':
-            data_mode = data.mode(dropna=True)
-            return data_mode.iloc[0]
+        if fill_value is None:
+            self.null_transformer = NullTransformer(fill_value, self.null_column)
 
-        return self.nan
+        else:
+            fill_value = pd.to_datetime(fill_value, format=self.datetime_format, errors='coerce')
+            fill_value = fill_value.strftime(self.datetime_format)
+            self.null_transformer = NullTransformer(fill_value, self.null_column)
 
     def transform(self, data):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        if self.null_transformer is not None:
-            data = self.null_transformer.fit_transform(data)
+        transformed = self.null_transformer.transform(data)
+        shape = transformed.shape
 
-        else:
-            data = data.to_frame()
+        if self.null_column and len(shape) == 2 and shape[1] == 2:
+            _slice = transformed[:, 0].astype('bool')
 
-        data.iloc[:,0] = pd.to_datetime(data.iloc[:,0], format=self.datetime_format, errors='coerce')
+            transformed[_slice, 0] = pd.to_datetime(
+                transformed[_slice, 0],
+                format=self.datetime_format,
+                errors='coerce'
+            ).astype('int64').to_numpy()
 
-        default = self._get_default(data.iloc[:,0])
-        if default is not None:
-            default = pd.to_datetime(default, format=self.datetime_format, errors='coerce')
-            data.iloc[:,0] = data.iloc[:,0].fillna(default)
+            return transformed
 
-        data.iloc[:,0] = data.iloc[:,0].astype('int64')
+        transformed = pd.to_datetime(
+            transformed,
+            format=self.datetime_format,
+            errors='coerce'
+        )
 
-        return data
+        return transformed.astype('int64').to_numpy()
 
     def _transform_to_date(self, data):
         """Transform a numeric value into str datetime format."""
+        if data is None:
+            return None
+
         aux_time = time.localtime(float(data) / 1e9)
 
         return time.strftime(self.datetime_format, aux_time)

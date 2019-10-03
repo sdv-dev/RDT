@@ -9,9 +9,9 @@ MAPS = {}
 
 class CategoricalTransformer(BaseTransformer):
 
-    def __init__(self, **kwargs):
-        self.subtype = kwargs.get('subtype')
-        self.anonymize = kwargs.get('anonymize', False)
+    def __init__(self, subtype, anonymize=False):
+        self.subtype = subtype
+        self.anonymize = anonymize
         self.mapping = dict()
 
     def get_generator(self):
