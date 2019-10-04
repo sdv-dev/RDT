@@ -35,17 +35,17 @@ class NullTransformer(BaseTransformer):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        _isnull = data.isnull()
-        if _isnull.any() and self.fill_value is not None:
+        isnull = data.isnull()
+        if isnull.any() and self.fill_value is not None:
             if not self.copy:
-                data[_isnull] = self.fill_value
+                data[isnull] = self.fill_value
             else:
                 data = data.fillna(self.fill_value)
 
-        if (self.null_column is None and _isnull.any()) or self.null_column:
-            return pd.concat([data, _isnull.astype('int')], axis=1).values
+        if (self.null_column is None and isnull.any()) or self.null_column:
+            return pd.concat([data, isnull.astype('int')], axis=1).values
 
-        elif self.fill_value in data:
+        elif self.fill_value in data.values:
             warnings.warn(IRREVERSIBLE_WARNING)
 
         return data.values
@@ -53,14 +53,14 @@ class NullTransformer(BaseTransformer):
     def reverse_transform(self, data):
         shape = data.shape
         if self.null_column and len(shape) == 2 and shape[1] == 2:
-            _isnull = data[:, 1].astype('bool')
+            isnull = data[:, 1].astype('bool')
             data = pd.Series(data[:, 0])
         else:
-            _isnull = data == self.fill_value
+            isnull = np.where(self.fill_value == data)[0]
             data = pd.Series(data)
 
         if self.copy:
             data = data.copy()
 
-        data.iloc[_isnull] = np.nan
+        data.iloc[isnull] = np.nan
         return data

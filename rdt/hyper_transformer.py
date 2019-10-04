@@ -80,10 +80,15 @@ class HyperTransformer:
             column = data.pop(column_name)
             transformed = transformer.transform(column)
 
-            data[column_name] = transformed.iloc[:,0]
-            if transformed.shape[1] == 2:
+            shape = transformed.shape
+
+            if len(shape) == 2 and shape[1] == 2:
+                data[column_name] = transformed[:,0]
                 new_column = '{}#{}'.format(column_name, 1)
-                data[new_column] = transformed.iloc[:,1]
+                data[new_column] = transformed[:,1]
+
+            else:
+                data[column_name] = transformed
 
         return data
 
