@@ -52,4 +52,5 @@ class DatetimeTransformer(BaseTransformer):
         if self.nan != 'ignore':
             data = self.null_transformer.reverse_transform(data)
 
-        return pd.to_datetime(np.round(data).astype(int))
+        data.loc[data.notnull()] = data.dropna().round().astype(int)
+        return pd.to_datetime(data)

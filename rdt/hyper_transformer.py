@@ -62,7 +62,7 @@ class HyperTransformer:
 
         return transformer_class(**transformer_kwargs)
 
-    def __init__(self, column_transformers=None, copy=True, anonymize=None):
+    def __init__(self, column_transformers=None, copy=True, anonymize=None, dtypes=None):
         if column_transformers:
             self.transformers = {
                 column_name: self._load_transformer(transformer)
@@ -71,21 +71,25 @@ class HyperTransformer:
 
         self.copy = copy
         self.anonymize = anonymize or dict()
+        self.dtypes = dtypes
 
     def _analyze(self, data):
         column_transformers = dict()
-        for name, column in data.items():
-            if column.dtype in [np.int, np.float]:
-                transformer = transformers.NumericalTransformer()
-            elif column.dtype == np.object:
+        dtypes = self.dtypes or data.dtypes
+        for name, dtype in zip(data.columns, dtypes):
+            if np.issubdtype(dtype, np.dtype(int)):
+                transformer = transformers.NumericalTransformer(dtype=int)
+            elif np.issubdtype(dtype, np.dtype(float)):
+                transformer = transformers.NumericalTransformer(dtype=float)
+            elif dtype == np.object:
                 anonymize = self.anonymize.get(name)
                 transformer = transformers.CategoricalTransformer(anonymize=anonymize)
-            elif column.dtype == np.bool:
+            elif np.issubdtype(dtype, np.dtype(bool)):
                 transformer = transformers.BooleanTransformer()
-            elif np.issubdtype(column.dtype, np.datetime64):
+            elif np.issubdtype(dtype, np.datetime64):
                 transformer = transformers.DatetimeTransformer()
             else:
-                raise ValueError('Unsupported dtype: {}'.format(column.dtype))
+                raise ValueError('Unsupported dtype: {}'.format(dtype))
 
             column_transformers[name] = transformer
 

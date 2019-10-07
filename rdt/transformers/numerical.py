@@ -9,17 +9,17 @@ class NumericalTransformer(BaseTransformer):
     """Transformer for numerical data."""
 
     null_transformer = None
-    dtype = None
 
-    def __init__(self, nan='mean', null_column=None):
+    def __init__(self, dtype=None, nan='mean', null_column=None):
         self.nan = nan
         self.null_column = null_column
+        self.dtype = dtype
 
     def fit(self, data):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        self.dtype = data.dtype
+        self._dtype = self.dtype or data.dtype
 
         if self.nan == 'mean':
             fill_value = data.mean()
@@ -40,10 +40,14 @@ class NumericalTransformer(BaseTransformer):
         return self.null_transformer.transform(data)
 
     def reverse_transform(self, data):
+        if isinstance(data, np.ndarray):
+            data = pd.Series(data)
+
         if self.nan != 'ignore':
             data = self.null_transformer.reverse_transform(data)
 
-        if self.dtype == np.int:
-            return np.round(data).astype(self.dtype)
+        if self._dtype == np.int:
+            data.loc[data.notnull()] = data.dropna().round().astype(int)
+            return data
 
-        return data.astype(self.dtype)
+        return data.astype(self._dtype)

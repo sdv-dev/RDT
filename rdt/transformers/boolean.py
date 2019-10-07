@@ -30,7 +30,7 @@ class BooleanTransformer(BaseTransformer):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        data = data.astype(int)
+        data.loc[data.notnull()] = data.dropna().astype(int)
 
         return self.null_transformer.transform(data)
 
@@ -38,4 +38,5 @@ class BooleanTransformer(BaseTransformer):
         if self.nan != 'ignore':
             data = self.null_transformer.reverse_transform(data)
 
-        return np.round(data).astype(bool)
+        data.loc[data.notnull()] = data.dropna().round().astype(bool)
+        return data
