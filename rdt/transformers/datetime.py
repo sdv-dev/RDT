@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 import pandas as pd
 
@@ -7,10 +5,10 @@ from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
 
-class DateTimeTransformer(BaseTransformer):
+class DatetimeTransformer(BaseTransformer):
     """Transformer for datetime data."""
 
-    def __init__(self, nan='mean', null_column=True):
+    def __init__(self, nan='mean', null_column=None):
         self.nan = nan
         self.null_column = null_column
         self.null_transformer = None
@@ -40,6 +38,7 @@ class DateTimeTransformer(BaseTransformer):
             fill_value = self.nan
 
         self.null_transformer = NullTransformer(fill_value, self.null_column)
+        self.null_transformer.fit(data)
 
     def transform(self, data):
         if isinstance(data, np.ndarray):
@@ -53,4 +52,4 @@ class DateTimeTransformer(BaseTransformer):
         if self.nan != 'ignore':
             data = self.null_transformer.reverse_transform(data)
 
-        return pd.to_datetime(data)
+        return pd.to_datetime(np.round(data).astype(int))

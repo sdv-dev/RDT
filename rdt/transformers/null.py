@@ -1,6 +1,7 @@
-import pandas as pd
-import numpy as np
 import warnings
+
+import numpy as np
+import pandas as pd
 
 from rdt.transformers.base import BaseTransformer
 
@@ -31,36 +32,40 @@ class NullTransformer(BaseTransformer):
         self.null_column = null_column
         self.copy = copy
 
+    def fit(self, data):
+        self.nulls = data.isnull().any()
+        if self.null_column is None:
+            self._null_column = self.nulls
+        else:
+            self._null_column = self.null_column
+
     def transform(self, data):
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
+        if self.nulls:
+            isnull = data.isnull()
+            if self.nulls and self.fill_value is not None:
+                if not self.copy:
+                    data[isnull] = self.fill_value
+                else:
+                    data = data.fillna(self.fill_value)
 
-        isnull = data.isnull()
-        if isnull.any() and self.fill_value is not None:
-            if not self.copy:
-                data[isnull] = self.fill_value
-            else:
-                data = data.fillna(self.fill_value)
+            if self._null_column:
+                return pd.concat([data, isnull.astype('int')], axis=1).values
 
-        if (self.null_column is None and isnull.any()) or self.null_column:
-            return pd.concat([data, isnull.astype('int')], axis=1).values
-
-        elif self.fill_value in data.values:
-            warnings.warn(IRREVERSIBLE_WARNING)
+            elif self.fill_value in data.values:
+                warnings.warn(IRREVERSIBLE_WARNING)
 
         return data.values
 
     def reverse_transform(self, data):
-        shape = data.shape
-        if self.null_column and len(shape) == 2 and shape[1] == 2:
-            isnull = data[:, 1].astype('bool')
-            data = pd.Series(data[:, 0])
-        else:
-            isnull = np.where(self.fill_value == data)[0]
-            data = pd.Series(data)
+        if self.nulls:
+            if self._null_column:
+                isnull = data[:, 1] > 0.5
+                data = pd.Series(data[:, 0])
+            else:
+                isnull = np.where(self.fill_value == data)[0]
+                data = pd.Series(data)
 
-        if self.copy:
-            data = data.copy()
+            if isnull.any():
+                data.iloc[isnull] = np.nan
 
-        data.iloc[isnull] = np.nan
         return data

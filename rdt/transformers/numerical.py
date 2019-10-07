@@ -8,11 +8,12 @@ from rdt.transformers.null import NullTransformer
 class NumericalTransformer(BaseTransformer):
     """Transformer for numerical data."""
 
-    def __init__(self, nan='mean', null_column=True):
+    null_transformer = None
+    dtype = None
+
+    def __init__(self, nan='mean', null_column=None):
         self.nan = nan
         self.null_column = null_column
-        self.dtype = None
-        self.null_transformer = None
 
     def fit(self, data):
         if isinstance(data, np.ndarray):
@@ -30,6 +31,7 @@ class NumericalTransformer(BaseTransformer):
             fill_value = self.nan
 
         self.null_transformer = NullTransformer(fill_value, self.null_column)
+        self.null_transformer.fit(data)
 
     def transform(self, data):
         if isinstance(data, np.ndarray):
@@ -40,5 +42,8 @@ class NumericalTransformer(BaseTransformer):
     def reverse_transform(self, data):
         if self.nan != 'ignore':
             data = self.null_transformer.reverse_transform(data)
+
+        if self.dtype == np.int:
+            return np.round(data).astype(self.dtype)
 
         return data.astype(self.dtype)
