@@ -1,8 +1,6 @@
 class BaseTransformer(object):
     """Base class for all transformers."""
 
-    type = None
-
     def fit(self, data):
         """Prepare the transformer to convert data.
 

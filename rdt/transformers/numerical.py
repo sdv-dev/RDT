@@ -40,14 +40,11 @@ class NumericalTransformer(BaseTransformer):
         return self.null_transformer.transform(data)
 
     def reverse_transform(self, data):
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
         if self.nan != 'ignore':
             data = self.null_transformer.reverse_transform(data)
 
         if self._dtype == np.int:
-            data.loc[data.notnull()] = data.dropna().round().astype(int)
+            data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(int)
             return data
 
         return data.astype(self._dtype)
