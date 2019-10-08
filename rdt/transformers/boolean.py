@@ -38,5 +38,5 @@ class BooleanTransformer(BaseTransformer):
         if self.nan != 'ignore':
             data = self.null_transformer.reverse_transform(data)
 
-        data.loc[data.notnull()] = data.dropna().round().astype(bool)
+        data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(bool)
         return data
