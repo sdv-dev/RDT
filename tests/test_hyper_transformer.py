@@ -7,8 +7,7 @@ import pandas as pd
 from rdt import HyperTransformer
 from rdt.transformers import (
     BaseTransformer, BooleanTransformer, CategoricalTransformer, DatetimeTransformer,
-    NullTransformer, NumericalTransformer
-)
+    NullTransformer, NumericalTransformer)
 
 
 class TestHyperTransformerTransformer(TestCase):
@@ -88,24 +87,6 @@ class TestHyperTransformerTransformer(TestCase):
 
         # Asserts
 
-    def test__load_transformer_dict_class_boolean(self):
-        """Test _load_transformer with a class, BooleanTransformer"""
-        # Run
-        transformer = {
-            'class': BooleanTransformer,
-            'kwargs': {
-                'nan': 0,
-                'null_column': True
-            }
-        }
-
-        result = HyperTransformer._load_transformer(transformer)
-
-        # Asserts
-        self.assertIsInstance(result, BooleanTransformer)
-        self.assertEqual(result.nan, 0)
-        self.assertEqual(result.null_column, True)
-
     def test__load_transformer_dict_str_boolean(self):
         """Test _load_transformer with a str, BooleanTransformer"""
         # Run
@@ -124,22 +105,6 @@ class TestHyperTransformerTransformer(TestCase):
         self.assertEqual(result.nan, 0)
         self.assertEqual(result.null_column, True)
 
-    def test__load_transformer_dict_class_categorical(self):
-        """Test _load_transformer with a class, CategoricalTransformer"""
-        # Run
-        transformer = {
-            'class': CategoricalTransformer,
-            'kwargs': {
-                'anonymize': 'email'
-            }
-        }
-
-        result = HyperTransformer._load_transformer(transformer)
-
-        # Asserts
-        self.assertIsInstance(result, CategoricalTransformer)
-        self.assertEqual(result.anonymize, 'email')
-
     def test__load_transformer_dict_str_categorical(self):
         """Test _load_transformer with a str, CategoricalTransformer"""
         # Run
@@ -155,24 +120,6 @@ class TestHyperTransformerTransformer(TestCase):
         # Asserts
         self.assertIsInstance(result, CategoricalTransformer)
         self.assertEqual(result.anonymize, 'email')
-
-    def test__load_transformer_dict_class_datetime(self):
-        """Test _load_transformer with a dict, DatetimeTransformer"""
-        # Run
-        transformer = {
-            'class': DatetimeTransformer,
-            'kwargs': {
-                'nan': 'ignore',
-                'null_column': True
-            }
-        }
-
-        result = HyperTransformer._load_transformer(transformer)
-
-        # Asserts
-        self.assertIsInstance(result, DatetimeTransformer)
-        self.assertEqual(result.nan, 'ignore')
-        self.assertEqual(result.null_column, True)
 
     def test__load_transformer_dict_str_datetime(self):
         """Test _load_transformer with a str, DatetimeTransformer"""
@@ -191,26 +138,6 @@ class TestHyperTransformerTransformer(TestCase):
         self.assertIsInstance(result, DatetimeTransformer)
         self.assertEqual(result.nan, 'ignore')
         self.assertEqual(result.null_column, True)
-
-    def test__load_transformer_dict_class_null(self):
-        """Test _load_transformer with a class, NullTransformer"""
-        # Run
-        transformer = {
-            'class': NullTransformer,
-            'kwargs': {
-                'fill_value': 0,
-                'null_column': True,
-                'copy': True
-            }
-        }
-
-        result = HyperTransformer._load_transformer(transformer)
-
-        # Asserts
-        self.assertIsInstance(result, NullTransformer)
-        self.assertEqual(result.fill_value, 0)
-        self.assertEqual(result.null_column, True)
-        self.assertEqual(result.copy, True)
 
     def test__load_transformer_dict_str_null(self):
         """Test _load_transformer with a str, NullTransformer"""
@@ -231,26 +158,6 @@ class TestHyperTransformerTransformer(TestCase):
         self.assertEqual(result.fill_value, 0)
         self.assertEqual(result.null_column, True)
         self.assertEqual(result.copy, True)
-
-    def test__load_transformer_dict_class_numerical(self):
-        """Test _load_transformer with a dict, NumericalTransformer"""
-        # Run
-        transformer = {
-            'class': NumericalTransformer,
-            'kwargs': {
-                'dtype': float,
-                'nan': 'ignore',
-                'null_column': True
-            }
-        }
-
-        result = HyperTransformer._load_transformer(transformer)
-
-        # Asserts
-        self.assertIsInstance(result, NumericalTransformer)
-        self.assertEqual(result.dtype, float)
-        self.assertEqual(result.nan, 'ignore')
-        self.assertEqual(result.null_column, True)
 
     def test__load_transformer_dict_str_numerical(self):
         """Test _load_transformer with a str, NumericalTransformer"""

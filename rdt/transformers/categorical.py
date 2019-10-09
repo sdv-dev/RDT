@@ -44,6 +44,7 @@ class CategoricalTransformer(BaseTransformer):
 
         try:
             faker_method = getattr(Faker(), category)
+
             def faker():
                 return faker_method(*args)
 
