@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -27,7 +27,7 @@ class TestNullTransformer(TestCase):
         # Run
         fill_value = None
         null_column = None
-        
+
         transformer = NullTransformer(fill_value, null_column=null_column)
         transformer.fit(data)
 
@@ -45,7 +45,7 @@ class TestNullTransformer(TestCase):
         # Run
         fill_value = None
         null_column = None
-        
+
         transformer = NullTransformer(fill_value, null_column=null_column)
         transformer.fit(data)
 
