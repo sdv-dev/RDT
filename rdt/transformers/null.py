@@ -14,17 +14,20 @@ IRREVERSIBLE_WARNING = (
 class NullTransformer(BaseTransformer):
     """Transformer for null data.
 
+    The ``NullTransformer`` class allow replace null values with a given value
+    and create a null column if needed.
+
     Args:
-        fill_value:
+        fill_value (int):
             Value to replace nulls. Not used if `None`.
-        null_column (bool or None):
-            If `True`, always create a column indicating whether
-            each value is null or not. If `None`, create it only
-            if there is at least one null value. If `False`, never
-            create it, even if there are null values.
+        null_column (bool):
+            When ``null_column`` is:
+                - ``None``: Only create a new column when the data contains null values.
+                - ``True``: Create always a new column even if the data don't contains null values.
+                - ``False``: Never create a new column.
+            Defaults to ``None``.
         copy (bool):
-            Whether to create a copy of the input data or modify it
-            destructively.
+            Whether to create a copy of the input data or modify it destructively.
     """
 
     def __init__(self, fill_value, null_column=None, copy=False):
@@ -33,6 +36,14 @@ class NullTransformer(BaseTransformer):
         self.copy = copy
 
     def fit(self, data):
+        """Prepare the transformer to convert data.
+
+        Evaluate when the transformer have to create the null column or not.
+
+        Args:
+            data (pandas.Series or numpy.array):
+                Data to transform.
+        """
         self.nulls = data.isnull().any()
         if self.null_column is None:
             self._null_column = self.nulls
@@ -40,6 +51,18 @@ class NullTransformer(BaseTransformer):
             self._null_column = self.null_column
 
     def transform(self, data):
+        """Transform null data.
+
+        When the data have null values, evaluate if should replace null values
+        and/or create the null column.
+
+        Args:
+            data (pandas.Series or numpy.array):
+                Data to transform.
+
+        Returns:
+            numpy.array
+        """
         if self.nulls:
             isnull = data.isnull()
             if self.nulls and self.fill_value is not None:
@@ -57,6 +80,18 @@ class NullTransformer(BaseTransformer):
         return data.values
 
     def reverse_transform(self, data):
+        """Converts data back into original format.
+
+        If the ``fill_value`` was in ``data`` when transforming the original
+        data can't be restored.
+
+        Args:
+            data (pandas.Series or numpy.array):
+                Data to transform.
+
+        Returns:
+            pandas.Series
+        """
         if self.nulls:
             if self._null_column:
                 isnull = data[:, 1] > 0.5

@@ -1,5 +1,10 @@
 class BaseTransformer(object):
-    """Base class for all transformers."""
+    """Base class for all transformers.
+
+    The ``BaseTransformer`` class contains methods that must be implemented
+    in order to create a new transformer. The ``fit`` method is optional,
+    and ``fit_transform`` method is already implemented.
+    """
 
     def fit(self, data):
         """Prepare the transformer to convert data.
@@ -23,7 +28,7 @@ class BaseTransformer(object):
         raise NotImplementedError
 
     def fit_transform(self, data):
-        """Prepare the transformer to convert data and return the processed table.
+        """Prepare the transformer to convert data and return the processed data.
 
         Args:
             data (pandas.Series or numpy.array):
@@ -39,10 +44,10 @@ class BaseTransformer(object):
         """Converts data back into original format.
 
         Args:
-            data (numpy.array):
+            data (pandas.Series or numpy.array):
                 Data to transform.
 
         Returns:
-            numpy.array
+            pandas.Series
         """
         raise NotImplementedError

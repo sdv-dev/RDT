@@ -10,22 +10,20 @@ MAPS = {}
 
 class CategoricalTransformer(BaseTransformer):
     """Transformer for categorical data.
+
     This transformer expects a ``column`` ``pandas.Series`` of any dtype in
     a ``pandas.DataFrame`` table. On transform, it will map categorical values
     into the interval [0, 1], back and forth mapping all the unique values close
-    to their frequency in the fit data.
-    This means that two instances of the same category may not be transformed into
-    the same number.
+    to their frequency in the fit data. This means that two instances of the same
+    category may not be transformed into the same number.
+
     On ``reverse_transform`` it will transform any value close to the frenquency
     to their related category. This behavior is to allow the transformed data to be
     modelled and the sampled data to be ``reverse_transformed``.
+
     Args:
-        anonymize (str or None):
-            Anonymization category. `None` disables anonymization.
-    Example:
-        Please note the following behavior, for any column:
-        >>> result = transformer.fit_transform(column)
-        >>> assert result[0 <= result <= 1].all()
+        anonymize (str, tuple or list):
+            Anonymization category. ``None`` disables anonymization. Defaults to ``None``.
     """
 
     mapping = None
@@ -34,7 +32,16 @@ class CategoricalTransformer(BaseTransformer):
         self.anonymize = anonymize
 
     def get_faker(self):
-        """Return the faker object to anonymize data."""
+        """Return the faker object to anonymize data.
+
+        Returns:
+            function:
+                Faker function to generate new data instances with ``self.anonymize`` arguments.
+
+        Raises:
+            ValueError:
+                A ``ValueError`` is raised if the faker category we want don't exist.
+        """
 
         if isinstance(self.anonymize, (tuple, list)):
             category, *args = self.anonymize
@@ -53,6 +60,7 @@ class CategoricalTransformer(BaseTransformer):
             raise ValueError('Category "{}" couldn\'t be found on faker'.format(self.anonymize))
 
     def _anonymize(self, data):
+        """Anonymize data and save in-memory the anonymized label encoding."""
         faker = self.get_faker()
         uniques = data.unique()
         fake_data = [faker() for x in range(len(uniques))]
@@ -64,6 +72,16 @@ class CategoricalTransformer(BaseTransformer):
 
     @staticmethod
     def _get_probabilities(data):
+        """Compute probabilities for each categorical value.
+
+        Args:
+            data (pandas.Series):
+                Data to compute the probabilities.
+
+        Returns:
+            dict:
+                Probabilities for each categorical value (interval, mean and std).
+        """
         frequencies = data.value_counts(dropna=False)
         start = 0
         end = 0
@@ -82,6 +100,15 @@ class CategoricalTransformer(BaseTransformer):
         return probabilities
 
     def fit(self, data):
+        """Prepare the transformer before convert data.
+
+        Create the mapping dict to save the label encoding. and anonymize data if needed.
+        Finaly, compute the probabilities for each categorical value.
+
+        Args:
+            data (pandas.Series or numpy.array):
+                Data to fit.
+        """
         self.mapping = dict()
 
         if isinstance(data, np.ndarray):
@@ -98,6 +125,19 @@ class CategoricalTransformer(BaseTransformer):
         return norm.rvs(mean, std)
 
     def transform(self, data):
+        """Transform categorical data.
+
+        If data is anonymized map the real values.
+
+        Real values encoding is only available in-memory and can't be pickled.
+
+        Args:
+            data (pandas.Series or numpy.array):
+                Data to transform.
+
+        Returns:
+            numpy.array
+        """
         if not isinstance(data, pd.Series):
             data = pd.Series(data)
 
@@ -108,17 +148,20 @@ class CategoricalTransformer(BaseTransformer):
 
     @staticmethod
     def _normalize(data):
+        """Normalize data between the range [0, 1]."""
         data = data - data.astype(int)
         data[data < 0] += 1
         return data
 
     def reverse_transform(self, data):
         """Converts data back into original format.
+
         Args:
-            data (pandas.DataFrame):
+            data (pandas.Series or numpy.array):
                 Data to transform.
+
         Returns:
-            pandas.DataFrame
+            pandas.Series
         """
         if not isinstance(data, pd.Series):
             data = pd.Series(data)
