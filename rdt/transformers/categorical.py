@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from faker import Faker
-from scipy.stats import norm
 
 from rdt.transformers.base import BaseTransformer
 
@@ -71,39 +70,42 @@ class CategoricalTransformer(BaseTransformer):
         return data.map(mapping)
 
     @staticmethod
-    def _get_probabilities(data):
-        """Compute probabilities for each categorical value.
+    def _get_intervals(data):
+        """Compute intervals for each categorical value.
 
         Args:
             data (pandas.Series):
-                Data to compute the probabilities.
+                Data to compute the intervals.
 
         Returns:
             dict:
-                Probabilities for each categorical value (interval, mean and std).
+                intervals for each categorical value (start, end).
         """
-        frequencies = data.value_counts(dropna=False)
+        frequencies = data.value_counts(dropna=False).reset_index()
+
+        # Sort also by index to make sure that results are always the same
+        name = data.name or 0
+        sorted_freqs = frequencies.sort_values([name, 'index'], ascending=False)
+        frequencies = sorted_freqs.set_index('index', drop=True)[name]
+
         start = 0
         end = 0
         elements = len(data)
 
-        probabilities = dict()
+        intervals = dict()
         for value, frequency in frequencies.items():
             prob = frequency / elements
             end = start + prob
-            interval = (start, end)
-            mean = np.mean(interval)
-            std = prob / 6
-            probabilities[value] = (interval, mean, std)
+            intervals[value] = (start, end)
             start = end
 
-        return probabilities
+        return intervals
 
     def fit(self, data):
         """Prepare the transformer before convert data.
 
         Create the mapping dict to save the label encoding. and anonymize data if needed.
-        Finaly, compute the probabilities for each categorical value.
+        Finaly, compute the intervals for each categorical value.
 
         Args:
             data (pandas.Series or numpy.array):
@@ -117,12 +119,12 @@ class CategoricalTransformer(BaseTransformer):
         if self.anonymize:
             data = self._anonymize(data)
 
-        self.probabilities = self._get_probabilities(data)
+        self.intervals = self._get_intervals(data)
 
     def get_val(self, x):
         """Convert cat value into num between 0 and 1."""
-        interval, mean, std = self.probabilities[x]
-        return norm.rvs(mean, std)
+        start, end = self.intervals[x]
+        return (start + end) / 2
 
     def transform(self, data):
         """Transform categorical data.
@@ -150,7 +152,7 @@ class CategoricalTransformer(BaseTransformer):
     def _normalize(data):
         """Normalize data between the range [0, 1]."""
         data = data - data.astype(int)
-        data[data < 0] += 1
+        data[data < 0] = -data[data < 0]
         return data
 
     def reverse_transform(self, data):
@@ -170,8 +172,7 @@ class CategoricalTransformer(BaseTransformer):
 
         result = pd.Series(index=data.index)
 
-        for category, stats in self.probabilities.items():
-            start, end = stats[0]
+        for category, (start, end) in self.intervals.items():
             result[(start < data) & (data < end)] = category
 
         return result

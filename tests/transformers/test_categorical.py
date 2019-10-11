@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -49,6 +49,19 @@ class TestCategoricalTransformer(TestCase):
             "Expected faker function"
         )
 
+    def test_get_faker_anonymize_list_type(self):
+        """Test get_faker when anonymize is a list with two elements"""
+        # Run
+        transformer = Mock()
+        transformer.anonymize = ['credit_card_number', 'visa']
+
+        faker_method = CategoricalTransformer.get_faker(transformer)
+        fake_value = faker_method()
+
+        # Asserts
+        assert isinstance(fake_value, str)
+        assert len(fake_value) == 16
+
     def test_get_faker_anonymize_not_tuple_or_list(self):
         """Test get_faker when anonymize is neither a typle or a list"""
         # Run
@@ -95,41 +108,21 @@ class TestCategoricalTransformer(TestCase):
             "Length of anonymized data unexpected"
         )
 
-    def test__get_probabilities(self):
-        """Test get category probabilities"""
+    def test__get_intervals(self):
+        """Test get category intervals"""
         # Setup
         data = pd.Series(['bar', 'foo', 'foo', 'tar'])
 
         # Run
-        result = CategoricalTransformer._get_probabilities(data)
+        result = CategoricalTransformer._get_intervals(data)
 
         # Asserts
-        # Intervals (item[0]) are compared with the difference because the order may change
-        expect = {
-            'foo': (0.5, 0.25, 0.08333),
-            'bar': (0.25, 0.625, 0.04167),
-            'tar': (0.25, 0.875, 0.04167)
+        expected_intervals = {
+            'foo': (0, 0.5),
+            'tar': (0.5, 0.75),
+            'bar': (0.75, 1)
         }
-
-        for key in result.keys():
-            self.assertEqual(
-                result[key][0][1] - result[key][0][0],
-                expect[key][0],
-                "Wrong interval: {}".format(key))
-
-            # REVIEW:
-            # can't assert when different means are computed in different orders
-            # self.assertEqual(
-            #     result[key][1],
-            #     expect[key][1],
-            #     "Wrong mean: {}".format(key)
-            # )
-
-            self.assertEqual(
-                round(result[key][2], 5),
-                expect[key][2],
-                "Wrong std: {}".format(key)
-            )
+        assert result == expected_intervals
 
     def test_fit_array_no_anonymize(self):
         """Test fit with a numpy.array, don't anonymize"""
@@ -144,8 +137,8 @@ class TestCategoricalTransformer(TestCase):
 
         # Asserts
         expect_anonymize_call_count = 0
-        expect_probabilities_call_count = 1
-        expect_probabilities_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
+        expect_intervals_call_count = 1
+        expect_intervals_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
 
         self.assertEqual(
             transformer._anonymize.call_count,
@@ -154,14 +147,14 @@ class TestCategoricalTransformer(TestCase):
         )
 
         self.assertEqual(
-            transformer._get_probabilities.call_count,
-            expect_probabilities_call_count,
-            "Get probabilities will be called always in fit"
+            transformer._get_intervals.call_count,
+            expect_intervals_call_count,
+            "Get intervals will be called always in fit"
         )
 
         pd.testing.assert_series_equal(
-            transformer._get_probabilities.call_args[0][0],
-            expect_probabilities_call_args
+            transformer._get_intervals.call_args[0][0],
+            expect_intervals_call_args
         )
 
     def test_fit_series_no_anonymize(self):
@@ -177,8 +170,8 @@ class TestCategoricalTransformer(TestCase):
 
         # Asserts
         expect_anonymize_call_count = 0
-        expect_probabilities_call_count = 1
-        expect_probabilities_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
+        expect_intervals_call_count = 1
+        expect_intervals_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
 
         self.assertEqual(
             transformer._anonymize.call_count,
@@ -187,14 +180,14 @@ class TestCategoricalTransformer(TestCase):
         )
 
         self.assertEqual(
-            transformer._get_probabilities.call_count,
-            expect_probabilities_call_count,
-            "Get probabilities will be called always in fit"
+            transformer._get_intervals.call_count,
+            expect_intervals_call_count,
+            "Get intervals will be called always in fit"
         )
 
         pd.testing.assert_series_equal(
-            transformer._get_probabilities.call_args[0][0],
-            expect_probabilities_call_args
+            transformer._get_intervals.call_args[0][0],
+            expect_intervals_call_args
         )
 
     def test_fit_array_anonymize(self):
@@ -212,8 +205,8 @@ class TestCategoricalTransformer(TestCase):
 
         # Asserts
         expect_anonymize_call_count = 1
-        expect_probabilities_call_count = 1
-        expect_probabilities_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
+        expect_intervals_call_count = 1
+        expect_intervals_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
 
         self.assertEqual(
             transformer._anonymize.call_count,
@@ -222,14 +215,14 @@ class TestCategoricalTransformer(TestCase):
         )
 
         self.assertEqual(
-            transformer._get_probabilities.call_count,
-            expect_probabilities_call_count,
-            "Get probabilities will be called always in fit"
+            transformer._get_intervals.call_count,
+            expect_intervals_call_count,
+            "Get intervals will be called always in fit"
         )
 
         pd.testing.assert_series_equal(
-            transformer._get_probabilities.call_args[0][0],
-            expect_probabilities_call_args
+            transformer._get_intervals.call_args[0][0],
+            expect_intervals_call_args
         )
 
     def test_fit_series_anonymize(self):
@@ -247,8 +240,8 @@ class TestCategoricalTransformer(TestCase):
 
         # Asserts
         expect_anonymize_call_count = 1
-        expect_probabilities_call_count = 1
-        expect_probabilities_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
+        expect_intervals_call_count = 1
+        expect_intervals_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
 
         self.assertEqual(
             transformer._anonymize.call_count,
@@ -257,14 +250,14 @@ class TestCategoricalTransformer(TestCase):
         )
 
         self.assertEqual(
-            transformer._get_probabilities.call_count,
-            expect_probabilities_call_count,
-            "Get probabilities will be called always in fit"
+            transformer._get_intervals.call_count,
+            expect_intervals_call_count,
+            "Get intervals will be called always in fit"
         )
 
         pd.testing.assert_series_equal(
-            transformer._get_probabilities.call_args[0][0],
-            expect_probabilities_call_args
+            transformer._get_intervals.call_args[0][0],
+            expect_intervals_call_args
         )
 
     @patch('scipy.stats.norm.rvs')
@@ -272,25 +265,14 @@ class TestCategoricalTransformer(TestCase):
         """Test convert category value into num between 0 and 1"""
         # Run
         transformer = Mock()
-        transformer.probabilities = {
-            'foo': ((0, 0.5), 0.25, 0.08333)
+        transformer.intervals = {
+            'foo': (0, 0.5),
         }
 
-        CategoricalTransformer.get_val(transformer, 'foo')
+        result = CategoricalTransformer.get_val(transformer, 'foo')
 
         # Asserts
-        expect_call_count = 1
-        expect_call_args = call(0.25, 0.08333)
-
-        self.assertEqual(
-            scipy_mock.call_count,
-            expect_call_count
-        )
-
-        self.assertEqual(
-            scipy_mock.call_args,
-            expect_call_args
-        )
+        assert result == 0.25
 
     @patch('rdt.transformers.categorical.MAPS')
     def test_transform_array_anonymize(self, mock_maps):
@@ -347,7 +329,7 @@ class TestCategoricalTransformer(TestCase):
         result = CategoricalTransformer._normalize(data)
 
         # Asserts
-        expect = pd.Series([0.57, 0.1234, 0.5, 0.69], dtype=float)
+        expect = pd.Series([0.43, 0.1234, 0.5, 0.31], dtype=float)
 
         pd.testing.assert_series_equal(result, expect)
 
@@ -357,16 +339,16 @@ class TestCategoricalTransformer(TestCase):
         data = np.array([-0.6, 0.2, 0.6, -0.2])
         normalized_data = pd.Series([0.4, 0.2, 0.6, 0.8])
 
-        probabilities = {
-            'foo': ((0, 0.5), None, None),
-            'bar': ((0.5, 0.75), None, None),
-            'tar': ((0.75, 1), None, None)
+        intervals = {
+            'foo': (0, 0.5),
+            'bar': (0.5, 0.75),
+            'tar': (0.75, 1),
         }
 
         # Run
         transformer = Mock()
         transformer._normalize.return_value = normalized_data
-        transformer.probabilities = probabilities
+        transformer.intervals = intervals
 
         result = CategoricalTransformer.reverse_transform(transformer, data)
 

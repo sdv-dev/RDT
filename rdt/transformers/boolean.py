@@ -76,7 +76,7 @@ class BooleanTransformer(BaseTransformer):
 
         data.loc[data.notnull()] = data.dropna().astype(int)
 
-        return self.null_transformer.transform(data)
+        return self.null_transformer.transform(data).astype(float)
 
     def reverse_transform(self, data):
         """Converts data back into original format.

@@ -1,16 +1,16 @@
 import numpy as np
 import pandas as pd
 
-from rdt import transformers
+from rdt.transformers import (
+    BooleanTransformer, CategoricalTransformer, DatetimeTransformer, NumericalTransformer,
+    load_transformers)
 
 
 class HyperTransformer:
     """HyperTransformer class.
 
-    The ``HyperTransformer`` class contains a collection of ``transformers`` that can be used
-    to transform and reverse transform one or more columns at once. This class contains
-    methods that can create transformers in case that those are not provided during
-    instantiation.
+    The ``HyperTransformer`` class contains a collection of ``transformers`` that can be
+    used to transform and reverse transform one or more columns at once.
 
     Args:
         column_transformers (dict):
@@ -27,15 +27,14 @@ class HyperTransformer:
             List of ``dtype`` corresponding to the data columns to fit. Defaults to ``None``.
 
     Example:
-        In this example we will instantiate a ``HyperTransformer`` that will transform the
+        In this example we will create a ``HyperTransformer`` that will transform the
         columns ``a`` and ``b`` by passing it a ``dict`` containing the name of the column
         and the instance of the transformer to be used (for the column ``a``) and a ``dict``
         with the parameters for the column ``b`` containing the class name and the keyword
         arguments for another ``NumericalTransformer``.
 
-        >>> from rdt.transformers import NumericalTransformer
         >>> nt = NumericalTransformer(dtype=float)
-        >>> column_transformers = {
+        >>> transformers = {
         ...     'a': nt,
         ...     'b': {
         ...         'class': 'NumericalTransformer',
@@ -44,46 +43,11 @@ class HyperTransformer:
         ...         }
         ...     }
         ... }
-        >>> ht = HyperTransformer(column_transformers)
+        >>> ht = HyperTransformer(transformers)
     """
-    transformers = None
-
-    @staticmethod
-    def get_class(name):
-        """Get transformer from its class name.
-
-        Args:
-            name (str):
-                Name of the transformer.
-
-        Returns:
-            BaseTransformer
-        """
-        return getattr(transformers, name)
-
-    @classmethod
-    def _load_transformer(cls, transformer):
-        """Load a new instance of a ``transformer``."""
-        if isinstance(transformer, transformers.BaseTransformer):
-            return transformer
-
-        transformer_class = transformer['class']
-        if not isinstance(transformer_class, transformers.BaseTransformer):
-            transformer_class = cls.get_class(transformer_class)
-
-        transformer_kwargs = transformer.get('kwargs')
-        if transformer_kwargs is None:
-            transformer_kwargs = dict()
-
-        return transformer_class(**transformer_kwargs)
-
-    def __init__(self, column_transformers=None, copy=True, anonymize=None, dtypes=None):
-        if column_transformers:
-            self.transformers = {
-                column_name: self._load_transformer(transformer)
-                for column_name, transformer in column_transformers.items()
-            }
-
+    def __init__(self, transformers=None, copy=True, anonymize=None, dtypes=None):
+        self.transformers = transformers
+        self._transformers = dict()
         self.copy = copy
         self.anonymize = anonymize or dict()
         self.dtypes = dtypes
@@ -115,26 +79,26 @@ class HyperTransformer:
                 A ``ValueError`` is raised if a ``dtype`` is not supported by the
                ``HyperTransformer``.
         """
-        column_transformers = dict()
+        transformers = dict()
         dtypes = self.dtypes or data.dtypes
         for name, dtype in zip(data.columns, dtypes):
             if np.issubdtype(dtype, np.dtype(int)):
-                transformer = transformers.NumericalTransformer(dtype=int)
+                transformer = NumericalTransformer(dtype=int)
             elif np.issubdtype(dtype, np.dtype(float)):
-                transformer = transformers.NumericalTransformer(dtype=float)
+                transformer = NumericalTransformer(dtype=float)
             elif dtype == np.object:
                 anonymize = self.anonymize.get(name)
-                transformer = transformers.CategoricalTransformer(anonymize=anonymize)
+                transformer = CategoricalTransformer(anonymize=anonymize)
             elif np.issubdtype(dtype, np.dtype(bool)):
-                transformer = transformers.BooleanTransformer()
+                transformer = BooleanTransformer()
             elif np.issubdtype(dtype, np.datetime64):
-                transformer = transformers.DatetimeTransformer()
+                transformer = DatetimeTransformer()
             else:
                 raise ValueError('Unsupported dtype: {}'.format(dtype))
 
-            column_transformers[name] = transformer
+            transformers[name] = transformer
 
-        return column_transformers
+        return transformers
 
     def fit(self, data):
         """Prepare transformers before convert data.
@@ -147,7 +111,7 @@ class HyperTransformer:
                 Data to fit.
         """
         if self.transformers:
-            self._transformers = self.transformers
+            self._transformers = load_transformers(self.transformers)
         else:
             self._transformers = self._analyze(data)
 
