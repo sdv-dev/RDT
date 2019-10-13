@@ -17,15 +17,15 @@ class TestCategoricalTransformer(TestCase):
         # Asserts
         self.assertFalse(transformer.anonymize, "Unexpected anonimyze default value")
 
-    def test_get_faker_anonymize_tuple(self):
-        """Test get_faker when anonymize is a tuple"""
+    def test__get_faker_anonymize_tuple(self):
+        """Test _get_faker when anonymize is a tuple"""
         # Setup
 
         # Run
         transformer = Mock()
         transformer.anonymize = ('email',)
 
-        result = CategoricalTransformer.get_faker(transformer)
+        result = CategoricalTransformer._get_faker(transformer)
 
         # Asserts
         self.assertEqual(
@@ -34,13 +34,13 @@ class TestCategoricalTransformer(TestCase):
             "Expected faker function"
         )
 
-    def test_get_faker_anonymize_list(self):
-        """Test get_faker when anonymize is a list"""
+    def test__get_faker_anonymize_list(self):
+        """Test _get_faker when anonymize is a list"""
         # Run
         transformer = Mock()
         transformer.anonymize = ['email']
 
-        result = CategoricalTransformer.get_faker(transformer)
+        result = CategoricalTransformer._get_faker(transformer)
 
         # Asserts
         self.assertEqual(
@@ -49,26 +49,26 @@ class TestCategoricalTransformer(TestCase):
             "Expected faker function"
         )
 
-    def test_get_faker_anonymize_list_type(self):
-        """Test get_faker when anonymize is a list with two elements"""
+    def test__get_faker_anonymize_list_type(self):
+        """Test _get_faker when anonymize is a list with two elements"""
         # Run
         transformer = Mock()
         transformer.anonymize = ['credit_card_number', 'visa']
 
-        faker_method = CategoricalTransformer.get_faker(transformer)
+        faker_method = CategoricalTransformer._get_faker(transformer)
         fake_value = faker_method()
 
         # Asserts
         assert isinstance(fake_value, str)
         assert len(fake_value) == 16
 
-    def test_get_faker_anonymize_not_tuple_or_list(self):
-        """Test get_faker when anonymize is neither a typle or a list"""
+    def test__get_faker_anonymize_not_tuple_or_list(self):
+        """Test _get_faker when anonymize is neither a typle or a list"""
         # Run
         transformer = Mock()
         transformer.anonymize = 'email'
 
-        result = CategoricalTransformer.get_faker(transformer)
+        result = CategoricalTransformer._get_faker(transformer)
 
         # Asserts
         self.assertEqual(
@@ -77,14 +77,14 @@ class TestCategoricalTransformer(TestCase):
             "Expected faker function"
         )
 
-    def test_get_faker_anonymize_category_not_exist(self):
-        """Test get_faker with a category that don't exist"""
+    def test__get_faker_anonymize_category_not_exist(self):
+        """Test _get_faker with a category that don't exist"""
         # Run & assert
         transformer = Mock()
         transformer.anonymize = 'SuP3R-P1Th0N-P0w3R'
 
         with self.assertRaises(ValueError):
-            CategoricalTransformer.get_faker(transformer)
+            CategoricalTransformer._get_faker(transformer)
 
     def test__anonymize(self):
         """Test anonymize data"""
@@ -261,7 +261,7 @@ class TestCategoricalTransformer(TestCase):
         )
 
     @patch('scipy.stats.norm.rvs')
-    def test_get_val(self, scipy_mock):
+    def test__get_value(self, scipy_mock):
         """Test convert category value into num between 0 and 1"""
         # Run
         transformer = Mock()
@@ -269,7 +269,7 @@ class TestCategoricalTransformer(TestCase):
             'foo': (0, 0.5),
         }
 
-        result = CategoricalTransformer.get_val(transformer, 'foo')
+        result = CategoricalTransformer._get_value(transformer, 'foo')
 
         # Asserts
         assert result == 0.25

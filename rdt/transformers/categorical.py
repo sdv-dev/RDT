@@ -10,15 +10,18 @@ MAPS = {}
 class CategoricalTransformer(BaseTransformer):
     """Transformer for categorical data.
 
-    This transformer expects a ``column`` ``pandas.Series`` of any dtype in
-    a ``pandas.DataFrame`` table. On transform, it will map categorical values
-    into the interval [0, 1], back and forth mapping all the unique values close
-    to their frequency in the fit data. This means that two instances of the same
-    category may not be transformed into the same number.
+    This transformer computes a float representative for each one of the categories
+    found in the fit data, and then replaces the instances of these categories with
+    the corresponding representative.
 
-    On ``reverse_transform`` it will transform any value close to the frenquency
-    to their related category. This behavior is to allow the transformed data to be
-    modelled and the sampled data to be ``reverse_transformed``.
+    The representatives are decided by sorting the categorical values by their relative
+    frequency, then dividing the ``[0, 1]`` interval by these relative frequencies, and
+    finally assigning the middle point of each interval to the corresponding category.
+
+    When the transformation is reverted, each value is assigned the category that
+    corresponds to the interval it falls int.
+
+    Null values are considered just another category.
 
     Args:
         anonymize (str, tuple or list):
@@ -30,7 +33,7 @@ class CategoricalTransformer(BaseTransformer):
     def __init__(self, anonymize=False):
         self.anonymize = anonymize
 
-    def get_faker(self):
+    def _get_faker(self):
         """Return the faker object to anonymize data.
 
         Returns:
@@ -75,7 +78,7 @@ class CategoricalTransformer(BaseTransformer):
 
         Args:
             data (pandas.Series):
-                Data to compute the intervals.
+                Data to analyze.
 
         Returns:
             dict:
@@ -102,14 +105,15 @@ class CategoricalTransformer(BaseTransformer):
         return intervals
 
     def fit(self, data):
-        """Prepare the transformer before convert data.
+        """Fit the transformer to the data.
 
-        Create the mapping dict to save the label encoding. and anonymize data if needed.
+        Create the mapping dict to save the label encoding, anonymizing the data
+        before if needed.
         Finaly, compute the intervals for each categorical value.
 
         Args:
-            data (pandas.Series or numpy.array):
-                Data to fit.
+            data (pandas.Series or numpy.ndarray):
+                Data to fit the transformer to.
         """
         self.mapping = dict()
 
@@ -121,24 +125,25 @@ class CategoricalTransformer(BaseTransformer):
 
         self.intervals = self._get_intervals(data)
 
-    def get_val(self, x):
-        """Convert cat value into num between 0 and 1."""
-        start, end = self.intervals[x]
+    def _get_value(self, category):
+        """Get the value that represents this category"""
+        start, end = self.intervals[category]
         return (start + end) / 2
 
     def transform(self, data):
-        """Transform categorical data.
+        """Transform categorical values to float values.
 
-        If data is anonymized map the real values.
+        If anonymization is required, replace the values with the corresponding
+        anonymized counterparts before transforming.
 
-        Real values encoding is only available in-memory and can't be pickled.
+        Then replace the categories with their float representative value.
 
         Args:
-            data (pandas.Series or numpy.array):
+            data (pandas.Series or numpy.ndarray):
                 Data to transform.
 
         Returns:
-            numpy.array
+            numpy.ndarray:
         """
         if not isinstance(data, pd.Series):
             data = pd.Series(data)
@@ -146,21 +151,25 @@ class CategoricalTransformer(BaseTransformer):
         if self.anonymize:
             data = data.map(MAPS[id(self)])
 
-        return data.fillna(np.nan).apply(self.get_val)
+        return data.fillna(np.nan).apply(self._get_value)
 
     @staticmethod
     def _normalize(data):
-        """Normalize data between the range [0, 1]."""
+        """Normalize data to the range [0, 1].
+
+        This is done by substracting to each value its integer part, leaving only
+        the decimal part, and then shifting the sign of the negative values.
+        """
         data = data - data.astype(int)
         data[data < 0] = -data[data < 0]
         return data
 
     def reverse_transform(self, data):
-        """Converts data back into original format.
+        """Convert float values back to the original categorical values.
 
         Args:
-            data (pandas.Series or numpy.array):
-                Data to transform.
+            data (numpy.ndarray):
+                Data to revert.
 
         Returns:
             pandas.Series

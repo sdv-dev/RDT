@@ -1,8 +1,9 @@
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from rdt import HyperTransformer
 from rdt.transformers import (
@@ -17,7 +18,7 @@ class TestHyperTransformerTransformer(TestCase):
         ht = HyperTransformer()
 
         # Asserts
-        self.assertEqual(ht.copy, True)
+        self.assertTrue(ht.copy)
         self.assertEqual(ht.anonymize, dict())
         self.assertEqual(ht.dtypes, None)
 
@@ -123,14 +124,14 @@ class TestHyperTransformerTransformer(TestCase):
 
         self.assertIsInstance(result['datetimes'], expect_class)
 
+    @patch('rdt.hyper_transformer.np.dtype', new=Mock())
     def test__analyze_raise_error(self):
         """Test _analyze raise error"""
         # Setup
-        data = pd.DataFrame({
-            'foo': [0, 1.1, None, True, 'bar']
-        })
+        data = Mock()
+        data.columns = ['foo']
 
-        dtypes = [complex]
+        dtypes = [Mock()]
 
         # Run
         transformer = Mock()
@@ -204,3 +205,34 @@ class TestHyperTransformerTransformer(TestCase):
             transformer.transform.call_args[0][0],
             expect_call_args_transform
         )
+
+    def test__get_columns_one(self):
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+        })
+
+        returned = HyperTransformer._get_columns(data, 'a')
+
+        np.testing.assert_equal(returned, np.array([1, 2, 3]))
+
+    def test__get_columns_two(self):
+        data = pd.DataFrame({
+            'b': [4, 5, 6],
+            'b#1': [7, 8, 9],
+        })
+
+        returned = HyperTransformer._get_columns(data, 'b')
+
+        expected = np.array([
+            [4, 7],
+            [5, 8],
+            [6, 9]
+        ])
+        np.testing.assert_equal(returned, expected)
+
+    def test__get_columns_error(self):
+        data = pd.DataFrame({
+        })
+
+        with pytest.raises(ValueError):
+            HyperTransformer._get_columns(data, 'a')

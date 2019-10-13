@@ -7,7 +7,7 @@ class BaseTransformer(object):
     """
 
     def fit(self, data):
-        """Prepare the transformer to convert data.
+        """Fit the transformer to the data.
 
         Args:
             data (pandas.Series or numpy.array):
@@ -16,38 +16,41 @@ class BaseTransformer(object):
         pass
 
     def transform(self, data):
-        """Does the required transformations to the data.
+        """Transform the data.
 
         Args:
             data (pandas.Series or numpy.array):
                 Data to transform.
 
         Returns:
-            numpy.array
+            numpy.array:
+                Transformed data.
         """
         raise NotImplementedError
 
     def fit_transform(self, data):
-        """Prepare the transformer to convert data and return the processed data.
+        """Fit the transformer to the data and then transform it.
 
         Args:
             data (pandas.Series or numpy.array):
                 Data to transform.
 
         Returns:
-            numpy.array
+            numpy.array:
+                Transformed data.
         """
         self.fit(data)
         return self.transform(data)
 
     def reverse_transform(self, data):
-        """Converts data back into original format.
+        """Revert the transformations to the original values.
 
         Args:
             data (pandas.Series or numpy.array):
                 Data to transform.
 
         Returns:
-            pandas.Series
+            pandas.Series:
+                Reverted data.
         """
         raise NotImplementedError

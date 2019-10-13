@@ -35,13 +35,13 @@ def test_load_transformer_kwargs():
     transformer = {
         'class': BooleanTransformer,
         'kwargs': {
-            'nan': 'ignore'
+            'nan': None
         }
     }
 
     returned = load_transformer(transformer)
 
-    assert returned.nan == 'ignore'
+    assert returned.nan is None
 
 
 def test_load_transformers():

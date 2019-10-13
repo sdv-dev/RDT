@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 from rdt.transformers import (
     BooleanTransformer, CategoricalTransformer, DatetimeTransformer, NumericalTransformer,
@@ -13,29 +12,33 @@ class HyperTransformer:
     used to transform and reverse transform one or more columns at once.
 
     Args:
-        column_transformers (dict):
-            Dict containing the name of the column as a key and the ``transformer`` instance as
-            a value. Also the value can be a dictionary containing the information of the
-            transformer, see the example below. Defaults to ``None``.
+        transformers (dict or None):
+            dict associating column names with transformers, which can be either passed
+            directly as an instance or as a dict specification. If ``None``, a simple
+            ``transformers`` dict is built automatically from the data.
         copy (bool):
-            Make a copy of the input data or not. Defaults to ``True``.
-        anonymize (string, tuple or list):
-            ``Faker`` method with arguments to be used in categoricals anonymization.
-            Defaults to ``None``.
-        dtypes (list):
-            List of data types corresponding to ``column_transformers`` or the ``data``.
-            List of ``dtype`` corresponding to the data columns to fit. Defaults to ``None``.
+            Whether to make a copy of the input data or not. Defaults to ``True``.
+        anonymize (dict or None):
+            Dictionary specifying the names and ``faker`` categories of the categorical
+            columns that need to be anonymized. Defaults to ``None``.
+        dtypes (list or None):
+            List of column data types to use when building the ``transformers`` dict
+            automatically. If not passed, the ``DataFrame.dtypes`` are used.
 
     Example:
-        In this example we will create a ``HyperTransformer`` that will transform the
-        columns ``a`` and ``b`` by passing it a ``dict`` containing the name of the column
-        and the instance of the transformer to be used (for the column ``a``) and a ``dict``
-        with the parameters for the column ``b`` containing the class name and the keyword
-        arguments for another ``NumericalTransformer``.
+        Create a simple ``HyperTransformer`` instance that will decide which transformers
+        to use based on the fit data ``dtypes``.
 
-        >>> nt = NumericalTransformer(dtype=float)
+        >>> ht = HyperTransformer()
+
+        Create a ``HyperTransformer`` passing a list of dtypes.
+
+        >>> ht = HyperTransformer(dtypes=[int, 'object', np.float64, 'datetime', 'bool'])
+
+        Create a ``HyperTransformer`` passing a ``transformers`` dict.
+
         >>> transformers = {
-        ...     'a': nt,
+        ...     'a': NumericalTransformer(dtype=float),
         ...     'b': {
         ...         'class': 'NumericalTransformer',
         ...         'kwargs': {
@@ -60,11 +63,11 @@ class HyperTransformer:
         When ``dtype`` is:
             - ``int``: a ``NumericalTransformer`` is created with ``dtype=int``.
             - ``float``: a ``NumericalTransformer`` is created with ``dtype=float``.
-            - ``object``: a ``CategoricalTransformer`` is created.
+            - ``object`` or ``category``: a ``CategoricalTransformer`` is created.
             - ``bool``: a ``BooleanTransformer`` is created.
-            - ``datetime64``: a ``DatetimeTransformer`` is created.
+            - ``datetime``: a ``DatetimeTransformer`` is created.
 
-        Any other ``dtype`` is not supported and raise a ``ValueError``.
+        Any other ``dtype`` is not supported and raises a ``ValueError``.
 
         Args:
             data (pandas.DataFrame):
@@ -72,26 +75,26 @@ class HyperTransformer:
 
         Returns:
             dict:
-                Map column name with the created transformer.
+                Mapping of column names and transformer instances.
 
         Raises:
             ValueError:
-                A ``ValueError`` is raised if a ``dtype`` is not supported by the
-               ``HyperTransformer``.
+                if a ``dtype`` is not supported by the `HyperTransformer``.
         """
         transformers = dict()
         dtypes = self.dtypes or data.dtypes
         for name, dtype in zip(data.columns, dtypes):
-            if np.issubdtype(dtype, np.dtype(int)):
+            dtype = np.dtype(dtype)
+            if dtype.kind == 'i':
                 transformer = NumericalTransformer(dtype=int)
-            elif np.issubdtype(dtype, np.dtype(float)):
+            elif dtype.kind == 'f':
                 transformer = NumericalTransformer(dtype=float)
-            elif dtype == np.object:
+            elif dtype.kind == 'O':
                 anonymize = self.anonymize.get(name)
                 transformer = CategoricalTransformer(anonymize=anonymize)
-            elif np.issubdtype(dtype, np.dtype(bool)):
+            elif dtype.kind == 'b':
                 transformer = BooleanTransformer()
-            elif np.issubdtype(dtype, np.datetime64):
+            elif dtype.kind == 'M':
                 transformer = DatetimeTransformer()
             else:
                 raise ValueError('Unsupported dtype: {}'.format(dtype))
@@ -101,14 +104,11 @@ class HyperTransformer:
         return transformers
 
     def fit(self, data):
-        """Prepare transformers before convert data.
-
-        Before fit the data, check if the transformers are already defined.
-        If not, the transformers will be created analyzing the data types.
+        """Fit the transformers to the data.
 
         Args:
             data (pandas.DataFrame):
-                Data to fit.
+                Data to fit the transformers to.
         """
         if self.transformers:
             self._transformers = load_transformers(self.transformers)
@@ -120,24 +120,17 @@ class HyperTransformer:
             transformer.fit(column)
 
     def transform(self, data):
-        """Does the required transformations to the data.
+        """Transform the data.
 
-        If ``self.copy`` is ``True`` make a copy of the data to don't overwrite it.
-
-        When a ``NullTransformer`` is applied it can generate a new column with values in range
-        1 or 0 if the values are null or not respectively.
-        New columns will be named column_name#1.
-
-        Also, a ``NullTransformer`` can replace null values. If this fill value is already
-        in the data and we don't create a null column data can't be reversed. In this case
-        we show a warning.
+        If ``self.copy`` is ``True`` make a copy of the input data to avoid modifying it.
 
         Args:
             data (pandas.DataFrame):
                 Data to transform.
 
         Returns:
-            pandas.DataFrame
+            pandas.DataFrame:
+                Transformed data.
         """
         if self.copy:
             data = data.copy()
@@ -159,21 +152,22 @@ class HyperTransformer:
         return data
 
     def fit_transform(self, data):
-        """Prepare transformers before convert and does the required transformations to the data.
+        """Fit the transformers to the data and then transform it.
 
         Args:
             data (pandas.DataFrame):
                 Data to transform.
 
         Returns:
-            pandas.DataFrame
+            pandas.DataFrame:
+                Transformed data.
         """
         self.fit(data)
         return self.transform(data)
 
     @staticmethod
     def _get_columns(data, column_name):
-        """Get one or more columns that match by a given name.
+        """Get one or more columns that match a given name.
 
         Args:
             data (pandas.DataFrame):
@@ -182,39 +176,41 @@ class HyperTransformer:
                 Name to match the columns.
 
         Returns:
-            * pandas.Series: When a single column is found.
-            * pandas.DataFrame: When multiple columns are found.
+            numpy.ndarray:
+                values of the matching columns
 
         Raises:
             ValueError:
-                A ``ValueError`` is raised if the match doesn't found any result.
+                if no columns match.
         """
         regex = r'{}(#[0-9]+)?$'.format(column_name)
         columns = data.columns[data.columns.str.match(regex)]
-        if len(columns) == 1:
-            return data.pop(columns[0])
+        if columns.empty:
+            raise ValueError('No columns match_ {}'.format(column_name))
 
-        return pd.concat([data.pop(column) for column in columns], axis=1)
+        values = [data.pop(column).values for column in columns]
+
+        if len(values) == 1:
+            return values[0]
+
+        return np.column_stack(values)
 
     def reverse_transform(self, data):
-        """Converts data back into original format.
-
-        Not all data is reversible. When a transformer fill null values, this value
-        is already in the original data and we haven't created the null column data
-        can't be reversed.
+        """Revert the transformations back to the original values.
 
         Args:
             data (pandas.DataFrame):
-                Data to transform.
+                Data to revert.
 
         Returns:
-            pandas.DataFrame
+            pandas.DataFrame:
+                reversed data.
         """
         if self.copy:
             data = data.copy()
 
         for column_name, transformer in self._transformers.items():
             columns = self._get_columns(data, column_name)
-            data[column_name] = transformer.reverse_transform(columns.values)
+            data[column_name] = transformer.reverse_transform(columns)
 
         return data

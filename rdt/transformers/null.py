@@ -14,17 +14,14 @@ IRREVERSIBLE_WARNING = (
 class NullTransformer(BaseTransformer):
     """Transformer for null data.
 
-    The ``NullTransformer`` class allow replace null values with a given value
-    and create a null column if needed.
-
     Args:
-        fill_value (int):
-            Value to replace nulls. Not used if `None`.
+        fill_value (object or None):
+            Value to replace nulls. If ``None``, nans are not replaced.
         null_column (bool):
-            When ``null_column`` is:
-                - ``None``: Only create a new column when the data contains null values.
-                - ``True``: Create always a new column even if the data don't contains null values.
-                - ``False``: Never create a new column.
+            Whether to create a new column to indicate which values were null or not.
+            If ``None``, only create a new column when the data contains null values.
+            If ``True``, always create the new column whether there are null values or not.
+            If ``False``, do not create the new column.
             Defaults to ``None``.
         copy (bool):
             Whether to create a copy of the input data or modify it destructively.
@@ -36,12 +33,12 @@ class NullTransformer(BaseTransformer):
         self.copy = copy
 
     def fit(self, data):
-        """Prepare the transformer to convert data.
+        """Fit the transformer to the data.
 
-        Evaluate when the transformer have to create the null column or not.
+        Evaluate if the transformer has to create the null column or not.
 
         Args:
-            data (pandas.Series or numpy.array):
+            data (pandas.Series or numpy.ndarray):
                 Data to transform.
         """
         self.nulls = data.isnull().any()
@@ -51,17 +48,16 @@ class NullTransformer(BaseTransformer):
             self._null_column = self.null_column
 
     def transform(self, data):
-        """Transform null data.
+        """Replace null values with the indicated fill_value.
 
-        When the data have null values, evaluate if should replace null values
-        and/or create the null column.
+        If required, create the null indicator column.
 
         Args:
-            data (pandas.Series or numpy.array):
+            data (pandas.Series or numpy.ndarray):
                 Data to transform.
 
         Returns:
-            numpy.array
+            numpy.ndarray
         """
         if self.nulls:
             isnull = data.isnull()
@@ -80,13 +76,14 @@ class NullTransformer(BaseTransformer):
         return data.values
 
     def reverse_transform(self, data):
-        """Converts data back into original format.
+        """Restore null values to the data.
 
-        If the ``fill_value`` was in ``data`` when transforming the original
-        data can't be restored.
+        If a null indicator column was created dring fit, use it as a reference.
+        Otherwise, replace all instances of ``fill_value`` that can be found in
+        data.
 
         Args:
-            data (pandas.Series or numpy.array):
+            data (numpy.ndarray):
                 Data to transform.
 
         Returns:

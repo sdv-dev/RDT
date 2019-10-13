@@ -140,11 +140,11 @@ class TestDatetimeTransformer(TestCase):
         data = pd.to_datetime(data).to_numpy()
 
         # Run
-        transformer = DatetimeTransformer(nan='ignore')
+        transformer = DatetimeTransformer(nan=None)
         transformer.fit(data)
 
         # Asserts
-        expect_nan = 'ignore'
+        expect_nan = None
         expect_fill_value = None
 
         self.assertEqual(
@@ -165,11 +165,11 @@ class TestDatetimeTransformer(TestCase):
         data = pd.to_datetime(data)
 
         # Run
-        transformer = DatetimeTransformer(nan='ignore')
+        transformer = DatetimeTransformer(nan=None)
         transformer.fit(data)
 
         # Asserts
-        expect_nan = 'ignore'
+        expect_nan = None
         expect_fill_value = None
 
         self.assertEqual(
@@ -321,7 +321,7 @@ class TestDatetimeTransformer(TestCase):
 
         # Run
         transformer = Mock()
-        transformer.nan = 'ignore'
+        transformer.nan = None
 
         DatetimeTransformer.reverse_transform(transformer, data)
 

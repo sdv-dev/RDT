@@ -24,7 +24,7 @@ class TestBooleanTransformer(TestCase):
         data = pd.Series([False, True, True, False, True])
 
         # Run
-        transformer = BooleanTransformer(nan='ignore')
+        transformer = BooleanTransformer(nan=None)
         transformer.fit(data)
 
         # Asserts
@@ -128,7 +128,7 @@ class TestBooleanTransformer(TestCase):
 
         # Run
         transformer = Mock()
-        transformer.nan = 'ignore'
+        transformer.nan = None
         transformer.null_transformer.reverse_transform.return_value = transformed_data
 
         BooleanTransformer.reverse_transform(transformer, data)

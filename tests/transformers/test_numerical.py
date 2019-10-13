@@ -125,7 +125,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([1.5, None, 2.5])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='ignore')
+        transformer = NumericalTransformer(dtype=np.float, nan=None)
         transformer.fit(data)
 
         # Asserts
@@ -150,7 +150,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.Series([1.5, None, 2.5])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='ignore')
+        transformer = NumericalTransformer(dtype=np.float, nan=None)
         transformer.fit(data)
 
         # Asserts
@@ -262,7 +262,7 @@ class TestNumericalTransformer(TestCase):
 
         # Run
         transformer = Mock()
-        transformer.nan = 'ignore'
+        transformer.nan = None
         transformer._dtype = np.float
 
         NumericalTransformer.reverse_transform(transformer, data)
@@ -309,7 +309,7 @@ class TestNumericalTransformer(TestCase):
 
         # Run
         transformer = Mock()
-        transformer.nan = 'ignore'
+        transformer.nan = None
         transformer._dtype = np.int
 
         NumericalTransformer.reverse_transform(transformer, data)
