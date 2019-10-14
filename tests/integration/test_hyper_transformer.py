@@ -71,8 +71,11 @@ def test_hypertransformer_with_transformers():
 
     expected = get_transformed_data()
 
-    np.testing.assert_allclose(transformed.values, expected.values)
+    np.testing.assert_allclose(
+        transformed.sort_index(axis=1).values,
+        expected.sort_index(axis=1).values
+    )
 
     reversed_data = ht.reverse_transform(transformed)
 
-    pd.testing.assert_frame_equal(data, reversed_data)
+    pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
