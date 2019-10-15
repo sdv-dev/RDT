@@ -102,6 +102,7 @@ class TestCategoricalTransformer(TestCase):
         # Asserts
         expect_result_len = 4
 
+        assert transformer._get_faker.call_count == 1
         self.assertEqual(
             len(result),
             expect_result_len,
@@ -286,7 +287,7 @@ class TestCategoricalTransformer(TestCase):
         transformer = Mock()
         transformer.anonymize = 'email'
 
-        mock_maps[id(transformer)] = data = np.array(['bar_x', 'foo_x', 'foo_x', 'tar_x'])
+        mock_maps[id(transformer)] = np.array(['bar_x', 'foo_x', 'foo_x', 'tar_x'])
 
         result = CategoricalTransformer.transform(transformer, data)
 

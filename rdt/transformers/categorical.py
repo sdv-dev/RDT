@@ -63,7 +63,7 @@ class CategoricalTransformer(BaseTransformer):
 
     def _anonymize(self, data):
         """Anonymize data and save in-memory the anonymized label encoding."""
-        faker = self.get_faker()
+        faker = self._get_faker()
         uniques = data.unique()
         fake_data = [faker() for x in range(len(uniques))]
 
