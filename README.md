@@ -1,4 +1,4 @@
-<p align="left"> 
+<p align="left">
 <img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt=“Copulas” />
 <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
@@ -8,13 +8,13 @@
 [![Coverage Status](https://codecov.io/gh/HDI-Project/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/HDI-Project/RDT)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
 
-# RDT: Reversible Data Transforms
+<h1>RDT: Reversible Data Transforms</h1>
 
 - License: MIT
 - Documentation: https://HDI-Project.github.io/RDT
 - Homepage: https://github.com/HDI-Project/RDT
 
-## Overview
+# Overview
 
 **RDT** is a Python library used to transform data for data science libraries and preserve
 the transformations in order to revert them as needed.
@@ -55,20 +55,25 @@ pip install rdt
 
 This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
-## Install from sources
+## Install from source
 
-Alternatively, with your virtualenv activated, you can clone the repository and install
-it from source by running `make install` on the `stable` branch:
+With your virtualenv activated, you can clone the repository and install it from
+source by running `make install` on the `stable` branch:
 
 ```bash
-git clone https://github.com/HDI-Project/RDT
+git clone git@github.com:HDI-Project/RDT.git
 cd RDT
 git checkout stable
 make install
 ```
 
-For development, you can use `make install-develop` instead in order to install all
-the required dependencies for testing and code linting.
+## Install for Development
+
+If you want to contribute to the project, a few more steps are required to make the project ready
+for development.
+
+Please head to the [Contributing Guide](https://HDI-Project.github.io/RDT/contributing.html#get-started)
+for more details about this process.
 
 # Quickstart
 
@@ -80,100 +85,105 @@ help you getting started using **RDT** to transform columns, tables and datasets
 In this first guide, you will learn how to use **RDT** in its simplest form, transforming
 a single column loaded as a `pandas.DataFrame` object.
 
-### 1. Load the column and its metadata
+### 1. Load the demo data
 
-In order to load a column and its metadata, you must call the `rdt.load_data` function passing
-it the path to the metadata json file, the name of the table from which to load the column,
-and the name of the column to load.
-
-You can find documentation about the metadata format in [MetaData.json](
-https://github.com/HDI-Project/MetaData.json).
+You can load some demo data using the `rdt.get_demo` function, which will return some random
+data for you to play with.
 
 ```python
-from rdt import load_data
+from rdt import get_demo
 
-metadata_path = 'tests/data/airbnb/airbnb_meta.json'
-
-column_data, column_metadata = load_data(
-    metadata_path=metadata_path,
-    table_name='users',
-    column_name='date_account_created',
-)
+data = get_demo()
 ```
 
-The output will be the variable `column_data`, which is a `pandas.DataFrame` with the column data:
+This will return a `pandas.DataFrame` with 10 rows and 4 columns, one of each data type supported:
 
 ```
-  date_account_created
-0           2014-01-01
-1           2014-01-01
-2           2014-01-01
-3           2014-01-01
-4           2014-01-01
+   0_int    1_float 2_str          3_datetime
+0   38.0  46.872441     b 2021-02-10 21:50:00
+1   77.0  13.150228   NaN 2021-07-19 21:14:00
+2   21.0        NaN     b                 NaT
+3   10.0  37.128869     c 2019-10-15 21:39:00
+4   91.0  41.341214     a 2020-10-31 11:57:00
+5   67.0  92.237335     a                 NaT
+6    NaN  51.598682   NaN 2020-04-01 01:56:00
+7    NaN  42.204396     c 2020-03-12 22:12:00
+8   68.0        NaN     c 2021-02-25 16:04:00
+9    7.0  31.542918     a 2020-07-12 03:12:00
 ```
 
-And the `column_metadata`, which is a `dict` containing the information from the metadata json
-that corresponds to this column:
-
-```python
-{
-    'name': 'date_account_created',
-    'type': 'datetime',
-    'format': '%Y-%m-%d',
-    'uniques': 1634
-}
-```
+Notice how the data is random, so your output might look a bit different. Also notice how
+RDT introduced some null values randomly.
 
 ### 2. Load the transformer
 
-In this case the column is a datetime, so we will use the `DTTransformer`.
+In this example we will use the datetime column, so let's load a `DatetimeTransformer`.
 
 ```python
-from rdt.transformers import DTTransformer
-transformer = DTTransformer(column_metadata)
+from rdt.transformers import DatetimeTransformer
+transformer = DatetimeTransformer()
 ```
 
-### 3. Transform the column data
+### 3. Fit the Transformer
 
-In order to transform the data, we will call its `fit_transform` method passing the
-`column` data:
+Before being able to transform the data, we need the transformer to learn from it.
+
+We will do this by calling its `fit` method passing the column that we want to transform.
 
 ```python
-transformed_data = transformer.fit_transform(column_data)
+transformer.fit(data['3_datetime'])
 ```
 
-The output will be another `pandas.DataFrame` with the transformed data:
+### 4. Transform the data
 
-```
-   date_account_created
-0          1.388534e+18
-1          1.388534e+18
-2          1.388534e+18
-3          1.388534e+18
-4          1.388534e+18
+Once the transformer is fitted, we can pass the data again to its `transform` method in order
+to get the transformed version of the data.
+
+```python
+transformed = transformer.transform(data['3_datetime'])
 ```
 
-### 4. Revert the column transformation
+The output will be a `numpy.ndarray` with two columns, one with the datetimes transformed
+to integer timestamps, and another one indicating with 1s which values were null in the
+original data.
+
+```
+array([[1.61299380e+18, 0.00000000e+00],
+       [1.62672924e+18, 0.00000000e+00],
+       [1.59919923e+18, 1.00000000e+00],
+       [1.57117554e+18, 0.00000000e+00],
+       [1.60414542e+18, 0.00000000e+00],
+       [1.59919923e+18, 1.00000000e+00],
+       [1.58570616e+18, 0.00000000e+00],
+       [1.58405112e+18, 0.00000000e+00],
+       [1.61426904e+18, 0.00000000e+00],
+       [1.59452352e+18, 0.00000000e+00]])
+```
+
+### 5. Revert the column transformation
 
 In order to revert the previous transformation, the transformed data can be passed to
 the `reverse_transform` method of the transformer:
 
 ```python
-reversed_data = transformer.reverse_transform(transformed_data)
+reversed_data = transformer.reverse_transform(transformed)
 ```
 
-The output will be a `pandas.DataFrame` containing the data from which the transformed data
-was generated with.
-
-In this case, of course, the obtained data should be identical to the original one:
+The output will be a `pandas.Series` containing the reverted values, which should be exactly
+like the original ones.
 
 ```
-  date_account_created
-0           2014-01-01
-1           2014-01-01
-2           2014-01-01
-3           2014-01-01
-4           2014-01-01
+0   2021-02-10 21:50:00
+1   2021-07-19 21:14:00
+2                   NaT
+3   2019-10-15 21:39:00
+4   2020-10-31 11:57:00
+5                   NaT
+6   2020-04-01 01:56:00
+7   2020-03-12 22:12:00
+8   2021-02-25 16:04:00
+9   2020-07-12 03:12:00
+dtype: datetime64[ns]
 ```
 
 ## Transforming a table
@@ -181,114 +191,80 @@ In this case, of course, the obtained data should be identical to the original o
 Once we know how to transform a single column, we can try to go the next level and transform
 a table with multiple columns.
 
-### 1. Load the table data and its metadata
+### 1. Load the HyperTransformer
 
-In order to load a complete table, we will use the same `rdt.load_data` function as before,
-but omit the `column_name` from the call.
-
-```python
-table_data, table_metadata = load_data(
-    metadata_path=metadata_path,
-    table_name='users',
-)
-```
-
-The output, like before will be compsed by the `table_data`, which in this case will contain
-all the columns from the table:
-
-```
-           id date_account_created  timestamp_first_active  ... signup_app first_device_type  first_browser
-0  d1mm9tcy42           2014-01-01          20140101000936  ...        Web   Windows Desktop         Chrome
-1  yo8nz8bqcq           2014-01-01          20140101001558  ...        Web       Mac Desktop        Firefox
-2  4grx6yxeby           2014-01-01          20140101001639  ...        Web   Windows Desktop        Firefox
-3  ncf87guaf0           2014-01-01          20140101002146  ...        Web   Windows Desktop         Chrome
-4  4rvqpxoh3h           2014-01-01          20140101002619  ...        iOS            iPhone      -unknown-
-```
-
-And the `table_metadata`, which will also contain all the information available about the table:
-
-```python
-{
-    'path': 'users_demo.csv',
-    'name': 'users',
-    'use': True,
-    'headers': True,
-    'fields': [
-        {
-            'name': 'id',
-            'type': 'id',
-            'regex': '^.{10}$',
-            'uniques': 213451
-        },
-        ...
-        {
-            'name': 'first_browser',
-            'type': 'categorical',
-            'subtype': 'categorical',
-            'uniques': 52
-        }
-    ],
-    'primary_key': 'id',
-    'number_of_rows': 213451
-}
-```
-
-### 2. Load the HyperTransformer
-
-In order to manuipulate a complete table we will need to import the `rdt.HyperTransformer` class
-and create an instance of it passing it the path to our metadata file.
+In order to manuipulate a complete table we will need to load a `rdt.HyperTransformer`.
 
 ```python
 from rdt import HyperTransformer
-ht = HyperTransformer(metadata=metadata_path)
+ht = HyperTransformer()
+```
+
+### 2. Fit the HyperTransformer
+
+Just like the transfomer, the HyperTransformer needs to be fitted before being able to transform
+data.
+
+This is done by calling its `fit` method passing the `data` DataFrame.
+
+```python
+ht.fit(data)
 ```
 
 ### 3. Transform the table data
 
-In order to transform the data, we will call the `fit_transform_table` method from our
-`HyperTransformer` instance passing it the table data, the table metadata and the names of the
-transformers that we want to apply.
+Once the HyperTransformer is fitted, we can pass the data again to its `transform` method in order
+to get the transformed version of the data.
 
 ```python
-transformed = ht.fit_transform_table(
-    table=table_data,
-    table_meta=table_metadata,
-    transformer_list=['DTTransformer', 'NumberTransformer', 'CatTransformer']
-)
+transformed = ht.transform(data)
 ```
 
-The output, again, will be the transformed data:
+The output, will now be another `pandas.DataFrame` with the numerical representation of our
+data.
 
 ```
-         id  date_account_created  timestamp_first_active  ...  signup_app  first_device_type  first_browser
-0  0.512195          1.388534e+18            1.388535e+18  ...    0.204759           0.417261       0.423842
-1  0.958701          1.388534e+18            1.388535e+18  ...    0.569893           0.115335       0.756304
-2  0.106468          1.388534e+18            1.388535e+18  ...    0.381164           0.571280       0.869942
-3  0.724346          1.388534e+18            1.388536e+18  ...    0.485542           0.668070       0.364122
-4  0.345691          1.388534e+18            1.388536e+18  ...    0.944064           0.847751       0.108216
+    0_int  0_int#1    1_float  1_float#1  2_str    3_datetime  3_datetime#1
+0  38.000      0.0  46.872441        0.0   0.70  1.612994e+18           0.0
+1  77.000      0.0  13.150228        0.0   0.90  1.626729e+18           0.0
+2  21.000      0.0  44.509511        1.0   0.70  1.599199e+18           1.0
+3  10.000      0.0  37.128869        0.0   0.15  1.571176e+18           0.0
+4  91.000      0.0  41.341214        0.0   0.45  1.604145e+18           0.0
+5  67.000      0.0  92.237335        0.0   0.45  1.599199e+18           1.0
+6  47.375      1.0  51.598682        0.0   0.90  1.585706e+18           0.0
+7  47.375      1.0  42.204396        0.0   0.15  1.584051e+18           0.0
+8  68.000      0.0  44.509511        1.0   0.15  1.614269e+18           0.0
+9   7.000      0.0  31.542918        0.0   0.45  1.594524e+18           0.0
 ```
 
 ### 4. Revert the table transformation
 
 In order to revert the transformation and recover the original data from the transformed one,
-we need to call `reverse_transform_table` of the `HyperTransformer` instance passing it the
-transformed data and the table metadata.
+we need to call `reverse_transform` method of the `HyperTransformer` instance passing it the
+transformed data.
 
 ```python
-reversed_data = ht.reverse_transform_table(
-    table=transformed,
-    table_meta=table_metadata
-)
+reversed_data = ht.reverse_transform(transformed)
 ```
 
-The output will be the reversed data. Just like before, this should look exactly like the
-original data:
+Which should output, again, a table that looks exactly like the original one.
 
 ```
-           id date_account_created timestamp_first_active  ... signup_app first_device_type  first_browser
-0  d1mm9tcy42           2014-01-01         20140101010936  ...        Web   Windows Desktop         Chrome
-1  yo8nz8bqcq           2014-01-01         20140101011558  ...        Web       Mac Desktop        Firefox
-2  4grx6yxeby           2014-01-01         20140101011639  ...        Web   Windows Desktop        Firefox
-3  ncf87guaf0           2014-01-01         20140101012146  ...        Web   Windows Desktop         Chrome
-4  4rvqpxoh3h           2014-01-01         20140101012619  ...        iOS            iPhone      -unknown-
+   0_int    1_float 2_str          3_datetime
+0   38.0  46.872441     b 2021-02-10 21:50:00
+1   77.0  13.150228   NaN 2021-07-19 21:14:00
+2   21.0        NaN     b                 NaT
+3   10.0  37.128869     c 2019-10-15 21:39:00
+4   91.0  41.341214     a 2020-10-31 11:57:00
+5   67.0  92.237335     a                 NaT
+6    NaN  51.598682   NaN 2020-04-01 01:56:00
+7    NaN  42.204396     c 2020-03-12 22:12:00
+8   68.0        NaN     c 2021-02-25 16:04:00
+9    7.0  31.542918     a 2020-07-12 03:12:00
 ```
+
+# What's next?
+
+For more details about **Reversible Data Transforms**, how to contribute to the project, and
+its complete API reference, please visit the [documentation site](
+https://HDI-Project.github.io/RDT/).

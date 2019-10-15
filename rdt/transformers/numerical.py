@@ -5,15 +5,19 @@ from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
 
-class DatetimeTransformer(BaseTransformer):
-    """Transformer for datetime data.
+class NumericalTransformer(BaseTransformer):
+    """Transformer for numerical data.
 
-    This transformer replaces datetime values with an integer timestamp
-    transformed to float.
+    This transformer replaces integer values with their float equivalent.
+    Non null float values are not modified.
 
     Null values are replaced using a ``NullTransformer``.
 
     Args:
+        dtype (data type):
+            Data type of the data to transform. It will be used when reversing the
+            transformation. If not provided, the dtype of the fit data will be used.
+            Defaults to ``None``.
         nan (int, str or None):
             Indicate what to do with the null values. If an integer is given, replace them
             with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
@@ -29,35 +33,27 @@ class DatetimeTransformer(BaseTransformer):
 
     null_transformer = None
 
-    def __init__(self, nan='mean', null_column=None):
+    def __init__(self, dtype=None, nan='mean', null_column=None):
         self.nan = nan
         self.null_column = null_column
-
-    @staticmethod
-    def _transform(datetimes):
-        """Transform datetime values to integer."""
-        nulls = datetimes.isnull()
-        integers = datetimes.astype(int).astype(float).values
-        integers[nulls] = np.nan
-
-        return pd.Series(integers)
+        self.dtype = dtype
 
     def fit(self, data):
         """Fit the transformer to the data.
 
         Args:
             data (pandas.Series or numpy.ndarray):
-                Data to fit the transformer to.
+                Data to fit.
         """
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        transformed = self._transform(data)
+        self._dtype = self.dtype or data.dtype
 
         if self.nan == 'mean':
-            fill_value = transformed.mean()
+            fill_value = data.mean()
         elif self.nan == 'mode':
-            fill_value = transformed.mode(dropna=True)[0]
+            fill_value = data.mode(dropna=True)[0]
         else:
             fill_value = self.nan
 
@@ -65,7 +61,10 @@ class DatetimeTransformer(BaseTransformer):
         self.null_transformer.fit(data)
 
     def transform(self, data):
-        """Transform datetime values to float values.
+        """Transform numerical data.
+
+        Integer values are replaced by their float equivalent. Non null float values
+        are left unmodified.
 
         Args:
             data (pandas.Series or numpy.ndarray):
@@ -77,15 +76,13 @@ class DatetimeTransformer(BaseTransformer):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        data = self._transform(data)
-
         return self.null_transformer.transform(data)
 
     def reverse_transform(self, data):
-        """Convert float values back to datetimes.
+        """Converts data back into original format.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (numpy.ndarray):
                 Data to transform.
 
         Returns:
@@ -94,5 +91,8 @@ class DatetimeTransformer(BaseTransformer):
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 
-        data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(int)
-        return pd.to_datetime(data)
+        if self._dtype == np.int:
+            data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(int)
+            return data
+
+        return data.astype(self._dtype)
