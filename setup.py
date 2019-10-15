@@ -85,6 +85,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/HDI-Project/RDT',
-    version='0.2.0',
+    version='0.2.1.dev0',
     zip_safe=False,
 )
