@@ -1,63 +1,103 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 
 from rdt.transformers.base import BaseTransformer
 
+IRREVERSIBLE_WARNING = (
+    'Replacing nulls with existing value without `null_column`, which is not reversible. '
+    'Use `null_column=True` to ensure that the transformation is reversible.'
+)
+
 
 class NullTransformer(BaseTransformer):
-    """Transformer for missing/null data."""
+    """Transformer for null data.
 
-    type = ['datetime', 'number', 'categorical']
+    Args:
+        fill_value (object or None):
+            Value to replace nulls. If ``None``, nans are not replaced.
+        null_column (bool):
+            Whether to create a new column to indicate which values were null or not.
+            If ``None``, only create a new column when the data contains null values.
+            If ``True``, always create the new column whether there are null values or not.
+            If ``False``, do not create the new column.
+            Defaults to ``None``.
+        copy (bool):
+            Whether to create a copy of the input data or modify it destructively.
+    """
 
-    def __init__(self, column_metadata):
-        """ initialize transformer """
-        super().__init__(column_metadata)
+    def __init__(self, fill_value, null_column=None, copy=False):
+        self.fill_value = fill_value
+        self.null_column = null_column
+        self.copy = copy
 
-    def fit(self, col):
-        self.new_name = '?' + self.col_name
+    def fit(self, data):
+        """Fit the transformer to the data.
 
-        if isinstance(col, pd.DataFrame):
-            col = col[self.col_name]
+        Evaluate if the transformer has to create the null column or not.
 
-        if self.column_metadata['type'] == 'number':
-            mean = col.mean()
-
-            if pd.notnull(mean):
-                self.default_value = mean
-
-            else:
-                self.default_value = 0
+        Args:
+            data (pandas.Series or numpy.ndarray):
+                Data to transform.
+        """
+        self.nulls = data.isnull().any()
+        if self.null_column is None:
+            self._null_column = self.nulls
         else:
-            self.default_value = col.mode().iloc[0]
+            self._null_column = self.null_column
 
-    def transform(self, col):
-        """Prepare the transformer to convert data and return the processed table.
+    def transform(self, data):
+        """Replace null values with the indicated fill_value.
+
+        If required, create the null indicator column.
 
         Args:
-            col (pandas.DataFrame):
+            data (pandas.Series or numpy.ndarray):
                 Data to transform.
 
         Returns:
-            pandas.DataFrame
+            numpy.ndarray
         """
-        out = pd.DataFrame(index=col.index)
-        out[self.col_name] = col.fillna(self.default_value)
-        out[self.new_name] = (pd.notnull(col) * 1).astype(int)
-        return out
+        if self.nulls:
+            isnull = data.isnull()
+            if self.nulls and self.fill_value is not None:
+                if not self.copy:
+                    data[isnull] = self.fill_value
+                else:
+                    data = data.fillna(self.fill_value)
 
-    def reverse_transform(self, col):
-        """Converts data back into original format.
+            if self._null_column:
+                return pd.concat([data, isnull.astype('int')], axis=1).values
+
+            elif self.fill_value in data.values:
+                warnings.warn(IRREVERSIBLE_WARNING)
+
+        return data.values
+
+    def reverse_transform(self, data):
+        """Restore null values to the data.
+
+        If a null indicator column was created dring fit, use it as a reference.
+        Otherwise, replace all instances of ``fill_value`` that can be found in
+        data.
 
         Args:
-            col (pandas.DataFrame):
+            data (numpy.ndarray):
                 Data to transform.
 
         Returns:
-            pandas.DataFrame
+            pandas.Series
         """
-        output = pd.DataFrame()
-        new_name = '?' + self.col_name
+        if self.nulls:
+            if self._null_column:
+                isnull = data[:, 1] > 0.5
+                data = pd.Series(data[:, 0])
+            else:
+                isnull = np.where(self.fill_value == data)[0]
+                data = pd.Series(data)
 
-        col.loc[col[new_name] == 0, self.col_name] = np.nan
-        output[self.col_name] = col[self.col_name]
-        return output
+            if isnull.any():
+                data.iloc[isnull] = np.nan
+
+        return data
