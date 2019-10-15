@@ -323,11 +323,17 @@ class TestDatetimeTransformer(TestCase):
         transformer = Mock()
         transformer.nan = None
 
-        DatetimeTransformer.reverse_transform(transformer, data)
+        result = DatetimeTransformer.reverse_transform(transformer, data)
 
         # Asserts
+        expect = pd.Series([
+            np.nan,
+            pd.to_datetime(845510400000000000),
+            pd.to_datetime(-145497600000000000)
+        ])
         expect_reverse_call_count = 0
 
+        pd.testing.assert_series_equal(result, expect)
         self.assertEqual(
             transformer.null_transformer.reverse_transform.call_count,
             expect_reverse_call_count,

@@ -124,18 +124,18 @@ class TestBooleanTransformer(TestCase):
         """Test reverse_transform with nan equal to ignore"""
         # Setup
         data = np.array([0.0, 1.0, 0.0, 1.0, 0.0])
-        transformed_data = np.array([0.0, 1.0, 0.0, 1.0, 0.0])
 
         # Run
         transformer = Mock()
         transformer.nan = None
-        transformer.null_transformer.reverse_transform.return_value = transformed_data
 
-        BooleanTransformer.reverse_transform(transformer, data)
+        result = BooleanTransformer.reverse_transform(transformer, data)
 
         # Asserts
+        expect = np.array([False, True, False, True, False])
         expect_call_count = 0
 
+        np.testing.assert_equal(result, expect)
         self.assertEqual(
             transformer.null_transformer.reverse_transform.call_count,
             expect_call_count,
@@ -153,11 +153,13 @@ class TestBooleanTransformer(TestCase):
         transformer.nan = 0
         transformer.null_transformer.reverse_transform.return_value = transformed_data
 
-        BooleanTransformer.reverse_transform(transformer, data)
+        result = BooleanTransformer.reverse_transform(transformer, data)
 
         # Asserts
+        expect = np.array([False, True, False, True, False])
         expect_call_count = 1
 
+        np.testing.assert_equal(result, expect)
         self.assertEqual(
             transformer.null_transformer.reverse_transform.call_count,
             expect_call_count,

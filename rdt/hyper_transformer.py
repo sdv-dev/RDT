@@ -83,6 +83,14 @@ class HyperTransformer:
         """
         transformers = dict()
         dtypes = self.dtypes or data.dtypes
+        if self.dtypes:
+            dtypes = self.dtypes
+        else:
+            dtypes = [
+                data[column].dropna().infer_objects()
+                for column in data.columns
+            ]
+
         for name, dtype in zip(data.columns, dtypes):
             dtype = np.dtype(dtype)
             if dtype.kind == 'i':

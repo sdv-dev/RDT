@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import numpy as np
 import pandas as pd
 
@@ -12,7 +14,8 @@ def get_input_data():
         'bool': [False, np.nan, False, True, False],
         'datetime': [
             np.nan, '2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'
-        ]
+        ],
+        'names': ['Jon', 'Arya', 'Sansa', 'Jon', 'Robb'],
     })
     data['datetime'] = pd.to_datetime(data['datetime'])
 
@@ -31,7 +34,8 @@ def get_transformed_data():
             1.2636432e+18, 1.2649824e+18, 1.262304e+18,
             1.2649824e+18, 1.262304e+18
         ],
-        'datetime#1': [1.0, 0.0, 0.0, 0.0, 0.0]
+        'datetime#1': [1.0, 0.0, 0.0, 0.0, 0.0],
+        'names': [0.2, 0.9, 0.5, 0.2, 0.7],
     })
 
 
@@ -58,10 +62,18 @@ def get_transformers():
         'datetime': {
             'class': 'DatetimeTransformer'
         },
+        'names': {
+            'class': 'CategoricalTransformer',
+            'kwargs': {
+                'anonymize': 'first_name'
+            }
+        },
     }
 
 
-def test_hypertransformer_with_transformers():
+@patch('rdt.transformers.categorical.Faker')
+def test_hypertransformer_with_transformers(faker_mock):
+    faker_mock.return_value.first_name.side_effect = ['Jaime', 'Cersei', 'Tywin', 'Tyrion']
     data = get_input_data()
     transformers = get_transformers()
 
@@ -78,4 +90,37 @@ def test_hypertransformer_with_transformers():
 
     reversed_data = ht.reverse_transform(transformed)
 
+    original_names = data.pop('names')
+    reversed_names = reversed_data.pop('names')
+
     pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
+
+    for name in original_names:
+        assert name not in reversed_names
+
+
+@patch('rdt.transformers.categorical.Faker')
+def test_hypertransformer_without_transformers(faker_mock):
+    faker_mock.return_value.first_name.side_effect = ['Jaime', 'Cersei', 'Tywin', 'Tyrion']
+    data = get_input_data()
+
+    ht = HyperTransformer()
+    ht.fit(data)
+    transformed = ht.transform(data)
+
+    expected = get_transformed_data()
+
+    np.testing.assert_allclose(
+        transformed.sort_index(axis=1).values,
+        expected.sort_index(axis=1).values
+    )
+
+    reversed_data = ht.reverse_transform(transformed)
+
+    original_names = data.pop('names')
+    reversed_names = reversed_data.pop('names')
+
+    pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
+
+    for name in original_names:
+        assert name not in reversed_names

@@ -265,11 +265,13 @@ class TestNumericalTransformer(TestCase):
         transformer.nan = None
         transformer._dtype = np.float
 
-        NumericalTransformer.reverse_transform(transformer, data)
+        result = NumericalTransformer.reverse_transform(transformer, data)
 
         # Asserts
+        expect = pd.Series([1.5, None, 2.5])
         expected_reverse_transform_call_count = 0
 
+        pd.testing.assert_series_equal(result, expect)
         self.assertEqual(
             transformer.null_transformer.reverse_transform.call_count,
             expected_reverse_transform_call_count,
@@ -312,11 +314,13 @@ class TestNumericalTransformer(TestCase):
         transformer.nan = None
         transformer._dtype = np.int
 
-        NumericalTransformer.reverse_transform(transformer, data)
+        result = NumericalTransformer.reverse_transform(transformer, data)
 
         # Asserts
+        expect = pd.Series([3.0, 2.0, 3.0])
         expected_reverse_transform_call_count = 0
 
+        pd.testing.assert_series_equal(result, expect)
         self.assertEqual(
             transformer.null_transformer.reverse_transform.call_count,
             expected_reverse_transform_call_count,
