@@ -1,10 +1,29 @@
 # History
 
+## 0.2.0 - 2019-10-15
+
+This version comes with a brand new API and internal implementation, removing the old
+metadata JSON from the user provided arguments, and making each transformer work only
+with `pandas.Series` of their corresponding data type.
+
+As part of this change, several transformer names have been changed and a new BooleanTransformer
+and a feature to automatically decide which transformers to use based on dtypes have been added.
+
+Unit test coverage has also been increased to 100%.
+
+Special thanks to @JDTheRipperPC and @csala for the big efforts put in making this
+release possible.
+
+### Issues
+
+* Drop the usage of meta - Issue [#72](https://github.com/HDI-Project/RDT/issues/72) by @JDTheRipperPC
+* Make CatTransformer.probability_map deterministic - Issue [#25](https://github.com/HDI-Project/RDT/issues/25) by @csala
+
 ## 0.1.3 - 2019-09-24
 
 ### New Features
 
-* Add attributes NullTransformer and col_meta. - Issue [#30](https://github.com/HDI-Project/RDT/issues/30) by @ManuelAlvarezC
+* Add attributes NullTransformer and col_meta - Issue [#30](https://github.com/HDI-Project/RDT/issues/30) by @ManuelAlvarezC
 
 ### General Improvements
 
