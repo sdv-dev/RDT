@@ -8,13 +8,13 @@
 [![Coverage Status](https://codecov.io/gh/HDI-Project/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/HDI-Project/RDT)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
 
-<h1>RDT: Reversible Data Transforms</h1>
+# RDT: Reversible Data Transforms
 
-- License: MIT
-- Documentation: https://HDI-Project.github.io/RDT
-- Homepage: https://github.com/HDI-Project/RDT
+* License: MIT
+* Documentation: https://HDI-Project.github.io/RDT
+* Homepage: https://github.com/HDI-Project/RDT
 
-# Overview
+## Overview
 
 **RDT** is a Python library used to transform data for data science libraries and preserve
 the transformations in order to revert them as needed.
