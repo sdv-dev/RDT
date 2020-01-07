@@ -33,7 +33,7 @@ The process of releasing a new version involves several steps:
 Clone the project and install the development requirements before start the release process. Alternatively, with your virtualenv activated.
 
 ```bash
-git clone https://github.com/HDI-Project/RDT
+git clone https://github.com/sdv-dev/RDT
 cd RDT
 git checkout master
 make install-develop
@@ -120,20 +120,20 @@ Make sure HISTORY.md is updated with the issues of the milestone:
 	
 ### New Features
 	
-* <ISSUE TITLE> - [Issue #<issue>](https://github.com/HDI-Project/RDT/issues/<issue>) by @resolver
+* <ISSUE TITLE> - [Issue #<issue>](https://github.com/sdv-dev/RDT/issues/<issue>) by @resolver
 	
 ### General Improvements
 	
-* <ISSUE TITLE> - [Issue #<issue>](https://github.com/HDI-Project/RDT/issues/<issue>) by @resolver
+* <ISSUE TITLE> - [Issue #<issue>](https://github.com/sdv-dev/RDT/issues/<issue>) by @resolver
 	
 ### Bug Fixed
 	
-* <ISSUE TITLE> - [Issue #<issue>](https://github.com/HDI-Project/RDT/issues/<issue>) by @resolver
+* <ISSUE TITLE> - [Issue #<issue>](https://github.com/sdv-dev/RDT/issues/<issue>) by @resolver
 ```
 
 The issue list per milestone can be found [here][milestones].
 
-[milestones]: https://github.com/HDI-Project/RDT/milestones
+[milestones]: https://github.com/sdv-dev/RDT/milestones
 
 ## Distribution
 
@@ -182,7 +182,7 @@ pip install /path/to/rdt/dist/<rdt-distribution-version-any>.whl
 Clone the project and install the development requirements. Alternatively, with your virtualenv activated.
 
 ```bash
-git clone https://github.com/HDI-Project/SDV
+git clone https://github.com/sdv-dev/SDV
 cd SDV
 git checkout master
 make install-develop
