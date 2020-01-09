@@ -10,7 +10,7 @@
 
 # RDT: Reversible Data Transforms
 
-* License: MIT
+* License: [MIT](https://github.com/sdv-dev/RDT/blob/master/LICENSE)
 * Documentation: https://sdv-dev.github.io/RDT
 * Homepage: https://github.com/sdv-dev/RDT
 
