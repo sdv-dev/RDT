@@ -77,5 +77,8 @@ class BooleanTransformer(BaseTransformer):
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 
+        if isinstance(data, np.ndarray):
+            data = pd.Series(data)
+
         data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(bool)
         return data

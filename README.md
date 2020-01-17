@@ -1,20 +1,20 @@
 <p align="left">
-<img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt=“Copulas” />
+<img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt="DAI-Lab" />
 <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
 [![PyPi Shield](https://img.shields.io/pypi/v/RDT.svg)](https://pypi.python.org/pypi/RDT)
-[![Travis CI Shield](https://travis-ci.org/HDI-Project/RDT.svg?branch=master)](https://travis-ci.org/HDI-Project/RDT)
-[![Coverage Status](https://codecov.io/gh/HDI-Project/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/HDI-Project/RDT)
+[![Travis CI Shield](https://travis-ci.org/sdv-dev/RDT.svg?branch=master)](https://travis-ci.org/sdv-dev/RDT)
+[![Coverage Status](https://codecov.io/gh/sdv-dev/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/RDT)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
 
-<h1>RDT: Reversible Data Transforms</h1>
+# RDT: Reversible Data Transforms
 
-- License: MIT
-- Documentation: https://HDI-Project.github.io/RDT
-- Homepage: https://github.com/HDI-Project/RDT
+* License: [MIT](https://github.com/sdv-dev/RDT/blob/master/LICENSE)
+* Documentation: https://sdv-dev.github.io/RDT
+* Homepage: https://github.com/sdv-dev/RDT
 
-# Overview
+## Overview
 
 **RDT** is a Python library used to transform data for data science libraries and preserve
 the transformations in order to revert them as needed.
@@ -61,7 +61,7 @@ With your virtualenv activated, you can clone the repository and install it from
 source by running `make install` on the `stable` branch:
 
 ```bash
-git clone git@github.com:HDI-Project/RDT.git
+git clone git@github.com:sdv-dev/RDT.git
 cd RDT
 git checkout stable
 make install
@@ -72,7 +72,7 @@ make install
 If you want to contribute to the project, a few more steps are required to make the project ready
 for development.
 
-Please head to the [Contributing Guide](https://HDI-Project.github.io/RDT/contributing.html#get-started)
+Please head to the [Contributing Guide](https://sdv-dev.github.io/RDT/contributing.html#get-started)
 for more details about this process.
 
 # Quickstart
@@ -267,4 +267,4 @@ Which should output, again, a table that looks exactly like the original one.
 
 For more details about **Reversible Data Transforms**, how to contribute to the project, and
 its complete API reference, please visit the [documentation site](
-https://HDI-Project.github.io/RDT/).
+https://sdv-dev.github.io/RDT/).

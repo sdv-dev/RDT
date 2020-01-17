@@ -1,5 +1,11 @@
 # History
 
+## 0.2.1 - 2020-01-17
+
+### Bugs Fixed
+
+* Boolean Transformer fails to revert when there are NO nulls - Issue [#103](https://github.com/sdv-dev/RDT/issues/103) by @JDTheRipperPC
+
 ## 0.2.0 - 2019-10-15
 
 This version comes with a brand new API and internal implementation, removing the old
@@ -16,23 +22,23 @@ release possible.
 
 ### Issues
 
-* Drop the usage of meta - Issue [#72](https://github.com/HDI-Project/RDT/issues/72) by @JDTheRipperPC
-* Make CatTransformer.probability_map deterministic - Issue [#25](https://github.com/HDI-Project/RDT/issues/25) by @csala
+* Drop the usage of meta - Issue [#72](https://github.com/sdv-dev/RDT/issues/72) by @JDTheRipperPC
+* Make CatTransformer.probability_map deterministic - Issue [#25](https://github.com/sdv-dev/RDT/issues/25) by @csala
 
 ## 0.1.3 - 2019-09-24
 
 ### New Features
 
-* Add attributes NullTransformer and col_meta - Issue [#30](https://github.com/HDI-Project/RDT/issues/30) by @ManuelAlvarezC
+* Add attributes NullTransformer and col_meta - Issue [#30](https://github.com/sdv-dev/RDT/issues/30) by @ManuelAlvarezC
 
 ### General Improvements
 
-* Integrate with CodeCov - Issue [#89](https://github.com/HDI-Project/RDT/issues/89) by @csala
-* Remake Sphinx Documentation - Issue [#96](https://github.com/HDI-Project/RDT/issues/96) by @JDTheRipperPC
-* Improve README - Issue [#92](https://github.com/HDI-Project/RDT/issues/92) by @JDTheRipperPC
-* Document RELEASE workflow - Issue [#93](https://github.com/HDI-Project/RDT/issues/93) by @JDTheRipperPC
-* Add support to Python 3.7 - Issue [#38](https://github.com/HDI-Project/RDT/issues/38) by @ManuelAlvarezC
-* Create way to pass HyperTransformer table dict - Issue [#45](https://github.com/HDI-Project/RDT/issues/45) by @ManuelAlvarezC
+* Integrate with CodeCov - Issue [#89](https://github.com/sdv-dev/RDT/issues/89) by @csala
+* Remake Sphinx Documentation - Issue [#96](https://github.com/sdv-dev/RDT/issues/96) by @JDTheRipperPC
+* Improve README - Issue [#92](https://github.com/sdv-dev/RDT/issues/92) by @JDTheRipperPC
+* Document RELEASE workflow - Issue [#93](https://github.com/sdv-dev/RDT/issues/93) by @JDTheRipperPC
+* Add support to Python 3.7 - Issue [#38](https://github.com/sdv-dev/RDT/issues/38) by @ManuelAlvarezC
+* Create way to pass HyperTransformer table dict - Issue [#45](https://github.com/sdv-dev/RDT/issues/45) by @ManuelAlvarezC
 
 ## 0.1.2
 

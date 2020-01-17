@@ -165,3 +165,20 @@ class TestBooleanTransformer(TestCase):
             expect_call_count,
             "NullTransformer.reverse_transform should not be called when nan is ignore"
         )
+
+    def test_reverse_transform_not_null_values(self):
+        """Test reverse_transform not null values correctly"""
+        # Setup
+        data = np.array([1., 0., 1.])
+
+        # Run
+        transformer = Mock()
+        transformer.nan = None
+
+        result = BooleanTransformer.reverse_transform(transformer, data)
+
+        # Asserts
+        expected = np.array([True, False, True])
+
+        assert type(result) == pd.Series
+        np.testing.assert_equal(result.to_numpy(), expected)
