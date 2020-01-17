@@ -1,5 +1,11 @@
 # History
 
+## 0.2.1 - 2020-01-17
+
+### Bugs Fixed
+
+* Boolean Transformer fails to revert when there are NO nulls - Issue [#103](https://github.com/sdv-dev/RDT/issues/103) by @JDTheRipperPC
+
 ## 0.2.0 - 2019-10-15
 
 This version comes with a brand new API and internal implementation, removing the old
