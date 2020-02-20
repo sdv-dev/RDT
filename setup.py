@@ -10,10 +10,10 @@ with open('HISTORY.md') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'numpy>=1.15.4',
-    'pandas>=0.23.4',
-    'scipy>=1.1.0',
-    'Faker>=1.0.1',
+    'numpy>=1.15.4,<2',
+    'pandas>=0.23.4,<1',
+    'scipy>=1.1.0,<2',
+    'Faker>=1.0.1,<2',
 ]
 
 setup_requires = [
