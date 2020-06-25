@@ -25,31 +25,16 @@ the transformations in order to revert them as needed.
 
 ## Requirements
 
-**RDT** has been developed and tested on [Python 3.5, 3.6 and 3.7](https://www.python.org/downloads)
+**RDT** has been developed and tested on [Python 3.5 and 3.6, 3.7](https://www.python.org/downloads/)
 
-Also, although it is not strictly required, the usage of a
-[virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
+Also, although it is not strictly required, the usage of a [virtualenv](
+https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
 interfering with other software installed in the system where **RDT** is run.
-
-These are the minimum commands needed to create a virtualenv using python3.6 for **RDT**:
-
-```bash
-pip install virtualenv
-virtualenv -p $(which python3.6) rdt-venv
-```
-
-Afterwards, you have to execute this command to have the virtualenv activated:
-
-```bash
-source rdt-venv/bin/activate
-```
-
-Remember about executing it every time you start a new console to work on **RDT**!
 
 ## Install with pip
 
-After creating the virtualenv and activating it, we recommend using
-[pip](https://pip.pypa.io/en/stable/) in order to install **RDT**:
+The easiest and recommended way to install **RDT** is using [pip](
+https://pip.pypa.io/en/stable/):
 
 ```bash
 pip install rdt
@@ -57,25 +42,9 @@ pip install rdt
 
 This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
-## Install from source
+If you want to install from source or contribute to the project please read the
+[Contributing Guide](https://sdv-dev.github.io/RDT/contributing.html#get-started).
 
-With your virtualenv activated, you can clone the repository and install it from
-source by running `make install` on the `stable` branch:
-
-```bash
-git clone git@github.com:sdv-dev/RDT.git
-cd RDT
-git checkout stable
-make install
-```
-
-## Install for Development
-
-If you want to contribute to the project, a few more steps are required to make the project ready
-for development.
-
-Please head to the [Contributing Guide](https://sdv-dev.github.io/RDT/contributing.html#get-started)
-for more details about this process.
 
 # Quickstart
 
@@ -92,7 +61,7 @@ a single column loaded as a `pandas.DataFrame` object.
 You can load some demo data using the `rdt.get_demo` function, which will return some random
 data for you to play with.
 
-```python
+```python3
 from rdt import get_demo
 
 data = get_demo()
@@ -121,8 +90,9 @@ RDT introduced some null values randomly.
 
 In this example we will use the datetime column, so let's load a `DatetimeTransformer`.
 
-```python
+```python3
 from rdt.transformers import DatetimeTransformer
+
 transformer = DatetimeTransformer()
 ```
 
@@ -132,7 +102,7 @@ Before being able to transform the data, we need the transformer to learn from i
 
 We will do this by calling its `fit` method passing the column that we want to transform.
 
-```python
+```python3
 transformer.fit(data['3_datetime'])
 ```
 
@@ -141,7 +111,7 @@ transformer.fit(data['3_datetime'])
 Once the transformer is fitted, we can pass the data again to its `transform` method in order
 to get the transformed version of the data.
 
-```python
+```python3
 transformed = transformer.transform(data['3_datetime'])
 ```
 
@@ -167,7 +137,7 @@ array([[1.61299380e+18, 0.00000000e+00],
 In order to revert the previous transformation, the transformed data can be passed to
 the `reverse_transform` method of the transformer:
 
-```python
+```python3
 reversed_data = transformer.reverse_transform(transformed)
 ```
 
@@ -197,8 +167,9 @@ a table with multiple columns.
 
 In order to manuipulate a complete table we will need to load a `rdt.HyperTransformer`.
 
-```python
+```python3
 from rdt import HyperTransformer
+
 ht = HyperTransformer()
 ```
 
@@ -209,7 +180,7 @@ data.
 
 This is done by calling its `fit` method passing the `data` DataFrame.
 
-```python
+```python3
 ht.fit(data)
 ```
 
@@ -218,7 +189,7 @@ ht.fit(data)
 Once the HyperTransformer is fitted, we can pass the data again to its `transform` method in order
 to get the transformed version of the data.
 
-```python
+```python3
 transformed = ht.transform(data)
 ```
 
@@ -245,7 +216,7 @@ In order to revert the transformation and recover the original data from the tra
 we need to call `reverse_transform` method of the `HyperTransformer` instance passing it the
 transformed data.
 
-```python
+```python3
 reversed_data = ht.reverse_transform(transformed)
 ```
 
