@@ -1,3 +1,5 @@
+import re
+
 import numpy as np
 
 from rdt.transformers import (
@@ -191,7 +193,7 @@ class HyperTransformer:
             ValueError:
                 if no columns match.
         """
-        regex = r'{}(#[0-9]+)?$'.format(column_name)
+        regex = r'{}(#[0-9]+)?$'.format(re.escape(column_name))
         columns = data.columns[data.columns.str.match(regex)]
         if columns.empty:
             raise ValueError('No columns match_ {}'.format(column_name))
