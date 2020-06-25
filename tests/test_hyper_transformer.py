@@ -236,3 +236,18 @@ class TestHyperTransformerTransformer(TestCase):
 
         with pytest.raises(ValueError):
             HyperTransformer._get_columns(data, 'a')
+
+    def test__get_columns_regex(self):
+        data = pd.DataFrame({
+            'a(b)': [4, 5, 6],
+            'a(b)#1': [7, 8, 9],
+        })
+
+        returned = HyperTransformer._get_columns(data, 'a(b)')
+
+        expected = np.array([
+            [4, 7],
+            [5, 8],
+            [6, 9]
+        ])
+        np.testing.assert_equal(returned, expected)
