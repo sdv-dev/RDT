@@ -1,5 +1,11 @@
 # History
 
+## 0.2.2 - 2020-06-26
+
+### Bugs Fixed
+
+* Escape `column_name` in hypertransformer - Issue [#110](https://github.com/sdv-dev/RDT/issues/110) by @csala
+
 ## 0.2.1 - 2020-01-17
 
 ### Bugs Fixed
