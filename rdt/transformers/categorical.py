@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from faker import Faker
-
 from scipy.stats import norm
 
 from rdt.transformers.base import BaseTransformer
