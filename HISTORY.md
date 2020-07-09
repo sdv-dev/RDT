@@ -1,5 +1,9 @@
 # History
 
+## 0.2.3 - 2020-07-09
+
+* Implement OneHot and Label encoding as transformers - Issue [#112](https://github.com/sdv-dev/RDT/issues/112) by @csala
+
 ## 0.2.2 - 2020-06-26
 
 ### Bugs Fixed

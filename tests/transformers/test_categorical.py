@@ -119,9 +119,9 @@ class TestCategoricalTransformer(TestCase):
 
         # Asserts
         expected_intervals = {
-            'foo': (0, 0.5),
-            'tar': (0.5, 0.75),
-            'bar': (0.75, 1)
+            'foo': (0, 0.5, 0.25, 0.5 / 6),
+            'tar': (0.5, 0.75, 0.625, 0.25 / 6),
+            'bar': (0.75, 1, 0.875, 0.25 / 6)
         }
         assert result == expected_intervals
 
@@ -261,19 +261,35 @@ class TestCategoricalTransformer(TestCase):
             expect_intervals_call_args
         )
 
-    @patch('scipy.stats.norm.rvs')
-    def test__get_value(self, scipy_mock):
-        """Test convert category value into num between 0 and 1"""
+    def test__get_value_no_fuzzy(self):
         # Run
         transformer = Mock()
+        transformer.fuzzy = False
         transformer.intervals = {
-            'foo': (0, 0.5),
+            'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
 
         result = CategoricalTransformer._get_value(transformer, 'foo')
 
         # Asserts
         assert result == 0.25
+
+    @patch('scipy.stats.norm.rvs')
+    def test__get_value_fuzzy(self, rvs_mock):
+        # setup
+        rvs_mock.return_value = 0.2745
+
+        # Run
+        transformer = Mock()
+        transformer.fuzzy = True
+        transformer.intervals = {
+            'foo': (0, 0.5, 0.25, 0.5 / 6),
+        }
+
+        result = CategoricalTransformer._get_value(transformer, 'foo')
+
+        # Asserts
+        assert result == 0.2745
 
     @patch('rdt.transformers.categorical.MAPS')
     def test_transform_array_anonymize(self, mock_maps):
@@ -286,6 +302,7 @@ class TestCategoricalTransformer(TestCase):
         # Run
         transformer = Mock()
         transformer.anonymize = 'email'
+        transformer.intervals = [1, 2, 3]
 
         mock_maps[id(transformer)] = np.array(['bar_x', 'foo_x', 'foo_x', 'tar_x'])
 
@@ -309,6 +326,7 @@ class TestCategoricalTransformer(TestCase):
         # Run
         transformer = Mock()
         transformer.anonymize = None
+        transformer.intervals = [1, 2, 3]
 
         CategoricalTransformer.transform(transformer, data)
 
@@ -321,16 +339,35 @@ class TestCategoricalTransformer(TestCase):
             "Dont call to the map encoder when not anonymize"
         )
 
-    def test__normalize(self):
+    def test__normalize_no_clip(self):
         """Test normalize data"""
         # Setup
         data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
 
+        transformer = Mock()
+        transformer.clip = False
+
         # Run
-        result = CategoricalTransformer._normalize(data)
+        result = CategoricalTransformer._normalize(transformer, data)
 
         # Asserts
-        expect = pd.Series([0.43, 0.1234, 0.5, 0.31], dtype=float)
+        expect = pd.Series([0.57, 0.1234, 0.5, 0.69], dtype=float)
+
+        pd.testing.assert_series_equal(result, expect)
+
+    def test__normalize_clip(self):
+        """Test normalize data with clip=True"""
+        # Setup
+        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
+
+        transformer = Mock()
+        transformer.clip = True
+
+        # Run
+        result = CategoricalTransformer._normalize(transformer, data)
+
+        # Asserts
+        expect = pd.Series([0.0, 0.1234, 1.0, 0.0], dtype=float)
 
         pd.testing.assert_series_equal(result, expect)
 

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from faker import Faker
+from scipy.stats import norm
 
 from rdt.transformers.base import BaseTransformer
 
@@ -26,12 +27,21 @@ class CategoricalTransformer(BaseTransformer):
     Args:
         anonymize (str, tuple or list):
             Anonymization category. ``None`` disables anonymization. Defaults to ``None``.
+        fuzzy (bool):
+            Whether to generate gassian noise around the class representative of each interval
+            or just use the mean for all the replaced values. Defaults to ``False``.
+        clip (bool):
+            If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
+            Defaults to ``False``.
     """
 
     mapping = None
+    intervals = None
 
-    def __init__(self, anonymize=False):
+    def __init__(self, anonymize=False, fuzzy=False, clip=False):
         self.anonymize = anonymize
+        self.fuzzy = fuzzy
+        self.clip = clip
 
     def _get_faker(self):
         """Return the faker object to anonymize data.
@@ -44,7 +54,6 @@ class CategoricalTransformer(BaseTransformer):
             ValueError:
                 A ``ValueError`` is raised if the faker category we want don't exist.
         """
-
         if isinstance(self.anonymize, (tuple, list)):
             category, *args = self.anonymize
         else:
@@ -99,7 +108,9 @@ class CategoricalTransformer(BaseTransformer):
         for value, frequency in frequencies.items():
             prob = frequency / elements
             end = start + prob
-            intervals[value] = (start, end)
+            mean = (start + end) / 2
+            std = prob / 6
+            intervals[value] = (start, end, mean, std)
             start = end
 
         return intervals
@@ -127,8 +138,11 @@ class CategoricalTransformer(BaseTransformer):
 
     def _get_value(self, category):
         """Get the value that represents this category"""
-        start, end = self.intervals[category]
-        return (start + end) / 2
+        mean, std = self.intervals[category][2:]
+        if self.fuzzy:
+            return norm.rvs(mean, std)
+        else:
+            return mean
 
     def transform(self, data):
         """Transform categorical values to float values.
@@ -151,18 +165,21 @@ class CategoricalTransformer(BaseTransformer):
         if self.anonymize:
             data = data.map(MAPS[id(self)])
 
-        return data.fillna(np.nan).apply(self._get_value)
+        if len(self.intervals) == 2:
+            category = list(self.intervals.values())[0]
+            return (data == category).astype(int)
 
-    @staticmethod
-    def _normalize(data):
+        return data.fillna(np.nan).apply(self._get_value).values
+
+    def _normalize(self, data):
         """Normalize data to the range [0, 1].
 
-        This is done by substracting to each value its integer part, leaving only
-        the decimal part, and then shifting the sign of the negative values.
+        This is done by either clipping or computing the values modulo 1.
         """
-        data = data - data.astype(int)
-        data[data < 0] = -data[data < 0]
-        return data
+        if self.clip:
+            return data.clip(0, 1)
+
+        return np.mod(data, 1)
 
     def reverse_transform(self, data):
         """Convert float values back to the original categorical values.
@@ -175,13 +192,44 @@ class CategoricalTransformer(BaseTransformer):
             pandas.Series
         """
         if not isinstance(data, pd.Series):
+            if len(data.shape) > 1:
+                data = data[:, 0]
+
             data = pd.Series(data)
 
         data = self._normalize(data)
 
         result = pd.Series(index=data.index)
 
-        for category, (start, end) in self.intervals.items():
+        for category, values in self.intervals.items():
+            start, end = values[:2]
             result[(start < data) & (data < end)] = category
 
         return result
+
+
+class OneHotEncodingTransformer(BaseTransformer):
+
+    def fit(self, data):
+        self.dummies = pd.Series(data.value_counts().index)
+
+    def transform(self, data):
+        dummies = pd.get_dummies(data)
+        return dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
+
+    def reverse_transform(self, data):
+        indices = np.argmax(data, axis=1)
+        return pd.Series(indices).map(self.dummies)
+
+
+class LabelEncodingTransformer(BaseTransformer):
+
+    def fit(self, data):
+        self.values = pd.Series(data.unique()).to_dict()
+        self.labels = {label: value for value, label in self.values.items()}
+
+    def transform(self, data):
+        return data.map(self.labels)
+
+    def reverse_transform(self, data):
+        return pd.Series(data).map(self.values)
