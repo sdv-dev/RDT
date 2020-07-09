@@ -206,7 +206,7 @@ class CategoricalTransformer(BaseTransformer):
         return result
 
 
-class OneHotTransformer(BaseTransformer):
+class OneHotEncodingTransformer(BaseTransformer):
 
     def fit(self, data):
         self.dummies = pd.Series(data.value_counts().index)
@@ -218,3 +218,16 @@ class OneHotTransformer(BaseTransformer):
     def reverse_transform(self, data):
         indices = np.argmax(data, axis=1)
         return pd.Series(indices).map(self.dummies)
+
+
+class LabelEncodingTransformer(BaseTransformer):
+
+    def fit(self, data):
+        self.values = pd.Series(data.unique()).to_dict()
+        self.labels = {label: value for value, label in self.values.items()}
+
+    def transform(self, data):
+        return data.map(self.labels)
+
+    def reverse_transform(self, data):
+        return pd.Series(data).map(self.values)
