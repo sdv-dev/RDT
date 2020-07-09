@@ -151,10 +151,10 @@ class HyperTransformer:
 
             shape = transformed.shape
 
-            if len(shape) == 2 and shape[1] == 2:
-                data[column_name] = transformed[:, 0]
-                new_column = '{}#{}'.format(column_name, 1)
-                data[new_column] = transformed[:, 1]
+            if len(shape) == 2:
+                for index in range(shape[1]):
+                    new_column = '{}#{}'.format(column_name, index)
+                    data[new_column] = transformed[:, index]
 
             else:
                 data[column_name] = transformed
