@@ -261,11 +261,10 @@ class TestCategoricalTransformer(TestCase):
             expect_intervals_call_args
         )
 
-    def test__get_value_no_add_noise(self):
-        """Test convert category value into num between 0 and 1"""
+    def test__get_value_no_fuzzy(self):
         # Run
         transformer = Mock()
-        transformer.add_noise = False
+        transformer.fuzzy = False
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
@@ -276,14 +275,13 @@ class TestCategoricalTransformer(TestCase):
         assert result == 0.25
 
     @patch('scipy.stats.norm.rvs')
-    def test__get_value_add_noise(self, rvs_mock):
-        """Test convert category value into num between 0 and 1"""
+    def test__get_value_fuzzy(self, rvs_mock):
         # setup
         rvs_mock.return_value = 0.2745
 
         # Run
         transformer = Mock()
-        transformer.add_noise = True
+        transformer.fuzzy = True
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
@@ -353,7 +351,7 @@ class TestCategoricalTransformer(TestCase):
         result = CategoricalTransformer._normalize(transformer, data)
 
         # Asserts
-        expect = pd.Series([0.43, 0.1234, 0.5, 0.31], dtype=float)
+        expect = pd.Series([0.57, 0.1234, 0.5, 0.69], dtype=float)
 
         pd.testing.assert_series_equal(result, expect)
 

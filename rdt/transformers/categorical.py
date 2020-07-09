@@ -27,14 +27,20 @@ class CategoricalTransformer(BaseTransformer):
     Args:
         anonymize (str, tuple or list):
             Anonymization category. ``None`` disables anonymization. Defaults to ``None``.
+        fuzzy (bool):
+            Whether to generate gassian noise around the class representative of each interval
+            or just use the mean for all the replaced values. Defaults to ``False``.
+        clip (bool):
+            If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
+            Defaults to ``False``.
     """
 
     mapping = None
     intervals = None
 
-    def __init__(self, anonymize=False, add_noise=False, clip=False):
+    def __init__(self, anonymize=False, fuzzy=False, clip=False):
         self.anonymize = anonymize
-        self.add_noise = add_noise
+        self.fuzzy = fuzzy
         self.clip = clip
 
     def _get_faker(self):
@@ -48,7 +54,6 @@ class CategoricalTransformer(BaseTransformer):
             ValueError:
                 A ``ValueError`` is raised if the faker category we want don't exist.
         """
-
         if isinstance(self.anonymize, (tuple, list)):
             category, *args = self.anonymize
         else:
@@ -134,7 +139,7 @@ class CategoricalTransformer(BaseTransformer):
     def _get_value(self, category):
         """Get the value that represents this category"""
         mean, std = self.intervals[category][2:]
-        if self.add_noise:
+        if self.fuzzy:
             return norm.rvs(mean, std)
         else:
             return mean
@@ -169,15 +174,12 @@ class CategoricalTransformer(BaseTransformer):
     def _normalize(self, data):
         """Normalize data to the range [0, 1].
 
-        This is done by substracting to each value its integer part, leaving only
-        the decimal part, and then shifting the sign of the negative values.
+        This is done by either clipping or computing the values modulo 1.
         """
         if self.clip:
             return data.clip(0, 1)
 
-        data = data - data.astype(int)
-        data[data < 0] = -data[data < 0]
-        return data
+        return np.mod(data, 1)
 
     def reverse_transform(self, data):
         """Convert float values back to the original categorical values.
