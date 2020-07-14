@@ -1,3 +1,4 @@
+"""Transformer for datetime data."""
 import numpy as np
 import pandas as pd
 
@@ -53,16 +54,8 @@ class DatetimeTransformer(BaseTransformer):
             data = pd.Series(data)
 
         transformed = self._transform(data)
-
-        if self.nan == 'mean':
-            fill_value = transformed.mean()
-        elif self.nan == 'mode':
-            fill_value = transformed.mode(dropna=True)[0]
-        else:
-            fill_value = self.nan
-
-        self.null_transformer = NullTransformer(fill_value, self.null_column)
-        self.null_transformer.fit(data)
+        self.null_transformer = NullTransformer(self.nan, self.null_column)
+        self.null_transformer.fit(transformed)
 
     def transform(self, data):
         """Transform datetime values to float values.

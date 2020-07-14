@@ -1,4 +1,7 @@
-class BaseTransformer(object):
+"""BaseTransformer module."""
+
+
+class BaseTransformer:
     """Base class for all transformers.
 
     The ``BaseTransformer`` class contains methods that must be implemented
@@ -13,7 +16,7 @@ class BaseTransformer(object):
             data (pandas.Series or numpy.array):
                 Data to transform.
         """
-        pass
+        raise NotImplementedError()
 
     def transform(self, data):
         """Transform the data.
@@ -26,7 +29,7 @@ class BaseTransformer(object):
             numpy.array:
                 Transformed data.
         """
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def fit_transform(self, data):
         """Fit the transformer to the data and then transform it.
@@ -53,4 +56,4 @@ class BaseTransformer(object):
             pandas.Series:
                 Reverted data.
         """
-        raise NotImplementedError
+        raise NotImplementedError()

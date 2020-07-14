@@ -18,6 +18,19 @@ __all__ = [
 
 
 def get_demo(dtypes=('int', 'float', 'str', 'datetime'), nans=0.2, size=10):
+    """Generate random demo data with multiple data types.
+
+    Args:
+        dtypes (tuple or list):
+            Data types to include in the generated demo data. Defaults to all.
+        nans (float):
+            Proportion of null values to generate. Defaults to 0.2.
+        size (int):
+            Number of data rows to generate.
+
+    Returns:
+        pd.DataFrame
+    """
     if np.isscalar(nans):
         nans = [nans] * len(dtypes)
 

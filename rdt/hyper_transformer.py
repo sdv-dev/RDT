@@ -1,3 +1,5 @@
+"""Hyper transformer module."""
+
 import re
 
 import numpy as np
@@ -50,6 +52,7 @@ class HyperTransformer:
         ... }
         >>> ht = HyperTransformer(transformers)
     """
+
     def __init__(self, transformers=None, copy=True, anonymize=None, dtypes=None):
         self.transformers = transformers
         self._transformers = dict()

@@ -121,7 +121,7 @@ class TestNullTransformer(TestCase):
         transformer = Mock()
         transformer.nulls = True
         transformer.copy = False
-        transformer.fill_value = 0
+        transformer._fill_value = 0
         transformer._null_column = False
 
         result = NullTransformer.transform(transformer, data)
@@ -141,7 +141,7 @@ class TestNullTransformer(TestCase):
         transformer = Mock()
         transformer.nulls = True
         transformer.copy = True
-        transformer.fill_value = 0
+        transformer._fill_value = 0
         transformer._null_column = False
 
         result = NullTransformer.transform(transformer, data)
@@ -159,7 +159,7 @@ class TestNullTransformer(TestCase):
         # Run
         transformer = Mock()
         transformer.nulls = True
-        transformer.fill_value = None
+        transformer._fill_value = None
         transformer._null_column = True
 
         result = NullTransformer.transform(transformer, data)
@@ -211,7 +211,7 @@ class TestNullTransformer(TestCase):
         transformer = Mock()
         transformer.nulls = True
         transformer._null_column = False
-        transformer.fill_value = 5.0
+        transformer._fill_value = 5.0
 
         result = NullTransformer.reverse_transform(transformer, data)
 

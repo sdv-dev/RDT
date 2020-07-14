@@ -1,3 +1,5 @@
+"""Transformers for categorical data."""
+
 import numpy as np
 import pandas as pd
 from faker import Faker
@@ -137,12 +139,12 @@ class CategoricalTransformer(BaseTransformer):
         self.intervals = self._get_intervals(data)
 
     def _get_value(self, category):
-        """Get the value that represents this category"""
+        """Get the value that represents this category."""
         mean, std = self.intervals[category][2:]
         if self.fuzzy:
             return norm.rvs(mean, std)
-        else:
-            return mean
+
+        return mean
 
     def transform(self, data):
         """Transform categorical values to float values.
@@ -209,27 +211,111 @@ class CategoricalTransformer(BaseTransformer):
 
 
 class OneHotEncodingTransformer(BaseTransformer):
+    """OneHotEncoding for categorical data.
+
+    This transformer replaces a single vector with N unique categories in it
+    with N vectors which have 1s on the rows where the corresponding category
+    is found and 0s on the rest.
+
+    Null values are considered just another category.
+    """
+
+    dummies = None
 
     def fit(self, data):
+        """Fit the transformer to the data.
+
+        Get the pandas `dummies` which will be used later on for OneHotEncoding.
+
+        Args:
+            data (pandas.Series or numpy.ndarray):
+                Data to fit the transformer to.
+        """
         self.dummies = pd.Series(data.value_counts().index)
 
     def transform(self, data):
+        """Replace each category with the OneHot vectors.
+
+        Args:
+            data (pandas.Series or numpy.ndarray):
+                Data to transform.
+
+        Returns:
+            numpy.ndarray:
+        """
         dummies = pd.get_dummies(data)
         return dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
 
     def reverse_transform(self, data):
+        """Convert float values back to the original categorical values.
+
+        Args:
+            data (numpy.ndarray):
+                Data to revert.
+
+        Returns:
+            pandas.Series
+        """
         indices = np.argmax(data, axis=1)
         return pd.Series(indices).map(self.dummies)
 
 
 class LabelEncodingTransformer(BaseTransformer):
+    """LabelEncoding for categorical data.
+
+    This transformer generates a unique integer representation for each category
+    and simply replaces each category with its integer value.
+
+    Null values are considered just another category.
+
+    Attributes:
+        values_to_categories (dict):
+            Dictionary that maps each integer value for its category.
+        categories_to_values (dict):
+            Dictionary that maps each category with the corresponding
+            integer value.
+    """
+
+    values_to_categories = None
+    categories_to_values = None
 
     def fit(self, data):
-        self.values = pd.Series(data.unique()).to_dict()
-        self.labels = {label: value for value, label in self.values.items()}
+        """Fit the transformer to the data.
+
+        Generate a unique integer representation for each category and
+        store them in the `categories_to_values` dict and its reverse
+        `values_to_categories`.
+
+        Args:
+            data (pandas.Series or numpy.ndarray):
+                Data to fit the transformer to.
+        """
+        self.values_to_categories = pd.Series(data.unique()).to_dict()
+        self.categories_to_values = {
+            category: value
+            for value, category in self.values_to_categories.items()
+        }
 
     def transform(self, data):
-        return data.map(self.labels)
+        """Replace each category with its corresponding integer value.
+
+        Args:
+            data (pandas.Series or numpy.ndarray):
+                Data to transform.
+
+        Returns:
+            numpy.ndarray:
+        """
+        return data.map(self.categories_to_values)
 
     def reverse_transform(self, data):
-        return pd.Series(data).map(self.values)
+        """Convert float values back to the original categorical values.
+
+        Args:
+            data (numpy.ndarray):
+                Data to revert.
+
+        Returns:
+            pandas.Series
+        """
+        return pd.Series(data).astype(int).map(self.values_to_categories)
