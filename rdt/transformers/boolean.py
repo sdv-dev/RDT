@@ -56,7 +56,7 @@ class BooleanTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to transform.
 
-        Returns:
+        Returns
             numpy.ndarray
         """
         if isinstance(data, np.ndarray):
