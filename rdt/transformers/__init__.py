@@ -1,3 +1,5 @@
+"""Transformers module."""
+
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
 from rdt.transformers.categorical import (
@@ -16,6 +18,7 @@ __all__ = [
     'OneHotEncodingTransformer',
     'LabelEncodingTransformer',
 ]
+
 
 TRANSFORMERS = {
     transformer.__name__: transformer
@@ -55,7 +58,8 @@ def load_transformer(transformer):
 
 
 def load_transformers(transformers):
-    """
+    """Load a dict of transfomers from a dict specification.
+
     >>> nt = NumericalTransformer(dtype=float)
     >>> transformers = {
     ...     'a': nt,
