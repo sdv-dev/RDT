@@ -74,6 +74,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     description='Reversible Data Transformsi',
     extras_require={
@@ -88,7 +89,7 @@ setup(
     long_description_content_type='text/markdown',
     name='rdt',
     packages=find_packages(include=['rdt', 'rdt.*']),
-    python_requires='>=3.5,<3.8',
+    python_requires='>=3.5,<3.9',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
