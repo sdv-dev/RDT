@@ -36,8 +36,7 @@ class TestDatetimeTransformer(TestCase):
     def test_fit(self):
         """Test fit nan custom value with numpy.array"""
         # Setup
-        data = np.array([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data).to_numpy()
+        data = pd.to_datetime([None, '1996-10-17', '1965-05-23']).values
 
         # Run
         transformer = DatetimeTransformer(nan='nan')
@@ -61,8 +60,7 @@ class TestDatetimeTransformer(TestCase):
     def test_transform_array(self):
         """Test tranform datetime arary"""
         # Setup
-        data = np.array([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data).to_numpy()
+        data = pd.to_datetime([None, '1996-10-17', '1965-05-23']).values
 
         data_transform = pd.Series([np.nan, 845510400000000000, -145497600000000000])
 

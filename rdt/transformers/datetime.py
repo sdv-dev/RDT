@@ -38,7 +38,8 @@ class DatetimeTransformer(BaseTransformer):
     def _transform(datetimes):
         """Transform datetime values to integer."""
         nulls = datetimes.isnull()
-        integers = datetimes.astype(int).astype(float).values
+        integers = np.zeros(len(datetimes))
+        integers[~nulls] = datetimes[~nulls].astype(int).astype(float).values
         integers[nulls] = np.nan
 
         return pd.Series(integers)

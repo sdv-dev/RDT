@@ -232,10 +232,11 @@ class TestHyperTransformerTransformer(TestCase):
 
     def test__get_columns_error(self):
         data = pd.DataFrame({
+            'a': [1, 2, 3],
         })
 
         with pytest.raises(ValueError):
-            HyperTransformer._get_columns(data, 'a')
+            HyperTransformer._get_columns(data, 'b')
 
     def test__get_columns_regex(self):
         data = pd.DataFrame({
