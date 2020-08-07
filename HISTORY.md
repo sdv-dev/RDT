@@ -1,5 +1,12 @@
 # History
 
+## 0.2.4 - 2020-08-08
+
+### General Improvements
+
+* Support Python 3.8 - Issue [#117](https://github.com/sdv-dev/RDT/issues/117) by @csala
+* Support pandas >1 - Issue [#116](https://github.com/sdv-dev/RDT/issues/116) by @csala
+
 ## 0.2.3 - 2020-07-09
 
 * Implement OneHot and Label encoding as transformers - Issue [#112](https://github.com/sdv-dev/RDT/issues/112) by @csala
