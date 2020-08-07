@@ -13,7 +13,7 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 
 install_requires = [
     'numpy>=1.15.4,<2',
-    'pandas>=0.23.4,<1',
+    'pandas>=0.21,<2',
     'scipy>=1.1.0,<2',
     'Faker>=1.0.1,<2',
 ]
@@ -43,7 +43,11 @@ development_requires = [
 
     # style check
     'flake8>=3.7.7,<4',
+    'flake8-absolute-import>=1.0,<2',
+    'flake8-docstrings>=1.5.0,<2',
+    'flake8-sfs>=0.0.3,<0.1',
     'isort>=4.3.4,<5',
+    'pylint>=2.5.3,<3',
 
     # fix style issues
     'autoflake>=1.1,<2',
@@ -70,6 +74,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
     description='Reversible Data Transformsi',
     extras_require={
@@ -84,11 +89,11 @@ setup(
     long_description_content_type='text/markdown',
     name='rdt',
     packages=find_packages(include=['rdt', 'rdt.*']),
-    python_requires='>=3.5,<3.8',
+    python_requires='>=3.5,<3.9',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.2.3',
+    version='0.2.4.dev2',
     zip_safe=False,
 )

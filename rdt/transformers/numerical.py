@@ -1,3 +1,5 @@
+"""Transformer for numerical data."""
+
 import numpy as np
 import pandas as pd
 
@@ -37,6 +39,7 @@ class NumericalTransformer(BaseTransformer):
         self.nan = nan
         self.null_column = null_column
         self.dtype = dtype
+        self._dtype = dtype
 
     def fit(self, data):
         """Fit the transformer to the data.
@@ -49,15 +52,7 @@ class NumericalTransformer(BaseTransformer):
             data = pd.Series(data)
 
         self._dtype = self.dtype or data.dtype
-
-        if self.nan == 'mean':
-            fill_value = data.mean()
-        elif self.nan == 'mode':
-            fill_value = data.mode(dropna=True)[0]
-        else:
-            fill_value = self.nan
-
-        self.null_transformer = NullTransformer(fill_value, self.null_column)
+        self.null_transformer = NullTransformer(self.nan, self.null_column)
         self.null_transformer.fit(data)
 
     def transform(self, data):
@@ -79,7 +74,7 @@ class NumericalTransformer(BaseTransformer):
         return self.null_transformer.transform(data)
 
     def reverse_transform(self, data):
-        """Converts data back into original format.
+        """Convert data back into the original format.
 
         Args:
             data (numpy.ndarray):

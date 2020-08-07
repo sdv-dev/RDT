@@ -291,12 +291,10 @@ class TestCategoricalTransformer(TestCase):
         # Asserts
         assert result == 0.2745
 
-    @patch('rdt.transformers.categorical.MAPS')
+    @patch('rdt.transformers.categorical.MAPS', new_callable=dict)
     def test_transform_array_anonymize(self, mock_maps):
         """Test transform a numpy.array, anonymize"""
         # Setup
-        mock_maps = {}
-
         data = np.array(['bar', 'foo', 'foo', 'tar'])
 
         # Run
@@ -304,7 +302,11 @@ class TestCategoricalTransformer(TestCase):
         transformer.anonymize = 'email'
         transformer.intervals = [1, 2, 3]
 
-        mock_maps[id(transformer)] = np.array(['bar_x', 'foo_x', 'foo_x', 'tar_x'])
+        mock_maps[id(transformer)] = {
+            'bar': 'bar_x',
+            'foo': 'foo_x',
+            'tar': 'tar_x'
+        }
 
         result = CategoricalTransformer.transform(transformer, data)
 

@@ -33,194 +33,18 @@ class TestDatetimeTransformer(TestCase):
 
         pd.testing.assert_series_equal(result, expect)
 
-    def test_fit_nan_mean_array(self):
-        """Test fit nan mean with numpy.array"""
-        # Setup
-        data = np.array([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data).to_numpy()
-
-        # Run
-        transformer = DatetimeTransformer(nan='mean')
-        transformer.fit(data)
-
-        # Asserts
-        expect_nan = 'mean'
-        expect_fill_value = 350006400000000000
-
-        self.assertEqual(
-            transformer.nan,
-            expect_nan,
-            'Unexpected nan'
-        )
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-    def test_fit_nan_mean_series(self):
-        """Test fit nan mean with pandas.Series"""
-        # Setup
-        data = pd.Series([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data)
-
-        # Run
-        transformer = DatetimeTransformer(nan='mean')
-        transformer.fit(data)
-
-        # Asserts
-        expect_nan = 'mean'
-        expect_fill_value = 350006400000000000
-
-        self.assertEqual(
-            transformer.nan,
-            expect_nan,
-            'Unexpected nan'
-        )
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-    def test_fit_nan_mode_array(self):
-        """Test fit nan mode with numpy.array"""
-        # Setup
-        data = np.array([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data).to_numpy()
-
-        # Run
-        transformer = DatetimeTransformer(nan='mode')
-        transformer.fit(data)
-
-        # Asserts
-        expect_nan = 'mode'
-        expect_fill_value = -145497600000000000
-
-        self.assertEqual(
-            transformer.nan,
-            expect_nan,
-            'Unexpected nan'
-        )
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-    def test_fit_nan_mode_series(self):
-        """Test fit nan mode with pandas.Series"""
-        # Setup
-        data = np.array([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data)
-
-        # Run
-        transformer = DatetimeTransformer(nan='mode')
-        transformer.fit(data)
-
-        # Asserts
-        expect_nan = 'mode'
-        expect_fill_value = -145497600000000000
-
-        self.assertEqual(
-            transformer.nan,
-            expect_nan,
-            'Unexpected nan'
-        )
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-    def test_fit_nan_ignore_array(self):
-        """Test fit nan ignore with numpy.array"""
-        # Setup
-        data = np.array([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data).to_numpy()
-
-        # Run
-        transformer = DatetimeTransformer(nan=None)
-        transformer.fit(data)
-
-        # Asserts
-        expect_nan = None
-        expect_fill_value = None
-
-        self.assertEqual(
-            transformer.nan,
-            expect_nan,
-            'Unexpected nan'
-        )
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-    def test_fit_nan_ignore_series(self):
-        """Test fit nan ignore with pandas.Series"""
-        # Setup
-        data = np.array([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data)
-
-        # Run
-        transformer = DatetimeTransformer(nan=None)
-        transformer.fit(data)
-
-        # Asserts
-        expect_nan = None
-        expect_fill_value = None
-
-        self.assertEqual(
-            transformer.nan,
-            expect_nan,
-            'Unexpected nan'
-        )
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-    def test_fit_nan_other_array(self):
+    def test_fit(self):
         """Test fit nan custom value with numpy.array"""
         # Setup
-        data = np.array([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data).to_numpy()
+        data = pd.to_datetime([None, '1996-10-17', '1965-05-23']).values
 
         # Run
-        transformer = DatetimeTransformer(nan=0)
+        transformer = DatetimeTransformer(nan='nan')
         transformer.fit(data)
 
         # Asserts
-        expect_nan = 0
-        expect_fill_value = 0
-
-        self.assertEqual(
-            transformer.nan,
-            expect_nan,
-            'Unexpected nan'
-        )
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-    def test_fit_nan_other_series(self):
-        """Test fit nan custom value with pandas.Series"""
-        # Setup
-        data = np.array([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data)
-
-        # Run
-        transformer = DatetimeTransformer(nan=0)
-        transformer.fit(data)
-
-        # Asserts
-        expect_nan = 0
-        expect_fill_value = 0
+        expect_nan = 'nan'
+        expect_fill_value = 'nan'
 
         self.assertEqual(
             transformer.nan,
@@ -236,8 +60,7 @@ class TestDatetimeTransformer(TestCase):
     def test_transform_array(self):
         """Test tranform datetime arary"""
         # Setup
-        data = np.array([None, '1996-10-17', '1965-05-23'])
-        data = pd.to_datetime(data).to_numpy()
+        data = pd.to_datetime([None, '1996-10-17', '1965-05-23']).values
 
         data_transform = pd.Series([np.nan, 845510400000000000, -145497600000000000])
 

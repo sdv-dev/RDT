@@ -10,7 +10,8 @@ class TestNumericalTransformer(TestCase):
 
     def test_fit(self):
         """Test call fit and pass"""
-        self.base.fit(None)
+        with self.assertRaises(NotImplementedError):
+            self.base.fit(None)
 
     def test_transform(self):
         """Test call transform raise not implemented error"""
