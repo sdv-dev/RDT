@@ -69,8 +69,9 @@ class CategoricalTransformer(BaseTransformer):
                 return faker_method(*args)
 
             return faker
-        except AttributeError:
-            raise ValueError('Category "{}" couldn\'t be found on faker'.format(self.anonymize))
+        except AttributeError as attrerror:
+            error = 'Category "{}" couldn\'t be found on faker'.format(self.anonymize)
+            raise ValueError(error) from attrerror
 
     def _anonymize(self, data):
         """Anonymize data and save in-memory the anonymized label encoding."""
