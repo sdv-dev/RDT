@@ -341,6 +341,19 @@ class TestCategoricalTransformer(TestCase):
             "Dont call to the map encoder when not anonymize"
         )
 
+    def test_transform_two_categories(self):
+        """If there are only two categories, the array is simply encoded as a bool."""
+        # Setup
+        data = np.array(['bar', 'foo', 'foo', 'bar'])
+        transformer = CategoricalTransformer()
+        transformer.fit(data)
+
+        # Run
+        transformed = transformer.transform(data)
+
+        # Asserts
+        np.testing.assert_array_equal(transformed, np.array([1, 0, 0, 1]))
+
     def test__normalize_no_clip(self):
         """Test normalize data"""
         # Setup
