@@ -69,6 +69,7 @@ class CategoricalTransformer(BaseTransformer):
                 return faker_method(*args)
 
             return faker
+
         except AttributeError as attrerror:
             error = 'Category "{}" couldn\'t be found on faker'.format(self.anonymize)
             raise ValueError(error) from attrerror
@@ -168,10 +169,6 @@ class CategoricalTransformer(BaseTransformer):
         if self.anonymize:
             data = data.map(MAPS[id(self)])
 
-        if len(self.intervals) == 2:
-            category = list(self.intervals.values())[0]
-            return (data == category).astype(int)
-
         return data.fillna(np.nan).apply(self._get_value).values
 
     def _normalize(self, data):
@@ -221,6 +218,7 @@ class OneHotEncodingTransformer(BaseTransformer):
     Null values are considered just another category.
     """
 
+    dummy_na = None
     dummies = None
 
     def fit(self, data):
@@ -232,7 +230,8 @@ class OneHotEncodingTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        self.dummies = pd.Series(data.value_counts().index)
+        self.dummy_na = pd.isnull(data).any()
+        self.dummies = list(pd.get_dummies(data, dummy_na=self.dummy_na).columns)
 
     def transform(self, data):
         """Replace each category with the OneHot vectors.
@@ -244,7 +243,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         Returns:
             numpy.ndarray:
         """
-        dummies = pd.get_dummies(data)
+        dummies = pd.get_dummies(data, dummy_na=self.dummy_na)
         return dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
 
     def reverse_transform(self, data):
@@ -257,8 +256,11 @@ class OneHotEncodingTransformer(BaseTransformer):
         Returns:
             pandas.Series
         """
+        if data.ndim == 1:
+            data = data.reshape(-1, 1)
+
         indices = np.argmax(data, axis=1)
-        return pd.Series(indices).map(self.dummies)
+        return pd.Series(indices).map(self.dummies.__getitem__)
 
 
 class LabelEncodingTransformer(BaseTransformer):
