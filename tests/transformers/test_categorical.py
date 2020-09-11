@@ -1,15 +1,13 @@
 import re
-from unittest import TestCase
 from unittest.mock import Mock, patch
 
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 
 from rdt.transformers import CategoricalTransformer, OneHotEncodingTransformer
 
-
-RE_SSN = re.compile('\d\d\d-\d\d-\d\d\d\d')
+RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
 
 class TestCategoricalTransformer:

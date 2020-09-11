@@ -222,6 +222,7 @@ class OneHotEncodingTransformer(BaseTransformer):
     Null values are considered just another category.
     """
 
+    dummy_na = None
     dummies = None
 
     def fit(self, data):
