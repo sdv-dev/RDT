@@ -169,10 +169,6 @@ class CategoricalTransformer(BaseTransformer):
         if self.anonymize:
             data = data.map(MAPS[id(self)])
 
-        if len(self.intervals) == 2:
-            category = list(sorted(self.intervals.keys()))[0]
-            return (data == category).astype(int)
-
         return data.fillna(np.nan).apply(self._get_value).values
 
     def _normalize(self, data):
