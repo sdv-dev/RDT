@@ -19,77 +19,149 @@ class TestNullTransformer(TestCase):
         self.assertIsNone(transformer.null_column, "null_column is None by default")
         self.assertFalse(transformer.copy, "copy is False by default")
 
-    def test_fit_null_column_none_true(self):
-        """Test fit with null_columns equal to None, None values in data"""
+    def test_fit_fill_value_mean(self):
+        """If fill_value is mean, _fill_value is the mean of the input data."""
         # Setup
-        data = pd.Series([1.5, None, 2.5])
+        data = pd.Series([1, 2, 3])
 
         # Run
-        fill_value = None
-        null_column = None
-
-        transformer = NullTransformer(fill_value, null_column=null_column)
+        transformer = NullTransformer(fill_value='mean')
         transformer.fit(data)
 
         # Asserts
-        self.assertTrue(
-            transformer._null_column,
-            "_null_column must be true when there are None values as input"
-        )
+        assert transformer._fill_value == 2
 
-    def test_fit_null_column_none_false(self):
-        """Test fit with null_columns equal to None, no None values in data"""
+    def test_fit_fill_value_mean_nulls(self):
+        """If fill_value is mean, _fill_value is the mean of the input data."""
         # Setup
-        data = pd.Series([1.5, 3.0, 2.5])
+        data = pd.Series([1, None, 3])
 
         # Run
-        fill_value = None
-        null_column = None
-
-        transformer = NullTransformer(fill_value, null_column=null_column)
+        transformer = NullTransformer(fill_value='mean')
         transformer.fit(data)
 
         # Asserts
-        self.assertFalse(
-            transformer._null_column,
-            "_null_column must be true when there are None values as input"
-        )
+        assert transformer._fill_value == 2
 
-    def test_fit_null_column_false(self):
-        """Test fit with null_column equal to False"""
+    def test_fit_fill_value_mean_all_nulls(self):
+        """If fill_value is mean and all the values are null, _fill_value is 0."""
         # Setup
-        data = pd.Series([1.5, None, 2.5])
+        data = pd.Series([None, None, None])
 
         # Run
-        fill_value = None
-        null_column = False
-
-        transformer = NullTransformer(fill_value, null_column=null_column)
+        transformer = NullTransformer(fill_value='mean')
         transformer.fit(data)
 
         # Asserts
-        self.assertFalse(
-            transformer._null_column,
-            "_null_column must be False when null_column is False"
-        )
+        assert transformer._fill_value == 0
+
+    def test_fit_fill_value_mode(self):
+        """If fill_value is mode, _fill_value is the mode of the input data."""
+        # Setup
+        data = pd.Series([1, 2, 3, 3, 4])
+
+        # Run
+        transformer = NullTransformer(fill_value='mode')
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._fill_value == 3
+
+    def test_fit_fill_value_mode_nulls(self):
+        """If fill_value is mode, _fill_value is the mode of the input data."""
+        # Setup
+        data = pd.Series([1, None, 3, 3, 4])
+
+        # Run
+        transformer = NullTransformer(fill_value='mode')
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._fill_value == 3
+
+    def test_fit_fill_value_mode_all_nulls(self):
+        """If fill_value is mode and all the values are null, _fill_value is 0."""
+        # Setup
+        data = pd.Series([None, None, None])
+
+        # Run
+        transformer = NullTransformer(fill_value='mode')
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._fill_value == 0
+
+    def test_fit_fill_value(self):
+        """If fill_value is something else, _fill_value is fill_value."""
+        # Setup
+        data = pd.Series([1, 2, 3, 3, 4])
+
+        # Run
+        transformer = NullTransformer(fill_value=43)
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._fill_value == 43
+
+    def test_fit_fill_value_all_nulls(self):
+        """If fill_value is something else, _fill_value is fill_value."""
+        # Setup
+        data = pd.Series([None, None, None])
+
+        # Run
+        transformer = NullTransformer(fill_value=43)
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._fill_value == 43
 
     def test_fit_null_column_true(self):
-        """Test fit with null_column equal to True"""
+        """If null_column is true, _null_column is always true."""
         # Setup
-        data = pd.Series([1.5, None, 2.5])
+        nonulls = pd.Series([1, 2, 3])
+        nulls = pd.Series([1, None, 3])
 
         # Run
-        fill_value = None
-        null_column = True
-
-        transformer = NullTransformer(fill_value, null_column=null_column)
-        transformer.fit(data)
+        nonulls_transformer = NullTransformer(fill_value=0, null_column=True)
+        nonulls_transformer.fit(nonulls)
+        nulls_transformer = NullTransformer(fill_value=0, null_column=True)
+        nulls_transformer.fit(nulls)
 
         # Asserts
-        self.assertTrue(
-            transformer._null_column,
-            "_null_column must be True when null_column is True"
-        )
+        assert nonulls_transformer._null_column
+        assert nulls_transformer._null_column
+
+    def test_fit_null_column_false(self):
+        """If null_column is false, _null_column is always false."""
+        # Setup
+        nonulls = pd.Series([1, 2, 3])
+        nulls = pd.Series([1, None, 3])
+
+        # Run
+        nonulls_transformer = NullTransformer(fill_value=0, null_column=False)
+        nonulls_transformer.fit(nonulls)
+        nulls_transformer = NullTransformer(fill_value=0, null_column=False)
+        nulls_transformer.fit(nulls)
+
+        # Asserts
+        assert not nonulls_transformer._null_column
+        assert not nulls_transformer._null_column
+
+    def test_fit_null_column_none(self):
+        """If null_column is None, _null_column is true only if there are Nulls."""
+        # Setup
+        nonulls = pd.Series([1, 2, 3])
+        nulls = pd.Series([1, None, 3])
+
+        # Run
+        nonulls_transformer = NullTransformer(fill_value=0, null_column=None)
+        nonulls_transformer.fit(nonulls)
+        nulls_transformer = NullTransformer(fill_value=0, null_column=None)
+        nulls_transformer.fit(nulls)
+
+        # Asserts
+        assert not nonulls_transformer._null_column
+        assert nulls_transformer._null_column
 
     def test_transform_without_nulls(self):
         """Test transform data with nulls equal to False"""
