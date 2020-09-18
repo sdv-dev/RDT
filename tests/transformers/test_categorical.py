@@ -1,120 +1,99 @@
-from unittest import TestCase
-from unittest.mock import Mock, patch
+import re
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from rdt.transformers import CategoricalTransformer
+from rdt.transformers import CategoricalTransformer, OneHotEncodingTransformer
+
+RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
 
-class TestCategoricalTransformer(TestCase):
+class TestCategoricalTransformer:
 
     def test___init__(self):
-        """Test default instance"""
+        """Passed arguments must be stored as attributes."""
         # Run
-        transformer = CategoricalTransformer()
+        transformer = CategoricalTransformer(
+            anonymize='anonymize_value',
+            fuzzy='fuzzy_value',
+            clip='clip_value',
+        )
 
         # Asserts
-        self.assertFalse(transformer.anonymize, "Unexpected anonimyze default value")
+        assert transformer.anonymize == 'anonymize_value'
+        assert transformer.fuzzy == 'fuzzy_value'
+        assert transformer.clip == 'clip_value'
 
     def test__get_faker_anonymize_tuple(self):
-        """Test _get_faker when anonymize is a tuple"""
+        """If anonymize is a tuple, first value is the category, rest are arguments."""
         # Setup
+        transformer = CategoricalTransformer(anonymize=('credit_card_number', 'visa'))
 
         # Run
-        transformer = Mock()
-        transformer.anonymize = ('email',)
-
-        result = CategoricalTransformer._get_faker(transformer)
+        faker = transformer._get_faker()
 
         # Asserts
-        self.assertEqual(
-            result.__name__,
-            'faker',
-            "Expected faker function"
-        )
+        assert callable(faker)
+
+        fake = faker()
+        assert isinstance(fake, str)
+        assert len(fake) == 16
 
     def test__get_faker_anonymize_list(self):
-        """Test _get_faker when anonymize is a list"""
-        # Run
-        transformer = Mock()
-        transformer.anonymize = ['email']
+        """If anonymize is a list, first value is the category, rest are arguments."""
+        # Setup
+        transformer = CategoricalTransformer(anonymize=['credit_card_number', 'visa'])
 
-        result = CategoricalTransformer._get_faker(transformer)
+        # Run
+        faker = transformer._get_faker()
 
         # Asserts
-        self.assertEqual(
-            result.__name__,
-            'faker',
-            "Expected faker function"
-        )
+        assert callable(faker)
 
-    def test__get_faker_anonymize_list_type(self):
-        """Test _get_faker when anonymize is a list with two elements"""
+        fake = faker()
+        assert isinstance(fake, str)
+        assert len(fake) == 16
+
+    def test__get_faker_anonymize_str(self):
+        """If anonymize is a list, first value is the category, rest are arguments."""
+        # Setup
+        transformer = CategoricalTransformer(anonymize='ssn')
+
         # Run
-        transformer = Mock()
-        transformer.anonymize = ['credit_card_number', 'visa']
-
-        faker_method = CategoricalTransformer._get_faker(transformer)
-        fake_value = faker_method()
+        faker = transformer._get_faker()
 
         # Asserts
-        assert isinstance(fake_value, str)
-        assert len(fake_value) == 16
+        assert callable(faker)
 
-    def test__get_faker_anonymize_not_tuple_or_list(self):
-        """Test _get_faker when anonymize is neither a typle or a list"""
-        # Run
-        transformer = Mock()
-        transformer.anonymize = 'email'
-
-        result = CategoricalTransformer._get_faker(transformer)
-
-        # Asserts
-        self.assertEqual(
-            result.__name__,
-            'faker',
-            "Expected faker function"
-        )
+        fake = faker()
+        assert isinstance(fake, str)
+        assert RE_SSN.match(fake)
 
     def test__get_faker_anonymize_category_not_exist(self):
-        """Test _get_faker with a category that don't exist"""
-        # Run & assert
-        transformer = Mock()
-        transformer.anonymize = 'SuP3R-P1Th0N-P0w3R'
+        # Setup
+        transformer = CategoricalTransformer(anonymize='whatever')
 
-        with self.assertRaises(ValueError):
-            CategoricalTransformer._get_faker(transformer)
+        # Run
+        with pytest.raises(ValueError):
+            transformer._get_faker()
 
     def test__anonymize(self):
-        """Test anonymize data"""
         # Setup
-        category = 'email'
-
-        data = pd.Series(['foo', 'bar', 'foo', 'tar'])
+        transformer = CategoricalTransformer(anonymize='ssn')
 
         # Run
-        transformer = Mock()
-        transformer.anonymize = category
-
-        result = CategoricalTransformer._anonymize(transformer, data)
+        data = pd.Series(['foo', 'bar', 'foo', 'tar'])
+        result = transformer._anonymize(data)
 
         # Asserts
-        expect_result_len = 4
-
-        assert transformer._get_faker.call_count == 1
-        self.assertEqual(
-            len(result),
-            expect_result_len,
-            "Length of anonymized data unexpected"
-        )
+        assert len(result) == 4
+        assert result.map(RE_SSN.match).astype(bool).all()
 
     def test__get_intervals(self):
-        """Test get category intervals"""
-        # Setup
-        data = pd.Series(['bar', 'foo', 'foo', 'tar'])
-
         # Run
+        data = pd.Series(['bar', 'foo', 'foo', 'tar'])
         result = CategoricalTransformer._get_intervals(data)
 
         # Asserts
@@ -125,151 +104,52 @@ class TestCategoricalTransformer(TestCase):
         }
         assert result == expected_intervals
 
-    def test_fit_array_no_anonymize(self):
-        """Test fit with a numpy.array, don't anonymize"""
+    def test_fit_no_anonymize(self):
         # Setup
+        transformer = CategoricalTransformer()
+
+        # Run
         data = np.array(['bar', 'foo', 'foo', 'tar'])
-
-        # Run
-        transformer = Mock()
-        transformer.anonymize = None
-
-        CategoricalTransformer.fit(transformer, data)
+        transformer.fit(data)
 
         # Asserts
-        expect_anonymize_call_count = 0
-        expect_intervals_call_count = 1
-        expect_intervals_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
+        expected_intervals = {
+            'foo': (0, 0.5, 0.25, 0.5 / 6),
+            'tar': (0.5, 0.75, 0.625, 0.25 / 6),
+            'bar': (0.75, 1, 0.875, 0.25 / 6)
+        }
+        assert transformer.intervals == expected_intervals
 
-        self.assertEqual(
-            transformer._anonymize.call_count,
-            expect_anonymize_call_count,
-            "Anonymize must be called only when anonymize is something"
-        )
-
-        self.assertEqual(
-            transformer._get_intervals.call_count,
-            expect_intervals_call_count,
-            "Get intervals will be called always in fit"
-        )
-
-        pd.testing.assert_series_equal(
-            transformer._get_intervals.call_args[0][0],
-            expect_intervals_call_args
-        )
-
-    def test_fit_series_no_anonymize(self):
-        """Test fit with a pandas.Series, don't anonymize"""
+    def test_fit_anonymize(self):
         # Setup
-        data = pd.Series(['bar', 'foo', 'foo', 'tar'])
+        transformer = CategoricalTransformer(anonymize='ssn')
 
         # Run
-        transformer = Mock()
-        transformer.anonymize = None
-
-        CategoricalTransformer.fit(transformer, data)
-
-        # Asserts
-        expect_anonymize_call_count = 0
-        expect_intervals_call_count = 1
-        expect_intervals_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
-
-        self.assertEqual(
-            transformer._anonymize.call_count,
-            expect_anonymize_call_count,
-            "Anonymize must be called only when anonymize is something"
-        )
-
-        self.assertEqual(
-            transformer._get_intervals.call_count,
-            expect_intervals_call_count,
-            "Get intervals will be called always in fit"
-        )
-
-        pd.testing.assert_series_equal(
-            transformer._get_intervals.call_args[0][0],
-            expect_intervals_call_args
-        )
-
-    def test_fit_array_anonymize(self):
-        """Test fit with a numpy.array, anonymize"""
-        # Setup
         data = np.array(['bar', 'foo', 'foo', 'tar'])
-        data_anonymized = pd.Series(['bar', 'foo', 'foo', 'tar'])
-
-        # Run
-        transformer = Mock()
-        transformer.anonymize = 'email'
-        transformer._anonymize.return_value = data_anonymized
-
-        CategoricalTransformer.fit(transformer, data)
+        transformer.fit(data)
 
         # Asserts
-        expect_anonymize_call_count = 1
-        expect_intervals_call_count = 1
-        expect_intervals_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
+        expected_intervals = {
+            (0, 0.5, 0.25, 0.5 / 6),
+            (0.5, 0.75, 0.625, 0.25 / 6),
+            (0.75, 1, 0.875, 0.25 / 6)
+        }
+        unexpected_keys = {'bar', 'foo', 'tar'}
 
-        self.assertEqual(
-            transformer._anonymize.call_count,
-            expect_anonymize_call_count,
-            "Anonymize must be called only once"
-        )
-
-        self.assertEqual(
-            transformer._get_intervals.call_count,
-            expect_intervals_call_count,
-            "Get intervals will be called always in fit"
-        )
-
-        pd.testing.assert_series_equal(
-            transformer._get_intervals.call_args[0][0],
-            expect_intervals_call_args
-        )
-
-    def test_fit_series_anonymize(self):
-        """Test fit with a pandas.Series, anonymize"""
-        # Setup
-        data = pd.Series(['bar', 'foo', 'foo', 'tar'])
-        data_anonymized = pd.Series(['bar', 'foo', 'foo', 'tar'])
-
-        # Run
-        transformer = Mock()
-        transformer.anonymize = 'email'
-        transformer._anonymize.return_value = data_anonymized
-
-        CategoricalTransformer.fit(transformer, data)
-
-        # Asserts
-        expect_anonymize_call_count = 1
-        expect_intervals_call_count = 1
-        expect_intervals_call_args = pd.Series(['bar', 'foo', 'foo', 'tar'])
-
-        self.assertEqual(
-            transformer._anonymize.call_count,
-            expect_anonymize_call_count,
-            "Anonymize must be called only once"
-        )
-
-        self.assertEqual(
-            transformer._get_intervals.call_count,
-            expect_intervals_call_count,
-            "Get intervals will be called always in fit"
-        )
-
-        pd.testing.assert_series_equal(
-            transformer._get_intervals.call_args[0][0],
-            expect_intervals_call_args
-        )
+        assert set(transformer.intervals.values()) == expected_intervals
+        keys = transformer.intervals.keys()
+        assert all((key not in unexpected_keys for key in keys))
 
     def test__get_value_no_fuzzy(self):
-        # Run
-        transformer = Mock()
+        # Setup
+        transformer = CategoricalTransformer(fuzzy=False)
         transformer.fuzzy = False
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
 
-        result = CategoricalTransformer._get_value(transformer, 'foo')
+        # Run
+        result = transformer._get_value('foo')
 
         # Asserts
         assert result == 0.25
@@ -279,78 +159,47 @@ class TestCategoricalTransformer(TestCase):
         # setup
         rvs_mock.return_value = 0.2745
 
-        # Run
-        transformer = Mock()
-        transformer.fuzzy = True
+        transformer = CategoricalTransformer(fuzzy=True)
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
 
-        result = CategoricalTransformer._get_value(transformer, 'foo')
+        # Run
+        result = transformer._get_value('foo')
 
         # Asserts
         assert result == 0.2745
 
     @patch('rdt.transformers.categorical.MAPS', new_callable=dict)
     def test_transform_array_anonymize(self, mock_maps):
-        """Test transform a numpy.array, anonymize"""
         # Setup
-        data = np.array(['bar', 'foo', 'foo', 'tar'])
-
-        # Run
-        transformer = Mock()
-        transformer.anonymize = 'email'
-        transformer.intervals = [1, 2, 3]
-
+        transformer = CategoricalTransformer(anonymize='ssn')
+        transformer.intervals = {
+            'foo_x': (0, 0.5, 0.25, 0.5 / 6),
+            'bar_x': (0.5, 0.75, 0.625, 0.25 / 6),
+            'tar_x': (0.75, 1, 0.875, 0.25 / 6)
+        }
         mock_maps[id(transformer)] = {
-            'bar': 'bar_x',
             'foo': 'foo_x',
+            'bar': 'bar_x',
             'tar': 'tar_x'
         }
 
-        result = CategoricalTransformer.transform(transformer, data)
-
-        # Asserts
-        expect_result_len = 4
-
-        self.assertEqual(
-            len(result),
-            expect_result_len,
-            "Unexpected length of transformed data"
-        )
-
-    @patch('rdt.transformers.categorical.MAPS')
-    def test_transform_array_no_anonymize(self, mock_maps):
-        """Test transform a numpy.array, no anonymize"""
-        # Setup
-        data = np.array(['bar', 'foo', 'foo', 'tar'])
-
         # Run
-        transformer = Mock()
-        transformer.anonymize = None
-        transformer.intervals = [1, 2, 3]
-
-        CategoricalTransformer.transform(transformer, data)
+        data = np.array(['foo', 'bar', 'tar'])
+        result = transformer.transform(data)
 
         # Asserts
-        expect_maps_call_count = 0
-
-        self.assertEqual(
-            mock_maps.call_count,
-            expect_maps_call_count,
-            "Dont call to the map encoder when not anonymize"
-        )
+        assert list(result) == [0.25, 0.625, 0.875]
 
     def test__normalize_no_clip(self):
         """Test normalize data"""
         # Setup
-        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
-
-        transformer = Mock()
-        transformer.clip = False
+        transformer = CategoricalTransformer(clip=False)
 
         # Run
-        result = CategoricalTransformer._normalize(transformer, data)
+        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
+        result = transformer._normalize(data)
 
         # Asserts
         expect = pd.Series([0.57, 0.1234, 0.5, 0.69], dtype=float)
@@ -360,13 +209,11 @@ class TestCategoricalTransformer(TestCase):
     def test__normalize_clip(self):
         """Test normalize data with clip=True"""
         # Setup
-        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
-
-        transformer = Mock()
-        transformer.clip = True
+        transformer = CategoricalTransformer(clip=True)
 
         # Run
-        result = CategoricalTransformer._normalize(transformer, data)
+        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
+        result = transformer._normalize(data)
 
         # Asserts
         expect = pd.Series([0.0, 0.1234, 1.0, 0.0], dtype=float)
@@ -376,23 +223,214 @@ class TestCategoricalTransformer(TestCase):
     def test_reverse_transform_array(self):
         """Test reverse_transform a numpy.array"""
         # Setup
-        data = np.array([-0.6, 0.2, 0.6, -0.2])
-        normalized_data = pd.Series([0.4, 0.2, 0.6, 0.8])
-
-        intervals = {
+        transformer = CategoricalTransformer()
+        transformer.dtype = object
+        transformer.intervals = {
             'foo': (0, 0.5),
             'bar': (0.5, 0.75),
             'tar': (0.75, 1),
         }
 
         # Run
-        transformer = Mock()
-        transformer._normalize.return_value = normalized_data
-        transformer.intervals = intervals
-
-        result = CategoricalTransformer.reverse_transform(transformer, data)
+        data = np.array([-0.6, 0.2, 0.6, -0.2])
+        result = transformer.reverse_transform(data)
 
         # Asserts
         expect = pd.Series(['foo', 'foo', 'bar', 'tar'])
 
         pd.testing.assert_series_equal(result, expect)
+
+    def test_reversible_strings(self):
+        data = pd.Series(['a', 'b', 'a', 'c'])
+        transformer = CategoricalTransformer()
+
+        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+
+        pd.testing.assert_series_equal(data, reverse)
+
+    def test_reversible_strings_2_categories(self):
+        data = pd.Series(['a', 'b', 'a', 'b'])
+        transformer = CategoricalTransformer()
+
+        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+
+        pd.testing.assert_series_equal(data, reverse)
+
+    def test_reversible_integers(self):
+        data = pd.Series([1, 2, 3, 2])
+        transformer = CategoricalTransformer()
+
+        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+
+        pd.testing.assert_series_equal(data, reverse)
+
+    def test_reversible_bool(self):
+        data = pd.Series([True, False, True, False])
+        transformer = CategoricalTransformer()
+
+        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+
+        pd.testing.assert_series_equal(data, reverse)
+
+    def test_reversible_mixed(self):
+        data = pd.Series([True, 'a', 1, None])
+        transformer = CategoricalTransformer()
+
+        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+
+        pd.testing.assert_series_equal(data, reverse)
+
+
+class TestOneHotEncodingTransformer:
+
+    def test_fit_no_nans(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+
+        # Run
+        data = pd.Series(['a', 'b', 'c'])
+        ohet.fit(data)
+
+        # Assert
+        np.testing.assert_array_equal(ohet.dummies, ['a', 'b', 'c'])
+
+    def test_fit_nans(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+
+        # Run
+        data = pd.Series(['a', 'b', None])
+        ohet.fit(data)
+
+        # Assert
+        np.testing.assert_array_equal(ohet.dummies, ['a', 'b', np.nan])
+
+    def test_fit_single(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+
+        # Run
+        data = pd.Series(['a', 'a', 'a'])
+        ohet.fit(data)
+
+        # Assert
+        np.testing.assert_array_equal(ohet.dummies, ['a'])
+
+    def test_transform_no_nans(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a', 'b', 'c'])
+        ohet.fit(data)
+
+        # Run
+        out = ohet.transform(data)
+
+        # Assert
+        expected = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
+    def test_transform_nans(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a', 'b', None])
+        ohet.fit(data)
+
+        # Run
+        out = ohet.transform(data)
+
+        # Assert
+        expected = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
+    def test_transform_single(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a', 'a', 'a'])
+        ohet.fit(data)
+
+        # Run
+        out = ohet.transform(data)
+
+        # Assert
+        expected = np.array([
+            [1],
+            [1],
+            [1]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
+    def test_reverse_transform_no_nans(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a', 'b', 'c'])
+        ohet.fit(data)
+
+        # Run
+        transformed = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        out = ohet.reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series(['a', 'b', 'c'])
+        pd.testing.assert_series_equal(out, expected)
+
+    def test_reverse_transform_nans(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a', 'b', None])
+        ohet.fit(data)
+
+        # Run
+        transformed = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        out = ohet.reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series(['a', 'b', None])
+        pd.testing.assert_series_equal(out, expected)
+
+    def test_reverse_transform_single(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a', 'a', 'a'])
+        ohet.fit(data)
+
+        # Run
+        transformed = np.array([
+            [1],
+            [1],
+            [1]
+        ])
+        out = ohet.reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series(['a', 'a', 'a'])
+        pd.testing.assert_series_equal(out, expected)
+
+    def test_reverse_transform_1d(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a', 'a', 'a'])
+        ohet.fit(data)
+
+        # Run
+        transformed = np.array([1, 1, 1])
+        out = ohet.reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series(['a', 'a', 'a'])
+        pd.testing.assert_series_equal(out, expected)

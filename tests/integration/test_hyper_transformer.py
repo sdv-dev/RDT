@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from rdt import HyperTransformer
+from rdt.transformers import OneHotEncodingTransformer
 
 
 def get_input_data():
@@ -124,3 +125,19 @@ def test_hypertransformer_without_transformers(faker_mock):
 
     for name in original_names:
         assert name not in reversed_names
+
+
+def test_single_category():
+    ht = HyperTransformer(transformers={
+        'a': OneHotEncodingTransformer()
+    })
+    data = pd.DataFrame({
+        'a': ['a', 'a', 'a']
+    })
+
+    ht.fit(data)
+    transformed = ht.transform(data)
+
+    reverse = ht.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(data, reverse)

@@ -13,7 +13,6 @@
 
 * License: [MIT](https://github.com/sdv-dev/RDT/blob/master/LICENSE)
 * Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
-* Documentation: https://sdv-dev.github.io/RDT
 * Homepage: https://github.com/sdv-dev/RDT
 
 ## Overview
@@ -43,7 +42,7 @@ pip install rdt
 This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
 If you want to install from source or contribute to the project please read the
-[Contributing Guide](https://sdv-dev.github.io/RDT/contributing.html#get-started).
+[Contributing Guide](CONTRIBUTING.rst).
 
 
 # Quickstart
@@ -235,9 +234,3 @@ Which should output, again, a table that looks exactly like the original one.
 8   68.0        NaN     c 2021-02-25 16:04:00
 9    7.0  31.542918     a 2020-07-12 03:12:00
 ```
-
-# What's next?
-
-For more details about **Reversible Data Transforms**, how to contribute to the project, and
-its complete API reference, please visit the [documentation site](
-https://sdv-dev.github.io/RDT/).

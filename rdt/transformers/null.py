@@ -48,9 +48,9 @@ class NullTransformer(BaseTransformer):
                 Data to transform.
         """
         if self.fill_value == 'mean':
-            self._fill_value = data.mean()
+            self._fill_value = data.mean() if pd.notnull(data).any() else 0
         elif self.fill_value == 'mode':
-            self._fill_value = data.mode(dropna=True)[0]
+            self._fill_value = data.mode(dropna=True)[0] if pd.notnull(data).any() else 0
         else:
             self._fill_value = self.fill_value
 

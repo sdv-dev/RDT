@@ -1,5 +1,16 @@
 # History
 
+## 0.2.5 - 2020-09-18
+
+Miunor bugfixing release.
+
+# Bugs Fixed
+
+* Handle NaNs in OneHotEncodingTransformer - Issue [#118](https://github.com/sdv-dev/RDT/issues/118) by @csala
+* OneHotEncodingTransformer fails if there is only one category - Issue [#119](https://github.com/sdv-dev/RDT/issues/119) by @csala
+* All NaN column produces NaN values enhancement - Issue [#121](https://github.com/sdv-dev/RDT/issues/121) by @csala
+* Make the CategoricalTransformer learn the column dtype and restore it back - Issue [#122](https://github.com/sdv-dev/RDT/issues/122) by @csala
+
 ## 0.2.4 - 2020-08-08
 
 ### General Improvements
