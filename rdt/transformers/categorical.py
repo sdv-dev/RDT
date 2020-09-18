@@ -39,6 +39,7 @@ class CategoricalTransformer(BaseTransformer):
 
     mapping = None
     intervals = None
+    dtype = None
 
     def __init__(self, anonymize=False, fuzzy=False, clip=False):
         self.anonymize = anonymize
@@ -131,6 +132,7 @@ class CategoricalTransformer(BaseTransformer):
                 Data to fit the transformer to.
         """
         self.mapping = dict()
+        self.dtype = data.dtype
 
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
@@ -199,7 +201,7 @@ class CategoricalTransformer(BaseTransformer):
 
         data = self._normalize(data)
 
-        result = pd.Series(index=data.index)
+        result = pd.Series(index=data.index, dtype=self.dtype)
 
         for category, values in self.intervals.items():
             start, end = values[:2]

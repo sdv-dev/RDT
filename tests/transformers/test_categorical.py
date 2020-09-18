@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -92,10 +92,8 @@ class TestCategoricalTransformer:
         assert result.map(RE_SSN.match).astype(bool).all()
 
     def test__get_intervals(self):
-        # Setup
-        data = pd.Series(['bar', 'foo', 'foo', 'tar'])
-
         # Run
+        data = pd.Series(['bar', 'foo', 'foo', 'tar'])
         result = CategoricalTransformer._get_intervals(data)
 
         # Asserts
@@ -143,14 +141,15 @@ class TestCategoricalTransformer:
         assert all((key not in unexpected_keys for key in keys))
 
     def test__get_value_no_fuzzy(self):
-        # Run
-        transformer = Mock()
+        # Setup
+        transformer = CategoricalTransformer(fuzzy=False)
         transformer.fuzzy = False
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
 
-        result = CategoricalTransformer._get_value(transformer, 'foo')
+        # Run
+        result = transformer._get_value('foo')
 
         # Asserts
         assert result == 0.25
@@ -160,14 +159,13 @@ class TestCategoricalTransformer:
         # setup
         rvs_mock.return_value = 0.2745
 
-        # Run
-        transformer = Mock()
-        transformer.fuzzy = True
+        transformer = CategoricalTransformer(fuzzy=True)
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
 
-        result = CategoricalTransformer._get_value(transformer, 'foo')
+        # Run
+        result = transformer._get_value('foo')
 
         # Asserts
         assert result == 0.2745
@@ -197,13 +195,11 @@ class TestCategoricalTransformer:
     def test__normalize_no_clip(self):
         """Test normalize data"""
         # Setup
-        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
-
-        transformer = Mock()
-        transformer.clip = False
+        transformer = CategoricalTransformer(clip=False)
 
         # Run
-        result = CategoricalTransformer._normalize(transformer, data)
+        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
+        result = transformer._normalize(data)
 
         # Asserts
         expect = pd.Series([0.57, 0.1234, 0.5, 0.69], dtype=float)
@@ -213,13 +209,11 @@ class TestCategoricalTransformer:
     def test__normalize_clip(self):
         """Test normalize data with clip=True"""
         # Setup
-        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
-
-        transformer = Mock()
-        transformer.clip = True
+        transformer = CategoricalTransformer(clip=True)
 
         # Run
-        result = CategoricalTransformer._normalize(transformer, data)
+        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
+        result = transformer._normalize(data)
 
         # Asserts
         expect = pd.Series([0.0, 0.1234, 1.0, 0.0], dtype=float)
@@ -229,26 +223,62 @@ class TestCategoricalTransformer:
     def test_reverse_transform_array(self):
         """Test reverse_transform a numpy.array"""
         # Setup
-        data = np.array([-0.6, 0.2, 0.6, -0.2])
-        normalized_data = pd.Series([0.4, 0.2, 0.6, 0.8])
-
-        intervals = {
+        transformer = CategoricalTransformer()
+        transformer.dtype = object
+        transformer.intervals = {
             'foo': (0, 0.5),
             'bar': (0.5, 0.75),
             'tar': (0.75, 1),
         }
 
         # Run
-        transformer = Mock()
-        transformer._normalize.return_value = normalized_data
-        transformer.intervals = intervals
-
-        result = CategoricalTransformer.reverse_transform(transformer, data)
+        data = np.array([-0.6, 0.2, 0.6, -0.2])
+        result = transformer.reverse_transform(data)
 
         # Asserts
         expect = pd.Series(['foo', 'foo', 'bar', 'tar'])
 
         pd.testing.assert_series_equal(result, expect)
+
+    def test_reversible_strings(self):
+        data = pd.Series(['a', 'b', 'a', 'c'])
+        transformer = CategoricalTransformer()
+
+        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+
+        pd.testing.assert_series_equal(data, reverse)
+
+    def test_reversible_strings_2_categories(self):
+        data = pd.Series(['a', 'b', 'a', 'b'])
+        transformer = CategoricalTransformer()
+
+        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+
+        pd.testing.assert_series_equal(data, reverse)
+
+    def test_reversible_integers(self):
+        data = pd.Series([1, 2, 3, 2])
+        transformer = CategoricalTransformer()
+
+        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+
+        pd.testing.assert_series_equal(data, reverse)
+
+    def test_reversible_bool(self):
+        data = pd.Series([True, False, True, False])
+        transformer = CategoricalTransformer()
+
+        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+
+        pd.testing.assert_series_equal(data, reverse)
+
+    def test_reversible_mixed(self):
+        data = pd.Series([True, 'a', 1, None])
+        transformer = CategoricalTransformer()
+
+        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+
+        pd.testing.assert_series_equal(data, reverse)
 
 
 class TestOneHotEncodingTransformer:
