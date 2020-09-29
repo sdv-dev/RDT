@@ -87,27 +87,31 @@ class HyperTransformer:
                 if a ``dtype`` is not supported by the `HyperTransformer``.
         """
         transformers = dict()
-        dtypes = self.dtypes or data.dtypes
         if self.dtypes:
             dtypes = self.dtypes
         else:
             dtypes = [
-                data[column].dropna().infer_objects()
+                data[column].dropna().infer_objects().dtype
                 for column in data.columns
             ]
 
         for name, dtype in zip(data.columns, dtypes):
-            dtype = np.dtype(dtype)
-            if dtype.kind == 'i':
+            try:
+                kind = np.dtype(dtype).kind
+            except TypeError:
+                # probably category
+                kind = dtype
+
+            if kind == 'i':
                 transformer = NumericalTransformer(dtype=int)
-            elif dtype.kind == 'f':
+            elif kind == 'f':
                 transformer = NumericalTransformer(dtype=float)
-            elif dtype.kind == 'O':
+            elif kind in ('O', 'category'):
                 anonymize = self.anonymize.get(name)
                 transformer = CategoricalTransformer(anonymize=anonymize)
-            elif dtype.kind == 'b':
+            elif kind == 'b':
                 transformer = BooleanTransformer()
-            elif dtype.kind == 'M':
+            elif kind == 'M':
                 transformer = DatetimeTransformer()
             else:
                 raise ValueError('Unsupported dtype: {}'.format(dtype))

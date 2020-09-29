@@ -141,3 +141,16 @@ def test_single_category():
     reverse = ht.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(data, reverse)
+
+
+def test_dtype_category():
+    df = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
+
+    ht = HyperTransformer()
+    ht.fit(df)
+
+    trans = ht.transform(df)
+
+    rever = ht.reverse_transform(trans)
+
+    pd.testing.assert_frame_equal(df, rever)
