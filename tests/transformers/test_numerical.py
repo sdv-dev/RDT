@@ -1,10 +1,12 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
+import copulas
 import numpy as np
 import pandas as pd
+import pytest
 
-from rdt.transformers import NumericalTransformer
+from rdt.transformers.numerical import CopulaTransformer, NumericalTransformer
 
 
 class TestNumericalTransformer(TestCase):
@@ -142,7 +144,7 @@ class TestNumericalTransformer(TestCase):
         result = NumericalTransformer.reverse_transform(transformer, data)
 
         # Asserts
-        expect = pd.Series([3.0, 2.0, 3.0])
+        expect = pd.Series([3, 2, 3])
         expected_reverse_transform_call_count = 0
 
         pd.testing.assert_series_equal(result, expect)
@@ -151,3 +153,68 @@ class TestNumericalTransformer(TestCase):
             expected_reverse_transform_call_count,
             "NullTransformer.reverse_transform must be called at least once"
         )
+
+
+class TestCopulaTransformer:
+
+    def test___init__super_attrs(self):
+        """super() arguments are properly passed and set as attributes."""
+        ct = CopulaTransformer(dtype='int', nan='mode', null_column=False)
+
+        assert ct.dtype == 'int'
+        assert ct.nan == 'mode'
+        assert ct.null_column is False
+
+    def test___init__str_distr(self):
+        """If distribution is an str, it is resolved using the _DISTRIBUTIONS dict."""
+        ct = CopulaTransformer(distribution='univariate')
+
+        assert ct._distribution is copulas.univariate.Univariate
+
+    def test___init__non_distr(self):
+        """If distribution is not an str, it is store as given."""
+        univariate = copulas.univariate.Univariate()
+        ct = CopulaTransformer(distribution=univariate)
+
+        assert ct._distribution is univariate
+
+    def test__get_univariate_instance(self):
+        """If a univariate instance is passed, make a copy."""
+        distribution = copulas.univariate.Univariate()
+        ct = CopulaTransformer(distribution=distribution)
+
+        univariate = ct._get_univariate()
+
+        assert univariate is not distribution
+        assert isinstance(univariate, copulas.univariate.Univariate)
+        assert dir(univariate) == dir(distribution)
+
+    def test__get_univariate_tuple(self):
+        """If a tuple is passed, create an instance using the given args."""
+        distribution = (
+            copulas.univariate.Univariate,
+            {'candidates': 'a_candidates_list'}
+        )
+        ct = CopulaTransformer(distribution=distribution)
+
+        univariate = ct._get_univariate()
+
+        assert isinstance(univariate, copulas.univariate.Univariate)
+        assert univariate.candidates == 'a_candidates_list'
+
+    def test__get_univariate_class(self):
+        """If a class is passed, create an instance without args."""
+        distribution = copulas.univariate.Univariate
+        ct = CopulaTransformer(distribution=distribution)
+
+        univariate = ct._get_univariate()
+
+        assert isinstance(univariate, copulas.univariate.Univariate)
+
+    def test__get_univariate_error(self):
+        """If something else is passed, rasie a TypeError."""
+        distribution = 123
+        ct = CopulaTransformer(distribution=distribution)
+
+        with pytest.raises(TypeError):
+            ct._get_univariate()

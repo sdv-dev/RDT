@@ -16,6 +16,7 @@ install_requires = [
     'pandas>=0.21,<2',
     'scipy>=1.1.0,<2',
     'Faker>=1.0.1,<2',
+    'copulas>=0.3.0,<0.4',
 ]
 
 setup_requires = [
