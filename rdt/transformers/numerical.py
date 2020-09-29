@@ -101,7 +101,7 @@ class NumericalTransformer(BaseTransformer):
 
 
 class CopulaTransformer(NumericalTransformer):
-    """Transformer for numerical data based on copulas transformation.
+    r"""Transformer for numerical data based on copulas transformation.
 
     Transformation consists on bringing the input data to a standard normal space
     by using a combination of *cdf* and *inverse cdf* transformations:
