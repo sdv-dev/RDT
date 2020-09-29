@@ -171,7 +171,7 @@ class CategoricalTransformer(BaseTransformer):
         if self.anonymize:
             data = data.map(MAPS[id(self)])
 
-        return data.fillna(np.nan).apply(self._get_value).values
+        return data.fillna(np.nan).apply(self._get_value).to_numpy()
 
     def _normalize(self, data):
         """Normalize data to the range [0, 1].
