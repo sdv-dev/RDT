@@ -6,13 +6,14 @@ from rdt.transformers.categorical import (
     CategoricalTransformer, LabelEncodingTransformer, OneHotEncodingTransformer)
 from rdt.transformers.datetime import DatetimeTransformer
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.numerical import NumericalTransformer
+from rdt.transformers.numerical import GaussianCopulaTransformer, NumericalTransformer
 
 __all__ = [
     'BaseTransformer',
     'BooleanTransformer',
     'CategoricalTransformer',
     'DatetimeTransformer',
+    'GaussianCopulaTransformer',
     'NumericalTransformer',
     'NullTransformer',
     'OneHotEncodingTransformer',

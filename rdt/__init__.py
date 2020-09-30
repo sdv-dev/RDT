@@ -10,10 +10,12 @@ __version__ = '0.2.6.dev0'
 import numpy as np
 import pandas as pd
 
+from rdt import transformers
 from rdt.hyper_transformer import HyperTransformer
 
 __all__ = [
     'HyperTransformer',
+    'transformers'
 ]
 
 
