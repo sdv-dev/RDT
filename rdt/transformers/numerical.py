@@ -100,7 +100,7 @@ class NumericalTransformer(BaseTransformer):
         return data.astype(self._dtype)
 
 
-class CopulaTransformer(NumericalTransformer):
+class GaussianCopulaTransformer(NumericalTransformer):
     r"""Transformer for numerical data based on copulas transformation.
 
     Transformation consists on bringing the input data to a standard normal space

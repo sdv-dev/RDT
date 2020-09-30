@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.numerical import CopulaTransformer, NumericalTransformer
+from rdt.transformers.numerical import GaussianCopulaTransformer, NumericalTransformer
 
 
 class TestNumericalTransformer(TestCase):
@@ -155,11 +155,11 @@ class TestNumericalTransformer(TestCase):
         )
 
 
-class TestCopulaTransformer:
+class TestGaussianCopulaTransformer:
 
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
-        ct = CopulaTransformer(dtype='int', nan='mode', null_column=False)
+        ct = GaussianCopulaTransformer(dtype='int', nan='mode', null_column=False)
 
         assert ct.dtype == 'int'
         assert ct.nan == 'mode'
@@ -167,21 +167,21 @@ class TestCopulaTransformer:
 
     def test___init__str_distr(self):
         """If distribution is an str, it is resolved using the _DISTRIBUTIONS dict."""
-        ct = CopulaTransformer(distribution='univariate')
+        ct = GaussianCopulaTransformer(distribution='univariate')
 
         assert ct._distribution is copulas.univariate.Univariate
 
     def test___init__non_distr(self):
         """If distribution is not an str, it is store as given."""
         univariate = copulas.univariate.Univariate()
-        ct = CopulaTransformer(distribution=univariate)
+        ct = GaussianCopulaTransformer(distribution=univariate)
 
         assert ct._distribution is univariate
 
     def test__get_univariate_instance(self):
         """If a univariate instance is passed, make a copy."""
         distribution = copulas.univariate.Univariate()
-        ct = CopulaTransformer(distribution=distribution)
+        ct = GaussianCopulaTransformer(distribution=distribution)
 
         univariate = ct._get_univariate()
 
@@ -195,7 +195,7 @@ class TestCopulaTransformer:
             copulas.univariate.Univariate,
             {'candidates': 'a_candidates_list'}
         )
-        ct = CopulaTransformer(distribution=distribution)
+        ct = GaussianCopulaTransformer(distribution=distribution)
 
         univariate = ct._get_univariate()
 
@@ -205,7 +205,7 @@ class TestCopulaTransformer:
     def test__get_univariate_class(self):
         """If a class is passed, create an instance without args."""
         distribution = copulas.univariate.Univariate
-        ct = CopulaTransformer(distribution=distribution)
+        ct = GaussianCopulaTransformer(distribution=distribution)
 
         univariate = ct._get_univariate()
 
@@ -214,7 +214,7 @@ class TestCopulaTransformer:
     def test__get_univariate_error(self):
         """If something else is passed, rasie a TypeError."""
         distribution = 123
-        ct = CopulaTransformer(distribution=distribution)
+        ct = GaussianCopulaTransformer(distribution=distribution)
 
         with pytest.raises(TypeError):
             ct._get_univariate()
