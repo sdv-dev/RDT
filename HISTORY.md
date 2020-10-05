@@ -1,5 +1,10 @@
 # History
 
+## 0.2.6 - 2020-10-05
+
+* Add GaussianCopulaTransformer - Issue [#125](https://github.com/sdv-dev/RDT/issues/125) by @csala
+* dtype category error - Issue [#124](https://github.com/sdv-dev/RDT/issues/124) by @csala
+
 ## 0.2.5 - 2020-09-18
 
 Miunor bugfixing release.
