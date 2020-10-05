@@ -16,6 +16,7 @@ install_requires = [
     'pandas>=0.21,<2',
     'scipy>=1.1.0,<2',
     'Faker>=1.0.1,<2',
+    'copulas>=0.3.0,<0.4',
 ]
 
 setup_requires = [
@@ -94,6 +95,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.2.5',
+    version='0.2.6.dev1',
     zip_safe=False,
 )
