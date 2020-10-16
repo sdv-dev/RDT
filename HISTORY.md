@@ -1,5 +1,15 @@
 # History
 
+## 0.2.7 - 2020-10-16
+
+In this release we drop the support for the now officially dead Python 3.5
+and introduce a new feature in the DatetimeTransformer which reduces the dimensionality
+of the generated numerical values while also ensuring that the reverted datetimes
+maintain the same level as time unit precision as the original ones.
+
+* Drop Py35 support - Issue [#129](https://github.com/sdv-dev/RDT/issues/129) by @csala
+* Add option to drop constant parts of the datetimes - Issue [#130](https://github.com/sdv-dev/RDT/issues/130) by @csala
+
 ## 0.2.6 - 2020-10-05
 
 * Add GaussianCopulaTransformer - Issue [#125](https://github.com/sdv-dev/RDT/issues/125) by @csala
