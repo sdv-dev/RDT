@@ -1,3 +1,5 @@
+"""Transformer for boolean data."""
+
 import numpy as np
 import pandas as pd
 
@@ -54,7 +56,7 @@ class BooleanTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to transform.
 
-        Returns:
+        Returns
             numpy.ndarray
         """
         if isinstance(data, np.ndarray):
@@ -76,6 +78,9 @@ class BooleanTransformer(BaseTransformer):
         """
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
+
+        if isinstance(data, np.ndarray):
+            data = pd.Series(data)
 
         data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(bool)
         return data

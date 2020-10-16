@@ -232,6 +232,6 @@ or in command line::
     pip install 'rdt>=X.Y.Z.dev'
 
 
-.. _GitHub issues page: https://github.com/HDI-Project/RDT/issues
-.. _Travis Build Status page: https://travis-ci.org/HDI-Project/RDT/pull_requests
+.. _GitHub issues page: https://github.com/sdv-dev/RDT/issues
+.. _Travis Build Status page: https://travis-ci.org/sdv-dev/RDT/pull_requests
 .. _Google docstrings style: https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments

@@ -1,3 +1,5 @@
+"""Transformer for data that contains Null values."""
+
 import warnings
 
 import numpy as np
@@ -12,7 +14,7 @@ IRREVERSIBLE_WARNING = (
 
 
 class NullTransformer(BaseTransformer):
-    """Transformer for null data.
+    """Transformer for data that contains Null values.
 
     Args:
         fill_value (object or None):
@@ -26,6 +28,10 @@ class NullTransformer(BaseTransformer):
         copy (bool):
             Whether to create a copy of the input data or modify it destructively.
     """
+
+    nulls = None
+    _null_column = None
+    _fill_value = None
 
     def __init__(self, fill_value, null_column=None, copy=False):
         self.fill_value = fill_value
@@ -41,6 +47,13 @@ class NullTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to transform.
         """
+        if self.fill_value == 'mean':
+            self._fill_value = data.mean() if pd.notnull(data).any() else 0
+        elif self.fill_value == 'mode':
+            self._fill_value = data.mode(dropna=True)[0] if pd.notnull(data).any() else 0
+        else:
+            self._fill_value = self.fill_value
+
         self.nulls = data.isnull().any()
         if self.null_column is None:
             self._null_column = self.nulls
@@ -61,16 +74,16 @@ class NullTransformer(BaseTransformer):
         """
         if self.nulls:
             isnull = data.isnull()
-            if self.nulls and self.fill_value is not None:
+            if self.nulls and self._fill_value is not None:
                 if not self.copy:
-                    data[isnull] = self.fill_value
+                    data[isnull] = self._fill_value
                 else:
-                    data = data.fillna(self.fill_value)
+                    data = data.fillna(self._fill_value)
 
             if self._null_column:
                 return pd.concat([data, isnull.astype('int')], axis=1).values
 
-            elif self.fill_value in data.values:
+            if self._fill_value in data.values:
                 warnings.warn(IRREVERSIBLE_WARNING)
 
         return data.values
@@ -94,10 +107,13 @@ class NullTransformer(BaseTransformer):
                 isnull = data[:, 1] > 0.5
                 data = pd.Series(data[:, 0])
             else:
-                isnull = np.where(self.fill_value == data)[0]
+                isnull = np.where(self._fill_value == data)[0]
                 data = pd.Series(data)
 
             if isnull.any():
+                if self.copy:
+                    data = data.copy()
+
                 data.iloc[isnull] = np.nan
 
         return data

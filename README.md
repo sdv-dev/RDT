@@ -1,20 +1,21 @@
 <p align="left">
-<img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt=“Copulas” />
+<img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt="DAI-Lab" />
 <i>An open source project from Data to AI Lab at MIT.</i>
 </p>
 
+[![Development Status](https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow)](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
 [![PyPi Shield](https://img.shields.io/pypi/v/RDT.svg)](https://pypi.python.org/pypi/RDT)
-[![Travis CI Shield](https://travis-ci.org/HDI-Project/RDT.svg?branch=master)](https://travis-ci.org/HDI-Project/RDT)
-[![Coverage Status](https://codecov.io/gh/HDI-Project/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/HDI-Project/RDT)
+[![Travis CI Shield](https://travis-ci.org/sdv-dev/RDT.svg?branch=master)](https://travis-ci.org/sdv-dev/RDT)
+[![Coverage Status](https://codecov.io/gh/sdv-dev/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/RDT)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
 
-<h1>RDT: Reversible Data Transforms</h1>
+# RDT: Reversible Data Transforms
 
-- License: MIT
-- Documentation: https://HDI-Project.github.io/RDT
-- Homepage: https://github.com/HDI-Project/RDT
+* License: [MIT](https://github.com/sdv-dev/RDT/blob/master/LICENSE)
+* Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
+* Homepage: https://github.com/sdv-dev/RDT
 
-# Overview
+## Overview
 
 **RDT** is a Python library used to transform data for data science libraries and preserve
 the transformations in order to revert them as needed.
@@ -23,31 +24,16 @@ the transformations in order to revert them as needed.
 
 ## Requirements
 
-**RDT** has been developed and tested on [Python 3.5, 3.6 and 3.7](https://www.python.org/downloads)
+**RDT** has been developed and tested on [Python 3.5, 3.6, 3.7 and 3.8](https://www.python.org/downloads/)
 
-Also, although it is not strictly required, the usage of a
-[virtualenv](https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
+Also, although it is not strictly required, the usage of a [virtualenv](
+https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
 interfering with other software installed in the system where **RDT** is run.
-
-These are the minimum commands needed to create a virtualenv using python3.6 for **RDT**:
-
-```bash
-pip install virtualenv
-virtualenv -p $(which python3.6) rdt-venv
-```
-
-Afterwards, you have to execute this command to have the virtualenv activated:
-
-```bash
-source rdt-venv/bin/activate
-```
-
-Remember about executing it every time you start a new console to work on **RDT**!
 
 ## Install with pip
 
-After creating the virtualenv and activating it, we recommend using
-[pip](https://pip.pypa.io/en/stable/) in order to install **RDT**:
+The easiest and recommended way to install **RDT** is using [pip](
+https://pip.pypa.io/en/stable/):
 
 ```bash
 pip install rdt
@@ -55,25 +41,9 @@ pip install rdt
 
 This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
-## Install from source
+If you want to install from source or contribute to the project please read the
+[Contributing Guide](CONTRIBUTING.rst).
 
-With your virtualenv activated, you can clone the repository and install it from
-source by running `make install` on the `stable` branch:
-
-```bash
-git clone git@github.com:HDI-Project/RDT.git
-cd RDT
-git checkout stable
-make install
-```
-
-## Install for Development
-
-If you want to contribute to the project, a few more steps are required to make the project ready
-for development.
-
-Please head to the [Contributing Guide](https://HDI-Project.github.io/RDT/contributing.html#get-started)
-for more details about this process.
 
 # Quickstart
 
@@ -90,7 +60,7 @@ a single column loaded as a `pandas.DataFrame` object.
 You can load some demo data using the `rdt.get_demo` function, which will return some random
 data for you to play with.
 
-```python
+```python3
 from rdt import get_demo
 
 data = get_demo()
@@ -119,8 +89,9 @@ RDT introduced some null values randomly.
 
 In this example we will use the datetime column, so let's load a `DatetimeTransformer`.
 
-```python
+```python3
 from rdt.transformers import DatetimeTransformer
+
 transformer = DatetimeTransformer()
 ```
 
@@ -130,7 +101,7 @@ Before being able to transform the data, we need the transformer to learn from i
 
 We will do this by calling its `fit` method passing the column that we want to transform.
 
-```python
+```python3
 transformer.fit(data['3_datetime'])
 ```
 
@@ -139,7 +110,7 @@ transformer.fit(data['3_datetime'])
 Once the transformer is fitted, we can pass the data again to its `transform` method in order
 to get the transformed version of the data.
 
-```python
+```python3
 transformed = transformer.transform(data['3_datetime'])
 ```
 
@@ -165,7 +136,7 @@ array([[1.61299380e+18, 0.00000000e+00],
 In order to revert the previous transformation, the transformed data can be passed to
 the `reverse_transform` method of the transformer:
 
-```python
+```python3
 reversed_data = transformer.reverse_transform(transformed)
 ```
 
@@ -195,8 +166,9 @@ a table with multiple columns.
 
 In order to manuipulate a complete table we will need to load a `rdt.HyperTransformer`.
 
-```python
+```python3
 from rdt import HyperTransformer
+
 ht = HyperTransformer()
 ```
 
@@ -207,7 +179,7 @@ data.
 
 This is done by calling its `fit` method passing the `data` DataFrame.
 
-```python
+```python3
 ht.fit(data)
 ```
 
@@ -216,7 +188,7 @@ ht.fit(data)
 Once the HyperTransformer is fitted, we can pass the data again to its `transform` method in order
 to get the transformed version of the data.
 
-```python
+```python3
 transformed = ht.transform(data)
 ```
 
@@ -243,7 +215,7 @@ In order to revert the transformation and recover the original data from the tra
 we need to call `reverse_transform` method of the `HyperTransformer` instance passing it the
 transformed data.
 
-```python
+```python3
 reversed_data = ht.reverse_transform(transformed)
 ```
 
@@ -262,9 +234,3 @@ Which should output, again, a table that looks exactly like the original one.
 8   68.0        NaN     c 2021-02-25 16:04:00
 9    7.0  31.542918     a 2020-07-12 03:12:00
 ```
-
-# What's next?
-
-For more details about **Reversible Data Transforms**, how to contribute to the project, and
-its complete API reference, please visit the [documentation site](
-https://HDI-Project.github.io/RDT/).

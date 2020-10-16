@@ -1,3 +1,7 @@
+"""Hyper transformer module."""
+
+import re
+
 import numpy as np
 
 from rdt.transformers import (
@@ -48,6 +52,7 @@ class HyperTransformer:
         ... }
         >>> ht = HyperTransformer(transformers)
     """
+
     def __init__(self, transformers=None, copy=True, anonymize=None, dtypes=None):
         self.transformers = transformers
         self._transformers = dict()
@@ -82,27 +87,31 @@ class HyperTransformer:
                 if a ``dtype`` is not supported by the `HyperTransformer``.
         """
         transformers = dict()
-        dtypes = self.dtypes or data.dtypes
         if self.dtypes:
             dtypes = self.dtypes
         else:
             dtypes = [
-                data[column].dropna().infer_objects()
+                data[column].dropna().infer_objects().dtype
                 for column in data.columns
             ]
 
         for name, dtype in zip(data.columns, dtypes):
-            dtype = np.dtype(dtype)
-            if dtype.kind == 'i':
+            try:
+                kind = np.dtype(dtype).kind
+            except TypeError:
+                # probably category
+                kind = dtype
+
+            if kind == 'i':
                 transformer = NumericalTransformer(dtype=int)
-            elif dtype.kind == 'f':
+            elif kind == 'f':
                 transformer = NumericalTransformer(dtype=float)
-            elif dtype.kind == 'O':
+            elif kind in ('O', 'category'):
                 anonymize = self.anonymize.get(name)
                 transformer = CategoricalTransformer(anonymize=anonymize)
-            elif dtype.kind == 'b':
+            elif kind == 'b':
                 transformer = BooleanTransformer()
-            elif dtype.kind == 'M':
+            elif kind == 'M':
                 transformer = DatetimeTransformer()
             else:
                 raise ValueError('Unsupported dtype: {}'.format(dtype))
@@ -149,10 +158,10 @@ class HyperTransformer:
 
             shape = transformed.shape
 
-            if len(shape) == 2 and shape[1] == 2:
-                data[column_name] = transformed[:, 0]
-                new_column = '{}#{}'.format(column_name, 1)
-                data[new_column] = transformed[:, 1]
+            if len(shape) == 2:
+                for index in range(shape[1]):
+                    new_column = '{}#{}'.format(column_name, index)
+                    data[new_column] = transformed[:, index]
 
             else:
                 data[column_name] = transformed
@@ -191,7 +200,7 @@ class HyperTransformer:
             ValueError:
                 if no columns match.
         """
-        regex = r'{}(#[0-9]+)?$'.format(column_name)
+        regex = r'{}(#[0-9]+)?$'.format(re.escape(column_name))
         columns = data.columns[data.columns.str.match(regex)]
         if columns.empty:
             raise ValueError('No columns match_ {}'.format(column_name))

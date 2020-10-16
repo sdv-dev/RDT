@@ -1,18 +1,25 @@
+"""Transformers module."""
+
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
-from rdt.transformers.categorical import CategoricalTransformer
+from rdt.transformers.categorical import (
+    CategoricalTransformer, LabelEncodingTransformer, OneHotEncodingTransformer)
 from rdt.transformers.datetime import DatetimeTransformer
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.numerical import NumericalTransformer
+from rdt.transformers.numerical import GaussianCopulaTransformer, NumericalTransformer
 
 __all__ = [
     'BaseTransformer',
     'BooleanTransformer',
     'CategoricalTransformer',
     'DatetimeTransformer',
+    'GaussianCopulaTransformer',
     'NumericalTransformer',
     'NullTransformer',
+    'OneHotEncodingTransformer',
+    'LabelEncodingTransformer',
 ]
+
 
 TRANSFORMERS = {
     transformer.__name__: transformer
@@ -52,7 +59,8 @@ def load_transformer(transformer):
 
 
 def load_transformers(transformers):
-    """
+    """Load a dict of transfomers from a dict specification.
+
     >>> nt = NumericalTransformer(dtype=float)
     >>> transformers = {
     ...     'a': nt,

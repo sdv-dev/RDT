@@ -1,10 +1,12 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
+import copulas
 import numpy as np
 import pandas as pd
+import pytest
 
-from rdt.transformers import NumericalTransformer
+from rdt.transformers.numerical import GaussianCopulaTransformer, NumericalTransformer
 
 
 class TestNumericalTransformer(TestCase):
@@ -19,192 +21,17 @@ class TestNumericalTransformer(TestCase):
         self.assertIsNone(transformer.null_column, "null_column is None by default")
         self.assertIsNone(transformer.dtype, "dtype is None by default")
 
-    def test_fit_nan_mean_array(self):
+    def test_fit(self):
         """Test fit nan mean with numpy.array"""
         # Setup
         data = np.array([1.5, None, 2.5])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='mean')
+        transformer = NumericalTransformer(dtype=np.float, nan='nan')
         transformer.fit(data)
 
         # Asserts
-        expect_fill_value = 2.0
-        expect_dtype = np.float
-
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-        self.assertEqual(
-            transformer._dtype,
-            expect_dtype,
-            "Expected dtype: float"
-        )
-
-    def test_fit_nan_mean_series(self):
-        """Test fit nan mean with pandas.Series"""
-        # Setup
-        data = pd.Series([1.5, None, 2.5])
-
-        # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='mean')
-        transformer.fit(data)
-
-        # Asserts
-        expect_fill_value = 2.0
-        expect_dtype = np.float
-
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-        self.assertEqual(
-            transformer._dtype,
-            expect_dtype,
-            "Expected dtype: float"
-        )
-
-    def test_fit_nan_mode_array(self):
-        """Test fit nan mode with numpy.array"""
-        # Setup
-        data = np.array([1.5, None, 2.5])
-
-        # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='mode')
-        transformer.fit(data)
-
-        # Asserts
-        expect_fill_value = 1.5
-        expect_dtype = np.float
-
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-        self.assertEqual(
-            transformer._dtype,
-            expect_dtype,
-            "Expected dtype: float"
-        )
-
-    def test_fit_nan_mode_series(self):
-        """Test fit nan mode with pandas.Series"""
-        # Setup
-        data = pd.Series([1.5, None, 2.5])
-
-        # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='mode')
-        transformer.fit(data)
-
-        # Asserts
-        expect_fill_value = 1.5
-        expect_dtype = np.float
-
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-        self.assertEqual(
-            transformer._dtype,
-            expect_dtype,
-            "Expected dtype: float"
-        )
-
-    def test_fit_nan_ignore_array(self):
-        """Test fit nan ignore with numpy.array"""
-        # Setup
-        data = np.array([1.5, None, 2.5])
-
-        # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=None)
-        transformer.fit(data)
-
-        # Asserts
-        expect_fill_value = None
-        expect_dtype = np.float
-
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-        self.assertEqual(
-            transformer._dtype,
-            expect_dtype,
-            "Expected dtype: float"
-        )
-
-    def test_fit_nan_ignore_series(self):
-        """Test fit nan ignore with pandas.Series"""
-        # Setup
-        data = pd.Series([1.5, None, 2.5])
-
-        # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=None)
-        transformer.fit(data)
-
-        # Asserts
-        expect_fill_value = None
-        expect_dtype = np.float
-
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-        self.assertEqual(
-            transformer._dtype,
-            expect_dtype,
-            "Expected dtype: float"
-        )
-
-    def test_fit_nan_other_array(self):
-        """Test fit nan custom value with numpy.array"""
-        # Setup
-        data = np.array([1.5, None, 2.5])
-
-        # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=0)
-        transformer.fit(data)
-
-        # Asserts
-        expect_fill_value = 0
-        expect_dtype = np.float
-
-        self.assertEqual(
-            transformer.null_transformer.fill_value,
-            expect_fill_value,
-            "Data mean is wrong"
-        )
-
-        self.assertEqual(
-            transformer._dtype,
-            expect_dtype,
-            "Expected dtype: float"
-        )
-
-    def test_fit_nan_other_series(self):
-        """Test fit nan custom value with pandas.Series"""
-        # Setup
-        data = pd.Series([1.5, None, 2.5])
-
-        # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=0)
-        transformer.fit(data)
-
-        # Asserts
-        expect_fill_value = 0
+        expect_fill_value = 'nan'
         expect_dtype = np.float
 
         self.assertEqual(
@@ -317,7 +144,7 @@ class TestNumericalTransformer(TestCase):
         result = NumericalTransformer.reverse_transform(transformer, data)
 
         # Asserts
-        expect = pd.Series([3.0, 2.0, 3.0])
+        expect = pd.Series([3, 2, 3])
         expected_reverse_transform_call_count = 0
 
         pd.testing.assert_series_equal(result, expect)
@@ -326,3 +153,68 @@ class TestNumericalTransformer(TestCase):
             expected_reverse_transform_call_count,
             "NullTransformer.reverse_transform must be called at least once"
         )
+
+
+class TestGaussianCopulaTransformer:
+
+    def test___init__super_attrs(self):
+        """super() arguments are properly passed and set as attributes."""
+        ct = GaussianCopulaTransformer(dtype='int', nan='mode', null_column=False)
+
+        assert ct.dtype == 'int'
+        assert ct.nan == 'mode'
+        assert ct.null_column is False
+
+    def test___init__str_distr(self):
+        """If distribution is an str, it is resolved using the _DISTRIBUTIONS dict."""
+        ct = GaussianCopulaTransformer(distribution='univariate')
+
+        assert ct._distribution is copulas.univariate.Univariate
+
+    def test___init__non_distr(self):
+        """If distribution is not an str, it is store as given."""
+        univariate = copulas.univariate.Univariate()
+        ct = GaussianCopulaTransformer(distribution=univariate)
+
+        assert ct._distribution is univariate
+
+    def test__get_univariate_instance(self):
+        """If a univariate instance is passed, make a copy."""
+        distribution = copulas.univariate.Univariate()
+        ct = GaussianCopulaTransformer(distribution=distribution)
+
+        univariate = ct._get_univariate()
+
+        assert univariate is not distribution
+        assert isinstance(univariate, copulas.univariate.Univariate)
+        assert dir(univariate) == dir(distribution)
+
+    def test__get_univariate_tuple(self):
+        """If a tuple is passed, create an instance using the given args."""
+        distribution = (
+            copulas.univariate.Univariate,
+            {'candidates': 'a_candidates_list'}
+        )
+        ct = GaussianCopulaTransformer(distribution=distribution)
+
+        univariate = ct._get_univariate()
+
+        assert isinstance(univariate, copulas.univariate.Univariate)
+        assert univariate.candidates == 'a_candidates_list'
+
+    def test__get_univariate_class(self):
+        """If a class is passed, create an instance without args."""
+        distribution = copulas.univariate.Univariate
+        ct = GaussianCopulaTransformer(distribution=distribution)
+
+        univariate = ct._get_univariate()
+
+        assert isinstance(univariate, copulas.univariate.Univariate)
+
+    def test__get_univariate_error(self):
+        """If something else is passed, rasie a TypeError."""
+        distribution = 123
+        ct = GaussianCopulaTransformer(distribution=distribution)
+
+        with pytest.raises(TypeError):
+            ct._get_univariate()

@@ -1,3 +1,4 @@
+"""Transformer for datetime data."""
 import numpy as np
 import pandas as pd
 
@@ -25,22 +26,45 @@ class DatetimeTransformer(BaseTransformer):
             If ``True``, always create the new column whether there are null values or not.
             If ``False``, do not create the new column.
             Defaults to ``None``.
+        strip_constant (bool):
+            Whether to optimize the output values by finding the smallest time unit that
+            is not zero on the training datetimes and dividing the generated numerical
+            values by the value of the next smallest time unit. This, a part from reducing the
+            orders of magnitued of the transformed values, ensures that reverted values always
+            are zero on the lower time units.
     """
 
     null_transformer = None
+    divider = None
 
-    def __init__(self, nan='mean', null_column=None):
+    def __init__(self, nan='mean', null_column=None, strip_constant=False):
         self.nan = nan
         self.null_column = null_column
+        self.strip_constant = strip_constant
 
-    @staticmethod
-    def _transform(datetimes):
+    def _find_divider(self, transformed):
+        self.divider = 1
+        multipliers = [10] * 9 + [60, 60, 24]
+        for multiplier in multipliers:
+            candidate = self.divider * multiplier
+            if np.mod(transformed, candidate).any():
+                break
+
+            self.divider = candidate
+
+    def _transform(self, datetimes):
         """Transform datetime values to integer."""
         nulls = datetimes.isnull()
-        integers = datetimes.astype(int).astype(float).values
+        integers = np.zeros(len(datetimes))
+        integers[~nulls] = datetimes[~nulls].astype(int).astype(float).values
         integers[nulls] = np.nan
 
-        return pd.Series(integers)
+        transformed = pd.Series(integers)
+        if self.strip_constant:
+            self._find_divider(transformed)
+            transformed = transformed.floordiv(self.divider)
+
+        return transformed
 
     def fit(self, data):
         """Fit the transformer to the data.
@@ -53,16 +77,8 @@ class DatetimeTransformer(BaseTransformer):
             data = pd.Series(data)
 
         transformed = self._transform(data)
-
-        if self.nan == 'mean':
-            fill_value = transformed.mean()
-        elif self.nan == 'mode':
-            fill_value = transformed.mode(dropna=True)[0]
-        else:
-            fill_value = self.nan
-
-        self.null_transformer = NullTransformer(fill_value, self.null_column)
-        self.null_transformer.fit(data)
+        self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
+        self.null_transformer.fit(transformed)
 
     def transform(self, data):
         """Transform datetime values to float values.
@@ -95,4 +111,7 @@ class DatetimeTransformer(BaseTransformer):
             data = self.null_transformer.reverse_transform(data)
 
         data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(int)
+        if self.strip_constant:
+            data = data * self.divider
+
         return pd.to_datetime(data)
