@@ -367,6 +367,16 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
+    def test_transform_all_zeros(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a'])
+        ohet.fit(data)
+
+        # Assert
+        with np.testing.assert_raises(ValueError):
+            ohet.transform(['b'])
+
     def test_reverse_transform_no_nans(self):
         # Setup
         ohet = OneHotEncodingTransformer()
