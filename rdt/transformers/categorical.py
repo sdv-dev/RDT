@@ -249,8 +249,8 @@ class OneHotEncodingTransformer(BaseTransformer):
         array = dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
         for i, row in enumerate(array):
             if np.all(row == 0):
-                raise ValueError("The value '%s' was not seen during the fit stage." % data[i])
-        
+                raise ValueError(f"The value {data[i]} was not seen during the fit stage.")
+
         return array
 
     def reverse_transform(self, data):
