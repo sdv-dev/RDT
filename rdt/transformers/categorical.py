@@ -247,8 +247,8 @@ class OneHotEncodingTransformer(BaseTransformer):
         """
         dummies = pd.get_dummies(data, dummy_na=self.dummy_na)
         array = dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
-        for i, col in enumerate(array.T):
-            if np.all(col == 0):
+        for i, row in enumerate(array):
+            if np.all(row == 0):
                 raise ValueError("The value '%s' was not seen during the fit stage." % data[i])
         
         return array
