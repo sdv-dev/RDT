@@ -76,7 +76,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description='Reversible Data Transformsi',
+    description='Reversible Data Transforms',
     extras_require={
         'test': tests_require,
         'dev': development_requires + tests_require,
