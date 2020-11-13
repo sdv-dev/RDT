@@ -236,15 +236,21 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         Returns:
             pandas.Series or numpy.ndarray
+
+                if isinstance(data, list):
+            data = np.array(data)
         """
         if isinstance(data, list):
             data = np.array(data)
-            if len(data.shape) == 2:
-                if data.shape[1] != 1:
-                    raise ValueError("Unexpected format.")
-                data = data[:, 0]
-            elif len(data.shape) > 2:
+
+        if len(data.shape) > 2:
+            raise ValueError("Unexpected format.")
+        elif len(data.shape) == 2:
+            if data.shape[1] != 1:
                 raise ValueError("Unexpected format.")
+
+            data = data[:, 0]
+
         return data
 
     def fit(self, data):
