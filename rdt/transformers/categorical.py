@@ -223,15 +223,40 @@ class OneHotEncodingTransformer(BaseTransformer):
     dummy_na = None
     dummies = None
 
+    @staticmethod
+    def _prepare_data(data):
+        """Transform data to appropriate format.
+
+        If data is a valid list or a list of lists, transforms it into an np.array,
+        otherwise returns it.
+
+        Args:
+            data (pandas.Series, numpy.ndarray, list or list of lists):
+                Data to prepare.
+
+        Returns:
+            pandas.Series or numpy.ndarray
+        """
+        if isinstance(data, list):
+            data = np.array(data)
+            if len(data.shape) == 2:
+                if data.shape[1] != 1:
+                    raise ValueError("Unexpected format.")
+                data = data[:, 0]
+            elif len(data.shape) > 2:
+                raise ValueError("Unexpected format.")
+        return data
+
     def fit(self, data):
         """Fit the transformer to the data.
 
         Get the pandas `dummies` which will be used later on for OneHotEncoding.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series, numpy.ndarray, list or list of lists):
                 Data to fit the transformer to.
         """
+        data = self._prepare_data(data)
         self.dummy_na = pd.isnull(data).any()
         self.dummies = list(pd.get_dummies(data, dummy_na=self.dummy_na).columns)
 
@@ -239,12 +264,13 @@ class OneHotEncodingTransformer(BaseTransformer):
         """Replace each category with the OneHot vectors.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series, numpy.ndarray, list or list of lists):
                 Data to transform.
 
         Returns:
             numpy.ndarray:
         """
+        data = self._prepare_data(data)
         dummies = pd.get_dummies(data, dummy_na=self.dummy_na)
         return dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
 
