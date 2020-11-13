@@ -245,7 +245,7 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         if len(data.shape) > 2:
             raise ValueError("Unexpected format.")
-        elif len(data.shape) == 2:
+        if len(data.shape) == 2:
             if data.shape[1] != 1:
                 raise ValueError("Unexpected format.")
 
