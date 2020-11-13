@@ -236,9 +236,6 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         Returns:
             pandas.Series or numpy.ndarray
-
-                if isinstance(data, list):
-            data = np.array(data)
         """
         if isinstance(data, list):
             data = np.array(data)
