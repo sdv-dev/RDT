@@ -221,11 +221,9 @@ class OneHotEncodingTransformer(BaseTransformer):
 
     Args:
         error_on_unknown (bool):
-
             If a value that was not seen during the fit stage is passed to
             transform, then an error will be raised if this is True.
     """
-
     dummy_na = None
     dummies = None
 
