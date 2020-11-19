@@ -12,11 +12,11 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'numpy>=1.15.4,<2',
-    'pandas>=0.21,<2',
-    'scipy>=1.1.0,<2',
+    'numpy>=1.17.4,<2',
+    'pandas>=1.1,<2',
+    'scipy>=1.4,<2',
     'Faker>=1.0.1,<2',
-    'copulas>=0.3.0,<0.4',
+    'copulas>=0.3.3,<0.4',
 ]
 
 setup_requires = [
@@ -61,6 +61,9 @@ development_requires = [
     # Advanced testing
     'coverage>=4.5.1,<6',
     'tox>=2.9.1,<4',
+
+    # Invoking test commands
+    'invoke'
 ]
 
 setup(
