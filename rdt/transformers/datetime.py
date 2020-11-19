@@ -56,7 +56,7 @@ class DatetimeTransformer(BaseTransformer):
         """Transform datetime values to integer."""
         nulls = datetimes.isnull()
         integers = np.zeros(len(datetimes))
-        integers[~nulls] = datetimes[~nulls].astype(int).astype(float).values
+        integers[~nulls] = datetimes[~nulls].astype(np.int64).astype(np.float64).values
         integers[nulls] = np.nan
 
         transformed = pd.Series(integers)
@@ -110,7 +110,7 @@ class DatetimeTransformer(BaseTransformer):
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 
-        data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(int)
+        data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(np.int64)
         if self.strip_constant:
             data = data * self.divider
 
