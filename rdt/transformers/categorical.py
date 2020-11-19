@@ -249,10 +249,10 @@ class OneHotEncodingTransformer(BaseTransformer):
             data = np.array(data)
 
         if len(data.shape) > 2:
-            raise ValueError("Unexpected format.")
+            raise ValueError('Unexpected format.')
         if len(data.shape) == 2:
             if data.shape[1] != 1:
-                raise ValueError("Unexpected format.")
+                raise ValueError('Unexpected format.')
 
             data = data[:, 0]
 
@@ -286,7 +286,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         array = dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
         for i, row in enumerate(array):
             if np.all(row == 0) and self.error_on_unknown:
-                raise ValueError(f"The value {data[i]} was not seen during the fit stage.")
+                raise ValueError(f'The value {data[i]} was not seen during the fit stage.')
 
         return array
 
