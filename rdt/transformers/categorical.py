@@ -218,10 +218,18 @@ class OneHotEncodingTransformer(BaseTransformer):
     is found and 0s on the rest.
 
     Null values are considered just another category.
+
+    Args:
+        error_on_unknown (bool):
+            If a value that was not seen during the fit stage is passed to
+            transform, then an error will be raised if this is True.
     """
 
     dummy_na = None
     dummies = None
+
+    def __init__(self, error_on_unknown=True):
+        self.error_on_unknown = error_on_unknown
 
     @staticmethod
     def _prepare_data(data):
@@ -275,7 +283,12 @@ class OneHotEncodingTransformer(BaseTransformer):
         """
         data = self._prepare_data(data)
         dummies = pd.get_dummies(data, dummy_na=self.dummy_na)
-        return dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
+        array = dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
+        for i, row in enumerate(array):
+            if np.all(row == 0) and self.error_on_unknown:
+                raise ValueError(f"The value {data[i]} was not seen during the fit stage.")
+
+        return array
 
     def reverse_transform(self, data):
         """Convert float values back to the original categorical values.
