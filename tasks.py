@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import stat
 from pathlib import Path
 
 from invoke import task
@@ -65,6 +66,15 @@ def lint(c):
     c.run('pylint rdt --rcfile=setup.cfg')
 
 
+def remove_readonly(func, path, _):
+    "Clear the readonly bit and reattempt the removal"
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
 @task
 def rmdir(c, path):
-    shutil.rmtree(path)
+    try:
+        shutil.rmtree(path, onerror=remove_readonly)
+    except PermissionError:
+        pass
