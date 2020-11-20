@@ -1,5 +1,21 @@
 # History
 
+## 0.2.8 - 2020-11-20
+
+This release fixes a few minor bugs, including some which prevented RDT from fully working
+on Windows systems.
+
+Thanks to this fixes, as well as a new testing infrastructure that has been set up, from now
+on RDT is officially supported on Windows systems, as well as on the Linux and macOS systems
+which were previously supported.
+
+### Issues closed
+
+* TypeError: unsupported operand type(s) for: 'NoneType' and 'int' - Issue [#132](https://github.com/sdv-dev/RDT/issues/132) by @csala
+* Example does not work on Windows - Issue [#114](https://github.com/sdv-dev/RDT/issues/114) by @csala
+* OneHotEncodingTransformer producing all zeros - Issue [#135](https://github.com/sdv-dev/RDT/issues/135) by @fealho
+* OneHotEncodingTransformer support for lists and lists of lists - Issue [#137](https://github.com/sdv-dev/RDT/issues/137) by @fealho
+
 ## 0.2.7 - 2020-10-16
 
 In this release we drop the support for the now officially dead Python 3.5

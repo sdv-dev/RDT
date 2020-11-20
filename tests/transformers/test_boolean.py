@@ -180,5 +180,5 @@ class TestBooleanTransformer(TestCase):
         # Asserts
         expected = np.array([True, False, True])
 
-        assert type(result) == pd.Series
+        assert isinstance(result, pd.Series)
         np.testing.assert_equal(result.values, expected)

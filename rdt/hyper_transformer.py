@@ -102,10 +102,8 @@ class HyperTransformer:
                 # probably category
                 kind = dtype
 
-            if kind == 'i':
-                transformer = NumericalTransformer(dtype=int)
-            elif kind == 'f':
-                transformer = NumericalTransformer(dtype=float)
+            if kind in ('i', 'f'):
+                transformer = NumericalTransformer(dtype=np.dtype(dtype))
             elif kind in ('O', 'category'):
                 anonymize = self.anonymize.get(name)
                 transformer = CategoricalTransformer(anonymize=anonymize)

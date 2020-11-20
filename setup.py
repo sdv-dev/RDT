@@ -12,11 +12,11 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'numpy>=1.15.4,<2',
-    'pandas>=0.21,<2',
-    'scipy>=1.1.0,<2',
+    'numpy>=1.17.4,<2',
+    'pandas>=1.1,<2',
+    'scipy>=1.4,<2',
     'Faker>=1.0.1,<2',
-    'copulas>=0.3.0,<0.4',
+    'copulas>=0.3.3,<0.4',
 ]
 
 setup_requires = [
@@ -61,6 +61,9 @@ development_requires = [
     # Advanced testing
     'coverage>=4.5.1,<6',
     'tox>=2.9.1,<4',
+
+    # Invoking test commands
+    'invoke'
 ]
 
 setup(
@@ -76,7 +79,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description='Reversible Data Transformsi',
+    description='Reversible Data Transforms',
     extras_require={
         'test': tests_require,
         'dev': development_requires + tests_require,
@@ -94,6 +97,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.2.7',
+    version='0.2.8.dev1',
     zip_safe=False,
 )

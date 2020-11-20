@@ -85,7 +85,7 @@ class NumericalTransformer(BaseTransformer):
                 Data to transform.
 
         Returns:
-            pandas.Series
+            numpy.ndarray
         """
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
