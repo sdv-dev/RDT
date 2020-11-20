@@ -39,3 +39,13 @@ class TestDatetimeTransformer:
         ])
         np.testing.assert_almost_equal(expect_trans, transformed)
         pd.testing.assert_series_equal(reverted, data)
+
+    def test_reverse_transform_all_none(self):
+        dt = pd.to_datetime(['2020-01-01'])
+        dtt = DatetimeTransformer(strip_constant=True)
+        dtt.fit(dt)
+
+        output = dtt.reverse_transform(np.array([None]))
+
+        expected = pd.to_datetime(['NaT'])
+        pd.testing.assert_series_equal(output.to_series(), expected.to_series())

@@ -37,7 +37,7 @@ class DatetimeTransformer(BaseTransformer):
     null_transformer = None
     divider = None
 
-    def __init__(self, nan='mean', null_column=None, strip_constant=False):
+    def __init__(self, nan='mean', null_column=None, strip_constant=True):
         self.nan = nan
         self.null_column = null_column
         self.strip_constant = strip_constant
@@ -112,6 +112,6 @@ class DatetimeTransformer(BaseTransformer):
 
         data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(np.int64)
         if self.strip_constant:
-            data = data * self.divider
+            data = data.astype(float) * self.divider
 
         return pd.to_datetime(data)
