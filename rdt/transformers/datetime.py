@@ -112,6 +112,6 @@ class DatetimeTransformer(BaseTransformer):
 
         data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(np.int64)
         if self.strip_constant:
-            data = data * self.divider
+            data = data.astype(float) * self.divider
 
         return pd.to_datetime(data)
