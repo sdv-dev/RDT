@@ -115,6 +115,9 @@ class CategoricalTransformer(BaseTransformer):
             end = start + prob
             mean = (start + end) / 2
             std = prob / 6
+            if pd.isnull(value):
+                value = np.nan
+
             intervals[value] = (start, end, mean, std)
             start = end
 
@@ -144,7 +147,11 @@ class CategoricalTransformer(BaseTransformer):
 
     def _get_value(self, category):
         """Get the value that represents this category."""
+        if pd.isnull(category):
+            category = np.nan
+
         mean, std = self.intervals[category][2:]
+
         if self.fuzzy:
             return norm.rvs(mean, std)
 
