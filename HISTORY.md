@@ -1,5 +1,15 @@
 # History
 
+## 0.2.9 - 2020-11-27
+
+This release fixes a bug that prevented the `CategoricalTransformer` from working properly
+when being passed data that contained numerical data only, without any strings, but also
+contained `None` or `NaN` values.
+
+### Issues closed
+
+* KeyError: nan - CategoricalTransformer fails on numerical + nan data only - Issue [#142](https://github.com/sdv-dev/RDT/issues/142) by @csala
+
 ## 0.2.8 - 2020-11-20
 
 This release fixes a few minor bugs, including some which prevented RDT from fully working
