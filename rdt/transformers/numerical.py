@@ -165,19 +165,19 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
     def __init__(self, dtype=None, nan='mean', null_column=None, distribution='parametric'):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column)
-        self._distributions = _get_distributions()
+        self._distributions = self._get_distributions()
 
         if isinstance(distribution, str):
             distribution = self._distributions[distribution]
 
         self._distribution = distribution
-    
+
     @staticmethod
     def _get_distributions():
         try:
             from copulas import univariate  # pylint: disable=import-outside-toplevel
-        except ImportError as ie:
-            ie.msg += (
+        except ImportError as error:
+            error.msg += (
                 '\n\nIt seems like `copulas` is not installed.\n'
                 'Please install it using:\n\n    pip install rdt[copulas]'
             )
