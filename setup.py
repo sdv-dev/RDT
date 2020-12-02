@@ -18,6 +18,9 @@ install_requires = [
     'Faker>=1.0.1,<2',
 ]
 
+copulas_requires = [
+    'copulas>=0.3.3,<0.4',
+]
 setup_requires = [
     'pytest-runner>=2.11.1',
 ]
@@ -29,6 +32,8 @@ tests_require = [
     'rundoc>=0.4.3,<0.5',
     'copulas>=0.3.3,<0.4',
 ]
+
+
 
 development_requires = [
     # general
@@ -81,6 +86,7 @@ setup(
     ],
     description='Reversible Data Transforms',
     extras_require={
+        'copulas': copulas_requires,
         'test': tests_require,
         'dev': development_requires + tests_require,
     },

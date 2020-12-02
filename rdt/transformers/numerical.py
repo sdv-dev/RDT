@@ -8,49 +8,7 @@ import scipy
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
-
-def _get_distributions():
-    from copulas import univariate  # pylint: disable=import-outside-toplevel
-    return {
-        'univariate': univariate.Univariate,
-        'parametric': (
-            univariate.Univariate, {
-                'parametric': univariate.ParametricType.PARAMETRIC,
-            },
-        ),
-        'bounded': (
-            univariate.Univariate,
-            {
-                'bounded': univariate.BoundedType.BOUNDED,
-            },
-        ),
-        'semi_bounded': (
-            univariate.Univariate,
-            {
-                'bounded': univariate.BoundedType.SEMI_BOUNDED,
-            },
-        ),
-        'parametric_bounded': (
-            univariate.Univariate,
-            {
-                'parametric': univariate.ParametricType.PARAMETRIC,
-                'bounded': univariate.BoundedType.BOUNDED,
-            },
-        ),
-        'parametric_semi_bounded': (
-            univariate.Univariate,
-            {
-                'parametric': univariate.ParametricType.PARAMETRIC,
-                'bounded': univariate.BoundedType.SEMI_BOUNDED,
-            },
-        ),
-        'gaussian': univariate.GaussianUnivariate,
-        'gamma': univariate.GammaUnivariate,
-        'beta': univariate.BetaUnivariate,
-        'student_t': univariate.StudentTUnivariate,
-        'gaussian_kde': univariate.GaussianKDE,
-        'truncated_gaussian': univariate.TruncatedGaussian,
-    }
+EPSILON = np.finfo(np.float32).eps
 
 
 class NumericalTransformer(BaseTransformer):
@@ -213,6 +171,58 @@ class GaussianCopulaTransformer(NumericalTransformer):
             distribution = self._distributions[distribution]
 
         self._distribution = distribution
+    
+    @staticmethod
+    def _get_distributions():
+        try:
+            from copulas import univariate  # pylint: disable=import-outside-toplevel
+        except ImportError as ie:
+            ie.msg += (
+                '\n\nIt seems like `copulas` is not installed.\n'
+                'Please install it using:\n\n    pip install rdt[copulas]'
+            )
+            raise
+
+        return {
+            'univariate': univariate.Univariate,
+            'parametric': (
+                univariate.Univariate, {
+                    'parametric': univariate.ParametricType.PARAMETRIC,
+                },
+            ),
+            'bounded': (
+                univariate.Univariate,
+                {
+                    'bounded': univariate.BoundedType.BOUNDED,
+                },
+            ),
+            'semi_bounded': (
+                univariate.Univariate,
+                {
+                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
+                },
+            ),
+            'parametric_bounded': (
+                univariate.Univariate,
+                {
+                    'parametric': univariate.ParametricType.PARAMETRIC,
+                    'bounded': univariate.BoundedType.BOUNDED,
+                },
+            ),
+            'parametric_semi_bounded': (
+                univariate.Univariate,
+                {
+                    'parametric': univariate.ParametricType.PARAMETRIC,
+                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
+                },
+            ),
+            'gaussian': univariate.GaussianUnivariate,
+            'gamma': univariate.GammaUnivariate,
+            'beta': univariate.BetaUnivariate,
+            'student_t': univariate.StudentTUnivariate,
+            'gaussian_kde': univariate.GaussianKDE,
+            'truncated_gaussian': univariate.TruncatedGaussian,
+        }
 
     def _get_univariate(self):
         distribution = self._distribution
@@ -244,7 +254,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
     def _copula_transform(self, data):
         cdf = self._univariate.cdf(data)
-        return scipy.stats.norm.ppf(cdf.clip(0 + 1e-5, 1 - 1e-5))
+        return scipy.stats.norm.ppf(cdf.clip(0 + EPSILON, 1 - EPSILON))
 
     def transform(self, data):
         """Transform numerical data.
