@@ -1,14 +1,14 @@
 """Transformers for numerical data."""
-
 import copy
 
 import numpy as np
 import pandas as pd
 import scipy
-from copulas import EPSILON, univariate
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
+
+EPSILON = np.finfo(np.float32).eps
 
 
 class NumericalTransformer(BaseTransformer):
@@ -161,64 +161,77 @@ class GaussianCopulaTransformer(NumericalTransformer):
                 * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
     """
 
-    _DISTRIBUTIONS = {
-        'univariate': univariate.Univariate,
-        'parametric': (
-            univariate.Univariate, {
-                'parametric': univariate.ParametricType.PARAMETRIC,
-            },
-        ),
-        'bounded': (
-            univariate.Univariate,
-            {
-                'bounded': univariate.BoundedType.BOUNDED,
-            },
-        ),
-        'semi_bounded': (
-            univariate.Univariate,
-            {
-                'bounded': univariate.BoundedType.SEMI_BOUNDED,
-            },
-        ),
-        'parametric_bounded': (
-            univariate.Univariate,
-            {
-                'parametric': univariate.ParametricType.PARAMETRIC,
-                'bounded': univariate.BoundedType.BOUNDED,
-            },
-        ),
-        'parametric_semi_bounded': (
-            univariate.Univariate,
-            {
-                'parametric': univariate.ParametricType.PARAMETRIC,
-                'bounded': univariate.BoundedType.SEMI_BOUNDED,
-            },
-        ),
-        'gaussian': univariate.GaussianUnivariate,
-        'gamma': univariate.GammaUnivariate,
-        'beta': univariate.BetaUnivariate,
-        'student_t': univariate.StudentTUnivariate,
-        'gaussian_kde': univariate.GaussianKDE,
-        'truncated_gaussian': univariate.TruncatedGaussian,
-    }
-
     _univariate = None
 
     def __init__(self, dtype=None, nan='mean', null_column=None, distribution='parametric'):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column)
+        self._distributions = self._get_distributions()
 
         if isinstance(distribution, str):
-            distribution = self._DISTRIBUTIONS[distribution]
+            distribution = self._distributions[distribution]
 
         self._distribution = distribution
 
+    @staticmethod
+    def _get_distributions():
+        try:
+            from copulas import univariate  # pylint: disable=import-outside-toplevel
+        except ImportError as error:
+            error.msg += (
+                '\n\nIt seems like `copulas` is not installed.\n'
+                'Please install it using:\n\n    pip install rdt[copulas]'
+            )
+            raise
+
+        return {
+            'univariate': univariate.Univariate,
+            'parametric': (
+                univariate.Univariate, {
+                    'parametric': univariate.ParametricType.PARAMETRIC,
+                },
+            ),
+            'bounded': (
+                univariate.Univariate,
+                {
+                    'bounded': univariate.BoundedType.BOUNDED,
+                },
+            ),
+            'semi_bounded': (
+                univariate.Univariate,
+                {
+                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
+                },
+            ),
+            'parametric_bounded': (
+                univariate.Univariate,
+                {
+                    'parametric': univariate.ParametricType.PARAMETRIC,
+                    'bounded': univariate.BoundedType.BOUNDED,
+                },
+            ),
+            'parametric_semi_bounded': (
+                univariate.Univariate,
+                {
+                    'parametric': univariate.ParametricType.PARAMETRIC,
+                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
+                },
+            ),
+            'gaussian': univariate.GaussianUnivariate,
+            'gamma': univariate.GammaUnivariate,
+            'beta': univariate.BetaUnivariate,
+            'student_t': univariate.StudentTUnivariate,
+            'gaussian_kde': univariate.GaussianKDE,
+            'truncated_gaussian': univariate.TruncatedGaussian,
+        }
+
     def _get_univariate(self):
         distribution = self._distribution
-        if isinstance(distribution, univariate.Univariate):
+        if isinstance(distribution, self._distributions['univariate']):
             return copy.deepcopy(distribution)
         if isinstance(distribution, tuple):
             return distribution[0](**distribution[1])
-        if isinstance(distribution, type) and issubclass(distribution, univariate.Univariate):
+        if isinstance(distribution, type) and \
+           issubclass(distribution, self._distributions['univariate']):
             return distribution()
 
         raise TypeError('Invalid distribution: {}'.format(distribution))

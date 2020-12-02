@@ -16,9 +16,11 @@ install_requires = [
     'pandas>=1.1,<2',
     'scipy>=1.4,<2',
     'Faker>=1.0.1,<2',
-    'copulas>=0.3.3,<0.4',
 ]
 
+copulas_requires = [
+    'copulas>=0.3.3,<0.4',
+]
 setup_requires = [
     'pytest-runner>=2.11.1',
 ]
@@ -28,7 +30,10 @@ tests_require = [
     'pytest-cov>=2.6.0',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
+    'copulas>=0.3.3,<0.4',
 ]
+
+
 
 development_requires = [
     # general
@@ -81,8 +86,9 @@ setup(
     ],
     description='Reversible Data Transforms',
     extras_require={
-        'test': tests_require,
-        'dev': development_requires + tests_require,
+        'copulas': copulas_requires,
+        'test': tests_require + copulas_requires,
+        'dev': development_requires + tests_require + copulas_requires,
     },
     include_package_data=True,
     install_requires=install_requires,

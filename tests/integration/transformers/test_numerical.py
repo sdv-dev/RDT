@@ -73,7 +73,7 @@ class TestGaussianCopulaTransformer:
 
         reverse = ct.reverse_transform(transformed)
 
-        np.testing.assert_array_almost_equal(reverse, data, decimal=2)
+        np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_null_column(self):
         data = np.array([1, 2, 1, 2, np.nan, 1])
