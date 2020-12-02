@@ -16,7 +16,6 @@ install_requires = [
     'pandas>=1.1,<2',
     'scipy>=1.4,<2',
     'Faker>=1.0.1,<2',
-    'copulas>=0.3.3,<0.4',
 ]
 
 setup_requires = [
@@ -28,6 +27,7 @@ tests_require = [
     'pytest-cov>=2.6.0',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
+    'copulas>=0.3.3,<0.4',
 ]
 
 development_requires = [
