@@ -8,8 +8,9 @@ import scipy
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
+
 def _get_distributions():
-    from copulas import univariate
+    from copulas import univariate  # pylint: disable=import-outside-toplevel
     return {
         'univariate': univariate.Univariate,
         'parametric': (
@@ -50,6 +51,7 @@ def _get_distributions():
         'gaussian_kde': univariate.GaussianKDE,
         'truncated_gaussian': univariate.TruncatedGaussian,
     }
+
 
 class NumericalTransformer(BaseTransformer):
     """Transformer for numerical data.
@@ -205,20 +207,21 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
     def __init__(self, dtype=None, nan='mean', null_column=None, distribution='parametric'):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column)
-        self._DISTRIBUTIONS = _get_distributions()
+        self._distributions = _get_distributions()
 
         if isinstance(distribution, str):
-            distribution = self._DISTRIBUTIONS[distribution]
+            distribution = self._distributions[distribution]
 
         self._distribution = distribution
 
     def _get_univariate(self):
         distribution = self._distribution
-        if isinstance(distribution, self._DISTRIBUTIONS['univariate']):
+        if isinstance(distribution, self._distributions['univariate']):
             return copy.deepcopy(distribution)
         if isinstance(distribution, tuple):
             return distribution[0](**distribution[1])
-        if isinstance(distribution, type) and issubclass(distribution, self._DISTRIBUTIONS['univariate']):
+        if isinstance(distribution, type) and \
+           issubclass(distribution, self._distributions['univariate']):
             return distribution()
 
         raise TypeError('Invalid distribution: {}'.format(distribution))
