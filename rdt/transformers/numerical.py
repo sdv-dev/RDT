@@ -1,55 +1,15 @@
 """Transformers for numerical data."""
+
 import copy
 
 import numpy as np
 import pandas as pd
 import scipy
+from copulas import EPSILON, univariate
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
-def _get_distributions():
-    from copulas import univariate
-    return {
-        'univariate': univariate.Univariate,
-        'parametric': (
-            univariate.Univariate, {
-                'parametric': univariate.ParametricType.PARAMETRIC,
-            },
-        ),
-        'bounded': (
-            univariate.Univariate,
-            {
-                'bounded': univariate.BoundedType.BOUNDED,
-            },
-        ),
-        'semi_bounded': (
-            univariate.Univariate,
-            {
-                'bounded': univariate.BoundedType.SEMI_BOUNDED,
-            },
-        ),
-        'parametric_bounded': (
-            univariate.Univariate,
-            {
-                'parametric': univariate.ParametricType.PARAMETRIC,
-                'bounded': univariate.BoundedType.BOUNDED,
-            },
-        ),
-        'parametric_semi_bounded': (
-            univariate.Univariate,
-            {
-                'parametric': univariate.ParametricType.PARAMETRIC,
-                'bounded': univariate.BoundedType.SEMI_BOUNDED,
-            },
-        ),
-        'gaussian': univariate.GaussianUnivariate,
-        'gamma': univariate.GammaUnivariate,
-        'beta': univariate.BetaUnivariate,
-        'student_t': univariate.StudentTUnivariate,
-        'gaussian_kde': univariate.GaussianKDE,
-        'truncated_gaussian': univariate.TruncatedGaussian,
-    }
 
 class NumericalTransformer(BaseTransformer):
     """Transformer for numerical data.
@@ -201,11 +161,51 @@ class GaussianCopulaTransformer(NumericalTransformer):
                 * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
     """
 
+    _DISTRIBUTIONS = {
+        'univariate': univariate.Univariate,
+        'parametric': (
+            univariate.Univariate, {
+                'parametric': univariate.ParametricType.PARAMETRIC,
+            },
+        ),
+        'bounded': (
+            univariate.Univariate,
+            {
+                'bounded': univariate.BoundedType.BOUNDED,
+            },
+        ),
+        'semi_bounded': (
+            univariate.Univariate,
+            {
+                'bounded': univariate.BoundedType.SEMI_BOUNDED,
+            },
+        ),
+        'parametric_bounded': (
+            univariate.Univariate,
+            {
+                'parametric': univariate.ParametricType.PARAMETRIC,
+                'bounded': univariate.BoundedType.BOUNDED,
+            },
+        ),
+        'parametric_semi_bounded': (
+            univariate.Univariate,
+            {
+                'parametric': univariate.ParametricType.PARAMETRIC,
+                'bounded': univariate.BoundedType.SEMI_BOUNDED,
+            },
+        ),
+        'gaussian': univariate.GaussianUnivariate,
+        'gamma': univariate.GammaUnivariate,
+        'beta': univariate.BetaUnivariate,
+        'student_t': univariate.StudentTUnivariate,
+        'gaussian_kde': univariate.GaussianKDE,
+        'truncated_gaussian': univariate.TruncatedGaussian,
+    }
+
     _univariate = None
 
     def __init__(self, dtype=None, nan='mean', null_column=None, distribution='parametric'):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column)
-        self._DISTRIBUTIONS = _get_distributions()
 
         if isinstance(distribution, str):
             distribution = self._DISTRIBUTIONS[distribution]
@@ -214,11 +214,11 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
     def _get_univariate(self):
         distribution = self._distribution
-        if isinstance(distribution, self._DISTRIBUTIONS['univariate']):
+        if isinstance(distribution, univariate.Univariate):
             return copy.deepcopy(distribution)
         if isinstance(distribution, tuple):
             return distribution[0](**distribution[1])
-        if isinstance(distribution, type) and issubclass(distribution, self._DISTRIBUTIONS['univariate']):
+        if isinstance(distribution, type) and issubclass(distribution, univariate.Univariate):
             return distribution()
 
         raise TypeError('Invalid distribution: {}'.format(distribution))
@@ -241,7 +241,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
     def _copula_transform(self, data):
         cdf = self._univariate.cdf(data)
-        return scipy.stats.norm.ppf(cdf.clip(0 + 1e-5, 1 - 1e-5))
+        return scipy.stats.norm.ppf(cdf.clip(0 + EPSILON, 1 - EPSILON))
 
     def transform(self, data):
         """Transform numerical data.
