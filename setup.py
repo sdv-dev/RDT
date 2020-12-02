@@ -87,8 +87,8 @@ setup(
     description='Reversible Data Transforms',
     extras_require={
         'copulas': copulas_requires,
-        'test': tests_require,
-        'dev': development_requires + tests_require,
+        'test': tests_require + copulas_requires,
+        'dev': development_requires + tests_require + copulas_requires,
     },
     include_package_data=True,
     install_requires=install_requires,
