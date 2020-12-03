@@ -15,7 +15,7 @@ install_requires = [
     'numpy>=1.17.4,<2',
     'pandas>=1.1,<2',
     'scipy>=1.4,<2',
-    'Faker>=1.0.1,<2',
+    'Faker>=1.0.1,<4.15',
 ]
 
 copulas_requires = [

@@ -45,6 +45,16 @@ This will pull and install the latest stable release from [PyPi](https://pypi.or
 If you want to install from source or contribute to the project please read the
 [Contributing Guide](CONTRIBUTING.rst).
 
+## Install with conda
+
+**RDT** can also be installed using [conda](https://docs.conda.io/en/latest/):
+
+```bash
+conda install -c sdv-dev -c conda-forge rdt
+```
+
+This will pull and install the latest stable release from [Anaconda](https://anaconda.org/).
+
 
 # Quickstart
 
