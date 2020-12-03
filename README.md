@@ -37,13 +37,23 @@ The easiest and recommended way to install **RDT** is using [pip](
 https://pip.pypa.io/en/stable/):
 
 ```bash
-pip install rdt
+pip install rdt[copulas]
 ```
 
 This will pull and install the latest stable release from [PyPi](https://pypi.org/).
 
 If you want to install from source or contribute to the project please read the
 [Contributing Guide](CONTRIBUTING.rst).
+
+## Install with conda
+
+**RDT** can also be installed using [conda](https://docs.conda.io/en/latest/):
+
+```bash
+conda install -c sdv-dev -c conda-forge rdt
+```
+
+This will pull and install the latest stable release from [Anaconda](https://anaconda.org/).
 
 
 # Quickstart
