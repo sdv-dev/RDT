@@ -37,7 +37,7 @@ The easiest and recommended way to install **RDT** is using [pip](
 https://pip.pypa.io/en/stable/):
 
 ```bash
-pip install rdt[copulas]
+pip install rdt
 ```
 
 This will pull and install the latest stable release from [PyPi](https://pypi.org/).
