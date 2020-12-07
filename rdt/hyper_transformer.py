@@ -1,12 +1,14 @@
 """Hyper transformer module."""
 
 import re
+import warnings
+from copy import deepcopy
 
 import numpy as np
 
 from rdt.transformers import (
-    BooleanTransformer, CategoricalTransformer, DatetimeTransformer, NumericalTransformer,
-    load_transformers)
+    BooleanTransformer, CategoricalTransformer, DatetimeTransformer, LabelEncodingTransformer,
+    NumericalTransformer, OneHotEncodingTransformer, load_transformers)
 
 
 class HyperTransformer:
@@ -28,6 +30,10 @@ class HyperTransformer:
         dtypes (list or None):
             List of column data types to use when building the ``transformers`` dict
             automatically. If not passed, the ``DataFrame.dtypes`` are used.
+        dtype_transformers (dict or None):
+            Transformer templates to use for each dtype. Passed as a dictionary of
+            dtype kinds ('i', 'f', 'O', 'b', 'M') and transformer names, classes
+            or instances.
 
     Example:
         Create a simple ``HyperTransformer`` instance that will decide which transformers
@@ -53,12 +59,34 @@ class HyperTransformer:
         >>> ht = HyperTransformer(transformers)
     """
 
-    def __init__(self, transformers=None, copy=True, anonymize=None, dtypes=None):
+    _TRANSFORMER_TEMPLATES = {
+        'integer': NumericalTransformer(dtype=int),
+        'float': NumericalTransformer(dtype=float),
+        'categorical': CategoricalTransformer,
+        'categorical_fuzzy': CategoricalTransformer(fuzzy=True),
+        'one_hot_encoding': OneHotEncodingTransformer(error_on_unknown=False),
+        'label_encoding': LabelEncodingTransformer,
+        'boolean': BooleanTransformer,
+        'datetime': DatetimeTransformer(),
+    }
+    _DTYPE_TRANSFORMERS = {
+        'i': 'integer',
+        'f': 'float',
+        'O': 'categorical',
+        'b': 'boolean',
+        'M': 'datetime',
+    }
+
+    def __init__(self, transformers=None, copy=True, anonymize=None,
+                 dtypes=None, dtype_transformers=None):
         self.transformers = transformers
         self._transformers = dict()
         self.copy = copy
         self.anonymize = anonymize or dict()
         self.dtypes = dtypes
+        self.dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
+        if dtype_transformers:
+            self.dtype_transformers.update(dtype_transformers)
 
     def _analyze(self, data):
         """Build a ``dict`` with column names and transformers from a given ``pandas.DataFrame``.
@@ -100,19 +128,23 @@ class HyperTransformer:
                 kind = np.dtype(dtype).kind
             except TypeError:
                 # probably category
-                kind = dtype
+                kind = 'O'
 
-            if kind in ('i', 'f'):
-                transformer = NumericalTransformer(dtype=np.dtype(dtype))
-            elif kind in ('O', 'category'):
-                anonymize = self.anonymize.get(name)
-                transformer = CategoricalTransformer(anonymize=anonymize)
-            elif kind == 'b':
-                transformer = BooleanTransformer()
-            elif kind == 'M':
-                transformer = DatetimeTransformer()
-            else:
+            transformer_template = self.dtype_transformers[kind]
+            if not transformer_template:
                 raise ValueError('Unsupported dtype: {}'.format(dtype))
+
+            if isinstance(transformer_template, str):
+                transformer_template = self._TRANSFORMER_TEMPLATES[transformer_template]
+
+            if not isinstance(transformer_template, type):
+                transformer = deepcopy(transformer_template)
+            elif self.anonymize and transformer_template == CategoricalTransformer:
+                warnings.warn(
+                    'Categorical anonymization is deprecated and will be removed soon.')
+                transformer = CategoricalTransformer(anonymize=self.anonymize)
+            else:
+                transformer = transformer_template()
 
             transformers[name] = transformer
 
