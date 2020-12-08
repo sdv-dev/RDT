@@ -60,6 +60,7 @@ class HyperTransformer:
     """
 
     _TRANSFORMER_TEMPLATES = {
+        'numerical': NumericalTransformer,
         'integer': NumericalTransformer(dtype=int),
         'float': NumericalTransformer(dtype=float),
         'categorical': CategoricalTransformer,
@@ -67,11 +68,11 @@ class HyperTransformer:
         'one_hot_encoding': OneHotEncodingTransformer(error_on_unknown=False),
         'label_encoding': LabelEncodingTransformer,
         'boolean': BooleanTransformer,
-        'datetime': DatetimeTransformer(),
+        'datetime': DatetimeTransformer,
     }
     _DTYPE_TRANSFORMERS = {
-        'i': 'integer',
-        'f': 'float',
+        'i': 'numerical',
+        'f': 'numerical',
         'O': 'categorical',
         'b': 'boolean',
         'M': 'datetime',
