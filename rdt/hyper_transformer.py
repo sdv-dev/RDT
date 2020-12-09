@@ -142,7 +142,9 @@ class HyperTransformer:
                 transformer = deepcopy(transformer_template)
             elif self.anonymize and transformer_template == CategoricalTransformer:
                 warnings.warn(
-                    'Categorical anonymization is deprecated and will be removed soon.')
+                    'Categorical anonymization is deprecated and will be removed from RDT soon.',
+                    DeprecationWarning
+                )
                 transformer = CategoricalTransformer(anonymize=self.anonymize)
             else:
                 transformer = transformer_template()
