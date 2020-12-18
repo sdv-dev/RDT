@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -7,7 +7,7 @@ import pytest
 
 from rdt import HyperTransformer
 from rdt.transformers import (
-    BooleanTransformer, CategoricalTransformer, DatetimeTransformer, NumericalTransformer)
+    BooleanTransformer, DatetimeTransformer, NumericalTransformer, OneHotEncodingTransformer)
 
 
 class TestHyperTransformerTransformer(TestCase):
@@ -22,123 +22,33 @@ class TestHyperTransformerTransformer(TestCase):
         self.assertEqual(ht.anonymize, dict())
         self.assertEqual(ht.dtypes, None)
 
-    def test__analyze_int(self):
-        """Test _analyze int dtype"""
+    def test__analyze(self):
+        """Test _analyze"""
         # Setup
-        data = pd.DataFrame({
-            'integers': [1, 2, 3, 4, 5, None, 6, 7, 8, 9, 0]
-        })
-
-        dtypes = [int]
+        hp = HyperTransformer(dtype_transformers={'O': 'one_hot_encoding'})
 
         # Run
-        transformer = Mock()
-        transformer.dtypes = dtypes
-
-        result = HyperTransformer._analyze(transformer, data)
+        data = pd.DataFrame({
+            'int': [1, 2, None],
+            'float': [1.0, 2.0, None],
+            'object': ['foo', 'bar', None],
+            'category': [1, 2, None],
+            'bool': [True, False, None],
+            'datetime': pd.to_datetime(['1965-05-23', None, '1997-10-17']),
+        })
+        data['category'] = data['category'].astype('category')
+        result = hp._analyze(data)
 
         # Asserts
-        expect_class = NumericalTransformer
+        assert isinstance(result, dict)
+        assert set(result.keys()) == {'int', 'float', 'object', 'category', 'bool', 'datetime'}
 
-        self.assertIsInstance(result['integers'], expect_class)
-
-    def test__analyze_float(self):
-        """Test _analyze float dtype"""
-        # Setup
-        data = pd.DataFrame({
-            'floats': [1.1, 2.2, 3.3, 4.4, 5.5, None, 6.6, 7.7, 8.8, 9.9, 0.0]
-        })
-
-        dtypes = [float]
-
-        # Run
-        transformer = Mock()
-        transformer.dtypes = dtypes
-
-        result = HyperTransformer._analyze(transformer, data)
-
-        # Asserts
-        expect_class = NumericalTransformer
-
-        self.assertIsInstance(result['floats'], expect_class)
-
-    def test__analyze_object(self):
-        """Test _analyze object dtype"""
-        # Setup
-        data = pd.DataFrame({
-            'objects': ['foo', 'bar', None, 'tar']
-        })
-
-        dtypes = [np.object]
-
-        # Run
-        transformer = Mock()
-        transformer.dtypes = dtypes
-
-        result = HyperTransformer._analyze(transformer, data)
-
-        # Asserts
-        expect_class = CategoricalTransformer
-
-        self.assertIsInstance(result['objects'], expect_class)
-
-    def test__analyze_bool(self):
-        """Test _analyze bool dtype"""
-        # Setup
-        data = pd.DataFrame({
-            'booleans': [True, False, None, False, True]
-        })
-
-        dtypes = [bool]
-
-        # Run
-        transformer = Mock()
-        transformer.dtypes = dtypes
-
-        result = HyperTransformer._analyze(transformer, data)
-
-        # Asserts
-        expect_class = BooleanTransformer
-
-        self.assertIsInstance(result['booleans'], expect_class)
-
-    def test__analyze_datetime64(self):
-        """Test _analyze datetime64 dtype"""
-        # Setup
-        data = pd.DataFrame({
-            'datetimes': ['1965-05-23', None, '1997-10-17']
-        })
-
-        data['datetimes'] = pd.to_datetime(data['datetimes'], format='%Y-%m-%d', errors='coerce')
-
-        dtypes = [np.datetime64]
-
-        # Run
-        transformer = Mock()
-        transformer.dtypes = dtypes
-
-        result = HyperTransformer._analyze(transformer, data)
-
-        # Asserts
-        expect_class = DatetimeTransformer
-
-        self.assertIsInstance(result['datetimes'], expect_class)
-
-    @patch('rdt.hyper_transformer.np.dtype', new=Mock())
-    def test__analyze_raise_error(self):
-        """Test _analyze raise error"""
-        # Setup
-        data = Mock()
-        data.columns = ['foo']
-
-        dtypes = [Mock()]
-
-        # Run
-        transformer = Mock()
-        transformer.dtypes = dtypes
-
-        with self.assertRaises(ValueError):
-            HyperTransformer._analyze(transformer, data)
+        assert isinstance(result['int'], NumericalTransformer)
+        assert isinstance(result['float'], NumericalTransformer)
+        assert isinstance(result['object'], OneHotEncodingTransformer)
+        assert isinstance(result['category'], OneHotEncodingTransformer)
+        assert isinstance(result['bool'], BooleanTransformer)
+        assert isinstance(result['datetime'], DatetimeTransformer)
 
     def test_fit_with_analyze(self):
         """Test fit and analyze the transformers"""

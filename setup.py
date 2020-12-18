@@ -12,13 +12,15 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'numpy>=1.15.4,<2',
-    'pandas>=0.21,<2',
-    'scipy>=1.1.0,<2',
-    'Faker>=1.0.1,<2',
-    'copulas>=0.3.0,<0.4',
+    'numpy>=1.17.4,<2',
+    'pandas>=1.1,<1.1.5',
+    'scipy>=1.4,<2',
+    'Faker>=1.0.1,<4.15',
 ]
 
+copulas_requires = [
+    'copulas>=0.3.3,<0.4',
+]
 setup_requires = [
     'pytest-runner>=2.11.1',
 ]
@@ -28,7 +30,10 @@ tests_require = [
     'pytest-cov>=2.6.0',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
+    'copulas>=0.3.3,<0.4',
 ]
+
+
 
 development_requires = [
     # general
@@ -61,6 +66,9 @@ development_requires = [
     # Advanced testing
     'coverage>=4.5.1,<6',
     'tox>=2.9.1,<4',
+
+    # Invoking test commands
+    'invoke'
 ]
 
 setup(
@@ -72,15 +80,15 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description='Reversible Data Transformsi',
+    description='Reversible Data Transforms',
     extras_require={
-        'test': tests_require,
-        'dev': development_requires + tests_require,
+        'copulas': copulas_requires,
+        'test': tests_require + copulas_requires,
+        'dev': development_requires + tests_require + copulas_requires,
     },
     include_package_data=True,
     install_requires=install_requires,
@@ -90,11 +98,11 @@ setup(
     long_description_content_type='text/markdown',
     name='rdt',
     packages=find_packages(include=['rdt', 'rdt.*']),
-    python_requires='>=3.5,<3.9',
+    python_requires='>=3.6,<3.9',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.2.6',
+    version='0.2.10.dev1',
     zip_safe=False,
 )

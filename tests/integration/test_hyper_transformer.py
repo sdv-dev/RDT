@@ -45,13 +45,13 @@ def get_transformers():
         'integer': {
             'class': 'NumericalTransformer',
             'kwargs': {
-                'dtype': int,
+                'dtype': np.int64,
             }
         },
         'float': {
             'class': 'NumericalTransformer',
             'kwargs': {
-                'dtype': float,
+                'dtype': np.float64,
             }
         },
         'categorical': {

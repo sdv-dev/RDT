@@ -111,6 +111,9 @@ class NullTransformer(BaseTransformer):
                 data = pd.Series(data)
 
             if isnull.any():
+                if self.copy:
+                    data = data.copy()
+
                 data.iloc[isnull] = np.nan
 
         return data

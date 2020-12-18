@@ -1,5 +1,54 @@
 # History
 
+## 0.2.10 - 2020-12-18
+
+This release adds a new argument to the `HyperTransformer` which gives control over
+which transformers to use by default for each `dtype` if no specific transformer
+has been specified for the field.
+
+This is also the first version to be officially released on conda.
+
+### Issues closed
+
+* Add `dtype_transformers` argument to HyperTransformer - Issue [#148](https://github.com/sdv-dev/RDT/issues/148) by @csala
+* Makes Copulas an optional dependency - Issue [#144](https://github.com/sdv-dev/RDT/issues/144) by @fealho
+
+## 0.2.9 - 2020-11-27
+
+This release fixes a bug that prevented the `CategoricalTransformer` from working properly
+when being passed data that contained numerical data only, without any strings, but also
+contained `None` or `NaN` values.
+
+### Issues closed
+
+* KeyError: nan - CategoricalTransformer fails on numerical + nan data only - Issue [#142](https://github.com/sdv-dev/RDT/issues/142) by @csala
+
+## 0.2.8 - 2020-11-20
+
+This release fixes a few minor bugs, including some which prevented RDT from fully working
+on Windows systems.
+
+Thanks to this fixes, as well as a new testing infrastructure that has been set up, from now
+on RDT is officially supported on Windows systems, as well as on the Linux and macOS systems
+which were previously supported.
+
+### Issues closed
+
+* TypeError: unsupported operand type(s) for: 'NoneType' and 'int' - Issue [#132](https://github.com/sdv-dev/RDT/issues/132) by @csala
+* Example does not work on Windows - Issue [#114](https://github.com/sdv-dev/RDT/issues/114) by @csala
+* OneHotEncodingTransformer producing all zeros - Issue [#135](https://github.com/sdv-dev/RDT/issues/135) by @fealho
+* OneHotEncodingTransformer support for lists and lists of lists - Issue [#137](https://github.com/sdv-dev/RDT/issues/137) by @fealho
+
+## 0.2.7 - 2020-10-16
+
+In this release we drop the support for the now officially dead Python 3.5
+and introduce a new feature in the DatetimeTransformer which reduces the dimensionality
+of the generated numerical values while also ensuring that the reverted datetimes
+maintain the same level as time unit precision as the original ones.
+
+* Drop Py35 support - Issue [#129](https://github.com/sdv-dev/RDT/issues/129) by @csala
+* Add option to drop constant parts of the datetimes - Issue [#130](https://github.com/sdv-dev/RDT/issues/130) by @csala
+
 ## 0.2.6 - 2020-10-05
 
 * Add GaussianCopulaTransformer - Issue [#125](https://github.com/sdv-dev/RDT/issues/125) by @csala

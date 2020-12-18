@@ -283,6 +283,48 @@ class TestCategoricalTransformer:
 
 class TestOneHotEncodingTransformer:
 
+    def test__prepare_data_empty_lists(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = [[], [], []]
+
+        # Assert
+        with pytest.raises(ValueError):
+            ohet._prepare_data(data)
+
+    def test__prepare_data_nested_lists(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = [[[]]]
+
+        # Assert
+        with pytest.raises(ValueError):
+            ohet._prepare_data(data)
+
+    def test__prepare_data_list_of_lists(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+
+        # Run
+        data = [['a'], ['b'], ['c']]
+        out = ohet._prepare_data(data)
+
+        # Assert
+        expected = np.array(['a', 'b', 'c'])
+        np.testing.assert_array_equal(out, expected)
+
+    def test__prepare_data_pandas_series(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+
+        # Run
+        data = pd.Series(['a', 'b', 'c'])
+        out = ohet._prepare_data(data)
+
+        # Assert
+        expected = pd.Series(['a', 'b', 'c'])
+        np.testing.assert_array_equal(out, expected)
+
     def test_fit_no_nans(self):
         # Setup
         ohet = OneHotEncodingTransformer()
@@ -366,6 +408,16 @@ class TestOneHotEncodingTransformer:
             [1]
         ])
         np.testing.assert_array_equal(out, expected)
+
+    def test_transform_all_zeros(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a'])
+        ohet.fit(data)
+
+        # Assert
+        with np.testing.assert_raises(ValueError):
+            ohet.transform(['b'])
 
     def test_reverse_transform_no_nans(self):
         # Setup
