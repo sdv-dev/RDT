@@ -1,5 +1,18 @@
 # History
 
+## 0.2.10 - 2020-12-18
+
+This release adds a new argument to the `HyperTransformer` which gives control over
+which transformers to use by default for each `dtype` if no specific transformer
+has been specified for the field.
+
+This is also the first version to be officially released on conda.
+
+### Issues closed
+
+* Add `dtype_transformers` argument to HyperTransformer - Issue [#148](https://github.com/sdv-dev/RDT/issues/148) by @csala
+* Makes Copulas an optional dependency - Issue [#144](https://github.com/sdv-dev/RDT/issues/144) by @fealho
+
 ## 0.2.9 - 2020-11-27
 
 This release fixes a bug that prevented the `CategoricalTransformer` from working properly
