@@ -10,7 +10,7 @@ from rdt.transformers import (
     BooleanTransformer, DatetimeTransformer, NumericalTransformer, OneHotEncodingTransformer)
 
 
-class TestHyperTransformerTransformer(TestCase):
+class TestHyperTransformer(TestCase):
 
     def test___init__(self):
         """Test create new instance of HyperTransformer"""

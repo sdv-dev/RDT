@@ -160,7 +160,7 @@ class HyperTransformer:
             data (pandas.DataFrame):
                 Data to fit the transformers to.
         """
-        if self.transformers:
+        if self.transformers is not None:
             self._transformers = load_transformers(self.transformers)
         else:
             self._transformers = self._analyze(data)
