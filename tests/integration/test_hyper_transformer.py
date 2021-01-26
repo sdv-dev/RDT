@@ -154,3 +154,17 @@ def test_dtype_category():
     rever = ht.reverse_transform(trans)
 
     pd.testing.assert_frame_equal(df, rever)
+
+
+def test_empty_transformers():
+    """If transformers is an empty dict, do nothing."""
+    data = get_input_data()
+
+    ht = HyperTransformer(transformers={})
+    ht.fit(data)
+
+    transformed = ht.transform(data)
+    reverse = ht.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(data, transformed)
+    pd.testing.assert_frame_equal(data, reverse)
