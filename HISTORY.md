@@ -1,5 +1,15 @@
 # History
 
+## 0.3.0 - 2021-01-27
+
+This release changes the behavior of the `HyperTransformer` to prevent it from
+modifying any column in the given `DataFrame` if the `transformers` dictionary
+is passed empty.
+
+### Issues closed
+
+* If transformers is an empty dict, do nothing - Issue [#149](https://github.com/sdv-dev/RDT/issues/149) by @csala
+
 ## 0.2.10 - 2020-12-18
 
 This release adds a new argument to the `HyperTransformer` which gives control over

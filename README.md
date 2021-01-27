@@ -1,59 +1,50 @@
 <p align="left">
-<img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt="DAI-Lab" />
-<i>An open source project from Data to AI Lab at MIT.</i>
+  <a href="https://dai.lids.mit.edu">
+    <img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt="DAI-Lab" />
+  </a>
+  <i>An Open Source Project from the <a href="https://dai.lids.mit.edu">Data to AI Lab, at MIT</a></i>
 </p>
 
 [![Development Status](https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow)](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
 [![PyPi Shield](https://img.shields.io/pypi/v/RDT.svg)](https://pypi.python.org/pypi/RDT)
-[![Travis CI Shield](https://travis-ci.com/sdv-dev/RDT.svg?branch=master)](https://travis-ci.com/sdv-dev/RDT)
-[![Coverage Status](https://codecov.io/gh/sdv-dev/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/RDT)
+[![Tests](https://github.com/sdv-dev/RDT/workflows/Run%20Tests/badge.svg)](https://github.com/sdv-dev/RDT/actions?query=workflow%3A%22Run+Tests%22+branch%3Amaster)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
+[![Coverage Status](https://codecov.io/gh/sdv-dev/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/RDT)
 
-# RDT: Reversible Data Transforms
+<img align="center" width=40% src="docs/images/rdt-logo.png">
 
+* Website: https://sdv.dev
+* Documentation: https://sdv.dev/SDV
+* Repository: https://github.com/sdv-dev/RDT
 * License: [MIT](https://github.com/sdv-dev/RDT/blob/master/LICENSE)
 * Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
-* Homepage: https://github.com/sdv-dev/RDT
 
-## Overview
+# Overview
 
 **RDT** is a Python library used to transform data for data science libraries and preserve
 the transformations in order to revert them as needed.
 
 # Install
 
-## Requirements
+**RDT** is part of the **SDV** project and is automatically installed alongside it. For
+details about this process please visit the [SDV Installation Guide](
+https://sdv.dev/SDV/getting_started/install.html)
 
-**RDT** has been developed and tested on [Python 3.6, 3.7 and 3.8](https://www.python.org/downloads/)
-on GNU/Linux, macOS and Windows systems.
+Optionally, **RDT** can also be installed as a standalone library using the following commands:
 
-Also, although it is not strictly required, the usage of a [virtualenv](
-https://virtualenv.pypa.io/en/latest/) is highly recommended in order to avoid
-interfering with other software installed in the system where **RDT** is run.
-
-## Install with pip
-
-The easiest and recommended way to install **RDT** is using [pip](
-https://pip.pypa.io/en/stable/):
+**Using `pip`:**
 
 ```bash
 pip install rdt
 ```
 
-This will pull and install the latest stable release from [PyPi](https://pypi.org/).
-
-If you want to install from source or contribute to the project please read the
-[Contributing Guide](CONTRIBUTING.rst).
-
-## Install with conda
-
-**RDT** can also be installed using [conda](https://docs.conda.io/en/latest/):
+**Using `conda`:**
 
 ```bash
 conda install -c sdv-dev -c conda-forge rdt
 ```
 
-This will pull and install the latest stable release from [Anaconda](https://anaconda.org/).
+For more installation options please visit the [RDT installation Guide](INSTALL.md)
 
 
 # Quickstart
@@ -245,3 +236,15 @@ Which should output, again, a table that looks exactly like the original one.
 8   68.0        NaN     c 2021-02-25 16:04:00
 9    7.0  31.542918     a 2020-07-12 03:12:00
 ```
+
+# The Synthetic Data Vault
+
+<p>
+  <a href="https://sdv.dev">
+    <img width=30% src="https://github.com/sdv-dev/SDV/blob/master/docs/images/SDV-Logo-Color-Tagline.png?raw=true">
+  </a>
+  <p><i>This repository is part of <a href="https://sdv.dev">The Synthetic Data Vault Project</a></i></p>
+</p>
+
+* Website: https://sdv.dev
+* Documentation: https://sdv.dev/SDV
