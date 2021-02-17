@@ -1,17 +1,44 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers import CategoricalTransformer
+from rdt.transformers import (
+    CategoricalTransformer, OneHotEncodingTransformer, LabelEncodingTransformer)
 
 
 def test_categorical_numerical_nans():
-    """Ensure CategoricalTransformers work on numerical + nan only columns."""
+    """Ensure CategoricalTransformer works on numerical + nan only columns."""
 
     data = pd.Series([1, 2, float('nan'), np.nan])
 
-    ct = CategoricalTransformer()
-    ct.fit(data)
-    transformed = ct.transform(data)
-    reverse = ct.reverse_transform(transformed)
+    transformer = CategoricalTransformer()
+    transformer.fit(data)
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    pd.testing.assert_series_equal(reverse, data)
+
+
+def test_one_hot_numerical_nans():
+    """Ensure OneHotEncodingTransformer works on numerical + nan only columns."""
+
+    data = pd.Series([1, 2, float('nan'), np.nan])
+
+    transformer = OneHotEncodingTransformer()
+    transformer.fit(data)
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    pd.testing.assert_series_equal(reverse, data)
+
+
+def test_label_numerical_nans():
+    """Ensure LabelEncodingTransformer works on numerical + nan only columns."""
+
+    data = pd.Series([1, 2, float('nan'), np.nan])
+
+    transformer = LabelEncodingTransformer()
+    transformer.fit(data)
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_series_equal(reverse, data)

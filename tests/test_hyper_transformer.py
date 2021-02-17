@@ -19,7 +19,6 @@ class TestHyperTransformer(TestCase):
 
         # Asserts
         self.assertTrue(ht.copy)
-        self.assertEqual(ht.anonymize, dict())
         self.assertEqual(ht.dtypes, None)
 
     def test__analyze(self):
@@ -49,6 +48,19 @@ class TestHyperTransformer(TestCase):
         assert isinstance(result['category'], OneHotEncodingTransformer)
         assert isinstance(result['bool'], BooleanTransformer)
         assert isinstance(result['datetime'], DatetimeTransformer)
+
+    def test__analyze_invalid_dtype(self):
+        """Test _analyze when a list of dtypes containing an invalid dtype is passed."""
+        # Setup
+        hp = HyperTransformer(dtypes=['int', 'complex'])
+
+        # Run
+        data = pd.DataFrame({
+            'int': [1, 2, None],
+            'complex': [1.0+0j, 2.0+1j, None],
+        })
+        with pytest.raises(ValueError):
+            hp._analyze(data)
 
     def test_fit_with_analyze(self):
         """Test fit and analyze the transformers"""
