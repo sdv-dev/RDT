@@ -57,7 +57,7 @@ class TestHyperTransformer(TestCase):
         # Run
         data = pd.DataFrame({
             'int': [1, 2, None],
-            'complex': [1.0+0j, 2.0+1j, None],
+            'complex': [1.0 + 0j, 2.0 + 1j, None],
         })
         with pytest.raises(ValueError):
             hp._analyze(data)

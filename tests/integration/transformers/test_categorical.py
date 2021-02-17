@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers import (
-    CategoricalTransformer, OneHotEncodingTransformer, LabelEncodingTransformer)
+    CategoricalTransformer, LabelEncodingTransformer, OneHotEncodingTransformer)
 
 
 def test_categorical_numerical_nans():
