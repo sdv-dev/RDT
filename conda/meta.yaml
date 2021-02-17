@@ -18,13 +18,11 @@ requirements:
     - pip
     - pytest-runner
     - python >=3.6,<3.9
-    - faker >=1.0.1,<4.15.0
     - numpy >=1.17.4,<2
     - pandas >=1.1,<1.1.5
     - scipy >=1.4,<2
   run:
     - python >=3.6,<3.9
-    - faker >=1.0.1,<4.15.0
     - numpy >=1.17.4,<2
     - pandas >=1.1,<1.1.5
     - scipy >=1.4,<2
