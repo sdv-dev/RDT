@@ -2,12 +2,9 @@
 
 import numpy as np
 import pandas as pd
-from faker import Faker
 from scipy.stats import norm
 
 from rdt.transformers.base import BaseTransformer
-
-MAPS = {}
 
 
 class CategoricalTransformer(BaseTransformer):
@@ -27,8 +24,6 @@ class CategoricalTransformer(BaseTransformer):
     Null values are considered just another category.
 
     Args:
-        anonymize (str, tuple or list):
-            Anonymization category. ``None`` disables anonymization. Defaults to ``None``.
         fuzzy (bool):
             Whether to generate gassian noise around the class representative of each interval
             or just use the mean for all the replaced values. Defaults to ``False``.
@@ -41,50 +36,9 @@ class CategoricalTransformer(BaseTransformer):
     intervals = None
     dtype = None
 
-    def __init__(self, anonymize=False, fuzzy=False, clip=False):
-        self.anonymize = anonymize
+    def __init__(self, fuzzy=False, clip=False):
         self.fuzzy = fuzzy
         self.clip = clip
-
-    def _get_faker(self):
-        """Return the faker object to anonymize data.
-
-        Returns:
-            function:
-                Faker function to generate new data instances with ``self.anonymize`` arguments.
-
-        Raises:
-            ValueError:
-                A ``ValueError`` is raised if the faker category we want don't exist.
-        """
-        if isinstance(self.anonymize, (tuple, list)):
-            category, *args = self.anonymize
-        else:
-            category = self.anonymize
-            args = tuple()
-
-        try:
-            faker_method = getattr(Faker(), category)
-
-            def faker():
-                return faker_method(*args)
-
-            return faker
-
-        except AttributeError as attrerror:
-            error = 'Category "{}" couldn\'t be found on faker'.format(self.anonymize)
-            raise ValueError(error) from attrerror
-
-    def _anonymize(self, data):
-        """Anonymize data and save in-memory the anonymized label encoding."""
-        faker = self._get_faker()
-        uniques = data.unique()
-        fake_data = [faker() for x in range(len(uniques))]
-
-        mapping = dict(zip(uniques, fake_data))
-        MAPS[id(self)] = mapping
-
-        return data.map(mapping)
 
     @staticmethod
     def _get_intervals(data):
@@ -126,8 +80,7 @@ class CategoricalTransformer(BaseTransformer):
     def fit(self, data):
         """Fit the transformer to the data.
 
-        Create the mapping dict to save the label encoding, anonymizing the data
-        before if needed.
+        Create the mapping dict to save the label encoding.
         Finaly, compute the intervals for each categorical value.
 
         Args:
@@ -139,9 +92,6 @@ class CategoricalTransformer(BaseTransformer):
 
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
-
-        if self.anonymize:
-            data = self._anonymize(data)
 
         self.intervals = self._get_intervals(data)
 
@@ -160,10 +110,7 @@ class CategoricalTransformer(BaseTransformer):
     def transform(self, data):
         """Transform categorical values to float values.
 
-        If anonymization is required, replace the values with the corresponding
-        anonymized counterparts before transforming.
-
-        Then replace the categories with their float representative value.
+        Replace the categories with their float representative value.
 
         Args:
             data (pandas.Series or numpy.ndarray):
@@ -174,9 +121,6 @@ class CategoricalTransformer(BaseTransformer):
         """
         if not isinstance(data, pd.Series):
             data = pd.Series(data)
-
-        if self.anonymize:
-            data = data.map(MAPS[id(self)])
 
         return data.fillna(np.nan).apply(self._get_value).to_numpy()
 

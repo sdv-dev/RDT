@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import numpy as np
 import pandas as pd
 
@@ -65,16 +63,11 @@ def get_transformers():
         },
         'names': {
             'class': 'CategoricalTransformer',
-            'kwargs': {
-                'anonymize': 'first_name'
-            }
         },
     }
 
 
-@patch('rdt.transformers.categorical.Faker')
-def test_hypertransformer_with_transformers(faker_mock):
-    faker_mock.return_value.first_name.side_effect = ['Jaime', 'Cersei', 'Tywin', 'Tyrion']
+def test_hypertransformer_with_transformers():
     data = get_input_data()
     transformers = get_transformers()
 
@@ -100,9 +93,7 @@ def test_hypertransformer_with_transformers(faker_mock):
         assert name not in reversed_names
 
 
-@patch('rdt.transformers.categorical.Faker')
-def test_hypertransformer_without_transformers(faker_mock):
-    faker_mock.return_value.first_name.side_effect = ['Jaime', 'Cersei', 'Tywin', 'Tyrion']
+def test_hypertransformer_without_transformers():
     data = get_input_data()
 
     ht = HyperTransformer()
