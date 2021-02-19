@@ -159,3 +159,20 @@ def test_empty_transformers():
 
     pd.testing.assert_frame_equal(data, transformed)
     pd.testing.assert_frame_equal(data, reverse)
+
+
+def test_subset_of_columns():
+    """HyperTransform should be able to transform a subset of the training columns.
+
+    See https://github.com/sdv-dev/RDT/issues/152
+    """
+    data = get_input_data()
+
+    ht = HyperTransformer()
+    ht.fit(data)
+
+    subset = data[[data.columns[0]]]
+    transformed = ht.transform(subset)
+    reverse = ht.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(subset, reverse)

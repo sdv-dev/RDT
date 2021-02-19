@@ -152,13 +152,14 @@ class TestHyperTransformer(TestCase):
         ])
         np.testing.assert_equal(returned, expected)
 
-    def test__get_columns_error(self):
+    def test__get_columns_none(self):
         data = pd.DataFrame({
             'a': [1, 2, 3],
         })
 
-        with pytest.raises(ValueError):
-            HyperTransformer._get_columns(data, 'b')
+        returned = HyperTransformer._get_columns(data, 'b')
+
+        assert returned is None
 
     def test__get_columns_regex(self):
         data = pd.DataFrame({

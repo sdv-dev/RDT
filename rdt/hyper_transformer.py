@@ -174,18 +174,19 @@ class HyperTransformer:
             data = data.copy()
 
         for column_name, transformer in self._transformers.items():
-            column = data.pop(column_name)
-            transformed = transformer.transform(column)
+            if column_name in data:
+                column = data.pop(column_name)
+                transformed = transformer.transform(column)
 
-            shape = transformed.shape
+                shape = transformed.shape
 
-            if len(shape) == 2:
-                for index in range(shape[1]):
-                    new_column = '{}#{}'.format(column_name, index)
-                    data[new_column] = transformed[:, index]
+                if len(shape) == 2:
+                    for index in range(shape[1]):
+                        new_column = '{}#{}'.format(column_name, index)
+                        data[new_column] = transformed[:, index]
 
-            else:
-                data[column_name] = transformed
+                else:
+                    data[column_name] = transformed
 
         return data
 
@@ -224,7 +225,7 @@ class HyperTransformer:
         regex = r'{}(#[0-9]+)?$'.format(re.escape(column_name))
         columns = data.columns[data.columns.str.match(regex)]
         if columns.empty:
-            raise ValueError('No columns match_ {}'.format(column_name))
+            return None
 
         values = [data.pop(column).values for column in columns]
 
@@ -249,6 +250,7 @@ class HyperTransformer:
 
         for column_name, transformer in self._transformers.items():
             columns = self._get_columns(data, column_name)
-            data[column_name] = transformer.reverse_transform(columns)
+            if columns is not None:
+                data[column_name] = transformer.reverse_transform(columns)
 
         return data
