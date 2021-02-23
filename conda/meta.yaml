@@ -18,14 +18,14 @@ requirements:
     - pip
     - pytest-runner
     - python >=3.6,<3.9
-    - numpy >=1.17.4,<2
+    - numpy >=1.18.0,<2
     - pandas >=1.1,<1.1.5
-    - scipy >=1.4,<2
+    - scipy >=1.4.1,<2
   run:
     - python >=3.6,<3.9
-    - numpy >=1.17.4,<2
+    - numpy >=1.18.0,<2
     - pandas >=1.1,<1.1.5
-    - scipy >=1.4,<2
+    - scipy >=1.4.1,<2
 
 about:
   home: "https://github.com/sdv-dev/RDT"
