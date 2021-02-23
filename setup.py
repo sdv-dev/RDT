@@ -18,8 +18,9 @@ install_requires = [
 ]
 
 copulas_requires = [
-    'copulas>=0.3.3,<0.4',
+    'copulas>=0.5.0.dev0,<0.6',
 ]
+
 setup_requires = [
     'pytest-runner>=2.11.1',
 ]
@@ -29,10 +30,7 @@ tests_require = [
     'pytest-cov>=2.6.0',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
-    'copulas>=0.3.3,<0.4',
 ]
-
-
 
 development_requires = [
     # general
