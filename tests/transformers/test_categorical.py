@@ -16,80 +16,13 @@ class TestCategoricalTransformer:
         """Passed arguments must be stored as attributes."""
         # Run
         transformer = CategoricalTransformer(
-            anonymize='anonymize_value',
             fuzzy='fuzzy_value',
             clip='clip_value',
         )
 
         # Asserts
-        assert transformer.anonymize == 'anonymize_value'
         assert transformer.fuzzy == 'fuzzy_value'
         assert transformer.clip == 'clip_value'
-
-    def test__get_faker_anonymize_tuple(self):
-        """If anonymize is a tuple, first value is the category, rest are arguments."""
-        # Setup
-        transformer = CategoricalTransformer(anonymize=('credit_card_number', 'visa'))
-
-        # Run
-        faker = transformer._get_faker()
-
-        # Asserts
-        assert callable(faker)
-
-        fake = faker()
-        assert isinstance(fake, str)
-        assert len(fake) == 16
-
-    def test__get_faker_anonymize_list(self):
-        """If anonymize is a list, first value is the category, rest are arguments."""
-        # Setup
-        transformer = CategoricalTransformer(anonymize=['credit_card_number', 'visa'])
-
-        # Run
-        faker = transformer._get_faker()
-
-        # Asserts
-        assert callable(faker)
-
-        fake = faker()
-        assert isinstance(fake, str)
-        assert len(fake) == 16
-
-    def test__get_faker_anonymize_str(self):
-        """If anonymize is a list, first value is the category, rest are arguments."""
-        # Setup
-        transformer = CategoricalTransformer(anonymize='ssn')
-
-        # Run
-        faker = transformer._get_faker()
-
-        # Asserts
-        assert callable(faker)
-
-        fake = faker()
-        assert isinstance(fake, str)
-        assert RE_SSN.match(fake)
-
-    def test__get_faker_anonymize_category_not_exist(self):
-        # Setup
-        transformer = CategoricalTransformer(anonymize='whatever')
-
-        # Run
-        with pytest.raises(ValueError):
-            transformer._get_faker()
-
-    def test__anonymize(self):
-        # Setup
-        transformer = CategoricalTransformer(anonymize='ssn')
-
-        # Run
-        data = pd.Series(['foo', 'bar', 'foo', 'tar'])
-        result = transformer._anonymize(data)
-
-        # Asserts
-        assert len(result) == 4
-        assert result.map(RE_SSN.match).astype(bool).all()
 
     def test__get_intervals(self):
         # Run
@@ -104,7 +37,7 @@ class TestCategoricalTransformer:
         }
         assert result == expected_intervals
 
-    def test_fit_no_anonymize(self):
+    def test_fit(self):
         # Setup
         transformer = CategoricalTransformer()
 
@@ -119,26 +52,6 @@ class TestCategoricalTransformer:
             'bar': (0.75, 1, 0.875, 0.25 / 6)
         }
         assert transformer.intervals == expected_intervals
-
-    def test_fit_anonymize(self):
-        # Setup
-        transformer = CategoricalTransformer(anonymize='ssn')
-
-        # Run
-        data = np.array(['bar', 'foo', 'foo', 'tar'])
-        transformer.fit(data)
-
-        # Asserts
-        expected_intervals = {
-            (0, 0.5, 0.25, 0.5 / 6),
-            (0.5, 0.75, 0.625, 0.25 / 6),
-            (0.75, 1, 0.875, 0.25 / 6)
-        }
-        unexpected_keys = {'bar', 'foo', 'tar'}
-
-        assert set(transformer.intervals.values()) == expected_intervals
-        keys = transformer.intervals.keys()
-        assert all((key not in unexpected_keys for key in keys))
 
     def test__get_value_no_fuzzy(self):
         # Setup
@@ -169,28 +82,6 @@ class TestCategoricalTransformer:
 
         # Asserts
         assert result == 0.2745
-
-    @patch('rdt.transformers.categorical.MAPS', new_callable=dict)
-    def test_transform_array_anonymize(self, mock_maps):
-        # Setup
-        transformer = CategoricalTransformer(anonymize='ssn')
-        transformer.intervals = {
-            'foo_x': (0, 0.5, 0.25, 0.5 / 6),
-            'bar_x': (0.5, 0.75, 0.625, 0.25 / 6),
-            'tar_x': (0.75, 1, 0.875, 0.25 / 6)
-        }
-        mock_maps[id(transformer)] = {
-            'foo': 'foo_x',
-            'bar': 'bar_x',
-            'tar': 'tar_x'
-        }
-
-        # Run
-        data = np.array(['foo', 'bar', 'tar'])
-        result = transformer.transform(data)
-
-        # Asserts
-        assert list(result) == [0.25, 0.625, 0.875]
 
     def test__normalize_no_clip(self):
         """Test normalize data"""

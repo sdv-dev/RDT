@@ -1,5 +1,5 @@
 {% set name = 'rdt' %}
-{% set version = '0.3.0' %}
+{% set version = '0.4.0.dev2' %}
 
 package:
   name: "{{ name|lower }}"
@@ -15,28 +15,26 @@ build:
 
 requirements:
   host:
-    - faker >=1.0.1,<4.15.0
-    - numpy >=1.17.4,<2
-    - pandas >=1.1,<1.1.5
     - pip
-    - python
-    - scipy >=1.4,<2
     - pytest-runner
-  run:
-    - faker >=1.0.1,<4.15.0
-    - numpy >=1.17.4,<2
+    - python >=3.6,<3.9
+    - numpy >=1.18.0,<2
     - pandas >=1.1,<1.1.5
-    - python
-    - scipy >=1.4,<2
+    - scipy >=1.4.1,<2
+  run:
+    - python >=3.6,<3.9
+    - numpy >=1.18.0,<2
+    - pandas >=1.1,<1.1.5
+    - scipy >=1.4.1,<2
 
 about:
   home: "https://github.com/sdv-dev/RDT"
   license: MIT
   license_family: MIT
-  license_file: 
+  license_file:
   summary: "Reversible Data Transforms"
-  doc_url: 
-  dev_url: 
+  doc_url:
+  dev_url:
 
 extra:
   recipe-maintainers:

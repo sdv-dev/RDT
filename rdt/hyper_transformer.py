@@ -1,7 +1,6 @@
 """Hyper transformer module."""
 
 import re
-import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -24,9 +23,6 @@ class HyperTransformer:
             ``transformers`` dict is built automatically from the data.
         copy (bool):
             Whether to make a copy of the input data or not. Defaults to ``True``.
-        anonymize (dict or None):
-            Dictionary specifying the names and ``faker`` categories of the categorical
-            columns that need to be anonymized. Defaults to ``None``.
         dtypes (list or None):
             List of column data types to use when building the ``transformers`` dict
             automatically. If not passed, the ``DataFrame.dtypes`` are used.
@@ -78,12 +74,10 @@ class HyperTransformer:
         'M': 'datetime',
     }
 
-    def __init__(self, transformers=None, copy=True, anonymize=None,
-                 dtypes=None, dtype_transformers=None):
+    def __init__(self, transformers=None, copy=True, dtypes=None, dtype_transformers=None):
         self.transformers = transformers
         self._transformers = dict()
         self.copy = copy
-        self.anonymize = anonymize or dict()
         self.dtypes = dtypes
         self.dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
         if dtype_transformers:
@@ -131,7 +125,7 @@ class HyperTransformer:
                 # probably category
                 kind = 'O'
 
-            transformer_template = self.dtype_transformers[kind]
+            transformer_template = self.dtype_transformers.get(kind)
             if not transformer_template:
                 raise ValueError('Unsupported dtype: {}'.format(dtype))
 
@@ -140,12 +134,6 @@ class HyperTransformer:
 
             if not isinstance(transformer_template, type):
                 transformer = deepcopy(transformer_template)
-            elif self.anonymize and transformer_template == CategoricalTransformer:
-                warnings.warn(
-                    'Categorical anonymization is deprecated and will be removed from RDT soon.',
-                    DeprecationWarning
-                )
-                transformer = CategoricalTransformer(anonymize=self.anonymize)
             else:
                 transformer = transformer_template()
 
@@ -186,18 +174,19 @@ class HyperTransformer:
             data = data.copy()
 
         for column_name, transformer in self._transformers.items():
-            column = data.pop(column_name)
-            transformed = transformer.transform(column)
+            if column_name in data:
+                column = data.pop(column_name)
+                transformed = transformer.transform(column)
 
-            shape = transformed.shape
+                shape = transformed.shape
 
-            if len(shape) == 2:
-                for index in range(shape[1]):
-                    new_column = '{}#{}'.format(column_name, index)
-                    data[new_column] = transformed[:, index]
+                if len(shape) == 2:
+                    for index in range(shape[1]):
+                        new_column = '{}#{}'.format(column_name, index)
+                        data[new_column] = transformed[:, index]
 
-            else:
-                data[column_name] = transformed
+                else:
+                    data[column_name] = transformed
 
         return data
 
@@ -236,7 +225,7 @@ class HyperTransformer:
         regex = r'{}(#[0-9]+)?$'.format(re.escape(column_name))
         columns = data.columns[data.columns.str.match(regex)]
         if columns.empty:
-            raise ValueError('No columns match_ {}'.format(column_name))
+            return None
 
         values = [data.pop(column).values for column in columns]
 
@@ -261,6 +250,7 @@ class HyperTransformer:
 
         for column_name, transformer in self._transformers.items():
             columns = self._get_columns(data, column_name)
-            data[column_name] = transformer.reverse_transform(columns)
+            if columns is not None:
+                data[column_name] = transformer.reverse_transform(columns)
 
         return data

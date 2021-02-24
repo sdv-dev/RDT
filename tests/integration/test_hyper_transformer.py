@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import numpy as np
 import pandas as pd
 
@@ -65,16 +63,11 @@ def get_transformers():
         },
         'names': {
             'class': 'CategoricalTransformer',
-            'kwargs': {
-                'anonymize': 'first_name'
-            }
         },
     }
 
 
-@patch('rdt.transformers.categorical.Faker')
-def test_hypertransformer_with_transformers(faker_mock):
-    faker_mock.return_value.first_name.side_effect = ['Jaime', 'Cersei', 'Tywin', 'Tyrion']
+def test_hypertransformer_with_transformers():
     data = get_input_data()
     transformers = get_transformers()
 
@@ -100,9 +93,7 @@ def test_hypertransformer_with_transformers(faker_mock):
         assert name not in reversed_names
 
 
-@patch('rdt.transformers.categorical.Faker')
-def test_hypertransformer_without_transformers(faker_mock):
-    faker_mock.return_value.first_name.side_effect = ['Jaime', 'Cersei', 'Tywin', 'Tyrion']
+def test_hypertransformer_without_transformers():
     data = get_input_data()
 
     ht = HyperTransformer()
@@ -168,3 +159,20 @@ def test_empty_transformers():
 
     pd.testing.assert_frame_equal(data, transformed)
     pd.testing.assert_frame_equal(data, reverse)
+
+
+def test_subset_of_columns():
+    """HyperTransform should be able to transform a subset of the training columns.
+
+    See https://github.com/sdv-dev/RDT/issues/152
+    """
+    data = get_input_data()
+
+    ht = HyperTransformer()
+    ht.fit(data)
+
+    subset = data[[data.columns[0]]]
+    transformed = ht.transform(subset)
+    reverse = ht.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(subset, reverse)

@@ -12,15 +12,15 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'numpy>=1.17.4,<2',
+    'numpy>=1.18.0,<2',
     'pandas>=1.1,<1.1.5',
-    'scipy>=1.4,<2',
-    'Faker>=1.0.1,<4.15',
+    'scipy>=1.4.1,<2',
 ]
 
 copulas_requires = [
-    'copulas>=0.3.3,<0.4',
+    'copulas>=0.5.0.dev0,<0.6',
 ]
+
 setup_requires = [
     'pytest-runner>=2.11.1',
 ]
@@ -30,10 +30,7 @@ tests_require = [
     'pytest-cov>=2.6.0',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
-    'copulas>=0.3.3,<0.4',
 ]
-
-
 
 development_requires = [
     # general
@@ -103,6 +100,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.3.0',
+    version='0.4.0.dev2',
     zip_safe=False,
 )
