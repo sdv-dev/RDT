@@ -1,5 +1,18 @@
 # History
 
+## 0.4.0 - 2021-02-24
+
+In this release a change in the HyperTransformer allows using it to transform and
+reverse transform a subset of the columns seen during training.
+
+The anonymization functionality which was deprecated and not being used has also
+been removed along with the Faker dependency.
+
+### Issues closed
+
+* Allow the HyperTransformer to be used on a subset of the columns - Issue [#152](https://github.com/sdv-dev/RDT/issues/152) by @csala
+* Remove faker - Issue [#150](https://github.com/sdv-dev/RDT/issues/150) by @csala
+
 ## 0.3.0 - 2021-01-27
 
 This release changes the behavior of the `HyperTransformer` to prevent it from
