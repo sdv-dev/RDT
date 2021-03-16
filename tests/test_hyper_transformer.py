@@ -131,14 +131,17 @@ class TestHyperTransformer(TestCase):
     def test__get_columns_one(self):
         data = pd.DataFrame({
             'a': [1, 2, 3],
+            'b': [1, 2, 3],
         })
 
         returned = HyperTransformer._get_columns(data, 'a')
 
-        np.testing.assert_equal(returned, np.array([1, 2, 3]))
+        np.testing.assert_equal(returned, np.array(['a']))
 
     def test__get_columns_two(self):
         data = pd.DataFrame({
+            'a': [4, 5, 6],
+            'a#1': [7, 8, 9],
             'b': [4, 5, 6],
             'b#1': [7, 8, 9],
         })
@@ -146,9 +149,8 @@ class TestHyperTransformer(TestCase):
         returned = HyperTransformer._get_columns(data, 'b')
 
         expected = np.array([
-            [4, 7],
-            [5, 8],
-            [6, 9]
+            'b',
+            'b#1',
         ])
         np.testing.assert_equal(returned, expected)
 
@@ -159,19 +161,20 @@ class TestHyperTransformer(TestCase):
 
         returned = HyperTransformer._get_columns(data, 'b')
 
-        assert returned is None
+        assert returned.empty
 
     def test__get_columns_regex(self):
         data = pd.DataFrame({
             'a(b)': [4, 5, 6],
             'a(b)#1': [7, 8, 9],
+            'b(b)': [4, 5, 6],
+            'b(b)#1': [7, 8, 9],
         })
 
         returned = HyperTransformer._get_columns(data, 'a(b)')
 
         expected = np.array([
-            [4, 7],
-            [5, 8],
-            [6, 9]
+            'a(b)',
+            'a(b)#1',
         ])
         np.testing.assert_equal(returned, expected)
