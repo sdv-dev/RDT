@@ -80,6 +80,9 @@ class BooleanTransformer(BaseTransformer):
             data = self.null_transformer.reverse_transform(data)
 
         if isinstance(data, np.ndarray):
+            if data.ndim == 2:
+                data = data[:, 0]
+
             data = pd.Series(data)
 
         data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(bool)

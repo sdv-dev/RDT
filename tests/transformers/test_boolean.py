@@ -182,3 +182,20 @@ class TestBooleanTransformer(TestCase):
 
         assert isinstance(result, pd.Series)
         np.testing.assert_equal(result.values, expected)
+
+    def test_reverse_transform_2d_ndarray(self):
+        """Test reverse_transform not null values correctly"""
+        # Setup
+        data = np.array([[1.], [0.], [1.]])
+
+        # Run
+        transformer = Mock()
+        transformer.nan = None
+
+        result = BooleanTransformer.reverse_transform(transformer, data)
+
+        # Asserts
+        expected = np.array([True, False, True])
+
+        assert isinstance(result, pd.Series)
+        np.testing.assert_equal(result.values, expected)

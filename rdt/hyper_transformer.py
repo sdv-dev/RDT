@@ -173,20 +173,25 @@ class HyperTransformer:
         if self.copy:
             data = data.copy()
 
+        drop_columns = []
         for column_name, transformer in self._transformers.items():
             if column_name in data:
-                column = data.pop(column_name)
+                column = data[column_name]
                 transformed = transformer.transform(column)
 
                 shape = transformed.shape
 
                 if len(shape) == 2:
+                    drop_columns.append(column_name)
                     for index in range(shape[1]):
                         new_column = '{}#{}'.format(column_name, index)
                         data[new_column] = transformed[:, index]
 
                 else:
                     data[column_name] = transformed
+
+        if drop_columns:
+            data.drop(drop_columns, axis=1, inplace=True)
 
         return data
 
@@ -215,24 +220,11 @@ class HyperTransformer:
                 Name to match the columns.
 
         Returns:
-            numpy.ndarray:
-                values of the matching columns
-
-        Raises:
-            ValueError:
-                if no columns match.
+            list[str]:
+                Names of the matching columns.
         """
         regex = r'{}(#[0-9]+)?$'.format(re.escape(column_name))
-        columns = data.columns[data.columns.str.match(regex)]
-        if columns.empty:
-            return None
-
-        values = [data.pop(column).values for column in columns]
-
-        if len(values) == 1:
-            return values[0]
-
-        return np.column_stack(values)
+        return data.columns[data.columns.str.match(regex)]
 
     def reverse_transform(self, data):
         """Revert the transformations back to the original values.
@@ -248,9 +240,15 @@ class HyperTransformer:
         if self.copy:
             data = data.copy()
 
+        drop_columns = []
         for column_name, transformer in self._transformers.items():
             columns = self._get_columns(data, column_name)
-            if columns is not None:
-                data[column_name] = transformer.reverse_transform(columns)
+            if not columns.empty:
+                columns_data = data[columns].values
+                reversed_data = transformer.reverse_transform(columns_data)
+                data[column_name] = reversed_data
+                drop_columns.extend(set(columns) - {column_name})
+
+        data.drop(drop_columns, axis=1, inplace=True)
 
         return data

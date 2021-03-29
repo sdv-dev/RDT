@@ -1,5 +1,15 @@
 # History
 
+## 0.4.1 - 2021-03-29
+
+This release improves the `HyperTransformer` memory usage when working with a
+high number of columns or a high number of categorical values when using one hot encoding.
+
+### Issues closed
+
+* `Boolean`, `Datetime` and `LabelEncoding` transformers fail with 2D `ndarray` - Issue [#160](https://github.com/sdv-dev/RDT/issues/160) by @pvk-developer
+* `HyperTransformer`: Memory usage increase when `reverse_transform` is called - Issue [#156](https://github.com/sdv-dev/RDT/issues/152) by @pvk-developer and @AnupamaGangadhar
+
 ## 0.4.0 - 2021-02-24
 
 In this release a change in the HyperTransformer allows using it to transform and

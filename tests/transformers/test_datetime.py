@@ -49,3 +49,14 @@ class TestDatetimeTransformer:
 
         expected = pd.to_datetime(['NaT'])
         pd.testing.assert_series_equal(output.to_series(), expected.to_series())
+
+    def test_reverse_transform_2d_ndarray(self):
+        dt = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
+        dtt = DatetimeTransformer(strip_constant=True)
+        dtt.fit(dt)
+
+        transformed = np.array([[18262.], [18293.], [18322.]])
+        output = dtt.reverse_transform(transformed)
+
+        expected = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
+        pd.testing.assert_series_equal(output.to_series(), expected.to_series())

@@ -110,6 +110,9 @@ class DatetimeTransformer(BaseTransformer):
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 
+        if isinstance(data, np.ndarray) and (data.ndim == 2):
+            data = data[:, 0]
+
         data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(np.int64)
         if self.strip_constant:
             data = data.astype(float) * self.divider
