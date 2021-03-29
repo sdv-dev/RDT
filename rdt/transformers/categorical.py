@@ -316,4 +316,7 @@ class LabelEncodingTransformer(BaseTransformer):
         Returns:
             pandas.Series
         """
+        if isinstance(data, np.ndarray) and (data.ndim == 2):
+            data = data[:, 0]
+
         return pd.Series(data).astype(int).map(self.values_to_categories)
