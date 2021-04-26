@@ -81,7 +81,7 @@ class CategoricalTransformer(BaseTransformer):
         """Fit the transformer to the data.
 
         Create the mapping dict to save the label encoding.
-        Finaly, compute the intervals for each categorical value.
+        Finally, compute the intervals for each categorical value.
 
         Args:
             data (pandas.Series or numpy.ndarray):
