@@ -19,13 +19,13 @@ class CategoricalTransformer(BaseTransformer):
     finally assigning the middle point of each interval to the corresponding category.
 
     When the transformation is reverted, each value is assigned the category that
-    corresponds to the interval it falls int.
+    corresponds to the interval it falls in.
 
     Null values are considered just another category.
 
     Args:
         fuzzy (bool):
-            Whether to generate gassian noise around the class representative of each interval
+            Whether to generate gaussian noise around the class representative of each interval
             or just use the mean for all the replaced values. Defaults to ``False``.
         clip (bool):
             If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
