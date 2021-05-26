@@ -28,6 +28,7 @@ def test_categoricaltransformer_pickle_nans():
 
     transformer = CategoricalTransformer()
     transformer.fit(data)
+    transformed = transformer.transform(data)
 
     # create pickle file on memory
     bytes_io = BytesIO()
@@ -39,7 +40,8 @@ def test_categoricaltransformer_pickle_nans():
     pickled_transformer = pickle.load(bytes_io)
 
     # assert
-    transformed = pickled_transformer.transform(data)
+    pickle_transformed = pickled_transformer.transform(data)
+    np.testing.assert_array_equal(pickle_transformed, transformed)
 
 
 def test_one_hot_numerical_nans():
