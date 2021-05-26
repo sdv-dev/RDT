@@ -1,3 +1,6 @@
+import pickle
+from io import BytesIO
+
 import numpy as np
 import pandas as pd
 
@@ -16,6 +19,27 @@ def test_categorical_numerical_nans():
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_series_equal(reverse, data)
+
+
+def test_categoricaltransformer_pickle_nans():
+    """Ensure that CategoricalTransformer can be pickled and loaded with nan value."""
+    # setup
+    data = pd.Series([1, 2, float('nan'), np.nan])
+
+    transformer = CategoricalTransformer()
+    transformer.fit(data)
+
+    # create pickle file on memory
+    bytes_io = BytesIO()
+    pickle.dump(transformer, bytes_io)
+    # rewind
+    bytes_io.seek(0)
+
+    # run
+    pickled_transformer = pickle.load(bytes_io)
+
+    # assert
+    transformed = pickled_transformer.transform(data)
 
 
 def test_one_hot_numerical_nans():

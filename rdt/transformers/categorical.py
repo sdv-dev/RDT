@@ -36,6 +36,16 @@ class CategoricalTransformer(BaseTransformer):
     intervals = None
     dtype = None
 
+    def __setstate__(self, state):
+        """Replace any ``null`` key by the actual ``np.nan`` instance."""
+        intervals = state.get('intervals')
+        if intervals:
+            for key in list(intervals):
+                if pd.isnull(key):
+                    intervals[np.nan] = intervals.pop(key)
+
+        self.__dict__ = state
+
     def __init__(self, fuzzy=False, clip=False):
         self.fuzzy = fuzzy
         self.clip = clip
