@@ -19,13 +19,13 @@ class CategoricalTransformer(BaseTransformer):
     finally assigning the middle point of each interval to the corresponding category.
 
     When the transformation is reverted, each value is assigned the category that
-    corresponds to the interval it falls int.
+    corresponds to the interval it falls in.
 
     Null values are considered just another category.
 
     Args:
         fuzzy (bool):
-            Whether to generate gassian noise around the class representative of each interval
+            Whether to generate gaussian noise around the class representative of each interval
             or just use the mean for all the replaced values. Defaults to ``False``.
         clip (bool):
             If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
@@ -35,6 +35,16 @@ class CategoricalTransformer(BaseTransformer):
     mapping = None
     intervals = None
     dtype = None
+
+    def __setstate__(self, state):
+        """Replace any ``null`` key by the actual ``np.nan`` instance."""
+        intervals = state.get('intervals')
+        if intervals:
+            for key in list(intervals):
+                if pd.isnull(key):
+                    intervals[np.nan] = intervals.pop(key)
+
+        self.__dict__ = state
 
     def __init__(self, fuzzy=False, clip=False):
         self.fuzzy = fuzzy
@@ -81,7 +91,7 @@ class CategoricalTransformer(BaseTransformer):
         """Fit the transformer to the data.
 
         Create the mapping dict to save the label encoding.
-        Finaly, compute the intervals for each categorical value.
+        Finally, compute the intervals for each categorical value.
 
         Args:
             data (pandas.Series or numpy.ndarray):

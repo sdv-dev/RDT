@@ -1,5 +1,21 @@
 # History
 
+## 0.4.2 - 2021-06-08
+
+This release adds a new method to the `CategoricalTransformer` to solve a bug where
+the transformer becomes unusable after being pickled and unpickled if it had `NaN`
+values in the data which it was fit on.
+
+It also fixes some grammar mistakes in the documentation.
+
+### Issues closed
+
+* CategoricalTransformer with NaN values cannot be pickled bug - Issue [#164](https://github.com/sdv-dev/RDT/issues/164) by @pvk-developer and @csala
+
+### Documentation changes
+
+* docs: fix typo - PR [#163](https://github.com/sdv-dev/RDT/issues/163) by @sbrugman
+
 ## 0.4.1 - 2021-03-29
 
 This release improves the `HyperTransformer` memory usage when working with a
