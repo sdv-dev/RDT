@@ -1,5 +1,6 @@
 """Transformers for numerical data."""
 import copy
+import sys
 
 import numpy as np
 import pandas as pd
@@ -9,6 +10,8 @@ from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
 EPSILON = np.finfo(np.float32).eps
+MAX_DECIMALS = sys.float_info.dig + 1
+MIN_DECIMALS = -sys.float_info.max_10_exp - 1
 
 
 class NumericalTransformer(BaseTransformer):
@@ -35,15 +38,34 @@ class NumericalTransformer(BaseTransformer):
             If ``True``, always create the new column whether there are null values or not.
             If ``False``, do not create the new column.
             Defaults to ``None``.
+        rounding (int, str or None):
+            Define rounding scheme for data. If set to an int, values will be rounded
+            to that number of decimal places. If ``None``, values will not be rounded.
+            If set to ``'auto'``, the transformer will round to the largest number of
+            decimal places seen in the fitted data.
     """
 
     null_transformer = None
+    rounding_digits = None
 
-    def __init__(self, dtype=None, nan='mean', null_column=None):
+    def __init__(self, dtype=None, nan='mean', null_column=None, rounding='auto'):
         self.nan = nan
         self.null_column = null_column
         self.dtype = dtype
         self._dtype = dtype
+        self.rounding = rounding
+
+    def _learn_rounding_digits(self, data):
+        if (data % 1 != 0).any():
+            for decimal in range(MAX_DECIMALS):
+                if (np.allclose(data, data.round(decimal), rtol=0, atol=1e-15)):
+                    return decimal
+        else:
+            for decimal in range(0, MIN_DECIMALS, -1):
+                if (data == data.round(decimal)).all():
+                    return decimal
+
+        return None
 
     def fit(self, data):
         """Fit the transformer to the data.
@@ -58,6 +80,8 @@ class NumericalTransformer(BaseTransformer):
         self._dtype = self.dtype or data.dtype
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(data)
+        if self.rounding == 'auto':
+            self.rounding_digits = self._learn_rounding_digits()
 
     def transform(self, data):
         """Transform numerical data.
@@ -96,6 +120,9 @@ class NumericalTransformer(BaseTransformer):
 
             data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(self._dtype)
             return data
+
+        if self.rounding:
+            data = data.round(self.rounding_digits)
 
         return data.astype(self._dtype)
 
