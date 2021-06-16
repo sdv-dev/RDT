@@ -60,7 +60,7 @@ class TestNumericalTransformer(TestCase):
         """
         # Setup
         data = np.array([1.5, None, 2.5])
-        expected_digits = np.random.randint(10)
+        expected_digits = 3
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding=expected_digits)
@@ -139,72 +139,21 @@ class TestNumericalTransformer(TestCase):
         The data should not be rounded at all.
         """
         # Setup
-        fitted_data = np.array([1, 2.1, 3.12, 4.123, 5.1234, 6.123, 7.12, 8.1, 9])
         data = np.random.random(10)
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding=None)
-        transformer.fit(fitted_data)
+        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer.rounding_digits = None
         result = transformer.reverse_transform(data)
 
         # Assert
         assert (result == data).all()
 
-    def test_reverse_transform_rounding_auto_decimals(self):
-        """Test ``reverse_transform`` when ``rounding`` is ``auto``
-
-        The data should round to the maximum number of decimal places
-        seen in the fitted data.
-
-        Input:
-        - Array with decimals
-
-        Output:
-        - Same array rounded to the third decimal place
-        """
-        # Setup
-        fitted_data = np.array([1, 2.1, 3.12, 4.123])
-        data = np.array([1.1111, 2.2222, 3.3333, 4.44444, 5.555555])
-
-        # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
-        transformer.fit(fitted_data)
-        result = transformer.reverse_transform(data)
-
-        # Assert
-        expected_data = np.array([1.111, 2.222, 3.333, 4.444, 5.556])
-        assert (result == expected_data).all()
-
-    def test_reverse_transform_rounding_auto_big_numbers(self):
-        """Test ``reverse_transform`` when ``rounding`` is ``auto``
-
-        The data should round to the min number of zeroes seen in
-        the input data.
-
-        Input:
-        - Array with with larger numbers
-
-        Output:
-        - Same array rounded to the hundreds place
-        """
-        # Setup
-        fitted_data = np.array([1000, 200, 30000, 440000])
-        data = np.array([2000, 120, 311, 40000])
-
-        # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
-        transformer.fit(fitted_data)
-        result = transformer.reverse_transform(data)
-
-        # Assert
-        expected_data = np.array([2000, 100, 300, 40000])
-        assert (result == expected_data).all()
-
     def test_reverse_transform_rounding_positive_int(self):
         """Test ``reverse_transform`` when ``rounding`` is a positive int
 
         The data should round to the maximum number of decimal places
-        seen in the fitted data.
+        set in the ``rounding_digits`` value.
 
         Input:
         - Array with decimals
@@ -213,12 +162,11 @@ class TestNumericalTransformer(TestCase):
         - Same array rounded to the provided number of decimal places
         """
         # Setup
-        fitted_data = np.array([1, 2.1, 3.12, 4.123])
         data = np.array([1.1111, 2.2222, 3.3333, 4.44444, 5.555555])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding=2)
-        transformer.fit(fitted_data)
+        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer.rounding_digits = 2
         result = transformer.reverse_transform(data)
 
         # Assert
@@ -228,8 +176,8 @@ class TestNumericalTransformer(TestCase):
     def test_reverse_transform_rounding_negative_int(self):
         """Test ``reverse_transform`` when ``rounding`` is a negative int
 
-        The data should round to the min number of zeroes seen in
-        the input data.
+        The data should round to the number set in the ``rounding_digits``
+        attribute.
 
         Input:
         - Array with with larger numbers
@@ -238,16 +186,39 @@ class TestNumericalTransformer(TestCase):
         - Same array rounded to the provided number of 0s
         """
         # Setup
-        fitted_data = np.array([1000, 200, 30000, 440000])
         data = np.array([2000, 120, 3100, 40100])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding=-3)
-        transformer.fit(fitted_data)
+        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer.rounding_digits = -3
         result = transformer.reverse_transform(data)
 
         # Assert
         expected_data = np.array([2000, 0, 3000, 40000])
+        assert (result == expected_data).all()
+
+    def test_reverse_transform_rounding_zero(self):
+        """Test ``reverse_transform`` when ``rounding`` is a negative int
+
+        The data should round to the number set in the ``rounding_digits``
+        attribute.
+
+        Input:
+        - Array with with larger numbers
+
+        Output:
+        - Same array rounded to the provided number of 0s
+        """
+        # Setup
+        data = np.array([2000.554, 120.2, 3101, 4010])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer.rounding_digits = 0
+        result = transformer.reverse_transform(data)
+
+        # Assert
+        expected_data = np.array([2001, 120, 3101, 4010])
         assert (result == expected_data).all()
 
 
