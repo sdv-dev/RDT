@@ -128,7 +128,7 @@ class NumericalTransformer(BaseTransformer):
             data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(self._dtype)
             return data
 
-        if self.rounding:
+        if self.rounding_digits:
             data = data.round(self.rounding_digits)
 
         return data.astype(self._dtype)
