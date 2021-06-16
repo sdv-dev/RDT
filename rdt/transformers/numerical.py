@@ -42,17 +42,31 @@ class NumericalTransformer(BaseTransformer):
             to that number of decimal places. If ``None``, values will not be rounded.
             If set to ``'auto'``, the transformer will round to the maximum number of
             decimal places detected in the fitted data.
+        min_value (int, str or None):
+            Indicate whether or not to set a minimum value for the data. If an integer is given,
+            reverse transformed data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum.
+        max_value (int, str or None):
+            Indicate whether or not to set a maximum value for the data. If an integer is given,
+            reverse transformed data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum.
     """
 
     null_transformer = None
     rounding_digits = None
 
-    def __init__(self, dtype=None, nan='mean', null_column=None, rounding='auto'):
+
+    def __init__(self, dtype=None, nan='mean', null_column=None, rounding='auto',
+                 min_value=None, max_value=None):
         self.nan = nan
         self.null_column = null_column
         self.dtype = dtype
         self._dtype = dtype
         self.rounding = rounding
+        self.min_value = min_value
+        self.max_value = max_value
 
     @staticmethod
     def _learn_rounding_digits(data):
@@ -87,10 +101,16 @@ class NumericalTransformer(BaseTransformer):
         self._dtype = self.dtype or data.dtype
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(data)
+
         if self.rounding == 'auto':
             self.rounding_digits = self._learn_rounding_digits(data)
         elif isinstance(self.rounding, int):
             self.rounding_digits = self.rounding
+
+        if self.min_value == 'auto':
+            self.min_value = min(data)
+        if self.max_value == 'auto':
+            self.max_value == max(data)
 
     def transform(self, data):
         """Transform numerical data.
@@ -110,6 +130,11 @@ class NumericalTransformer(BaseTransformer):
 
         return self.null_transformer.transform(data)
 
+    def _normalize_to_range(self, data):
+        normalized_data = (data - self.min_value) / (self.max_value - self.min_value)
+        data = (data * normalized_data) + self.min_value
+        return data
+
     def reverse_transform(self, data):
         """Convert data back into the original format.
 
@@ -122,6 +147,8 @@ class NumericalTransformer(BaseTransformer):
         """
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
+        
+        data = self._normalize_to_range(data)
 
         if self.rounding_digits is not None:
             data = data.round(self.rounding_digits)
