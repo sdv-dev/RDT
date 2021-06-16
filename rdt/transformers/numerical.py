@@ -54,14 +54,15 @@ class NumericalTransformer(BaseTransformer):
         self._dtype = dtype
         self.rounding = rounding
 
-    def _learn_rounding_digits(self, data):
+    @staticmethod
+    def _learn_rounding_digits(data):
         clean_data = data.replace([pd.NA, None], np.nan)
         if (clean_data % 1 != 0).any():
-            if (not np.allclose(clean_data, clean_data.round(MAX_DECIMALS), rtol=0, atol=1e-15)):
+            if not (clean_data == clean_data.round(MAX_DECIMALS)).all():
                 return None
 
-            for decimal in range(MAX_DECIMALS):
-                if (np.allclose(clean_data, clean_data.round(decimal), rtol=0, atol=1e-15)):
+            for decimal in range(MAX_DECIMALS + 1):
+                if (clean_data == clean_data.round(decimal)).all():
                     return decimal
 
         else:

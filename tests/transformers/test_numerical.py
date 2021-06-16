@@ -124,7 +124,7 @@ class TestNumericalTransformer(TestCase):
         - Array with a value that has over 15 decimals.
         """
         # Setup
-        data = np.array([0.0000000000000011])
+        data = np.array([0.000000000000001])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
