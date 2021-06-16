@@ -33,6 +33,102 @@ class TestNumericalTransformer(TestCase):
         assert transformer.null_transformer.fill_value == expect_fill_value
         assert transformer._dtype == expect_dtype
 
+    def test_fit_rounding_none(self):
+        """Test fit rounding parameter with ``None``
+
+        If the rounding parameter is set to ``None``, the ``fit`` method
+        should not set its ``rounding`` or ``rounding_digits`` instance
+        variables.
+        """
+        # Setup
+        data = np.array([1.5, None, 2.5])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding=None)
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer.rounding is None
+        assert transformer.rounding_digits is None
+
+    def test_fit_rounding_int(self):
+        """Test fit rounding parameter with int
+
+        If the rounding parameter is set to ``None``, the ``fit`` method
+        should not set its ``rounding`` or ``rounding_digits`` instance
+        variables.
+        """
+        # Setup
+        data = np.array([1.5, None, 2.5])
+        expected_digits = np.random.randint(10)
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding=expected_digits)
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer.rounding == expected_digits
+        assert transformer.rounding_digits == expected_digits
+
+    def test_fit_rounding_auto(self):
+        """Test fit rounding parameter with ``'auto'``
+
+        If the ``rounding`` parameter is set to ``'auto'``,
+        fit should learn the ``rounding_digits`` to be the max
+        number of decimal places seen in the data.
+        """
+        data = np.array([1, 2.1, 3.12, 4.123, 5.1234, 6.123, 7.12, 8.1, 9])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer.rounding_digits == 4
+
+    def test_fit_rounding_auto_large_numbers(self):
+        """Test fit rounding parameter with ``'auto'``
+
+        If the ``rounding`` parameter is set to ``'auto'``
+        and the data is very large, fit should learn
+        ``rounding_digits`` to be the biggest number of 0s
+        to round to that keeps the data the same.
+
+        Input:
+        - Array of data with numbers as big as 10^20
+        """
+        exponents = [np.random.randint(20) for i in range(10)]
+        random_big_numbers = [10**exponents[i] for i in range(10)]
+        data = np.array(random_big_numbers)
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer.rounding_digits == -min(exponents)
+
+    def test_fit_rounding_auto_max_decimals(self):
+        """Test fit rounding parameter with ``'auto'``
+
+        If the ``rounding`` parameter is set to ``'auto'``,
+        fit should learn the ``rounding_digits`` to be the max
+        number of decimal places seen in the data. The biggest
+        amount of decimals that can be accurately compared with
+        floats is 15.
+
+        Input:
+        - Array with a value that has over 15 decimals.
+        """
+        data = np.array([0.0000000000000011])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer.rounding_digits is None
+
 
 class TestGaussianCopulaTransformer:
 
