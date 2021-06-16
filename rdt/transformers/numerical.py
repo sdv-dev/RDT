@@ -11,7 +11,6 @@ from rdt.transformers.null import NullTransformer
 
 EPSILON = np.finfo(np.float32).eps
 MAX_DECIMALS = sys.float_info.dig - 1
-MIN_DECIMALS = -sys.float_info.max_10_exp
 
 
 class NumericalTransformer(BaseTransformer):
@@ -64,8 +63,10 @@ class NumericalTransformer(BaseTransformer):
             for decimal in range(MAX_DECIMALS):
                 if (np.allclose(clean_data, clean_data.round(decimal), rtol=0, atol=1e-15)):
                     return decimal
+
         else:
-            for decimal in range(MIN_DECIMALS, 1):
+            start = int(np.log10(max(data)))
+            for decimal in range(-start, 0):
                 if (clean_data == clean_data.round(decimal)).all():
                     return decimal
 
