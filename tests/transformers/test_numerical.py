@@ -147,7 +147,7 @@ class TestNumericalTransformer(TestCase):
         result = transformer.reverse_transform(data)
 
         # Assert
-        assert (result == data).all()
+        assert np.array_equal(result, data)
 
     def test_reverse_transform_rounding_positive_int(self):
         """Test ``reverse_transform`` when ``rounding`` is a positive int
@@ -171,7 +171,7 @@ class TestNumericalTransformer(TestCase):
 
         # Assert
         expected_data = np.array([1.11, 2.22, 3.33, 4.44, 5.56])
-        assert (result == expected_data).all()
+        assert np.array_equal(result, expected_data)
 
     def test_reverse_transform_rounding_negative_int(self):
         """Test ``reverse_transform`` when ``rounding`` is a negative int
@@ -195,7 +195,7 @@ class TestNumericalTransformer(TestCase):
 
         # Assert
         expected_data = np.array([2000, 0, 3000, 40000])
-        assert (result == expected_data).all()
+        assert np.array_equal(result, expected_data)
 
     def test_reverse_transform_rounding_zero(self):
         """Test ``reverse_transform`` when ``rounding`` is a negative int
@@ -219,7 +219,7 @@ class TestNumericalTransformer(TestCase):
 
         # Assert
         expected_data = np.array([2001, 120, 3101, 4010])
-        assert (result == expected_data).all()
+        assert np.array_equal(result, expected_data)
 
 
 class TestGaussianCopulaTransformer:
