@@ -123,15 +123,15 @@ class NumericalTransformer(BaseTransformer):
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 
+        if self.rounding_digits is not None:
+            data = data.round(self.rounding_digits)
+
         if np.dtype(self._dtype).kind == 'i':
             if pd.notnull(data).all():
                 return data.round().astype(self._dtype)
 
             data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(self._dtype)
             return data
-
-        if self.rounding_digits is not None:
-            data = data.round(self.rounding_digits)
 
         return data.astype(self._dtype)
 
