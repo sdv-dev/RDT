@@ -1,4 +1,5 @@
 from unittest import TestCase
+from unittest.mock import Mock
 
 import copulas
 import numpy as np
@@ -153,6 +154,77 @@ class TestNumericalTransformer(TestCase):
         # Asserts
         assert transformer.rounding_digits is None
 
+    def test_fit_min_max_none(self):
+        """Test fit min and max parameters with ``None``
+
+        If the min and max parameters are set to ``None``,
+        the ``fit`` method should not set its ``min`` or ``max``
+        instance variables.
+
+        Input:
+        - Array of floats and null values
+        Side Effect:
+        - ``_min_value`` and ``_max_value`` stay ``None``
+        """
+        # Setup
+        data = np.array([1.5, None, 2.5])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan',
+                                           min_value=None, max_value=None)
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._min_value is None
+        assert transformer._max_value is None
+
+    def test_fit_min_max_int(self):
+        """Test fit min and max parameters with int values
+
+        If the min and max parameters are set to an int,
+        the ``fit`` method should not change them.
+
+        Input:
+        - Array of floats and null values
+        Side Effect:
+        - ``_min_value`` and ``_max_value`` remain unchanged
+        """
+        # Setup
+        data = np.array([1.5, None, 2.5])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan',
+                                           min_value=1, max_value=10)
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._min_value == 1
+        assert transformer._max_value == 10
+
+    def test_fit_min_max_auto(self):
+        """Test fit min and max parameters with ``'auto'``
+
+        If the min or max parameters are set to ``'auto'``
+        the ``fit`` method should learn them from the
+        fitted data.
+
+        Input:
+        - Array of floats and null values
+        Side Effect:
+        - ``_min_value`` and ``_max_value`` are learned
+        """
+        # Setup
+        data = np.array([-100, -5000, 0, None, 100, 4000])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan',
+                                           min_value='auto', max_value='auto')
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._min_value == -5000
+        assert transformer._max_value == 4000
+
     def test_reverse_transform_rounding_none(self):
         """Test ``reverse_transform`` when ``rounding`` is ``None``
 
@@ -272,6 +344,123 @@ class TestNumericalTransformer(TestCase):
 
         # Assert
         expected_data = np.array([2001, 120, 3101, 4010])
+        np.testing.assert_array_equal(result, expected_data)
+
+    def test_reverse_transform_min_no_max(self):
+        """Test reverse_transform with ``min_value`` set
+
+        The ``reverse_transform`` method should clip any values below
+        the ``min_value`` if it is set.
+
+        Input:
+        - Array with values below the min and infinitely high values
+        Output:
+        - Array with low values clipped to min
+        """
+        # Setup
+        data = np.array([-np.inf, -5000, -301, -250, 0, 125, 400, np.inf])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer._min_value = -300
+        result = transformer.reverse_transform(data)
+
+        # Asserts
+        expected_data = np.array([-300, -300, -300, -250, 0, 125, 400, np.inf])
+        np.testing.assert_array_equal(result, expected_data)
+
+    def test_reverse_transform_max_no_min(self):
+        """Test reverse_transform with ``max_value`` set
+
+        The ``reverse_transform`` method should clip any values above
+        the ``max_value`` if it is set.
+
+        Input:
+        - Array with values above the max and infinitely low values
+        Output:
+        - Array with values clipped to max
+        """
+        # Setup
+        data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer._max_value = 400
+        result = transformer.reverse_transform(data)
+
+        # Asserts
+        expected_data = np.array([-np.inf, -5000, -301, -250, 0, 125, 400, 400])
+        np.testing.assert_array_equal(result, expected_data)
+
+    def test_reverse_transform_min_and_max(self):
+        """Test reverse_transform with ``min_value`` and ``max_value`` set
+
+        The ``reverse_transform`` method should clip any values above
+        the ``max_value`` and any values below the ``min_value``.
+
+        Input:
+        - Array with values above the max and below the min
+        Output:
+        - Array with out of bound values clipped to min and max
+        """
+        # Setup
+        data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer._max_value = 400
+        transformer._min_value = -300
+        result = transformer.reverse_transform(data)
+
+        # Asserts
+        np.testing.assert_array_equal(result, np.array([-300, -300, -300, -250, 0, 125, 400, 400]))
+
+    def test_reverse_transform_min_an_max_with_nulls(self):
+        """Test reverse_transform with nulls and ``min_value`` and ``max_value`` set
+
+        The ``reverse_transform`` method should clip any values above
+        the ``max_value`` and any values below the ``min_value``. Null values
+        should be replaced with ``np.nan``.
+
+        Input:
+        - 2d array where second column has some values over 0.5 representing null values
+        Output:
+        - Array with out of bounds values clipped and null values injected
+        """
+        # Setup
+        data = np.array([
+            [-np.inf, 0],
+            [-5000, 0.1],
+            [-301, 0.8],
+            [-250, 0.4],
+            [0, 0],
+            [125, 1],
+            [401, 0.2],
+            [np.inf, 0.5]
+        ])
+        clipped_data = np.array([
+            [-300, 0],
+            [-300, 0.1],
+            [-300, 0.8],
+            [-250, 0.4],
+            [0, 0],
+            [125, 1],
+            [400, 0.2],
+            [400, 0.5]
+        ])
+        expected_data = np.array([-300, -300, np.nan, -250, 0, np.nan, 400, 400])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan')
+        transformer._max_value = 400
+        transformer._min_value = -300
+        transformer.null_transformer = Mock()
+        transformer.null_transformer.reverse_transform.return_value = expected_data
+        result = transformer.reverse_transform(data)
+
+        # Asserts
+        null_transformer_calls = transformer.null_transformer.reverse_transform.mock_calls
+        np.testing.assert_array_equal(null_transformer_calls[0][1][0], clipped_data)
         np.testing.assert_array_equal(result, expected_data)
 
 
