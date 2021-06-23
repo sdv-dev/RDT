@@ -55,19 +55,19 @@ class NumericalTransformer(BaseTransformer):
     """
 
     null_transformer = None
-    rounding_digits = None
+    _dtype = None
+    _rounding_digits = None
+    _min_value = None
+    _max_value = None
 
     def __init__(self, dtype=None, nan='mean', null_column=None, rounding='auto',
                  min_value=None, max_value=None):
         self.nan = nan
         self.null_column = null_column
         self.dtype = dtype
-        self._dtype = dtype
         self.rounding = rounding
         self.min_value = min_value
-        self._min_value = None
         self.max_value = max_value
-        self._max_value = None
 
     @staticmethod
     def _learn_rounding_digits(data):
@@ -105,9 +105,9 @@ class NumericalTransformer(BaseTransformer):
         self._max_value = max(clean_data) if self.max_value == 'auto' else self.max_value
 
         if self.rounding == 'auto':
-            self.rounding_digits = self._learn_rounding_digits(clean_data)
+            self._rounding_digits = self._learn_rounding_digits(clean_data)
         elif isinstance(self.rounding, int):
-            self.rounding_digits = self.rounding
+            self._rounding_digits = self.rounding
 
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(data)
@@ -149,8 +149,8 @@ class NumericalTransformer(BaseTransformer):
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 
-        if self.rounding_digits is not None:
-            data = data.round(self.rounding_digits)
+        if self._rounding_digits is not None:
+            data = data.round(self._rounding_digits)
 
         if np.dtype(self._dtype).kind == 'i':
             if pd.notnull(data).all():

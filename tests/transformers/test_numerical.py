@@ -38,13 +38,13 @@ class TestNumericalTransformer(TestCase):
         """Test fit rounding parameter with ``None``
 
         If the rounding parameter is set to ``None``, the ``fit`` method
-        should not set its ``rounding`` or ``rounding_digits`` instance
+        should not set its ``rounding`` or ``_rounding_digits`` instance
         variables.
 
         Input:
         - An array with floats rounded to one decimal and a None value
         Side Effect:
-        - ``rounding`` and ``rounding_digits`` continue to be ``None``
+        - ``rounding`` and ``_rounding_digits`` continue to be ``None``
         """
         # Setup
         data = np.array([1.5, None, 2.5])
@@ -55,19 +55,19 @@ class TestNumericalTransformer(TestCase):
 
         # Asserts
         assert transformer.rounding is None
-        assert transformer.rounding_digits is None
+        assert transformer._rounding_digits is None
 
     def test_fit_rounding_int(self):
         """Test fit rounding parameter with int
 
         If the rounding parameter is set to ``None``, the ``fit`` method
-        should not set its ``rounding`` or ``rounding_digits`` instance
+        should not set its ``rounding`` or ``_rounding_digits`` instance
         variables.
 
         Input:
         - An array with floats rounded to one decimal and a None value
         Side Effect:
-        - ``rounding`` and ``rounding_digits`` are the provided int
+        - ``rounding`` and ``_rounding_digits`` are the provided int
         """
         # Setup
         data = np.array([1.5, None, 2.5])
@@ -79,19 +79,19 @@ class TestNumericalTransformer(TestCase):
 
         # Asserts
         assert transformer.rounding == expected_digits
-        assert transformer.rounding_digits == expected_digits
+        assert transformer._rounding_digits == expected_digits
 
     def test_fit_rounding_auto(self):
         """Test fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``,
-        fit should learn the ``rounding_digits`` to be the max
+        fit should learn the ``_rounding_digits`` to be the max
         number of decimal places seen in the data.
 
         Input:
         - Array of floats with up to 4 decimals
         Side Effect:
-        - ``rounding_digits`` is set to 4
+        - ``_rounding_digits`` is set to 4
         """
         # Setup
         data = np.array([1, 2.1, 3.12, 4.123, 5.1234, 6.123, 7.12, 8.1, 9])
@@ -101,20 +101,20 @@ class TestNumericalTransformer(TestCase):
         transformer.fit(data)
 
         # Asserts
-        assert transformer.rounding_digits == 4
+        assert transformer._rounding_digits == 4
 
     def test_fit_rounding_auto_large_numbers(self):
         """Test fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``
         and the data is very large, fit should learn
-        ``rounding_digits`` to be the biggest number of 0s
+        ``_rounding_digits`` to be the biggest number of 0s
         to round to that keeps the data the same.
 
         Input:
         - Array of data with numbers between 10^10 and 10^20
         Side Effect:
-        - ``rounding_digits`` is set to the minimum exponent seen in the data
+        - ``_rounding_digits`` is set to the minimum exponent seen in the data
         """
         # Setup
         exponents = [np.random.randint(10, 20) for i in range(10)]
@@ -126,13 +126,13 @@ class TestNumericalTransformer(TestCase):
         transformer.fit(data)
 
         # Asserts
-        assert transformer.rounding_digits == -min(exponents)
+        assert transformer._rounding_digits == -min(exponents)
 
     def test_fit_rounding_auto_max_decimals(self):
         """Test fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``,
-        fit should learn the ``rounding_digits`` to be the max
+        fit should learn the ``_rounding_digits`` to be the max
         number of decimal places seen in the data. The max
         amount of decimals that floats can be accurately compared
         with is 15. If the input data has values with more than
@@ -142,7 +142,7 @@ class TestNumericalTransformer(TestCase):
         Input:
         - Array with a value that has 15 decimals
         Side Effect:
-        - ``rounding_digits`` is set to ``None``
+        - ``_rounding_digits`` is set to ``None``
         """
         # Setup
         data = np.array([0.000000000000001])
@@ -152,7 +152,7 @@ class TestNumericalTransformer(TestCase):
         transformer.fit(data)
 
         # Asserts
-        assert transformer.rounding_digits is None
+        assert transformer._rounding_digits is None
 
     def test_fit_min_max_none(self):
         """Test fit min and max parameters with ``None``
@@ -240,7 +240,7 @@ class TestNumericalTransformer(TestCase):
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan=None)
-        transformer.rounding_digits = None
+        transformer._rounding_digits = None
         result = transformer.reverse_transform(data)
 
         # Assert
@@ -250,7 +250,7 @@ class TestNumericalTransformer(TestCase):
         """Test ``reverse_transform`` when ``rounding`` is a positive int
 
         The data should round to the maximum number of decimal places
-        set in the ``rounding_digits`` value.
+        set in the ``_rounding_digits`` value.
 
         Input:
         - Array with decimals
@@ -263,7 +263,7 @@ class TestNumericalTransformer(TestCase):
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan=None)
-        transformer.rounding_digits = 2
+        transformer._rounding_digits = 2
         result = transformer.reverse_transform(data)
 
         # Assert
@@ -273,7 +273,7 @@ class TestNumericalTransformer(TestCase):
     def test_reverse_transform_rounding_negative_rounding_int(self):
         """Test ``reverse_transform`` when ``rounding`` is a negative int
 
-        The data should round to the number set in the ``rounding_digits``
+        The data should round to the number set in the ``_rounding_digits``
         attribute and remain ints.
 
         Input:
@@ -288,7 +288,8 @@ class TestNumericalTransformer(TestCase):
 
         # Run
         transformer = NumericalTransformer(dtype=np.int, nan=None)
-        transformer.rounding_digits = -3
+        transformer._dtype = np.int
+        transformer._rounding_digits = -3
         result = transformer.reverse_transform(data)
 
         # Assert
@@ -299,7 +300,7 @@ class TestNumericalTransformer(TestCase):
     def test_reverse_transform_rounding_negative_rounding_float(self):
         """Test ``reverse_transform`` when ``rounding`` is a negative int
 
-        The data should round to the number set in the ``rounding_digits``
+        The data should round to the number set in the ``_rounding_digits``
         attribute and remain floats.
 
         Input:
@@ -314,7 +315,7 @@ class TestNumericalTransformer(TestCase):
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan=None)
-        transformer.rounding_digits = -3
+        transformer._rounding_digits = -3
         result = transformer.reverse_transform(data)
 
         # Assert
@@ -325,7 +326,7 @@ class TestNumericalTransformer(TestCase):
     def test_reverse_transform_rounding_zero(self):
         """Test ``reverse_transform`` when ``rounding`` is a negative int
 
-        The data should round to the number set in the ``rounding_digits``
+        The data should round to the number set in the ``_rounding_digits``
         attribute.
 
         Input:
@@ -339,7 +340,7 @@ class TestNumericalTransformer(TestCase):
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan=None)
-        transformer.rounding_digits = 0
+        transformer._rounding_digits = 0
         result = transformer.reverse_transform(data)
 
         # Assert
