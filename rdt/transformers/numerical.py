@@ -42,34 +42,49 @@ class NumericalTransformer(BaseTransformer):
             to that number of decimal places. If ``None``, values will not be rounded.
             If set to ``'auto'``, the transformer will round to the maximum number of
             decimal places detected in the fitted data.
+        min_value (int, str or None):
+            Indicate whether or not to set a minimum value for the data. If an integer is given,
+            reverse transformed data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum.
+        max_value (int, str or None):
+            Indicate whether or not to set a maximum value for the data. If an integer is given,
+            reverse transformed data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum.
     """
 
     null_transformer = None
-    rounding_digits = None
+    _dtype = None
+    _rounding_digits = None
+    _min_value = None
+    _max_value = None
 
-    def __init__(self, dtype=None, nan='mean', null_column=None, rounding='auto'):
+    def __init__(self, dtype=None, nan='mean', null_column=None, rounding='auto',
+                 min_value=None, max_value=None):
         self.nan = nan
         self.null_column = null_column
         self.dtype = dtype
-        self._dtype = dtype
         self.rounding = rounding
+        self.min_value = min_value
+        self.max_value = max_value
 
     @staticmethod
     def _learn_rounding_digits(data):
-        clean_data = data.replace([pd.NA, None], np.nan)
         # check if data has any decimals
-        if (clean_data % 1 != 0).any():
-            if not (clean_data == clean_data.round(MAX_DECIMALS)).all():
+        data = data.astype(float)
+        if (data % 1 != 0).any():
+            if not (data == data.round(MAX_DECIMALS)).all():
                 return None
 
             for decimal in range(MAX_DECIMALS + 1):
-                if (clean_data == clean_data.round(decimal)).all():
+                if (data == data.round(decimal)).all():
                     return decimal
 
         else:
             start = int(np.log10(max(data)))
             for decimal in range(-start, 1):
-                if (clean_data == clean_data.round(decimal)).all():
+                if (data == data.round(decimal)).all():
                     return decimal
 
         return None
@@ -85,12 +100,17 @@ class NumericalTransformer(BaseTransformer):
             data = pd.Series(data)
 
         self._dtype = self.dtype or data.dtype
+        clean_data = data.dropna()
+        self._min_value = min(clean_data) if self.min_value == 'auto' else self.min_value
+        self._max_value = max(clean_data) if self.max_value == 'auto' else self.max_value
+
+        if self.rounding == 'auto':
+            self._rounding_digits = self._learn_rounding_digits(clean_data)
+        elif isinstance(self.rounding, int):
+            self._rounding_digits = self.rounding
+
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(data)
-        if self.rounding == 'auto':
-            self.rounding_digits = self._learn_rounding_digits(data)
-        elif isinstance(self.rounding, int):
-            self.rounding_digits = self.rounding
 
     def transform(self, data):
         """Transform numerical data.
@@ -120,11 +140,17 @@ class NumericalTransformer(BaseTransformer):
         Returns:
             numpy.ndarray
         """
+        if self._min_value is not None or self._max_value is not None:
+            if len(data.shape) > 1:
+                data[:, 0] = data[:, 0].clip(self._min_value, self._max_value)
+            else:
+                data = data.clip(self._min_value, self._max_value)
+
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 
-        if self.rounding_digits is not None:
-            data = data.round(self.rounding_digits)
+        if self._rounding_digits is not None:
+            data = data.round(self._rounding_digits)
 
         if np.dtype(self._dtype).kind == 'i':
             if pd.notnull(data).all():
