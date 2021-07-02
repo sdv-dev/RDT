@@ -60,7 +60,7 @@ class NumericalTransformer(BaseTransformer):
     _min_value = None
     _max_value = None
 
-    def __init__(self, dtype=None, nan='mean', null_column=None, rounding='auto',
+    def __init__(self, dtype=None, nan='mean', null_column=None, rounding=None,
                  min_value=None, max_value=None):
         self.nan = nan
         self.null_column = null_column
@@ -72,19 +72,21 @@ class NumericalTransformer(BaseTransformer):
     @staticmethod
     def _learn_rounding_digits(data):
         # check if data has any decimals
-        data = data.astype(float)
-        if (data % 1 != 0).any():
-            if not (data == data.round(MAX_DECIMALS)).all():
+        roundable_data = data[~np.isinf(data)]
+        roundable_data = roundable_data.astype(float)
+        if (roundable_data % 1 != 0).any():
+            if not (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
                 return None
 
             for decimal in range(MAX_DECIMALS + 1):
-                if (data == data.round(decimal)).all():
+                if (roundable_data == roundable_data.round(decimal)).all():
                     return decimal
 
         else:
-            start = int(np.log10(max(data)))
+            maximum = max(abs(roundable_data))
+            start = int(np.log10(maximum)) if maximum != 0 else 0
             for decimal in range(-start, 1):
-                if (data == data.round(decimal)).all():
+                if (roundable_data == roundable_data.round(decimal)).all():
                     return decimal
 
         return None
