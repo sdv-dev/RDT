@@ -85,7 +85,7 @@ class TestNumericalTransformer(TestCase):
         """Test fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``,
-        fit should learn the ``_rounding_digits`` to be the max
+        ``fit`` should learn the ``_rounding_digits`` to be the max
         number of decimal places seen in the data.
 
         Input:
@@ -107,7 +107,7 @@ class TestNumericalTransformer(TestCase):
         """Test fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``
-        and the data is very large, fit should learn
+        and the data is very large, ``fit`` should learn
         ``_rounding_digits`` to be the biggest number of 0s
         to round to that keeps the data the same.
 
@@ -132,7 +132,7 @@ class TestNumericalTransformer(TestCase):
         """Test fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``,
-        fit should learn the ``_rounding_digits`` to be the max
+        ``fit`` should learn the ``_rounding_digits`` to be the max
         number of decimal places seen in the data. The max
         amount of decimals that floats can be accurately compared
         with is 15. If the input data has values with more than
@@ -153,6 +153,75 @@ class TestNumericalTransformer(TestCase):
 
         # Asserts
         assert transformer._rounding_digits is None
+
+    def test_fit_rounding_auto_max_inf(self):
+        """Test fit rounding parameter with ``'auto'``
+
+        If the ``rounding`` parameter is set to ``'auto'``,
+        and the data contains infinite values, ``fit`` should
+        learn the ``_rounding_digits`` to be the min
+        number of decimal places seen in the data with
+        the infinite values filtered out.
+
+        Input:
+        - Array with ``np.inf`` as a value
+        Side Effect:
+        - ``_rounding_digits`` is set to max seen in rest of data
+        """
+        # Setup
+        data = np.array([15000, 4000, 60000, np.inf])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._rounding_digits is -3
+
+    def test_fit_rounding_auto_max_zero(self):
+        """Test fit rounding parameter with ``'auto'``
+
+        If the ``rounding`` parameter is set to ``'auto'``,
+        and the max in the data is 0, ``fit`` should
+        learn the ``_rounding_digits`` to be 0.
+
+        Input:
+        - Array with 0 as max value
+        Side Effect:
+        - ``_rounding_digits`` is set to 0
+        """
+        # Setup
+        data = np.array([0, 0, 0])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._rounding_digits == 0
+
+    def test_fit_rounding_auto_max_negative(self):
+        """Test fit rounding parameter with ``'auto'``
+
+        If the ``rounding`` parameter is set to ``'auto'``,
+        and the max in the data is negative, the ``fit`` method
+        should learn ``_rounding_digits`` to be the min number
+        of digits seen in those negative values.
+
+        Input:
+        - Array with negative max value
+        Side Effect:
+        - ``_rounding_digits`` is set to min number of digits in array
+        """
+        # Setup
+        data = np.array([-500, -220, -10])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer.fit(data)
+
+        # Asserts
+        assert transformer._rounding_digits == -1
 
     def test_fit_min_max_none(self):
         """Test fit min and max parameters with ``None``
