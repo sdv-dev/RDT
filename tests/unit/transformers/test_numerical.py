@@ -176,7 +176,7 @@ class TestNumericalTransformer(TestCase):
         transformer.fit(data)
 
         # Asserts
-        assert transformer._rounding_digits is -3
+        assert transformer._rounding_digits == -3
 
     def test_fit_rounding_auto_max_zero(self):
         """Test fit rounding parameter with ``'auto'``

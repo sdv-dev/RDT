@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import psutil
 from scipy.stats import norm
 
 from rdt.transformers.base import BaseTransformer
@@ -34,7 +35,10 @@ class CategoricalTransformer(BaseTransformer):
 
     mapping = None
     intervals = None
+    starts = None
+    means = None
     dtype = None
+    _get_category_from_index = None
 
     def __setstate__(self, state):
         """Replace any ``null`` key by the actual ``np.nan`` instance."""
@@ -57,7 +61,6 @@ class CategoricalTransformer(BaseTransformer):
         Args:
             data (pandas.Series):
                 Data to analyze.
-
         Returns:
             dict:
                 intervals for each categorical value (start, end).
@@ -74,25 +77,31 @@ class CategoricalTransformer(BaseTransformer):
         elements = len(data)
 
         intervals = dict()
+        means = []
+        starts = []
         for value, frequency in frequencies.items():
             prob = frequency / elements
             end = start + prob
-            mean = (start + end) / 2
+            mean = start + prob / 2
             std = prob / 6
             if pd.isnull(value):
                 value = np.nan
 
             intervals[value] = (start, end, mean, std)
+            means.append(mean)
+            starts.append((value, starts))
             start = end
 
-        return intervals
+        means = pd.Series(means, index=list(frequencies.keys()))
+        starts = pd.DataFrame(starts, columns=['category', 'start']).set_index('start')
+
+        return intervals, means, starts
 
     def fit(self, data):
         """Fit the transformer to the data.
 
         Create the mapping dict to save the label encoding.
         Finally, compute the intervals for each categorical value.
-
         Args:
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
@@ -103,7 +112,8 @@ class CategoricalTransformer(BaseTransformer):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        self.intervals = self._get_intervals(data)
+        self.intervals, self.means, self.starts = self._get_intervals(data)
+        self._get_category_from_index = list(self.means.index).__getitem__
 
     def _get_value(self, category):
         """Get the value that represents this category."""
@@ -144,15 +154,15 @@ class CategoricalTransformer(BaseTransformer):
 
         return np.mod(data, 1)
 
+    def _get_category_from_start(self, value):
+        lower = self.starts.loc[:value]
+        return lower.iloc[-1].category
+
     def reverse_transform(self, data):
-        """Convert float values back to the original categorical values.
+        """Reverse transform the given data.
 
-        Args:
-            data (numpy.ndarray):
-                Data to revert.
-
-        Returns:
-            pandas.Series
+        This does the reverse transform in a more efficient way than
+        the one implemented in the public library.
         """
         if not isinstance(data, pd.Series):
             if len(data.shape) > 1:
@@ -162,13 +172,34 @@ class CategoricalTransformer(BaseTransformer):
 
         data = self._normalize(data)
 
-        result = pd.Series(index=data.index, dtype=self.dtype)
+        num_rows = len(data)
+        num_categories = len(self.means)
 
-        for category, values in self.intervals.items():
-            start, end = values[:2]
-            result[(start < data) & (data < end)] = category
+        # total shape * float size * number of matrices needed
+        needed_memory = num_rows * num_categories * 8 * 3
+        available_memory = psutil.virtual_memory().available
+        if available_memory > needed_memory:
+            data = np.broadcast_to(data, (num_categories, num_rows)).T
+            means = np.broadcast_to(self.means, (num_rows, num_categories))
+            diffs = np.abs(np.subtract(data, means))
+            indexes = np.argmin(diffs, axis=1)
 
-        return result
+            self._get_category_from_index = list(self.means.index).__getitem__
+            return pd.Series(indexes).apply(self._get_category_from_index).values
+
+        if num_rows > num_categories:
+            result = np.empty(shape=(len(data), ), dtype=self.dtype)
+
+            # loop over categories
+            for category, values in self.intervals.items():
+                start = values[0]
+                mask = (start <= data)
+                result[mask] = category
+
+            return pd.Series(result, index=data.index)
+
+        # loop over rows
+        return data.apply(self._get_category_from_start)
 
 
 class OneHotEncodingTransformer(BaseTransformer):
