@@ -1,5 +1,6 @@
-from tests.performance.datasets.base import BaseGenerator
 import numpy as np
+
+from tests.performance.datasets.base import BaseGenerator
 
 
 class RandomNumericalGenerator(BaseGenerator):
