@@ -1,5 +1,15 @@
 # History
 
+## 0.5.0 - 2021-07-12
+
+This release updates the `NumericalTransformer` by adding a new `rounding` argument.
+Users can now obtain numerical values with precision, either pre-specified or automatically computed from the given data.
+
+### Issues closed
+
+* Add `rounding` argument to `NumericalTransformer` - Issue [#166](https://github.com/sdv-dev/RDT/issues/166) by @amontanez24 and @csala
+* `NumericalTransformer` rounding error with infinity - Issue [#169](https://github.com/sdv-dev/RDT/issues/169) by @amontanez24
+
 ## 0.4.2 - 2021-06-08
 
 This release adds a new method to the `CategoricalTransformer` to solve a bug where
