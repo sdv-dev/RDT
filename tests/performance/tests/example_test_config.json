@@ -3,9 +3,10 @@
     "test_cases": [
         {
             "arguments": {},
+            "reversible": true,
             "sizes": [1000, 10000, 1000000],
             "dataset_generator": "tests.datasets.<generator_name>",
-            "expected_output": {
+            "expected_outputs": {
                 "1000": {},
                 "10000": {},
                 "1000000": {} 
