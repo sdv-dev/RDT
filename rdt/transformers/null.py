@@ -91,7 +91,7 @@ class NullTransformer(BaseTransformer):
     def reverse_transform(self, data):
         """Restore null values to the data.
 
-        If a null indicator column was created dring fit, use it as a reference.
+        If a null indicator column was created during fit, use it as a reference.
         Otherwise, replace all instances of ``fill_value`` that can be found in
         data.
 
