@@ -4,6 +4,7 @@ class BaseGenerator:
     TYPE = None
     SUBTYPE = None
 
+    @staticmethod
     def generate(self, num_rows):
         """This method serves as a template for dataset generators.
 
