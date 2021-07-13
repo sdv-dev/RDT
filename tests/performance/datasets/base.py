@@ -1,10 +1,14 @@
-class BaseGenerator:
-    """Base class for all dataset generators."""
+from abc import ABC, abstractmethod
+
+
+class BaseDatasetGenerator(ABC):
+    """Parent class for all the Dataset Generators."""
 
     TYPE = None
     SUBTYPE = None
 
     @staticmethod
+    @abstractmethod
     def generate(self, num_rows):
         """This method serves as a template for dataset generators.
 

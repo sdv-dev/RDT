@@ -1,9 +1,9 @@
 import numpy as np
 
-from tests.performance.datasets.base import BaseGenerator
+from tests.performance.datasets.base import BaseDatasetGenerator
 
 
-class RandomNumericalGenerator(BaseGenerator):
+class RandomNumericalGenerator(BaseDatasetGenerator):
     """Generator that creates dataset of random integers."""
 
     TYPE = 'numerical'
