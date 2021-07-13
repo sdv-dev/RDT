@@ -20,7 +20,9 @@ def test_performance(transformers, sizes):
     """
     pass
 
+
 if __name__ == '__main__':
+    # everything below is just experimenting
     parser = argparse.ArgumentParser(description='Test RDT Performance')
     parser.add_argument('transformers', nargs='+', help='List of transformer class names.')
     parser.add_argument('sizes', nargs='+', help='List of column lengths.')
@@ -28,6 +30,5 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         parser.print_help()
         sys.exit(0)
-    
+
     args = parser.parse_args()
-    breakpoint()
