@@ -24,8 +24,8 @@ def test_performance(transformers, sizes):
 if __name__ == '__main__':
     # everything below is just experimenting
     parser = argparse.ArgumentParser(description='Test RDT Performance')
-    parser.add_argument('transformers', nargs='+', help='List of transformer class names.')
-    parser.add_argument('sizes', nargs='+', help='List of column lengths.')
+    parser.add_argument('-t', nargs='+', help='List of transformer class names.')
+    parser.add_argument('-s', nargs='+', help='List of dataset sizes.')
 
     if len(sys.argv) < 2:
         parser.print_help()
