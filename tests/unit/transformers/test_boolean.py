@@ -84,7 +84,7 @@ class TestBooleanTransformer(TestCase):
 
         # Asserts
         expect_call_count = 1
-        expect_call_args = pd.Series([0, 1, None, 1, 0], dtype=object)
+        expect_call_args = pd.Series([0., 1., None, 1., 0.], dtype=float)
 
         self.assertEqual(
             transformer.null_transformer.transform.call_count,
@@ -108,7 +108,7 @@ class TestBooleanTransformer(TestCase):
 
         # Asserts
         expect_call_count = 1
-        expect_call_args = pd.Series([0, 1, None, 1, 0], dtype=object)
+        expect_call_args = pd.Series([0., 1., None, 1., 0.], dtype=float)
 
         self.assertEqual(
             transformer.null_transformer.transform.call_count,
