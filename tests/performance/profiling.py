@@ -1,25 +1,8 @@
-import threading
 import timeit
 import tracemalloc
+from multiprocessing import Process, Value
 
 import pandas as pd
-
-
-class MemoryProfilerThread(threading.Thread):
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs={}):
-        threading.Thread.__init__(self, group=group, target=target, name=name, args=args,
-                                  kwargs=kwargs)
-        self._peak_memory = 0
-
-    def run(self):
-        tracemalloc.start()
-        self._target(*self._args, **self._kwargs)
-        self._peak_memory = tracemalloc.get_traced_memory()[1]
-        tracemalloc.stop()
-
-    def join(self, *args):
-        threading.Thread.join(self, *args)
-        return self._peak_memory
 
 
 def _profile_time(method, dataset, iterations=100):
@@ -32,11 +15,19 @@ def _profile_time(method, dataset, iterations=100):
     return total_time / iterations
 
 
+def _set_memory_for_method(method, dataset, peak_memory):
+    tracemalloc.start()
+    method(dataset)
+    peak_memory.value = tracemalloc.get_traced_memory()[1]
+    tracemalloc.stop()
+
+
 def _profile_memory(method, dataset):
-    profiler_thread = MemoryProfilerThread(target=method, args=(dataset,))
-    profiler_thread.start()
-    peak_memory = profiler_thread.join()
-    return peak_memory
+    peak_memory = Value('i', 0)
+    profiling_process = Process(target=_set_memory_for_method, args=(method, dataset, peak_memory))
+    profiling_process.start()
+    profiling_process.join()
+    return peak_memory.value
 
 
 def profile_transformer(transformer, dataset_generator, transform_size, fit_size=None):
@@ -58,18 +49,19 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
         fit_size (int or None):
             Number of rows to generate for ``fit``. If None, use ``transform_size``.
     """
+    transformer_instance = transformer()
     fit_size = fit_size or transform_size
     fit_dataset = dataset_generator.generate(fit_size)
-    fit_time = _profile_time(transformer.fit, fit_dataset)
-    fit_memory = _profile_memory(transformer.fit, fit_dataset)
+    fit_time = _profile_time(transformer_instance.fit, fit_dataset)
+    fit_memory = _profile_memory(transformer_instance.fit, fit_dataset)
 
     transform_dataset = dataset_generator.generate(transform_size)
-    transform_time = _profile_time(transformer.transform, transform_dataset)
-    transform_memory = _profile_memory(transformer.transform, transform_dataset)
+    transform_time = _profile_time(transformer_instance.transform, transform_dataset)
+    transform_memory = _profile_memory(transformer_instance.transform, transform_dataset)
 
-    reverse_dataset = transformer.transform(transform_dataset)
-    reverse_time = _profile_time(transformer.reverse_transform, reverse_dataset)
-    reverse_memory = _profile_memory(transformer.reverse_transform, reverse_dataset)
+    reverse_dataset = transformer_instance.transform(transform_dataset)
+    reverse_time = _profile_time(transformer_instance.reverse_transform, reverse_dataset)
+    reverse_memory = _profile_memory(transformer_instance.reverse_transform, reverse_dataset)
 
     return pd.DataFrame({
         'Fit Time': [fit_time],

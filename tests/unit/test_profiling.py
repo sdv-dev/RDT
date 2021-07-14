@@ -1,4 +1,5 @@
-from unittest.mock import Mock
+from multiprocessing import Process
+from unittest.mock import Mock, patch
 
 import numpy as np
 
@@ -7,7 +8,8 @@ from tests.performance.datasets import RandomNumericalGenerator
 from tests.performance.profiling import profile_transformer
 
 
-def test_profile_transformer():
+@patch('tests.performance.profiling.Process', spec_set=Process)
+def test_profile_transformer(process_mock):
     """Test the ``profile_transformer`` function.
 
     The function should run the ``fit``, ``transform``
@@ -31,7 +33,7 @@ def test_profile_transformer():
     # Setup
     transformer_mock = Mock(spec_set=NumericalTransformer)
     dataset_gen_mock = Mock(spec_set=RandomNumericalGenerator)
-    transformer_mock.transform.return_value = np.zeros(100)
+    transformer_mock.return_value.transform.return_value = np.zeros(100)
     dataset_gen_mock.generate.return_value = np.ones(100)
 
     # Run
@@ -42,9 +44,9 @@ def test_profile_transformer():
         'Fit Time', 'Fit Memory', 'Transform Time', 'Transform Memory',
         'Reverse Transform Time', 'Reverse Transform Memory'
     ]
-    assert len(transformer_mock.fit.mock_calls) == 101
-    assert len(transformer_mock.transform.mock_calls) == 102
-    assert len(transformer_mock.reverse_transform.mock_calls) == 101
+    assert len(transformer_mock.return_value.fit.mock_calls) == 100
+    assert len(transformer_mock.return_value.transform.mock_calls) == 101
+    assert len(transformer_mock.return_value.reverse_transform.mock_calls) == 100
     all(np.testing.assert_array_equal(call[1][0], np.ones(100)) for call
         in transformer_mock.fit.mock_calls)
     all(np.testing.assert_array_equal(call[1][0], np.ones(100)) for call
@@ -52,3 +54,12 @@ def test_profile_transformer():
     all(np.testing.assert_array_equal(call[1][0], np.zeros(100)) for call
         in transformer_mock.reverse_transform.mock_calls)
     expected_output_columns == list(profiling_results.columns)
+    fit_call = process_mock.mock_calls[0]
+    transform_call = process_mock.mock_calls[3]
+    reverse_transform_call = process_mock.mock_calls[6]
+    assert fit_call[2]['args'][0] == transformer_mock.return_value.fit
+    np.testing.assert_array_equal(fit_call[2]['args'][1], np.ones(100))
+    assert transform_call[2]['args'][0] == transformer_mock.return_value.transform
+    np.testing.assert_array_equal(transform_call[2]['args'][1], np.ones(100))
+    assert reverse_transform_call[2]['args'][0] == transformer_mock.return_value.reverse_transform
+    np.testing.assert_array_equal(reverse_transform_call[2]['args'][1], np.zeros(100))
