@@ -18,4 +18,4 @@ class BaseDatasetGenerator(ABC):
         Returns:
             numpy.ndarray of size ``num_rows``
         """
-        pass
+        raise NotImplementedError()

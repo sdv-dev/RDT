@@ -1,8 +1,4 @@
-import argparse
-import sys
-
-
-def test_performance(transformers, sizes):
+def test_performance():
     """
     Function to test the performance of specified transformers.
 
@@ -20,15 +16,3 @@ def test_performance(transformers, sizes):
     """
     pass
 
-
-if __name__ == '__main__':
-    # everything below is just experimenting
-    parser = argparse.ArgumentParser(description='Test RDT Performance')
-    parser.add_argument('-t', nargs='+', help='List of transformer class names.')
-    parser.add_argument('-s', nargs='+', help='List of dataset sizes.')
-
-    if len(sys.argv) < 2:
-        parser.print_help()
-        sys.exit(0)
-
-    args = parser.parse_args()
