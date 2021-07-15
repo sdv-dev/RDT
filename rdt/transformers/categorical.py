@@ -229,8 +229,11 @@ class OneHotEncodingTransformer(BaseTransformer):
                 Data to fit the transformer to.
         """
         data = self._prepare_data(data)
-        self.dummy_na = pd.isnull(data).any()
-        self.dummies = list(pd.get_dummies(data, dummy_na=self.dummy_na).columns)
+        null = pd.isnull(data)
+        self.dummy_na = null.any()
+        self.dummies = list(pd.unique(data[~null]))
+        if self.dummy_na:
+            self.dummies.append(np.nan)
 
     def transform(self, data):
         """Replace each category with the OneHot vectors.
@@ -245,9 +248,8 @@ class OneHotEncodingTransformer(BaseTransformer):
         data = self._prepare_data(data)
         dummies = pd.get_dummies(data, dummy_na=self.dummy_na)
         array = dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
-        for i, row in enumerate(array):
-            if np.all(row == 0) and self.error_on_unknown:
-                raise ValueError(f'The value {data[i]} was not seen during the fit stage.')
+        if self.error_on_unknown and (array.sum() == 0).any():
+            raise ValueError('Attempted to transform values that was not seen during fit stage.')
 
         return array
 
