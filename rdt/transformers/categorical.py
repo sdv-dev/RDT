@@ -186,8 +186,9 @@ class OneHotEncodingTransformer(BaseTransformer):
             transform, then an error will be raised if this is True.
     """
 
-    dummy_na = None
     dummies = None
+    dummy_na = None
+    num_dummies = None
 
     def __init__(self, error_on_unknown=True):
         self.error_on_unknown = error_on_unknown
@@ -223,10 +224,10 @@ class OneHotEncodingTransformer(BaseTransformer):
         dummies = np.broadcast_to(self.dummies, (num_rows, self.num_dummies))
         coded = np.broadcast_to(data, (self.num_dummies, num_rows)).T
         array = (coded == dummies).astype(int)
-        
+
         if self.dummy_na:
             null = pd.isnull(data)
-            num_nulls = sum(null) 
+            num_nulls = sum(null)
             null_code = np.zeros(self.num_dummies)
             null_code[-1] = 1
             array[null] = np.broadcast_to(null_code, (num_nulls, self.num_dummies))
@@ -276,7 +277,8 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         unknown = array.sum(axis=1) == 0
         if self.error_on_unknown and unknown.any():
-            raise ValueError(f'Attempted to transform {list(data[unknown])} that were not seen during fit stage.')
+            raise ValueError(f'Attempted to transform {list(data[unknown])} \
+                that were not seen during fit stage.')
 
         return array
 
