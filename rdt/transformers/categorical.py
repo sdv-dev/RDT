@@ -219,6 +219,25 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return data
 
+    def _transform_small(self, data, num_rows):
+        dummies = np.broadcast_to(self.dummies, (num_rows, self.num_dummies))
+        coded = np.broadcast_to(data, (self.num_dummies, num_rows)).T
+        array = (coded == dummies).astype(int)
+        
+        if self.dummy_na:
+            null = pd.isnull(data)
+            num_nulls = sum(null) 
+            null_code = np.zeros(self.num_dummies)
+            null_code[-1] = 1
+            array[null] = np.broadcast_to(null_code, (num_nulls, self.num_dummies))
+
+        return array
+
+    def _transform_large(self, data):
+        dummies = pd.get_dummies(data, dummy_na=self.dummy_na)
+        array = dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
+        return array
+
     def fit(self, data):
         """Fit the transformer to the data.
 
@@ -235,6 +254,8 @@ class OneHotEncodingTransformer(BaseTransformer):
         if self.dummy_na:
             self.dummies.append(np.nan)
 
+        self.num_dummies = len(self.dummies)
+
     def transform(self, data):
         """Replace each category with the OneHot vectors.
 
@@ -246,10 +267,16 @@ class OneHotEncodingTransformer(BaseTransformer):
             numpy.ndarray:
         """
         data = self._prepare_data(data)
-        dummies = pd.get_dummies(data, dummy_na=self.dummy_na)
-        array = dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
-        if self.error_on_unknown and (array.sum() == 0).any():
-            raise ValueError('Attempted to transform values that was not seen during fit stage.')
+        size = len(data)
+
+        if size < 2800:
+            array = self._transform_small(data, size)
+        else:
+            array = self._transform_large(data)
+
+        unknown = array.sum(axis=1) == 0
+        if self.error_on_unknown and unknown.any():
+            raise ValueError(f'Attempted to transform {list(data[unknown])} that were not seen during fit stage.')
 
         return array
 

@@ -310,6 +310,24 @@ class TestOneHotEncodingTransformer:
         with np.testing.assert_raises(ValueError):
             ohet.transform(['b'])
 
+    def test_transform_large(self):
+        # Setup
+        size = 1000
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a', 'b', None] * size)
+        ohet.fit(data)
+
+        # Run
+        out = ohet.transform(data)
+
+        # Assert
+        expected = np.tile(np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ]), (size, 1))
+        np.testing.assert_array_equal(out, expected)
+
     def test_reverse_transform_no_nans(self):
         # Setup
         ohet = OneHotEncodingTransformer()
