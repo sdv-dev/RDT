@@ -122,7 +122,7 @@ class NumericalTransformer(BaseTransformer):
         Args:
             data (pandas.Series or numpy.ndarray):
                 Data to transform.
-                
+
         Returns:
             numpy.ndarray
         """
