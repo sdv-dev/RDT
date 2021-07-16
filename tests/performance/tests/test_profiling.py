@@ -37,7 +37,8 @@ def test_profile_transformer(process_mock):
     dataset_gen_mock.generate.return_value = np.ones(100)
 
     # Run
-    profiling_results = profile_transformer(transformer_mock, dataset_gen_mock, 100)
+    profiling_results = profile_transformer(transformer_mock.return_value,
+                                            dataset_gen_mock, 100)
 
     # Assert
     expected_output_columns = [
@@ -53,7 +54,7 @@ def test_profile_transformer(process_mock):
         in transformer_mock.transform.mock_calls)
     all(np.testing.assert_array_equal(call[1][0], np.zeros(100)) for call
         in transformer_mock.reverse_transform.mock_calls)
-    expected_output_columns == list(profiling_results.columns)
+    expected_output_columns == list(profiling_results.index)
     fit_call = process_mock.mock_calls[0]
     transform_call = process_mock.mock_calls[3]
     reverse_transform_call = process_mock.mock_calls[6]
