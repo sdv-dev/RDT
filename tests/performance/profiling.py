@@ -1,13 +1,21 @@
 import timeit
 import tracemalloc
+from copy import deepcopy
 from multiprocessing import Process, Value
 
 import pandas as pd
 
 
-def _profile_time(method, dataset, iterations=100):
+def _profile_time(transformer, method_name, dataset, iterations=100, copy=False):
     total_time = 0
     for _ in range(iterations):
+        if copy:
+            transformer_copy = deepcopy(transformer)
+            method = getattr(transformer_copy, method_name)
+
+        else:
+            method = getattr(transformer, method_name)
+
         start_time = timeit.default_timer()
         method(dataset)
         total_time += timeit.default_timer() - start_time
@@ -55,15 +63,15 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     """
     fit_size = fit_size or transform_size
     fit_dataset = dataset_generator.generate(fit_size)
-    fit_time = _profile_time(transformer.fit, fit_dataset)
+    fit_time = _profile_time(transformer, 'fit', fit_dataset, copy=True)
     fit_memory = _profile_memory(transformer.fit, fit_dataset)
 
     transform_dataset = dataset_generator.generate(transform_size)
-    transform_time = _profile_time(transformer.transform, transform_dataset)
+    transform_time = _profile_time(transformer, 'transform', transform_dataset)
     transform_memory = _profile_memory(transformer.transform, transform_dataset)
 
     reverse_dataset = transformer.transform(transform_dataset)
-    reverse_time = _profile_time(transformer.reverse_transform, reverse_dataset)
+    reverse_time = _profile_time(transformer, 'reverse_transform', reverse_dataset)
     reverse_memory = _profile_memory(transformer.reverse_transform, reverse_dataset)
 
     return pd.Series({

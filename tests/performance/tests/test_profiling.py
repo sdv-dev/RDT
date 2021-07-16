@@ -1,3 +1,4 @@
+from copy import deepcopy
 from multiprocessing import Process
 from unittest.mock import Mock, patch
 
@@ -9,7 +10,8 @@ from tests.performance.profiling import profile_transformer
 
 
 @patch('tests.performance.profiling.Process', spec_set=Process)
-def test_profile_transformer(process_mock):
+@patch('tests.performance.profiling.deepcopy', spec_set=deepcopy)
+def test_profile_transformer(deepcopy_mock, process_mock):
     """Test the ``profile_transformer`` function.
 
     The function should run the ``fit``, ``transform``
@@ -35,6 +37,7 @@ def test_profile_transformer(process_mock):
     dataset_gen_mock = Mock(spec_set=RandomNumericalGenerator)
     transformer_mock.return_value.transform.return_value = np.zeros(100)
     dataset_gen_mock.generate.return_value = np.ones(100)
+    deepcopy_mock.return_value = transformer_mock.return_value
 
     # Run
     profiling_results = profile_transformer(transformer_mock.return_value,
