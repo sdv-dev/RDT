@@ -329,4 +329,5 @@ class LabelEncodingTransformer(BaseTransformer):
         if isinstance(data, np.ndarray) and (data.ndim == 2):
             data = data[:, 0]
 
-        return pd.Series(data).map(self.values_to_categories)
+        data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
+        return pd.Series(data).round().map(self.values_to_categories)
