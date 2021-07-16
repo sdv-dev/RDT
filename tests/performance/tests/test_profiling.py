@@ -48,6 +48,7 @@ def test_profile_transformer(deepcopy_mock, process_mock):
         'Fit Time', 'Fit Memory', 'Transform Time', 'Transform Memory',
         'Reverse Transform Time', 'Reverse Transform Memory'
     ]
+    assert len(deepcopy_mock.mock_calls) == 100
     assert len(transformer_mock.return_value.fit.mock_calls) == 100
     assert len(transformer_mock.return_value.transform.mock_calls) == 101
     assert len(transformer_mock.return_value.reverse_transform.mock_calls) == 100
