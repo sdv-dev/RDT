@@ -94,6 +94,7 @@ class NumericalTransformer(BaseTransformer):
 
     def fit(self, data):
         """Fit the transformer to the data.
+
         Args:
             data (pandas.Series or numpy.ndarray):
                 Data to fit.
@@ -114,11 +115,14 @@ class NumericalTransformer(BaseTransformer):
 
     def transform(self, data):
         """Transform numerical data.
+
         Integer values are replaced by their float equivalent. Non null float values
         are left unmodified.
+
         Args:
             data (pandas.Series or numpy.ndarray):
                 Data to transform.
+                
         Returns:
             numpy.ndarray
         """
@@ -132,6 +136,7 @@ class NumericalTransformer(BaseTransformer):
         Args:
             data (numpy.ndarray):
                 Data to transform.
+
         Returns:
             numpy.ndarray
         """
