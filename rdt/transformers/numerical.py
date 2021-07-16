@@ -68,11 +68,12 @@ class NumericalTransformer(BaseTransformer):
         self.rounding = rounding
         self.min_value = min_value
         self.max_value = max_value
+        self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
 
     @staticmethod
     def _learn_rounding_digits(data):
         # check if data has any decimals
-        roundable_data = data[~np.isinf(data)]
+        roundable_data = data[~(np.isinf(data) | ~pd.notnull(data))]
         roundable_data = roundable_data.astype(float)
         if (roundable_data % 1 != 0).any():
             if not (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
@@ -93,7 +94,6 @@ class NumericalTransformer(BaseTransformer):
 
     def fit(self, data):
         """Fit the transformer to the data.
-
         Args:
             data (pandas.Series or numpy.ndarray):
                 Data to fit.
@@ -102,28 +102,23 @@ class NumericalTransformer(BaseTransformer):
             data = pd.Series(data)
 
         self._dtype = self.dtype or data.dtype
-        clean_data = data.dropna()
-        self._min_value = min(clean_data) if self.min_value == 'auto' else self.min_value
-        self._max_value = max(clean_data) if self.max_value == 'auto' else self.max_value
+        self._min_value = data.min() if self.min_value == 'auto' else self.min_value
+        self._max_value = data.max() if self.max_value == 'auto' else self.max_value
 
         if self.rounding == 'auto':
-            self._rounding_digits = self._learn_rounding_digits(clean_data)
+            self._rounding_digits = self._learn_rounding_digits(data)
         elif isinstance(self.rounding, int):
             self._rounding_digits = self.rounding
 
-        self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(data)
 
     def transform(self, data):
         """Transform numerical data.
-
         Integer values are replaced by their float equivalent. Non null float values
         are left unmodified.
-
         Args:
             data (pandas.Series or numpy.ndarray):
                 Data to transform.
-
         Returns:
             numpy.ndarray
         """
@@ -134,11 +129,9 @@ class NumericalTransformer(BaseTransformer):
 
     def reverse_transform(self, data):
         """Convert data back into the original format.
-
         Args:
             data (numpy.ndarray):
                 Data to transform.
-
         Returns:
             numpy.ndarray
         """
@@ -158,7 +151,7 @@ class NumericalTransformer(BaseTransformer):
             if pd.notnull(data).all():
                 return data.round().astype(self._dtype)
 
-            data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(self._dtype)
+            data = np.round(data)
             return data
 
         return data.astype(self._dtype)
