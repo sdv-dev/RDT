@@ -68,12 +68,11 @@ class NumericalTransformer(BaseTransformer):
         self.rounding = rounding
         self.min_value = min_value
         self.max_value = max_value
-        self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
 
     @staticmethod
     def _learn_rounding_digits(data):
         # check if data has any decimals
-        roundable_data = data[~(np.isinf(data) | ~pd.notnull(data))]
+        roundable_data = data[~(np.isinf(data) | pd.isnull(data))]
         roundable_data = roundable_data.astype(float)
         if (roundable_data % 1 != 0).any():
             if not (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
@@ -111,6 +110,7 @@ class NumericalTransformer(BaseTransformer):
         elif isinstance(self.rounding, int):
             self._rounding_digits = self.rounding
 
+        self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(data)
 
     def transform(self, data):
