@@ -133,6 +133,7 @@ class NumericalTransformer(BaseTransformer):
 
     def reverse_transform(self, data):
         """Convert data back into the original format.
+
         Args:
             data (numpy.ndarray):
                 Data to transform.
