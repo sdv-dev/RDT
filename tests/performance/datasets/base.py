@@ -9,7 +9,7 @@ class BaseDatasetGenerator(ABC):
 
     @staticmethod
     @abstractmethod
-    def generate(self, num_rows):
+    def generate(num_rows):
         """This method serves as a template for dataset generators.
 
         Args:
@@ -18,4 +18,4 @@ class BaseDatasetGenerator(ABC):
         Returns:
             numpy.ndarray of size ``num_rows``
         """
-        pass
+        raise NotImplementedError()
