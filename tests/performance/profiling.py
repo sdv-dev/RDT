@@ -82,7 +82,3 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
         'Reverse Transform Time': reverse_time,
         'Reverse Transform Memory': reverse_memory
     })
-
-
-if __name__ == '__main__':
-    pass
