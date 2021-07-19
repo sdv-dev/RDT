@@ -65,12 +65,15 @@ class CategoricalTransformer(BaseTransformer):
             dict:
                 intervals for each categorical value (start, end).
         """
-        frequencies = data.value_counts(dropna=False).reset_index()
+        frequencies = data.value_counts(dropna=False)
 
-        # Sort also by index to make sure that results are always the same
-        name = data.name or 0
-        sorted_freqs = frequencies.sort_values([name, 'index'], ascending=False)
-        frequencies = sorted_freqs.set_index('index', drop=True)[name]
+        # Sort by both count and index to make sure that results are always the same
+        value_counts = np.rec.fromarrays(
+            (frequencies.index.notnull(), frequencies.values, frequencies.index.astype('str')),
+            names=('notnull', 'vals', 'index'),
+        )
+        frequencies = frequencies.iloc[np.argsort(
+            value_counts, order=('notnull', 'vals', 'index')).tolist()[::-1]]
 
         start = 0
         end = 0
