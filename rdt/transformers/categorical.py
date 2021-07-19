@@ -142,6 +142,21 @@ class CategoricalTransformer(BaseTransformer):
         if not isinstance(data, pd.Series):
             data = pd.Series(data)
 
+        if len(self.means) < len(data):
+            result = np.empty(shape=(len(data), ), dtype=float)
+
+            # loop over categories
+            for category, values in self.intervals.items():
+                mean = values[2]
+                if category is np.nan:
+                    mask = data.isnull()
+                else:
+                    mask = (data.values == category)
+
+                result[mask] = mean
+
+            return result
+
         return data.fillna(np.nan).apply(self._get_value).to_numpy()
 
     def _normalize(self, data):
@@ -185,7 +200,7 @@ class CategoricalTransformer(BaseTransformer):
             indexes = np.argmin(diffs, axis=1)
 
             self._get_category_from_index = list(self.means.index).__getitem__
-            return pd.Series(indexes).apply(self._get_category_from_index).values
+            return pd.Series(indexes).apply(self._get_category_from_index).astype(self.dtype)
 
         if num_rows > num_categories:
             result = np.empty(shape=(len(data), ), dtype=self.dtype)
@@ -193,10 +208,10 @@ class CategoricalTransformer(BaseTransformer):
             # loop over categories
             for category, values in self.intervals.items():
                 start = values[0]
-                mask = (start <= data)
+                mask = (start <= data.values)
                 result[mask] = category
 
-            return pd.Series(result, index=data.index)
+            return pd.Series(result, index=data.index, dtype=self.dtype)
 
         # loop over rows
         return data.apply(self._get_category_from_start)

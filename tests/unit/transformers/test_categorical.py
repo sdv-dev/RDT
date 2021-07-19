@@ -35,7 +35,7 @@ class TestCategoricalTransformer:
             'tar': (0.5, 0.75, 0.625, 0.25 / 6),
             'bar': (0.75, 1, 0.875, 0.25 / 6)
         }
-        assert result == expected_intervals
+        assert result[0] == expected_intervals
 
     def test_fit(self):
         # Setup
@@ -114,21 +114,23 @@ class TestCategoricalTransformer:
     def test_reverse_transform_array(self):
         """Test reverse_transform a numpy.array"""
         # Setup
+        data = np.array(['foo', 'foo', 'tar', 'bar'])
+        rt_data = np.array([-0.6, 0.2, 0.6, -0.2])
         transformer = CategoricalTransformer()
-        transformer.dtype = object
-        transformer.intervals = {
-            'foo': (0, 0.5),
-            'bar': (0.5, 0.75),
-            'tar': (0.75, 1),
-        }
 
         # Run
-        data = np.array([-0.6, 0.2, 0.6, -0.2])
-        result = transformer.reverse_transform(data)
+        transformer.fit(data)
+        result = transformer.reverse_transform(rt_data)
 
         # Asserts
-        expect = pd.Series(['foo', 'foo', 'bar', 'tar'])
+        expected_intervals = {
+            'foo': (0, 0.5, 0.25, 0.08333333333333333),
+            'tar': (0.5, 0.75, 0.625, 0.041666666666666664),
+            'bar': (0.75, 1.0, 0.875, 0.041666666666666664),
+        }
+        assert transformer.intervals == expected_intervals
 
+        expect = pd.Series(data)
         pd.testing.assert_series_equal(result, expect)
 
     def test_reversible_strings(self):
