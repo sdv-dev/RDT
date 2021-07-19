@@ -249,6 +249,144 @@ class TestOneHotEncodingTransformer:
         # Assert
         np.testing.assert_array_equal(ohet.dummies, ['a'])
 
+    def test__transform_small_no_nan(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = np.array(['a', 'b', 'c'])
+        ohet.fit(pd.Series(data))
+
+        # Run
+        out = ohet._transform_small(data, len(data))
+
+        # Assert
+        expected = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
+    def test__transform_small_nans(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = np.array([np.nan, None, 'a', 'b'])
+        ohet.fit(pd.Series(data))
+
+        # Run
+        out = ohet._transform_small(data, len(data))
+
+        # Assert
+        expected = np.array([
+            [0, 0, 1],
+            [0, 0, 1],
+            [1, 0, 0],
+            [0, 1, 0]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
+    def test__transform_small_single(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = np.array(['a', 'a', 'a'])
+        ohet.fit(pd.Series(data))
+
+        # Run
+        out = ohet._transform_small(data, len(data))
+
+        # Assert
+        expected = np.array([
+            [1],
+            [1],
+            [1]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
+    def test__transform_small_zeros(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = np.array(['a'])
+        ohet.fit(pd.Series(data))
+
+        # Run
+        out = ohet._transform_small(np.array(['b', 'b', 'b']), 3)
+
+        # Assert
+        expected = np.array([
+            [0],
+            [0],
+            [0]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
+    def test__transform_large_no_nan(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = np.array(['a', 'b', 'c'])
+        ohet.fit(pd.Series(data))
+
+        # Run
+        out = ohet._transform_large(data)
+
+        # Assert
+        expected = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
+    def test__transform_large_nans(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = np.array([np.nan, None, 'a', 'b'])
+        ohet.fit(pd.Series(data))
+
+        # Run
+        out = ohet._transform_large(data)
+
+        # Assert
+        expected = np.array([
+            [0, 0, 1],
+            [0, 0, 1],
+            [1, 0, 0],
+            [0, 1, 0]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
+    def test__transform_large_single(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = np.array(['a', 'a', 'a'])
+        ohet.fit(pd.Series(data))
+
+        # Run
+        out = ohet._transform_large(data)
+
+        # Assert
+        expected = np.array([
+            [1],
+            [1],
+            [1]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
+    def test__transform_large_zeros(self):
+        # Setup
+        ohet = OneHotEncodingTransformer()
+        data = np.array(['a'])
+        ohet.fit(pd.Series(data))
+
+        # Run
+        out = ohet._transform_large(np.array(['b', 'b', 'b']))
+
+        # Assert
+        expected = np.array([
+            [0],
+            [0],
+            [0]
+        ])
+        np.testing.assert_array_equal(out, expected)
+
     def test_transform_no_nans(self):
         # Setup
         ohet = OneHotEncodingTransformer()
@@ -310,23 +448,44 @@ class TestOneHotEncodingTransformer:
         with np.testing.assert_raises(ValueError):
             ohet.transform(['b'])
 
-    def test_transform_large(self):
+    @patch('rdt.transformers.OneHotEncodingTransformer._transform_large')
+    def test_transform_size_large(self, tran_large):
         # Setup
-        size = 1000
+        size = 1400
         ohet = OneHotEncodingTransformer()
-        data = pd.Series(['a', 'b', None] * size)
+        data = pd.Series(['a', 'b'] * size)
         ohet.fit(data)
 
-        # Run
-        out = ohet.transform(data)
+        expected = np.tile(np.array([
+            [1, 0],
+            [0, 1],
+        ]), (size, 1))
+        tran_large.return_value = expected
 
-        # Assert
+        # Run
+        ohet.transform(data)
+
+        tran_large.assert_called_with(data)
+
+    @patch('rdt.transformers.OneHotEncodingTransformer._transform_small')
+    def test_transform_size_small(self, tran_small):
+        # Setup
+        size = 933
+        ohet = OneHotEncodingTransformer()
+        data = pd.Series(['a', 'b', 'c'] * size)
+        ohet.fit(data)
+
         expected = np.tile(np.array([
             [1, 0, 0],
             [0, 1, 0],
             [0, 0, 1]
         ]), (size, 1))
-        np.testing.assert_array_equal(out, expected)
+        tran_small.return_value = expected
+
+        # Run
+        ohet.transform(data)
+
+        tran_small.assert_called_with(data, size * 3)
 
     def test_reverse_transform_no_nans(self):
         # Setup

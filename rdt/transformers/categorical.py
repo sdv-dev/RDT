@@ -277,8 +277,8 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         unknown = array.sum(axis=1) == 0
         if self.error_on_unknown and unknown.any():
-            raise ValueError(f'Attempted to transform {list(data[unknown])} \
-                that were not seen during fit stage.')
+            raise ValueError(f'Attempted to transform {list(data[unknown])} ',
+                             'that were not seen during fit stage.')
 
         return array
 
