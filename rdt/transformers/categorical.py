@@ -298,7 +298,7 @@ class LabelEncodingTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        self.values_to_categories = pd.Series(data.unique()).to_dict()
+        self.values_to_categories = dict(enumerate(data.unique()))
         self.categories_to_values = {
             category: value
             for value, category in self.values_to_categories.items()
@@ -329,4 +329,5 @@ class LabelEncodingTransformer(BaseTransformer):
         if isinstance(data, np.ndarray) and (data.ndim == 2):
             data = data[:, 0]
 
-        return pd.Series(data).astype(int).map(self.values_to_categories)
+        data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
+        return pd.Series(data).round().map(self.values_to_categories)

@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers import CategoricalTransformer, OneHotEncodingTransformer
+from rdt.transformers import (
+    CategoricalTransformer, LabelEncodingTransformer, OneHotEncodingTransformer)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
@@ -377,3 +378,29 @@ class TestOneHotEncodingTransformer:
         # Assert
         expected = pd.Series(['a', 'a', 'a'])
         pd.testing.assert_series_equal(out, expected)
+
+
+class TestLabelEncodingTransformer:
+
+    def test_reverse_transform_clips_values(self):
+        """Test the ``reverse_transform`` method with values not in map.
+
+        If a value that is not in ``values_to_categories`` is passed
+        to ``reverse_transform``, then the value should be clipped to
+        the range of the dict's keys.
+
+        Input:
+        - array with values outside of dict
+        Output:
+        - categories corresponding to closest key in the dict
+        """
+        # Setup
+        transformer = LabelEncodingTransformer()
+        transformer.values_to_categories = {0: 'a', 1: 'b', 2: 'c'}
+        data = pd.Series([0, 1, 10])
+
+        # Run
+        out = transformer.reverse_transform(data)
+
+        # Assert
+        pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
