@@ -55,11 +55,10 @@ class DatetimeTransformer(BaseTransformer):
     def _transform(self, datetimes):
         """Transform datetime values to integer."""
         nulls = datetimes.isnull()
-        integers = np.zeros(len(datetimes))
-        integers[~nulls] = datetimes[~nulls].astype(np.int64).astype(np.float64).values
+        integers = pd.to_numeric(datetimes, errors='coerce').values.astype(np.float64)
         integers[nulls] = np.nan
-
         transformed = pd.Series(integers)
+
         if self.strip_constant:
             self._find_divider(transformed)
             transformed = transformed.floordiv(self.divider)
@@ -113,8 +112,8 @@ class DatetimeTransformer(BaseTransformer):
         if isinstance(data, np.ndarray) and (data.ndim == 2):
             data = data[:, 0]
 
-        data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(np.int64)
+        data = np.round(data.astype(np.float64))
         if self.strip_constant:
-            data = data.astype(float) * self.divider
+            data = data * self.divider
 
         return pd.to_datetime(data)
