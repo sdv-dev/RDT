@@ -49,7 +49,7 @@ def test_profile_transformer(deepcopy_mock, process_mock):
         'Reverse Transform Time', 'Reverse Transform Memory'
     ]
     assert len(deepcopy_mock.mock_calls) == 100
-    assert len(transformer_mock.return_value.fit.mock_calls) == 100
+    assert len(transformer_mock.return_value.fit.mock_calls) == 101
     assert len(transformer_mock.return_value.transform.mock_calls) == 101
     assert len(transformer_mock.return_value.reverse_transform.mock_calls) == 100
     all(np.testing.assert_array_equal(call[1][0], np.ones(100)) for call
