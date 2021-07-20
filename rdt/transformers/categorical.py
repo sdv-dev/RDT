@@ -67,14 +67,6 @@ class CategoricalTransformer(BaseTransformer):
         """
         frequencies = data.value_counts(dropna=False)
 
-        # Sort by both count and index to make sure that results are always the same
-        value_counts = np.rec.fromarrays(
-            (frequencies.index.notnull(), frequencies.values, frequencies.index.astype('str')),
-            names=('notnull', 'vals', 'index'),
-        )
-        frequencies = frequencies.iloc[np.argsort(
-            value_counts, order=('notnull', 'vals', 'index')).tolist()[::-1]]
-
         start = 0
         end = 0
         elements = len(data)
@@ -92,7 +84,7 @@ class CategoricalTransformer(BaseTransformer):
 
             intervals[value] = (start, end, mean, std)
             means.append(mean)
-            starts.append((value, starts))
+            starts.append((value, start))
             start = end
 
         means = pd.Series(means, index=list(frequencies.keys()))
@@ -118,6 +110,25 @@ class CategoricalTransformer(BaseTransformer):
         self.intervals, self.means, self.starts = self._get_intervals(data)
         self._get_category_from_index = list(self.means.index).__getitem__
 
+    def _transform_by_category(self, data):
+        """Transform the data by iterating over the different categories."""
+        result = np.empty(shape=(len(data), ), dtype=float)
+
+        # loop over categories
+        for category, values in self.intervals.items():
+            mean, std = values[2:]
+            if category is np.nan:
+                mask = data.isnull()
+            else:
+                mask = (data.values == category)
+
+            if self.fuzzy:
+                result[mask] = np.array([norm.rvs(mean, std) for _ in range(np.sum(mask))])
+            else:
+                result[mask] = mean
+
+        return result
+
     def _get_value(self, category):
         """Get the value that represents this category."""
         if pd.isnull(category):
@@ -129,6 +140,10 @@ class CategoricalTransformer(BaseTransformer):
             return norm.rvs(mean, std)
 
         return mean
+
+    def _transform_by_row(self, data):
+        """Transform the data row by row."""
+        return data.fillna(np.nan).apply(self._get_value).to_numpy()
 
     def transform(self, data):
         """Transform categorical values to float values.
@@ -146,21 +161,9 @@ class CategoricalTransformer(BaseTransformer):
             data = pd.Series(data)
 
         if len(self.means) < len(data):
-            result = np.empty(shape=(len(data), ), dtype=float)
+            return self._transform_by_category(data)
 
-            # loop over categories
-            for category, values in self.intervals.items():
-                mean = values[2]
-                if category is np.nan:
-                    mask = data.isnull()
-                else:
-                    mask = (data.values == category)
-
-                result[mask] = mean
-
-            return result
-
-        return data.fillna(np.nan).apply(self._get_value).to_numpy()
+        return self._transform_by_row(data)
 
     def _normalize(self, data):
         """Normalize data to the range [0, 1].
@@ -172,9 +175,38 @@ class CategoricalTransformer(BaseTransformer):
 
         return np.mod(data, 1)
 
+    def _reverse_transform_by_matrix(self, data):
+        """Reverse transform the data with matrix operations."""
+        num_rows = len(data)
+        num_categories = len(self.means)
+
+        data = np.broadcast_to(data, (num_categories, num_rows)).T
+        means = np.broadcast_to(self.means, (num_rows, num_categories))
+        diffs = np.abs(np.subtract(data, means))
+        indexes = np.argmin(diffs, axis=1)
+
+        self._get_category_from_index = list(self.means.index).__getitem__
+        return pd.Series(indexes).apply(self._get_category_from_index).astype(self.dtype)
+
+    def _reverse_transform_by_category(self, data):
+        """Reverse transform the data by iterating over all the categories."""
+        result = np.empty(shape=(len(data), ), dtype=self.dtype)
+
+        # loop over categories
+        for category, values in self.intervals.items():
+            start = values[0]
+            mask = (start <= data.values)
+            result[mask] = category
+
+        return pd.Series(result, index=data.index, dtype=self.dtype)
+
     def _get_category_from_start(self, value):
         lower = self.starts.loc[:value]
         return lower.iloc[-1].category
+
+    def _reverse_transform_by_row(self, data):
+        """Reverse transform the data by iterating over each row."""
+        return data.apply(self._get_category_from_start)
 
     def reverse_transform(self, data):
         """Reverse transform the given data.
@@ -197,27 +229,13 @@ class CategoricalTransformer(BaseTransformer):
         needed_memory = num_rows * num_categories * 8 * 3
         available_memory = psutil.virtual_memory().available
         if available_memory > needed_memory:
-            data = np.broadcast_to(data, (num_categories, num_rows)).T
-            means = np.broadcast_to(self.means, (num_rows, num_categories))
-            diffs = np.abs(np.subtract(data, means))
-            indexes = np.argmin(diffs, axis=1)
-
-            self._get_category_from_index = list(self.means.index).__getitem__
-            return pd.Series(indexes).apply(self._get_category_from_index).astype(self.dtype)
+            return self._reverse_transform_by_matrix(data)
 
         if num_rows > num_categories:
-            result = np.empty(shape=(len(data), ), dtype=self.dtype)
-
-            # loop over categories
-            for category, values in self.intervals.items():
-                start = values[0]
-                mask = (start <= data.values)
-                result[mask] = category
-
-            return pd.Series(result, index=data.index, dtype=self.dtype)
+            return self._reverse_transform_by_category(data)
 
         # loop over rows
-        return data.apply(self._get_category_from_start)
+        return self._reverse_transform_by_row(data)
 
 
 class OneHotEncodingTransformer(BaseTransformer):
