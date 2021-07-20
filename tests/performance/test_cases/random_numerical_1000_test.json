@@ -7,15 +7,15 @@
     "transform_size": 1000,
     "expected": {
         "fit": {
-            "time": 0.0002,
+            "time": 0.001,
             "memory": 72760.0
         },
         "transform": {
-            "time": 0.00006,
+            "time": 0.0001,
             "memory": 27310.0
         },
         "reverse_transform": {
-            "time": 0.00002,
+            "time": 0.0001,
             "memory": 15490.0
         }
     }
