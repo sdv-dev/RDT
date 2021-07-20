@@ -55,6 +55,7 @@ class NumericalTransformer(BaseTransformer):
     """
 
     null_transformer = None
+    nan = None
     _dtype = None
     _rounding_digits = None
     _min_value = None
@@ -73,7 +74,6 @@ class NumericalTransformer(BaseTransformer):
     def _learn_rounding_digits(data):
         # check if data has any decimals
         roundable_data = data[~(np.isinf(data) | pd.isnull(data))]
-        roundable_data = roundable_data.astype(float)
         if (roundable_data % 1 != 0).any():
             if not (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
                 return None
@@ -150,14 +150,10 @@ class NumericalTransformer(BaseTransformer):
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 
-        if self._rounding_digits is not None:
-            data = data.round(self._rounding_digits)
+        if self._rounding_digits is not None or np.dtype(self._dtype).kind == 'i':
+            data = data.round(self._rounding_digits or 0)
 
-        if np.dtype(self._dtype).kind == 'i':
-            if pd.notnull(data).all():
-                return data.round().astype(self._dtype)
-
-            data = np.round(data)
+        if pd.isnull(data).any():
             return data
 
         return data.astype(self._dtype)
