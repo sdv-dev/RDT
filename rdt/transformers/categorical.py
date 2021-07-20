@@ -123,7 +123,7 @@ class CategoricalTransformer(BaseTransformer):
                 mask = (data.values == category)
 
             if self.fuzzy:
-                result[mask] = np.array([norm.rvs(mean, std) for _ in range(np.sum(mask))])
+                result[mask] = norm.rvs(mean, std, size=mask.sum())
             else:
                 result[mask] = mean
 
@@ -206,13 +206,17 @@ class CategoricalTransformer(BaseTransformer):
 
     def _reverse_transform_by_row(self, data):
         """Reverse transform the data by iterating over each row."""
-        return data.apply(self._get_category_from_start)
+        return data.apply(self._get_category_from_start).astype(self.dtype)
 
     def reverse_transform(self, data):
-        """Reverse transform the given data.
+        """Convert float values back to the original categorical values.
 
-        This does the reverse transform in a more efficient way than
-        the one implemented in the public library.
+        Args:
+            data (numpy.ndarray):
+                Data to revert.
+
+        Returns:
+            pandas.Series
         """
         if not isinstance(data, pd.Series):
             if len(data.shape) > 1:
