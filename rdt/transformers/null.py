@@ -49,7 +49,7 @@ class NullTransformer(BaseTransformer):
         """
         null_values = data.isnull().values
         self.nulls = null_values.any()
-        contains_not_null = (~null_values).any()
+        contains_not_null = not null_values.all()
         if self.fill_value == 'mean':
             self._fill_value = data.mean() if contains_not_null else 0
         elif self.fill_value == 'mode':
