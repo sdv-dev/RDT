@@ -47,14 +47,16 @@ class NullTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to transform.
         """
+        null_values = data.isnull().values
+        self.nulls = null_values.any()
+        contains_not_null = ~null_values.any()
         if self.fill_value == 'mean':
-            self._fill_value = data.mean() if pd.notnull(data).any() else 0
+            self._fill_value = data.mean() if contains_not_null else 0
         elif self.fill_value == 'mode':
-            self._fill_value = data.mode(dropna=True)[0] if pd.notnull(data).any() else 0
+            self._fill_value = data.mode(dropna=True)[0] if contains_not_null else 0
         else:
             self._fill_value = self.fill_value
 
-        self.nulls = data.isnull().any()
         if self.null_column is None:
             self._null_column = self.nulls
         else:
