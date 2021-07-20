@@ -75,6 +75,9 @@ class NullTransformer(BaseTransformer):
             numpy.ndarray
         """
         if self.nulls:
+            if not isinstance(data, pd.Series):
+                data = pd.Series(data)
+
             isnull = data.isnull()
             if self.nulls and self._fill_value is not None:
                 if not self.copy:
