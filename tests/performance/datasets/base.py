@@ -19,3 +19,7 @@ class BaseDatasetGenerator(ABC):
             numpy.ndarray of size ``num_rows``
         """
         raise NotImplementedError()
+
+    @classmethod
+    def __call__(cls, num_rows):
+        return cls.generate(num_rows)
