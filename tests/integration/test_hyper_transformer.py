@@ -9,12 +9,12 @@ def get_input_data_with_nan():
     data = pd.DataFrame({
         'integer': [1, 2, 1, 3, 1],
         'float': [0.1, 0.2, 0.1, np.nan, 0.1],
-        'categorical': ['a', 'b', np.nan, 'b', 'a'],
+        'categorical': ['a', 'a', np.nan, 'b', 'a'],
         'bool': [False, np.nan, False, True, False],
         'datetime': [
             np.nan, '2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'
         ],
-        'names': ['Jon', 'Arya', 'Sansa', 'Jon', 'Robb'],
+        'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon'],
     })
     data['datetime'] = pd.to_datetime(data['datetime'])
 
@@ -25,12 +25,12 @@ def get_input_data_without_nan():
     data = pd.DataFrame({
         'integer': [1, 2, 1, 3],
         'float': [0.1, 0.2, 0.1, 0.1],
-        'categorical': ['a', 'b', 'b', 'a'],
+        'categorical': ['a', 'a', 'b', 'a'],
         'bool': [False, False, True, False],
         'datetime': [
             '2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'
         ],
-        'names': ['Jon', 'Arya', 'Sansa', 'Jon'],
+        'names': ['Jon', 'Arya', 'Jon', 'Jon'],
     })
     data['datetime'] = pd.to_datetime(data['datetime'])
     data['bool'] = data['bool'].astype('O')  # boolean transformer returns O instead of bool
@@ -42,7 +42,7 @@ def get_transformed_data():
     return pd.DataFrame({
         'integer': [1, 2, 1, 3],
         'float': [0.1, 0.2, 0.1, 0.1],
-        'categorical': [0.75, 0.25, 0.25, 0.75],
+        'categorical': [0.375, 0.375, 0.875, 0.375],
         'bool': [0.0, 0.0, 1.0, 0.0],
         'datetime': [
             1.2649824e+18,
@@ -50,7 +50,7 @@ def get_transformed_data():
             1.2649824e+18,
             1.262304e+18
         ],
-        'names': [0.25, 0.875, 0.625, 0.25]
+        'names': [0.375, 0.875, 0.375, 0.375]
     })
 
 
@@ -59,7 +59,7 @@ def get_transformed_nan_data():
         'integer': [1, 2, 1, 3, 1],
         'float': [0.1, 0.2, 0.1, 0.125, 0.1],
         'float#1': [0.0, 0.0, 0.0, 1.0, 0.0],
-        'categorical': [0.6, 0.2, 0.9, 0.2, 0.6],
+        'categorical': [0.3, 0.3, 0.9, 0.7, 0.3],
         'bool': [0.0, -1.0, 0.0, 1.0, 0.0],
         'bool#1': [0.0, 1.0, 0.0, 0.0, 0.0],
         'datetime': [
@@ -67,7 +67,7 @@ def get_transformed_nan_data():
             1.2649824e+18, 1.262304e+18
         ],
         'datetime#1': [1.0, 0.0, 0.0, 0.0, 0.0],
-        'names': [0.2, 0.9, 0.5, 0.2, 0.7],
+        'names': [0.3, 0.8, 0.8, 0.3, 0.3],
     })
 
 

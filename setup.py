@@ -15,6 +15,7 @@ install_requires = [
     'numpy>=1.18.0,<2',
     'pandas>=1.1,<1.1.5',
     'scipy>=1.4.1,<2',
+    'psutil>=5.7,<6',
 ]
 
 copulas_requires = [
