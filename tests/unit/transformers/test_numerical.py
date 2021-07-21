@@ -34,6 +34,77 @@ class TestNumericalTransformer(TestCase):
         assert transformer.null_transformer.fill_value == expect_fill_value
         assert transformer._dtype == expect_dtype
 
+    def test__learn_rounding_digits_more_than_15_decimals(data):
+        """Test the _learn_rounding_digits method with more than 15 decimals.
+
+        If the data has more than 15 decimals, None should be returned.
+
+        Input:
+        - An array that contains floats with more than 15 decimals.
+        Output:
+        - None
+        """
+        data = np.random.random(size=10).round(20)
+
+        output = NumericalTransformer._learn_rounding_digits(data)
+
+        assert output is None
+
+    def test__learn_rounding_digits_less_than_15_decimals(data):
+        """Test the _learn_rounding_digits method with less than 15 decimals.
+
+        If the data has less than 15 decimals, the maximum number of decimals
+        should be returned.
+
+        Input:
+        - An array that contains floats with a maximum of 3 decimals and a NaN.
+        Output:
+        - 3
+        """
+        data = np.array([10, 0., 0.1, 0.12, 0.123, np.nan])
+
+        output = NumericalTransformer._learn_rounding_digits(data)
+
+        assert output == 3
+
+    def test__learn_rounding_digits_negative_decimals_float(data):
+        """Test the _learn_rounding_digits method with floats multiples of powers of 10.
+
+        If the data has all multiples of 10, 100, or any other higher power of 10,
+        the output is the negative number of decimals representing the corresponding
+        power of 10.
+
+        Input:
+        - An array that contains floats that are multiples of powers of 10, 100 and 1000
+          and a NaN.
+        Output:
+        - -1
+        """
+        data = np.array([1230., 12300., 123000., np.nan])
+
+        output = NumericalTransformer._learn_rounding_digits(data)
+
+        assert output == -1
+
+    def test__learn_rounding_digits_negative_decimals_integer(data):
+        """Test the _learn_rounding_digits method with integers multiples of powers of 10.
+
+        If the data has all multiples of 10, 100, or any other higher power of 10,
+        the output is the negative number of decimals representing the corresponding
+        power of 10.
+
+        Input:
+        - An array that contains integers that are multiples of powers of 10, 100 and 1000
+          and a NaN.
+        Output:
+        - -1
+        """
+        data = np.array([1230, 12300, 123000, np.nan])
+
+        output = NumericalTransformer._learn_rounding_digits(data)
+
+        assert output == -1
+
     def test_fit_rounding_none(self):
         """Test fit rounding parameter with ``None``
 
@@ -176,7 +247,7 @@ class TestNumericalTransformer(TestCase):
         transformer.fit(data)
 
         # Asserts
-        assert transformer._rounding_digits is -3
+        assert transformer._rounding_digits == -3
 
     def test_fit_rounding_auto_max_zero(self):
         """Test fit rounding parameter with ``'auto'``
@@ -314,6 +385,93 @@ class TestNumericalTransformer(TestCase):
 
         # Assert
         np.testing.assert_array_equal(result, data)
+
+    def test_reverse_transform_rounding_none_integer(self):
+        """Test ``reverse_transform`` when ``rounding`` is ``None`` and the dtype is integer.
+
+        The data should be rounded to 0 decimals and returned as integer values.
+
+        Input:
+        - Array of multiple float values with decimals.
+        Output:
+        - Input array rounded an converted to integers.
+        """
+        # Setup
+        data = np.array([0., 1.2, 3.45, 6.789])
+
+        # Run
+        transformer = NumericalTransformer(dtype=np.int64, nan=None)
+        transformer._rounding_digits = None
+        transformer._dtype = np.int64
+        result = transformer.reverse_transform(data)
+
+        # Assert
+        expected = np.array([0, 1, 3, 7])
+        np.testing.assert_array_equal(result, expected)
+
+    def test_reverse_transform_rounding_none_with_nulls(self):
+        """Test ``reverse_transform`` when ``rounding`` is ``None`` and there are nulls.
+
+        The data should not be rounded at all.
+
+        Input:
+        - 2d Array of multiple float values with decimals and a column setting at least 1 null.
+        Output:
+        - First column of the input array as entered, replacing the indicated value with a Nan.
+        """
+        # Setup
+        data = np.array([
+            [0., 0.],
+            [1.2, 0.],
+            [3.45, 1.],
+            [6.789, 0.],
+        ])
+
+        # Run
+        transformer = NumericalTransformer()
+        null_transformer = Mock()
+        null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
+        transformer.null_transformer = null_transformer
+        transformer._rounding_digits = None
+        transformer._dtype = np.float
+        result = transformer.reverse_transform(data)
+
+        # Assert
+        expected = np.array([0., 1.2, np.nan, 6.789])
+        np.testing.assert_array_equal(result, expected)
+
+    def test_reverse_transform_rounding_none_with_nulls_dtype_int(self):
+        """Test ``reverse_transform`` when rounding is None, dtype is int and there are nulls.
+
+        The data should be rounded to 0 decimals and returned as float values with
+        nulls in the right place.
+
+        Input:
+        - 2d Array of multiple float values with decimals and a column setting at least 1 null.
+        Output:
+        - First column of the input array rounded, replacing the indicated value with a Nan,
+          and kept as float values.
+        """
+        # Setup
+        data = np.array([
+            [0., 0.],
+            [1.2, 0.],
+            [3.45, 1.],
+            [6.789, 0.],
+        ])
+
+        # Run
+        transformer = NumericalTransformer()
+        null_transformer = Mock()
+        null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
+        transformer.null_transformer = null_transformer
+        transformer._rounding_digits = None
+        transformer._dtype = np.int
+        result = transformer.reverse_transform(data)
+
+        # Assert
+        expected = np.array([0., 1., np.nan, 7.])
+        np.testing.assert_array_equal(result, expected)
 
     def test_reverse_transform_rounding_positive_rounding(self):
         """Test ``reverse_transform`` when ``rounding`` is a positive int

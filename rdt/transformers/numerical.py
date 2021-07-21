@@ -55,6 +55,7 @@ class NumericalTransformer(BaseTransformer):
     """
 
     null_transformer = None
+    nan = None
     _dtype = None
     _rounding_digits = None
     _min_value = None
@@ -72,8 +73,7 @@ class NumericalTransformer(BaseTransformer):
     @staticmethod
     def _learn_rounding_digits(data):
         # check if data has any decimals
-        roundable_data = data[~np.isinf(data)]
-        roundable_data = roundable_data.astype(float)
+        roundable_data = data[~(np.isinf(data) | pd.isnull(data))]
         if (roundable_data % 1 != 0).any():
             if not (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
                 return None
@@ -102,12 +102,11 @@ class NumericalTransformer(BaseTransformer):
             data = pd.Series(data)
 
         self._dtype = self.dtype or data.dtype
-        clean_data = data.dropna()
-        self._min_value = min(clean_data) if self.min_value == 'auto' else self.min_value
-        self._max_value = max(clean_data) if self.max_value == 'auto' else self.max_value
+        self._min_value = data.min() if self.min_value == 'auto' else self.min_value
+        self._max_value = data.max() if self.max_value == 'auto' else self.max_value
 
         if self.rounding == 'auto':
-            self._rounding_digits = self._learn_rounding_digits(clean_data)
+            self._rounding_digits = self._learn_rounding_digits(data)
         elif isinstance(self.rounding, int):
             self._rounding_digits = self.rounding
 
@@ -151,14 +150,11 @@ class NumericalTransformer(BaseTransformer):
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 
-        if self._rounding_digits is not None:
-            data = data.round(self._rounding_digits)
+        is_integer = np.dtype(self._dtype).kind == 'i'
+        if self._rounding_digits is not None or is_integer:
+            data = data.round(self._rounding_digits or 0)
 
-        if np.dtype(self._dtype).kind == 'i':
-            if pd.notnull(data).all():
-                return data.round().astype(self._dtype)
-
-            data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(self._dtype)
+        if pd.isnull(data).any() and is_integer:
             return data
 
         return data.astype(self._dtype)
