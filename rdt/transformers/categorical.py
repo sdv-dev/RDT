@@ -61,6 +61,7 @@ class CategoricalTransformer(BaseTransformer):
         Args:
             data (pandas.Series):
                 Data to analyze.
+
         Returns:
             dict:
                 intervals for each categorical value (start, end).
@@ -97,6 +98,7 @@ class CategoricalTransformer(BaseTransformer):
 
         Create the mapping dict to save the label encoding.
         Finally, compute the intervals for each categorical value.
+
         Args:
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
