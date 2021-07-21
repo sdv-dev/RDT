@@ -8,15 +8,15 @@
     "expected": {
         "fit": {
             "time": 0.001,
-            "memory": 72760.0
+            "memory": 77860.0
         },
         "transform": {
-            "time": 0.0001,
-            "memory": 27310.0
+            "time": 0.0002,
+            "memory": 33060.0
         },
         "reverse_transform": {
             "time": 0.0001,
-            "memory": 15490.0
+            "memory": 15590.0
         }
     }
 }
