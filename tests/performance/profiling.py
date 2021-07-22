@@ -65,6 +65,7 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     fit_dataset = dataset_generator.generate(fit_size)
     fit_time = _profile_time(transformer, 'fit', fit_dataset, copy=True)
     fit_memory = _profile_memory(transformer.fit, fit_dataset)
+    transformer.fit(fit_dataset)
 
     transform_dataset = dataset_generator.generate(transform_size)
     transform_time = _profile_time(transformer, 'transform', transform_dataset)

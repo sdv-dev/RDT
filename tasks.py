@@ -9,7 +9,12 @@ from invoke import task
 
 @task
 def pytest(c):
-    c.run('python -m pytest --cov=rdt')
+    c.run('pytest ./tests/unit ./tests/integration ./tests/performance/tests --cov=rdt')
+
+
+@task
+def performance(c):
+    c.run('pytest ./tests/performance/test_performance.py')
 
 
 @task

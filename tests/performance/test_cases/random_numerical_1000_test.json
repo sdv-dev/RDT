@@ -1,0 +1,22 @@
+{
+    "name": "NumericalTransformer - Random integers",
+    "dataset": "tests.performance.datasets.numerical.RandomNumericalGenerator",
+    "transformer": "rdt.transformers.numerical.NumericalTransformer",
+    "kwargs": {},
+    "fit_size": 1000,
+    "transform_size": 1000,
+    "expected": {
+        "fit": {
+            "time": 0.001,
+            "memory": 83000.0
+        },
+        "transform": {
+            "time": 0.0003,
+            "memory": 35000.0
+        },
+        "reverse_transform": {
+            "time": 0.0001,
+            "memory": 23000.0
+        }
+    }
+}
