@@ -220,21 +220,19 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return data
 
-    def _transform_small(self, data, num_rows):
+    def _transform_numeric(self, data):
+        num_rows = len(data)
         dummies = np.broadcast_to(self.dummies, (num_rows, self.num_dummies))
         coded = np.broadcast_to(data, (self.num_dummies, num_rows)).T
         array = (coded == dummies).astype(int)
 
         if self.dummy_na:
-            null = pd.isnull(data)
-            num_nulls = sum(null)
-            null_code = np.zeros(self.num_dummies)
-            null_code[-1] = 1
-            array[null] = np.broadcast_to(null_code, (num_nulls, self.num_dummies))
+            null = array.sum(axis=1) == 0
+            array[null, -1] = 1
 
         return array
 
-    def _transform_large(self, data):
+    def _transform_objects(self, data):
         dummies = pd.get_dummies(data, dummy_na=self.dummy_na)
         array = dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
         return array
@@ -268,17 +266,22 @@ class OneHotEncodingTransformer(BaseTransformer):
             numpy.ndarray:
         """
         data = self._prepare_data(data)
-        size = len(data)
 
-        if size < 2800:
-            array = self._transform_small(data, size)
+        if self.error_on_unknown and np.issubdtype(data.dtype, np.number):
+            unknown = set(pd.unique(data[pd.notnull(data)])).difference(self.dummies)
+            if unknown:
+                raise ValueError(f'Data contains {list(unknown)} that were not ',
+                                 'seen during fit stage.')
+
+            array = self._transform_numeric(data)
+
         else:
-            array = self._transform_large(data)
+            array = self._transform_objects(data)
 
-        unknown = array.sum(axis=1) == 0
-        if self.error_on_unknown and unknown.any():
-            raise ValueError(f'Attempted to transform {list(data[unknown])} ',
-                             'that were not seen during fit stage.')
+            unknown = array.sum(axis=1) == 0
+            if self.error_on_unknown and unknown.any():
+                raise ValueError(f'Attempted to transform {list(data[unknown])} ',
+                                 'that were not seen during fit stage.')
 
         return array
 
