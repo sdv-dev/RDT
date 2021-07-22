@@ -1,5 +1,5 @@
 import re
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -27,30 +27,32 @@ class TestCategoricalTransformer:
 
     def test__get_intervals(self):
         # Run
-        data = pd.Series(['bar', 'foo', 'foo', 'tar'])
+        data = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
         result = CategoricalTransformer._get_intervals(data)
 
         # Asserts
         expected_intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
-            'tar': (0.5, 0.75, 0.625, 0.25 / 6),
-            'bar': (0.75, 1, 0.875, 0.25 / 6)
+            'bar': (0.5, 0.8333333333333333, 0.6666666666666666, 0.05555555555555555),
+            'tar': (0.8333333333333333, 0.9999999999999999, 0.9166666666666666,
+                    0.027777777777777776)
         }
-        assert result == expected_intervals
+        assert result[0] == expected_intervals
 
     def test_fit(self):
         # Setup
         transformer = CategoricalTransformer()
 
         # Run
-        data = np.array(['bar', 'foo', 'foo', 'tar'])
+        data = np.array(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
         transformer.fit(data)
 
         # Asserts
         expected_intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
-            'tar': (0.5, 0.75, 0.625, 0.25 / 6),
-            'bar': (0.75, 1, 0.875, 0.25 / 6)
+            'bar': (0.5, 0.8333333333333333, 0.6666666666666666, 0.05555555555555555),
+            'tar': (0.8333333333333333, 0.9999999999999999, 0.9166666666666666,
+                    0.027777777777777776)
         }
         assert transformer.intervals == expected_intervals
 
@@ -115,61 +117,357 @@ class TestCategoricalTransformer:
     def test_reverse_transform_array(self):
         """Test reverse_transform a numpy.array"""
         # Setup
+        data = np.array(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
+        rt_data = np.array([-0.6, 0.5, 0.6, 0.2, 0.1, -0.2])
         transformer = CategoricalTransformer()
-        transformer.dtype = object
+
+        # Run
+        transformer.fit(data)
+        result = transformer.reverse_transform(rt_data)
+
+        # Asserts
+        expected_intervals = {
+            'foo': (0, 0.5, 0.25, 0.5 / 6),
+            'bar': (0.5, 0.8333333333333333, 0.6666666666666666, 0.05555555555555555),
+            'tar': (0.8333333333333333, 0.9999999999999999, 0.9166666666666666,
+                    0.027777777777777776)
+        }
+        assert transformer.intervals == expected_intervals
+
+        expect = pd.Series(data)
+        pd.testing.assert_series_equal(result, expect)
+
+    def test__transform_by_category_called(self):
+        """Test that the `_transform_by_category` method is called.
+
+        When the number of rows is greater than the number of categories, expect
+        that the `_transform_by_category` method is called.
+
+        Setup:
+            The categorical transformer is instantiated with 4 categories.
+        Input:
+            - data with 5 rows
+        Output:
+            - the output of `_transform_by_category`
+        Side effects:
+            - `_transform_by_category` will be called once
+        """
+        # Setup
+        data = pd.Series([1, 3, 3, 2, 1])
+
+        categorical_transformer_mock = Mock()
+        categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
+
+        # Run
+        transformed = CategoricalTransformer.transform(categorical_transformer_mock, data)
+
+        # Asserts
+        categorical_transformer_mock._transform_by_category.assert_called_once_with(data)
+        assert transformed == categorical_transformer_mock._transform_by_category.return_value
+
+    def test__transform_by_category(self):
+        """Test the `_transform_by_category` method with numerical data.
+
+        Expect that the correct transformed data is returned.
+
+        Setup:
+            The categorical transformer is instantiated with 4 categories and intervals.
+        Input:
+            - data with 5 rows
+        Ouptut:
+            - the transformed data
+        """
+        # Setup
+        data = pd.Series([1, 3, 3, 2, 1])
+        transformer = CategoricalTransformer()
         transformer.intervals = {
-            'foo': (0, 0.5),
-            'bar': (0.5, 0.75),
-            'tar': (0.75, 1),
+            4: (0, 0.25, 0.125, 0.041666666666666664),
+            3: (0.25, 0.5, 0.375, 0.041666666666666664),
+            2: (0.5, 0.75, 0.625, 0.041666666666666664),
+            1: (0.75, 1.0, 0.875, 0.041666666666666664),
         }
 
         # Run
-        data = np.array([-0.6, 0.2, 0.6, -0.2])
-        result = transformer.reverse_transform(data)
+        transformed = transformer._transform_by_category(data)
 
         # Asserts
-        expect = pd.Series(['foo', 'foo', 'bar', 'tar'])
+        expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
+        assert (transformed == expected).all()
 
-        pd.testing.assert_series_equal(result, expect)
+    def test__transform_by_row_called(self):
+        """Test that the `_transform_by_row` method is called.
 
-    def test_reversible_strings(self):
-        data = pd.Series(['a', 'b', 'a', 'c'])
+        When the number of rows is less than or equal to the number of categories,
+        expect that the `_transform_by_row` method is called.
+
+        Setup:
+            The categorical transformer is instantiated with 4 categories.
+        Input:
+            - data with 4 rows
+        Output:
+            - the output of `_transform_by_row`
+        Side effects:
+            - `_transform_by_row` will be called once
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 4])
+
+        categorical_transformer_mock = Mock()
+        categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
+
+        # Run
+        transformed = CategoricalTransformer.transform(categorical_transformer_mock, data)
+
+        # Asserts
+        categorical_transformer_mock._transform_by_row.assert_called_once_with(data)
+        assert transformed == categorical_transformer_mock._transform_by_row.return_value
+
+    def test__transform_by_row(self):
+        """Test the `_transform_by_row` method with numerical data.
+
+        Expect that the correct transformed data is returned.
+
+        Setup:
+            The categorical transformer is instantiated with 4 categories and intervals.
+        Input:
+            - data with 4 rows
+        Ouptut:
+            - the transformed data
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 4])
         transformer = CategoricalTransformer()
+        transformer.intervals = {
+            4: (0, 0.25, 0.125, 0.041666666666666664),
+            3: (0.25, 0.5, 0.375, 0.041666666666666664),
+            2: (0.5, 0.75, 0.625, 0.041666666666666664),
+            1: (0.75, 1.0, 0.875, 0.041666666666666664),
+        }
 
-        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+        # Run
+        transformed = transformer._transform_by_row(data)
+
+        # Asserts
+        expected = np.array([0.875, 0.625, 0.375, 0.125])
+        assert (transformed == expected).all()
+
+    @patch('psutil.virtual_memory')
+    def test__reverse_transfrom_by_matrix_called(self, psutil_mock):
+        """Test that the `_reverse_transform_by_matrix` method is called.
+
+        When there is enough virtual memory, expect that the
+        `_reverse_transform_by_matrix` method is called.
+
+        Setup:
+            The categorical transformer is instantiated with 4 categories. Also patch the
+            `psutil.virtual_memory` function to return a large enough `available_memory`.
+        Input:
+            - numerical data with 4 rows
+        Output:
+            - the output of `_reverse_transform_by_matrix`
+        Side effects:
+            - `_reverse_transform_by_matrix` will be called once
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 4])
+
+        categorical_transformer_mock = Mock()
+        categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
+        categorical_transformer_mock._normalize.return_value = data
+
+        virtual_memory = Mock()
+        virtual_memory.available = 4 * 4 * 8 * 3 + 1
+        psutil_mock.return_value = virtual_memory
+
+        # Run
+        reverse = CategoricalTransformer.reverse_transform(categorical_transformer_mock, data)
+
+        # Asserts
+        categorical_transformer_mock._reverse_transform_by_matrix.assert_called_once_with(data)
+        assert reverse == categorical_transformer_mock._reverse_transform_by_matrix.return_value
+
+    @patch('psutil.virtual_memory')
+    def test__reverse_transfrom_by_matrix(self, psutil_mock):
+        """Test the _reverse_transform_by_matrix method with numerical data
+
+        Expect that the transformed data is correctly reverse transformed.
+
+        Setup:
+            The categorical transformer is instantiated with 4 categories and means. Also patch
+            the `psutil.virtual_memory` function to return a large enough `available_memory`.
+        Input:
+            - transformed data with 4 rows
+        Ouptut:
+            - the original data
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 4])
+        transformed = pd.Series([0.875, 0.625, 0.375, 0.125])
+
+        transformer = CategoricalTransformer()
+        transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1])
+        transformer.dtype = data.dtype
+
+        virtual_memory = Mock()
+        virtual_memory.available = 4 * 4 * 8 * 3 + 1
+        psutil_mock.return_value = virtual_memory
+
+        # Run
+        reverse = transformer._reverse_transform_by_matrix(transformed)
+
+        # Assert
+        pd.testing.assert_series_equal(data, reverse)
+
+    @patch('psutil.virtual_memory')
+    def test__reverse_transform_by_category_called(self, psutil_mock):
+        """Test that the `_reverse_transform_by_category` method is called.
+
+        When there is not enough virtual memory and the number of rows is greater than the
+        number of categories, expect that the `_reverse_transform_by_category` method is called.
+
+        Setup:
+            The categorical transformer is instantiated with 4 categories. Also patch the
+            `psutil.virtual_memory` function to return an `available_memory` of 1.
+        Input:
+            - numerical data with 5 rows
+        Output:
+            - the output of `_reverse_transform_by_category`
+        Side effects:
+            - `_reverse_transform_by_category` will be called once
+        """
+        # Setup
+        transform_data = pd.Series([1, 3, 3, 2, 1])
+
+        categorical_transformer_mock = Mock()
+        categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
+        categorical_transformer_mock._normalize.return_value = transform_data
+
+        virtual_memory = Mock()
+        virtual_memory.available = 1
+        psutil_mock.return_value = virtual_memory
+
+        # Run
+        reverse = CategoricalTransformer.reverse_transform(
+            categorical_transformer_mock, transform_data)
+
+        # Asserts
+        categorical_transformer_mock._reverse_transform_by_category.assert_called_once_with(
+            transform_data)
+        assert reverse == categorical_transformer_mock._reverse_transform_by_category.return_value
+
+    @patch('psutil.virtual_memory')
+    def test__reverse_transform_by_category(self, psutil_mock):
+        """Test the _reverse_transform_by_category method with numerical data.
+
+        Expect that the transformed data is correctly reverse transformed.
+
+        Setup:
+            The categorical transformer is instantiated with 4 categories, and the means
+            and intervals are set for those categories. Also patch the `psutil.virtual_memory`
+            function to return an `available_memory` of 1.
+        Input:
+            - transformed data with 5 rows
+        Ouptut:
+            - the original data
+        """
+        data = pd.Series([1, 3, 3, 2, 1])
+        transformed = pd.Series([0.875, 0.375, 0.375, 0.625, 0.875])
+
+        transformer = CategoricalTransformer()
+        transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1])
+        transformer.intervals = {
+            4: (0, 0.25, 0.125, 0.041666666666666664),
+            3: (0.25, 0.5, 0.375, 0.041666666666666664),
+            2: (0.5, 0.75, 0.625, 0.041666666666666664),
+            1: (0.75, 1.0, 0.875, 0.041666666666666664),
+        }
+        transformer.dtype = data.dtype
+
+        virtual_memory = Mock()
+        virtual_memory.available = 1
+        psutil_mock.return_value = virtual_memory
+
+        reverse = transformer._reverse_transform_by_category(transformed)
 
         pd.testing.assert_series_equal(data, reverse)
 
-    def test_reversible_strings_2_categories(self):
-        data = pd.Series(['a', 'b', 'a', 'b'])
+    @patch('psutil.virtual_memory')
+    def test__reverse_transform_by_row_called(self, psutil_mock):
+        """Test that the `_reverse_transform_by_row` method is called.
+
+        When there is not enough virtual memory and the number of rows is less than or equal
+        to the number of categories, expect that the `_reverse_transform_by_row` method
+        is called.
+
+        Setup:
+            The categorical transformer is instantiated with 4 categories. Also patch the
+            `psutil.virtual_memory` function to return an `available_memory` of 1.
+        Input:
+            - numerical data with 4 rows
+        Output:
+            - the output of `_reverse_transform_by_row`
+        Side effects:
+            - `_reverse_transform_by_row` will be called once
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 4])
+
+        categorical_transformer_mock = Mock()
+        categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
+        categorical_transformer_mock.starts = pd.DataFrame(
+            [0., 0.25, 0.5, 0.75], index=[4, 3, 2, 1], columns=['category'])
+        categorical_transformer_mock._normalize.return_value = data
+
+        virtual_memory = Mock()
+        virtual_memory.available = 1
+        psutil_mock.return_value = virtual_memory
+
+        # Run
+        reverse = CategoricalTransformer.reverse_transform(categorical_transformer_mock, data)
+
+        # Asserts
+        categorical_transformer_mock._reverse_transform_by_row.assert_called_once_with(data)
+        assert reverse == categorical_transformer_mock._reverse_transform_by_row.return_value
+
+    @patch('psutil.virtual_memory')
+    def test__reverse_transform_by_row(self, psutil_mock):
+        """Test the _reverse_transform_by_row method with numerical data.
+
+        Expect that the transformed data is correctly reverse transformed.
+
+        Setup:
+            The categorical transformer is instantiated with 4 categories, and the means, starts,
+            and intervals are set for those categories. Also patch the `psutil.virtual_memory`
+            function to return an `available_memory` of 1.
+        Input:
+            - transformed data with 4 rows
+        Ouptut:
+            - the original data
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 4])
+        transformed = pd.Series([0.875, 0.625, 0.375, 0.125])
+
         transformer = CategoricalTransformer()
+        transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1])
+        transformer.starts = pd.DataFrame(
+            [4, 3, 2, 1], index=[0., 0.25, 0.5, 0.75], columns=['category'])
+        transformer.intervals = {
+            4: (0, 0.25, 0.125, 0.041666666666666664),
+            3: (0.25, 0.5, 0.375, 0.041666666666666664),
+            2: (0.5, 0.75, 0.625, 0.041666666666666664),
+            1: (0.75, 1.0, 0.875, 0.041666666666666664),
+        }
+        transformer.dtype = data.dtype
 
-        reverse = transformer.reverse_transform(transformer.fit_transform(data))
+        virtual_memory = Mock()
+        virtual_memory.available = 1
+        psutil_mock.return_value = virtual_memory
 
-        pd.testing.assert_series_equal(data, reverse)
+        # Run
+        reverse = transformer.reverse_transform(transformed)
 
-    def test_reversible_integers(self):
-        data = pd.Series([1, 2, 3, 2])
-        transformer = CategoricalTransformer()
-
-        reverse = transformer.reverse_transform(transformer.fit_transform(data))
-
-        pd.testing.assert_series_equal(data, reverse)
-
-    def test_reversible_bool(self):
-        data = pd.Series([True, False, True, False])
-        transformer = CategoricalTransformer()
-
-        reverse = transformer.reverse_transform(transformer.fit_transform(data))
-
-        pd.testing.assert_series_equal(data, reverse)
-
-    def test_reversible_mixed(self):
-        data = pd.Series([True, 'a', 1, None])
-        transformer = CategoricalTransformer()
-
-        reverse = transformer.reverse_transform(transformer.fit_transform(data))
-
+        # Assert
         pd.testing.assert_series_equal(data, reverse)
 
 

@@ -105,6 +105,10 @@ test-unit: ## run tests quickly with the default Python
 test-readme: ## run the readme snippets
 	invoke readme
 
+.PHONY: test-performance
+test-unit: ## run performance tests
+	invoke performance
+
 .PHONY: test
 test: test-unit test-readme ## test everything that needs test dependencies
 
