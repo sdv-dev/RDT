@@ -1,3 +1,5 @@
+"""Tests for the profiling module."""
+
 from copy import deepcopy
 from multiprocessing import Process
 from unittest.mock import Mock, patch
@@ -5,7 +7,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 
 from rdt.transformers import NumericalTransformer
-from tests.performance.datasets import RandomNumericalGenerator
+from tests.performance.datasets import BaseDatasetGenerator
 from tests.performance.profiling import profile_transformer
 
 
@@ -34,7 +36,7 @@ def test_profile_transformer(deepcopy_mock, process_mock):
     """
     # Setup
     transformer_mock = Mock(spec_set=NumericalTransformer)
-    dataset_gen_mock = Mock(spec_set=RandomNumericalGenerator)
+    dataset_gen_mock = Mock(spec_set=BaseDatasetGenerator)
     transformer_mock.return_value.transform.return_value = np.zeros(100)
     dataset_gen_mock.generate.return_value = np.ones(100)
     deepcopy_mock.return_value = transformer_mock.return_value
@@ -52,16 +54,20 @@ def test_profile_transformer(deepcopy_mock, process_mock):
     assert len(transformer_mock.return_value.fit.mock_calls) == 101
     assert len(transformer_mock.return_value.transform.mock_calls) == 101
     assert len(transformer_mock.return_value.reverse_transform.mock_calls) == 100
+
     all(np.testing.assert_array_equal(call[1][0], np.ones(100)) for call
         in transformer_mock.fit.mock_calls)
     all(np.testing.assert_array_equal(call[1][0], np.ones(100)) for call
         in transformer_mock.transform.mock_calls)
     all(np.testing.assert_array_equal(call[1][0], np.zeros(100)) for call
         in transformer_mock.reverse_transform.mock_calls)
-    expected_output_columns == list(profiling_results.index)
+
+    assert expected_output_columns == list(profiling_results.index)
+
     fit_call = process_mock.mock_calls[0]
     transform_call = process_mock.mock_calls[3]
     reverse_transform_call = process_mock.mock_calls[6]
+
     assert fit_call[2]['args'][0] == transformer_mock.return_value.fit
     np.testing.assert_array_equal(fit_call[2]['args'][1], np.ones(100))
     assert transform_call[2]['args'][0] == transformer_mock.return_value.transform

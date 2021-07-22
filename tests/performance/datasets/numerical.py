@@ -1,3 +1,5 @@
+"""Dataset Generators for numerical transformers."""
+
 import numpy as np
 
 from tests.performance.datasets.base import BaseDatasetGenerator

@@ -106,7 +106,7 @@ test-readme: ## run the readme snippets
 	invoke readme
 
 .PHONY: test-performance
-test-unit: ## run performance tests
+test-performance: ## run performance tests
 	invoke performance
 
 .PHONY: test
