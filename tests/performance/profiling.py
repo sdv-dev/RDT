@@ -77,6 +77,13 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     reverse_time = _profile_time(transformer, 'reverse_transform', reverse_dataset)
     reverse_memory = _profile_memory(transformer.reverse_transform, reverse_dataset)
 
+    print('Fit Time', fit_time)
+    print('Fit Memory', fit_memory)
+    print('Transform Time', transform_time)
+    print('Transform Memory', transform_memory)
+    print('Reverse Transform Time', reverse_time)
+    print('Reverse Transform Memory', reverse_memory)
+
     return pd.Series({
         'Fit Time': fit_time,
         'Fit Memory': fit_memory,

@@ -3,6 +3,7 @@ import numpy as np
 from tests.performance.datasets.base import BaseDatasetGenerator
 
 MAX_PERCENT_NULL = 50  # cap the percentage of null values at 50%
+MIN_PERCENT = 20  # the minimum percentage of true or false is 20%
 
 
 class RandomBooleanGenerator(BaseDatasetGenerator):
@@ -32,7 +33,7 @@ class RandomBooleanNaNsGenerator(BaseDatasetGenerator):
 
     @staticmethod
     def generate(num_rows):
-        percent_null = np.random.randint(1, MAX_PERCENT_NULL)
+        percent_null = np.random.randint(MIN_PERCENT, MAX_PERCENT_NULL)
         percent_true = (100 - percent_null) / 2
         percent_false = 100 - percent_true - percent_null
 
@@ -51,7 +52,7 @@ class RandomSkewedBooleanGenerator(BaseDatasetGenerator):
 
     @staticmethod
     def generate(num_rows):
-        percent_true = np.random.randint(1, 100)
+        percent_true = np.random.randint(MIN_PERCENT, 100 - MIN_PERCENT)
 
         return np.random.choice(
             a=[True, False],
@@ -68,8 +69,8 @@ class RandomSkewedBooleanNaNsGenerator(BaseDatasetGenerator):
 
     @staticmethod
     def generate(num_rows):
-        percent_null = np.random.randint(1, MAX_PERCENT_NULL)
-        percent_true = np.random.randint(1, 100 - percent_null)
+        percent_null = np.random.randint(MIN_PERCENT, MAX_PERCENT_NULL)
+        percent_true = np.random.randint(MIN_PERCENT, 100 - percent_null - MIN_PERCENT)
         percent_false = 100 - percent_null - percent_true
 
         return np.random.choice(
@@ -92,7 +93,7 @@ class ConstantBooleanGenerator(BaseDatasetGenerator):
 
 
 class ConstantBooleanNaNsGenerator(BaseDatasetGenerator):
-    """Generator that creates a constant array with a random boolean with some nulls."""
+    """Generator that creates a constant array with either True or False with some nulls."""
 
     TYPE = 'boolean'
     SUBTYPE = 'boolean'
@@ -100,7 +101,8 @@ class ConstantBooleanNaNsGenerator(BaseDatasetGenerator):
     @staticmethod
     def generate(num_rows):
         constant = np.random.choice([True, False])
-        percent_null = np.random.randint(1, MAX_PERCENT_NULL)
+        percent_null = np.random.randint(MIN_PERCENT, MAX_PERCENT_NULL)
+
         return np.random.choice(
             a=[constant, None],
             size=num_rows,

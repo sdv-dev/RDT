@@ -1,6 +1,6 @@
 {
-    "name": "BooleanTransformer - Random values",
-    "dataset": "tests.performance.datasets.boolean.RandomBooleanGenerator",
+    "name": "BooleanTransformer - Constant value",
+    "dataset": "tests.performance.datasets.boolean.ConstantBooleanGenerator",
     "transformer": "rdt.transformers.boolean.BooleanTransformer",
     "kwargs": {},
     "fit_size": 1000,
