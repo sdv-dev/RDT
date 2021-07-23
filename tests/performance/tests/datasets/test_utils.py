@@ -11,7 +11,7 @@ def test_add_nulls_int():
     with_nans = utils.add_nans(array)
 
     assert len(with_nans) == 100
-    assert 1 < np.isnan(with_nans).sum() < 100
+    assert 1 <= np.isnan(with_nans).sum() < 100
 
     nans = np.isnan(with_nans)
     np.testing.assert_array_equal(array[~nans], with_nans[~nans])
