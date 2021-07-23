@@ -1,0 +1,22 @@
+{
+    "description": "Test against 1000 dates with random gaps and nulls.",
+    "dataset": "tests.performance.datasets.datetime.RandomGapDatetimeNaNsGenerator",
+    "transformer": "rdt.transformers.datetime.DatetimeTransformer",
+    "kwargs": {},
+    "fit_size": 1000,
+    "transform_size": 1000,
+    "expected": {
+        "fit": {
+            "time": 0.0006,
+            "memory": 120000.0
+        },
+        "transform": {
+            "time": 0.001,
+            "memory": 250000.0
+        },
+        "reverse_transform": {
+            "time": 0.0008,
+            "memory": 240000.0
+        }
+    }
+}

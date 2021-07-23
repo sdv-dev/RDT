@@ -1,0 +1,22 @@
+{
+    "description": "Test against 1000 dates with 1 day gaps between them.",
+    "dataset": "tests.performance.datasets.datetime.EqualGapDaysDatetimeGenerator",
+    "transformer": "rdt.transformers.datetime.DatetimeTransformer",
+    "kwargs": {},
+    "fit_size": 1000,
+    "transform_size": 1000,
+    "expected": {
+        "fit": {
+            "time": 0.0006,
+            "memory": 120000.0
+        },
+        "transform": {
+            "time": 0.0004,
+            "memory": 95000.0
+        },
+        "reverse_transform": {
+            "time": 0.0006,
+            "memory": 200000.0
+        }
+    }
+}
