@@ -16,6 +16,16 @@ class TestRandomGapDatetimeGenerator:
         assert np.isnan(output).sum() == 0
 
 
+class TestRandomGapSecondsDatetimeGenerator:
+
+    def test(self):
+        output = datetime.RandomGapSecondsDatetimeGenerator.generate(10)
+        assert len(output) == 10
+        assert output.dtype == 'datetime64[us]'
+        assert len(pd.unique(output)) > 1
+        assert np.isnan(output).sum() == 0
+
+
 class TestRandomGapDatetimeNaNsGenerator:
 
     def test(self):

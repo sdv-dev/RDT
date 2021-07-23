@@ -21,6 +21,19 @@ class RandomGapDatetimeGenerator(BaseDatasetGenerator):
         return np.array(dates, dtype='datetime64')
 
 
+class RandomGapSecondsDatetimeGenerator(BaseDatasetGenerator):
+    """Generator that creates dates with random gaps of seconds between them"""
+
+    TYPE = 'datetime'
+
+    @staticmethod
+    def generate(num_rows):
+        today = datetime.datetime.today()
+        delta = datetime.timedelta(seconds=1)
+        dates = [(np.random.random() * delta + today) for i in range(num_rows)]
+        return np.array(dates, dtype='datetime64')
+
+
 class RandomGapDatetimeNaNsGenerator(BaseDatasetGenerator):
     """Generator that creates dates with random gaps and NaNs"""
 
