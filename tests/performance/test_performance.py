@@ -1,7 +1,8 @@
-import glob
+"""Test whether the performance of the Transformers is the expected one."""
+
 import importlib
 import json
-import os
+import pathlib
 
 import pytest
 
@@ -10,6 +11,7 @@ from tests.performance.profiling import profile_transformer
 
 def get_instance(obj, **kwargs):
     """Create new instance of the ``obj`` argument.
+
     Args:
         obj (str):
             Full name of class to import.
@@ -22,11 +24,13 @@ def get_instance(obj, **kwargs):
     return instance
 
 
-BASE = os.path.dirname(__file__)
-TESTS = glob.glob(BASE + '/test_cases/*.json')
+TEST_CASES_PATH = pathlib.Path(__file__).parent / 'test_cases'
+TEST_CASES_PATH_LEN = len(str(TEST_CASES_PATH)) + 1
+TEST_CASES = [str(test_case) for test_case in TEST_CASES_PATH.rglob('*.json')]
+IDS = [test_case[TEST_CASES_PATH_LEN:] for test_case in TEST_CASES]
 
 
-@pytest.mark.parametrize('config_path', TESTS)
+@pytest.mark.parametrize('config_path', TEST_CASES, ids=IDS)
 def test_performance(config_path):
     """Run the performance tests for RDT.
 

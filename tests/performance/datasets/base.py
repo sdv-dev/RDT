@@ -1,3 +1,5 @@
+"""Base class for all the Dataset Generatos."""
+
 from abc import ABC, abstractmethod
 
 

@@ -1,3 +1,5 @@
+"""Functions to profile performance of RDT Transformers."""
+
 import timeit
 import tracemalloc
 from copy import deepcopy
@@ -39,7 +41,7 @@ def _profile_memory(method, dataset):
 
 
 def profile_transformer(transformer, dataset_generator, transform_size, fit_size=None):
-    """Function to profile a transformer.
+    """Profile a Transformer on a dataset.
 
     This function will get the total time and peak memory
     for the ``fit``, ``transform`` and ``reverse_transform``

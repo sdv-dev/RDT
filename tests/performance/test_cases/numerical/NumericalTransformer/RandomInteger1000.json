@@ -1,6 +1,5 @@
 {
-    "name": "NumericalTransformer - Random integers",
-    "dataset": "tests.performance.datasets.numerical.RandomNumericalGenerator",
+    "dataset": "tests.performance.datasets.numerical.RandomIntegerGenerator",
     "transformer": "rdt.transformers.numerical.NumericalTransformer",
     "kwargs": {},
     "fit_size": 1000,
