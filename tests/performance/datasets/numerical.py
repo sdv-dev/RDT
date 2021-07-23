@@ -3,14 +3,7 @@
 import numpy as np
 
 from tests.performance.datasets.base import BaseDatasetGenerator
-
-
-def _add_nulls(array):
-    length = len(array)
-    num_nulls = np.random.randint(1, length)
-    nulls = np.random.choice(range(length), num_nulls)
-    array[nulls] = np.nan
-    return array
+from tests.performance.datasets.utils import add_nans
 
 
 class RandomIntegerGenerator(BaseDatasetGenerator):
@@ -26,14 +19,14 @@ class RandomIntegerGenerator(BaseDatasetGenerator):
 
 
 class RandomIntegerNaNsGenerator(BaseDatasetGenerator):
-    """Generator that creates an array of random integers with nulls."""
+    """Generator that creates an array of random integers with nans."""
 
     TYPE = 'numerical'
     SUBTYPE = 'integer'
 
     @staticmethod
     def generate(num_rows):
-        return _add_nulls(RandomIntegerGenerator.generate(num_rows).astype(np.float))
+        return add_nans(RandomIntegerGenerator.generate(num_rows).astype(np.float))
 
 
 class ConstantIntegerGenerator(BaseDatasetGenerator):
@@ -50,14 +43,14 @@ class ConstantIntegerGenerator(BaseDatasetGenerator):
 
 
 class ConstantIntegerNaNsGenerator(BaseDatasetGenerator):
-    """Generator that creates a constant array with a random integer with some nulls."""
+    """Generator that creates a constant array with a random integer with some nans."""
 
     TYPE = 'numerical'
     SUBTYPE = 'integer'
 
     @staticmethod
     def generate(num_rows):
-        return _add_nulls(ConstantIntegerGenerator.generate(num_rows).astype(np.float))
+        return add_nans(ConstantIntegerGenerator.generate(num_rows).astype(np.float))
 
 
 class AlmostConstantIntegerGenerator(BaseDatasetGenerator):
@@ -87,7 +80,7 @@ class AlmostConstantIntegerNaNsGenerator(BaseDatasetGenerator):
         ii32 = np.iinfo(np.int32)
         values = np.random.randint(ii32.min, ii32.max, size=2)
         additional_values = np.full(num_rows - 2, values[1]).astype(np.float)
-        array = np.concatenate([values, _add_nulls(additional_values)])
+        array = np.concatenate([values, add_nans(additional_values)])
         np.random.shuffle(array)
         return array
 
@@ -111,7 +104,7 @@ class NormalNaNsGenerator(BaseDatasetGenerator):
 
     @staticmethod
     def generate(num_rows):
-        return _add_nulls(NormalGenerator.generate(num_rows))
+        return add_nans(NormalGenerator.generate(num_rows))
 
 
 class BigNormalGenerator(BaseDatasetGenerator):
@@ -133,4 +126,4 @@ class BigNormalNaNsGenerator(BaseDatasetGenerator):
 
     @staticmethod
     def generate(num_rows):
-        return _add_nulls(BigNormalGenerator.generate(num_rows))
+        return add_nans(BigNormalGenerator.generate(num_rows))
