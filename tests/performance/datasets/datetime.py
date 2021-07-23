@@ -5,7 +5,7 @@ import datetime
 import numpy as np
 
 from tests.performance.datasets.base import BaseDatasetGenerator
-from tests.performance.datasets.utils import add_nulls
+from tests.performance.datasets.utils import add_nans
 
 
 class RandomGapDatetimeGenerator(BaseDatasetGenerator):
@@ -42,7 +42,7 @@ class RandomGapDatetimeNaNsGenerator(BaseDatasetGenerator):
     @staticmethod
     def generate(num_rows):
         dates = RandomGapDatetimeGenerator.generate(num_rows)
-        return add_nulls(dates.astype('O'))
+        return add_nans(dates.astype('O'))
 
 
 class EqualGapHoursDatetimeGenerator(BaseDatasetGenerator):
