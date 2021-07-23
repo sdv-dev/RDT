@@ -190,6 +190,8 @@ class OneHotEncodingTransformer(BaseTransformer):
     dummy_na = None
     num_dummies = None
     dummy_encoded = False
+    indexer = None
+    decoder = None
 
     def __init__(self, error_on_unknown=True):
         self.error_on_unknown = error_on_unknown
