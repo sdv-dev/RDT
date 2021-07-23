@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -217,6 +217,16 @@ class TestOneHotEncodingTransformer:
         np.testing.assert_array_equal(out, expected)
 
     def test_fit_no_nans(self):
+        """Test the ``fit`` method without nans.
+
+        Check that the settings of the transformer
+        are properly set based on the input. Encoding
+        should be activated
+
+        Input:
+        - Series with values
+        """
+
         # Setup
         ohet = OneHotEncodingTransformer()
 
@@ -226,8 +236,45 @@ class TestOneHotEncodingTransformer:
 
         # Assert
         np.testing.assert_array_equal(ohet.dummies, ['a', 'b', 'c'])
+        np.testing.assert_array_equal(ohet.decoder, ['a', 'b', 'c'])
+        assert ohet.dummy_encoded
+        assert not ohet.dummy_na
+
+    def test_fit_no_nans_numeric(self):
+        """Test the ``fit`` method without nans.
+
+        Check that the settings of the transformer
+        are properly set based on the input. Encoding
+        should be deactivated
+
+        Input:
+        - Series with values
+        """
+
+        # Setup
+        ohet = OneHotEncodingTransformer()
+
+        # Run
+        data = pd.Series([1, 2, 3])
+        ohet.fit(data)
+
+        # Assert
+        np.testing.assert_array_equal(ohet.dummies, [1, 2, 3])
+        np.testing.assert_array_equal(ohet.decoder, [1, 2, 3])
+        assert not ohet.dummy_encoded
+        assert not ohet.dummy_na
 
     def test_fit_nans(self):
+        """Test the ``fit`` method with nans.
+
+        Check that the settings of the transformer
+        are properly set based on the input. Encoding
+        and NA should be activated.
+
+        Input:
+        - Series with containing nan values
+        """
+
         # Setup
         ohet = OneHotEncodingTransformer()
 
@@ -236,7 +283,34 @@ class TestOneHotEncodingTransformer:
         ohet.fit(data)
 
         # Assert
-        np.testing.assert_array_equal(ohet.dummies, ['a', 'b', np.nan])
+        np.testing.assert_array_equal(ohet.dummies, ['a', 'b'])
+        np.testing.assert_array_equal(ohet.decoder, ['a', 'b', np.nan])
+        assert ohet.dummy_encoded
+        assert ohet.dummy_na
+
+    def test_fit_nans_numeric(self):
+        """Test the ``fit`` method with nans.
+
+        Check that the settings of the transformer
+        are properly set based on the input. Encoding
+        should be deactivated and NA activated.
+
+        Input:
+        - Series with containing nan values
+        """
+
+        # Setup
+        ohet = OneHotEncodingTransformer()
+
+        # Run
+        data = pd.Series([1, 2, np.nan])
+        ohet.fit(data)
+
+        # Assert
+        np.testing.assert_array_equal(ohet.dummies, [1, 2])
+        np.testing.assert_array_equal(ohet.decoder, [1, 2, np.nan])
+        assert not ohet.dummy_encoded
+        assert ohet.dummy_na
 
     def test_fit_single(self):
         # Setup
@@ -249,10 +323,10 @@ class TestOneHotEncodingTransformer:
         # Assert
         np.testing.assert_array_equal(ohet.dummies, ['a'])
 
-    def test__transform_numeric_no_nan(self):
-        """Test the ``_transform_numeric`` method without nans
+    def test__transform_no_nan(self):
+        """Test the ``_transform`` method without nans
 
-        The values passed to ``_transform_numeric`` should be
+        The values passed to ``_transform`` should be
         returned in a one-hot encoding representation.
 
         Input:
@@ -268,7 +342,7 @@ class TestOneHotEncodingTransformer:
         ohet.num_dummies = 3
 
         # Run
-        out = ohet._transform_numeric(data)
+        out = ohet._transform(data)
 
         # Assert
         expected = np.array([
@@ -278,11 +352,11 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test__transform_numeric_nans(self):
-        """Test the ``_transform_numeric`` method with nans
+    def test__transform_nans(self):
+        """Test the ``_transform`` method with nans
 
-        The values passed to ``_transform_numeric`` should be
-        returned in a one-hot encoding representation. All null
+        The values passed to ``_transform`` should be
+        returned in a one-hot encoding representation. Null
         values should be represented by the same encoding.
 
         Input:
@@ -293,159 +367,12 @@ class TestOneHotEncodingTransformer:
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series([np.nan, None, 'a', 'b'])
-        ohet.dummies = ['a', 'b', np.nan]
-        ohet.dummy_na = True
-        ohet.num_dummies = 3
-
-        # Run
-        out = ohet._transform_numeric(data)
-
-        # Assert
-        expected = np.array([
-            [0, 0, 1],
-            [0, 0, 1],
-            [1, 0, 0],
-            [0, 1, 0]
-        ])
-        np.testing.assert_array_equal(out, expected)
-
-    def test__transform_numeric_single(self):
-        """Test the ``_transform_numeric`` with one category.
-
-        The values passed to ``_transform_numeric`` should be
-        returned in a one-hot encoding representation where in
-        this test it should be a single column.
-
-        Input:
-        - Series with values
-        Output:
-        - one-hot encoding of the input
-        """
-        # Setup
-        ohet = OneHotEncodingTransformer()
-        data = pd.Series(['a', 'a', 'a'])
-        ohet.dummies = ['a']
-        ohet.dummy_na = False
-        ohet.num_dummies = 1
-
-        # Run
-        out = ohet._transform_numeric(data)
-
-        # Assert
-        expected = np.array([
-            [1],
-            [1],
-            [1]
-        ])
-        np.testing.assert_array_equal(out, expected)
-
-    def test__transform_numeric_zeros(self):
-        """Test the ``_transform_numeric`` with unknown category.
-
-        The values passed to ``_transform_numeric`` should be
-        returned in a one-hot encoding representation where in
-        this test it should be a column of zeros.
-
-        Input:
-        - Series with unknown values
-        Output:
-        - one-hot encoding of the input
-        """
-        # Setup
-        ohet = OneHotEncodingTransformer()
-        pd.Series(['a'])
-        ohet.dummies = ['a']
-        ohet.num_dummies = 1
-
-        # Run
-        out = ohet._transform_numeric(pd.Series(['b', 'b', 'b']))
-
-        # Assert
-        expected = np.array([
-            [0],
-            [0],
-            [0]
-        ])
-        np.testing.assert_array_equal(out, expected)
-
-    def test__transform_numeric_unknown_nan(self):
-        """Test the ``_transform_numeric`` with unknown and nans.
-
-        This is an edge case for ``_transform_numeric`` where
-        unknowns and nans will be considered as a single
-        category and the method will return a column of ones.
-
-        Input:
-        - Series with unknown
-        Output:
-        - one-hot encoding of the input
-        """
-        # Setup
-        ohet = OneHotEncodingTransformer()
-        pd.Series(['a'])
-        ohet.dummies = ['a', np.nan]
+        ohet.dummies = ['a', 'b']
         ohet.dummy_na = True
         ohet.num_dummies = 2
 
         # Run
-        out = ohet._transform_numeric(pd.Series(['b', 'b', 'b']))
-
-        # Assert
-        expected = np.array([
-            [0, 1],
-            [0, 1],
-            [0, 1]
-        ])
-        np.testing.assert_array_equal(out, expected)
-
-    def test__transform_objects_no_nan(self):
-        """Test the ``_transform_objects`` method without nans
-
-        The values passed to ``_transform_objects`` should be
-        returned in a one-hot encoding representation.
-
-        Input:
-        - Series with values
-        Output:
-        - one-hot encoding of the input
-        """
-        # Setup
-        ohet = OneHotEncodingTransformer()
-        data = pd.Series(['a', 'b', 'c'])
-        ohet.dummies = ['a', 'b', 'c']
-        ohet.dummy_na = False
-
-        # Run
-        out = ohet._transform_objects(data)
-
-        # Assert
-        expected = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ])
-        np.testing.assert_array_equal(out, expected)
-
-    def test__transform_objects_nans(self):
-        """Test the ``_transform_objects`` method with nans
-
-        The values passed to ``_transform_objects`` should be
-        returned in a one-hot encoding representation. All null
-        values should be represented by the same encoding.
-
-        Input:
-        - Series with values containing nans
-        Output:
-        - one-hot encoding of the input
-        """
-        # Setup
-        ohet = OneHotEncodingTransformer()
-        data = pd.Series([np.nan, None, 'a', 'b'])
-        ohet.dummies = ['a', 'b', np.nan]
-        ohet.dummy_na = True
-
-        # Run
-        out = ohet._transform_objects(data)
+        out = ohet._transform(data)
 
         # Assert
         expected = np.array([
@@ -456,15 +383,15 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test__transform_objects_single(self):
-        """Test the ``_transform_objects`` with one category.
+    def test__transform_single(self):
+        """Test the ``_transform`` with one category.
 
-        The values passed to ``_transform_objects`` should be
-        returned in a one-hot encoding representation where in
-        this test it should be a single column.
+        The values passed to ``_transform`` should be
+        returned in a one-hot encoding representation
+        where it should be a single column.
 
         Input:
-        - Series with values
+        - Series with a single category
         Output:
         - one-hot encoding of the input
         """
@@ -473,9 +400,10 @@ class TestOneHotEncodingTransformer:
         data = pd.Series(['a', 'a', 'a'])
         ohet.dummies = ['a']
         ohet.dummy_na = False
+        ohet.num_dummies = 1
 
         # Run
-        out = ohet._transform_objects(data)
+        out = ohet._transform(data)
 
         # Assert
         expected = np.array([
@@ -485,12 +413,12 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test__transform_objects_zeros(self):
-        """Test the ``_transform_objects`` with unknown category.
+    def test__transform_zeros(self):
+        """Test the ``_transform`` with unknown category.
 
-        The values passed to ``_transform_objects`` should be
-        returned in a one-hot encoding representation where in
-        this test it should be a column of zeros.
+        The values passed to ``_transform`` should be
+        returned in a one-hot encoding representation
+        where it should be a column of zeros.
 
         Input:
         - Series with unknown values
@@ -501,9 +429,10 @@ class TestOneHotEncodingTransformer:
         ohet = OneHotEncodingTransformer()
         pd.Series(['a'])
         ohet.dummies = ['a']
+        ohet.num_dummies = 1
 
         # Run
-        out = ohet._transform_objects(pd.Series(['b', 'b', 'b']))
+        out = ohet._transform(pd.Series(['b', 'b', 'b']))
 
         # Assert
         expected = np.array([
@@ -513,31 +442,33 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test__transform_objects_unknown_nan(self):
-        """Test the ``_transform_objects`` with unknown and nans.
+    def test__transform_unknown_nan(self):
+        """Test the ``_transform`` with unknown and nans.
 
-        In this test ``_transform_objects`` should return a column
-        of zeros since the category is unknown and the original
-        categories do not contain nans.
+        This is an edge case for ``_transform`` where
+        unknowns should be zeros and nans should be
+        the last entry in the column.
 
         Input:
-        - Series with unknown values
+        - Series with unknown and nans
         Output:
         - one-hot encoding of the input
         """
         # Setup
         ohet = OneHotEncodingTransformer()
         pd.Series(['a'])
-        ohet.dummies = ['a', np.nan]
+        ohet.dummies = ['a']
+        ohet.dummy_na = True
+        ohet.num_dummies = 1
 
         # Run
-        out = ohet._transform_objects(pd.Series(['b', 'b', 'b']))
+        out = ohet._transform(pd.Series(['b', 'b', np.nan]))
 
         # Assert
         expected = np.array([
             [0, 0],
             [0, 0],
-            [0, 0]
+            [0, 1]
         ])
         np.testing.assert_array_equal(out, expected)
 
@@ -622,7 +553,7 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test_transform_unknown_objects(self):
+    def test_transform_unknown(self):
         """Test the ``transform`` with unknown data.
 
         In this test ``transform`` should raise an error
@@ -641,117 +572,33 @@ class TestOneHotEncodingTransformer:
         with np.testing.assert_raises(ValueError):
             ohet.transform(['b'])
 
-    def test_transform_unknown_numeric(self):
-        """Test the ``transform`` with unknown data.
-
-        In this test ``transform`` should raise an error
-        due to the attempt of transforming data with previously
-        unseen categories.
-
-        Input:
-        - Series with unknown numeric values
-        """
-        # Setup
-        ohet = OneHotEncodingTransformer()
-        data = pd.Series([1, 2])
-        ohet.fit(data)
-
-        # Assert
-        with np.testing.assert_raises(ValueError):
-            ohet.transform([3])
-
-    def test_transform_call_numeric(self):
-        """Test the ``transform`` on numeric category.
+    def test_transform_categorical(self):
+        """Test the ``transform`` on categorical input.
 
         In this test ``transform`` should return a matrix
         representing each item in the input as one-hot encodings.
-        It should also call ``_transform_numeric``.
 
         Input:
-        - Series with numeric value
+        - Series with categorical input
         Output:
         - one-hot encoding of the input
         """
         # Setup
         ohet = OneHotEncodingTransformer()
-        data = pd.Series([1, 2])
+        data = pd.Series(['1', '2'])
         ohet.fit(data)
 
         expected = np.array([
             [1, 0],
             [0, 1],
         ])
-        ohet._transform_numeric = Mock(return_value=expected)
 
         # Run
-        ohet.transform(data)
+        out = ohet.transform(data)
 
         # Assert
-        ohet._transform_numeric.assert_called_with(data)
-        np.testing.assert_array_equal(ohet._transform_numeric.return_value, expected)
-
-    def test_transform_call_objects(self):
-        """Test the ``transform`` on objects.
-
-        In this test ``transform`` should return a matrix
-        representing each item in the input as one-hot encodings.
-        It should also call ``_transform_objects``.
-
-        Input:
-        - Series with object values
-        Output:
-        - one-hot encoding of the input
-        """
-        # Setup
-        ohet = OneHotEncodingTransformer()
-        data = pd.Series(['a', 'b', 'c'])
-        ohet.fit(data)
-
-        expected = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ])
-        ohet._transform_objects = Mock(return_value=expected)
-
-        # Run
-        ohet.transform(data)
-
-        # Assert
-        ohet._transform_objects.assert_called_with(data)
-        np.testing.assert_array_equal(ohet._transform_objects.return_value, expected)
-
-    def test_transform_call_objects_unknown_false(self):
-        """Test the ``transform`` on objects.
-
-        In this test ``transform`` should return a matrix
-        representing each item in the input as one-hot encodings.
-        It should also call ``_transform_objects``.
-
-        Input:
-        - Series with object values
-        Output:
-        - one-hot encoding of the input
-        """
-        # Setup
-        ohet = OneHotEncodingTransformer(error_on_unknown=False)
-        data = pd.Series(['a', 'b', 'c'])
-        test = pd.Series(['a', 'b', 'd'])
-        ohet.fit(data)
-
-        expected = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 0]
-        ])
-        ohet._transform_objects = Mock(return_value=expected)
-
-        # Run
-        ohet.transform(test)
-
-        # Assert
-        ohet._transform_objects.assert_called_with(test)
-        np.testing.assert_array_equal(ohet._transform_objects.return_value, expected)
+        assert ohet.dummy_encoded
+        np.testing.assert_array_equal(out, expected)
 
     def test_reverse_transform_no_nans(self):
         # Setup
