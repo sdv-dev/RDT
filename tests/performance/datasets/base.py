@@ -1,4 +1,4 @@
-"""Base class for all the Dataset Generatos."""
+"""Base class for all the Dataset Generators."""
 
 from abc import ABC, abstractmethod
 
