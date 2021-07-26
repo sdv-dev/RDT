@@ -11,15 +11,15 @@
     "expected": {
         "fit": {
             "time": 0.01,
-            "memory": 400000.0
+            "memory": 200000.0
         },
         "transform": {
-            "time": 0.0004,
+            "time": 0.0002,
             "memory": 10000.0
         },
         "reverse_transform": {
-            "time": 0.0003,
-            "memory": 200000.0
+            "time": 0.0001,
+            "memory": 100000.0
         }
     }
 }

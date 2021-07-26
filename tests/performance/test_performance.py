@@ -82,6 +82,9 @@ def test_performance(config_path):
 
 
 def _round_to_magnitude(value):
+    if value == 0:
+        raise ValueError("Value cannot be exactly 0.")
+
     for digits in range(-15, 15):
         rounded = np.round(value, digits)
         if rounded != 0:
@@ -92,13 +95,13 @@ def _round_to_magnitude(value):
 
 
 def find_transformer_boundaries(transformer, dataset_generator, fit_size,
-                                transform_size, iterations=1):
+                                transform_size, iterations=1, multiplier=5):
     """Helper function to find valid candidate boundaries for performance tests.
 
     The function works by:
         - Running the profiling multiple times
         - Averaging out the values for each metric
-        - Multiplying the found values by 10 (next order of magnitude).
+        - Multiplying the found values by the given multiplier (default=5).
         - Rounding to the found order of magnitude
 
     As an example, if a method took 0.012 seconds to run, the expected output
@@ -115,6 +118,9 @@ def find_transformer_boundaries(transformer, dataset_generator, fit_size,
             Number of values to use when transforming and reverse transforming.
         iterations (int):
             Number of iterations to perform.
+        multiplier (int):
+            The value used to multiply the average results before rounding them
+            up/down. Defaults to 5.
 
     Returns:
         pd.Series:
@@ -125,17 +131,17 @@ def find_transformer_boundaries(transformer, dataset_generator, fit_size,
         for _ in range(iterations)
     ]
     means = pd.DataFrame(results).mean(axis=0)
-    return (means * 10).apply(_round_to_magnitude)
+    return (means * multiplier).apply(_round_to_magnitude)
 
 
 def make_test_case_config(transformer_class, transformer_kwargs, dataset_generator,
-                          fit_size, transform_size, iterations=1, output_path=None,
-                          config_name=None):
+                          fit_size, transform_size, iterations=1, multiplier=5,
+                          output_path=None, config_name=None):
     """Create a Test Case JSON file for the indicated transformer and dataset.
 
     If output path is not given, the test case is created with the filename
-    ``{dataset_generator}_{fit_size}_{transform_size}.json`` inside the folder
-    ``{transformer_module}/{transformer_class_name}``.
+    ``{config_name}_{dataset_generator}_{fit_size}_{transform_size}.json``
+    inside the folder ``{transformer_module}/{transformer_class_name}``.
 
     Args:
         transformer_class (type):
@@ -150,6 +156,9 @@ def make_test_case_config(transformer_class, transformer_kwargs, dataset_generat
             Number of values to use when transforming and reverse transforming.
         iterations (int):
             Number of iterations to perform.
+        multiplier (int):
+            The value used to multiply the average results before rounding them
+            up/down. Defaults to 5.
         output_path (str):
             Optional. Path where the output JSON file is written.
         config_name (str):
@@ -158,8 +167,14 @@ def make_test_case_config(transformer_class, transformer_kwargs, dataset_generat
             hash is taken.
     """
     transformer_instance = transformer_class(**transformer_kwargs)
-    outputs = find_transformer_boundaries(transformer_instance, dataset_generator,
-                                          transform_size, fit_size, iterations)
+    outputs = find_transformer_boundaries(
+        transformer=transformer_instance,
+        dataset_generator=dataset_generator,
+        fit_size=fit_size,
+        transform_size=transform_size,
+        iterations=iterations,
+        multiplier=multiplier
+    )
     test_case = {
         'dataset': get_fqn(dataset_generator),
         'transformer': get_fqn(transformer_class),
@@ -206,7 +221,8 @@ def make_test_case_config(transformer_class, transformer_kwargs, dataset_generat
     print(f'Test case created: {output_path}')
 
 
-def make_test_case_configs(transformers, dataset_generators, fit_transform_sizes, iterations=1):
+def make_test_case_configs(transformers, dataset_generators, fit_transform_sizes,
+                           iterations=1, multiplier=5):
     """Create Test Case JSON files for multiple transformers and dataset generators.
 
     Args:
@@ -216,6 +232,11 @@ def make_test_case_configs(transformers, dataset_generators, fit_transform_sizes
             List of dataset generator classes.
         fit_transform_sizes (List[tuple[int, int]]):
             List of tuples indicating fit size and transform size.
+        iterations (int):
+            Number of iterations to perform.
+        multiplier (int):
+            The value used to multiply the average results before rounding them
+            up/down. Defaults to 5.
     """
     for transformer in transformers:
         if not isinstance(transformer, tuple):
@@ -235,5 +256,6 @@ def make_test_case_configs(transformers, dataset_generators, fit_transform_sizes
                     fit_size=fit_size,
                     transform_size=transform_size,
                     iterations=iterations,
-                    config_name=config_name
+                    multiplier=multiplier,
+                    config_name=config_name,
                 )
