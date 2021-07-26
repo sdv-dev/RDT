@@ -1,3 +1,5 @@
+"""Dataset Generators for boolean transformers."""
+
 import numpy as np
 
 from tests.performance.datasets.base import BaseDatasetGenerator
@@ -19,6 +21,7 @@ class RandomBooleanGenerator(BaseDatasetGenerator):
         Args:
             num_rows (int):
                 Number of rows of booleans to generate.
+
         Returns:
             numpy.ndarray of size ``num_rows`` containing random booleans.
         """
