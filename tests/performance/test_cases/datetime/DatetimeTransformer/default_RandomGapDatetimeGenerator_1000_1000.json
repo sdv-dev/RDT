@@ -1,22 +1,21 @@
 {
-    "description": "Test against 10000 dates with random gaps between them.",
     "dataset": "tests.performance.datasets.datetime.RandomGapDatetimeGenerator",
     "transformer": "rdt.transformers.datetime.DatetimeTransformer",
     "kwargs": {},
-    "fit_size": 10000,
-    "transform_size": 10000,
+    "fit_size": 1000,
+    "transform_size": 1000,
     "expected": {
         "fit": {
             "time": 0.002,
             "memory": 500000.0
         },
         "transform": {
-            "time": 0.0016,
-            "memory": 500000.0
+            "time": 0.001,
+            "memory": 300000.0
         },
         "reverse_transform": {
-            "time": 0.004,
-            "memory": 900000.0
+            "time": 0.002,
+            "memory": 1000000.0
         }
     }
 }

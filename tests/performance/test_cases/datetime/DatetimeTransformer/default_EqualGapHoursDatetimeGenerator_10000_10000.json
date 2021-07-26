@@ -1,22 +1,21 @@
 {
-    "description": "Test against 1000 dates with 1 hour gaps between them.",
     "dataset": "tests.performance.datasets.datetime.EqualGapHoursDatetimeGenerator",
     "transformer": "rdt.transformers.datetime.DatetimeTransformer",
     "kwargs": {},
-    "fit_size": 1000,
-    "transform_size": 1000,
+    "fit_size": 10000,
+    "transform_size": 10000,
     "expected": {
         "fit": {
-            "time": 0.001,
-            "memory": 120000.0
+            "time": 0.003,
+            "memory": 2000000.0
         },
         "transform": {
-            "time": 0.0008,
-            "memory": 95000.0
+            "time": 0.002,
+            "memory": 1000000.0
         },
         "reverse_transform": {
-            "time": 0.002,
-            "memory": 200000.0
+            "time": 0.01,
+            "memory": 3000000.0
         }
     }
 }
