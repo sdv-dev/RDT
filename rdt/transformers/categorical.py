@@ -259,8 +259,12 @@ class OneHotEncodingTransformer(BaseTransformer):
             transform, then an error will be raised if this is True.
     """
 
-    dummy_na = None
     dummies = None
+    dummy_na = None
+    num_dummies = None
+    dummy_encoded = False
+    indexer = None
+    decoder = None
 
     def __init__(self, error_on_unknown=True):
         self.error_on_unknown = error_on_unknown
@@ -292,6 +296,26 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return data
 
+    def _transform(self, data):
+        if self.dummy_encoded:
+            coder = self.indexer
+            codes = pd.Categorical(data, categories=self.dummies).codes
+        else:
+            coder = self.dummies
+            codes = data
+
+        rows = len(data)
+        dummies = np.broadcast_to(coder, (rows, self.num_dummies))
+        coded = np.broadcast_to(codes, (self.num_dummies, rows)).T
+        array = (coded == dummies).astype(int)
+
+        if self.dummy_na:
+            null = np.zeros((rows, 1), dtype=int)
+            null[pd.isnull(data)] = 1
+            array = np.append(array, null, axis=1)
+
+        return array
+
     def fit(self, data):
         """Fit the transformer to the data.
 
@@ -302,8 +326,19 @@ class OneHotEncodingTransformer(BaseTransformer):
                 Data to fit the transformer to.
         """
         data = self._prepare_data(data)
-        self.dummy_na = pd.isnull(data).any()
-        self.dummies = list(pd.get_dummies(data, dummy_na=self.dummy_na).columns)
+
+        null = pd.isnull(data)
+        self.dummy_na = null.any()
+        self.dummies = list(pd.unique(data[~null]))
+        self.num_dummies = len(self.dummies)
+        self.indexer = list(range(self.num_dummies))
+        self.decoder = self.dummies.copy()
+
+        if not np.issubdtype(data.dtype, np.number):
+            self.dummy_encoded = True
+
+        if self.dummy_na:
+            self.decoder.append(np.nan)
 
     def transform(self, data):
         """Replace each category with the OneHot vectors.
@@ -316,11 +351,13 @@ class OneHotEncodingTransformer(BaseTransformer):
             numpy.ndarray:
         """
         data = self._prepare_data(data)
-        dummies = pd.get_dummies(data, dummy_na=self.dummy_na)
-        array = dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
-        for i, row in enumerate(array):
-            if np.all(row == 0) and self.error_on_unknown:
-                raise ValueError(f'The value {data[i]} was not seen during the fit stage.')
+        array = self._transform(data)
+
+        if self.error_on_unknown:
+            unknown = array.sum(axis=1) == 0
+            if unknown.any():
+                raise ValueError(f'Attempted to transform {list(data[unknown])} ',
+                                 'that were not seen during fit stage.')
 
         return array
 
@@ -338,7 +375,7 @@ class OneHotEncodingTransformer(BaseTransformer):
             data = data.reshape(-1, 1)
 
         indices = np.argmax(data, axis=1)
-        return pd.Series(indices).map(self.dummies.__getitem__)
+        return pd.Series(indices).map(self.decoder.__getitem__)
 
 
 class LabelEncodingTransformer(BaseTransformer):
