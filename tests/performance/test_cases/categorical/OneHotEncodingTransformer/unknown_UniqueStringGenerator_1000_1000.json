@@ -1,0 +1,23 @@
+{
+    "dataset": "tests.performance.datasets.categorical.UniqueStringGenerator",
+    "transformer": "rdt.transformers.categorical.OneHotEncodingTransformer",
+    "kwargs": {
+        "error_on_unknown": false
+    },
+    "fit_size": 1000,
+    "transform_size": 1000,
+    "expected": {
+        "fit": {
+            "time": 0.004,
+            "memory": 1000000.0
+        },
+        "transform": {
+            "time": 0.02,
+            "memory": 50000000.0
+        },
+        "reverse_transform": {
+            "time": 0.01,
+            "memory": 400000.0
+        }
+    }
+}

@@ -3,14 +3,14 @@
 import numpy as np
 
 from tests.performance.datasets.base import BaseDatasetGenerator
+from tests.performance.datasets.datetime import RandomGapDatetimeGenerator
 from tests.performance.datasets.utils import add_nans
 
 
 class RandomIntegerGenerator(BaseDatasetGenerator):
     """Generator that creates an array of random integers."""
 
-    TYPE = 'numerical'
-    SUBTYPE = 'integer'
+    TYPE = 'categorical'
 
     @staticmethod
     def generate(num_rows):
@@ -21,16 +21,15 @@ class RandomIntegerGenerator(BaseDatasetGenerator):
 class RandomIntegerNaNsGenerator(BaseDatasetGenerator):
     """Generator that creates an array of random integers with nans."""
 
-    TYPE = 'numerical'
-    SUBTYPE = 'float'
+    TYPE = 'categorical'
 
     @staticmethod
     def generate(num_rows):
         return add_nans(RandomIntegerGenerator.generate(num_rows).astype(np.float))
 
 
-class RandomCategoricalGenerator(BaseDatasetGenerator):
-    """Generator that creates an array of random categories."""
+class RandomStringGenerator(BaseDatasetGenerator):
+    """Generator that creates an array of random strings."""
 
     TYPE = 'categorical'
 
@@ -40,21 +39,62 @@ class RandomCategoricalGenerator(BaseDatasetGenerator):
         return np.random.choice(a=categories, size=num_rows)
 
 
-class RandomCategoricalNaNsGenerator(BaseDatasetGenerator):
-    """Generator that creates an array of random categories with nans."""
+class RandomStringNaNsGenerator(BaseDatasetGenerator):
+    """Generator that creates an array of random strings with nans."""
 
     TYPE = 'categorical'
 
     @staticmethod
     def generate(num_rows):
-        return add_nans(RandomCategoricalGenerator.generate(num_rows).astype('O'))
+        return add_nans(RandomStringGenerator.generate(num_rows).astype('O'))
+
+
+class RandomMixedGenerator(BaseDatasetGenerator):
+    """Generator that creates an array of random mixed types.
+
+    Mixed types include: int, float, bool, string, datetime.
+    """
+
+    TYPE = 'categorical'
+
+    @staticmethod
+    def generate(num_rows):
+        cat_size = 5
+        categories = np.concatenate([
+            RandomGapDatetimeGenerator.generate(cat_size),
+            np.random.randint(0, 100, cat_size),
+            np.random.uniform(0, 100, cat_size),
+            np.arange(cat_size).astype(str),
+            np.array([True, False])
+        ], dtype='O')
+
+        return np.random.choice(a=categories, size=num_rows)
+
+
+class RandomMixedNaNsGenerator(BaseDatasetGenerator):
+    """Generator that creates an array of random mixed types with nans.
+
+    Mixed types include: int, float, bool, string, datetime.
+    """
+    TYPE = 'categorical'
+
+    @staticmethod
+    def generate(num_rows):
+        array = RandomMixedGenerator.generate(num_rows)
+
+        length = len(array)
+        num_nulls = np.random.randint(1, length)
+        nulls_idx = np.random.choice(range(length), num_nulls)
+        nulls = np.random.choice([np.nan, float('nan'), None], num_nulls)
+        array[nulls_idx] = nulls
+
+        return array
 
 
 class SingleIntegerGenerator(BaseDatasetGenerator):
     """Generator that creates an array with a single integer."""
 
-    TYPE = 'numerical'
-    SUBTYPE = 'integer'
+    TYPE = 'categorical'
 
     @staticmethod
     def generate(num_rows):
@@ -65,16 +105,15 @@ class SingleIntegerGenerator(BaseDatasetGenerator):
 class SingleIntegerNaNsGenerator(BaseDatasetGenerator):
     """Generator that creates an array with a single integer with some nans."""
 
-    TYPE = 'numerical'
-    SUBTYPE = 'float'
+    TYPE = 'categorical'
 
     @staticmethod
     def generate(num_rows):
         return add_nans(SingleIntegerGenerator.generate(num_rows).astype(np.float))
 
 
-class SingleCategoricalGenerator(BaseDatasetGenerator):
-    """Generator that creates an array of a single category."""
+class SingleStringGenerator(BaseDatasetGenerator):
+    """Generator that creates an array of a single string."""
 
     TYPE = 'categorical'
 
@@ -84,21 +123,20 @@ class SingleCategoricalGenerator(BaseDatasetGenerator):
         return np.full(num_rows, constant)
 
 
-class SingleCategoricalNaNsGenerator(BaseDatasetGenerator):
-    """Generator that creates an array of a single category with nans."""
+class SingleStringNaNsGenerator(BaseDatasetGenerator):
+    """Generator that creates an array of a single string with nans."""
 
     TYPE = 'categorical'
 
     @staticmethod
     def generate(num_rows):
-        return add_nans(SingleCategoricalGenerator.generate(num_rows).astype('O'))
+        return add_nans(SingleStringGenerator.generate(num_rows).astype('O'))
 
 
 class UniqueIntegerGenerator(BaseDatasetGenerator):
     """Generator that creates an array of unique integers."""
 
-    TYPE = 'numerical'
-    SUBTYPE = 'integer'
+    TYPE = 'categorical'
 
     @staticmethod
     def generate(num_rows):
@@ -108,16 +146,15 @@ class UniqueIntegerGenerator(BaseDatasetGenerator):
 class UniqueIntegerNaNsGenerator(BaseDatasetGenerator):
     """Generator that creates an array of unique integers with nans."""
 
-    TYPE = 'numerical'
-    SUBTYPE = 'float'
+    TYPE = 'categorical'
 
     @staticmethod
     def generate(num_rows):
         return add_nans(UniqueIntegerGenerator.generate(num_rows))
 
 
-class UniqueCategoricalGenerator(BaseDatasetGenerator):
-    """Generator that creates an array of unique categories."""
+class UniqueStringGenerator(BaseDatasetGenerator):
+    """Generator that creates an array of unique strings."""
 
     TYPE = 'categorical'
 
@@ -126,11 +163,11 @@ class UniqueCategoricalGenerator(BaseDatasetGenerator):
         return np.arange(num_rows).astype(str)
 
 
-class UniqueCategoricalNaNsGenerator(BaseDatasetGenerator):
-    """Generator that creates an array of unique categories with nans."""
+class UniqueStringNaNsGenerator(BaseDatasetGenerator):
+    """Generator that creates an array of unique strings with nans."""
 
     TYPE = 'categorical'
 
     @staticmethod
     def generate(num_rows):
-        return add_nans(UniqueCategoricalGenerator.generate(num_rows).astype('O'))
+        return add_nans(UniqueStringGenerator.generate(num_rows).astype('O'))

@@ -8,16 +8,16 @@
     "transform_size": 1000,
     "expected": {
         "fit": {
-            "time": 0.03,
-            "memory": 2000000.0
+            "time": 0.01,
+            "memory": 1000000.0
         },
         "transform": {
-            "time": 0.4,
-            "memory": 200000.0
+            "time": 0.2,
+            "memory": 100000.0
         },
         "reverse_transform": {
-            "time": 0.04,
-            "memory": 100000000.0
+            "time": 0.02,
+            "memory": 50000000.0
         }
     }
 }

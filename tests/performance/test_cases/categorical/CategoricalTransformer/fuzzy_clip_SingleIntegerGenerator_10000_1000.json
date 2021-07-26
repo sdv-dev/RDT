@@ -1,0 +1,24 @@
+{
+    "dataset": "tests.performance.datasets.categorical.SingleIntegerGenerator",
+    "transformer": "rdt.transformers.categorical.CategoricalTransformer",
+    "kwargs": {
+        "fuzzy": true,
+        "clip": true
+    },
+    "fit_size": 10000,
+    "transform_size": 1000,
+    "expected": {
+        "fit": {
+            "time": 0.01,
+            "memory": 100000.0
+        },
+        "transform": {
+            "time": 0.001,
+            "memory": 200000.0
+        },
+        "reverse_transform": {
+            "time": 0.01,
+            "memory": 400000.0
+        }
+    }
+}
