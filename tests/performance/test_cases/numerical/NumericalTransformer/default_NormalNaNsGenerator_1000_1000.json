@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.numerical.RandomIntegerGenerator",
+    "dataset": "tests.performance.datasets.numerical.NormalNaNsGenerator",
     "transformer": "rdt.transformers.numerical.NumericalTransformer",
     "kwargs": {},
     "fit_size": 1000,
@@ -7,15 +7,15 @@
     "expected": {
         "fit": {
             "time": 0.001,
-            "memory": 83000.0
+            "memory": 100000.0
         },
         "transform": {
-            "time": 0.0003,
-            "memory": 35000.0
+            "time": 0.004,
+            "memory": 200000.0
         },
         "reverse_transform": {
-            "time": 0.0001,
-            "memory": 23000.0
+            "time": 0.001,
+            "memory": 100000.0
         }
     }
 }

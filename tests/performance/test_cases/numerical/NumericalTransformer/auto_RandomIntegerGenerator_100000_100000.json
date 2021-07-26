@@ -1,0 +1,25 @@
+{
+    "dataset": "tests.performance.datasets.numerical.RandomIntegerGenerator",
+    "transformer": "rdt.transformers.numerical.NumericalTransformer",
+    "kwargs": {
+        "rounding": "auto",
+        "min_value": "auto",
+        "max_value": "auto"
+    },
+    "fit_size": 100000,
+    "transform_size": 100000,
+    "expected": {
+        "fit": {
+            "time": 0.1,
+            "memory": 20000000.0
+        },
+        "transform": {
+            "time": 0.0003,
+            "memory": 10000.0
+        },
+        "reverse_transform": {
+            "time": 0.001,
+            "memory": 10000000.0
+        }
+    }
+}

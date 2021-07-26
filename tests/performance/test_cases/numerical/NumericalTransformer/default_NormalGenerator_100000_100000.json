@@ -1,0 +1,21 @@
+{
+    "dataset": "tests.performance.datasets.numerical.NormalGenerator",
+    "transformer": "rdt.transformers.numerical.NumericalTransformer",
+    "kwargs": {},
+    "fit_size": 100000,
+    "transform_size": 100000,
+    "expected": {
+        "fit": {
+            "time": 0.002,
+            "memory": 10000000.0
+        },
+        "transform": {
+            "time": 0.0002,
+            "memory": 10000.0
+        },
+        "reverse_transform": {
+            "time": 0.0003,
+            "memory": 4000000.0
+        }
+    }
+}
