@@ -1,0 +1,22 @@
+{
+    "name": "BooleanTransformer - Random skewed values with nans",
+    "dataset": "tests.performance.datasets.boolean.RandomSkewedBooleanNaNsGenerator",
+    "transformer": "rdt.transformers.boolean.BooleanTransformer",
+    "kwargs": {},
+    "fit_size": 1000,
+    "transform_size": 1000,
+    "expected": {
+        "fit": {
+            "time": 0.001,
+            "memory": 42000.0
+        },
+        "transform": {
+            "time": 0.003,
+            "memory": 280000.0
+        },
+        "reverse_transform": {
+            "time": 0.001,
+            "memory": 120000.0
+        }
+    }
+}
