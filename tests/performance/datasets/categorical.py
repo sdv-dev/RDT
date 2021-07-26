@@ -60,13 +60,13 @@ class RandomMixedGenerator(BaseDatasetGenerator):
     @staticmethod
     def generate(num_rows):
         cat_size = 5
-        categories = np.concatenate([
+        categories = np.array([
             RandomGapDatetimeGenerator.generate(cat_size),
             np.random.randint(0, 100, cat_size),
             np.random.uniform(0, 100, cat_size),
             np.arange(cat_size).astype(str),
             np.array([True, False])
-        ], dtype='O')
+        ]).flatten()
 
         return np.random.choice(a=categories, size=num_rows)
 
