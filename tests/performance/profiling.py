@@ -40,7 +40,8 @@ def _profile_memory(method, dataset):
     return peak_memory.value
 
 
-def profile_transformer(transformer, dataset_generator, transform_size, fit_size=None):
+def profile_transformer(transformer, dataset_generator, transform_size, fit_size=None,
+                        assert_reversible=True):
     """Profile a Transformer on a dataset.
 
     This function will get the total time and peak memory
@@ -76,6 +77,9 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     reverse_dataset = transformer.transform(transform_dataset)
     reverse_time = _profile_time(transformer, 'reverse_transform', reverse_dataset)
     reverse_memory = _profile_memory(transformer.reverse_transform, reverse_dataset)
+
+    if assert_reversible:
+        pd.testing.assert_series_equal(transform_dataset, transformer.reverse_transform(reverse_dataset))
 
     print('Fit Time', fit_time)
     print('Fit Memory', fit_memory)
