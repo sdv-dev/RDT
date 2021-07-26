@@ -43,7 +43,7 @@ def test_profile_transformer(deepcopy_mock, process_mock):
 
     # Run
     profiling_results = profile_transformer(transformer_mock.return_value,
-                                            dataset_gen_mock, 100)
+                                            dataset_gen_mock, 100, assert_reversible=False)
 
     # Assert
     expected_output_columns = [
