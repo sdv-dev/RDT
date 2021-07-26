@@ -54,6 +54,138 @@ If you are proposing a feature:
 * Remember that this is a volunteer-driven project, and that contributions
   are welcome :)
 
+Adding a New Transformer
+------------------------
+
+Create Transformer Class
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+All new Transformer classes should inherit from `BaseTransformer` or one of its child classes.
+There are only three required methods for a transformer:
+
+1. ``fit``: Used to store and learn any values from the input data that might be useful
+   for the transformer.
+2. ``transform``: Used to transform the input data into completely numeric data.
+3. ``reverse_transform``: Used to convert data that is completely numeric back into the
+   format of the fitted data.
+
+Common Performance Pitfalls
+"""""""""""""""""""""""""""
+It is important to try and keep the performance of these transformers as efficient as possible.
+Below are some tips and common pitfalls to avoid when developing your transformer, so as to
+optimize performance.
+
+1. Avoid duplicate operations. If you need to do some change to an array/series, try to only
+   do it once and reuse that variable later.
+2. Try to use vectorized operations when possible.
+3. When working with Pandas Series, a lot of the operations are able to handle nulls. If you
+   need to round, get the max or get the min of a series, there is no need to filter out nulls
+   before doing that calculation.
+4. ``pd.to_numeric`` is preferred over ``as_type``.
+5. ``pd.to_numeric`` also replaces all None values with nans that can be operated on since ``np.nan``
+   is a float type.
+6. If you are working with a series that has booleans and null values, there is a
+   `nullable boolean type`_ that can be leveraged to avoid having to filter out null values.
+
+Create Performance Notebook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once your transformer is complete, please follow the format in this sample `Collab Notebook`_
+that runs common performance metrics on the implemented methods and create one for your
+transformer. This can help you find inefficiencies in the transformer and may give you ideas
+for improvements.
+
+Add Unit and Integration Tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There should be unit tests and integration tests created specifically for the new transformer
+you add. Unit tests should cover specific cases for each of the following methods: ``__init__``,
+``fit``, ``transform`` and ``reverse_transform``. They can be added under
+``tests/unit/transformers/{new_transformer}``.
+
+The integration tests should test the whole workflow of going from input data, to fitting, to
+transforming and finally reverse transforming the data. The tests should make sure the reversed
+data is in the same format or exactly identical to the input data. Integration tests can be
+added under ``tests/unit/transformers/{new_transformer}``.
+
+Adding Performance Tests
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once the new ``transformer`` is complete and has been analyzed for performance, performance tests
+should be added for it. If it is a completely new ``transformer``, add a folder with the same name
+as it to this directory: ``/tests/performance/test_cases``. Otherwise, add the test cases to the
+appropriate existing folder.
+
+The naming convention for the test case files is as follows:
+
+``{description of arguments}_{dataset_generator_name}_{fit_size}_{transform_size}.json``
+
+For example, if we use the default arguments with the `ConstantIntegerGenerator`, and generate
+1000 rows for ``fit`` as well as ``transform``, then we would have the name
+``default_ConstantIntegerGenerator_1000_1000.json``.
+
+Each test case config file has the following format::
+
+   {
+      "dataset": "tests.performance.datasets.UniqueCategories",
+      "transformer": "rdt.transformers.categorical.CategoricalTransformer,
+      "kwargs": {},
+      "fit_rows": 1000,
+      "transform_rows": 10000,
+      "expected": {
+         "fit": {
+               "time": 0.3,
+               "memory": 400
+         },
+         "transform": {
+               "time": 0.3,
+               "memory": 400
+         },
+         "reverse_transform": {
+               "time": 0.3,
+               "memory": 400
+         }
+      }
+   }
+
+The config should specify the name of the test, the path to the transformer, the path to the
+dataset generator (explained in more detail below), the number of rows to generate for both
+``fit`` and ``transform`` and the max allowable time and memory for each method.
+
+There is a function called ``make_test_case_configs`` in ``tests/performance/test_performance.py``
+that can be used to generate test cases once you have the dataset generators created.
+
+Create Dataset generators
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to test performance, we have a class that is responsible for generating data to test
+the transformer methods against. Each subclass implements one static method, ``generate`` that
+takes in the number of rows to generate. You should make a generator for every type of column
+that you believe would be useful to test against. For some examples, you can look in this
+folder: https://github.com/sdv-dev/RDT/tree/master/tests/performance/datasets
+
+The generators also each have the following class variables:
+
+1. ``TYPE``
+2. ``SUBTYPE``
+
+These should match the type and subtype of data that your ``transformer`` is used for.
+
+Maintainer's Checklist
+~~~~~~~~~~~~~~~~~~~~~~
+
+Once you have done everything above, you can create a PR. Be sure to look over the
+checklist below to make sure your PR is ready for review.
+
+1. Verify that the profiling notebook was created and used to find any obvious bottlenecks.
+2. Verify that performance test cases were created.
+3. Verify that the timings and memory values for these test cases are reasonable compared
+   to other similar transformers if possible.
+4. Verify that unit and integration tests were added for the transformers.
+5. Verify that developers are appropriately credited in the PR.
+6. Create an issue that is assigned to the user making the PR and verify that the PR resolves
+   that issue.
+
 Get Started!
 ------------
 
@@ -235,3 +367,5 @@ or in command line::
 .. _GitHub issues page: https://github.com/sdv-dev/RDT/issues
 .. _Travis Build Status page: https://travis-ci.org/sdv-dev/RDT/pull_requests
 .. _Google docstrings style: https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments
+.. _nullable boolean type: https://pandas.pydata.org/pandas-docs/version/1.0/user_guide/boolean.html
+.. _Collab Notebook: https://colab.research.google.com/drive/1dGnBLMW-5LATGoBUuQKWfOTZFssBmgYu?usp=sharing
