@@ -1,0 +1,21 @@
+{
+    "dataset": "tests.performance.datasets.datetime.RandomGapSecondsDatetimeGenerator",
+    "transformer": "rdt.transformers.datetime.DatetimeTransformer",
+    "kwargs": {},
+    "fit_size": 10000,
+    "transform_size": 10000,
+    "expected": {
+        "fit": {
+            "time": 0.003,
+            "memory": 2000000.0
+        },
+        "transform": {
+            "time": 0.002,
+            "memory": 1000000.0
+        },
+        "reverse_transform": {
+            "time": 0.01,
+            "memory": 3000000.0
+        }
+    }
+}
