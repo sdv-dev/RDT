@@ -182,9 +182,9 @@ checklist below to make sure your PR is ready for review.
 3. Verify that the timings and memory values for these test cases are reasonable compared
    to other similar transformers if possible.
 4. Verify that unit and integration tests were added for the transformers.
-5. Verify that developers are appropriately credited in the PR.
-6. Create an issue that is assigned to the user making the PR and verify that the PR resolves
+5. Create an issue that is assigned to the user making the PR and verify that the PR resolves
    that issue.
+6. Review the ``Pull Request Guidelines`` below
 
 Get Started!
 ------------
