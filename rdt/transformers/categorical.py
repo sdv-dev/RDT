@@ -408,7 +408,7 @@ class LabelEncodingTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        self.values_to_categories = dict(enumerate(data.unique()))
+        self.values_to_categories = dict(enumerate(pd.unique(data)))
         self.categories_to_values = {
             category: value
             for value, category in self.values_to_categories.items()
@@ -424,6 +424,9 @@ class LabelEncodingTransformer(BaseTransformer):
         Returns:
             numpy.ndarray:
         """
+        if not isinstance(data, pd.Series):
+            data = pd.Series(data)
+
         return data.map(self.categories_to_values)
 
     def reverse_transform(self, data):

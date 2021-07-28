@@ -1,0 +1,21 @@
+{
+    "dataset": "tests.performance.datasets.categorical.RandomMixedGenerator",
+    "transformer": "rdt.transformers.categorical.LabelEncodingTransformer",
+    "kwargs": {},
+    "fit_size": 10000,
+    "transform_size": 1000,
+    "expected": {
+        "fit": {
+            "time": 0.002,
+            "memory": 10000.0
+        },
+        "transform": {
+            "time": 0.003,
+            "memory": 100000.0
+        },
+        "reverse_transform": {
+            "time": 0.01,
+            "memory": 100000.0
+        }
+    }
+}

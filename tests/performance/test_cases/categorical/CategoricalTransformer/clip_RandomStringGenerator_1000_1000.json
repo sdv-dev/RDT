@@ -1,0 +1,23 @@
+{
+    "dataset": "tests.performance.datasets.categorical.RandomStringGenerator",
+    "transformer": "rdt.transformers.categorical.CategoricalTransformer",
+    "kwargs": {
+        "clip": true
+    },
+    "fit_size": 1000,
+    "transform_size": 1000,
+    "expected": {
+        "fit": {
+            "time": 0.01,
+            "memory": 400000.0
+        },
+        "transform": {
+            "time": 0.002,
+            "memory": 400000.0
+        },
+        "reverse_transform": {
+            "time": 0.01,
+            "memory": 1000000.0
+        }
+    }
+}

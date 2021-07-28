@@ -5,6 +5,7 @@ import tracemalloc
 from copy import deepcopy
 from multiprocessing import Process, Value
 
+import numpy as np
 import pandas as pd
 
 
@@ -69,7 +70,8 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     fit_memory = _profile_memory(transformer.fit, fit_dataset)
     transformer.fit(fit_dataset)
 
-    transform_dataset = dataset_generator.generate(transform_size)
+    replace = transform_size > fit_size
+    transform_dataset = np.random.choice(fit_dataset, transform_size, replace=replace)
     transform_time = _profile_time(transformer, 'transform', transform_dataset)
     transform_memory = _profile_memory(transformer.transform, transform_dataset)
 
