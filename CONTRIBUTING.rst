@@ -65,13 +65,20 @@ There are only three required methods for a transformer:
 
 1. ``fit``: Used to store and learn any values from the input data that might be useful
    for the transformer.
-2. ``transform``: Used to transform the input data into completely numeric data.
+2. ``transform``: Used to transform the input data into completely numeric data. This method
+   should not modify the internal state of the Transformer instance.
 3. ``reverse_transform``: Used to convert data that is completely numeric back into the
-   format of the fitted data.
+   format of the fitted data. This method should not modify the internal state of the
+   Transformer instance.
+
+Each transformer class should be placed inside the ``rdt/transformers`` folder, in a module
+file named after the data type that the transformer operates on. For example, if you are
+writing a transformer that works with ``categorical`` data, your transformer should be placed
+inside the ``rdt/transformers/categorical.py`` module.
 
 Common Performance Pitfalls
 """""""""""""""""""""""""""
-It is important to try and keep the performance of these transformers as efficient as possible.
+It is important to try to keep the performance of these transformers as efficient as possible.
 Below are some tips and common pitfalls to avoid when developing your transformer, so as to
 optimize performance.
 
@@ -82,15 +89,15 @@ optimize performance.
    need to round, get the max or get the min of a series, there is no need to filter out nulls
    before doing that calculation.
 4. ``pd.to_numeric`` is preferred over ``as_type``.
-5. ``pd.to_numeric`` also replaces all None values with nans that can be operated on since ``np.nan``
-   is a float type.
+5. ``pd.to_numeric`` also replaces all None values with NaNs that can be operated on since
+   ``np.nan`` is a float type.
 6. If you are working with a series that has booleans and null values, there is a
    `nullable boolean type`_ that can be leveraged to avoid having to filter out null values.
 
 Create Performance Notebook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Once your transformer is complete, please follow the format in this sample `Collab Notebook`_
+Once your transformer is complete, please follow the format in this sample `Colab Notebook`_
 that runs common performance metrics on the implemented methods and create one for your
 transformer. This can help you find inefficiencies in the transformer and may give you ideas
 for improvements.
@@ -101,12 +108,12 @@ Add Unit and Integration Tests
 There should be unit tests and integration tests created specifically for the new transformer
 you add. Unit tests should cover specific cases for each of the following methods: ``__init__``,
 ``fit``, ``transform`` and ``reverse_transform``. They can be added under
-``tests/unit/transformers/{new_transformer}``.
+``tests/unit/transformers/{transformer_module}``.
 
 The integration tests should test the whole workflow of going from input data, to fitting, to
 transforming and finally reverse transforming the data. The tests should make sure the reversed
 data is in the same format or exactly identical to the input data. Integration tests can be
-added under ``tests/unit/transformers/{new_transformer}``.
+added under ``tests/unit/transformers/{transformer_module}``.
 
 Adding Performance Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -120,11 +127,11 @@ The naming convention for the test case files is as follows:
 
 ``{description of arguments}_{dataset_generator_name}_{fit_size}_{transform_size}.json``
 
-For example, if we use the default arguments with the `ConstantIntegerGenerator`, and generate
+For example, if we use the default arguments with the ``ConstantIntegerGenerator``, and generate
 1000 rows for ``fit`` as well as ``transform``, then we would have the name
 ``default_ConstantIntegerGenerator_1000_1000.json``.
 
-Each test case config file has the following format::
+Each test case configuration file has the following format::
 
    {
       "dataset": "tests.performance.datasets.UniqueCategories",
@@ -148,8 +155,9 @@ Each test case config file has the following format::
       }
    }
 
-The config should specify the name of the test, the path to the transformer, the path to the
-dataset generator (explained in more detail below), the number of rows to generate for both
+The configuration should specify the full Python path of the transformer, the keyword arguments
+that need to be passed to the transformer when creating its instance, the full Python path of
+the dataset generator (explained in more detail below), the number of rows to generate for both
 ``fit`` and ``transform`` and the max allowable time and memory for each method.
 
 There is a function called ``make_test_case_configs`` in ``tests/performance/test_performance.py``
@@ -184,7 +192,7 @@ checklist below to make sure your PR is ready for review.
 4. Verify that unit and integration tests were added for the transformers.
 5. Create an issue that is assigned to the user making the PR and verify that the PR resolves
    that issue.
-6. Review the ``Pull Request Guidelines`` below
+6. Review the ``Pull Request Guidelines`` below.
 
 Get Started!
 ------------
@@ -255,8 +263,8 @@ Before you submit a pull request, check that it meets these guidelines:
 4. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the documentation in an appropriate place.
-5. The pull request should work for all the supported Python versions. Check the `Travis Build
-   Status page`_ and make sure that all the checks pass.
+5. The pull request should work for all the supported Python versions. Check the `Github actions
+   page`_ and make sure that all the checks pass.
 
 Unit Testing Guidelines
 -----------------------
@@ -365,7 +373,7 @@ or in command line::
 
 
 .. _GitHub issues page: https://github.com/sdv-dev/RDT/issues
-.. _Travis Build Status page: https://travis-ci.org/sdv-dev/RDT/pull_requests
+.. _Github actions page: https://github.com/sdv-dev/RDT/actions
 .. _Google docstrings style: https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments
 .. _nullable boolean type: https://pandas.pydata.org/pandas-docs/version/1.0/user_guide/boolean.html
-.. _Collab Notebook: https://colab.research.google.com/drive/1dGnBLMW-5LATGoBUuQKWfOTZFssBmgYu?usp=sharing
+.. _Colab Notebook: https://colab.research.google.com/drive/1dGnBLMW-5LATGoBUuQKWfOTZFssBmgYu?usp=sharing
