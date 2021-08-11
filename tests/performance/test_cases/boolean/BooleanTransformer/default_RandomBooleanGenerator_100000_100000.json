@@ -1,0 +1,21 @@
+{
+    "dataset": "tests.performance.datasets.boolean.RandomBooleanGenerator",
+    "transformer": "rdt.transformers.boolean.BooleanTransformer",
+    "kwargs": {},
+    "fit_size": 100000,
+    "transform_size": 100000,
+    "expected": {
+        "fit": {
+            "time": 0.001,
+            "memory": 1000000.0
+        },
+        "transform": {
+            "time": 0.003,
+            "memory": 4000000.0
+        },
+        "reverse_transform": {
+            "time": 0.01,
+            "memory": 10000000.0
+        }
+    }
+}

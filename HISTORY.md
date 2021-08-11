@@ -1,5 +1,26 @@
 # History
 
+## 0.5.1 - 2021-08-11
+
+This release improves the overall performance of the library, both in terms of memory and time consumption.
+More specifically, it makes the following modules more efficient: `NullTransformer`, `DatetimeTransformer`,
+`LabelEncodingTransformer`, `NumericalTransformer`, `CategoricalTransformer`, `BooleanTransformer` and `OneHotEncodingTransformer`.
+
+It also adds performance-based testing and a script for profiling the performance.
+
+### Issues closed
+
+* Add performance-based testing - Issue [#194](https://github.com/sdv-dev/RDT/issues/194) by @amontanez24
+* Audit the NullTransformer - Issue [#192](https://github.com/sdv-dev/RDT/issues/192) by @amontanez24
+* Audit DatetimeTransformer - Issue [#189](https://github.com/sdv-dev/RDT/issues/189) by @sarahmish
+* Audit the LabelEncodingTransformer - Issue [#184](https://github.com/sdv-dev/RDT/issues/184) by @amontanez24
+* Audit the NumericalTransformer - Issue [#181](https://github.com/sdv-dev/RDT/issues/181) by @fealho
+* Audit CategoricalTransformer - Issue [#180](https://github.com/sdv-dev/RDT/issues/180) by @katxiao
+* Audit BooleanTransformer - Issue [#179](https://github.com/sdv-dev/RDT/issues/179) by @katxiao
+* Auditing OneHotEncodingTransformer - Issue [#178](https://github.com/sdv-dev/RDT/issues/178) by @sarahmish
+* Create script for profiling - Issue [#176](https://github.com/sdv-dev/RDT/issues/176) by @amontanez24
+* Create folder structure for performance testing - Issue [#174](https://github.com/sdv-dev/RDT/issues/174) by @amontanez24
+
 ## 0.5.0 - 2021-07-12
 
 This release updates the `NumericalTransformer` by adding a new `rounding` argument.
@@ -9,6 +30,7 @@ Users can now obtain numerical values with precision, either pre-specified or au
 
 * Add `rounding` argument to `NumericalTransformer` - Issue [#166](https://github.com/sdv-dev/RDT/issues/166) by @amontanez24 and @csala
 * `NumericalTransformer` rounding error with infinity - Issue [#169](https://github.com/sdv-dev/RDT/issues/169) by @amontanez24
+* Add min and max arguments to NumericalTransformer - Issue [#106](https://github.com/sdv-dev/RDT/issues/106) by @amontanez24
 
 ## 0.4.2 - 2021-06-08
 

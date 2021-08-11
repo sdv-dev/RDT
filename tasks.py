@@ -9,7 +9,12 @@ from invoke import task
 
 @task
 def pytest(c):
-    c.run('python -m pytest --cov=rdt')
+    c.run('pytest ./tests/unit ./tests/integration ./tests/performance/tests --cov=rdt')
+
+
+@task
+def performance(c):
+    c.run('pytest -v ./tests/performance/test_performance.py')
 
 
 @task
@@ -42,7 +47,7 @@ def install_minimum(c):
 def minimum(c):
     install_minimum(c)
     c.run('python -m pip check')
-    c.run('python -m pytest')
+    c.run('python -m pytest ./tests/unit ./tests/integration ./tests/performance/tests')
 
 
 @task
@@ -65,7 +70,7 @@ def lint(c):
     c.run('flake8 rdt')
     c.run('flake8 tests --ignore=D')
     c.run('isort -c --recursive rdt tests')
-    c.run('pylint rdt --rcfile=setup.cfg')
+    c.run('pylint rdt tests/performance --rcfile=setup.cfg')
 
 
 def remove_readonly(func, path, _):

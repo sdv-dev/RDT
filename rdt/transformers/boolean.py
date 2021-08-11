@@ -62,7 +62,7 @@ class BooleanTransformer(BaseTransformer):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        data.loc[data.notnull()] = data.dropna().astype(int)
+        data = pd.to_numeric(data, errors='coerce')
 
         return self.null_transformer.transform(data).astype(float)
 
@@ -85,5 +85,4 @@ class BooleanTransformer(BaseTransformer):
 
             data = pd.Series(data)
 
-        data[pd.notnull(data)] = np.round(data[pd.notnull(data)]).astype(bool)
-        return data
+        return np.round(data).astype('boolean').astype('object')

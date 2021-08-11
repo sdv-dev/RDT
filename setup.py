@@ -15,6 +15,7 @@ install_requires = [
     'numpy>=1.18.0,<2',
     'pandas>=1.1,<1.1.5',
     'scipy>=1.4.1,<2',
+    'psutil>=5.7,<6',
 ]
 
 copulas_requires = [
@@ -100,6 +101,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.5.0',
+    version='0.5.1.dev1',
     zip_safe=False,
 )

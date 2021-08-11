@@ -1,0 +1,24 @@
+{
+    "dataset": "tests.performance.datasets.boolean.RandomBooleanNaNsGenerator",
+    "transformer": "rdt.transformers.boolean.BooleanTransformer",
+    "kwargs": {
+        "nan": null,
+        "null_column": null
+    },
+    "fit_size": 10000,
+    "transform_size": 10000,
+    "expected": {
+        "fit": {
+            "time": 0.003,
+            "memory": 300000.0
+        },
+        "transform": {
+            "time": 0.01,
+            "memory": 3000000.0
+        },
+        "reverse_transform": {
+            "time": 0.004,
+            "memory": 1000000.0
+        }
+    }
+}

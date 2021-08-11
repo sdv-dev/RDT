@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import psutil
 from scipy.stats import norm
 
 from rdt.transformers.base import BaseTransformer
@@ -34,7 +35,10 @@ class CategoricalTransformer(BaseTransformer):
 
     mapping = None
     intervals = None
+    starts = None
+    means = None
     dtype = None
+    _get_category_from_index = None
 
     def __setstate__(self, state):
         """Replace any ``null`` key by the actual ``np.nan`` instance."""
@@ -62,30 +66,32 @@ class CategoricalTransformer(BaseTransformer):
             dict:
                 intervals for each categorical value (start, end).
         """
-        frequencies = data.value_counts(dropna=False).reset_index()
-
-        # Sort also by index to make sure that results are always the same
-        name = data.name or 0
-        sorted_freqs = frequencies.sort_values([name, 'index'], ascending=False)
-        frequencies = sorted_freqs.set_index('index', drop=True)[name]
+        frequencies = data.value_counts(dropna=False)
 
         start = 0
         end = 0
         elements = len(data)
 
         intervals = dict()
+        means = []
+        starts = []
         for value, frequency in frequencies.items():
             prob = frequency / elements
             end = start + prob
-            mean = (start + end) / 2
+            mean = start + prob / 2
             std = prob / 6
             if pd.isnull(value):
                 value = np.nan
 
             intervals[value] = (start, end, mean, std)
+            means.append(mean)
+            starts.append((value, start))
             start = end
 
-        return intervals
+        means = pd.Series(means, index=list(frequencies.keys()))
+        starts = pd.DataFrame(starts, columns=['category', 'start']).set_index('start')
+
+        return intervals, means, starts
 
     def fit(self, data):
         """Fit the transformer to the data.
@@ -103,7 +109,27 @@ class CategoricalTransformer(BaseTransformer):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        self.intervals = self._get_intervals(data)
+        self.intervals, self.means, self.starts = self._get_intervals(data)
+        self._get_category_from_index = list(self.means.index).__getitem__
+
+    def _transform_by_category(self, data):
+        """Transform the data by iterating over the different categories."""
+        result = np.empty(shape=(len(data), ), dtype=float)
+
+        # loop over categories
+        for category, values in self.intervals.items():
+            mean, std = values[2:]
+            if category is np.nan:
+                mask = data.isnull()
+            else:
+                mask = (data.values == category)
+
+            if self.fuzzy:
+                result[mask] = norm.rvs(mean, std, size=mask.sum())
+            else:
+                result[mask] = mean
+
+        return result
 
     def _get_value(self, category):
         """Get the value that represents this category."""
@@ -116,6 +142,10 @@ class CategoricalTransformer(BaseTransformer):
             return norm.rvs(mean, std)
 
         return mean
+
+    def _transform_by_row(self, data):
+        """Transform the data row by row."""
+        return data.fillna(np.nan).apply(self._get_value).to_numpy()
 
     def transform(self, data):
         """Transform categorical values to float values.
@@ -132,7 +162,10 @@ class CategoricalTransformer(BaseTransformer):
         if not isinstance(data, pd.Series):
             data = pd.Series(data)
 
-        return data.fillna(np.nan).apply(self._get_value).to_numpy()
+        if len(self.means) < len(data):
+            return self._transform_by_category(data)
+
+        return self._transform_by_row(data)
 
     def _normalize(self, data):
         """Normalize data to the range [0, 1].
@@ -143,6 +176,39 @@ class CategoricalTransformer(BaseTransformer):
             return data.clip(0, 1)
 
         return np.mod(data, 1)
+
+    def _reverse_transform_by_matrix(self, data):
+        """Reverse transform the data with matrix operations."""
+        num_rows = len(data)
+        num_categories = len(self.means)
+
+        data = np.broadcast_to(data, (num_categories, num_rows)).T
+        means = np.broadcast_to(self.means, (num_rows, num_categories))
+        diffs = np.abs(np.subtract(data, means))
+        indexes = np.argmin(diffs, axis=1)
+
+        self._get_category_from_index = list(self.means.index).__getitem__
+        return pd.Series(indexes).apply(self._get_category_from_index).astype(self.dtype)
+
+    def _reverse_transform_by_category(self, data):
+        """Reverse transform the data by iterating over all the categories."""
+        result = np.empty(shape=(len(data), ), dtype=self.dtype)
+
+        # loop over categories
+        for category, values in self.intervals.items():
+            start = values[0]
+            mask = (start <= data.values)
+            result[mask] = category
+
+        return pd.Series(result, index=data.index, dtype=self.dtype)
+
+    def _get_category_from_start(self, value):
+        lower = self.starts.loc[:value]
+        return lower.iloc[-1].category
+
+    def _reverse_transform_by_row(self, data):
+        """Reverse transform the data by iterating over each row."""
+        return data.apply(self._get_category_from_start).astype(self.dtype)
 
     def reverse_transform(self, data):
         """Convert float values back to the original categorical values.
@@ -162,13 +228,20 @@ class CategoricalTransformer(BaseTransformer):
 
         data = self._normalize(data)
 
-        result = pd.Series(index=data.index, dtype=self.dtype)
+        num_rows = len(data)
+        num_categories = len(self.means)
 
-        for category, values in self.intervals.items():
-            start, end = values[:2]
-            result[(start < data) & (data < end)] = category
+        # total shape * float size * number of matrices needed
+        needed_memory = num_rows * num_categories * 8 * 3
+        available_memory = psutil.virtual_memory().available
+        if available_memory > needed_memory:
+            return self._reverse_transform_by_matrix(data)
 
-        return result
+        if num_rows > num_categories:
+            return self._reverse_transform_by_category(data)
+
+        # loop over rows
+        return self._reverse_transform_by_row(data)
 
 
 class OneHotEncodingTransformer(BaseTransformer):
@@ -186,8 +259,12 @@ class OneHotEncodingTransformer(BaseTransformer):
             transform, then an error will be raised if this is True.
     """
 
-    dummy_na = None
     dummies = None
+    dummy_na = None
+    num_dummies = None
+    dummy_encoded = False
+    indexer = None
+    decoder = None
 
     def __init__(self, error_on_unknown=True):
         self.error_on_unknown = error_on_unknown
@@ -219,6 +296,26 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return data
 
+    def _transform(self, data):
+        if self.dummy_encoded:
+            coder = self.indexer
+            codes = pd.Categorical(data, categories=self.dummies).codes
+        else:
+            coder = self.dummies
+            codes = data
+
+        rows = len(data)
+        dummies = np.broadcast_to(coder, (rows, self.num_dummies))
+        coded = np.broadcast_to(codes, (self.num_dummies, rows)).T
+        array = (coded == dummies).astype(int)
+
+        if self.dummy_na:
+            null = np.zeros((rows, 1), dtype=int)
+            null[pd.isnull(data)] = 1
+            array = np.append(array, null, axis=1)
+
+        return array
+
     def fit(self, data):
         """Fit the transformer to the data.
 
@@ -229,8 +326,19 @@ class OneHotEncodingTransformer(BaseTransformer):
                 Data to fit the transformer to.
         """
         data = self._prepare_data(data)
-        self.dummy_na = pd.isnull(data).any()
-        self.dummies = list(pd.get_dummies(data, dummy_na=self.dummy_na).columns)
+
+        null = pd.isnull(data)
+        self.dummy_na = null.any()
+        self.dummies = list(pd.unique(data[~null]))
+        self.num_dummies = len(self.dummies)
+        self.indexer = list(range(self.num_dummies))
+        self.decoder = self.dummies.copy()
+
+        if not np.issubdtype(data.dtype, np.number):
+            self.dummy_encoded = True
+
+        if self.dummy_na:
+            self.decoder.append(np.nan)
 
     def transform(self, data):
         """Replace each category with the OneHot vectors.
@@ -243,11 +351,13 @@ class OneHotEncodingTransformer(BaseTransformer):
             numpy.ndarray:
         """
         data = self._prepare_data(data)
-        dummies = pd.get_dummies(data, dummy_na=self.dummy_na)
-        array = dummies.reindex(columns=self.dummies, fill_value=0).values.astype(int)
-        for i, row in enumerate(array):
-            if np.all(row == 0) and self.error_on_unknown:
-                raise ValueError(f'The value {data[i]} was not seen during the fit stage.')
+        array = self._transform(data)
+
+        if self.error_on_unknown:
+            unknown = array.sum(axis=1) == 0
+            if unknown.any():
+                raise ValueError(f'Attempted to transform {list(data[unknown])} ',
+                                 'that were not seen during fit stage.')
 
         return array
 
@@ -265,7 +375,7 @@ class OneHotEncodingTransformer(BaseTransformer):
             data = data.reshape(-1, 1)
 
         indices = np.argmax(data, axis=1)
-        return pd.Series(indices).map(self.dummies.__getitem__)
+        return pd.Series(indices).map(self.decoder.__getitem__)
 
 
 class LabelEncodingTransformer(BaseTransformer):
@@ -298,7 +408,7 @@ class LabelEncodingTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        self.values_to_categories = pd.Series(data.unique()).to_dict()
+        self.values_to_categories = dict(enumerate(pd.unique(data)))
         self.categories_to_values = {
             category: value
             for value, category in self.values_to_categories.items()
@@ -314,6 +424,9 @@ class LabelEncodingTransformer(BaseTransformer):
         Returns:
             numpy.ndarray:
         """
+        if not isinstance(data, pd.Series):
+            data = pd.Series(data)
+
         return data.map(self.categories_to_values)
 
     def reverse_transform(self, data):
@@ -329,4 +442,5 @@ class LabelEncodingTransformer(BaseTransformer):
         if isinstance(data, np.ndarray) and (data.ndim == 2):
             data = data[:, 0]
 
-        return pd.Series(data).astype(int).map(self.values_to_categories)
+        data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
+        return pd.Series(data).round().map(self.values_to_categories)

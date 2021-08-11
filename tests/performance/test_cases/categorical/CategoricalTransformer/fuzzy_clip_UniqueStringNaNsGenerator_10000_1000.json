@@ -1,0 +1,24 @@
+{
+    "dataset": "tests.performance.datasets.categorical.UniqueStringNaNsGenerator",
+    "transformer": "rdt.transformers.categorical.CategoricalTransformer",
+    "kwargs": {
+        "fuzzy": true,
+        "clip": true
+    },
+    "fit_size": 10000,
+    "transform_size": 1000,
+    "expected": {
+        "fit": {
+            "time": 0.1,
+            "memory": 10000000.0
+        },
+        "transform": {
+            "time": 0.2,
+            "memory": 500000.0
+        },
+        "reverse_transform": {
+            "time": 0.2,
+            "memory": 1000000000.0
+        }
+    }
+}
