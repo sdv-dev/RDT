@@ -11,7 +11,7 @@ from invoke import task
 def pytest(c):
     c.run(
         'pytest ./tests/unit ./tests/integration ./tests/performance/tests '
-        '--cov=rdt  --cov-report=xml'
+        '--cov=rdt --cov-report=xml'
     )
 
 
