@@ -43,7 +43,7 @@ class BooleanTransformer(BaseTransformer):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        self.null_transformer = NullTransformer(self.nan, self.null_column)
+        self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(data)
 
     def transform(self, data):
