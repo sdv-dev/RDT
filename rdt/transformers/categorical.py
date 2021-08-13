@@ -260,11 +260,11 @@ class OneHotEncodingTransformer(BaseTransformer):
     """
 
     dummies = None
-    dummy_na = None
-    num_dummies = None
-    dummy_encoded = False
-    indexer = None
-    decoder = None
+    _dummy_na = None
+    _num_dummies = None
+    _dummy_encoded = False
+    _indexer = None
+    _uniques = None
 
     def __init__(self, error_on_unknown=True):
         self.error_on_unknown = error_on_unknown
@@ -297,19 +297,19 @@ class OneHotEncodingTransformer(BaseTransformer):
         return data
 
     def _transform(self, data):
-        if self.dummy_encoded:
-            coder = self.indexer
-            codes = pd.Categorical(data, categories=self.dummies).codes
+        if self._dummy_encoded:
+            coder = self._indexer
+            codes = pd.Categorical(data, categories=self._uniques).codes
         else:
-            coder = self.dummies
+            coder = self._uniques
             codes = data
 
         rows = len(data)
-        dummies = np.broadcast_to(coder, (rows, self.num_dummies))
-        coded = np.broadcast_to(codes, (self.num_dummies, rows)).T
+        dummies = np.broadcast_to(coder, (rows, self._num_dummies))
+        coded = np.broadcast_to(codes, (self._num_dummies, rows)).T
         array = (coded == dummies).astype(int)
 
-        if self.dummy_na:
+        if self._dummy_na:
             null = np.zeros((rows, 1), dtype=int)
             null[pd.isnull(data)] = 1
             array = np.append(array, null, axis=1)
@@ -328,17 +328,17 @@ class OneHotEncodingTransformer(BaseTransformer):
         data = self._prepare_data(data)
 
         null = pd.isnull(data)
-        self.dummy_na = null.any()
-        self.dummies = list(pd.unique(data[~null]))
-        self.num_dummies = len(self.dummies)
-        self.indexer = list(range(self.num_dummies))
-        self.decoder = self.dummies.copy()
+        self._uniques = list(pd.unique(data[~null]))
+        self._dummy_na = null.any()
+        self._num_dummies = len(self._uniques)
+        self._indexer = list(range(self._num_dummies))
+        self.dummies = self._uniques.copy()
 
         if not np.issubdtype(data.dtype, np.number):
-            self.dummy_encoded = True
+            self._dummy_encoded = True
 
-        if self.dummy_na:
-            self.decoder.append(np.nan)
+        if self._dummy_na:
+            self.dummies.append(np.nan)
 
     def transform(self, data):
         """Replace each category with the OneHot vectors.
@@ -375,7 +375,7 @@ class OneHotEncodingTransformer(BaseTransformer):
             data = data.reshape(-1, 1)
 
         indices = np.argmax(data, axis=1)
-        return pd.Series(indices).map(self.decoder.__getitem__)
+        return pd.Series(indices).map(self.dummies.__getitem__)
 
 
 class LabelEncodingTransformer(BaseTransformer):
