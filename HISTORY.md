@@ -1,5 +1,15 @@
 # History
 
+## 0.5.2 - 2021-08-16
+
+This release fixes a couple of bugs introduced by the previous release regarding the
+`OneHotEncoder` and the `BooleanTransformer`.
+
+### Issues closed
+
+* BooleanTransformer.reverse_transform sometimes crashes with TypeError - Isssue [#210](https://github.com/sdv-dev/RDT/issues/210) by @katxiao
+* OneHotEncoder causing shape misalignment in CopulaGAN, CTGAN, and TVAE - Issue [#208](https://github.com/sdv-dev/RDT/issues/210) by @sarahmish
+
 ## 0.5.1 - 2021-08-11
 
 This release improves the overall performance of the library, both in terms of memory and time consumption.
