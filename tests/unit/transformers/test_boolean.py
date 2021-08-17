@@ -199,3 +199,54 @@ class TestBooleanTransformer(TestCase):
 
         assert isinstance(result, pd.Series)
         np.testing.assert_equal(result.values, expected)
+
+    def test_reverse_transform_float_values(self):
+        """Test the ``reverse_transform`` method with decimals.
+
+        Expect that the ``reverse_transform`` method handles decimal inputs
+        correctly by rounding them.
+
+        Input:
+            - Transformed data with decimal values.
+        Output:
+            - Reversed transformed data.
+        """
+        # Setup
+        data = np.array([1.2, 0.32, 1.01])
+        transformer = Mock()
+        transformer.nan = None
+
+        # Run
+        result = BooleanTransformer.reverse_transform(transformer, data)
+
+        # Asserts
+        expected = np.array([True, False, True])
+
+        assert isinstance(result, pd.Series)
+        np.testing.assert_equal(result.values, expected)
+
+    def test_reverse_transform_float_values_out_of_range(self):
+        """Test the ``reverse_transform`` method with decimals that are out of range.
+
+        Expect that the ``reverse_transform`` method handles decimal inputs
+        correctly by rounding them. If the rounded decimal inputs are < 0 or > 1, expect
+        expect them to be clipped.
+
+        Input:
+            - Transformed data with decimal values, some of which round to < 0 or > 1.
+        Output:
+            - Reversed transformed data.
+        """
+        # Setup
+        data = np.array([1.9, -0.7, 1.01])
+        transformer = Mock()
+        transformer.nan = None
+
+        # Run
+        result = BooleanTransformer.reverse_transform(transformer, data)
+
+        # Asserts
+        expected = np.array([True, False, True])
+
+        assert isinstance(result, pd.Series)
+        np.testing.assert_equal(result.values, expected)
