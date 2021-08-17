@@ -7,8 +7,9 @@ This release fixes a couple of bugs introduced by the previous release regarding
 
 ### Issues closed
 
-* BooleanTransformer.reverse_transform sometimes crashes with TypeError - Isssue [#210](https://github.com/sdv-dev/RDT/issues/210) by @katxiao
-* OneHotEncoder causing shape misalignment in CopulaGAN, CTGAN, and TVAE - Issue [#208](https://github.com/sdv-dev/RDT/issues/210) by @sarahmish
+* BooleanTransformer.reverse_transform sometimes crashes with TypeError - Issue [#210](https://github.com/sdv-dev/RDT/issues/210) by @katxiao
+* OneHotEncoder causing shape misalignment in CopulaGAN, CTGAN, and TVAE - Issue [#208](https://github.com/sdv-dev/RDT/issues/208) by @sarahmish
+* Boolean.transformer.reverse_transform modifies the input data - Issue [#211](https://github.com/sdv-dev/RDT/issues/211) by @katxiao
 
 ## 0.5.1 - 2021-08-11
 
