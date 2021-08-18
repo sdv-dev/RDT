@@ -14,7 +14,7 @@
             "memory": 1000000.0
         },
         "reverse_transform": {
-            "time": 0.003,
+            "time": 0.01,
             "memory": 1000000.0
         }
     }
