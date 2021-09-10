@@ -36,7 +36,7 @@ def get_demo(dtypes=('int', 'float', 'str', 'datetime'), nans=0.2, size=10):
     if np.isscalar(nans):
         nans = [nans] * len(dtypes)
 
-    columns = dict()
+    columns = {}
     for count, (dtype, nan) in enumerate(zip(dtypes, nans)):
         if dtype == 'int':
             column = np.random.randint(100, size=size)

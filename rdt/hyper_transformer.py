@@ -76,7 +76,7 @@ class HyperTransformer:
 
     def __init__(self, transformers=None, copy=True, dtypes=None, dtype_transformers=None):
         self.transformers = transformers
-        self._transformers = dict()
+        self._transformers = {}
         self.copy = copy
         self.dtypes = dtypes
         self.dtype_transformers = self._DTYPE_TRANSFORMERS.copy()
@@ -109,7 +109,7 @@ class HyperTransformer:
             ValueError:
                 if a ``dtype`` is not supported by the `HyperTransformer``.
         """
-        transformers = dict()
+        transformers = {}
         if self.dtypes:
             dtypes = self.dtypes
         else:
