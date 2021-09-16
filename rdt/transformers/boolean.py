@@ -27,6 +27,11 @@ class BooleanTransformer(BaseTransformer):
             Defaults to ``None``.
     """
 
+    INPUT_TYPE = 'boolean'
+    OUTPUT_TYPES = None
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
+    DETERMINISTIC = False  # same as the nulltransformer
     null_transformer = None
 
     def __init__(self, nan=-1, null_column=None):

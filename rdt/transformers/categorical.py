@@ -33,6 +33,11 @@ class CategoricalTransformer(BaseTransformer):
             Defaults to ``False``.
     """
 
+    INPUT_TYPE = 'categorical'
+    OUTPUT_TYPES = None
+    DETERMINISTIC_TRANSFORM = False
+    DETERMINISTIC_REVERSE = True
+    DETERMINISTIC = True
     mapping = None
     intervals = None
     starts = None

@@ -54,6 +54,11 @@ class NumericalTransformer(BaseTransformer):
             is given, there won't be a maximum.
     """
 
+    INPUT_TYPE = 'numerical'
+    OUTPUT_TYPES = None
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
+    DETERMINISTIC = False  # it's true if we reverse on the values we fit on, otherwise false
     null_transformer = None
     nan = None
     _dtype = None
