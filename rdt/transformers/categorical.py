@@ -46,7 +46,7 @@ class CategoricalTransformer(BaseTransformer):
 
 
     def get_output_types(self):
-        return {self._columns[0]: 'numerical'} # should I write it as 'numerical.float'?
+        return {self._column: 'numerical'} # should I write it as 'numerical.float'?
 
     def __setstate__(self, state):
         """Replace any ``null`` key by the actual ``np.nan`` instance."""
@@ -113,7 +113,7 @@ class CategoricalTransformer(BaseTransformer):
         """
         self.mapping = {}
         self.dtype = data.dtype
-        self._columns = columns
+        self._column = columns[0]
 
         if len(columns) != 1:
             raise ValueError(f'The Categorical Transformer should fit one column at a time. \
@@ -427,14 +427,17 @@ class LabelEncodingTransformer(BaseTransformer):
     """
 
     INPUT_TYPE = 'categorical'
-    DETERMINISTIC_TRANSFORM = False
+    DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
 
     values_to_categories = None
     categories_to_values = None
 
-    def fit(self, data):
+    def get_output_types(self):
+        return {self._column: 'numerical.integer'} # subtype
+
+    def fit(self, data, columns):
         """Fit the transformer to the data.
 
         Generate a unique integer representation for each category and
@@ -445,6 +448,11 @@ class LabelEncodingTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
+        if len(columns) != 1:
+            raise ValueError(f'The One Hot Encoding Transformer should fit one column at a time. \
+                               Instead, the following columns were passed: {columns}.')
+
+        self._column = columns[0]
         self.values_to_categories = dict(enumerate(pd.unique(data)))
         self.categories_to_values = {
             category: value
