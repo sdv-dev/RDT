@@ -70,17 +70,25 @@ class DatetimeTransformer(BaseTransformer):
 
         return transformed
 
-    def fit(self, data):
+    def get_output_types(self):
+        return {self._column: 'numerical.float'} # subtype
+
+    def fit(self, data, columns):
         """Fit the transformer to the data.
 
         Args:
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
+        if len(columns) != 1:
+            raise ValueError(f'The One Hot Encoding Transformer should fit one column at a time. \
+                               Instead, the following columns were passed: {columns}.')
 
-        transformed = self._transform(data)
+        self._column = columns[0]
+        if isinstance(data, np.ndarray):
+            data = pd.DataFrame(data)
+
+        transformed = self._transform(data[self._column])
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(transformed)
 
