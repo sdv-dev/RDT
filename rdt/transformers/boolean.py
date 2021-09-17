@@ -31,7 +31,7 @@ class BooleanTransformer(BaseTransformer):
     OUTPUT_TYPES = None
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
-    DETERMINISTIC = False  # same as the nulltransformer
+    COMPOSITION_IS_IDENTITY = True
     null_transformer = None
 
     def __init__(self, nan=-1, null_column=None):

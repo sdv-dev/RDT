@@ -38,7 +38,7 @@ class DatetimeTransformer(BaseTransformer):
     OUTPUT_TYPES = None
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
-    DETERMINISTIC = True  # I'm not sure if the miliseconds would count? they would work like clipping
+    COMPOSITION_IS_IDENTITY = True
     null_transformer = None
     divider = None
 

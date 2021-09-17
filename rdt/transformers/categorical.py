@@ -34,16 +34,19 @@ class CategoricalTransformer(BaseTransformer):
     """
 
     INPUT_TYPE = 'categorical'
-    OUTPUT_TYPES = None
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = True
-    DETERMINISTIC = True
+    COMPOSITION_IS_IDENTITY = True
     mapping = None
     intervals = None
     starts = None
     means = None
     dtype = None
     _get_category_from_index = None
+
+
+    def get_output_types(self):
+        return {self._columns[0]: 'numerical'} # should I write it as 'numerical.float'?
 
     def __setstate__(self, state):
         """Replace any ``null`` key by the actual ``np.nan`` instance."""
@@ -98,7 +101,7 @@ class CategoricalTransformer(BaseTransformer):
 
         return intervals, means, starts
 
-    def fit(self, data):
+    def fit(self, data, columns): # should we support numpy arrays still? seeing as we are passing the whole table?
         """Fit the transformer to the data.
 
         Create the mapping dict to save the label encoding.
@@ -110,11 +113,16 @@ class CategoricalTransformer(BaseTransformer):
         """
         self.mapping = {}
         self.dtype = data.dtype
+        self._columns = columns
+
+        if len(columns) != 1:
+            raise ValueError(f'The Categorical Transformer should fit one column at a time. \
+                               Instead, the following columns were passed: {columns}.')
 
         if isinstance(data, np.ndarray):
-            data = pd.Series(data)
+            data = pd.DataFrame(data)
 
-        self.intervals, self.means, self.starts = self._get_intervals(data)
+        self.intervals, self.means, self.starts = self._get_intervals(data[columns[0]])
         self._get_category_from_index = list(self.means.index).__getitem__
 
     def _transform_by_category(self, data):

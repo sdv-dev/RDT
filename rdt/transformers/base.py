@@ -13,7 +13,7 @@ class BaseTransformer:
     OUTPUT_TYPES = None
     DETERMINISTIC_TRANSFORM = None
     DETERMINISTIC_REVERSE = None
-    DETERMINISTIC = None
+    COMPOSITION_IS_IDENTITY = None
     NEXT_TRANSFORMERS = None
 
     def get_input_type(self):
@@ -32,11 +32,11 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to supported data types.
         """
-        obj = {}
-        for output_name, value in self.OUTPUT_TYPES.items():
-            obj[f'{self.column_name}#{output_name}'] = value
-
-        return obj
+        return self.OUTPUT_TYPES
+        #obj = {}
+        #for output_name, value in self.OUTPUT_TYPES.items():
+        #    obj[f'{self.column_name}#{output_name}'] = value
+        #return obj
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -56,18 +56,16 @@ class BaseTransformer:
         """
         return self.DETERMINISTIC_REVERSE
 
-    def is_deterministic(self):
-        """Return whether transforming and then reverse transforming is deterministic.
-
-        Note: if this process is deterministic, the output will always be the same as the input.
+    def is_composition_identity(self):
+        """Return whether composition of transform and reverse transform produces the input data.
 
         Returns:
             bool:
-                Whether or not transforming and then reverse transforming is deterministic.
+                Whether or not transforming and then reverse transforming returns the input data.
         """
-        return self.DETERMINISTIC
+        return self.COMPOSITION_IS_IDENTITY
 
-    def fit(self, data):
+    def fit(self, data, columns):
         """Fit the transformer to the data.
 
         Args:

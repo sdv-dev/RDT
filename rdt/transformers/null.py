@@ -29,12 +29,11 @@ class NullTransformer(BaseTransformer):
             Whether to create a copy of the input data or modify it destructively.
     """
 
-    INPUT_TYPE = ''  # not sure what to do here? everything is possible.
+    INPUT_TYPE = None
     OUTPUT_TYPES = None
-    # how are we defining these if there are parameters that make them non-determisitic?
     DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True  # it's deterministic, but not exactly a reverse transform
-    DETERMINISTIC = False  # it's deterministic, but not the identity, so this should be false, correct?
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = False  # it's deterministic, but not the identity, so this should be false, correct?
     nulls = None
     _null_column = None
     _fill_value = None
