@@ -28,9 +28,7 @@ class NullTransformer(BaseTransformer):
         copy (bool):
             Whether to create a copy of the input data or modify it destructively.
     """
-
-    INPUT_TYPE = None
-    OUTPUT_TYPES = None
+    # INPUT_TYPE as None means it can deal with all datatypes.
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = False  # it's deterministic, but not the identity, so this should be false, correct?
@@ -43,22 +41,32 @@ class NullTransformer(BaseTransformer):
         self.null_column = null_column
         self.copy = copy
 
-    def fit(self, data):
-        """Fit the transformer to the data.
+    def get_output_types(self):
+        # need to convert dtype to sdv type, and I'm not sure if .null is the correct way to go
+        if self._null_column:
+            return {self._column: self._dtype, self._column + ".null": 'categorical'}
+        return {self._column: self._dtype}
 
-        Evaluate if the transformer has to create the null column or not.
+    def fit(self, data, columns):
+        """Fit the transformer to the data.
 
         Args:
             data (pandas.Series or numpy.ndarray):
-                Data to transform.
+                Data to fit the transformer to.
         """
-        null_values = data.isnull().values
+        if len(columns) != 1:
+            raise ValueError(f'The One Hot Encoding Transformer should fit one column at a time. \
+                               Instead, the following columns were passed: {columns}.')
+
+        self._column = columns[0]
+        self._dtype = data[self._column].dtype
+        null_values = data[self._column].isnull().values
         self.nulls = null_values.any()
         contains_not_null = not null_values.all()
         if self.fill_value == 'mean':
-            self._fill_value = data.mean() if contains_not_null else 0
+            self._fill_value = data[self._column].mean() if contains_not_null else 0
         elif self.fill_value == 'mode':
-            self._fill_value = data.mode(dropna=True)[0] if contains_not_null else 0
+            self._fill_value = data[self._column].mode(dropna=True)[0] if contains_not_null else 0
         else:
             self._fill_value = self.fill_value
 
