@@ -122,7 +122,7 @@ class CategoricalTransformer(BaseTransformer):
         if isinstance(data, np.ndarray):
             data = pd.DataFrame(data)
 
-        self.intervals, self.means, self.starts = self._get_intervals(data[columns[0]])
+        self.intervals, self.means, self.starts = self._get_intervals(data[self._column])
         self._get_category_from_index = list(self.means.index).__getitem__
 
     def _transform_by_category(self, data):
@@ -291,7 +291,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         num_categories = len(self.dummies)
         output_types = {}
         for i in range(num_categories):
-            output_types[self._column_name + '.' + str(i)] = 'numerical.integer'
+            output_types[self._column_name + '.' + str(i)] = 'numerical.integer' # subtype
         
         # the column names don't match with the transformed output (since it's a numpy ndarray)...
         return output_types
@@ -453,7 +453,7 @@ class LabelEncodingTransformer(BaseTransformer):
                                Instead, the following columns were passed: {columns}.')
 
         self._column = columns[0]
-        self.values_to_categories = dict(enumerate(pd.unique(data)))
+        self.values_to_categories = dict(enumerate(pd.unique(data[self._column])))
         self.categories_to_values = {
             category: value
             for value, category in self.values_to_categories.items()

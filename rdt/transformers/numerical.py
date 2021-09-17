@@ -55,7 +55,6 @@ class NumericalTransformer(BaseTransformer):
     """
 
     INPUT_TYPE = 'numerical'
-    OUTPUT_TYPES = None
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True 
     COMPOSITION_IS_IDENTITY = True # since value should be between min/max, clipping doesnt matter
@@ -74,6 +73,9 @@ class NumericalTransformer(BaseTransformer):
         self.rounding = rounding
         self.min_value = min_value
         self.max_value = max_value
+
+    def get_output_types(self):
+        return {self._column: 'numerical.float'} # subtype
 
     @staticmethod
     def _learn_rounding_digits(data):
@@ -96,13 +98,18 @@ class NumericalTransformer(BaseTransformer):
 
         return None
 
-    def fit(self, data):
+    def fit(self, data, columns):
         """Fit the transformer to the data.
 
         Args:
             data (pandas.Series or numpy.ndarray):
                 Data to fit.
         """
+        if len(columns) != 1:
+            raise ValueError(f'The One Hot Encoding Transformer should fit one column at a time. \
+                               Instead, the following columns were passed: {columns}.')
+
+        self._column = columns[0]
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
@@ -301,7 +308,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
         raise TypeError('Invalid distribution: {}'.format(distribution))
 
-    def fit(self, data):
+    def fit(self, data, columns):
         """Fit the transformer to the data.
 
         Args:
@@ -310,7 +317,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
         """
         self._univariate = self._get_univariate()
 
-        super().fit(data)
+        super().fit(data, columns)
         data = super().transform(data)
         if data.ndim > 1:
             data = data[:, 0]

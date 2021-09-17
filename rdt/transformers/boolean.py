@@ -28,7 +28,6 @@ class BooleanTransformer(BaseTransformer):
     """
 
     INPUT_TYPE = 'boolean'
-    OUTPUT_TYPES = None
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
@@ -37,19 +36,27 @@ class BooleanTransformer(BaseTransformer):
     def __init__(self, nan=-1, null_column=None):
         self.nan = nan
         self.null_column = null_column
+    
+    def get_output_types(self):
+        return {self._column: 'numerical.float'} # subtype
 
-    def fit(self, data):
+    def fit(self, data, columns):
         """Fit the transformer to the data.
 
         Args:
             data (pandas.Series or numpy.ndarray):
                 Data to fit to.
         """
+        if len(columns) != 1:
+            raise ValueError(f'The One Hot Encoding Transformer should fit one column at a time. \
+                               Instead, the following columns were passed: {columns}.')
+
+        self._column = columns[0]
         if isinstance(data, np.ndarray):
-            data = pd.Series(data)
+            data = pd.DataFrame(data)
 
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
-        self.null_transformer.fit(data)
+        self.null_transformer.fit(data[self._column])
 
     def transform(self, data):
         """Transform boolean to float.
