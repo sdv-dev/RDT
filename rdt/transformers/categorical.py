@@ -272,6 +272,11 @@ class OneHotEncodingTransformer(BaseTransformer):
             transform, then an error will be raised if this is True.
     """
 
+    INPUT_TYPE = 'categorical'
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = True # only true if error_on_unknown is true. Write logic to check this. 
+
     dummies = None
     _dummy_na = None
     _num_dummies = None
@@ -281,9 +286,18 @@ class OneHotEncodingTransformer(BaseTransformer):
 
     def __init__(self, error_on_unknown=True):
         self.error_on_unknown = error_on_unknown
+    
+    def get_output_types(self):
+        num_categories = len(self.dummies)
+        output_types = {}
+        for i in range(num_categories):
+            output_types[self._column_name + '.' + str(i)] = 'numerical.integer'
+        
+        # the column names don't match with the transformed output (since it's a numpy ndarray)...
+        return output_types
 
     @staticmethod
-    def _prepare_data(data):
+    def _prepare_data(data, columns):
         """Transform data to appropriate format.
 
         If data is a valid list or a list of lists, transforms it into an np.array,
@@ -329,7 +343,7 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return array
 
-    def fit(self, data):
+    def fit(self, data, columns):
         """Fit the transformer to the data.
 
         Get the pandas `dummies` which will be used later on for OneHotEncoding.
@@ -338,7 +352,12 @@ class OneHotEncodingTransformer(BaseTransformer):
             data (pandas.Series, numpy.ndarray, list or list of lists):
                 Data to fit the transformer to.
         """
-        data = self._prepare_data(data)
+        if len(columns) != 1:
+            raise ValueError(f'The One Hot Encoding Transformer should fit one column at a time. \
+                               Instead, the following columns were passed: {columns}.')
+        self._column_name = columns[0]
+
+        data = self._prepare_data(data[self._column_name])
 
         null = pd.isnull(data)
         self._uniques = list(pd.unique(data[~null]))
@@ -406,6 +425,11 @@ class LabelEncodingTransformer(BaseTransformer):
             Dictionary that maps each category with the corresponding
             integer value.
     """
+
+    INPUT_TYPE = 'categorical'
+    DETERMINISTIC_TRANSFORM = False
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = True
 
     values_to_categories = None
     categories_to_values = None
