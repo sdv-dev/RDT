@@ -56,8 +56,11 @@ class NumericalTransformer(BaseTransformer):
 
     INPUT_TYPE = 'numerical'
     DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True 
-    COMPOSITION_IS_IDENTITY = True # since value should be between min/max, clipping doesnt matter
+    DETERMINISTIC_REVERSE = True
+    # Since the values to be transformed should be between some min/max boundaries,
+    # the clipping done by the reverse_transform shouldn't matter, therefore
+    # COMPOSITION_IS_IDENTITY should be True if the user respects the boundaries.
+    COMPOSITION_IS_IDENTITY = True
     null_transformer = None
     nan = None
     _dtype = None
@@ -75,7 +78,7 @@ class NumericalTransformer(BaseTransformer):
         self.max_value = max_value
 
     def get_output_types(self):
-        return {self._column: 'numerical.float'} # subtype
+        return {self._column: 'numerical.float'}  # subtype
 
     @staticmethod
     def _learn_rounding_digits(data):

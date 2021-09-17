@@ -33,10 +33,6 @@ class BaseTransformer:
                 Mapping from the transformed column names to supported data types.
         """
         return self.OUTPUT_TYPES
-        #obj = {}
-        #for output_name, value in self.OUTPUT_TYPES.items():
-        #    obj[f'{self.column_name}#{output_name}'] = value
-        #return obj
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -64,6 +60,11 @@ class BaseTransformer:
                 Whether or not transforming and then reverse transforming returns the input data.
         """
         return self.COMPOSITION_IS_IDENTITY
+
+    def _check_columns(self, columns):
+        if len(columns) != 1:
+            raise ValueError(f'The Transformer should fit one column at a time. \
+                               Instead, the following columns were passed: {columns}.')
 
     def fit(self, data, columns):
         """Fit the transformer to the data.

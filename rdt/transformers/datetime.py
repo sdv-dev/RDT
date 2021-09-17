@@ -71,7 +71,7 @@ class DatetimeTransformer(BaseTransformer):
         return transformed
 
     def get_output_types(self):
-        return {self._column: 'numerical.float'} # subtype
+        return {self._column: 'numerical.float'}  # subtype
 
     def fit(self, data, columns):
         """Fit the transformer to the data.

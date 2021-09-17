@@ -44,9 +44,8 @@ class CategoricalTransformer(BaseTransformer):
     dtype = None
     _get_category_from_index = None
 
-
     def get_output_types(self):
-        return {self._column: 'numerical'} # should I write it as 'numerical.float'?
+        return {self._column: 'numerical'} # subtype
 
     def __setstate__(self, state):
         """Replace any ``null`` key by the actual ``np.nan`` instance."""
@@ -101,7 +100,7 @@ class CategoricalTransformer(BaseTransformer):
 
         return intervals, means, starts
 
-    def fit(self, data, columns): # should we support numpy arrays still? seeing as we are passing the whole table?
+    def fit(self, data, columns):
         """Fit the transformer to the data.
 
         Create the mapping dict to save the label encoding.
@@ -275,8 +274,6 @@ class OneHotEncodingTransformer(BaseTransformer):
     INPUT_TYPE = 'categorical'
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True # only true if error_on_unknown is true. Write logic to check this. 
-
     dummies = None
     _dummy_na = None
     _num_dummies = None
@@ -286,15 +283,6 @@ class OneHotEncodingTransformer(BaseTransformer):
 
     def __init__(self, error_on_unknown=True):
         self.error_on_unknown = error_on_unknown
-    
-    def get_output_types(self):
-        num_categories = len(self.dummies)
-        output_types = {}
-        for i in range(num_categories):
-            output_types[self._column_name + '.' + str(i)] = 'numerical.integer' # subtype
-        
-        # the column names don't match with the transformed output (since it's a numpy ndarray)...
-        return output_types
 
     @staticmethod
     def _prepare_data(data, columns):
@@ -342,6 +330,17 @@ class OneHotEncodingTransformer(BaseTransformer):
             array = np.append(array, null, axis=1)
 
         return array
+
+    def get_output_types(self):
+        num_categories = len(self.dummies)
+        output_types = {}
+        for i in range(num_categories):
+            output_types[self._column_name + '.' + str(i)] = 'numerical.integer'  # subtype
+
+        return output_types
+
+    def is_composition_identity(self):
+        return True if self.error_on_unknown else False
 
     def fit(self, data, columns):
         """Fit the transformer to the data.
@@ -435,7 +434,7 @@ class LabelEncodingTransformer(BaseTransformer):
     categories_to_values = None
 
     def get_output_types(self):
-        return {self._column: 'numerical.integer'} # subtype
+        return {self._column: 'numerical.integer'}  # subtype
 
     def fit(self, data, columns):
         """Fit the transformer to the data.
