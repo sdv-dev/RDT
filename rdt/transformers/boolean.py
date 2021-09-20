@@ -26,6 +26,10 @@ class BooleanTransformer(BaseTransformer):
             If ``False``, do not create the new column.
             Defaults to ``None``.
     """
+    INPUT_TYPE = 'boolean'
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = True
 
     null_transformer = None
 
@@ -33,7 +37,22 @@ class BooleanTransformer(BaseTransformer):
         self.nan = nan
         self.null_column = null_column
 
-    def fit(self, data):
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        if self.null_transformer._null_column:  # whether an extra column is generated
+            return {
+                f'{self._columns[0]}': 'float',
+                f'{self._columns[0]}.is_null': 'bool',
+            }
+
+        return {self._columns[0]: 'float'}
+
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Args:
@@ -44,9 +63,9 @@ class BooleanTransformer(BaseTransformer):
             data = pd.Series(data)
 
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
-        self.null_transformer.fit(data)
+        self.null_transformer._fit(data)
 
-    def transform(self, data):
+    def _transform(self, data):
         """Transform boolean to float.
 
         The boolean values will be replaced by the corresponding integer
@@ -64,9 +83,9 @@ class BooleanTransformer(BaseTransformer):
 
         data = pd.to_numeric(data, errors='coerce')
 
-        return self.null_transformer.transform(data).astype(float)
+        return self.null_transformer._transform(data).astype(float)
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Transform float values back to the original boolean values.
 
         Args:
@@ -77,7 +96,7 @@ class BooleanTransformer(BaseTransformer):
             pandas.Series
         """
         if self.nan is not None:
-            data = self.null_transformer.reverse_transform(data)
+            data = self.null_transformer._reverse_transform(data)
 
         if isinstance(data, np.ndarray):
             if data.ndim == 2:
