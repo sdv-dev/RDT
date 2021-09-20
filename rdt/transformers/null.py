@@ -31,7 +31,7 @@ class NullTransformer(BaseTransformer):
     # INPUT_TYPE as None means it can deal with all datatypes.
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = None # need to implement the logic
+    COMPOSITION_IS_IDENTITY = None  # need to implement the logic
 
     nulls = None
     _null_column = None

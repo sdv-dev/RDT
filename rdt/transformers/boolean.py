@@ -37,6 +37,21 @@ class BooleanTransformer(BaseTransformer):
         self.nan = nan
         self.null_column = null_column
 
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        if self.null_transformer._null_column: # whether an extra column is generated
+            return {
+                f'{self._columns[0]}': 'float',
+                f'{self._columns[0]}.is_null': 'bool',
+            }
+
+        return {self._columns[0]: 'float'}
+
     def _fit(self, data):
         """Fit the transformer to the data.
 

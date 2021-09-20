@@ -8,6 +8,7 @@ class BaseTransformer:
     in order to create a new transformer. The ``fit`` method is optional,
     and ``fit_transform`` method is already implemented.
     """
+
     INPUT_TYPE = None
     OUTPUT_TYPES = None
     DETERMINISTIC_TRANSFORM = None
@@ -67,8 +68,7 @@ class BaseTransformer:
             string:
                 Whether or not transforming and then reverse transforming returns the input data.
         """
-        return "TODO" # concatenate column name to NEXT_TRANS
-
+        return "TODO"  # concatenate column name to NEXT_TRANS
 
     def fit(self, data, columns):
         """Fit the transformer to the data.
@@ -166,6 +166,7 @@ class BaseTransformer:
         columns_data = data[output_columns]
         reversed_columns = self._reverse_transform(columns_data)
         data[self._columns] = reversed_columns
+        # add drop columns logic
 
         return data
 

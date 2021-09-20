@@ -97,6 +97,15 @@ class CategoricalTransformer(BaseTransformer):
 
         return intervals, means, starts
 
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        return {self._columns[0]: 'float'}
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -323,6 +332,20 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return array
 
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        num_categories = len(self.dummies)
+        output_types = {}
+        for i in range(num_categories):
+            output_types[f'{self._column_name}.{i}'] = 'integer'
+
+        return output_types
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -407,6 +430,15 @@ class LabelEncodingTransformer(BaseTransformer):
 
     values_to_categories = None
     categories_to_values = None
+
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        return {self._columns[0]: 'float'}
 
     def _fit(self, data):
         """Fit the transformer to the data.
