@@ -77,7 +77,7 @@ class DatetimeTransformer(BaseTransformer):
             dict:
                 Mapping from the transformed column names to supported data types.
         """
-        if self.null_transformer._null_column: # whether an extra column is generated
+        if self.null_transformer._null_column:  # whether an extra column is generated
             return {
                 f'{self._columns[0]}': 'float',
                 f'{self._columns[0]}.is_null': 'bool',

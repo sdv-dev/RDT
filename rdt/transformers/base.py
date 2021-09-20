@@ -71,10 +71,10 @@ class BaseTransformer:
         output_types = self.get_output_types()
         output_columns = list(output_types.keys())
         columns_next_transformers = {column: None for column in output_columns}
-        
+
         if self.NEXT_TRANSFORMERS:
             return {**self.NEXT_TRANSFORMERS, **columns_next_transformers}
-        
+
         return columns_next_transformers
 
     def fit(self, data, columns):
@@ -175,7 +175,7 @@ class BaseTransformer:
         data[self._columns] = reversed_columns
 
         columns_to_drop = set(output_columns) - set(self._columns)
-        data.drop(columns_to_drop) # this breaks if we run twice
+        data.drop(columns_to_drop)  # this breaks if we run twice
 
         return data
 
