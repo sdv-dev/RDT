@@ -62,13 +62,20 @@ class BaseTransformer:
         return self.COMPOSITION_IS_IDENTITY
 
     def get_next_transformers(self):
-        """Return the suggested next transformer to be used.
+        """Return the suggested next transformer to be used for each column.
 
         Returns:
-            string:
-                Whether or not transforming and then reverse transforming returns the input data.
+            dict:
+                Mapping from transformed column names to the transformers to apply to each column.
         """
-        return "TODO"  # concatenate column name to NEXT_TRANS
+        output_types = self.get_output_types()
+        output_columns = list(output_types.keys())
+        columns_next_transformers = {column: None for column in output_columns}
+        
+        if self.NEXT_TRANSFORMERS:
+            return {**self.NEXT_TRANSFORMERS, **columns_next_transformers}
+        
+        return columns_next_transformers
 
     def fit(self, data, columns):
         """Fit the transformer to the data.
@@ -166,7 +173,9 @@ class BaseTransformer:
         columns_data = data[output_columns]
         reversed_columns = self._reverse_transform(columns_data)
         data[self._columns] = reversed_columns
-        # add drop columns logic
+
+        columns_to_drop = set(output_columns) - set(self._columns)
+        data.drop(columns_to_drop) # this breaks if we run twice
 
         return data
 
