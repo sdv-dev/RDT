@@ -32,7 +32,10 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to supported data types.
         """
-        return self.OUTPUT_TYPES
+        if self.OUTPUT_TYPES:
+            return {f'{self._column_prefix}.{k}': v for k, v in self.OUTPUT_TYPES.items()}
+        
+        return None
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -68,14 +71,10 @@ class BaseTransformer:
             dict:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
-        output_types = self.get_output_types()
-        output_columns = list(output_types.keys())
-        columns_next_transformers = {column: None for column in output_columns}
-
         if self.NEXT_TRANSFORMERS:
-            return {**self.NEXT_TRANSFORMERS, **columns_next_transformers}
+            return {f'{self._column_prefix}.{k}': v for k, v in self.NEXT_TRANSFORMERS.items()}
 
-        return columns_next_transformers
+        return None
 
     def fit(self, data, columns):
         """Fit the transformer to the data.
@@ -87,6 +86,10 @@ class BaseTransformer:
                 List of column names from the data.
         """
         self._columns = columns
+        self._column_prefix = '#'.join(columns)
+        while self._column_prefix in data: # make sure the _column_prefix doesn't exist in the data
+            self._column_prefix.append('#')
+
         columns_data = data[columns]
         self._fit(columns_data)
 
@@ -129,7 +132,7 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def fit_transform(self, data):
+    def fit_transform(self, data, columns):
         """Fit the transformer to the data and then transform it.
 
         Args:
@@ -140,22 +143,8 @@ class BaseTransformer:
             numpy.array:
                 Transformed data.
         """
-        columns_data = data[self._columns]
-        return self._fit_transform(columns_data)
-
-    def _fit_transform(self, columns_data):
-        """Fit the transformer to the data and then transform it.
-
-        Args:
-            columns_data (pandas.Series or numpy.array):
-                Data to transform.
-
-        Returns:
-            numpy.array:
-                Transformed data.
-        """
-        self._fit(columns_data)
-        return self._transform(columns_data)
+        self.fit(data, columns)
+        return self.transform(data)
 
     def reverse_transform(self, data):
         """Revert the transformations to the original values.
@@ -168,11 +157,9 @@ class BaseTransformer:
             pandas.Series:
                 Reverted data.
         """
-        output_types = self.get_output_types()
-        output_columns = list(output_types.keys())
+        output_columns = list(self.get_output_types().keys())
         columns_data = data[output_columns]
-        reversed_columns = self._reverse_transform(columns_data)
-        data[self._columns] = reversed_columns
+        data[self._columns] = self._reverse_transform(columns_data)
 
         columns_to_drop = set(output_columns) - set(self._columns)
         data.drop(columns_to_drop)  # this breaks if we run twice
