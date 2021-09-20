@@ -32,6 +32,10 @@ class CategoricalTransformer(BaseTransformer):
             If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
             Defaults to ``False``.
     """
+    INPUT_TYPE = 'categorical'
+    DETERMINISTIC_TRANSFORM = False
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = True
 
     mapping = None
     intervals = None
@@ -93,7 +97,16 @@ class CategoricalTransformer(BaseTransformer):
 
         return intervals, means, starts
 
-    def fit(self, data):
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        return {self._columns[0]: 'float'}
+
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Create the mapping dict to save the label encoding.
@@ -147,7 +160,7 @@ class CategoricalTransformer(BaseTransformer):
         """Transform the data row by row."""
         return data.fillna(np.nan).apply(self._get_value).to_numpy()
 
-    def transform(self, data):
+    def _transform(self, data):
         """Transform categorical values to float values.
 
         Replace the categories with their float representative value.
@@ -210,7 +223,7 @@ class CategoricalTransformer(BaseTransformer):
         """Reverse transform the data by iterating over each row."""
         return data.apply(self._get_category_from_start).astype(self.dtype)
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
 
         Args:
@@ -258,6 +271,9 @@ class OneHotEncodingTransformer(BaseTransformer):
             If a value that was not seen during the fit stage is passed to
             transform, then an error will be raised if this is True.
     """
+    INPUT_TYPE = 'categorical'
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
 
     dummies = None
     _dummy_na = None
@@ -296,7 +312,7 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return data
 
-    def _transform(self, data):
+    def _transform_helper(self, data):
         if self._dummy_encoded:
             coder = self._indexer
             codes = pd.Categorical(data, categories=self._uniques).codes
@@ -316,7 +332,21 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return array
 
-    def fit(self, data):
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        num_categories = len(self.dummies)
+        output_types = {}
+        for i in range(num_categories):
+            output_types[f'{self._column_name}.{i}'] = 'integer'
+
+        return output_types
+
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Get the pandas `dummies` which will be used later on for OneHotEncoding.
@@ -340,7 +370,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         if self._dummy_na:
             self.dummies.append(np.nan)
 
-    def transform(self, data):
+    def _transform(self, data):
         """Replace each category with the OneHot vectors.
 
         Args:
@@ -351,7 +381,7 @@ class OneHotEncodingTransformer(BaseTransformer):
             numpy.ndarray:
         """
         data = self._prepare_data(data)
-        array = self._transform(data)
+        array = self._transform_helper(data)
 
         if self.error_on_unknown:
             unknown = array.sum(axis=1) == 0
@@ -361,7 +391,7 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return array
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
 
         Args:
@@ -393,11 +423,24 @@ class LabelEncodingTransformer(BaseTransformer):
             Dictionary that maps each category with the corresponding
             integer value.
     """
+    INPUT_TYPE = 'categorical'
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = True
 
     values_to_categories = None
     categories_to_values = None
 
-    def fit(self, data):
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        return {self._columns[0]: 'float'}
+
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Generate a unique integer representation for each category and
@@ -414,7 +457,7 @@ class LabelEncodingTransformer(BaseTransformer):
             for value, category in self.values_to_categories.items()
         }
 
-    def transform(self, data):
+    def _transform(self, data):
         """Replace each category with its corresponding integer value.
 
         Args:
@@ -429,7 +472,7 @@ class LabelEncodingTransformer(BaseTransformer):
 
         return data.map(self.categories_to_values)
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
 
         Args:
