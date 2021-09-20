@@ -33,6 +33,11 @@ class DatetimeTransformer(BaseTransformer):
             orders of magnitued of the transformed values, ensures that reverted values always
             are zero on the lower time units.
     """
+    INPUT_TYPE = 'datetime'
+    OUTPUT_TYPES = None
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = True
 
     null_transformer = None
     divider = None
@@ -52,7 +57,7 @@ class DatetimeTransformer(BaseTransformer):
 
             self.divider = candidate
 
-    def _transform(self, datetimes):
+    def _transform_helper(self, datetimes):
         """Transform datetime values to integer."""
         nulls = datetimes.isnull()
         integers = pd.to_numeric(datetimes, errors='coerce').values.astype(np.float64)
@@ -65,7 +70,7 @@ class DatetimeTransformer(BaseTransformer):
 
         return transformed
 
-    def fit(self, data):
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Args:
@@ -79,7 +84,7 @@ class DatetimeTransformer(BaseTransformer):
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(transformed)
 
-    def transform(self, data):
+    def _transform(self, data):
         """Transform datetime values to float values.
 
         Args:
@@ -92,11 +97,11 @@ class DatetimeTransformer(BaseTransformer):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        data = self._transform(data)
+        data = self._transform_helper(data)
 
-        return self.null_transformer.transform(data)
+        return self.null_transformer._transform(data)
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Convert float values back to datetimes.
 
         Args:
@@ -107,7 +112,7 @@ class DatetimeTransformer(BaseTransformer):
             pandas.Series
         """
         if self.nan is not None:
-            data = self.null_transformer.reverse_transform(data)
+            data = self.null_transformer._reverse_transform(data)
 
         if isinstance(data, np.ndarray) and (data.ndim == 2):
             data = data[:, 0]
