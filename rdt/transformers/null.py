@@ -28,6 +28,10 @@ class NullTransformer(BaseTransformer):
         copy (bool):
             Whether to create a copy of the input data or modify it destructively.
     """
+    # INPUT_TYPE as None means it can deal with all datatypes.
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = None  # need to implement the logic
 
     nulls = None
     _null_column = None
@@ -38,7 +42,7 @@ class NullTransformer(BaseTransformer):
         self.null_column = null_column
         self.copy = copy
 
-    def fit(self, data):
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Evaluate if the transformer has to create the null column or not.
@@ -62,7 +66,7 @@ class NullTransformer(BaseTransformer):
         else:
             self._null_column = self.null_column
 
-    def transform(self, data):
+    def _transform(self, data):
         """Replace null values with the indicated fill_value.
 
         If required, create the null indicator column.
@@ -93,7 +97,7 @@ class NullTransformer(BaseTransformer):
 
         return data.values
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Restore null values to the data.
 
         If a null indicator column was created during fit, use it as a reference.
