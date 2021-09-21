@@ -28,6 +28,7 @@ class BaseTransformer:
     
     @staticmethod
     def _add_prefix(dictionary, column_prefix):
+        # maybe add some validation of types here
         if not dictionary:
             return None
 

@@ -32,13 +32,19 @@ class TestBaseTransformer(TestCase):
         expected = {'prefix.digit': 'numerical', 'prefix.letter': 'categorical'}
         self.assertEqual(self.base._add_prefix(column_to_type, 'prefix'), expected)
     
-    def get_output_types(self):
+    def test_get_output_types(self):
         """Test `get_output_types`."""
         categorical_transformer = CategoricalTransformer()
         categorical_transformer.OUTPUT_TYPES = MagicMock({'value': 'categorical', 'is_null': 'null'})
         categorical_transformer._column_prefix = MagicMock('prefix')
         expected = {'prefix.value': 'categorical', 'prefix.is_null': 'null'}
         self.assertEqual(categorical_transformer.get_output_types(), expected)
+    
+    def test_is_transform_deterministic(self):
+        """Test `is_transform_deterministic`."""
+        categorical_transformer = CategoricalTransformer()
+        categorical_transformer.DETERMINISTIC_TRANSFORM = MagicMock(False)
+        self.assertEqual(categorical_transformer.is_transform_deterministic(), False)
 
     def test__fit(self):
         """Test call fit and pass"""
