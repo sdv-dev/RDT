@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.categorical.UniqueStringGenerator",
+    "dataset": "tests.datasets.categorical.UniqueStringGenerator",
     "transformer": "rdt.transformers.categorical.CategoricalTransformer",
     "kwargs": {
         "clip": true
