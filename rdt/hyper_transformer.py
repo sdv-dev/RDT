@@ -93,7 +93,14 @@ class HyperTransformer:
 
     @staticmethod
     def get_transformers_by_type():
-        data_type_transformers = dict()
+        """Build a ``dict`` mapping data types to valid existing transformers for that type.
+
+        Returns:
+                dict:
+                    Mapping of data types to a list of existing transformers that take that
+                    type as an input.
+        """
+        data_type_transformers = {}
         transformer_classes = inspect.getmembers(sys.modules[__name__], inspect.isclass)
         for (_, transformer) in transformer_classes:
             try:
