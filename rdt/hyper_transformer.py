@@ -75,6 +75,21 @@ class HyperTransformer:
         'b': 'boolean',
         'M': 'datetime',
     }
+    DEFAULT_TRANSFORMERS = {
+        'numerical': NumericalTransformer,
+        'integer': NumericalTransformer(dtype=int),
+        'float': NumericalTransformer(dtype=float),
+        'categorical': CategoricalTransformer(fuzzy=True),
+        'boolean': BooleanTransformer,
+        'datetime': DatetimeTransformer,
+    }
+    _DTYPES_TO_DATA_TYPES = {
+        'i': 'integer',
+        'f': 'float',
+        'O': 'categorical',
+        'b': 'boolean',
+        'M': 'datetime',
+    }
 
     @staticmethod
     def get_transformers_by_type():
@@ -85,9 +100,10 @@ class HyperTransformer:
                 input_type = transformer.get_input_type()
                 transformers_for_type = data_type_transformers.get(input_type, [])
                 transformers_for_type.append(transformer)
-                data_type_transformers.update({input_type, transformers_for_type})
-            except:
+                data_type_transformers.update({input_type: transformers_for_type})
+            except AttributeError:
                 pass
+        return data_type_transformers
 
     def __init__(self, transformers=None, copy=True, dtypes=None, dtype_transformers=None):
         self.transformers = transformers
