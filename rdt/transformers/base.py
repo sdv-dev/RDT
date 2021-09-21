@@ -27,7 +27,7 @@ class BaseTransformer:
         return cls.INPUT_TYPE
     
     @staticmethod
-    def _create_output_columns(dictionary, column_prefix):
+    def _add_prefix(dictionary, column_prefix):
         if not dictionary:
             return None
 
@@ -44,7 +44,7 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to supported data types.
         """
-        return self._create_output_columns(self._OUTPUT_TYPES, self._column_prefix)
+        return self._add_prefix(self._OUTPUT_TYPES, self._column_prefix)
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -80,7 +80,7 @@ class BaseTransformer:
             dict:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
-        return self._create_output_columns(self._NEXT_TRANSFORMERS, self._column_prefix)
+        return self._add_prefix(self._NEXT_TRANSFORMERS, self._column_prefix)
 
     def fit(self, data, columns):
         """Fit the transformer to the `columns` of the `data`.
