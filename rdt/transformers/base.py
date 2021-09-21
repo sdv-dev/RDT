@@ -16,14 +16,15 @@ class BaseTransformer:
     COMPOSITION_IS_IDENTITY = None
     NEXT_TRANSFORMERS = None
 
-    def get_input_type(self):
+    @classmethod
+    def get_input_type(cls):
         """Return the input type supported by the transformer.
 
         Returns:
             string:
                 Accepted input type of the transformer.
         """
-        return self.INPUT_TYPE
+        return cls.INPUT_TYPE
 
     def get_output_types(self):
         """Return the output types supported by the transformer.
