@@ -82,7 +82,7 @@ class BaseTransformer:
         """
         return self._add_prefix(self._NEXT_TRANSFORMERS, self._column_prefix)
 
-    def fit(self, data, columns):
+    def fit(self, data, columns=None):
         """Fit the transformer to the `columns` of the `data`.
 
         Args:
@@ -92,6 +92,20 @@ class BaseTransformer:
                 List or tuple of column names from the data to transform.
                 If only one column is provided, it can be passed as a string instead.
         """
+        if columns is None:
+            columns = list(data.columns)
+
+        if isinstance(columns, tuple):
+            columns = list(columns)
+
+        if isinstance(columns, list):
+            if len(columns) == 1:
+                columns = columns[0]
+
+        elif not isinstance(columns, str):
+            raise TypeError(f'`columns` must be either a list, tuple or a string. \
+                             Instead, it was passed a {type(columns)}.')
+
         self._column_prefix = '#'.join(columns)
         self._output_columns = list(self.get_output_types().keys())
 
@@ -99,20 +113,11 @@ class BaseTransformer:
         while any(output_column in data for output_column in self._output_columns):
             self._column_prefix += '#'
             self._output_columns = list(self.get_output_types().keys())
-        
+
         self._columns_to_drop = set(self._output_columns) - set(columns)
-
-        try:
-            columns_data = data[columns]
-        except KeyError:
-            if isinstance(tuple, columns):
-                columns_data = data[list(columns)]
-
-            raise ValueError(f'`columns` must be either a list, tuple or a string. \
-                             Instead, it was passed a {type(columns)}.')
         
         self._columns = columns
-        self._fit(columns_data)
+        self._fit(data[columns])
 
     def _fit(self, columns_data):
         """Fit the transformer to the data.
@@ -156,7 +161,7 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def fit_transform(self, data, columns):
+    def fit_transform(self, data, columns=None):
         """Fit the transformer to the `columns` of the `data` and then transform them.
 
         Args:
@@ -165,6 +170,7 @@ class BaseTransformer:
             columns (list or tuple or str):
                 List or tuple of column names from the data to transform.
                 If only one column is provided, it can be passed as a string instead.
+                If none are passed, fits on the entire dataset.
 
         Returns:
             pd.DataFrame:

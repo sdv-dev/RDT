@@ -1,6 +1,8 @@
 from unittest import TestCase
+from unittest.case import expectedFailure
+from unittest.mock import MagicMock
 
-from rdt.transformers import BaseTransformer
+from rdt.transformers import BaseTransformer, CategoricalTransformer
 
 import pandas as pd
 
@@ -13,6 +15,30 @@ class TestBaseTransformer(TestCase):
             'b': ['x', 'y', 'z']
         })
         self.base = BaseTransformer()
+    
+    def test_get_input_type(self):
+        """Test `get_input_type` returns `_INPUT_TYPE` of child class."""
+        categorical_transformer = CategoricalTransformer()
+        categorical_transformer.INPUT_TYPE = MagicMock('categorical')
+        self.assertEqual(categorical_transformer.get_input_type(), 'categorical')
+
+    def test__add_prefix_none(self):
+        """Test `_add_prefix`."""
+        self.assertEqual(self.base._add_prefix(None, None), None)
+
+    def test__add_prefix(self):
+        """Test `_add_prefix`."""
+        column_to_type = {'digit': 'numerical', 'letter': 'categorical'}
+        expected = {'prefix.digit': 'numerical', 'prefix.letter': 'categorical'}
+        self.assertEqual(self.base._add_prefix(column_to_type, 'prefix'), expected)
+    
+    def get_output_types(self):
+        """Test `get_output_types`."""
+        categorical_transformer = CategoricalTransformer()
+        categorical_transformer.OUTPUT_TYPES = MagicMock({'value': 'categorical', 'is_null': 'null'})
+        categorical_transformer._column_prefix = MagicMock('prefix')
+        expected = {'prefix.value': 'categorical', 'prefix.is_null': 'null'}
+        self.assertEqual(categorical_transformer.get_output_types(), expected)
 
     def test__fit(self):
         """Test call fit and pass"""
