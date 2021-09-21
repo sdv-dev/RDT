@@ -5,7 +5,7 @@ class BaseTransformer:
     """Base class for all transformers.
 
     The ``BaseTransformer`` class contains methods that must be implemented
-    in order to create a new transformer. The ``fit`` method is optional,
+    in order to create a new transformer. The ``_fit`` method is optional,
     and ``fit_transform`` method is already implemented.
     """
 
@@ -78,17 +78,17 @@ class BaseTransformer:
         return None
 
     def fit(self, data, columns):
-        """Fit the transformer to the data.
+        """Fit the transformer to the `columns` of the `data`.
 
         Args:
             data (pandas.Series or numpy.array):
-                Data to transform.
+                The entire table.
             columns (list):
-                List of column names from the data.
+                List of column names from the data to transform.
         """
         self._columns = columns
         self._column_prefix = '#'.join(columns)
-        while self._column_prefix in data: # make sure the _column_prefix doesn't exist in the data
+        while self._column_prefix in data: # make sure the `_column_prefix` is not in the data
             self._column_prefix.append('#')
 
         columns_data = data[columns]
@@ -104,15 +104,15 @@ class BaseTransformer:
         raise NotImplementedError()
 
     def transform(self, data):
-        """Transform the data.
+        """Transform the `self._columns` of the `data`.
 
         Args:
-            columns_data (pandas.Series or numpy.array):
-                Data to transform.
+            data (pandas.Series or numpy.array):
+                The entire table.
 
         Returns:
-            numpy.array:
-                Transformed data.
+            pd.DataFrame:
+                The entire table, containing the transformed data.
         """
         columns_data = data[self._columns]
         transformed_data = self._transform(columns_data)
@@ -134,15 +134,17 @@ class BaseTransformer:
         raise NotImplementedError()
 
     def fit_transform(self, data, columns):
-        """Fit the transformer to the data and then transform it.
+        """Fit the transformer to the `columns` of the `data` and then transform them.
 
         Args:
             data (pandas.Series or numpy.array):
-                Data to transform.
+                The entire table.
+            columns (list):
+                List of column names from the data to transform.
 
         Returns:
-            numpy.array:
-                Transformed data.
+            pd.DataFrame:
+                The entire table, containing the transformed data.
         """
         self.fit(data, columns)
         return self.transform(data)
@@ -152,18 +154,18 @@ class BaseTransformer:
 
         Args:
             data (pandas.Series or numpy.array):
-                Data to transform.
+                The entire table.
 
         Returns:
             pandas.Series:
-                Reverted data.
+                The entire table, containing the reverted data.
         """
         output_columns = list(self.get_output_types().keys())
         columns_data = data[output_columns]
         data[self._columns] = self._reverse_transform(columns_data)
 
         columns_to_drop = set(output_columns) - set(self._columns)
-        data.drop(columns_to_drop)  # this breaks if we run twice
+        data.drop(columns_to_drop) # this breaks if we run twice
 
         return data
 
