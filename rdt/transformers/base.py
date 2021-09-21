@@ -25,6 +25,17 @@ class BaseTransformer:
                 Accepted input type of the transformer.
         """
         return cls.INPUT_TYPE
+    
+    @staticmethod
+    def _create_output_columns(dictionary, column_prefix):
+        if not dictionary:
+            return None
+
+        output = {}
+        for output_columns, output_type in dictionary.items():
+            output[f'{column_prefix}.{output_columns}'] = output_type
+
+        return output
 
     def get_output_types(self):
         """Return the output types supported by the transformer.
@@ -33,10 +44,7 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to supported data types.
         """
-        if self.OUTPUT_TYPES:
-            return {f'{self._column_prefix}.{k}': v for k, v in self.OUTPUT_TYPES.items()}
-        
-        return None
+        return self._create_output_columns(self._OUTPUT_TYPES, self._column_prefix)
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -72,33 +80,45 @@ class BaseTransformer:
             dict:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
-        if self.NEXT_TRANSFORMERS:
-            return {f'{self._column_prefix}.{k}': v for k, v in self.NEXT_TRANSFORMERS.items()}
-
-        return None
+        return self._create_output_columns(self._NEXT_TRANSFORMERS, self._column_prefix)
 
     def fit(self, data, columns):
         """Fit the transformer to the `columns` of the `data`.
 
         Args:
-            data (pandas.Series or numpy.array):
+            data (pandas.DataFrame):
                 The entire table.
-            columns (list):
-                List of column names from the data to transform.
+            columns (list or str):
+                List or tuple of column names from the data to transform.
+                If only one column is provided, it can be passed as a string instead.
         """
-        self._columns = columns
         self._column_prefix = '#'.join(columns)
-        while self._column_prefix in data: # make sure the `_column_prefix` is not in the data
-            self._column_prefix += '#'
+        self._output_columns = list(self.get_output_types().keys())
 
-        columns_data = data[columns]
+        # make sure none of the generated `output_columns` exists in the data
+        while any(output_column in data for output_column in self._output_columns):
+            self._column_prefix += '#'
+            self._output_columns = list(self.get_output_types().keys())
+        
+        self._columns_to_drop = set(self._output_columns) - set(columns)
+
+        try:
+            columns_data = data[columns]
+        except KeyError:
+            if isinstance(tuple, columns):
+                columns_data = data[list(columns)]
+
+            raise ValueError(f'`columns` must be either a list, tuple or a string. \
+                             Instead, it was passed a {type(columns)}.')
+        
+        self._columns = columns
         self._fit(columns_data)
 
     def _fit(self, columns_data):
         """Fit the transformer to the data.
 
         Args:
-            columns_data (pandas.Series or numpy.array):
+            columns_data (pandas.DataFrame):
                 Data to transform.
         """
         raise NotImplementedError()
@@ -107,7 +127,7 @@ class BaseTransformer:
         """Transform the `self._columns` of the `data`.
 
         Args:
-            data (pandas.Series or numpy.array):
+            data (pandas.DataFrame):
                 The entire table.
 
         Returns:
@@ -116,7 +136,7 @@ class BaseTransformer:
         """
         columns_data = data[self._columns]
         transformed_data = self._transform(columns_data)
-        data[transformed_data.columns] = transformed_data
+        data[self._output_columns] = transformed_data
 
         return data
 
@@ -124,7 +144,7 @@ class BaseTransformer:
         """Transform the data.
 
         Args:
-            columns_data (pandas.Series or numpy.array):
+            columns_data (pandas.DataFrame):
                 Data to transform.
 
         Returns:
@@ -137,10 +157,11 @@ class BaseTransformer:
         """Fit the transformer to the `columns` of the `data` and then transform them.
 
         Args:
-            data (pandas.Series or numpy.array):
+            data (pandas.DataFrame):
                 The entire table.
-            columns (list):
-                List of column names from the data to transform.
+            columns (list or tuple or str):
+                List or tuple of column names from the data to transform.
+                If only one column is provided, it can be passed as a string instead.
 
         Returns:
             pd.DataFrame:
@@ -153,19 +174,16 @@ class BaseTransformer:
         """Revert the transformations to the original values.
 
         Args:
-            data (pandas.Series or numpy.array):
+            data (pandas.DataFrame):
                 The entire table.
 
         Returns:
-            pandas.Series:
+            pandas.DataFrame:
                 The entire table, containing the reverted data.
         """
-        output_columns = list(self.get_output_types().keys())
-        columns_data = data[output_columns]
+        columns_data = data[self._output_columns]
         data[self._columns] = self._reverse_transform(columns_data)
-
-        columns_to_drop = set(output_columns) - set(self._columns)
-        data.drop(columns_to_drop) # this breaks if we run twice
+        data.drop(self._columns_to_drop) # this line will break if you run method twice 
 
         return data
 
@@ -173,7 +191,7 @@ class BaseTransformer:
         """Revert the transformations to the original values.
 
         Args:
-            columns_data (pandas.Series or numpy.array):
+            columns_data (pandas.DataFrame):
                 Data to transform.
 
         Returns:
