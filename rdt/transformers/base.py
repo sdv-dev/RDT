@@ -134,9 +134,12 @@ class BaseTransformer:
             pd.DataFrame:
                 The entire table, containing the transformed data.
         """
+        if self._columns not in data.columns: # what about columns being partially in the data?
+            return data
+
         columns_data = data[self._columns]
         transformed_data = self._transform(columns_data)
-        data[self._output_columns] = transformed_data
+        data[self._output_columns] = transformed_data # need to make sure columns properly ordered
 
         return data
 
@@ -181,9 +184,12 @@ class BaseTransformer:
             pandas.DataFrame:
                 The entire table, containing the reverted data.
         """
+        if self._output_columns not in data:
+            return data
+
         columns_data = data[self._output_columns]
         data[self._columns] = self._reverse_transform(columns_data)
-        data.drop(self._columns_to_drop) # this line will break if you run method twice 
+        data.drop(self._columns_to_drop) # this line will break if you run the method twice 
 
         return data
 
