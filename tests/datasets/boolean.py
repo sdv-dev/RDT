@@ -2,17 +2,20 @@
 
 import numpy as np
 
-from tests.performance.datasets.base import BaseDatasetGenerator
+from tests.datasets.base import BaseDatasetGenerator
 
 MAX_PERCENT_NULL = 50  # cap the percentage of null values at 50%
 MIN_PERCENT = 20  # the minimum percentage of true or false is 20%
 
 
-class RandomBooleanGenerator(BaseDatasetGenerator):
-    """Generator that creates dataset of random booleans."""
+class BooleanGenerator(BaseDatasetGenerator):
+    """Base class for generators that generate boolean data."""
 
-    TYPE = 'boolean'
-    SUBTYPE = 'boolean'
+    DATA_TYPE = 'boolean'
+
+
+class RandomBooleanGenerator(BooleanGenerator):
+    """Generator that creates dataset of random booleans."""
 
     @staticmethod
     def generate(num_rows):
@@ -28,11 +31,8 @@ class RandomBooleanGenerator(BaseDatasetGenerator):
         return np.random.choice(a=[True, False], size=num_rows)
 
 
-class RandomBooleanNaNsGenerator(BaseDatasetGenerator):
+class RandomBooleanNaNsGenerator(BooleanGenerator):
     """Generator that creates an array of random booleans with nulls."""
-
-    TYPE = 'boolean'
-    SUBTYPE = 'boolean'
 
     @staticmethod
     def generate(num_rows):
@@ -47,11 +47,8 @@ class RandomBooleanNaNsGenerator(BaseDatasetGenerator):
         )
 
 
-class RandomSkewedBooleanGenerator(BaseDatasetGenerator):
+class RandomSkewedBooleanGenerator(BooleanGenerator):
     """Generator that creates dataset of random booleans."""
-
-    TYPE = 'boolean'
-    SUBTYPE = 'boolean'
 
     @staticmethod
     def generate(num_rows):
@@ -64,11 +61,8 @@ class RandomSkewedBooleanGenerator(BaseDatasetGenerator):
         )
 
 
-class RandomSkewedBooleanNaNsGenerator(BaseDatasetGenerator):
+class RandomSkewedBooleanNaNsGenerator(BooleanGenerator):
     """Generator that creates an array of random booleans with nulls."""
-
-    TYPE = 'boolean'
-    SUBTYPE = 'boolean'
 
     @staticmethod
     def generate(num_rows):
@@ -83,11 +77,8 @@ class RandomSkewedBooleanNaNsGenerator(BaseDatasetGenerator):
         )
 
 
-class ConstantBooleanGenerator(BaseDatasetGenerator):
+class ConstantBooleanGenerator(BooleanGenerator):
     """Generator that creates a constant array with either True or False"""
-
-    TYPE = 'boolean'
-    SUBTYPE = 'boolean'
 
     @staticmethod
     def generate(num_rows):
@@ -95,11 +86,8 @@ class ConstantBooleanGenerator(BaseDatasetGenerator):
         return np.full(num_rows, constant)
 
 
-class ConstantBooleanNaNsGenerator(BaseDatasetGenerator):
+class ConstantBooleanNaNsGenerator(BooleanGenerator):
     """Generator that creates a constant array with either True or False with some nulls."""
-
-    TYPE = 'boolean'
-    SUBTYPE = 'boolean'
 
     @staticmethod
     def generate(num_rows):
