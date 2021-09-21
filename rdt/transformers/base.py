@@ -89,7 +89,7 @@ class BaseTransformer:
         self._columns = columns
         self._column_prefix = '#'.join(columns)
         while self._column_prefix in data: # make sure the `_column_prefix` is not in the data
-            self._column_prefix.append('#')
+            self._column_prefix += '#'
 
         columns_data = data[columns]
         self._fit(columns_data)
