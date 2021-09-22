@@ -86,7 +86,8 @@ class BaseTransformer:
         """
         return self._add_prefix(self.NEXT_TRANSFORMERS)
 
-    def _convert_if_length_one(self, columns):
+    @staticmethod
+    def _convert_if_length_one(columns):
         """Convert columns to string if it's a list of length one."""
         if len(columns) == 1:
             columns = columns[0]
@@ -133,7 +134,8 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def _convert_if_series(self, columns, data):
+    @staticmethod
+    def _convert_if_series(columns, data):
         """Convert columns to pandas.Series if it's a list of length one."""
         if isinstance(data, pd.Series):
             columns = columns[0]
