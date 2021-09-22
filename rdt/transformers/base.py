@@ -25,7 +25,7 @@ class BaseTransformer:
                 Accepted input type of the transformer.
         """
         return cls.INPUT_TYPE
-    
+
     @staticmethod
     def _add_prefix(dictionary, column_prefix):
         # maybe add some validation of types here
@@ -116,7 +116,7 @@ class BaseTransformer:
             self._output_columns = list(self.get_output_types().keys())
 
         self._columns_to_drop = set(self._output_columns) - set(columns)
-        
+
         self._columns = columns
         self._fit(data[columns])
 
@@ -140,12 +140,12 @@ class BaseTransformer:
             pd.DataFrame:
                 The entire table, containing the transformed data.
         """
-        if self._columns not in data.columns: # what about columns being partially in the data?
+        if self._columns not in data.columns:  # what about columns being partially in the data?
             return data
 
         columns_data = data[self._columns]
         transformed_data = self._transform(columns_data)
-        data[self._output_columns] = transformed_data # need to make sure columns properly ordered
+        data[self._output_columns] = transformed_data  # need to make sure columns properly ordered
 
         return data
 
@@ -196,7 +196,7 @@ class BaseTransformer:
 
         columns_data = data[self._output_columns]
         data[self._columns] = self._reverse_transform(columns_data)
-        data.drop(self._columns_to_drop) # this line will break if you run the method twice 
+        data.drop(self._columns_to_drop)  # this line will break if you run the method twice
 
         return data
 

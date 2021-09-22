@@ -1,10 +1,9 @@
 from unittest import TestCase
-from unittest.case import expectedFailure
 from unittest.mock import MagicMock
 
-from rdt.transformers import BaseTransformer, CategoricalTransformer
-
 import pandas as pd
+
+from rdt.transformers import BaseTransformer, CategoricalTransformer
 
 
 class TestBaseTransformer(TestCase):
@@ -15,7 +14,7 @@ class TestBaseTransformer(TestCase):
             'b': ['x', 'y', 'z']
         })
         self.base = BaseTransformer()
-    
+
     def test_get_input_type(self):
         """Test `get_input_type` returns `_INPUT_TYPE` of child class."""
         categorical_transformer = CategoricalTransformer()
@@ -31,15 +30,16 @@ class TestBaseTransformer(TestCase):
         column_to_type = {'digit': 'numerical', 'letter': 'categorical'}
         expected = {'prefix.digit': 'numerical', 'prefix.letter': 'categorical'}
         self.assertEqual(self.base._add_prefix(column_to_type, 'prefix'), expected)
-    
+
     def test_get_output_types(self):
         """Test `get_output_types`."""
         categorical_transformer = CategoricalTransformer()
-        categorical_transformer.OUTPUT_TYPES = MagicMock({'value': 'categorical', 'is_null': 'null'})
+        categorical_transformer.OUTPUT_TYPES = MagicMock(
+            {'value': 'categorical', 'is_null': 'null'})
         categorical_transformer._column_prefix = MagicMock('prefix')
         expected = {'prefix.value': 'categorical', 'prefix.is_null': 'null'}
         self.assertEqual(categorical_transformer.get_output_types(), expected)
-    
+
     def test_is_transform_deterministic(self):
         """Test `is_transform_deterministic`."""
         categorical_transformer = CategoricalTransformer()
@@ -70,12 +70,12 @@ class TestBaseTransformer(TestCase):
         """Test the fit method."""
         with self.assertRaises(NotImplementedError):
             self.base.fit(self.data, ['a'])
-        
+
         assert self.base._column_prefix == 'a'
 
     def test_fit2(self):
         """Test the fit method."""
         with self.assertRaises(NotImplementedError):
             self.base.fit(self.data, ['a', 'b'])
-        
+
         assert self.base._column_prefix == 'a#b'
