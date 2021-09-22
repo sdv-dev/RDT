@@ -17,6 +17,10 @@ class BaseTransformer:
     COMPOSITION_IS_IDENTITY = None
     NEXT_TRANSFORMERS = None
 
+    _columns = None
+    _column_prefix = None
+    _output_columns = None
+
     @classmethod
     def get_input_type(cls):
         """Return the input type supported by the transformer.
@@ -27,15 +31,6 @@ class BaseTransformer:
         """
         return cls.INPUT_TYPE
 
-    def get_output_types(self):
-        """Return the output types supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported data types.
-        """
-        return self._add_prefix(self.OUTPUT_TYPES)
-
     def _add_prefix(self, dictionary):
         if not dictionary:
             return None
@@ -45,6 +40,15 @@ class BaseTransformer:
             output[f'{self._column_prefix}.{output_columns}'] = output_type
 
         return output
+
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        return self._add_prefix(self.OUTPUT_TYPES)
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -82,6 +86,13 @@ class BaseTransformer:
         """
         return self._add_prefix(self.NEXT_TRANSFORMERS)
 
+    def _convert_if_length_one(self, columns):
+        """Convert columns to string if it's a list of length one."""
+        if len(columns) == 1:
+            columns = columns[0]
+
+        return columns
+
     def fit(self, data, columns):
         """Fit the transformer to the `columns` of the `data`.
 
@@ -96,8 +107,10 @@ class BaseTransformer:
             columns = list(columns)
         elif not isinstance(columns, list):
             columns = [columns]
-        if any(column not in data for column in columns):
-            raise KeyError(f'Some of the columns were not present in the data.')
+
+        missing = set(columns) - set(data.columns)
+        if missing:
+            raise KeyError(f'Columns {missing} were not present in the data.')
 
         self._column_prefix = '#'.join(columns)
         self._output_columns = list(self.get_output_types().keys())
@@ -111,13 +124,6 @@ class BaseTransformer:
         columns = self._convert_if_length_one(self._columns)
         self._fit(data[columns])
 
-    def _convert_if_length_one(self, columns):
-        """Convert columns to string if it's a list of length one."""
-        if len(columns) == 1:
-            columns = columns[0]
-
-        return columns
-
     def _fit(self, columns_data):
         """Fit the transformer to the data.
 
@@ -126,6 +132,13 @@ class BaseTransformer:
                 Data to transform.
         """
         raise NotImplementedError()
+
+    def _convert_if_series(self, columns, data):
+        """Convert columns to pandas.Series if it's a list of length one."""
+        if isinstance(data, pd.Series):
+            columns = columns[0]
+
+        return columns
 
     def transform(self, data):
         """Transform the `self._columns` of the `data`.
@@ -153,13 +166,6 @@ class BaseTransformer:
         data.drop(self._columns, axis=1, inplace=True)
 
         return data
-
-    def _convert_if_series(self, columns, data):
-        """Convert columns to pandas.Series if it's a list of length one."""
-        if isinstance(data, pd.Series):
-            columns = columns[0]
-
-        return columns
 
     def _transform(self, columns_data):
         """Transform the data.
