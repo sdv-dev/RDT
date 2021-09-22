@@ -17,6 +17,10 @@ class BaseTransformer:
     COMPOSITION_IS_IDENTITY = None
     NEXT_TRANSFORMERS = None
 
+    _columns = None
+    _column_prefix = None
+    _output_columns = None
+
     @classmethod
     def get_input_type(cls):
         """Return the input type supported by the transformer.
@@ -96,8 +100,10 @@ class BaseTransformer:
             columns = list(columns)
         elif not isinstance(columns, list):
             columns = [columns]
-        if any(column not in data for column in columns):
-            raise KeyError(f'Some of the columns were not present in the data.')
+
+        missing = set(columns) - set(data.columns)
+        if missing:
+            raise KeyError(f'Columns {missing} were not present in the data.')
 
         # make sure none of the generated `output_columns` exists in the data
         self._column_prefix = '#'.join(columns)
@@ -209,12 +215,12 @@ class BaseTransformer:
 
         columns_data = data[output_columns]
         reversed_data = self._reverse_transform(columns_data)
-        
+
         columns = self._columns
         if isinstance(reversed_data, pd.Series):
             columns = columns[0]
 
-        data[columns] = reversed_data # we don't keep the original order of the columns
+        data[columns] = reversed_data
         data.drop(self._output_columns, axis=1, inplace=True)
 
         return data
