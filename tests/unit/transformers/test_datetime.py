@@ -11,7 +11,8 @@ class TestDatetimeTransformer:
         data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
 
         # Run
-        transformed = dtt.fit_transform(data.copy().to_numpy())
+        dtt.fit(data.copy().to_numpy())
+        transformed = dtt.transform(data.copy().to_numpy())
         reverted = dtt.reverse_transform(transformed)
 
         # Asserts
@@ -28,7 +29,8 @@ class TestDatetimeTransformer:
         data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
 
         # Run
-        transformed = dtt.fit_transform(data.copy().to_numpy())
+        dtt.fit(data.copy().to_numpy())
+        transformed = dtt.transform(data.copy().to_numpy())
         reverted = dtt.reverse_transform(transformed)
 
         # Asserts
