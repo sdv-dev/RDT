@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from tests.performance.datasets import utils
+from tests.datasets import utils
 
 
 def test_add_nulls_int():
