@@ -27,15 +27,13 @@ class BaseTransformer:
         """
         return cls.INPUT_TYPE
 
-    @staticmethod
-    def _add_prefix(dictionary, column_prefix):
-        # maybe add some validation of types here
+    def _add_prefix(self, dictionary):
         if not dictionary:
             return None
 
         output = {}
         for output_columns, output_type in dictionary.items():
-            output[f'{column_prefix}.{output_columns}'] = output_type
+            output[f'{self._column_prefix}.{output_columns}'] = output_type
 
         return output
 
@@ -46,7 +44,7 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to supported data types.
         """
-        return self._add_prefix(self._OUTPUT_TYPES, self._column_prefix)
+        return self._add_prefix(self.OUTPUT_TYPES)
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -82,41 +80,33 @@ class BaseTransformer:
             dict:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
-        return self._add_prefix(self._NEXT_TRANSFORMERS, self._column_prefix)
+        return self._add_prefix(self.NEXT_TRANSFORMERS)
 
-    def fit(self, data, columns=None):
+    def fit(self, data, columns):
         """Fit the transformer to the `columns` of the `data`.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            columns (list or str):
-                List or tuple of column names from the data to transform.
-                If only one column is provided, it can be passed as a string instead.
+            columns (list):
+                Column names. Must be present in the data.
         """
-        if columns is None:
-            if isinstance(data, pd.Series):
-                data = pd.DataFrame(data, columns=['series'])
-
-            columns = list(data.columns)
-
-        if isinstance(columns, tuple) or isinstance(columns, str):
+        # make sure columns is a list where every column is in the data
+        if isinstance(columns, tuple) and columns not in data:
             columns = list(columns)
-
-        if not isinstance(columns, list):
-            raise TypeError('`columns` must be a list, tuple or a string. ' \
-                            f'Instead, it was passed a {type(columns)}.')
-
-        self._column_prefix = '#'.join(columns)
-        self._output_columns = list(self.get_output_types().keys())
+        elif not isinstance(columns, list):
+            columns = [columns]
+        if any(column not in data for column in columns):
+            raise KeyError(f'Some of the columns were not present in the data.')
 
         # make sure none of the generated `output_columns` exists in the data
+        self._column_prefix = '#'.join(columns)
+        self._output_columns = list(self.get_output_types().keys())
         while any(output_column in data for output_column in self._output_columns):
             self._column_prefix += '#'
             self._output_columns = list(self.get_output_types().keys())
 
-        self._columns_to_drop = set(self._output_columns) - set(columns)
-
+        # if only one column, pass it as a pandas.Series to improve performance
         self._columns = columns
         if len(columns) == 1:
             columns = columns[0]
@@ -127,7 +117,7 @@ class BaseTransformer:
         """Fit the transformer to the data.
 
         Args:
-            columns_data (pandas.DataFrame):
+            columns_data (pandas.DataFrame or pandas.Series):
                 Data to transform.
         """
         raise NotImplementedError()
@@ -143,22 +133,26 @@ class BaseTransformer:
             pd.DataFrame:
                 The entire table, containing the transformed data.
         """
-        if isinstance(data, pd.Series):
-            data = pd.DataFrame(data, columns=['series'])
-
-        if len(self._columns) == 1:
-            columns = self._columns[0]
-
-        if len(self._output_columns) == 1:
-            output_columns = self._output_columns[0]
-
-        # what about columns being partially in the data?
+        # if `data` doesn't have the columns that were fitted on, don't transform
         if any(column not in data.columns for column in self._columns):
             return data
 
+        data = data.copy()
+
+        # if only one column, convert to string so data[column] becomes a pandas.Series
+        columns = self._columns
+        if len(columns) == 1:
+            columns = columns[0]
+
         columns_data = data[columns]
         transformed_data = self._transform(columns_data)
-        data[output_columns] = transformed_data  # need to make sure columns properly ordered
+
+        output_columns = self._output_columns
+        if isinstance(transformed_data, pd.Series):
+            output_columns = output_columns[0]
+
+        data[output_columns] = transformed_data
+        data.drop(self._columns, axis=1, inplace=True)
 
         return data
 
@@ -166,11 +160,11 @@ class BaseTransformer:
         """Transform the data.
 
         Args:
-            columns_data (pandas.DataFrame):
+            columns_data (pandas.DataFrame or pandas.Series):
                 Data to transform.
 
         Returns:
-            numpy.array:
+            pandas.DataFrame or pandas.Series:
                 Transformed data.
         """
         raise NotImplementedError()
@@ -204,22 +198,24 @@ class BaseTransformer:
             pandas.DataFrame:
                 The entire table, containing the reverted data.
         """
-        if isinstance(data, pd.Series):
-            data = pd.DataFrame(data, columns=['series'])
-
-        if len(self._columns) == 1:
-            columns = self._columns[0]
-
-        if len(self._output_columns) == 1:
-            output_columns = self._output_columns[0]
-
-        # what about columns being partially in the data?
-        if any(column not in data.columns for column in self._columns):
+        if any(column not in data.columns for column in self._output_columns):
             return data
 
+        data = data.copy()
+
+        output_columns = self._output_columns
+        if len(output_columns) == 1:
+            output_columns = output_columns[0]
+
         columns_data = data[output_columns]
-        data[columns] = self._reverse_transform(columns_data)
-        data.drop(list(self._columns_to_drop), axis=1)
+        reversed_data = self._reverse_transform(columns_data)
+        
+        columns = self._columns
+        if isinstance(reversed_data, pd.Series):
+            columns = columns[0]
+
+        data[columns] = reversed_data # we don't keep the original order of the columns
+        data.drop(self._output_columns, axis=1, inplace=True)
 
         return data
 
