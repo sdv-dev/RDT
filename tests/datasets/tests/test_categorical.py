@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from tests.performance.datasets import categorical
+from tests.datasets import categorical
 
 
 class TestRandomIntegerGenerator:
