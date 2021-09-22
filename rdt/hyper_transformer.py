@@ -80,6 +80,7 @@ class HyperTransformer:
     }
     _transformers_sequence = []
     _output_columns = []
+    _input_columns = []
 
 
     def __init__(self, copy=True, field_types=None, data_type_transformers=None,
@@ -91,9 +92,20 @@ class HyperTransformer:
         self.transform_output_types = transform_output_types
 
     def _update_field_types(self, data):
+        for field in self.field_transformers:
+            if (field in data or isinstance(field, tuple)) and field not in self.field_types:
+                self.field_types[field] = self._DTYPES_TO_DATA_TYPES[data[field].dtype.kind]
+
+        # get set of provided fields including multi-column fields
+        provided_fields = set()
+        for field in self.field_types.keys():
+            if isinstance(field, tuple):
+                provided_fields.update(field)
+            else:
+                provided_fields.add(field)
+
         for field in data:
-            # not sure how to handle if field is part of multi-column data type
-            if field not in self.field_types:
+            if field not in provided_fields:
                 self.field_types[field] = self._DTYPES_TO_DATA_TYPES[data[field].dtype.kind]
 
     def _fit_field_transformer(self, data, field, data_type):
