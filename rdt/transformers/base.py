@@ -1,4 +1,5 @@
 """BaseTransformer module."""
+import pandas as pd
 
 
 class BaseTransformer:
@@ -94,18 +95,17 @@ class BaseTransformer:
                 If only one column is provided, it can be passed as a string instead.
         """
         if columns is None:
+            if isinstance(data, pd.Series):
+                data = pd.DataFrame(data, columns=['series'])
+
             columns = list(data.columns)
 
-        if isinstance(columns, tuple):
+        if isinstance(columns, tuple) or isinstance(columns, str):
             columns = list(columns)
 
-        if isinstance(columns, list):
-            if len(columns) == 1:
-                columns = columns[0]
-
-        elif not isinstance(columns, str):
-            raise TypeError(f'`columns` must be either a list, tuple or a string. \
-                             Instead, it was passed a {type(columns)}.')
+        if not isinstance(columns, list):
+            raise TypeError('`columns` must be a list, tuple or a string. ' \
+                            f'Instead, it was passed a {type(columns)}.')
 
         self._column_prefix = '#'.join(columns)
         self._output_columns = list(self.get_output_types().keys())
@@ -118,6 +118,9 @@ class BaseTransformer:
         self._columns_to_drop = set(self._output_columns) - set(columns)
 
         self._columns = columns
+        if len(columns) == 1:
+            columns = columns[0]
+
         self._fit(data[columns])
 
     def _fit(self, columns_data):
@@ -140,12 +143,22 @@ class BaseTransformer:
             pd.DataFrame:
                 The entire table, containing the transformed data.
         """
-        if self._columns not in data.columns:  # what about columns being partially in the data?
+        if isinstance(data, pd.Series):
+            data = pd.DataFrame(data, columns=['series'])
+
+        if len(self._columns) == 1:
+            columns = self._columns[0]
+
+        if len(self._output_columns) == 1:
+            output_columns = self._output_columns[0]
+
+        # what about columns being partially in the data?
+        if any(column not in data.columns for column in self._columns):
             return data
 
-        columns_data = data[self._columns]
+        columns_data = data[columns]
         transformed_data = self._transform(columns_data)
-        data[self._output_columns] = transformed_data  # need to make sure columns properly ordered
+        data[output_columns] = transformed_data  # need to make sure columns properly ordered
 
         return data
 
@@ -191,12 +204,22 @@ class BaseTransformer:
             pandas.DataFrame:
                 The entire table, containing the reverted data.
         """
-        if self._output_columns not in data:
+        if isinstance(data, pd.Series):
+            data = pd.DataFrame(data, columns=['series'])
+
+        if len(self._columns) == 1:
+            columns = self._columns[0]
+
+        if len(self._output_columns) == 1:
+            output_columns = self._output_columns[0]
+
+        # what about columns being partially in the data?
+        if any(column not in data.columns for column in self._columns):
             return data
 
-        columns_data = data[self._output_columns]
-        data[self._columns] = self._reverse_transform(columns_data)
-        data.drop(self._columns_to_drop)  # this line will break if you run the method twice
+        columns_data = data[output_columns]
+        data[columns] = self._reverse_transform(columns_data)
+        data.drop(list(self._columns_to_drop), axis=1)
 
         return data
 
