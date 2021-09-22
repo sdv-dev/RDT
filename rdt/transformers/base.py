@@ -233,12 +233,14 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def reverse_transform(self, data):
+    def reverse_transform(self, data, drop=True):
         """Revert the transformations to the original values.
 
         Args:
-            data (pandas.DataFrame):
+            data (pandas.Series or numpy.array):
                 The entire table.
+            drop (bool):
+                Whether or not to drop derived columns.
 
         Returns:
             pandas.DataFrame:
@@ -254,6 +256,7 @@ class BaseTransformer:
         reversed_data = self._reverse_transform(columns_data)
 
         self._set_columns_data(data, reversed_data, self.columns)
-        data.drop(self.output_columns, axis=1, inplace=True)
+        if drop:
+            data.drop(self._output_columns, axis=1, inplace=True)
 
         return data
