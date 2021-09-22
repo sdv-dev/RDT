@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.categorical.RandomMixedGenerator",
+    "dataset": "tests.datasets.categorical.RandomMixedGenerator",
     "transformer": "rdt.transformers.categorical.CategoricalTransformer",
     "kwargs": {},
     "fit_size": 10000,

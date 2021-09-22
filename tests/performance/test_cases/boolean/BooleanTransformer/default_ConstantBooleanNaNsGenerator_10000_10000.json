@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.boolean.ConstantBooleanNaNsGenerator",
+    "dataset": "tests.datasets.boolean.ConstantBooleanNaNsGenerator",
     "transformer": "rdt.transformers.boolean.BooleanTransformer",
     "kwargs": {},
     "fit_size": 10000,

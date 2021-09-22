@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.datetime.EqualGapWeeksDatetimeGenerator",
+    "dataset": "tests.datasets.datetime.EqualGapWeeksDatetimeGenerator",
     "transformer": "rdt.transformers.datetime.DatetimeTransformer",
     "kwargs": {},
     "fit_size": 1000,

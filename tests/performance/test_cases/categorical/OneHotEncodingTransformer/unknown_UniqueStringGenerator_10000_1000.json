@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.categorical.UniqueStringGenerator",
+    "dataset": "tests.datasets.categorical.UniqueStringGenerator",
     "transformer": "rdt.transformers.categorical.OneHotEncodingTransformer",
     "kwargs": {
         "error_on_unknown": false
