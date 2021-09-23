@@ -117,12 +117,9 @@ class NumericalTransformer(BaseTransformer):
         """Fit the transformer to the data.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.DataFrame or pandas.Series):
                 Data to fit.
         """
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
         self._dtype = self.dtype or data.dtype
         self._min_value = data.min() if self.min_value == 'auto' else self.min_value
         self._max_value = data.max() if self.max_value == 'auto' else self.max_value
