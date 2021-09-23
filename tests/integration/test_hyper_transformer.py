@@ -33,7 +33,6 @@ def get_input_data_without_nan():
         'names': ['Jon', 'Arya', 'Jon', 'Jon'],
     })
     data['datetime'] = pd.to_datetime(data['datetime'])
-    data['bool'] = data['bool'].astype('O')  # boolean transformer returns O instead of bool
 
     return data
 

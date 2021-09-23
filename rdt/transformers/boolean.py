@@ -85,4 +85,9 @@ class BooleanTransformer(BaseTransformer):
 
             data = pd.Series(data)
 
-        return np.round(data).clip(0, 1).astype('boolean').astype('object')
+        try:
+            out = np.round(data).clip(0, 1).astype('boolean').astype('bool')
+        except ValueError:
+            out = np.round(data).clip(0, 1).astype('boolean').astype('object')
+
+        return out
