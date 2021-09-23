@@ -306,28 +306,15 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return data
 
-    def _transform_helper(self, data):
-        if self._dummy_encoded:
-            coder = self._indexer
-            codes = pd.Categorical(data, categories=self._uniques).codes
-        else:
-            coder = self._uniques
-            codes = data
-
-        rows = len(data)
-        dummies = np.broadcast_to(coder, (rows, self._num_dummies))
-        coded = np.broadcast_to(codes, (self._num_dummies, rows)).T
-        array = (coded == dummies).astype(int)
-
-        if self._dummy_na:
-            null = np.zeros((rows, 1), dtype=int)
-            null[pd.isnull(data)] = 1
-            array = np.append(array, null, axis=1)
-
-        return array
-
     def get_output_types(self):
+        """Return the output types produced by this transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to the produced data types.
+        """
         output_types = {f'value{i}': 'integer' for i in range(len(self.dummies))}
+
         return self._add_prefix(output_types)
 
     def _fit(self, data):
@@ -353,6 +340,26 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         if self._dummy_na:
             self.dummies.append(np.nan)
+
+    def _transform_helper(self, data):
+        if self._dummy_encoded:
+            coder = self._indexer
+            codes = pd.Categorical(data, categories=self._uniques).codes
+        else:
+            coder = self._uniques
+            codes = data
+
+        rows = len(data)
+        dummies = np.broadcast_to(coder, (rows, self._num_dummies))
+        coded = np.broadcast_to(codes, (self._num_dummies, rows)).T
+        array = (coded == dummies).astype(int)
+
+        if self._dummy_na:
+            null = np.zeros((rows, 1), dtype=int)
+            null[pd.isnull(data)] = 1
+            array = np.append(array, null, axis=1)
+
+        return array
 
     def _transform(self, data):
         """Replace each category with the OneHot vectors.
