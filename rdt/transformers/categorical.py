@@ -32,6 +32,7 @@ class CategoricalTransformer(BaseTransformer):
             If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
             Defaults to ``False``.
     """
+
     INPUT_TYPE = 'categorical'
     OUTPUT_TYPES = {'value': 'float'}
     DETERMINISTIC_TRANSFORM = False
@@ -263,6 +264,7 @@ class OneHotEncodingTransformer(BaseTransformer):
             If a value that was not seen during the fit stage is passed to
             transform, then an error will be raised if this is True.
     """
+
     INPUT_TYPE = 'categorical'
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
@@ -406,6 +408,7 @@ class LabelEncodingTransformer(BaseTransformer):
             Dictionary that maps each category with the corresponding
             integer value.
     """
+
     INPUT_TYPE = 'categorical'
     OUTPUT_TYPES = {'value': 'integer'}
     DETERMINISTIC_TRANSFORM = True
