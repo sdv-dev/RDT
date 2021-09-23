@@ -1,4 +1,5 @@
 """Transformers module."""
+from copy import deepcopy
 
 import importlib
 import json
@@ -82,7 +83,7 @@ def load_transformer(transformer):
             BaseTransformer subclass instance.
     """
     if isinstance(transformer, BaseTransformer):
-        return transformer
+        return deepcopy(transformer)
 
     transformer_class = transformer['class']
     if isinstance(transformer_class, str):
