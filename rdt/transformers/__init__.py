@@ -7,6 +7,7 @@ from rdt.transformers.categorical import (
 from rdt.transformers.datetime import DatetimeTransformer
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import GaussianCopulaTransformer, NumericalTransformer
+from rdt.transformers.utils import get_subclasses
 
 __all__ = [
     'BaseTransformer',
@@ -22,21 +23,9 @@ __all__ = [
 ]
 
 
-def _get_transformer_subclasses(base):
-    subclasses = base.__subclasses__()
-
-    if len(subclasses) == 0:
-        return []
-
-    for subclass in subclasses:
-        subclasses.extend(_get_transformer_subclasses(subclass))
-
-    return subclasses
-
-
 TRANSFORMERS = {
     transformer.__name__: transformer
-    for transformer in _get_transformer_subclasses(BaseTransformer)
+    for transformer in get_subclasses(BaseTransformer)
 }
 
 
