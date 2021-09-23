@@ -5,15 +5,13 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.base import BaseTransformer
-
 IRREVERSIBLE_WARNING = (
     'Replacing nulls with existing value without `null_column`, which is not reversible. '
     'Use `null_column=True` to ensure that the transformation is reversible.'
 )
 
 
-class NullTransformer(BaseTransformer):
+class NullTransformer():
     """Transformer for data that contains Null values.
 
     Args:
@@ -28,10 +26,6 @@ class NullTransformer(BaseTransformer):
         copy (bool):
             Whether to create a copy of the input data or modify it destructively.
     """
-    # INPUT_TYPE as None means it can deal with all datatypes.
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = None  # need to implement the logic
 
     nulls = None
     _null_column = None
@@ -42,7 +36,16 @@ class NullTransformer(BaseTransformer):
         self.null_column = null_column
         self.copy = copy
 
-    def _fit(self, data):
+    def creates_null_column(self):
+        """Indicate whether this transformer creates a null column on transform.
+
+        Returns:
+            bool:
+                Whether a null column is created on transform.
+        """
+        return bool(self._null_column)
+
+    def fit(self, data):
         """Fit the transformer to the data.
 
         Evaluate if the transformer has to create the null column or not.
@@ -66,7 +69,7 @@ class NullTransformer(BaseTransformer):
         else:
             self._null_column = self.null_column
 
-    def _transform(self, data):
+    def transform(self, data):
         """Replace null values with the indicated fill_value.
 
         If required, create the null indicator column.
@@ -97,7 +100,7 @@ class NullTransformer(BaseTransformer):
 
         return data.values
 
-    def _reverse_transform(self, data):
+    def reverse_transform(self, data):
         """Restore null values to the data.
 
         If a null indicator column was created during fit, use it as a reference.
