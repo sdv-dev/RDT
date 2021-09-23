@@ -68,10 +68,8 @@ DEFAULT_TRANSFORMERS = {
 def load_transformer(transformer):
     """Load a new instance of a ``Transformer``.
 
-    The ``transformer`` is expected to be a ``dict`` containing  the transformer ``class``
-    and its ``kwargs``. The ``class`` entry can either be the actual ``class`` or its name.
-    For convenience, if an instance of a ``BaseTransformer`` is passed, it will be
-    returned unmodified.
+    The ``transformer`` is expected to be a ``string`` containing  the transformer ``class``
+    name, a transformer instance or a transformer type.
 
     Args:
         transformer (dict or BaseTransformer):
@@ -85,15 +83,10 @@ def load_transformer(transformer):
     if isinstance(transformer, BaseTransformer):
         return deepcopy(transformer)
 
-    transformer_class = transformer['class']
-    if isinstance(transformer_class, str):
-        transformer_class = TRANSFORMERS[transformer_class]
+    if isinstance(transformer, str):
+        transformer = TRANSFORMERS[transformer]
 
-    transformer_kwargs = transformer.get('kwargs')
-    if transformer_kwargs is None:
-        transformer_kwargs = {}
-
-    return transformer_class(**transformer_kwargs)
+    return transformer()
 
 
 def load_transformers(transformers):

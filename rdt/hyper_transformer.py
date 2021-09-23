@@ -78,9 +78,15 @@ class HyperTransformer:
         'b': 'boolean',
         'M': 'datetime',
     }
+    _DEFAULT_OUTPUT_TYPES = [
+        'numerical',
+        'float',
+        'integer'
+    ]
     _transformers_sequence = []
     _output_columns = []
     _input_columns = []
+    _generated_columns = []
 
     def __init__(self, copy=True, field_types=None, data_type_transformers=None,
                  field_transformers=None, transform_output_types=None):
@@ -88,14 +94,15 @@ class HyperTransformer:
         self.field_types = field_types or {}
         self._default_transformers = get_default_transformers()
         self.data_type_transformers = data_type_transformers or {}
-        self.field_transformers = field_transformers
-        self.transform_output_types = transform_output_types
+        self.field_transformers = field_transformers or {}
+        self.transform_output_types = transform_output_types or self._DEFAULT_OUTPUT_TYPES
+
+    @staticmethod
+    def _field_in_data(field, data):
+        all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
+        return field in data or all_columns_in_data
 
     def _update_field_types(self, data):
-        for field in self.field_transformers:
-            if (field in data or isinstance(field, tuple)) and field not in self.field_types:
-                self.field_types[field] = self._DTYPES_TO_DATA_TYPES[data[field].dtype.kind]
-
         # get set of provided fields including multi-column fields
         provided_fields = set()
         for field in self.field_types.keys():
@@ -108,13 +115,7 @@ class HyperTransformer:
             if field not in provided_fields:
                 self.field_types[field] = self._DTYPES_TO_DATA_TYPES[data[field].dtype.kind]
 
-    def _fit_field_transformer(self, data, field, data_type):
-        if field in self.field_transformers:
-            transformer = self.field_transformers[field]
-        elif data_type in self.data_type_transformers:
-            transformer = self.data_type_transformers[data_type]
-        else:
-            transformer = self._default_transformers[data_type]
+    def _fit_field_transformer(self, data, field, transformer):
         transformer = load_transformer(transformer)
         transformer.fit(data, field)
         self._transformers_sequence.append(transformer)
@@ -124,10 +125,15 @@ class HyperTransformer:
             if output_type in self.transform_output_types:
                 self._output_columns.append(output)
             else:
+                self._generated_columns.append(output)
                 transformed_data = transformer.transform(data)
                 if output not in self.field_transformers and next_transformers is not None:
                     self.field_transformers[output] = next_transformers[output]
-                self._fit_field_transformer(transformed_data, output, output_type)
+                if output in self.field_transformers:
+                    next_transformer = self.field_transformers[output]
+                else:
+                    next_transformer = self._default_transformers[output_type]
+                self._fit_field_transformer(transformed_data, output, next_transformer)
 
     def fit(self, data):
         """Fit the transformers to the data.
@@ -138,9 +144,22 @@ class HyperTransformer:
         """
         self._input_columns = data.columns
         self._update_field_types(data)
+        fitted_fields = set()
+
+        for field in self.field_transformers:
+            if self._field_in_data(field, data):
+                self._fit_field_transformer(data, field, self.field_transformers[field])
+                fitted_fields.add(field)
 
         for (field, data_type) in self.field_types.items():
-            self._fit_field_transformer(data, field, data_type)
+            if field not in fitted_fields:
+                fitted_fields.add(field)
+                if data_type in self.data_type_transformers:
+                    transformer = self.data_type_transformers[data_type]
+                else:
+                    transformer = self._default_transformers[data_type]
+
+                self._fit_field_transformer(data, field, transformer)
 
     def transform(self, data):
         """Transform the data.
@@ -159,9 +178,13 @@ class HyperTransformer:
             data = data.copy()
 
         for transformer in self._transformers_sequence:
-            transformer.transform(data, drop=False)
+            data = transformer.transform(data, drop=False)
 
-        columns_to_drop = [input for input in self._input_columns if input in data]
+        columns_to_drop = [
+            column
+            for column in data
+            if column in self._input_columns or column in self._generated_columns
+        ]
         data = data.drop(columns_to_drop, axis=1)
         return data
 
@@ -191,8 +214,9 @@ class HyperTransformer:
                 reversed data.
         """
         for transformer in reversed(self._transformers_sequence):
-            transformer.reverse_transform(data, drop=False)
+            data = transformer.reverse_transform(data, drop=False)
 
-        columns_to_drop = [output for output in self._output_columns if output in data]
+        columns_to_drop = [col for col in data
+                           if col in self._output_columns or col in self._generated_columns]
         reversed_data = data.drop(columns_to_drop, axis=1)
         return reversed_data
