@@ -134,7 +134,7 @@ class CategoricalTransformer(BaseTransformer):
             else:
                 result[mask] = mean
 
-        return pd.DataFrame(result)
+        return result
 
     def _get_value(self, category):
         """Get the value that represents this category."""
@@ -150,7 +150,7 @@ class CategoricalTransformer(BaseTransformer):
 
     def _transform_by_row(self, data):
         """Transform the data row by row."""
-        return pd.DataFrame(data.fillna(np.nan).apply(self._get_value))
+        return data.fillna(np.nan).apply(self._get_value)
 
     def _transform(self, data):
         """Transform categorical values to float values.
@@ -375,17 +375,19 @@ class OneHotEncodingTransformer(BaseTransformer):
         """Convert float values back to the original categorical values.
 
         Args:
-            data (pandas.):
+            data (numpy.ndarray):
                 Data to revert.
 
         Returns:
             pandas.Series
         """
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
         if data.ndim == 1:
             data = data.reshape(-1, 1)
 
-        indices = data.idxmax(axis=1)
-        print(indices)
+        indices = np.argmax(data, axis=1)
         return pd.Series(indices).map(self.dummies.__getitem__)
 
 
@@ -443,7 +445,7 @@ class LabelEncodingTransformer(BaseTransformer):
         if not isinstance(data, pd.Series):
             data = pd.Series(data)
 
-        return data.map(self.categories_to_values)
+        return pd.Series(data).map(self.categories_to_values)
 
     def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
