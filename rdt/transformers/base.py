@@ -163,7 +163,9 @@ class BaseTransformer:
         columns_data = data[columns]
         transformed_data = self._transform(columns_data)
 
+        print(transformed_data)
         output_columns = self._convert_if_series(self._output_columns, transformed_data)
+        print(output_columns)
         data[output_columns] = transformed_data
         data.drop(self._columns, axis=1, inplace=True)
 

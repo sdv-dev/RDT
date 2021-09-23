@@ -12,14 +12,14 @@ from rdt.transformers import (
 def test_categorical_numerical_nans():
     """Ensure CategoricalTransformer works on numerical + nan only columns."""
 
-    data = pd.Series([1, 2, float('nan'), np.nan])
+    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['a'])
 
     transformer = CategoricalTransformer()
-    transformer.fit(data)
+    transformer.fit(data, list(data.columns))
     transformed = transformer.transform(data)
     reverse = transformer.reverse_transform(transformed)
 
-    pd.testing.assert_series_equal(reverse, data)
+    pd.testing.assert_frame_equal(reverse, data)
 
 
 def test_categoricaltransformer_pickle_nans():

@@ -33,6 +33,7 @@ class CategoricalTransformer(BaseTransformer):
             Defaults to ``False``.
     """
     INPUT_TYPE = 'categorical'
+    OUTPUT_TYPES = {'value': 'float'}
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
@@ -97,15 +98,6 @@ class CategoricalTransformer(BaseTransformer):
 
         return intervals, means, starts
 
-    def get_output_types(self):
-        """Return the output types supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported data types.
-        """
-        return {self._columns[0]: 'float'}
-
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -142,7 +134,7 @@ class CategoricalTransformer(BaseTransformer):
             else:
                 result[mask] = mean
 
-        return result
+        return pd.DataFrame(result)
 
     def _get_value(self, category):
         """Get the value that represents this category."""
@@ -158,7 +150,7 @@ class CategoricalTransformer(BaseTransformer):
 
     def _transform_by_row(self, data):
         """Transform the data row by row."""
-        return data.fillna(np.nan).apply(self._get_value).to_numpy()
+        return pd.DataFrame(data.fillna(np.nan).apply(self._get_value))
 
     def _transform(self, data):
         """Transform categorical values to float values.
