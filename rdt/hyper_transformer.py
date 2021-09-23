@@ -73,14 +73,6 @@ class HyperTransformer:
         'b': 'boolean',
         'M': 'datetime',
     }
-    DEFAULT_TRANSFORMERS = {
-        'numerical': NumericalTransformer,
-        'integer': NumericalTransformer(dtype=int),
-        'float': NumericalTransformer(dtype=float),
-        'categorical': CategoricalTransformer(fuzzy=True),
-        'boolean': BooleanTransformer,
-        'datetime': DatetimeTransformer,
-    }
     _DTYPES_TO_DATA_TYPES = {
         'i': 'integer',
         'f': 'float',

@@ -25,6 +25,14 @@ TRANSFORMERS = {
     transformer.__name__: transformer
     for transformer in BaseTransformer.__subclasses__()
 }
+DEFAULT_TRANSFORMERS = {
+    'numerical': NumericalTransformer,
+    'integer': NumericalTransformer(dtype=int),
+    'float': NumericalTransformer(dtype=float),
+    'categorical': CategoricalTransformer(fuzzy=True),
+    'boolean': BooleanTransformer,
+    'datetime': DatetimeTransformer,
+}
 
 
 def load_transformer(transformer):
@@ -99,3 +107,21 @@ def get_transformers_by_type():
             pass
 
     return data_type_transformers
+
+
+def get_default_transformers():
+    """Build a ``dict`` mapping data types to a default transformer for that type.
+
+    Returns:
+            dict:
+                Mapping of data types to a transformer.
+    """
+    transformers_by_type = get_transformers_by_type()
+    defaults = {}
+    for (data_type, transformers) in transformers_by_type.items():
+        if data_type in DEFAULT_TRANSFORMERS:
+            defaults[data_type] = DEFAULT_TRANSFORMERS[data_type]
+        else:
+            defaults[data_type] = transformers[0]
+
+    return defaults
