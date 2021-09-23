@@ -9,7 +9,8 @@ class TestNumericalTransformer:
         data = np.array([1, 2, 1, 2, np.nan, 1])
 
         nt = NumericalTransformer()
-        transformed = nt.fit_transform(data)
+        nt.fit(data)
+        transformed = nt.transform(data)
 
         assert isinstance(transformed, np.ndarray)
         assert transformed.shape == (6, 2)
@@ -23,7 +24,8 @@ class TestNumericalTransformer:
         data = np.array([1, 2, 1, 2, np.nan, 1])
 
         nt = NumericalTransformer(null_column=False)
-        transformed = nt.fit_transform(data)
+        nt.fit(data)
+        transformed = nt.transform(data)
 
         assert isinstance(transformed, np.ndarray)
         assert transformed.shape == (6, )
@@ -36,7 +38,8 @@ class TestNumericalTransformer:
         data = np.array([1, 2, 1, 2, 1])
 
         nt = NumericalTransformer(dtype=int)
-        transformed = nt.fit_transform(data)
+        nt.fit(data)
+        transformed = nt.transform(data)
 
         assert isinstance(transformed, np.ndarray)
         assert transformed.shape == (5, )
@@ -48,7 +51,8 @@ class TestNumericalTransformer:
         data = np.array([1, 2, 1, 2, 1, np.nan])
 
         nt = NumericalTransformer(dtype=int)
-        transformed = nt.fit_transform(data)
+        nt.fit(data)
+        transformed = nt.transform(data)
 
         assert isinstance(transformed, np.ndarray)
         assert transformed.shape == (6, 2)
@@ -63,7 +67,8 @@ class TestGaussianCopulaTransformer:
         data = np.random.normal(loc=4, scale=4, size=1000)
 
         ct = GaussianCopulaTransformer()
-        transformed = ct.fit_transform(data)
+        ct.fit(data)
+        transformed = ct.transform(data)
 
         assert isinstance(transformed, np.ndarray)
         assert transformed.shape == (1000, )
@@ -79,7 +84,8 @@ class TestGaussianCopulaTransformer:
         data = np.array([1, 2, 1, 2, np.nan, 1])
 
         ct = GaussianCopulaTransformer()
-        transformed = ct.fit_transform(data)
+        ct.fit(data)
+        transformed = ct.transform(data)
 
         assert isinstance(transformed, np.ndarray)
         assert transformed.shape == (6, 2)
@@ -93,7 +99,8 @@ class TestGaussianCopulaTransformer:
         data = np.array([1, 2, 1, 2, np.nan, 1])
 
         ct = GaussianCopulaTransformer(null_column=False)
-        transformed = ct.fit_transform(data)
+        ct.fit(data)
+        transformed = ct.transform(data)
 
         assert isinstance(transformed, np.ndarray)
         assert transformed.shape == (6, )
@@ -106,7 +113,8 @@ class TestGaussianCopulaTransformer:
         data = np.array([1, 2, 1, 2, 1])
 
         ct = GaussianCopulaTransformer(dtype=int)
-        transformed = ct.fit_transform(data)
+        ct.fit(data)
+        transformed = ct.transform(data)
 
         assert isinstance(transformed, np.ndarray)
         assert transformed.shape == (5, )
@@ -118,7 +126,8 @@ class TestGaussianCopulaTransformer:
         data = np.array([1, 2, 1, 2, 1, np.nan])
 
         ct = GaussianCopulaTransformer(dtype=int)
-        transformed = ct.fit_transform(data)
+        ct.fit(data)
+        transformed = ct.transform(data)
 
         assert isinstance(transformed, np.ndarray)
         assert transformed.shape == (6, 2)
