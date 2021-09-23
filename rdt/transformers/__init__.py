@@ -18,12 +18,25 @@ __all__ = [
     'NullTransformer',
     'OneHotEncodingTransformer',
     'LabelEncodingTransformer',
+    'GaussianCopulaTransformer',
 ]
+
+
+def _get_transformer_subclasses(base):
+    subclasses = base.__subclasses__()
+
+    if len(subclasses) == 0:
+        return []
+
+    for subclass in subclasses:
+        subclasses.extend(_get_transformer_subclasses(subclass))
+
+    return subclasses
 
 
 TRANSFORMERS = {
     transformer.__name__: transformer
-    for transformer in BaseTransformer.__subclasses__()
+    for transformer in _get_transformer_subclasses(BaseTransformer)
 }
 
 
