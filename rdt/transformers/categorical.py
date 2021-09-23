@@ -326,6 +326,10 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return array
 
+    def get_output_types(self):
+        output_types = {f'value{i}': 'integer' for i in range(len(self.dummies))}
+        return self._add_prefix(output_types)
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -349,8 +353,6 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         if self._dummy_na:
             self.dummies.append(np.nan)
-
-        self.OUTPUT_TYPES = {f'value{i}': 'integer' for i in range(len(self.dummies))}
 
     def _transform(self, data):
         """Replace each category with the OneHot vectors.

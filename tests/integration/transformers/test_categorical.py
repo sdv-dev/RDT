@@ -233,7 +233,6 @@ def test_one_hot_numerical_nans():
     transformer = OneHotEncodingTransformer()
     transformer.fit(data, list(data.columns))
     transformed = transformer.transform(data)
-    print('ntohuntohu: ', transformed)
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
