@@ -160,7 +160,8 @@ class HyperTransformer:
         for transformer in self._transformers_sequence:
             transformer.transform(data, drop=False)
 
-        data = data.drop(self._input_columns, axis=1)
+        columns_to_drop = [input for input in self._input_columns if input in data]
+        data = data.drop(columns_to_drop, axis=1)
         return data
 
     def fit_transform(self, data):
@@ -191,5 +192,6 @@ class HyperTransformer:
         for transformer in reversed(self._transformers_sequence):
             transformer.reverse_transform(data, drop=False)
 
-        reversed_data = data.drop(self._output_columns, axis=1)
+        columns_to_drop = [output for output in self._output_columns if output in data]
+        reversed_data = data.drop(columns_to_drop, axis=1)
         return reversed_data
