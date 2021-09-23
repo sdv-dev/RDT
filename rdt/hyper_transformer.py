@@ -2,7 +2,7 @@
 
 from rdt.transformers import (
     BooleanTransformer, CategoricalTransformer, DatetimeTransformer, LabelEncodingTransformer,
-    NumericalTransformer, OneHotEncodingTransformer)
+    NumericalTransformer, OneHotEncodingTransformer, get_default_transformers, load_transformer)
 
 
 class HyperTransformer:
@@ -19,7 +19,7 @@ class HyperTransformer:
         data_type_transformers (dict or None):
             Dict mapping data types to transformers to use for that data type.
         field_transformers (dict or None):
-            Dict mapping field names to transformers to use. The keys can be a string
+            Dict mapping field names to transformer to use. The keys can be a string
             representing one field name or a tuple of multiple field names. Keys can
             also specify transformers for fields derived by other transformers by
             concatenating the name of the original field to the output name of the
@@ -82,11 +82,11 @@ class HyperTransformer:
     _output_columns = []
     _input_columns = []
 
-
     def __init__(self, copy=True, field_types=None, data_type_transformers=None,
                  field_transformers=None, transform_output_types=None):
         self.copy = copy
         self.field_types = field_types or {}
+        self._default_transformers = get_default_transformers()
         self.data_type_transformers = data_type_transformers or {}
         self.field_transformers = field_transformers
         self.transform_output_types = transform_output_types
@@ -114,7 +114,8 @@ class HyperTransformer:
         elif data_type in self.data_type_transformers:
             transformer = self.data_type_transformers[data_type]
         else:
-            transformer = self.DEFAULT_TRANSFORMERS[data_type]
+            transformer = self._default_transformers[data_type]
+        transformer = load_transformer(transformer)
         transformer.fit(data, field)
         self._transformers_sequence.append(transformer)
         output_types = transformer.get_output_types()
