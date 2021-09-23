@@ -77,3 +77,25 @@ def load_transformers(transformers):
         name: load_transformer(transformer)
         for name, transformer in transformers.items()
     }
+
+
+def get_transformers_by_type():
+    """Build a ``dict`` mapping data types to valid existing transformers for that type.
+
+    Returns:
+            dict:
+                Mapping of data types to a list of existing transformers that take that
+                type as an input.
+    """
+    data_type_transformers = {}
+    transformer_classes = BaseTransformer.get_subclasses()
+    for transformer in transformer_classes:
+        try:
+            input_type = transformer.get_input_type()
+            transformers_for_type = data_type_transformers.get(input_type, [])
+            transformers_for_type.append(transformer)
+            data_type_transformers.update({input_type: transformers_for_type})
+        except AttributeError:
+            pass
+
+    return data_type_transformers

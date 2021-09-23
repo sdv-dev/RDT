@@ -1,8 +1,6 @@
 """Hyper transformer module."""
 
-import inspect
 import re
-import sys
 from copy import deepcopy
 
 import numpy as np
@@ -90,27 +88,6 @@ class HyperTransformer:
         'b': 'boolean',
         'M': 'datetime',
     }
-
-    @staticmethod
-    def get_transformers_by_type():
-        """Build a ``dict`` mapping data types to valid existing transformers for that type.
-
-        Returns:
-                dict:
-                    Mapping of data types to a list of existing transformers that take that
-                    type as an input.
-        """
-        data_type_transformers = {}
-        transformer_classes = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-        for (_, transformer) in transformer_classes:
-            try:
-                input_type = transformer.get_input_type()
-                transformers_for_type = data_type_transformers.get(input_type, [])
-                transformers_for_type.append(transformer)
-                data_type_transformers.update({input_type: transformers_for_type})
-            except AttributeError:
-                pass
-        return data_type_transformers
 
     def __init__(self, transformers=None, copy=True, dtypes=None, dtype_transformers=None):
         self.transformers = transformers
