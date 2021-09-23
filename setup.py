@@ -34,6 +34,7 @@ tests_require = [
     'pytest-cov>=2.6.0',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
+    'pytest-subtests>=0.5,<1.0',
 ]
 
 addons_require = []
