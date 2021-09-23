@@ -10,7 +10,7 @@ from invoke import task
 @task
 def pytest(c):
     c.run(
-        'pytest ./tests/unit ./tests/integration ./tests/performance/tests '
+        'pytest ./tests/unit ./tests/integration ./tests/performance/tests ./tests/datasets/tests '
         '--cov=rdt --cov-report=xml'
     )
 

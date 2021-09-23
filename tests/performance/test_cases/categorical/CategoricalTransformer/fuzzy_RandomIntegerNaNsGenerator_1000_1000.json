@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.categorical.RandomIntegerNaNsGenerator",
+    "dataset": "tests.datasets.categorical.RandomIntegerNaNsGenerator",
     "transformer": "rdt.transformers.categorical.CategoricalTransformer",
     "kwargs": {
         "fuzzy": true

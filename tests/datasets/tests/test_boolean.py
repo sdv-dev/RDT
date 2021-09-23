@@ -1,6 +1,6 @@
 import pandas as pd
 
-from tests.performance.datasets import boolean
+from tests.datasets import boolean
 
 NUM_ROWS = 50
 
