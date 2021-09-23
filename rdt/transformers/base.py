@@ -177,8 +177,8 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def transform(self, data):
-        """Transform the `self.columns` of the `data`.
+    def transform(self, data, drop=True):
+        """Transform the `self._columns` of the `data`.
 
         Args:
             data (pandas.DataFrame):
@@ -198,7 +198,8 @@ class BaseTransformer:
         transformed_data = self._transform(columns_data)
 
         self._set_columns_data(data, transformed_data, self.output_columns)
-        data.drop(self.columns, axis=1, inplace=True)
+        if drop:
+            data.drop(self._columns, axis=1, inplace=True)
 
         return data
 
