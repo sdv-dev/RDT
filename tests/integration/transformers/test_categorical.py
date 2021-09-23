@@ -62,7 +62,8 @@ def test_categoricaltransformer_strings():
     transformer = CategoricalTransformer()
 
     # run
-    reverse = transformer.reverse_transform(transformer.fit_transform(data))
+    transformer.fit(data)
+    reverse = transformer.reverse_transform(transformer.transform(data))
 
     # assert
     pd.testing.assert_series_equal(data, reverse)
@@ -85,7 +86,8 @@ def test_categoricaltransformer_strings_2_categories():
     data = pd.Series(['a', 'b', 'a', 'b'])
     transformer = CategoricalTransformer()
 
-    reverse = transformer.reverse_transform(transformer.fit_transform(data))
+    transformer.fit(data)
+    reverse = transformer.reverse_transform(transformer.transform(data))
 
     # assert
     pd.testing.assert_series_equal(data, reverse)
@@ -108,7 +110,8 @@ def test_categoricaltransformer_integers():
     transformer = CategoricalTransformer()
 
     # run
-    reverse = transformer.reverse_transform(transformer.fit_transform(data))
+    transformer.fit(data)
+    reverse = transformer.reverse_transform(transformer.transform(data))
 
     # assert
     pd.testing.assert_series_equal(data, reverse)
@@ -131,7 +134,8 @@ def test_categoricaltransformer_bool():
     transformer = CategoricalTransformer()
 
     # run
-    reverse = transformer.reverse_transform(transformer.fit_transform(data))
+    transformer.fit(data)
+    reverse = transformer.reverse_transform(transformer.transform(data))
 
     # assert
     pd.testing.assert_series_equal(data, reverse)
@@ -154,7 +158,8 @@ def test_categoricaltransformer_mixed():
     transformer = CategoricalTransformer()
 
     # run
-    reverse = transformer.reverse_transform(transformer.fit_transform(data))
+    transformer.fit(data)
+    reverse = transformer.reverse_transform(transformer.transform(data))
 
     # assert
     pd.testing.assert_series_equal(data, reverse)
@@ -182,7 +187,8 @@ def test_categoricaltransformer_mixed_low_virtual_memory(psutil_mock):
     psutil_mock.return_value = virtual_memory
 
     # run
-    reverse = transformer.reverse_transform(transformer.fit_transform(data))
+    transformer.fit(data)
+    reverse = transformer.reverse_transform(transformer.transform(data))
 
     # assert
     pd.testing.assert_series_equal(data, reverse)
