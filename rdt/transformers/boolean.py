@@ -26,10 +26,10 @@ class BooleanTransformer(BaseTransformer):
             If ``False``, do not create the new column.
             Defaults to ``None``.
     """
+
     INPUT_TYPE = 'boolean'
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
 
     null_transformer = None
 
@@ -38,19 +38,19 @@ class BooleanTransformer(BaseTransformer):
         self.null_column = null_column
 
     def get_output_types(self):
-        """Return the output types supported by the transformer.
+        """Return the output types returned by this transformer.
 
         Returns:
             dict:
-                Mapping from the transformed column names to supported data types.
+                Mapping from the transformed column names to the produced data types.
         """
-        if self.null_transformer._null_column:  # whether an extra column is generated
-            return {
-                f'{self._columns[0]}': 'float',
-                f'{self._columns[0]}.is_null': 'bool',
-            }
+        output_types = {
+            'value': 'float',
+        }
+        if self.null_transformer and self.null_transformer.creates_null_column():
+            output_types['is_null'] = 'float'
 
-        return {self._columns[0]: 'float'}
+        return self._add_prefix(output_types)
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -63,7 +63,7 @@ class BooleanTransformer(BaseTransformer):
             data = pd.Series(data)
 
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
-        self.null_transformer._fit(data)
+        self.null_transformer.fit(data)
 
     def _transform(self, data):
         """Transform boolean to float.
@@ -76,27 +76,31 @@ class BooleanTransformer(BaseTransformer):
                 Data to transform.
 
         Returns
-            numpy.ndarray
+            pandas.DataFrame or pandas.Series
         """
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
         data = pd.to_numeric(data, errors='coerce')
 
-        return self.null_transformer._transform(data).astype(float)
+        return self.null_transformer.transform(data).astype(float)
 
     def _reverse_transform(self, data):
         """Transform float values back to the original boolean values.
 
         Args:
-            data (numpy.ndarray):
+            data (pandas.DataFrame or pandas.Series):
                 Data to revert.
 
         Returns:
-            pandas.Series
+            pandas.Series:
+                Reverted data.
         """
+        if not isinstance(data, np.ndarray):
+            data = data.values
+
         if self.nan is not None:
-            data = self.null_transformer._reverse_transform(data)
+            data = self.null_transformer.reverse_transform(data)
 
         if isinstance(data, np.ndarray):
             if data.ndim == 2:

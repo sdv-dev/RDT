@@ -18,14 +18,14 @@ class TestBooleanTransformer(TestCase):
         self.assertEqual(transformer.nan, -1, "Unexpected nan")
         self.assertIsNone(transformer.null_column, "null_column is None by default")
 
-    def test_fit_nan_ignore(self):
-        """Test fit nan equal to ignore"""
+    def test__fit_nan_ignore(self):
+        """Test _fit nan equal to ignore"""
         # Setup
         data = pd.Series([False, True, True, False, True])
 
         # Run
         transformer = BooleanTransformer(nan=None)
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         expect_fill_value = None
@@ -36,14 +36,14 @@ class TestBooleanTransformer(TestCase):
             "Unexpected fill value"
         )
 
-    def test_fit_nan_not_ignore(self):
-        """Test fit nan not equal to ignore"""
+    def test__fit_nan_not_ignore(self):
+        """Test _fit nan not equal to ignore"""
         # Setup
         data = pd.Series([False, True, True, False, True])
 
         # Run
         transformer = BooleanTransformer(nan=0)
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         expect_fill_value = 0
@@ -54,14 +54,14 @@ class TestBooleanTransformer(TestCase):
             "Unexpected fill value"
         )
 
-    def test_fit_array(self):
-        """Test fit with numpy.array"""
+    def test__fit_array(self):
+        """Test _fit with numpy.array"""
         # Setup
         data = np.array([False, True, True, False, True])
 
         # Run
         transformer = BooleanTransformer(nan=0)
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         expect_fill_value = 0
@@ -72,7 +72,7 @@ class TestBooleanTransformer(TestCase):
             "Unexpected fill value"
         )
 
-    def test_transform_series(self):
+    def test__transform_series(self):
         """Test transform pandas.Series"""
         # Setup
         data = pd.Series([False, True, None, True, False])
@@ -80,7 +80,7 @@ class TestBooleanTransformer(TestCase):
         # Run
         transformer = Mock()
 
-        BooleanTransformer.transform(transformer, data)
+        BooleanTransformer._transform(transformer, data)
 
         # Asserts
         expect_call_count = 1
@@ -96,7 +96,7 @@ class TestBooleanTransformer(TestCase):
             expect_call_args
         )
 
-    def test_transform_array(self):
+    def test__transform_array(self):
         """Test transform numpy.array"""
         # Setup
         data = np.array([False, True, None, True, False])
@@ -104,7 +104,7 @@ class TestBooleanTransformer(TestCase):
         # Run
         transformer = Mock()
 
-        BooleanTransformer.transform(transformer, data)
+        BooleanTransformer._transform(transformer, data)
 
         # Asserts
         expect_call_count = 1
@@ -120,8 +120,8 @@ class TestBooleanTransformer(TestCase):
             expect_call_args
         )
 
-    def test_reverse_transform_nan_ignore(self):
-        """Test reverse_transform with nan equal to ignore"""
+    def test__reverse_transform_nan_ignore(self):
+        """Test _reverse_transform with nan equal to ignore"""
         # Setup
         data = np.array([0.0, 1.0, 0.0, 1.0, 0.0])
 
@@ -129,7 +129,7 @@ class TestBooleanTransformer(TestCase):
         transformer = Mock()
         transformer.nan = None
 
-        result = BooleanTransformer.reverse_transform(transformer, data)
+        result = BooleanTransformer._reverse_transform(transformer, data)
 
         # Asserts
         expect = np.array([False, True, False, True, False])
@@ -142,8 +142,8 @@ class TestBooleanTransformer(TestCase):
             "NullTransformer.reverse_transform should not be called when nan is ignore"
         )
 
-    def test_reverse_transform_nan_not_ignore(self):
-        """Test reverse_transform with nan not equal to ignore"""
+    def test__reverse_transform_nan_not_ignore(self):
+        """Test _reverse_transform with nan not equal to ignore"""
         # Setup
         data = np.array([0.0, 1.0, 0.0, 1.0, 0.0])
         transformed_data = np.array([0.0, 1.0, 0.0, 1.0, 0.0])
@@ -153,7 +153,7 @@ class TestBooleanTransformer(TestCase):
         transformer.nan = 0
         transformer.null_transformer.reverse_transform.return_value = transformed_data
 
-        result = BooleanTransformer.reverse_transform(transformer, data)
+        result = BooleanTransformer._reverse_transform(transformer, data)
 
         # Asserts
         expect = np.array([False, True, False, True, False])
@@ -166,8 +166,8 @@ class TestBooleanTransformer(TestCase):
             "NullTransformer.reverse_transform should not be called when nan is ignore"
         )
 
-    def test_reverse_transform_not_null_values(self):
-        """Test reverse_transform not null values correctly"""
+    def test__reverse_transform_not_null_values(self):
+        """Test _reverse_transform not null values correctly"""
         # Setup
         data = np.array([1., 0., 1.])
 
@@ -175,7 +175,7 @@ class TestBooleanTransformer(TestCase):
         transformer = Mock()
         transformer.nan = None
 
-        result = BooleanTransformer.reverse_transform(transformer, data)
+        result = BooleanTransformer._reverse_transform(transformer, data)
 
         # Asserts
         expected = np.array([True, False, True])
@@ -183,8 +183,8 @@ class TestBooleanTransformer(TestCase):
         assert isinstance(result, pd.Series)
         np.testing.assert_equal(result.values, expected)
 
-    def test_reverse_transform_2d_ndarray(self):
-        """Test reverse_transform not null values correctly"""
+    def test__reverse_transform_2d_ndarray(self):
+        """Test _reverse_transform not null values correctly"""
         # Setup
         data = np.array([[1.], [0.], [1.]])
 
@@ -192,7 +192,7 @@ class TestBooleanTransformer(TestCase):
         transformer = Mock()
         transformer.nan = None
 
-        result = BooleanTransformer.reverse_transform(transformer, data)
+        result = BooleanTransformer._reverse_transform(transformer, data)
 
         # Asserts
         expected = np.array([True, False, True])
@@ -200,10 +200,10 @@ class TestBooleanTransformer(TestCase):
         assert isinstance(result, pd.Series)
         np.testing.assert_equal(result.values, expected)
 
-    def test_reverse_transform_float_values(self):
-        """Test the ``reverse_transform`` method with decimals.
+    def test__reverse_transform_float_values(self):
+        """Test the ``_reverse_transform`` method with decimals.
 
-        Expect that the ``reverse_transform`` method handles decimal inputs
+        Expect that the ``_reverse_transform`` method handles decimal inputs
         correctly by rounding them.
 
         Input:
@@ -217,7 +217,7 @@ class TestBooleanTransformer(TestCase):
         transformer.nan = None
 
         # Run
-        result = BooleanTransformer.reverse_transform(transformer, data)
+        result = BooleanTransformer._reverse_transform(transformer, data)
 
         # Asserts
         expected = np.array([True, False, True])
@@ -225,10 +225,10 @@ class TestBooleanTransformer(TestCase):
         assert isinstance(result, pd.Series)
         np.testing.assert_equal(result.values, expected)
 
-    def test_reverse_transform_float_values_out_of_range(self):
-        """Test the ``reverse_transform`` method with decimals that are out of range.
+    def test__reverse_transform_float_values_out_of_range(self):
+        """Test the ``_reverse_transform`` method with decimals that are out of range.
 
-        Expect that the ``reverse_transform`` method handles decimal inputs
+        Expect that the ``_reverse_transform`` method handles decimal inputs
         correctly by rounding them. If the rounded decimal inputs are < 0 or > 1, expect
         expect them to be clipped.
 
@@ -243,7 +243,7 @@ class TestBooleanTransformer(TestCase):
         transformer.nan = None
 
         # Run
-        result = BooleanTransformer.reverse_transform(transformer, data)
+        result = BooleanTransformer._reverse_transform(transformer, data)
 
         # Asserts
         expected = np.array([True, False, True])
