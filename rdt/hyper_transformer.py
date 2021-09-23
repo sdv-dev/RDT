@@ -86,8 +86,8 @@ class HyperTransformer:
     def __init__(self, copy=True, field_types=None, data_type_transformers=None,
                  field_transformers=None, transform_output_types=None):
         self.copy = copy
-        self.field_types = field_types or dict()
-        self.data_type_transformers = data_type_transformers or dict()
+        self.field_types = field_types or {}
+        self.data_type_transformers = data_type_transformers or {}
         self.field_transformers = field_transformers
         self.transform_output_types = transform_output_types
 
@@ -118,11 +118,14 @@ class HyperTransformer:
         transformer.fit(data, field)
         self._transformers_sequence.append(transformer)
         output_types = transformer.get_output_types()
+        next_transformers = transformer.get_next_transformers()
         for (output, output_type) in output_types.items():
             if output_type in self.transform_output_types:
                 self._output_columns.append(output)
             else:
                 transformed_data = transformer.transform(data)
+                if output not in self.field_transformers and next_transformers is not None:
+                    self.field_transformers[output] = next_transformers[output]
                 self._fit_field_transformer(transformed_data, output, output_type)
 
     def fit(self, data):
