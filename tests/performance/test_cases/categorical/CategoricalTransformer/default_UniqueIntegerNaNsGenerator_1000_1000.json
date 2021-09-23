@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.categorical.UniqueIntegerNaNsGenerator",
+    "dataset": "tests.datasets.categorical.UniqueIntegerNaNsGenerator",
     "transformer": "rdt.transformers.categorical.CategoricalTransformer",
     "kwargs": {},
     "fit_size": 1000,

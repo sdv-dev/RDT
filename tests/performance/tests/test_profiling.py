@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 
 from rdt.transformers import NumericalTransformer
-from tests.performance.datasets import BaseDatasetGenerator
+from tests.datasets import BaseDatasetGenerator
 from tests.performance.profiling import profile_transformer
 
 

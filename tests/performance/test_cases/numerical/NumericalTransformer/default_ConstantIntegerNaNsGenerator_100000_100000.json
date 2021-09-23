@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.numerical.ConstantIntegerNaNsGenerator",
+    "dataset": "tests.datasets.numerical.ConstantIntegerNaNsGenerator",
     "transformer": "rdt.transformers.numerical.NumericalTransformer",
     "kwargs": {},
     "fit_size": 100000,

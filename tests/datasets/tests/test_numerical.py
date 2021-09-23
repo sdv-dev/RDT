@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from tests.performance.datasets import numerical
+from tests.datasets import numerical
 
 
 class TestRandomIntegerGenerator:

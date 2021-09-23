@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.datetime.RandomGapDatetimeNaNsGenerator",
+    "dataset": "tests.datasets.datetime.RandomGapDatetimeNaNsGenerator",
     "transformer": "rdt.transformers.datetime.DatetimeTransformer",
     "kwargs": {},
     "fit_size": 100000,
