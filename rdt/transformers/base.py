@@ -113,6 +113,10 @@ class BaseTransformer:
         if missing:
             raise KeyError(f'Columns {missing} were not present in the data.')
 
+        self._columns = columns
+        columns = self._convert_if_length_one(self._columns)
+        self._fit(data[columns])
+
         self._column_prefix = '#'.join(columns)
         self._output_columns = list(self.get_output_types().keys())
 
@@ -120,10 +124,6 @@ class BaseTransformer:
         while any(output_column in data for output_column in self._output_columns):
             self._column_prefix += '#'
             self._output_columns = list(self.get_output_types().keys())
-
-        self._columns = columns
-        columns = self._convert_if_length_one(self._columns)
-        self._fit(data[columns])
 
     def _fit(self, columns_data):
         """Fit the transformer to the data.

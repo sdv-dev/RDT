@@ -285,7 +285,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         otherwise returns it.
 
         Args:
-            data (pandas.Series, numpy.ndarray, list or list of lists):
+            data (pandas.Series or pandas.DataFrame):
                 Data to prepare.
 
         Returns:
@@ -324,27 +324,13 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return array
 
-    def get_output_types(self):
-        """Return the output types supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported data types.
-        """
-        num_categories = len(self.dummies)
-        output_types = {}
-        for i in range(num_categories):
-            output_types[f'{self._column_name}.{i}'] = 'integer'
-
-        return output_types
-
     def _fit(self, data):
         """Fit the transformer to the data.
 
         Get the pandas `dummies` which will be used later on for OneHotEncoding.
 
         Args:
-            data (pandas.Series, numpy.ndarray, list or list of lists):
+            data (pandas.Series or pandas.DataFrame):
                 Data to fit the transformer to.
         """
         data = self._prepare_data(data)
@@ -361,6 +347,8 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         if self._dummy_na:
             self.dummies.append(np.nan)
+
+        self.OUTPUT_TYPES = {f'value{i}': 'integer' for i in range(len(self.dummies))}
 
     def _transform(self, data):
         """Replace each category with the OneHot vectors.
@@ -387,7 +375,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         """Convert float values back to the original categorical values.
 
         Args:
-            data (numpy.ndarray):
+            data (pandas.):
                 Data to revert.
 
         Returns:
@@ -396,7 +384,8 @@ class OneHotEncodingTransformer(BaseTransformer):
         if data.ndim == 1:
             data = data.reshape(-1, 1)
 
-        indices = np.argmax(data, axis=1)
+        indices = data.idxmax(axis=1)
+        print(indices)
         return pd.Series(indices).map(self.dummies.__getitem__)
 
 
@@ -416,21 +405,13 @@ class LabelEncodingTransformer(BaseTransformer):
             integer value.
     """
     INPUT_TYPE = 'categorical'
+    OUTPUT_TYPES = {'value': 'integer'}
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
 
     values_to_categories = None
     categories_to_values = None
-
-    def get_output_types(self):
-        """Return the output types supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported data types.
-        """
-        return {self._columns[0]: 'float'}
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -474,8 +455,5 @@ class LabelEncodingTransformer(BaseTransformer):
         Returns:
             pandas.Series
         """
-        if isinstance(data, np.ndarray) and (data.ndim == 2):
-            data = data[:, 0]
-
         data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
-        return pd.Series(data).round().map(self.values_to_categories)
+        return data.round().map(self.values_to_categories)
