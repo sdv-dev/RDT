@@ -13,9 +13,9 @@ class TestNumericalTransformer:
         nt.fit(data, list(data.columns))
         transformed = nt.transform(data)
 
-        assert isinstance(transformed, np.ndarray)
+        assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (6, 2)
-        assert list(transformed[:, 1]) == [0, 0, 0, 0, 1, 0]
+        assert list(transformed.iloc[:, 1]) == [0, 0, 0, 0, 1, 0]
 
         reverse = nt.reverse_transform(transformed)
 
@@ -28,8 +28,8 @@ class TestNumericalTransformer:
         nt.fit(data, list(data.columns))
         transformed = nt.transform(data)
 
-        assert isinstance(transformed, np.ndarray)
-        assert transformed.shape == (6, )
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (6, 1)
 
         reverse = nt.reverse_transform(transformed)
 
@@ -42,11 +42,11 @@ class TestNumericalTransformer:
         nt.fit(data, list(data.columns))
         transformed = nt.transform(data)
 
-        assert isinstance(transformed, np.ndarray)
-        assert transformed.shape == (5, )
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (5, 1)
 
         reverse = nt.reverse_transform(transformed)
-        assert list(reverse) == [1, 2, 1, 2, 1]
+        assert list(reverse['a']) == [1, 2, 1, 2, 1]
 
     def test_int_nan(self):
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
@@ -55,7 +55,7 @@ class TestNumericalTransformer:
         nt.fit(data, list(data.columns))
         transformed = nt.transform(data)
 
-        assert isinstance(transformed, np.ndarray)
+        assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (6, 2)
 
         reverse = nt.reverse_transform(transformed)
@@ -65,17 +65,17 @@ class TestNumericalTransformer:
 class TestGaussianCopulaTransformer:
 
     def test_stats(self):
-        data = np.random.normal(loc=4, scale=4, size=1000)
+        data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['a'])
 
         ct = GaussianCopulaTransformer()
-        ct.fit(data)
+        ct.fit(data, list(data.columns))
         transformed = ct.transform(data)
 
-        assert isinstance(transformed, np.ndarray)
-        assert transformed.shape == (1000, )
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (1000, 1)
 
-        np.testing.assert_almost_equal(transformed.mean(), 0, decimal=1)
-        np.testing.assert_almost_equal(transformed.std(), 1, decimal=1)
+        np.testing.assert_almost_equal(transformed['a.value'].mean(), 0, decimal=1)
+        np.testing.assert_almost_equal(transformed['a.value'].std(), 1, decimal=1)
 
         reverse = ct.reverse_transform(transformed)
 
@@ -85,12 +85,12 @@ class TestGaussianCopulaTransformer:
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
 
         ct = GaussianCopulaTransformer()
-        ct.fit(data)
+        ct.fit(data, list(data.columns))
         transformed = ct.transform(data)
 
-        assert isinstance(transformed, np.ndarray)
+        assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (6, 2)
-        assert list(transformed[:, 1]) == [0, 0, 0, 0, 1, 0]
+        assert list(transformed.iloc[:, 1]) == [0, 0, 0, 0, 1, 0]
 
         reverse = ct.reverse_transform(transformed)
 
@@ -100,11 +100,11 @@ class TestGaussianCopulaTransformer:
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
 
         ct = GaussianCopulaTransformer(null_column=False)
-        ct.fit(data)
+        ct.fit(data, list(data.columns))
         transformed = ct.transform(data)
 
-        assert isinstance(transformed, np.ndarray)
-        assert transformed.shape == (6, )
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (6, 1)
 
         reverse = ct.reverse_transform(transformed)
 
@@ -114,23 +114,23 @@ class TestGaussianCopulaTransformer:
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
 
         ct = GaussianCopulaTransformer(dtype=int)
-        ct.fit(data)
+        ct.fit(data, list(data.columns))
         transformed = ct.transform(data)
 
-        assert isinstance(transformed, np.ndarray)
-        assert transformed.shape == (5, )
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (5, 1)
 
         reverse = ct.reverse_transform(transformed)
-        assert list(reverse) == [1, 2, 1, 2, 1]
+        assert list(reverse['a']) == [1, 2, 1, 2, 1]
 
     def test_int_nan(self):
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
 
         ct = GaussianCopulaTransformer(dtype=int)
-        ct.fit(data)
+        ct.fit(data, list(data.columns))
         transformed = ct.transform(data)
 
-        assert isinstance(transformed, np.ndarray)
+        assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (6, 2)
 
         reverse = ct.reverse_transform(transformed)

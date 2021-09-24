@@ -1,5 +1,4 @@
 """BaseTransformer module."""
-import pandas as pd
 
 
 class BaseTransformer:
