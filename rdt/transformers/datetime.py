@@ -127,6 +127,9 @@ class DatetimeTransformer(BaseTransformer):
         Returns:
             pandas.Series
         """
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 
