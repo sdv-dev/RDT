@@ -75,6 +75,33 @@ class NumericalTransformer(BaseTransformer):
         self.min_value = min_value
         self.max_value = max_value
 
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        output_types = {
+            'value': 'float',
+        }
+        if self.null_transformer and self.null_transformer.creates_null_column():
+            output_types['is_null'] = 'float'
+
+        return self._add_prefix(output_types)
+
+    def is_composition_identity(self):
+        """Return whether composition of transform and reverse transform produces the input data.
+
+        Returns:
+            bool:
+                Whether or not transforming and then reverse transforming returns the input data.
+        """
+        if self.null_transformer and not self.null_transformer.creates_null_column():
+            return False
+
+        return self.COMPOSITION_IS_IDENTITY
+
     @staticmethod
     def _learn_rounding_digits(data):
         # check if data has any decimals
@@ -96,21 +123,6 @@ class NumericalTransformer(BaseTransformer):
                     return decimal
 
         return None
-
-    def get_output_types(self):
-        """Return the output types supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported data types.
-        """
-        output_types = {
-            'value': 'float',
-        }
-        if self.null_transformer and self.null_transformer.creates_null_column():
-            output_types['is_null'] = 'float'
-
-        return self._add_prefix(output_types)
 
     def _fit(self, data):
         """Fit the transformer to the data.
