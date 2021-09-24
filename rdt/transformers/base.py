@@ -33,6 +33,7 @@ class BaseTransformer:
         for subclass in cls.__subclasses__():
             if abc.ABC not in subclass.__bases__:
                 subclasses.append(subclass)
+
             subclasses += subclass.get_subclasses()
 
         return subclasses

@@ -1,6 +1,7 @@
 """Transformers module."""
 
 from collections import defaultdict
+from functools import lru_cache
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
@@ -93,9 +94,9 @@ def get_transformers_by_type():
     """Build a ``dict`` mapping data types to valid existing transformers for that type.
 
     Returns:
-            dict:
-                Mapping of data types to a list of existing transformers that take that
-                type as an input.
+        dict:
+            Mapping of data types to a list of existing transformers that take that
+            type as an input.
     """
     data_type_transformers = defaultdict(list)
     transformer_classes = BaseTransformer.get_subclasses()
@@ -109,12 +110,13 @@ def get_transformers_by_type():
     return data_type_transformers
 
 
+@lru_cache()
 def get_default_transformers():
     """Build a ``dict`` mapping data types to a default transformer for that type.
 
     Returns:
-            dict:
-                Mapping of data types to a transformer.
+        dict:
+            Mapping of data types to a transformer.
     """
     transformers_by_type = get_transformers_by_type()
     defaults = {}
@@ -125,3 +127,15 @@ def get_default_transformers():
             defaults[data_type] = transformers[0]
 
     return defaults
+
+
+@lru_cache()
+def get_default_transformer(data_type):
+    """Gets default transformer for a data type.
+
+    Returns:
+        Transformer:
+            Default transformer for data type.
+    """
+    default_transformers = get_default_transformers()
+    return default_transformers[data_type]
