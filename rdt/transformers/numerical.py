@@ -78,8 +78,9 @@ class NumericalTransformer(BaseTransformer):
     @staticmethod
     def _learn_rounding_digits(data):
         # check if data has any decimals
+        data = np.array(data)
         roundable_data = data[~(np.isinf(data) | pd.isnull(data))]
-        if (roundable_data % 1 != 0).any():
+        if ((roundable_data % 1) != 0).any():
             if not (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
                 return None
 
