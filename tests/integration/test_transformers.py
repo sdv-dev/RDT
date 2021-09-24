@@ -33,6 +33,7 @@ TRANSFORMER_TO_TRANSFORMED_TYPE = {
 
 
 def _get_subclasses(obj):
+    """Get all subclasses of the given class."""
     subclasses = obj.__subclasses__()
 
     if len(subclasses) == 0:
@@ -45,6 +46,13 @@ def _get_subclasses(obj):
 
 
 def _build_generator_map():
+    """Build a map of data type to data generator.
+
+    Output:
+        dict:
+            A mapping of data type (str) to a list of data
+            generators (rdt.tests.datasets.BaseDatasetGenerator).
+    """
     generators = {}
 
     for g in tests.datasets.BaseDatasetGenerator.__subclasses__():
@@ -53,55 +61,59 @@ def _build_generator_map():
     return generators
 
 
-def _validate_input_type(input_type):
-    assert input_type is not None
-
-
 def _find_dataset_generators(data_type, generators):
+    """Find the dataset generators for the given data_type."""
     if data_type is None or data_type not in generators:
         return []
 
     return generators[data_type]
 
 
+def _validate_input_type(input_type):
+    """Check that the transformer input type is not null."""
+    assert input_type is not None
+
+
 def _validate_transformed_data(transformer, transformed_data):
+    """Check that the transformed data is the expected dtype."""
+    # TODO: Update to use `get_output_types`
     expected_dtype = TRANSFORMER_TO_TRANSFORMED_TYPE[transformer]
     assert transformed_data.dtype == expected_dtype
 
 
-def _validate_reverse_transformed_data(transformer, reversed_data, input_dtype):
+def _validate_reverse_transformed_data(reversed_data, input_dtype):
+    """Check that the reverse transformed data is the expected dtype.
+
+    Expect that the dtype is equal to the dtype of the input data.
+    """
     expected_dtype = input_dtype
     assert reversed_data.dtype == expected_dtype
 
 
-def _validate_composition(transformer, reversed_data, input_data):
-    # if transformer.is_composition_identity():
+def _validate_composition(reversed_data, input_data):
+    """Check that the reverse transformed data is equal to the input.
+
+    This is only applicable if the transformer has the composition
+    identity property.
+    """
+    # TODO: only do if transformer.is_composition_identity():
     pd.testing.assert_series_equal(reversed_data, input_data, check_dtype=False)
 
 
-def _test_transformer_with_hypertransformer(transformer, input_data):
-    # reverse transformed data using hypertransformer, check that output type is same as input.
-    col_name = 'test_col'
-    data = pd.DataFrame({col_name: input_data})
-
-    hypertransformer = rdt.HyperTransformer(transformers={
-        col_name: {'class': transformer.__name__},
-    })
-    hypertransformer.fit(data)
-    transformed = hypertransformer.transform(data)
-
-    # Expect transformed data to be float.
-    for dt in transformed.dtypes:
-        assert dt == 'float' or dt == 'int'
-
-    out = hypertransformer.reverse_transform(transformed)
-    # Except reverse transformed data to have the same dtype as the original data.
-    assert out[col_name].dtype == input_data.dtype
-
-
 def _test_transformer_with_dataset(transformer, input_data):
-    # Fit
+    """Test the given transformer with the given input data.
+
+    This method verifies the transformed data's dtype, the reverse
+    transformed data (if `is_composition_identity`) and the dtype.
+
+    Args:
+        transformer (rdt.transformers.BaseTransformer):
+            The transformer to test.
+        input_data (pandas.Series):
+            The data to test on.
+    """
     t = transformer()
+    # Fit
     t.fit(input_data)
 
     # Transform
@@ -110,7 +122,7 @@ def _test_transformer_with_dataset(transformer, input_data):
 
     # Reverse transform
     out = t.reverse_transform(transformed)
-    _validate_reverse_transformed_data(transformer, out, input_data.dtype)
+    _validate_reverse_transformed_data(out, input_data.dtype)
 
     if isinstance(out, pd.DatetimeIndex):
         out = out.to_series(index=pd.RangeIndex(start=0, stop=DATA_SIZE, step=1))
@@ -119,7 +131,48 @@ def _test_transformer_with_dataset(transformer, input_data):
     if isinstance(out, np.ndarray):
         out = pd.Series(out)
 
-    _validate_composition(transformer, out, input_data)
+    _validate_composition(out, input_data)
+
+
+def _validate_hypertransformer_transformed_data(transformed_data):
+    """Check that the transformed data is of type float."""
+    for dt in transformed_data.dtypes:
+        assert dt == 'float'
+
+
+def _validate_hypertransformer_reversed_transformed_data(reversed_data, input_dtype):
+    """Check that the reverse transformed data has the same dtype as the input."""
+    assert reversed_data.dtype == input_dtype
+
+
+def _test_transformer_with_hypertransformer(transformer, input_data):
+    """Test the given transformer in the hypertransformer.
+
+    Run the provided transformer using the hypertransformer using the provided
+    input data. Verify that the expected dtypes are returned by transform
+    and reverse_transform.
+
+    Args:
+        transformer (rdt.transformers.BaseTransformer):
+            The transformer to test.
+        input_data (pandas.Series):
+            The data to test on.
+    """
+    # reverse transformed data using hypertransformer, check that output type is same as input.
+    col_name = 'test_col'
+    data = pd.DataFrame({col_name: input_data})
+
+    hypertransformer = rdt.HyperTransformer(transformers={
+        col_name: {'class': transformer.__name__},
+    })
+    hypertransformer.fit(data)
+
+    transformed = hypertransformer.transform(data)
+    _validate_hypertransformer_transformed_data(transformed)
+
+    out = hypertransformer.reverse_transform(transformed)
+    _validate_hypertransformer_reversed_transformed_data(
+        out[col_name], input_data.dtype)
 
 
 transformers = _get_subclasses(rdt.transformers.BaseTransformer)
@@ -128,6 +181,15 @@ generators = _build_generator_map()
 
 @pytest.mark.parametrize('transformer', transformers)
 def test_transformer(subtests, transformer):
+    """Test the transformer end-to-end.
+
+    Test the transformer end-to-end with at least one generated dataset. Test
+    both the transformer by itself, and by running in the hypertransformer.
+
+    Args:
+        transformer (rdt.transformers.BaseTransformer):
+            The transformer to test.
+    """
     data_type = TRANSFORMER_TO_TYPE[transformer]  # transformer.get_input_type()
     assert data_type is not None
 
