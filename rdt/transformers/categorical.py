@@ -313,7 +313,7 @@ class OneHotEncodingTransformer(BaseTransformer):
             dict:
                 Mapping from the transformed column names to the produced data types.
         """
-        output_types = {f'value{i}': 'integer' for i in range(len(self.dummies))}
+        output_types = {f'value{i}': 'float' for i in range(len(self.dummies))}
 
         return self._add_prefix(output_types)
 

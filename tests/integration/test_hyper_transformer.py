@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import pytest
 
 from rdt import HyperTransformer
 from rdt.transformers import OneHotEncodingTransformer
@@ -101,7 +100,6 @@ def get_transformers():
     }
 
 
-@pytest.mark.xfail
 def test_hypertransformer_with_transformers():
     data = get_input_data_without_nan()
     transformers = get_transformers()
@@ -128,7 +126,6 @@ def test_hypertransformer_with_transformers():
         assert name not in reversed_names
 
 
-@pytest.mark.xfail
 def test_hypertransformer_with_transformers_nan_data():
     data = get_input_data_with_nan()
     transformers = get_transformers()
@@ -155,7 +152,6 @@ def test_hypertransformer_with_transformers_nan_data():
         assert name not in reversed_names
 
 
-@pytest.mark.xfail
 def test_hypertransformer_without_transformers():
     data = get_input_data_without_nan()
 
@@ -181,7 +177,6 @@ def test_hypertransformer_without_transformers():
         assert name not in reversed_names
 
 
-@pytest.mark.xfail
 def test_hypertransformer_without_transformers_nan_data():
     data = get_input_data_with_nan()
 
@@ -207,7 +202,6 @@ def test_hypertransformer_without_transformers_nan_data():
         assert name not in reversed_names
 
 
-@pytest.mark.xfail
 def test_single_category():
     ht = HyperTransformer(transformers={
         'a': OneHotEncodingTransformer()
@@ -224,7 +218,6 @@ def test_single_category():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-@pytest.mark.xfail
 def test_dtype_category():
     df = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
 
@@ -235,7 +228,7 @@ def test_dtype_category():
 
     rever = ht.reverse_transform(trans)
 
-    pd.testing.assert_frame_equal(df, rever)
+    pd.testing.assert_frame_equal(rever, df)
 
 
 def test_empty_transformers():
@@ -266,7 +259,6 @@ def test_empty_transformers_nan_data():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-@pytest.mark.xfail
 def test_subset_of_columns():
     """HyperTransform should be able to transform a subset of the training columns.
 
@@ -284,7 +276,6 @@ def test_subset_of_columns():
     pd.testing.assert_frame_equal(subset, reverse)
 
 
-@pytest.mark.xfail
 def test_subset_of_columns_nan_data():
     """HyperTransform should be able to transform a subset of the training columns.
 
