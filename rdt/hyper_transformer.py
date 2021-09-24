@@ -86,30 +86,43 @@ class HyperTransformer:
     _transformers_sequence = []
     _output_columns = []
     _input_columns = []
-    _generated_columns = []
+    _temp_columns = []
+
+    def _create_multi_column_fields(self):
+        multi_column_fields = {}
+        for field in list(self.field_types) + list(self.field_transformers):
+            if isinstance(field, tuple):
+                for column in field:
+                    multi_column_fields[column] = field
+        return multi_column_fields
 
     def __init__(self, copy=True, field_types=None, data_type_transformers=None,
                  field_transformers=None, transform_output_types=None):
         self.copy = copy
         self.field_types = field_types or {}
-        self._default_transformers = get_default_transformers()
         self.data_type_transformers = data_type_transformers or {}
         self.field_transformers = field_transformers or {}
         self.transform_output_types = transform_output_types or self._DEFAULT_OUTPUT_TYPES
+        self._default_transformers = get_default_transformers()
+        self._multi_column_fields = self._create_multi_column_fields()
 
     @staticmethod
     def _field_in_data(field, data):
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
+    @staticmethod
+    def _add_field_to_set(field, field_set):
+        if isinstance(field, tuple):
+            field_set.update(field)
+        else:
+            field_set.add(field)
+
     def _update_field_types(self, data):
         # get set of provided fields including multi-column fields
         provided_fields = set()
         for field in self.field_types.keys():
-            if isinstance(field, tuple):
-                provided_fields.update(field)
-            else:
-                provided_fields.add(field)
+            self._add_field_to_set(field, provided_fields)
 
         for field in data:
             if field not in provided_fields:
@@ -122,17 +135,29 @@ class HyperTransformer:
         output_types = transformer.get_output_types()
         next_transformers = transformer.get_next_transformers()
         for (output, output_type) in output_types.items():
-            if output_type in self.transform_output_types:
-                self._output_columns.append(output)
-            else:
-                self._generated_columns.append(output)
+            if output in self.field_transformers:
+                self._temp_columns.append(output)
                 transformed_data = transformer.transform(data)
-                if output not in self.field_transformers and next_transformers is not None:
-                    self.field_transformers[output] = next_transformers[output]
-                if output in self.field_transformers:
-                    next_transformer = self.field_transformers[output]
-                else:
-                    next_transformer = self._default_transformers[output_type]
+                next_transformer = self.field_transformers[output]
+                self._fit_field_transformer(transformed_data, output, next_transformer)
+            elif (output in self._multi_column_fields and
+                  self._field_in_data(self._multi_column_fields[output], data)):
+                transformed_data = transformer.transform(data)
+                multi_column_field = self._multi_column_fields[output]
+                self._temp_columns.append(multi_column_field)
+                next_transformer = self.field_transformers[multi_column_field]
+                self._fit_field_transformer(transformed_data, multi_column_field, next_transformer)
+            elif output_type in self.transform_output_types:
+                self._output_columns.append(output)
+            elif next_transformers is not None:
+                self._temp_columns.append(output)
+                transformed_data = transformer.transform(data)
+                next_transformer = next_transformers[output]
+                self._fit_field_transformer(transformed_data, output, next_transformer)
+            else:
+                self._temp_columns.append(output)
+                transformed_data = transformer.transform(data)
+                next_transformer = self._default_transformers[output_type]
                 self._fit_field_transformer(transformed_data, output, next_transformer)
 
     def fit(self, data):
@@ -149,17 +174,17 @@ class HyperTransformer:
         for field in self.field_transformers:
             if self._field_in_data(field, data):
                 self._fit_field_transformer(data, field, self.field_transformers[field])
-                fitted_fields.add(field)
+                self._add_field_to_set(field, fitted_fields)
 
         for (field, data_type) in self.field_types.items():
             if field not in fitted_fields:
-                fitted_fields.add(field)
                 if data_type in self.data_type_transformers:
                     transformer = self.data_type_transformers[data_type]
                 else:
                     transformer = self._default_transformers[data_type]
 
                 self._fit_field_transformer(data, field, transformer)
+                self._add_field_to_set(field, fitted_fields)
 
     def transform(self, data):
         """Transform the data.
@@ -183,7 +208,7 @@ class HyperTransformer:
         columns_to_drop = [
             column
             for column in data
-            if column in self._input_columns or column in self._generated_columns
+            if column in self._input_columns or column in self._temp_columns
         ]
         data = data.drop(columns_to_drop, axis=1)
         return data
@@ -216,7 +241,10 @@ class HyperTransformer:
         for transformer in reversed(self._transformers_sequence):
             data = transformer.reverse_transform(data, drop=False)
 
-        columns_to_drop = [col for col in data
-                           if col in self._output_columns or col in self._generated_columns]
+        columns_to_drop = [
+            col
+            for col in data
+            if col in self._output_columns or col in self._temp_columns
+        ]
         reversed_data = data.drop(columns_to_drop, axis=1)
         return reversed_data

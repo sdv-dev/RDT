@@ -178,7 +178,7 @@ class BaseTransformer:
         raise NotImplementedError()
 
     def transform(self, data, drop=True):
-        """Transform the `self._columns` of the `data`.
+        """Transform the `self.columns` of the `data`.
 
         Args:
             data (pandas.DataFrame):
@@ -199,7 +199,7 @@ class BaseTransformer:
 
         self._set_columns_data(data, transformed_data, self.output_columns)
         if drop:
-            data.drop(self._columns, axis=1, inplace=True)
+            data.drop(self.columns, axis=1, inplace=True)
 
         return data
 
@@ -258,6 +258,6 @@ class BaseTransformer:
 
         self._set_columns_data(data, reversed_data, self.columns)
         if drop:
-            data.drop(self._output_columns, axis=1, inplace=True)
+            data.drop(self.output_columns, axis=1, inplace=True)
 
         return data
