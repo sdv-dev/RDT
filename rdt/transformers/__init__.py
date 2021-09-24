@@ -131,7 +131,7 @@ def get_default_transformers():
 
 @lru_cache()
 def get_default_transformer(data_type):
-    """Gets default transformer for a data type.
+    """Get default transformer for a data type.
 
     Returns:
         Transformer:
