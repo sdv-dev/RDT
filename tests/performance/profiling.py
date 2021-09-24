@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 
-def _profile_time(transformer, method_name, dataset, iterations=100, copy=False):
+def _profile_time(transformer, method_name, dataset, iterations=100, copy=False, **kwargs):
     total_time = 0
     for _ in range(iterations):
         if copy:
@@ -20,22 +20,26 @@ def _profile_time(transformer, method_name, dataset, iterations=100, copy=False)
             method = getattr(transformer, method_name)
 
         start_time = timeit.default_timer()
-        method(dataset)
+        method(dataset, **kwargs)
         total_time += timeit.default_timer() - start_time
 
     return total_time / iterations
 
 
-def _set_memory_for_method(method, dataset, peak_memory):
+def _set_memory_for_method(method, dataset, peak_memory, **kwargs):
     tracemalloc.start()
-    method(dataset)
+    method(dataset, **kwargs)
     peak_memory.value = tracemalloc.get_traced_memory()[1]
     tracemalloc.stop()
 
 
-def _profile_memory(method, dataset):
+def _profile_memory(method, dataset, **kwargs):
     peak_memory = Value('i', 0)
-    profiling_process = Process(target=_set_memory_for_method, args=(method, dataset, peak_memory))
+    profiling_process = Process(
+        target=_set_memory_for_method,
+        args=(method, dataset, peak_memory),
+        kwargs=kwargs
+    )
     profiling_process.start()
     profiling_process.join()
     return peak_memory.value
@@ -66,12 +70,22 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     """
     fit_size = fit_size or transform_size
     fit_dataset = dataset_generator.generate(fit_size)
-    fit_time = _profile_time(transformer, 'fit', fit_dataset, copy=True)
-    fit_memory = _profile_memory(transformer.fit, fit_dataset)
-    transformer.fit(fit_dataset)
-
     replace = transform_size > fit_size
     transform_dataset = np.random.choice(fit_dataset, transform_size, replace=replace)
+
+    try:
+        fit_time = _profile_time(transformer, 'fit', fit_dataset, copy=True)
+        fit_memory = _profile_memory(transformer.fit, fit_dataset)
+        transformer.fit(fit_dataset)
+    except TypeError:
+        # temporarily support both old and new style transformers
+        columns = ['data']
+        fit_dataset = pd.DataFrame(fit_dataset, columns=columns)
+        transform_dataset = pd.DataFrame(transform_dataset, columns=columns)
+        fit_time = _profile_time(transformer, 'fit', fit_dataset, copy=True, columns=columns)
+        fit_memory = _profile_memory(transformer.fit, fit_dataset, columns=columns)
+        transformer.fit(fit_dataset, columns=columns)
+
     transform_time = _profile_time(transformer, 'transform', transform_dataset)
     transform_memory = _profile_memory(transformer.transform, transform_dataset)
 
