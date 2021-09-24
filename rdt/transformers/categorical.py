@@ -399,6 +399,7 @@ class OneHotEncodingTransformer(BaseTransformer):
             data = data.reshape(-1, 1)
 
         indices = np.argmax(data, axis=1)
+
         return pd.Series(indices).map(self.dummies.__getitem__)
 
 
