@@ -4,14 +4,18 @@ import datetime
 
 import numpy as np
 
-from tests.performance.datasets.base import BaseDatasetGenerator
-from tests.performance.datasets.utils import add_nans
+from tests.datasets.base import BaseDatasetGenerator
+from tests.datasets.utils import add_nans
 
 
-class RandomGapDatetimeGenerator(BaseDatasetGenerator):
+class DatetimeGenerator(BaseDatasetGenerator):
+    """Base class for generators that generate datatime data"""
+
+    DATA_TYPE = 'datetime'
+
+
+class RandomGapDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with random gaps between them"""
-
-    TYPE = 'datetime'
 
     @staticmethod
     def generate(num_rows):
@@ -21,10 +25,8 @@ class RandomGapDatetimeGenerator(BaseDatasetGenerator):
         return np.array(dates, dtype='datetime64')
 
 
-class RandomGapSecondsDatetimeGenerator(BaseDatasetGenerator):
+class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with random gaps of seconds between them"""
-
-    TYPE = 'datetime'
 
     @staticmethod
     def generate(num_rows):
@@ -34,10 +36,8 @@ class RandomGapSecondsDatetimeGenerator(BaseDatasetGenerator):
         return np.array(dates, dtype='datetime64')
 
 
-class RandomGapDatetimeNaNsGenerator(BaseDatasetGenerator):
+class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
     """Generator that creates dates with random gaps and NaNs"""
-
-    TYPE = 'datetime'
 
     @staticmethod
     def generate(num_rows):
@@ -45,10 +45,8 @@ class RandomGapDatetimeNaNsGenerator(BaseDatasetGenerator):
         return add_nans(dates.astype('O'))
 
 
-class EqualGapHoursDatetimeGenerator(BaseDatasetGenerator):
+class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with hour gaps between them"""
-
-    TYPE = 'datetime'
 
     @staticmethod
     def generate(num_rows):
@@ -58,10 +56,8 @@ class EqualGapHoursDatetimeGenerator(BaseDatasetGenerator):
         return np.array(dates, dtype='datetime64')
 
 
-class EqualGapDaysDatetimeGenerator(BaseDatasetGenerator):
+class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with 1 day gaps between them"""
-
-    TYPE = 'datetime'
 
     @staticmethod
     def generate(num_rows):
@@ -71,10 +67,8 @@ class EqualGapDaysDatetimeGenerator(BaseDatasetGenerator):
         return np.array(dates, dtype='datetime64')
 
 
-class EqualGapWeeksDatetimeGenerator(BaseDatasetGenerator):
+class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with 1 week gaps between them"""
-
-    TYPE = 'datetime'
 
     @staticmethod
     def generate(num_rows):

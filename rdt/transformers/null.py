@@ -5,15 +5,13 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.base import BaseTransformer
-
 IRREVERSIBLE_WARNING = (
     'Replacing nulls with existing value without `null_column`, which is not reversible. '
     'Use `null_column=True` to ensure that the transformation is reversible.'
 )
 
 
-class NullTransformer(BaseTransformer):
+class NullTransformer():
     """Transformer for data that contains Null values.
 
     Args:
@@ -37,6 +35,15 @@ class NullTransformer(BaseTransformer):
         self.fill_value = fill_value
         self.null_column = null_column
         self.copy = copy
+
+    def creates_null_column(self):
+        """Indicate whether this transformer creates a null column on transform.
+
+        Returns:
+            bool:
+                Whether a null column is created on transform.
+        """
+        return bool(self._null_column)
 
     def fit(self, data):
         """Fit the transformer to the data.

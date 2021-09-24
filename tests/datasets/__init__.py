@@ -1,10 +1,11 @@
 """Dataset Generators to test the RDT Transformers."""
 
-from tests.performance.datasets import boolean, datetime, numerical
-from tests.performance.datasets.base import BaseDatasetGenerator
+from tests.datasets import boolean, categorical, datetime, numerical
+from tests.datasets.base import BaseDatasetGenerator
 
 __all__ = [
     'boolean',
+    'categorical',
     'datetime',
     'numerical',
     'BaseDatasetGenerator',

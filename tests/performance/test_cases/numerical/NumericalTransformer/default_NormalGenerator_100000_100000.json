@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.numerical.NormalGenerator",
+    "dataset": "tests.datasets.numerical.NormalGenerator",
     "transformer": "rdt.transformers.numerical.NumericalTransformer",
     "kwargs": {},
     "fit_size": 100000,

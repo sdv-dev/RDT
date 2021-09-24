@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.numerical.AlmostConstantIntegerGenerator",
+    "dataset": "tests.datasets.numerical.AlmostConstantIntegerGenerator",
     "transformer": "rdt.transformers.numerical.NumericalTransformer",
     "kwargs": {},
     "fit_size": 100000,

@@ -1,5 +1,5 @@
 {
-    "dataset": "tests.performance.datasets.categorical.SingleStringGenerator",
+    "dataset": "tests.datasets.categorical.SingleStringGenerator",
     "transformer": "rdt.transformers.categorical.LabelEncodingTransformer",
     "kwargs": {},
     "fit_size": 1000,
