@@ -1,5 +1,6 @@
 """Transformers module."""
 
+from collections import defaultdict
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
 from rdt.transformers.categorical import (
@@ -23,7 +24,7 @@ __all__ = [
 
 TRANSFORMERS = {
     transformer.__name__: transformer
-    for transformer in BaseTransformer.__subclasses__()
+    for transformer in BaseTransformer.get_subclasses()
 }
 DEFAULT_TRANSFORMERS = {
     'numerical': NumericalTransformer,
@@ -95,14 +96,12 @@ def get_transformers_by_type():
                 Mapping of data types to a list of existing transformers that take that
                 type as an input.
     """
-    data_type_transformers = {}
+    data_type_transformers = defaultdict(list)
     transformer_classes = BaseTransformer.get_subclasses()
     for transformer in transformer_classes:
         try:
             input_type = transformer.get_input_type()
-            transformers_for_type = data_type_transformers.get(input_type, [])
-            transformers_for_type.append(transformer)
-            data_type_transformers.update({input_type: transformers_for_type})
+            data_type_transformers[input_type].append(transformer)
         except AttributeError:
             pass
 
