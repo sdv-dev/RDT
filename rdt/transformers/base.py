@@ -16,9 +16,9 @@ class BaseTransformer:
     COMPOSITION_IS_IDENTITY = None
     NEXT_TRANSFORMERS = None
 
-    _columns = None
-    _column_prefix = None
-    _output_columns = None
+    columns = None
+    column_prefix = None
+    output_columns = None
 
     @classmethod
     def get_input_type(cls):
@@ -36,7 +36,7 @@ class BaseTransformer:
 
         output = {}
         for output_columns, output_type in dictionary.items():
-            output[f'{self._column_prefix}.{output_columns}'] = output_type
+            output[f'{self.column_prefix}.{output_columns}'] = output_type
 
         return output
 
@@ -95,7 +95,7 @@ class BaseTransformer:
         if missing:
             raise KeyError(f'Columns {missing} were not present in the data.')
 
-        self._columns = columns
+        self.columns = columns
 
     @staticmethod
     def _get_columns_data(data, columns):
@@ -112,14 +112,14 @@ class BaseTransformer:
             data[columns] = columns_data
 
     def _build_output_columns(self, data):
-        self._column_prefix = '#'.join(self._columns)
-        self._output_columns = list(self.get_output_types().keys())
+        self.column_prefix = '#'.join(self.columns)
+        self.output_columns = list(self.get_output_types().keys())
 
         # make sure none of the generated `output_columns` exists in the data
         data_columns = set(data.columns)
-        while data_columns & set(self._output_columns):
-            self._column_prefix += '#'
-            self._output_columns = list(self.get_output_types().keys())
+        while data_columns & set(self.output_columns):
+            self.column_prefix += '#'
+            self.output_columns = list(self.get_output_types().keys())
 
     def _fit(self, columns_data):
         """Fit the transformer to the data.
@@ -141,7 +141,7 @@ class BaseTransformer:
         """
         self._store_columns(columns, data)
 
-        columns_data = self._get_columns_data(data, self._columns)
+        columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
 
         self._build_output_columns(data)
@@ -160,7 +160,7 @@ class BaseTransformer:
         raise NotImplementedError()
 
     def transform(self, data):
-        """Transform the `self._columns` of the `data`.
+        """Transform the `self.columns` of the `data`.
 
         Args:
             data (pandas.DataFrame):
@@ -171,16 +171,16 @@ class BaseTransformer:
                 The entire table, containing the transformed data.
         """
         # if `data` doesn't have the columns that were fitted on, don't transform
-        if any(column not in data.columns for column in self._columns):
+        if any(column not in data.columns for column in self.columns):
             return data
 
         data = data.copy()
 
-        columns_data = self._get_columns_data(data, self._columns)
+        columns_data = self._get_columns_data(data, self.columns)
         transformed_data = self._transform(columns_data)
 
-        self._set_columns_data(data, transformed_data, self._output_columns)
-        data.drop(self._columns, axis=1, inplace=True)
+        self._set_columns_data(data, transformed_data, self.output_columns)
+        data.drop(self.columns, axis=1, inplace=True)
 
         return data
 
@@ -227,15 +227,15 @@ class BaseTransformer:
                 The entire table, containing the reverted data.
         """
         # if `data` doesn't have the columns that were transformed, don't reverse_transform
-        if any(column not in data.columns for column in self._output_columns):
+        if any(column not in data.columns for column in self.output_columns):
             return data
 
         data = data.copy()
 
-        columns_data = self._get_columns_data(data, self._output_columns)
+        columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
 
-        self._set_columns_data(data, reversed_data, self._columns)
-        data.drop(self._output_columns, axis=1, inplace=True)
+        self._set_columns_data(data, reversed_data, self.columns)
+        data.drop(self.output_columns, axis=1, inplace=True)
 
         return data
