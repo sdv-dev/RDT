@@ -33,6 +33,7 @@ class DatetimeTransformer(BaseTransformer):
             orders of magnitued of the transformed values, ensures that reverted values always
             are zero on the lower time units.
     """
+
     INPUT_TYPE = 'datetime'
     OUTPUT_TYPES = None
     DETERMINISTIC_TRANSFORM = True
@@ -46,6 +47,21 @@ class DatetimeTransformer(BaseTransformer):
         self.nan = nan
         self.null_column = null_column
         self.strip_constant = strip_constant
+
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        output_types = {
+            'value': 'float',
+        }
+        if self.null_transformer and self.null_transformer.creates_null_column():
+            output_types['is_null'] = 'float'
+
+        return self._add_prefix(output_types)
 
     def _find_divider(self, transformed):
         self.divider = 1
@@ -70,21 +86,6 @@ class DatetimeTransformer(BaseTransformer):
 
         return transformed
 
-    def get_output_types(self):
-        """Return the output types supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported data types.
-        """
-        if self.null_transformer._null_column:  # whether an extra column is generated
-            return {
-                f'{self._columns[0]}': 'float',
-                f'{self._columns[0]}.is_null': 'bool',
-            }
-
-        return {self._columns[0]: 'float'}
-
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -95,7 +96,7 @@ class DatetimeTransformer(BaseTransformer):
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
 
-        transformed = self._transform(data)
+        transformed = self._transform_helper(data)
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(transformed)
 
@@ -114,7 +115,7 @@ class DatetimeTransformer(BaseTransformer):
 
         data = self._transform_helper(data)
 
-        return self.null_transformer._transform(data)
+        return self.null_transformer.transform(data)
 
     def _reverse_transform(self, data):
         """Convert float values back to datetimes.
@@ -127,7 +128,7 @@ class DatetimeTransformer(BaseTransformer):
             pandas.Series
         """
         if self.nan is not None:
-            data = self.null_transformer._reverse_transform(data)
+            data = self.null_transformer.reverse_transform(data)
 
         if isinstance(data, np.ndarray) and (data.ndim == 2):
             data = data[:, 0]
