@@ -154,8 +154,12 @@ class HyperTransformer:
             self._transformers = self._analyze(data)
 
         for column_name, transformer in self._transformers.items():
-            column = data[column_name]
-            transformer.fit(column)
+            try:
+                column = data[column_name]
+                transformer.fit(column)
+            except TypeError:
+                # temporarily support both old and new style transformers
+                transformer.fit(data, column_name)
 
     def transform(self, data):
         """Transform the data.
@@ -176,8 +180,13 @@ class HyperTransformer:
         drop_columns = []
         for column_name, transformer in self._transformers.items():
             if column_name in data:
-                column = data[column_name]
-                transformed = transformer.transform(column)
+                try:
+                    column = data[column_name]
+                    transformed = transformer.transform(column)
+                except AttributeError:
+                    # temporarily support both old and new style transformers
+                    transformed = transformer.transform(data)
+                    transformed = transformed[transformer.output_columns].to_numpy()
 
                 shape = transformed.shape
 
@@ -244,8 +253,15 @@ class HyperTransformer:
         for column_name, transformer in self._transformers.items():
             columns = self._get_columns(data, column_name)
             if not columns.empty:
-                columns_data = data[columns].values
-                reversed_data = transformer.reverse_transform(columns_data)
+                try:
+                    columns_data = data[columns].values
+                    reversed_data = transformer.reverse_transform(columns_data)
+                except AttributeError:
+                    # temporarily support both old and new style transformers
+                    rename = dict(zip(columns, transformer.output_columns))
+                    reversed_data = transformer.reverse_transform(data.rename(columns=rename))
+                    reversed_data = reversed_data[transformer.columns[0]].to_numpy()
+
                 data[column_name] = reversed_data
                 drop_columns.extend(set(columns) - {column_name})
 
