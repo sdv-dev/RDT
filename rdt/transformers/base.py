@@ -1,4 +1,5 @@
 """BaseTransformer module."""
+import abc
 
 
 class BaseTransformer:
@@ -19,6 +20,23 @@ class BaseTransformer:
     columns = None
     column_prefix = None
     output_columns = None
+
+    @classmethod
+    def get_subclasses(cls):
+        """Recursively find subclasses of this Baseline.
+
+        Returns:
+            list:
+                List of all subclasses of this class.
+        """
+        subclasses = []
+        for subclass in cls.__subclasses__():
+            if abc.ABC not in subclass.__bases__:
+                subclasses.append(subclass)
+
+            subclasses += subclass.get_subclasses()
+
+        return subclasses
 
     @classmethod
     def get_input_type(cls):
