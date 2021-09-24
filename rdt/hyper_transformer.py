@@ -81,7 +81,7 @@ class HyperTransformer:
     _DEFAULT_OUTPUT_TYPES = [
         'numerical',
         'float',
-        'int'
+        'integer'
     ]
     _transformers_sequence = []
     _output_columns = []
@@ -150,6 +150,7 @@ class HyperTransformer:
             if self._field_in_data(field, data):
                 self._fit_field_transformer(data, field, self.field_transformers[field])
                 fitted_fields.add(field)
+
         for (field, data_type) in self.field_types.items():
             if field not in fitted_fields:
                 fitted_fields.add(field)
@@ -157,6 +158,7 @@ class HyperTransformer:
                     transformer = self.data_type_transformers[data_type]
                 else:
                     transformer = self._default_transformers[data_type]
+
                 self._fit_field_transformer(data, field, transformer)
 
     def transform(self, data):
@@ -178,8 +180,11 @@ class HyperTransformer:
         for transformer in self._transformers_sequence:
             data = transformer.transform(data, drop=False)
 
-        columns_to_drop = [col for col in data
-                           if col in self._input_columns or col in self._generated_columns]
+        columns_to_drop = [
+            column
+            for column in data
+            if column in self._input_columns or column in self._generated_columns
+        ]
         data = data.drop(columns_to_drop, axis=1)
         return data
 
