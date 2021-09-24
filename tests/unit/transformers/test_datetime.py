@@ -11,9 +11,9 @@ class TestDatetimeTransformer:
         data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
 
         # Run
-        dtt.fit(data.copy().to_numpy())
-        transformed = dtt.transform(data.copy().to_numpy())
-        reverted = dtt.reverse_transform(transformed)
+        dtt._fit(data.copy().to_numpy())
+        transformed = dtt._transform(data.copy().to_numpy())
+        reverted = dtt._reverse_transform(transformed)
 
         # Asserts
         expect_trans = np.array([
@@ -29,9 +29,9 @@ class TestDatetimeTransformer:
         data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
 
         # Run
-        dtt.fit(data.copy().to_numpy())
-        transformed = dtt.transform(data.copy().to_numpy())
-        reverted = dtt.reverse_transform(transformed)
+        dtt._fit(data.copy().to_numpy())
+        transformed = dtt._transform(data.copy().to_numpy())
+        reverted = dtt._reverse_transform(transformed)
 
         # Asserts
         expect_trans = np.array([
@@ -45,9 +45,9 @@ class TestDatetimeTransformer:
     def test_reverse_transform_all_none(self):
         dt = pd.to_datetime(['2020-01-01'])
         dtt = DatetimeTransformer(strip_constant=True)
-        dtt.fit(dt)
+        dtt._fit(dt)
 
-        output = dtt.reverse_transform(np.array([None]))
+        output = dtt._reverse_transform(np.array([None]))
 
         expected = pd.to_datetime(['NaT'])
         pd.testing.assert_series_equal(output.to_series(), expected.to_series())
@@ -55,10 +55,10 @@ class TestDatetimeTransformer:
     def test_reverse_transform_2d_ndarray(self):
         dt = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
         dtt = DatetimeTransformer(strip_constant=True)
-        dtt.fit(dt)
+        dtt._fit(dt)
 
         transformed = np.array([[18262.], [18293.], [18322.]])
-        output = dtt.reverse_transform(transformed)
+        output = dtt._reverse_transform(transformed)
 
         expected = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
         pd.testing.assert_series_equal(output.to_series(), expected.to_series())
