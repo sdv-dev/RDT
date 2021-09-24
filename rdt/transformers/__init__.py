@@ -1,6 +1,7 @@
 """Transformers module."""
 
 from collections import defaultdict
+
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
 from rdt.transformers.categorical import (
