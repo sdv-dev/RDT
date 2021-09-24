@@ -113,7 +113,7 @@ Once the transformer is fitted, we can pass the data again to its `transform` me
 to get the transformed version of the data.
 
 ```python3
-transformed = transformer.transform(data['3_datetime'])
+transformed = transformer.transform(data)
 ```
 
 The output will be a `numpy.ndarray` with two columns, one with the datetimes transformed

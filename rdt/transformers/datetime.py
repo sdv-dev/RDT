@@ -48,6 +48,12 @@ class DatetimeTransformer(BaseTransformer):
         self.strip_constant = strip_constant
 
     def is_composition_identity(self):
+        """Return whether composition of transform and reverse transform produces the input data.
+
+        Returns:
+            bool:
+                Whether or not transforming and then reverse transforming returns the input data.
+        """
         if self.null_transformer and not self.null_transformer.creates_null_column():
             return False
 
