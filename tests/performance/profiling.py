@@ -1,5 +1,7 @@
 """Functions to profile performance of RDT Transformers."""
 
+# pylint: disable=W0212
+
 import timeit
 import tracemalloc
 from copy import deepcopy
