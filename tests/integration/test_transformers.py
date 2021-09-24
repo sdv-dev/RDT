@@ -7,31 +7,28 @@ import tests.datasets
 
 DATA_SIZE = 1000
 
-# Temporary mapping
+# Temporary mapping of transformer to (input_type, output_type)
 TRANSFORMER_TO_TYPE = {
-    rdt.transformers.null.NullTransformer: None,
-    rdt.transformers.boolean.BooleanTransformer: 'boolean',
-    rdt.transformers.categorical.CategoricalTransformer: 'categorical',
-    rdt.transformers.categorical.OneHotEncodingTransformer: 'categorical',
-    rdt.transformers.categorical.LabelEncodingTransformer: 'categorical',
-    rdt.transformers.datetime.DatetimeTransformer: 'datetime',
-    rdt.transformers.numerical.NumericalTransformer: 'numerical',
-    rdt.transformers.numerical.GaussianCopulaTransformer: 'numerical',
+    rdt.transformers.null.NullTransformer: (None, None),
+    rdt.transformers.boolean.BooleanTransformer: ('boolean', 'numerical'),
+    rdt.transformers.categorical.CategoricalTransformer: ('categorical', 'numerical'),
+    rdt.transformers.categorical.OneHotEncodingTransformer: ('categorical', 'numerical'),
+    rdt.transformers.categorical.LabelEncodingTransformer: ('categorical', 'numerical'),
+    rdt.transformers.datetime.DatetimeTransformer: ('datetime', 'numerical'),
+    rdt.transformers.numerical.NumericalTransformer: ('numerical', 'numerical'),
+    rdt.transformers.numerical.GaussianCopulaTransformer: ('numerical', 'numerical'),
 }
 
-# Temporary mapping
-TRANSFORMER_TO_TRANSFORMED_TYPE = {
-    rdt.transformers.null.NullTransformer: None,
-    rdt.transformers.boolean.BooleanTransformer: 'float',
-    rdt.transformers.categorical.CategoricalTransformer: 'float',
-    rdt.transformers.categorical.OneHotEncodingTransformer: 'int',
-    rdt.transformers.categorical.LabelEncodingTransformer: 'int',
-    rdt.transformers.datetime.DatetimeTransformer: 'float',
-    rdt.transformers.numerical.NumericalTransformer: 'float',
-    rdt.transformers.numerical.GaussianCopulaTransformer: 'float',
+# Temporary mapping of rdt data type to dtype
+DATA_TYPE_TO_DTYPES = {
+    'boolean': ['b', 'O'],
+    'categorical': ['O', 'i', 'f'],
+    'datetime': ['M'],
+    'numerical': ['f', 'i'],
 }
 
 
+# Temporary method, will be removed after hypertransformer is updated.
 def _get_subclasses(obj):
     """Get all subclasses of the given class."""
     subclasses = obj.__subclasses__()
@@ -77,17 +74,17 @@ def _validate_input_type(input_type):
 def _validate_transformed_data(transformer, transformed_data):
     """Check that the transformed data is the expected dtype."""
     # TODO: Update to use `get_output_types`
-    expected_dtype = TRANSFORMER_TO_TRANSFORMED_TYPE[transformer]
-    assert transformed_data.dtype == expected_dtype
+    expected_data_type = TRANSFORMER_TO_TYPE[transformer][1]
+    assert transformed_data.dtype.kind in DATA_TYPE_TO_DTYPES[expected_data_type]
 
 
-def _validate_reverse_transformed_data(reversed_data, input_dtype):
+def _validate_reverse_transformed_data(transformer, reversed_data, input_dtype):
     """Check that the reverse transformed data is the expected dtype.
 
     Expect that the dtype is equal to the dtype of the input data.
     """
-    expected_dtype = input_dtype
-    assert reversed_data.dtype == expected_dtype
+    expected_data_type = TRANSFORMER_TO_TYPE[transformer][0]
+    assert reversed_data.dtype.kind in DATA_TYPE_TO_DTYPES[expected_data_type]
 
 
 def _validate_composition(reversed_data, input_data):
@@ -122,7 +119,7 @@ def _test_transformer_with_dataset(transformer, input_data):
 
     # Reverse transform
     out = t.reverse_transform(transformed)
-    _validate_reverse_transformed_data(out, input_data.dtype)
+    _validate_reverse_transformed_data(transformer, out, input_data.dtype)
 
     if isinstance(out, pd.DatetimeIndex):
         out = out.to_series(index=pd.RangeIndex(start=0, stop=DATA_SIZE, step=1))
@@ -137,12 +134,13 @@ def _test_transformer_with_dataset(transformer, input_data):
 def _validate_hypertransformer_transformed_data(transformed_data):
     """Check that the transformed data is of type float."""
     for dt in transformed_data.dtypes:
-        assert dt == 'float'
+        assert dt.kind in DATA_TYPE_TO_DTYPES['numerical']
 
 
-def _validate_hypertransformer_reversed_transformed_data(reversed_data, input_dtype):
+def _validate_hypertransformer_reversed_transformed_data(transformer, reversed_data):
     """Check that the reverse transformed data has the same dtype as the input."""
-    assert reversed_data.dtype == input_dtype
+    expected_data_type = TRANSFORMER_TO_TYPE[transformer][0]
+    assert reversed_data.dtype.kind in DATA_TYPE_TO_DTYPES[expected_data_type]
 
 
 def _test_transformer_with_hypertransformer(transformer, input_data):
@@ -171,8 +169,7 @@ def _test_transformer_with_hypertransformer(transformer, input_data):
     _validate_hypertransformer_transformed_data(transformed)
 
     out = hypertransformer.reverse_transform(transformed)
-    _validate_hypertransformer_reversed_transformed_data(
-        out[col_name], input_data.dtype)
+    _validate_hypertransformer_reversed_transformed_data(transformer, out[col_name])
 
 
 transformers = _get_subclasses(rdt.transformers.BaseTransformer)
@@ -190,10 +187,10 @@ def test_transformer(subtests, transformer):
         transformer (rdt.transformers.BaseTransformer):
             The transformer to test.
     """
-    data_type = TRANSFORMER_TO_TYPE[transformer]  # transformer.get_input_type()
-    assert data_type is not None
+    input_data_type = TRANSFORMER_TO_TYPE[transformer][0]  # transformer.get_input_type()
+    assert input_data_type is not None
 
-    dataset_generators = _find_dataset_generators(data_type, generators)
+    dataset_generators = _find_dataset_generators(input_data_type, generators)
     assert len(dataset_generators) > 0
 
     for dg in dataset_generators:
