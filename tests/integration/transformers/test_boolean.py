@@ -19,16 +19,16 @@ class TestBooleanTransformer:
             - The reversed transformed data
         """
         # Setup
-        data = pd.Series([True, False, None, False])
+        data = pd.DataFrame([True, False, None, False], columns=['bool'])
         transformer = BooleanTransformer()
 
         # Run
-        transformer.fit(data)
+        transformer.fit(data, data.columns.to_list())
         transformed = transformer.transform(data)
         reverse = transformer.reverse_transform(transformed)
 
         # Assert
-        pd.testing.assert_series_equal(reverse, data)
+        pd.testing.assert_frame_equal(reverse, data)
 
     def test_boolean_all_nans(self):
         """Test BooleanTransformer on input with all nan values.
@@ -43,16 +43,16 @@ class TestBooleanTransformer:
             - The reversed transformed data
         """
         # Setup
-        data = pd.Series([None, None, None, None])
+        data = pd.DataFrame([None, None, None, None], columns=['bool'])
         transformer = BooleanTransformer()
 
         # Run
-        transformer.fit(data)
+        transformer.fit(data, data.columns.to_list())
         transformed = transformer.transform(data)
         reverse = transformer.reverse_transform(transformed)
 
         # Assert
-        pd.testing.assert_series_equal(reverse, data)
+        pd.testing.assert_frame_equal(reverse, data)
 
     def test_boolean_input_unchanged(self):
         """Test BooleanTransformer on input with some nan values.
@@ -69,15 +69,15 @@ class TestBooleanTransformer:
             - The intermediate transformed data is unchanged.
         """
         # Setup
-        data = pd.Series([True, False, None, False])
+        data = pd.DataFrame([True, False, None, False], columns=['bool'])
         transformer = BooleanTransformer()
 
         # Run
-        transformer.fit(data)
+        transformer.fit(data, data.columns.to_list())
         transformed = transformer.transform(data)
         unchanged_transformed = transformed.copy()
         reverse = transformer.reverse_transform(transformed)
 
         # Assert
-        pd.testing.assert_series_equal(reverse, data)
+        pd.testing.assert_frame_equal(reverse, data)
         np.testing.assert_array_equal(unchanged_transformed, transformed)
