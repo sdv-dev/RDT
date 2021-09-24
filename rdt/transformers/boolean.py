@@ -27,13 +27,32 @@ class BooleanTransformer(BaseTransformer):
             Defaults to ``None``.
     """
 
+    INPUT_TYPE = 'boolean'
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
+
     null_transformer = None
 
     def __init__(self, nan=-1, null_column=None):
         self.nan = nan
         self.null_column = null_column
 
-    def fit(self, data):
+    def get_output_types(self):
+        """Return the output types returned by this transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to the produced data types.
+        """
+        output_types = {
+            'value': 'float',
+        }
+        if self.null_transformer and self.null_transformer.creates_null_column():
+            output_types['is_null'] = 'float'
+
+        return self._add_prefix(output_types)
+
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Args:
@@ -46,7 +65,7 @@ class BooleanTransformer(BaseTransformer):
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(data)
 
-    def transform(self, data):
+    def _transform(self, data):
         """Transform boolean to float.
 
         The boolean values will be replaced by the corresponding integer
@@ -57,7 +76,7 @@ class BooleanTransformer(BaseTransformer):
                 Data to transform.
 
         Returns
-            numpy.ndarray
+            pandas.DataFrame or pandas.Series
         """
         if isinstance(data, np.ndarray):
             data = pd.Series(data)
@@ -66,16 +85,20 @@ class BooleanTransformer(BaseTransformer):
 
         return self.null_transformer.transform(data).astype(float)
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Transform float values back to the original boolean values.
 
         Args:
-            data (numpy.ndarray):
+            data (pandas.DataFrame or pandas.Series):
                 Data to revert.
 
         Returns:
-            pandas.Series
+            pandas.Series:
+                Reverted data.
         """
+        if not isinstance(data, np.ndarray):
+            data = data.values
+
         if self.nan is not None:
             data = self.null_transformer.reverse_transform(data)
 

@@ -101,7 +101,7 @@ def test_dummy_transformer_dataframe_output():
 
         def _transform(self, data):
             out = pd.DataFrame(dict(zip(
-                self._output_columns,
+                self.output_columns,
                 [
                     data.astype(np.float).fillna(-1),
                     data.isnull().astype(np.float)
@@ -111,8 +111,8 @@ def test_dummy_transformer_dataframe_output():
             return out
 
         def _reverse_transform(self, data):
-            out = data[self._output_columns[0]].round().astype(bool).astype(object)
-            out.iloc[data[self._output_columns[1]] == 1] = np.nan
+            out = data[self.output_columns[0]].round().astype(bool).astype(object)
+            out.iloc[data[self.output_columns[1]] == 1] = np.nan
 
             return out
 
@@ -176,7 +176,7 @@ def test_dummy_transformer_multi_column_input():
             data = pd.to_datetime(data)
 
             out = pd.DataFrame(dict(zip(
-                self._output_columns,
+                self.output_columns,
                 [
                     data.values.astype(np.float64),
                     data.isnull().astype(np.float64)
