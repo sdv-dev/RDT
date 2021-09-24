@@ -35,7 +35,6 @@ class DatetimeTransformer(BaseTransformer):
     """
 
     INPUT_TYPE = 'datetime'
-    OUTPUT_TYPES = None
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
@@ -47,6 +46,12 @@ class DatetimeTransformer(BaseTransformer):
         self.nan = nan
         self.null_column = null_column
         self.strip_constant = strip_constant
+
+    def is_composition_identity(self):
+        if self.null_transformer and not self.null_transformer.creates_null_column():
+            return False
+
+        return self.COMPOSITION_IS_IDENTITY
 
     def get_output_types(self):
         """Return the output types supported by the transformer.
