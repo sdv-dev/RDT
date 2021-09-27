@@ -35,7 +35,6 @@ class CategoricalTransformer(BaseTransformer):
 
     INPUT_TYPE = 'categorical'
     OUTPUT_TYPES = {'value': 'float'}
-    DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
 
@@ -59,6 +58,15 @@ class CategoricalTransformer(BaseTransformer):
     def __init__(self, fuzzy=False, clip=False):
         self.fuzzy = fuzzy
         self.clip = clip
+
+    def is_transform_deterministic(self):
+        """Return whether the transform is deterministic.
+
+        Returns:
+            bool:
+                Whether or not the transform is deterministic.
+        """
+        return False if self.fuzzy else True
 
     @staticmethod
     def _get_intervals(data):
@@ -151,7 +159,7 @@ class CategoricalTransformer(BaseTransformer):
 
     def _transform_by_row(self, data):
         """Transform the data row by row."""
-        return data.fillna(np.nan).apply(self._get_value)
+        return data.fillna(np.nan).apply(self._get_value).to_numpy()
 
     def _transform(self, data):
         """Transform categorical values to float values.

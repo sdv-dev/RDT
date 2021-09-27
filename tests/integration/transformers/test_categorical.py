@@ -12,7 +12,7 @@ from rdt.transformers import (
 def test_categorical_numerical_nans():
     """Ensure CategoricalTransformer works on numerical + nan only columns."""
 
-    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['a'])
+    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
 
     transformer = CategoricalTransformer()
     transformer.fit(data, list(data.columns))
@@ -25,7 +25,7 @@ def test_categorical_numerical_nans():
 def test_categoricaltransformer_pickle_nans():
     """Ensure that CategoricalTransformer can be pickled and loaded with nan value."""
     # setup
-    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['a'])
+    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
 
     transformer = CategoricalTransformer()
     transformer.fit(data, list(data.columns))
@@ -58,7 +58,7 @@ def test_categoricaltransformer_strings():
         - The reverse transformed data
     """
     # setup
-    data = pd.DataFrame(['a', 'b', 'a', 'c'], columns=['a'])
+    data = pd.DataFrame(['a', 'b', 'a', 'c'], columns=['column_name'])
     transformer = CategoricalTransformer()
 
     # run
@@ -83,7 +83,7 @@ def test_categoricaltransformer_strings_2_categories():
         - The reverse transformed data
     """
     # setup
-    data = pd.DataFrame(['a', 'b', 'a', 'b'], columns=['a'])
+    data = pd.DataFrame(['a', 'b', 'a', 'b'], columns=['column_name'])
     transformer = CategoricalTransformer()
 
     transformer.fit(data, list(data.columns))
@@ -106,7 +106,7 @@ def test_categoricaltransformer_integers():
         - The reverse transformed data
     """
     # setup
-    data = pd.DataFrame([1, 2, 3, 2], columns=['a'])
+    data = pd.DataFrame([1, 2, 3, 2], columns=['column_name'])
     transformer = CategoricalTransformer()
 
     # run
@@ -130,7 +130,7 @@ def test_categoricaltransformer_bool():
         - The reverse transformed data
     """
     # setup
-    data = pd.DataFrame([True, False, True, False], columns=['a'])
+    data = pd.DataFrame([True, False, True, False], columns=['column_name'])
     transformer = CategoricalTransformer()
 
     # run
@@ -154,7 +154,7 @@ def test_categoricaltransformer_mixed():
         - The reverse transformed data
     """
     # setup
-    data = pd.DataFrame([True, 'a', 1, None], columns=['a'])
+    data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
     transformer = CategoricalTransformer()
 
     # run
@@ -179,7 +179,7 @@ def test_categoricaltransformer_mixed_low_virtual_memory(psutil_mock):
         - The reverse transformed data
     """
     # setup
-    data = pd.DataFrame([True, 'a', 1, None], columns=['a'])
+    data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
     transformer = CategoricalTransformer()
 
     virtual_memory = Mock()
@@ -208,8 +208,8 @@ def test_categoricaltransformer_mixed_more_rows(psutil_mock):
         - The reverse transformed data
     """
     # setup
-    data = pd.DataFrame([True, 'a', 1, None], columns=['a'])
-    transform_data = pd.DataFrame(['a', 1, None, 'a', True, 1], columns=['a'])
+    data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
+    transform_data = pd.DataFrame(['a', 1, None, 'a', True, 1], columns=['column_name'])
     transformer = CategoricalTransformer()
 
     virtual_memory = Mock()
@@ -228,7 +228,7 @@ def test_categoricaltransformer_mixed_more_rows(psutil_mock):
 def test_one_hot_numerical_nans():
     """Ensure OneHotEncodingTransformer works on numerical + nan only columns."""
 
-    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['a'])
+    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
 
     transformer = OneHotEncodingTransformer()
     transformer.fit(data, list(data.columns))
@@ -241,11 +241,11 @@ def test_one_hot_numerical_nans():
 def test_label_numerical_2d_array():
     """Ensure LabelEncodingTransformer works on numerical + nan only columns."""
 
-    data = pd.DataFrame(['a', 'b', 'c', 'd'], columns=['a'])
+    data = pd.DataFrame(['a', 'b', 'c', 'd'], columns=['column_name'])
 
     transformer = LabelEncodingTransformer()
     transformer.fit(data, list(data.columns))
-    transformed = pd.DataFrame([0, 1, 2, 3], columns=['a.value'])
+    transformed = pd.DataFrame([0, 1, 2, 3], columns=['column_name.value'])
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
@@ -254,7 +254,7 @@ def test_label_numerical_2d_array():
 def test_label_numerical_nans():
     """Ensure LabelEncodingTransformer works on numerical + nan only columns."""
 
-    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['a'])
+    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
 
     transformer = LabelEncodingTransformer()
     transformer.fit(data, list(data.columns))

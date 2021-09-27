@@ -260,7 +260,7 @@ class HyperTransformer:
                     # temporarily support both old and new style transformers
                     rename = dict(zip(columns, transformer.output_columns))
                     reversed_data = transformer.reverse_transform(data.rename(columns=rename))
-                    reversed_data = reversed_data[transformer.columns[0]]
+                    reversed_data = reversed_data[transformer.columns[0]].to_numpy()
 
                 data[column_name] = reversed_data
                 drop_columns.extend(set(columns) - {column_name})
