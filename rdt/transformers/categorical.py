@@ -66,7 +66,7 @@ class CategoricalTransformer(BaseTransformer):
             bool:
                 Whether or not the transform is deterministic.
         """
-        return False if self.fuzzy else True
+        return not self.fuzzy
 
     @staticmethod
     def _get_intervals(data):
