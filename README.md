@@ -104,7 +104,7 @@ Before being able to transform the data, we need the transformer to learn from i
 We will do this by calling its `fit` method passing the column that we want to transform.
 
 ```python3
-transformer.fit(data['3_datetime'])
+transformer.fit(data, columns=['3_datetime'])
 ```
 
 ### 4. Transform the data
@@ -113,7 +113,7 @@ Once the transformer is fitted, we can pass the data again to its `transform` me
 to get the transformed version of the data.
 
 ```python3
-transformed = transformer.transform(data['3_datetime'])
+transformed = transformer.transform(data)
 ```
 
 The output will be a `numpy.ndarray` with two columns, one with the datetimes transformed

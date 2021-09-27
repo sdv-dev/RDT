@@ -1,5 +1,8 @@
 """Transformers module."""
 
+from collections import defaultdict
+from functools import lru_cache
+
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
 from rdt.transformers.categorical import (
@@ -23,7 +26,15 @@ __all__ = [
 
 TRANSFORMERS = {
     transformer.__name__: transformer
-    for transformer in BaseTransformer.__subclasses__()
+    for transformer in BaseTransformer.get_subclasses()
+}
+DEFAULT_TRANSFORMERS = {
+    'numerical': NumericalTransformer,
+    'integer': NumericalTransformer(dtype=int),
+    'float': NumericalTransformer(dtype=float),
+    'categorical': CategoricalTransformer(fuzzy=True),
+    'boolean': BooleanTransformer,
+    'datetime': DatetimeTransformer,
 }
 
 
@@ -77,3 +88,54 @@ def load_transformers(transformers):
         name: load_transformer(transformer)
         for name, transformer in transformers.items()
     }
+
+
+def get_transformers_by_type():
+    """Build a ``dict`` mapping data types to valid existing transformers for that type.
+
+    Returns:
+        dict:
+            Mapping of data types to a list of existing transformers that take that
+            type as an input.
+    """
+    data_type_transformers = defaultdict(list)
+    transformer_classes = BaseTransformer.get_subclasses()
+    for transformer in transformer_classes:
+        try:
+            input_type = transformer.get_input_type()
+            data_type_transformers[input_type].append(transformer)
+        except AttributeError:
+            pass
+
+    return data_type_transformers
+
+
+@lru_cache()
+def get_default_transformers():
+    """Build a ``dict`` mapping data types to a default transformer for that type.
+
+    Returns:
+        dict:
+            Mapping of data types to a transformer.
+    """
+    transformers_by_type = get_transformers_by_type()
+    defaults = {}
+    for (data_type, transformers) in transformers_by_type.items():
+        if data_type in DEFAULT_TRANSFORMERS:
+            defaults[data_type] = DEFAULT_TRANSFORMERS[data_type]
+        else:
+            defaults[data_type] = transformers[0]
+
+    return defaults
+
+
+@lru_cache()
+def get_default_transformer(data_type):
+    """Get default transformer for a data type.
+
+    Returns:
+        Transformer:
+            Default transformer for data type.
+    """
+    default_transformers = get_default_transformers()
+    return default_transformers[data_type]

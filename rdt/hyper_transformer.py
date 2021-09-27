@@ -73,6 +73,13 @@ class HyperTransformer:
         'b': 'boolean',
         'M': 'datetime',
     }
+    _DTYPES_TO_DATA_TYPES = {
+        'i': 'integer',
+        'f': 'float',
+        'O': 'categorical',
+        'b': 'boolean',
+        'M': 'datetime',
+    }
 
     def __init__(self, transformers=None, copy=True, dtypes=None, dtype_transformers=None):
         self.transformers = transformers
