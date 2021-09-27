@@ -51,7 +51,7 @@ __all__ = [
 
 TRANSFORMERS = {
     transformer.__name__: transformer
-    for transformer in BaseTransformer.__subclasses__()
+    for transformer in BaseTransformer.get_subclasses()
 }
 
 DEFAULT_TRANSFORMERS = {
