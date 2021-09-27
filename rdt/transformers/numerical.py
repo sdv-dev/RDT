@@ -54,6 +54,11 @@ class NumericalTransformer(BaseTransformer):
             is given, there won't be a maximum.
     """
 
+    INPUT_TYPE = 'numerical'
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = True
+
     null_transformer = None
     nan = None
     _dtype = None
@@ -70,11 +75,39 @@ class NumericalTransformer(BaseTransformer):
         self.min_value = min_value
         self.max_value = max_value
 
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        output_types = {
+            'value': 'float',
+        }
+        if self.null_transformer and self.null_transformer.creates_null_column():
+            output_types['is_null'] = 'float'
+
+        return self._add_prefix(output_types)
+
+    def is_composition_identity(self):
+        """Return whether composition of transform and reverse transform produces the input data.
+
+        Returns:
+            bool:
+                Whether or not transforming and then reverse transforming returns the input data.
+        """
+        if self.null_transformer and not self.null_transformer.creates_null_column():
+            return False
+
+        return self.COMPOSITION_IS_IDENTITY
+
     @staticmethod
     def _learn_rounding_digits(data):
         # check if data has any decimals
+        data = np.array(data)
         roundable_data = data[~(np.isinf(data) | pd.isnull(data))]
-        if (roundable_data % 1 != 0).any():
+        if ((roundable_data % 1) != 0).any():
             if not (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
                 return None
 
@@ -91,11 +124,11 @@ class NumericalTransformer(BaseTransformer):
 
         return None
 
-    def fit(self, data):
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.DataFrame or pandas.Series):
                 Data to fit.
         """
         if isinstance(data, np.ndarray):
@@ -113,7 +146,7 @@ class NumericalTransformer(BaseTransformer):
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(data)
 
-    def transform(self, data):
+    def _transform(self, data):
         """Transform numerical data.
 
         Integer values are replaced by their float equivalent. Non null float values
@@ -131,7 +164,7 @@ class NumericalTransformer(BaseTransformer):
 
         return self.null_transformer.transform(data)
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Convert data back into the original format.
 
         Args:
@@ -141,6 +174,9 @@ class NumericalTransformer(BaseTransformer):
         Returns:
             numpy.ndarray
         """
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
         if self._min_value is not None or self._max_value is not None:
             if len(data.shape) > 1:
                 data[:, 0] = data[:, 0].clip(self._min_value, self._max_value)
@@ -296,7 +332,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
         raise TypeError('Invalid distribution: {}'.format(distribution))
 
-    def fit(self, data):
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Args:
@@ -305,8 +341,8 @@ class GaussianCopulaTransformer(NumericalTransformer):
         """
         self._univariate = self._get_univariate()
 
-        super().fit(data)
-        data = super().transform(data)
+        super()._fit(data)
+        data = super()._transform(data)
         if data.ndim > 1:
             data = data[:, 0]
 
@@ -316,7 +352,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
         cdf = self._univariate.cdf(data)
         return scipy.stats.norm.ppf(cdf.clip(0 + EPSILON, 1 - EPSILON))
 
-    def transform(self, data):
+    def _transform(self, data):
         """Transform numerical data.
 
         Args:
@@ -326,7 +362,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
         Returns:
             numpy.ndarray
         """
-        transformed = super().transform(data)
+        transformed = super()._transform(data)
         if transformed.ndim > 1:
             transformed[:, 0] = self._copula_transform(transformed[:, 0])
         else:
@@ -334,7 +370,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
         return transformed
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Convert data back into the original format.
 
         Args:
@@ -344,9 +380,12 @@ class GaussianCopulaTransformer(NumericalTransformer):
         Returns:
             pandas.Series
         """
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
         if data.ndim > 1:
             data[:, 0] = self._univariate.ppf(scipy.stats.norm.cdf(data[:, 0]))
         else:
             data = self._univariate.ppf(scipy.stats.norm.cdf(data))
 
-        return super().reverse_transform(data)
+        return super()._reverse_transform(data)
