@@ -3,6 +3,7 @@ from unittest.mock import Mock
 
 import copulas
 import numpy as np
+import pandas as pd
 import pytest
 
 from rdt.transformers.numerical import GaussianCopulaTransformer, NumericalTransformer
@@ -18,14 +19,14 @@ class TestNumericalTransformer(TestCase):
         assert nt.nan == 'mode'
         assert nt.null_column is False
 
-    def test_fit(self):
-        """Test fit nan mean with numpy.array"""
+    def test__fit(self):
+        """Test _fit nan mean with numpy.array"""
         # Setup
-        data = np.array([1.5, None, 2.5])
+        data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan')
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         expect_fill_value = 'nan'
@@ -105,10 +106,10 @@ class TestNumericalTransformer(TestCase):
 
         assert output == -1
 
-    def test_fit_rounding_none(self):
-        """Test fit rounding parameter with ``None``
+    def test__fit_rounding_none(self):
+        """Test _fit rounding parameter with ``None``
 
-        If the rounding parameter is set to ``None``, the ``fit`` method
+        If the rounding parameter is set to ``None``, the ``_fit`` method
         should not set its ``rounding`` or ``_rounding_digits`` instance
         variables.
 
@@ -118,20 +119,20 @@ class TestNumericalTransformer(TestCase):
         - ``rounding`` and ``_rounding_digits`` continue to be ``None``
         """
         # Setup
-        data = np.array([1.5, None, 2.5])
+        data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding=None)
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         assert transformer.rounding is None
         assert transformer._rounding_digits is None
 
-    def test_fit_rounding_int(self):
-        """Test fit rounding parameter with int
+    def test__fit_rounding_int(self):
+        """Test _fit rounding parameter with int
 
-        If the rounding parameter is set to ``None``, the ``fit`` method
+        If the rounding parameter is set to ``None``, the ``_fit`` method
         should not set its ``rounding`` or ``_rounding_digits`` instance
         variables.
 
@@ -141,22 +142,22 @@ class TestNumericalTransformer(TestCase):
         - ``rounding`` and ``_rounding_digits`` are the provided int
         """
         # Setup
-        data = np.array([1.5, None, 2.5])
+        data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
         expected_digits = 3
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding=expected_digits)
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         assert transformer.rounding == expected_digits
         assert transformer._rounding_digits == expected_digits
 
-    def test_fit_rounding_auto(self):
-        """Test fit rounding parameter with ``'auto'``
+    def test__fit_rounding_auto(self):
+        """Test _fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``,
-        ``fit`` should learn the ``_rounding_digits`` to be the max
+        ``_fit`` should learn the ``_rounding_digits`` to be the max
         number of decimal places seen in the data.
 
         Input:
@@ -165,20 +166,20 @@ class TestNumericalTransformer(TestCase):
         - ``_rounding_digits`` is set to 4
         """
         # Setup
-        data = np.array([1, 2.1, 3.12, 4.123, 5.1234, 6.123, 7.12, 8.1, 9])
+        data = pd.DataFrame([1, 2.1, 3.12, 4.123, 5.1234, 6.123, 7.12, 8.1, 9], columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         assert transformer._rounding_digits == 4
 
-    def test_fit_rounding_auto_large_numbers(self):
-        """Test fit rounding parameter with ``'auto'``
+    def test__fit_rounding_auto_large_numbers(self):
+        """Test _fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``
-        and the data is very large, ``fit`` should learn
+        and the data is very large, ``_fit`` should learn
         ``_rounding_digits`` to be the biggest number of 0s
         to round to that keeps the data the same.
 
@@ -190,20 +191,20 @@ class TestNumericalTransformer(TestCase):
         # Setup
         exponents = [np.random.randint(10, 20) for i in range(10)]
         big_numbers = [10**exponents[i] for i in range(10)]
-        data = np.array(big_numbers)
+        data = pd.DataFrame(big_numbers, columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         assert transformer._rounding_digits == -min(exponents)
 
-    def test_fit_rounding_auto_max_decimals(self):
-        """Test fit rounding parameter with ``'auto'``
+    def test__fit_rounding_auto_max_decimals(self):
+        """Test _fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``,
-        ``fit`` should learn the ``_rounding_digits`` to be the max
+        ``_fit`` should learn the ``_rounding_digits`` to be the max
         number of decimal places seen in the data. The max
         amount of decimals that floats can be accurately compared
         with is 15. If the input data has values with more than
@@ -216,20 +217,20 @@ class TestNumericalTransformer(TestCase):
         - ``_rounding_digits`` is set to ``None``
         """
         # Setup
-        data = np.array([0.000000000000001])
+        data = pd.DataFrame([0.000000000000001], columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         assert transformer._rounding_digits is None
 
-    def test_fit_rounding_auto_max_inf(self):
-        """Test fit rounding parameter with ``'auto'``
+    def test__fit_rounding_auto_max_inf(self):
+        """Test _fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``,
-        and the data contains infinite values, ``fit`` should
+        and the data contains infinite values, ``_fit`` should
         learn the ``_rounding_digits`` to be the min
         number of decimal places seen in the data with
         the infinite values filtered out.
@@ -240,20 +241,20 @@ class TestNumericalTransformer(TestCase):
         - ``_rounding_digits`` is set to max seen in rest of data
         """
         # Setup
-        data = np.array([15000, 4000, 60000, np.inf])
+        data = pd.DataFrame([15000, 4000, 60000, np.inf], columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         assert transformer._rounding_digits == -3
 
-    def test_fit_rounding_auto_max_zero(self):
-        """Test fit rounding parameter with ``'auto'``
+    def test__fit_rounding_auto_max_zero(self):
+        """Test _fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``,
-        and the max in the data is 0, ``fit`` should
+        and the max in the data is 0, ``_fit`` should
         learn the ``_rounding_digits`` to be 0.
 
         Input:
@@ -262,20 +263,20 @@ class TestNumericalTransformer(TestCase):
         - ``_rounding_digits`` is set to 0
         """
         # Setup
-        data = np.array([0, 0, 0])
+        data = pd.DataFrame([0, 0, 0], columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         assert transformer._rounding_digits == 0
 
-    def test_fit_rounding_auto_max_negative(self):
-        """Test fit rounding parameter with ``'auto'``
+    def test__fit_rounding_auto_max_negative(self):
+        """Test _fit rounding parameter with ``'auto'``
 
         If the ``rounding`` parameter is set to ``'auto'``,
-        and the max in the data is negative, the ``fit`` method
+        and the max in the data is negative, the ``_fit`` method
         should learn ``_rounding_digits`` to be the min number
         of digits seen in those negative values.
 
@@ -285,20 +286,20 @@ class TestNumericalTransformer(TestCase):
         - ``_rounding_digits`` is set to min number of digits in array
         """
         # Setup
-        data = np.array([-500, -220, -10])
+        data = pd.DataFrame([-500, -220, -10], columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         assert transformer._rounding_digits == -1
 
-    def test_fit_min_max_none(self):
-        """Test fit min and max parameters with ``None``
+    def test__fit_min_max_none(self):
+        """Test _fit min and max parameters with ``None``
 
         If the min and max parameters are set to ``None``,
-        the ``fit`` method should not set its ``min`` or ``max``
+        the ``_fit`` method should not set its ``min`` or ``max``
         instance variables.
 
         Input:
@@ -307,22 +308,22 @@ class TestNumericalTransformer(TestCase):
         - ``_min_value`` and ``_max_value`` stay ``None``
         """
         # Setup
-        data = np.array([1.5, None, 2.5])
+        data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan',
                                            min_value=None, max_value=None)
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         assert transformer._min_value is None
         assert transformer._max_value is None
 
-    def test_fit_min_max_int(self):
-        """Test fit min and max parameters with int values
+    def test__fit_min_max_int(self):
+        """Test _fit min and max parameters with int values
 
         If the min and max parameters are set to an int,
-        the ``fit`` method should not change them.
+        the ``_fit`` method should not change them.
 
         Input:
         - Array of floats and null values
@@ -330,23 +331,23 @@ class TestNumericalTransformer(TestCase):
         - ``_min_value`` and ``_max_value`` remain unchanged
         """
         # Setup
-        data = np.array([1.5, None, 2.5])
+        data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan',
                                            min_value=1, max_value=10)
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         assert transformer._min_value == 1
         assert transformer._max_value == 10
 
-    def test_fit_min_max_auto(self):
-        """Test fit min and max parameters with ``'auto'``
+    def test__fit_min_max_auto(self):
+        """Test _fit min and max parameters with ``'auto'``
 
         If the min or max parameters are set to ``'auto'``
-        the ``fit`` method should learn them from the
-        fitted data.
+        the ``_fit`` method should learn them from the
+        _fitted data.
 
         Input:
         - Array of floats and null values
@@ -354,19 +355,19 @@ class TestNumericalTransformer(TestCase):
         - ``_min_value`` and ``_max_value`` are learned
         """
         # Setup
-        data = np.array([-100, -5000, 0, None, 100, 4000])
+        data = pd.DataFrame([-100, -5000, 0, None, 100, 4000], columns=['a'])
 
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan='nan',
                                            min_value='auto', max_value='auto')
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
-        assert transformer._min_value == -5000
-        assert transformer._max_value == 4000
+        assert transformer._min_value['a'] == -5000
+        assert transformer._max_value['a'] == 4000
 
-    def test_reverse_transform_rounding_none(self):
-        """Test ``reverse_transform`` when ``rounding`` is ``None``
+    def test__reverse_transform_rounding_none(self):
+        """Test ``_reverse_transform`` when ``rounding`` is ``None``
 
         The data should not be rounded at all.
 
@@ -381,13 +382,13 @@ class TestNumericalTransformer(TestCase):
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan=None)
         transformer._rounding_digits = None
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Assert
         np.testing.assert_array_equal(result, data)
 
-    def test_reverse_transform_rounding_none_integer(self):
-        """Test ``reverse_transform`` when ``rounding`` is ``None`` and the dtype is integer.
+    def test__reverse_transform_rounding_none_integer(self):
+        """Test ``_reverse_transform`` when ``rounding`` is ``None`` and the dtype is integer.
 
         The data should be rounded to 0 decimals and returned as integer values.
 
@@ -403,14 +404,14 @@ class TestNumericalTransformer(TestCase):
         transformer = NumericalTransformer(dtype=np.int64, nan=None)
         transformer._rounding_digits = None
         transformer._dtype = np.int64
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Assert
         expected = np.array([0, 1, 3, 7])
         np.testing.assert_array_equal(result, expected)
 
-    def test_reverse_transform_rounding_none_with_nulls(self):
-        """Test ``reverse_transform`` when ``rounding`` is ``None`` and there are nulls.
+    def test__reverse_transform_rounding_none_with_nulls(self):
+        """Test ``_reverse_transform`` when ``rounding`` is ``None`` and there are nulls.
 
         The data should not be rounded at all.
 
@@ -420,12 +421,12 @@ class TestNumericalTransformer(TestCase):
         - First column of the input array as entered, replacing the indicated value with a Nan.
         """
         # Setup
-        data = np.array([
+        data = pd.DataFrame([
             [0., 0.],
             [1.2, 0.],
             [3.45, 1.],
             [6.789, 0.],
-        ])
+        ], columns=['a', 'b'])
 
         # Run
         transformer = NumericalTransformer()
@@ -434,14 +435,14 @@ class TestNumericalTransformer(TestCase):
         transformer.null_transformer = null_transformer
         transformer._rounding_digits = None
         transformer._dtype = np.float
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Assert
         expected = np.array([0., 1.2, np.nan, 6.789])
         np.testing.assert_array_equal(result, expected)
 
-    def test_reverse_transform_rounding_none_with_nulls_dtype_int(self):
-        """Test ``reverse_transform`` when rounding is None, dtype is int and there are nulls.
+    def test__reverse_transform_rounding_none_with_nulls_dtype_int(self):
+        """Test ``_reverse_transform`` when rounding is None, dtype is int and there are nulls.
 
         The data should be rounded to 0 decimals and returned as float values with
         nulls in the right place.
@@ -467,14 +468,14 @@ class TestNumericalTransformer(TestCase):
         transformer.null_transformer = null_transformer
         transformer._rounding_digits = None
         transformer._dtype = np.int
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Assert
         expected = np.array([0., 1., np.nan, 7.])
         np.testing.assert_array_equal(result, expected)
 
-    def test_reverse_transform_rounding_positive_rounding(self):
-        """Test ``reverse_transform`` when ``rounding`` is a positive int
+    def test__reverse_transform_rounding_positive_rounding(self):
+        """Test ``_reverse_transform`` when ``rounding`` is a positive int
 
         The data should round to the maximum number of decimal places
         set in the ``_rounding_digits`` value.
@@ -491,14 +492,14 @@ class TestNumericalTransformer(TestCase):
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan=None)
         transformer._rounding_digits = 2
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Assert
         expected_data = np.array([1.11, 2.22, 3.33, 4.44, 5.56])
         np.testing.assert_array_equal(result, expected_data)
 
-    def test_reverse_transform_rounding_negative_rounding_int(self):
-        """Test ``reverse_transform`` when ``rounding`` is a negative int
+    def test__reverse_transform_rounding_negative_rounding_int(self):
+        """Test ``_reverse_transform`` when ``rounding`` is a negative int
 
         The data should round to the number set in the ``_rounding_digits``
         attribute and remain ints.
@@ -517,15 +518,15 @@ class TestNumericalTransformer(TestCase):
         transformer = NumericalTransformer(dtype=np.int, nan=None)
         transformer._dtype = np.int
         transformer._rounding_digits = -3
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Assert
         expected_data = np.array([2000, 0, 3000, 40000])
         np.testing.assert_array_equal(result, expected_data)
         assert result.dtype == np.int
 
-    def test_reverse_transform_rounding_negative_rounding_float(self):
-        """Test ``reverse_transform`` when ``rounding`` is a negative int
+    def test__reverse_transform_rounding_negative_rounding_float(self):
+        """Test ``_reverse_transform`` when ``rounding`` is a negative int
 
         The data should round to the number set in the ``_rounding_digits``
         attribute and remain floats.
@@ -543,15 +544,15 @@ class TestNumericalTransformer(TestCase):
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan=None)
         transformer._rounding_digits = -3
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Assert
         expected_data = np.array([2000.0, 0.0, 3000.0, 40000.0])
         np.testing.assert_array_equal(result, expected_data)
         assert result.dtype == np.float
 
-    def test_reverse_transform_rounding_zero(self):
-        """Test ``reverse_transform`` when ``rounding`` is a negative int
+    def test__reverse_transform_rounding_zero(self):
+        """Test ``_reverse_transform`` when ``rounding`` is a negative int
 
         The data should round to the number set in the ``_rounding_digits``
         attribute.
@@ -568,16 +569,16 @@ class TestNumericalTransformer(TestCase):
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan=None)
         transformer._rounding_digits = 0
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Assert
         expected_data = np.array([2001, 120, 3101, 4010])
         np.testing.assert_array_equal(result, expected_data)
 
-    def test_reverse_transform_min_no_max(self):
-        """Test reverse_transform with ``min_value`` set
+    def test__reverse_transform_min_no_max(self):
+        """Test _reverse_transform with ``min_value`` set
 
-        The ``reverse_transform`` method should clip any values below
+        The ``_reverse_transform`` method should clip any values below
         the ``min_value`` if it is set.
 
         Input:
@@ -591,16 +592,16 @@ class TestNumericalTransformer(TestCase):
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan=None)
         transformer._min_value = -300
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Asserts
         expected_data = np.array([-300, -300, -300, -250, 0, 125, 400, np.inf])
         np.testing.assert_array_equal(result, expected_data)
 
-    def test_reverse_transform_max_no_min(self):
-        """Test reverse_transform with ``max_value`` set
+    def test__reverse_transform_max_no_min(self):
+        """Test _reverse_transform with ``max_value`` set
 
-        The ``reverse_transform`` method should clip any values above
+        The ``_reverse_transform`` method should clip any values above
         the ``max_value`` if it is set.
 
         Input:
@@ -614,16 +615,16 @@ class TestNumericalTransformer(TestCase):
         # Run
         transformer = NumericalTransformer(dtype=np.float, nan=None)
         transformer._max_value = 400
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Asserts
         expected_data = np.array([-np.inf, -5000, -301, -250, 0, 125, 400, 400])
         np.testing.assert_array_equal(result, expected_data)
 
-    def test_reverse_transform_min_and_max(self):
-        """Test reverse_transform with ``min_value`` and ``max_value`` set
+    def test__reverse_transform_min_and_max(self):
+        """Test _reverse_transform with ``min_value`` and ``max_value`` set
 
-        The ``reverse_transform`` method should clip any values above
+        The ``_reverse_transform`` method should clip any values above
         the ``max_value`` and any values below the ``min_value``.
 
         Input:
@@ -638,15 +639,15 @@ class TestNumericalTransformer(TestCase):
         transformer = NumericalTransformer(dtype=np.float, nan=None)
         transformer._max_value = 400
         transformer._min_value = -300
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Asserts
         np.testing.assert_array_equal(result, np.array([-300, -300, -300, -250, 0, 125, 400, 400]))
 
-    def test_reverse_transform_min_an_max_with_nulls(self):
-        """Test reverse_transform with nulls and ``min_value`` and ``max_value`` set
+    def test__reverse_transform_min_an_max_with_nulls(self):
+        """Test _reverse_transform with nulls and ``min_value`` and ``max_value`` set
 
-        The ``reverse_transform`` method should clip any values above
+        The ``_reverse_transform`` method should clip any values above
         the ``max_value`` and any values below the ``min_value``. Null values
         should be replaced with ``np.nan``.
 
@@ -684,7 +685,7 @@ class TestNumericalTransformer(TestCase):
         transformer._min_value = -300
         transformer.null_transformer = Mock()
         transformer.null_transformer.reverse_transform.return_value = expected_data
-        result = transformer.reverse_transform(data)
+        result = transformer._reverse_transform(data)
 
         # Asserts
         null_transformer_calls = transformer.null_transformer.reverse_transform.mock_calls
