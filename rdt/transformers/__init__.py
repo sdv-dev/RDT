@@ -1,7 +1,7 @@
 """Transformers module."""
-from copy import deepcopy
 
 from collections import defaultdict
+from copy import deepcopy
 from functools import lru_cache
 
 from rdt.transformers.base import BaseTransformer
