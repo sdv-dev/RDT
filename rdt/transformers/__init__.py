@@ -1,10 +1,10 @@
 """Transformers module."""
-from copy import deepcopy
 
 import importlib
 import json
 import os
 from collections import defaultdict
+from copy import deepcopy
 from functools import lru_cache
 from glob import glob
 
