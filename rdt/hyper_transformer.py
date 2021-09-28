@@ -1,6 +1,12 @@
 """Hyper transformer module."""
 
+import warnings
+
 from rdt.transformers import get_default_transformer, load_transformer
+
+FIELD_ALREADY_FIT_WARNING = (
+    'This field has already been fit. Only one transformer can be specified per field.'
+)
 
 
 class HyperTransformer:
@@ -106,6 +112,13 @@ class HyperTransformer:
         else:
             field_set.add(field)
 
+    @staticmethod
+    def _field_in_set(field, field_set):
+        if isinstance(field, tuple):
+            return all(column in field_set for column in field)
+
+        return field in field_set
+
     def _update_field_types(self, data):
         # get set of provided fields including multi-column fields
         provided_fields = set()
@@ -116,23 +129,18 @@ class HyperTransformer:
             if field not in provided_fields:
                 self.field_types[field] = self._DTYPES_TO_DATA_TYPES[data[field].dtype.kind]
 
-    def _get_next_steps(self, output, output_type, data, next_transformers):
+    def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
-        output_ml_ready = False
-        if output in self.field_transformers:
-            if self._field_in_data(output, data):
-                next_transformer = self.field_transformers[output]
+        if output_field in self.field_transformers:
+            next_transformer = self.field_transformers[output_field]
 
-        elif output_type in self.transform_output_types:
-            output_ml_ready = True
+        elif output_type not in self.transform_output_types:
+            if next_transformers is not None and output_field in next_transformers:
+                next_transformer = next_transformers[output_field]
+            else:
+                next_transformer = get_default_transformer(output_type)
 
-        elif next_transformers is not None:
-            next_transformer = next_transformers[output]
-
-        else:
-            next_transformer = get_default_transformer(output_type)
-
-        return (next_transformer, output_ml_ready)
+        return next_transformer
 
     def _fit_field_transformer(self, data, field, transformer):
         """Fit a transformer to its corresponding field.
@@ -154,22 +162,26 @@ class HyperTransformer:
         transformer = load_transformer(transformer)
         transformer.fit(data, field)
         self._transformers_sequence.append(transformer)
+
         output_types = transformer.get_output_types()
         next_transformers = transformer.get_next_transformers()
         for (output_name, output_type) in output_types.items():
             output_field = self._multi_column_fields.get(output_name, output_name)
-            (next_transformer, output_ml_ready) = self._get_next_steps(
-                output_field, output_type, data, next_transformers)
-            if output_ml_ready:
-                self._output_columns.append(output_name)
+            next_transformer = self._get_next_transformer(
+                output_field, output_type, next_transformers)
 
-            else:
-                self._add_field_to_set(output_field, self._temp_columns)
+            if next_transformer:
+                self._temp_columns.append(output_name)
                 if output_name not in data:
                     data = transformer.transform(data)
 
-                if next_transformer:
+                if self._field_in_data(output_field, data):
                     self._fit_field_transformer(data, output_field, next_transformer)
+
+            else:
+                self._output_columns.append(output_name)
+
+        return data
 
     def fit(self, data):
         """Fit the transformers to the data.
@@ -185,17 +197,20 @@ class HyperTransformer:
         # Loop through field_transformers that are first level
         for field in self.field_transformers:
             if self._field_in_data(field, data):
-                self._fit_field_transformer(data, field, self.field_transformers[field])
-                self._add_field_to_set(field, fitted_fields)
+                if self._field_in_set(field, fitted_fields):
+                    warnings.warn(FIELD_ALREADY_FIT_WARNING)
+                else:
+                    data = self._fit_field_transformer(data, field, self.field_transformers[field])
+                    self._add_field_to_set(field, fitted_fields)
 
         for (field, data_type) in self.field_types.items():
-            if field not in fitted_fields:
+            if not self._field_in_set(field, fitted_fields):
                 if data_type in self.data_type_transformers:
                     transformer = self.data_type_transformers[data_type]
                 else:
                     transformer = get_default_transformer(data_type)
 
-                self._fit_field_transformer(data, field, transformer)
+                data = self._fit_field_transformer(data, field, transformer)
                 self._add_field_to_set(field, fitted_fields)
 
     def transform(self, data):
