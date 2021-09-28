@@ -45,7 +45,7 @@ class TestCategoricalTransformer:
 
         # Run
         data = np.array(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
-        transformer.fit(data)
+        transformer._fit(data)
 
         # Asserts
         expected_intervals = {
@@ -122,8 +122,8 @@ class TestCategoricalTransformer:
         transformer = CategoricalTransformer()
 
         # Run
-        transformer.fit(data)
-        result = transformer.reverse_transform(rt_data)
+        transformer._fit(data)
+        result = transformer._reverse_transform(rt_data)
 
         # Asserts
         expected_intervals = {
@@ -159,7 +159,7 @@ class TestCategoricalTransformer:
         categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
 
         # Run
-        transformed = CategoricalTransformer.transform(categorical_transformer_mock, data)
+        transformed = CategoricalTransformer._transform(categorical_transformer_mock, data)
 
         # Asserts
         categorical_transformer_mock._transform_by_category.assert_called_once_with(data)
@@ -216,7 +216,7 @@ class TestCategoricalTransformer:
         categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
 
         # Run
-        transformed = CategoricalTransformer.transform(categorical_transformer_mock, data)
+        transformed = CategoricalTransformer._transform(categorical_transformer_mock, data)
 
         # Asserts
         categorical_transformer_mock._transform_by_row.assert_called_once_with(data)
@@ -280,7 +280,7 @@ class TestCategoricalTransformer:
         psutil_mock.return_value = virtual_memory
 
         # Run
-        reverse = CategoricalTransformer.reverse_transform(categorical_transformer_mock, data)
+        reverse = CategoricalTransformer._reverse_transform(categorical_transformer_mock, data)
 
         # Asserts
         categorical_transformer_mock._reverse_transform_by_matrix.assert_called_once_with(data)
@@ -347,7 +347,7 @@ class TestCategoricalTransformer:
         psutil_mock.return_value = virtual_memory
 
         # Run
-        reverse = CategoricalTransformer.reverse_transform(
+        reverse = CategoricalTransformer._reverse_transform(
             categorical_transformer_mock, transform_data)
 
         # Asserts
@@ -423,7 +423,7 @@ class TestCategoricalTransformer:
         psutil_mock.return_value = virtual_memory
 
         # Run
-        reverse = CategoricalTransformer.reverse_transform(categorical_transformer_mock, data)
+        reverse = CategoricalTransformer._reverse_transform(categorical_transformer_mock, data)
 
         # Asserts
         categorical_transformer_mock._reverse_transform_by_row.assert_called_once_with(data)
@@ -465,7 +465,7 @@ class TestCategoricalTransformer:
         psutil_mock.return_value = virtual_memory
 
         # Run
-        reverse = transformer.reverse_transform(transformed)
+        reverse = transformer._reverse_transform(transformed)
 
         # Assert
         pd.testing.assert_series_equal(data, reverse)
@@ -530,7 +530,7 @@ class TestOneHotEncodingTransformer:
 
         # Run
         data = pd.Series(['a', 2, 'c'])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Assert
         np.testing.assert_array_equal(ohet.dummies, ['a', 2, 'c'])
@@ -549,7 +549,7 @@ class TestOneHotEncodingTransformer:
 
         # Run
         data = pd.Series(['a', 2, 'c', None])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Assert
         np.testing.assert_array_equal(ohet.dummies, ['a', 2, 'c', np.nan])
@@ -570,7 +570,7 @@ class TestOneHotEncodingTransformer:
 
         # Run
         data = pd.Series(['a', 'b', 'c'])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Assert
         np.testing.assert_array_equal(ohet.dummies, ['a', 'b', 'c'])
@@ -594,7 +594,7 @@ class TestOneHotEncodingTransformer:
 
         # Run
         data = pd.Series([1, 2, 3])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Assert
         np.testing.assert_array_equal(ohet.dummies, [1, 2, 3])
@@ -618,7 +618,7 @@ class TestOneHotEncodingTransformer:
 
         # Run
         data = pd.Series(['a', 'b', None])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Assert
         np.testing.assert_array_equal(ohet.dummies, ['a', 'b', np.nan])
@@ -642,7 +642,7 @@ class TestOneHotEncodingTransformer:
 
         # Run
         data = pd.Series([1, 2, np.nan])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Assert
         np.testing.assert_array_equal(ohet.dummies, [1, 2, np.nan])
@@ -656,7 +656,7 @@ class TestOneHotEncodingTransformer:
 
         # Run
         data = pd.Series(['a', 'a', 'a'])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Assert
         np.testing.assert_array_equal(ohet.dummies, ['a'])
@@ -679,7 +679,7 @@ class TestOneHotEncodingTransformer:
         ohet._num_dummies = 3
 
         # Run
-        out = ohet._transform(data)
+        out = ohet._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -710,7 +710,7 @@ class TestOneHotEncodingTransformer:
         ohet._dummy_encoded = True
 
         # Run
-        out = ohet._transform(data)
+        out = ohet._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -740,7 +740,7 @@ class TestOneHotEncodingTransformer:
         ohet._num_dummies = 2
 
         # Run
-        out = ohet._transform(data)
+        out = ohet._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -774,7 +774,7 @@ class TestOneHotEncodingTransformer:
         ohet._dummy_encoded = True
 
         # Run
-        out = ohet._transform(data)
+        out = ohet._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -804,7 +804,7 @@ class TestOneHotEncodingTransformer:
         ohet._num_dummies = 1
 
         # Run
-        out = ohet._transform(data)
+        out = ohet._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -836,7 +836,7 @@ class TestOneHotEncodingTransformer:
         ohet._dummy_encoded = True
 
         # Run
-        out = ohet._transform(data)
+        out = ohet._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -865,7 +865,7 @@ class TestOneHotEncodingTransformer:
         ohet._num_dummies = 1
 
         # Run
-        out = ohet._transform(pd.Series(['b', 'b', 'b']))
+        out = ohet._transform_helper(pd.Series(['b', 'b', 'b']))
 
         # Assert
         expected = np.array([
@@ -897,7 +897,7 @@ class TestOneHotEncodingTransformer:
         ohet.dummy_encoded = True
 
         # Run
-        out = ohet._transform(pd.Series(['b', 'b', 'b']))
+        out = ohet._transform_helper(pd.Series(['b', 'b', 'b']))
 
         # Assert
         expected = np.array([
@@ -927,7 +927,7 @@ class TestOneHotEncodingTransformer:
         ohet._num_dummies = 1
 
         # Run
-        out = ohet._transform(pd.Series(['b', 'b', np.nan]))
+        out = ohet._transform_helper(pd.Series(['b', 'b', np.nan]))
 
         # Assert
         expected = np.array([
@@ -951,10 +951,10 @@ class TestOneHotEncodingTransformer:
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'b', 'c'])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Run
-        out = ohet.transform(data)
+        out = ohet._transform(data)
 
         # Assert
         expected = np.array([
@@ -978,10 +978,10 @@ class TestOneHotEncodingTransformer:
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'b', None])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Run
-        out = ohet.transform(data)
+        out = ohet._transform(data)
 
         # Assert
         expected = np.array([
@@ -1005,10 +1005,10 @@ class TestOneHotEncodingTransformer:
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'a', 'a'])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Run
-        out = ohet.transform(data)
+        out = ohet._transform(data)
 
         # Assert
         expected = np.array([
@@ -1031,11 +1031,11 @@ class TestOneHotEncodingTransformer:
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a'])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Assert
         with np.testing.assert_raises(ValueError):
-            ohet.transform(['b'])
+            ohet._transform(['b'])
 
     def test_transform_numeric(self):
         """Test the ``transform`` on numeric input.
@@ -1051,7 +1051,7 @@ class TestOneHotEncodingTransformer:
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series([1, 2])
-        ohet.fit(data)
+        ohet._fit(data)
 
         expected = np.array([
             [1, 0],
@@ -1059,7 +1059,7 @@ class TestOneHotEncodingTransformer:
         ])
 
         # Run
-        out = ohet.transform(data)
+        out = ohet._transform(data)
 
         # Assert
         assert not ohet._dummy_encoded
@@ -1069,7 +1069,7 @@ class TestOneHotEncodingTransformer:
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'b', 'c'])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Run
         transformed = np.array([
@@ -1077,7 +1077,7 @@ class TestOneHotEncodingTransformer:
             [0, 1, 0],
             [0, 0, 1]
         ])
-        out = ohet.reverse_transform(transformed)
+        out = ohet._reverse_transform(transformed)
 
         # Assert
         expected = pd.Series(['a', 'b', 'c'])
@@ -1087,7 +1087,7 @@ class TestOneHotEncodingTransformer:
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'b', None])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Run
         transformed = np.array([
@@ -1095,7 +1095,7 @@ class TestOneHotEncodingTransformer:
             [0, 1, 0],
             [0, 0, 1]
         ])
-        out = ohet.reverse_transform(transformed)
+        out = ohet._reverse_transform(transformed)
 
         # Assert
         expected = pd.Series(['a', 'b', None])
@@ -1105,7 +1105,7 @@ class TestOneHotEncodingTransformer:
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'a', 'a'])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Run
         transformed = np.array([
@@ -1113,7 +1113,7 @@ class TestOneHotEncodingTransformer:
             [1],
             [1]
         ])
-        out = ohet.reverse_transform(transformed)
+        out = ohet._reverse_transform(transformed)
 
         # Assert
         expected = pd.Series(['a', 'a', 'a'])
@@ -1123,11 +1123,11 @@ class TestOneHotEncodingTransformer:
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'a', 'a'])
-        ohet.fit(data)
+        ohet._fit(data)
 
         # Run
         transformed = np.array([1, 1, 1])
-        out = ohet.reverse_transform(transformed)
+        out = ohet._reverse_transform(transformed)
 
         # Assert
         expected = pd.Series(['a', 'a', 'a'])
@@ -1154,7 +1154,7 @@ class TestLabelEncodingTransformer:
         data = pd.Series([0, 1, 10])
 
         # Run
-        out = transformer.reverse_transform(data)
+        out = transformer._reverse_transform(data)
 
         # Assert
         pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
