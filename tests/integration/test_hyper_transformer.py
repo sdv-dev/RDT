@@ -377,110 +377,8 @@ def test_hypertransformer_field_transformers_multi_column_fields():
     )
 
 
-def test_hypertransformer_with_transformers():
-    data = get_input_data_without_nan()
-    transformers = get_transformers()
-
-    ht = HyperTransformer(transformers)
-    ht.fit(data)
-    transformed = ht.transform(data)
-
-    expected = get_transformed_data()
-
-    np.testing.assert_allclose(
-        transformed.sort_index(axis=1).values,
-        expected.sort_index(axis=1).values
-    )
-
-    reversed_data = ht.reverse_transform(transformed)
-
-    original_names = data.pop('names')
-    reversed_names = reversed_data.pop('names')
-
-    pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
-
-    for name in original_names:
-        assert name not in reversed_names
-
-
-def test_hypertransformer_with_transformers_nan_data():
-    data = get_input_data_with_nan()
-    transformers = get_transformers()
-
-    ht = HyperTransformer(transformers)
-    ht.fit(data)
-    transformed = ht.transform(data)
-
-    expected = get_transformed_nan_data()
-
-    np.testing.assert_allclose(
-        transformed.sort_index(axis=1).values,
-        expected.sort_index(axis=1).values
-    )
-
-    reversed_data = ht.reverse_transform(transformed)
-
-    original_names = data.pop('names')
-    reversed_names = reversed_data.pop('names')
-
-    pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
-
-    for name in original_names:
-        assert name not in reversed_names
-
-
-def test_hypertransformer_without_transformers():
-    data = get_input_data_without_nan()
-
-    ht = HyperTransformer()
-    ht.fit(data)
-    transformed = ht.transform(data)
-
-    expected = get_transformed_data()
-
-    np.testing.assert_allclose(
-        transformed.sort_index(axis=1).values,
-        expected.sort_index(axis=1).values
-    )
-
-    reversed_data = ht.reverse_transform(transformed)
-
-    original_names = data.pop('names')
-    reversed_names = reversed_data.pop('names')
-
-    pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
-
-    for name in original_names:
-        assert name not in reversed_names
-
-
-def test_hypertransformer_without_transformers_nan_data():
-    data = get_input_data_with_nan()
-
-    ht = HyperTransformer()
-    ht.fit(data)
-    transformed = ht.transform(data)
-
-    expected = get_transformed_nan_data()
-
-    np.testing.assert_allclose(
-        transformed.sort_index(axis=1).values,
-        expected.sort_index(axis=1).values
-    )
-
-    reversed_data = ht.reverse_transform(transformed)
-
-    original_names = data.pop('names')
-    reversed_names = reversed_data.pop('names')
-
-    pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
-
-    for name in original_names:
-        assert name not in reversed_names
-
-
 def test_single_category():
-    ht = HyperTransformer(transformers={
+    ht = HyperTransformer(field_transformers={
         'a': OneHotEncodingTransformer()
     })
     data = pd.DataFrame({
@@ -507,34 +405,6 @@ def test_dtype_category():
     rever = ht.reverse_transform(trans)
 
     pd.testing.assert_frame_equal(rever, df)
-
-
-def test_empty_transformers():
-    """If transformers is an empty dict, do nothing."""
-    data = get_input_data_without_nan()
-
-    ht = HyperTransformer(transformers={})
-    ht.fit(data)
-
-    transformed = ht.transform(data)
-    reverse = ht.reverse_transform(transformed)
-
-    pd.testing.assert_frame_equal(data, transformed)
-    pd.testing.assert_frame_equal(data, reverse)
-
-
-def test_empty_transformers_nan_data():
-    """If transformers is an empty dict, do nothing."""
-    data = get_input_data_with_nan()
-
-    ht = HyperTransformer(transformers={})
-    ht.fit(data)
-
-    transformed = ht.transform(data)
-    reverse = ht.reverse_transform(transformed)
-
-    pd.testing.assert_frame_equal(data, transformed)
-    pd.testing.assert_frame_equal(data, reverse)
 
 
 def test_subset_of_columns():
