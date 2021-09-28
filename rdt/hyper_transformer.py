@@ -72,10 +72,6 @@ class HyperTransformer:
         'float',
         'integer'
     ]
-    _transformers_sequence = []
-    _output_columns = set()
-    _input_columns = set()
-    _temp_columns = set()
 
     def _create_multi_column_fields(self):
         multi_column_fields = {}
@@ -93,6 +89,10 @@ class HyperTransformer:
         self.field_transformers = field_transformers or {}
         self.transform_output_types = transform_output_types or self._DEFAULT_OUTPUT_TYPES
         self._multi_column_fields = self._create_multi_column_fields()
+        self._transformers_sequence = []
+        self._output_columns = []
+        self._input_columns = []
+        self._temp_columns = []
 
     @staticmethod
     def _field_in_data(field, data):
@@ -116,11 +116,15 @@ class HyperTransformer:
             if field not in provided_fields:
                 self.field_types[field] = self._DTYPES_TO_DATA_TYPES[data[field].dtype.kind]
 
-    def _get_next_transformer(self, output, output_type, data, next_transformers):
+    def _get_next_steps(self, output, output_type, data, next_transformers):
         next_transformer = None
+        output_ml_ready = False
         if output in self.field_transformers:
             if self._field_in_data(output, data):
                 next_transformer = self.field_transformers[output]
+
+        elif output_type in self.transform_output_types:
+            output_ml_ready = True
 
         elif next_transformers is not None:
             next_transformer = next_transformers[output]
@@ -128,7 +132,7 @@ class HyperTransformer:
         else:
             next_transformer = get_default_transformer(output_type)
 
-        return next_transformer
+        return (next_transformer, output_ml_ready)
 
     def _fit_field_transformer(self, data, field, transformer):
         """Fit a transformer to its corresponding field.
@@ -152,17 +156,18 @@ class HyperTransformer:
         self._transformers_sequence.append(transformer)
         output_types = transformer.get_output_types()
         next_transformers = transformer.get_next_transformers()
-        for (output, output_type) in output_types.items():
-            output_field = self._multi_column_fields.get(output, output)
-            if (output_field not in self.field_transformers
-                    and output_type in self.transform_output_types):
-                self._add_field_to_set(output_field, self._output_columns)
+        for (output_name, output_type) in output_types.items():
+            output_field = self._multi_column_fields.get(output_name, output_name)
+            (next_transformer, output_ml_ready) = self._get_next_steps(
+                output_field, output_type, data, next_transformers)
+            if output_ml_ready:
+                self._output_columns.append(output_name)
 
             else:
                 self._add_field_to_set(output_field, self._temp_columns)
-                data = transformer.transform(data)
-                next_transformer = self._get_next_transformer(
-                    output_field, output_type, data, next_transformers)
+                if output_name not in data:
+                    data = transformer.transform(data)
+
                 if next_transformer:
                     self._fit_field_transformer(data, output_field, next_transformer)
 
@@ -173,7 +178,7 @@ class HyperTransformer:
             data (pandas.DataFrame):
                 Data to fit the transformers to.
         """
-        self._input_columns = set(data.columns)
+        self._input_columns = list(data.columns)
         self._update_field_types(data)
         fitted_fields = set()
 
