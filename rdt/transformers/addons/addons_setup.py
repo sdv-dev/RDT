@@ -5,12 +5,14 @@
 
 import json
 import os
+import shutil
 import sys
 from copy import deepcopy
 from glob import glob
 from tempfile import TemporaryDirectory
 
 from setuptools import find_namespace_packages, setup
+
 
 import rdt
 
@@ -48,7 +50,7 @@ def _build_setup(addon_json):
             'Programming Language :: Python :: 3.8',
         ],
         description='Reversible Data Transforms',
-        include_package_data=True,
+        include_package_data=False,
         install_requires=install_requires,
         keywords=['rdt', addon_name],
         license='MIT license',
@@ -64,6 +66,10 @@ def _build_setup(addon_json):
 
 
 def _run():
+    sys_argv = deepcopy(sys.argv)
+    path = sys.argv[0]
+    base_path = os.path.realpath(path).replace(path, '')
+
     families = deepcopy(sys.argv[1:])
 
     all_families = [
@@ -77,11 +83,13 @@ def _run():
     for addon in glob(f'{ADDONS_PATH}/*/*.json'):
         with TemporaryDirectory() as temp_dir:
             build_command = [
-                'addons_setup.py', 'bdist_wheel', '--dist-dir', 'dist', '--bdist-dir',
-                temp_dir, 'sdist', '--dist-dir', 'dist', 'egg_info', '--egg-base', temp_dir
+                path, 'bdist_wheel', '--dist-dir', 'dist', '--bdist-dir', temp_dir,
+                'sdist', '--dist-dir', 'dist', 'egg_info', '--egg-base', temp_dir
             ]
 
-            sys.argv = build_command
+            sys.argv = deepcopy(build_command)
+
+            base_name = os.path.basename(os.path.dirname(addon))
 
             if not families:
                 _build_setup(addon)
@@ -89,6 +97,13 @@ def _run():
             else:
                 if os.path.basename(os.path.dirname(addon)) in families:
                     _build_setup(addon)
+
+            remove = os.path.join(
+                base_path, 'build', 'lib', 'rdt', 'transformers', 'addons', base_name
+            )
+
+            # delete only the processed addon folder
+            shutil.rmtree(remove)
 
 
 _run()
