@@ -66,9 +66,15 @@ def _build_setup(addon_json):
 
 
 def _run():
+
     sys_argv = deepcopy(sys.argv)
     path = sys.argv[0]
     base_path = os.path.realpath(path).replace(path, '')
+
+    # clear build if exists
+    build_path = os.path.join(base_path, 'build')
+    if os.path.exists(build_path):
+        shutil.rmtree(build_path)
 
     families = deepcopy(sys.argv[1:])
 
