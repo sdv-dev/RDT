@@ -13,7 +13,6 @@ from tempfile import TemporaryDirectory
 
 from setuptools import find_namespace_packages, setup
 
-
 import rdt
 
 with open('README.md', encoding='utf-8') as readme_file:
@@ -67,7 +66,6 @@ def _build_setup(addon_json):
 
 def _run():
 
-    sys_argv = deepcopy(sys.argv)
     path = sys.argv[0]
     base_path = os.path.realpath(path).replace(path, '')
 
@@ -77,7 +75,6 @@ def _run():
         shutil.rmtree(build_path)
 
     families = deepcopy(sys.argv[1:])
-
     all_families = [
         family
         for family in os.listdir('.')
@@ -85,7 +82,6 @@ def _run():
     ]
 
     families = list(set(families).intersection(set(all_families)))
-
     for addon in glob(f'{ADDONS_PATH}/*/*.json'):
         with TemporaryDirectory() as temp_dir:
             build_command = [
@@ -93,9 +89,8 @@ def _run():
                 'sdist', '--dist-dir', 'dist', 'egg_info', '--egg-base', temp_dir
             ]
 
-            sys.argv = deepcopy(build_command)
-
             base_name = os.path.basename(os.path.dirname(addon))
+            sys.argv = deepcopy(build_command)
 
             if not families:
                 _build_setup(addon)
@@ -104,12 +99,12 @@ def _run():
                 if os.path.basename(os.path.dirname(addon)) in families:
                     _build_setup(addon)
 
-            remove = os.path.join(
+            remove_addon_build = os.path.join(
                 base_path, 'build', 'lib', 'rdt', 'transformers', 'addons', base_name
             )
 
             # delete only the processed addon folder
-            shutil.rmtree(remove)
+            shutil.rmtree(remove_addon_build)
 
 
 _run()
