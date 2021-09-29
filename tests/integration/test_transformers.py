@@ -74,12 +74,15 @@ def _validate_composition(transformer, reversed_data, input_data):
     This is only applicable if the transformer has the composition
     identity property.
     """
-    actual_reversed = reversed_data
-    if isinstance(reversed_data, pd.DataFrame):
-        actual_reversed = reversed_data[TEST_COL]
+    assert transformer.is_composition_identity()
 
-    if transformer.is_composition_identity():
-        pd.testing.assert_series_equal(actual_reversed, input_data[TEST_COL], check_dtype=False)
+    pd.testing.assert_series_equal(
+        reversed_data,
+        input_data[TEST_COL],
+        check_dtype=False,
+        check_exact=False,
+        rtol=1e-03,
+    )
 
 
 def _test_transformer_with_dataset(transformer_class, input_data):
@@ -106,14 +109,18 @@ def _test_transformer_with_dataset(transformer_class, input_data):
     out = transformer.reverse_transform(transformed)
     _validate_reverse_transformed_data(transformer, out, input_data.dtypes[TEST_COL])
 
+    reversed_data = out
+    if isinstance(out, pd.DataFrame):
+        reversed_data = out[TEST_COL]
     if isinstance(out, pd.DatetimeIndex):
-        out = out.to_series(index=pd.RangeIndex(start=0, stop=DATA_SIZE, step=1))
-    if pd.api.types.is_datetime64_any_dtype(out):
-        out = out.round('us')
-    if isinstance(out, np.ndarray):
-        out = pd.Series(out)
+        reversed_data = out.to_series(index=pd.RangeIndex(start=0, stop=DATA_SIZE, step=1))
+    if isinstance(reversed_data, np.ndarray):
+        out = pd.Series(reversed_data)
+    if pd.api.types.is_datetime64_any_dtype(reversed_data):
+        reversed_data = reversed_data.round('us')
 
-    _validate_composition(transformer, out, input_data)
+    if transformer.is_composition_identity():
+        _validate_composition(transformer, reversed_data, input_data)
 
 
 def _validate_hypertransformer_transformed_data(transformed_data):
@@ -141,7 +148,6 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data):
         input_data (pandas.Series):
             The data to test on.
     """
-    # reverse transformed data using hypertransformer, check that output type is same as input.
     hypertransformer = HyperTransformer(transformers={
         TEST_COL: {'class': transformer_class.__name__},
     })
