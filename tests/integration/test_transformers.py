@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from rdt import HyperTransformer
 from rdt.transformers import BaseTransformer
-import rdt
-import tests.datasets
+from tests.datasets import BaseDatasetGenerator
 
 DATA_SIZE = 1000
 TEST_COL = 'test_col'
@@ -30,7 +30,7 @@ def _build_generator_map():
     """
     generators = {}
 
-    for g in tests.datasets.BaseDatasetGenerator.__subclasses__():
+    for g in BaseDatasetGenerator.__subclasses__():
         generators[g.DATA_TYPE] = g.__subclasses__()
 
     return generators
@@ -142,7 +142,7 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data):
             The data to test on.
     """
     # reverse transformed data using hypertransformer, check that output type is same as input.
-    hypertransformer = rdt.HyperTransformer(transformers={
+    hypertransformer = HyperTransformer(transformers={
         TEST_COL: {'class': transformer_class.__name__},
     })
     hypertransformer.fit(input_data)
