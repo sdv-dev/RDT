@@ -17,32 +17,39 @@ class IdentityTransformer(BaseTransformer):
         """Fit the transformer to the data.
 
         Args:
-            columns_data (pandas.Series or numpy.ndarray):
+            data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        self.INPUT_TYPE = dict(data.dtypes)
-        self.OUTPUT_TYPES = dict(data.dtypes)
+        self.INPUT_TYPES = {
+            column: None
+            for column in self.columns
+        }
 
-    def transform(self, columns_data):
+        self.OUTPUT_TYPES = {
+            column: None
+            for column in self.columns
+        }
+
+    def _transform(self, data):
         """Return the same input data.
 
         Args:
-            columns_data (pandas.DataFrame or pandas.Series):
+            data (pandas.Series or numpy.ndarray):
                 Data to transform.
 
         Returns:
-            numpy.ndarray:
+            pandas.DataFrame or pandas.Series
         """
         return columns_data
 
-    def reverse_transform(self, columns_data):
+    def _reverse_transform(self, data):
         """Return the same input data.
 
         Args:
-            columns_data (numpy.ndarray):
+            data (pandas.Series or numpy.ndarray):
                 Data to revert.
 
         Returns:
-            pandas.Series
+            pandas.DataFrame or pandas.Series
         """
-        return columns_data
+        return data
