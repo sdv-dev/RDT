@@ -13,6 +13,23 @@ class DatetimeGenerator(BaseDatasetGenerator):
 
     DATA_TYPE = 'datetime'
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-6,
+                'memory': 500.0,
+            }
+        }
+
 
 class RandomGapDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with random gaps between them"""

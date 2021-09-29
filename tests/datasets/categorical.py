@@ -12,6 +12,23 @@ class CategoricalGenerator(BaseDatasetGenerator):
 
     DATA_TYPE = 'categorical'
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-6,
+                'memory': 500.0,
+            }
+        }
+
 
 class RandomIntegerGenerator(CategoricalGenerator):
     """Generator that creates an array of random integers."""

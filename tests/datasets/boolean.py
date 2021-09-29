@@ -30,6 +30,23 @@ class RandomBooleanGenerator(BooleanGenerator):
         """
         return np.random.choice(a=[True, False], size=num_rows)
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-6,
+                'memory': 500.0,
+            }
+        }
+
 
 class RandomBooleanNaNsGenerator(BooleanGenerator):
     """Generator that creates an array of random booleans with nulls."""
@@ -46,6 +63,23 @@ class RandomBooleanNaNsGenerator(BooleanGenerator):
             p=[percent_true / 100, percent_false / 100, percent_null / 100],
         )
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-6,
+                'memory': 500.0,
+            }
+        }
+
 
 class RandomSkewedBooleanGenerator(BooleanGenerator):
     """Generator that creates dataset of random booleans."""
@@ -59,6 +93,23 @@ class RandomSkewedBooleanGenerator(BooleanGenerator):
             size=num_rows,
             p=[percent_true / 100, (100 - percent_true) / 100],
         )
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-6,
+                'memory': 500.0,
+            }
+        }
 
 
 class RandomSkewedBooleanNaNsGenerator(BooleanGenerator):
@@ -76,6 +127,23 @@ class RandomSkewedBooleanNaNsGenerator(BooleanGenerator):
             p=[percent_true / 100, percent_false / 100, percent_null / 100],
         )
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-6,
+                'memory': 500.0,
+            }
+        }
+
 
 class ConstantBooleanGenerator(BooleanGenerator):
     """Generator that creates a constant array with either True or False"""
@@ -84,6 +152,23 @@ class ConstantBooleanGenerator(BooleanGenerator):
     def generate(num_rows):
         constant = np.random.choice([True, False])
         return np.full(num_rows, constant)
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-6,
+                'memory': 500.0,
+            }
+        }
 
 
 class ConstantBooleanNaNsGenerator(BooleanGenerator):
@@ -99,3 +184,20 @@ class ConstantBooleanNaNsGenerator(BooleanGenerator):
             size=num_rows,
             p=[(100 - percent_null) / 100, percent_null / 100],
         )
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-6,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-6,
+                'memory': 500.0,
+            }
+        }
