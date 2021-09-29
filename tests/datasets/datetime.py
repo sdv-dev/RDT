@@ -3,6 +3,7 @@
 import datetime
 
 import numpy as np
+import pandas as pd
 
 from tests.datasets.base import BaseDatasetGenerator
 from tests.datasets.utils import add_nans
@@ -146,9 +147,11 @@ class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def generate(num_rows):
-        today = datetime.datetime.today()
         delta = datetime.timedelta
+
+        today = min(datetime.datetime.today(), pd.Timestamp.max - delta(num_rows))
         dates = [delta(i) + today for i in range(num_rows)]
+
         return np.array(dates, dtype='datetime64')
 
     @staticmethod
@@ -174,9 +177,11 @@ class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def generate(num_rows):
-        today = datetime.datetime.today()
         delta = datetime.timedelta
-        dates = [delta(weeks=i) + today for i in range(num_rows)]
+
+        today = datetime.datetime.today()
+        dates = [min(delta(weeks=i) + today, pd.Timestamp.max) for i in range(num_rows)]
+
         return np.array(dates, dtype='datetime64')
 
     @staticmethod

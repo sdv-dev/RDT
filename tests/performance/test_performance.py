@@ -60,9 +60,46 @@ def _build_transformer_map():
     return transformers_map
 
 
+def _get_dataset_sizes(data_type):
+    """Get a list of (fit_size, transform_size) for each dataset generator.
+
+    Based on the data type of the dataset generator, return the list of
+    sizes to run performance tests on. Each element in this list is a tuple
+    of (fit_size, transform_size).
+
+    Input:
+        input_type (str):
+            The type of data that the generator returns.
+
+    Output:
+        sizes (list[tuple]):
+            A list of (fit_size, transform_size) configs to run tests on.
+    """
+    sizes = [(s, s) for s in DATASET_SIZES]
+
+    if data_type == 'categorical':
+        sizes = [(s, max(s, 1000)) for s in DATASET_SIZES if s <= 10000]
+
+    return sizes
+
+
 DATASET_SIZES = [1000, 10000, 100000]
 dataset_generators = _get_all_dataset_generators()
 transformer_map = _build_transformer_map()
+
+
+def _validate_metric_against_threshold(actual, expected_unit, size):
+    """Validate that the observed metric is below the expected threshold.
+
+    Input:
+        actual (int or float):
+            The observed value.
+        expected_unit (int or float):
+            The expected unit of the metric (per row).
+        size (int):
+            Size of the dataset.
+    """
+    assert actual < size * expected_unit
 
 
 @pytest.mark.parametrize('dataset_generator', dataset_generators)
@@ -81,24 +118,39 @@ def test_performance(dataset_generator):
 
     expected = dataset_generator.get_performance_thresholds()
 
+    dataset_sizes = _get_dataset_sizes(dataset_generator.DATA_TYPE)
+
     for transformer in transformers:
         transformer_instance = transformer()
 
-        for size in DATASET_SIZES:
+        for sizes in dataset_sizes:
+            fit_size, transform_size = sizes
 
             out = profile_transformer(
                 transformer=transformer_instance,
                 dataset_generator=dataset_generator,
-                fit_size=size,
-                transform_size=size,
+                fit_size=fit_size,
+                transform_size=transform_size,
             )
 
-            assert out['Fit Time'] < size * expected['fit']['time']
-            assert out['Fit Memory'] < size * expected['fit']['memory']
-            assert out['Transform Time'] < size * expected['transform']['time']
-            assert out['Transform Memory'] < size * expected['transform']['memory']
-            assert out['Reverse Transform Time'] < size * expected['reverse_transform']['time']
-            assert out['Reverse Transform Memory'] < size * expected['reverse_transform']['memory']
+            _validate_metric_against_threshold(
+                out['Fit Time'], expected['fit']['time'], fit_size)
+            _validate_metric_against_threshold(
+                out['Fit Memory'], expected['fit']['memory'], fit_size)
+            _validate_metric_against_threshold(
+                out['Transform Time'], expected['transform']['time'], transform_size)
+            _validate_metric_against_threshold(
+                out['Transform Memory'], expected['transform']['memory'], transform_size)
+            _validate_metric_against_threshold(
+                out['Reverse Transform Time'],
+                expected['reverse_transform']['time'],
+                transform_size,
+            )
+            _validate_metric_against_threshold(
+                out['Reverse Transform Memory'],
+                expected['reverse_transform']['memory'],
+                transform_size,
+            )
 
 
 def _round_to_magnitude(value):
