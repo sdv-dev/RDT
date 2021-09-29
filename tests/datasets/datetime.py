@@ -41,6 +41,23 @@ class RandomGapDatetimeGenerator(DatetimeGenerator):
         dates = [(np.random.random() * delta + today) for i in range(num_rows)]
         return np.array(dates, dtype='datetime64')
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 2e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 1e-06,
+                'memory': 300.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 1000.0,
+            }
+        }
+
 
 class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with random gaps of seconds between them"""
@@ -52,6 +69,23 @@ class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
         dates = [(np.random.random() * delta + today) for i in range(num_rows)]
         return np.array(dates, dtype='datetime64')
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 2e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 1e-06,
+                'memory': 300.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 1000.0,
+            }
+        }
+
 
 class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
     """Generator that creates dates with random gaps and NaNs"""
@@ -60,6 +94,23 @@ class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
     def generate(num_rows):
         dates = RandomGapDatetimeGenerator.generate(num_rows)
         return add_nans(dates.astype('O'))
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 2e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 4e-06,
+                'memory': 1000.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 1000.0,
+            }
+        }
 
 
 class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
@@ -72,6 +123,23 @@ class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
         dates = [delta(hours=i) + today for i in range(num_rows)]
         return np.array(dates, dtype='datetime64')
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 2e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 1e-06,
+                'memory': 300.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 1000.0,
+            }
+        }
+
 
 class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with 1 day gaps between them"""
@@ -83,6 +151,23 @@ class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
         dates = [delta(i) + today for i in range(num_rows)]
         return np.array(dates, dtype='datetime64')
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 2e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 1e-06,
+                'memory': 300.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 1000.0,
+            }
+        }
+
 
 class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with 1 week gaps between them"""
@@ -93,3 +178,20 @@ class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
         delta = datetime.timedelta
         dates = [delta(weeks=i) + today for i in range(num_rows)]
         return np.array(dates, dtype='datetime64')
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 2e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 1e-06,
+                'memory': 300.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 1000.0,
+            }
+        }

@@ -71,12 +71,12 @@ class RandomBooleanNaNsGenerator(BooleanGenerator):
                 'memory': 200.0
             },
             'transform': {
-                'time': 1e-6,
-                'memory': 200.0
+                'time': 1e-5,
+                'memory': 1000.0
             },
             'reverse_transform': {
-                'time': 2e-6,
-                'memory': 500.0,
+                'time': 1e-5,
+                'memory': 1000.0,
             }
         }
 
@@ -135,12 +135,12 @@ class RandomSkewedBooleanNaNsGenerator(BooleanGenerator):
                 'memory': 200.0
             },
             'transform': {
-                'time': 1e-6,
-                'memory': 200.0
+                'time': 1e-5,
+                'memory': 1000.0
             },
             'reverse_transform': {
-                'time': 2e-6,
-                'memory': 500.0,
+                'time': 1e-5,
+                'memory': 1000.0,
             }
         }
 
@@ -193,11 +193,11 @@ class ConstantBooleanNaNsGenerator(BooleanGenerator):
                 'memory': 200.0
             },
             'transform': {
-                'time': 1e-6,
-                'memory': 200.0
+                'time': 1e-5,
+                'memory': 1000.0
             },
             'reverse_transform': {
-                'time': 2e-6,
-                'memory': 500.0,
+                'time': 1e-5,
+                'memory': 1000.0,
             }
         }

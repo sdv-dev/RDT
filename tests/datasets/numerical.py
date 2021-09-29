@@ -37,6 +37,23 @@ class RandomIntegerGenerator(NumericalGenerator):
         ii32 = np.iinfo(np.int32)
         return np.random.randint(ii32.min, ii32.max, num_rows)
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 2e-07,
+                'memory': 10.0
+            },
+            'reverse_transform': {
+                'time': 1e-07,
+                'memory': 100.0,
+            }
+        }
+
 
 class RandomIntegerNaNsGenerator(NumericalGenerator):
     """Generator that creates an array of random integers with nans."""
@@ -44,6 +61,23 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
     @staticmethod
     def generate(num_rows):
         return add_nans(RandomIntegerGenerator.generate(num_rows).astype(np.float))
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 4e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 100.0,
+            }
+        }
 
 
 class ConstantIntegerGenerator(NumericalGenerator):
@@ -55,6 +89,23 @@ class ConstantIntegerGenerator(NumericalGenerator):
         constant = np.random.randint(ii32.min, ii32.max)
         return np.full(num_rows, constant)
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 2e-07,
+                'memory': 10.0
+            },
+            'reverse_transform': {
+                'time': 1e-07,
+                'memory': 100.0,
+            }
+        }
+
 
 class ConstantIntegerNaNsGenerator(NumericalGenerator):
     """Generator that creates a constant array with a random integer with some nans."""
@@ -62,6 +113,23 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
     @staticmethod
     def generate(num_rows):
         return add_nans(ConstantIntegerGenerator.generate(num_rows).astype(np.float))
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 3e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 100.0,
+            }
+        }
 
 
 class AlmostConstantIntegerGenerator(NumericalGenerator):
@@ -76,6 +144,23 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
         np.random.shuffle(array)
         return array
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 2e-07,
+                'memory': 10.0
+            },
+            'reverse_transform': {
+                'time': 1e-07,
+                'memory': 100.0,
+            }
+        }
+
 
 class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
     """Generator that creates an array with 2 only values, one of them repeated, and NaNs."""
@@ -89,6 +174,23 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
         np.random.shuffle(array)
         return array
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 3e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 100.0,
+            }
+        }
+
 
 class NormalGenerator(NumericalGenerator):
     """Generator that creates an array of normally distributed float values."""
@@ -96,6 +198,23 @@ class NormalGenerator(NumericalGenerator):
     @staticmethod
     def generate(num_rows):
         return np.random.normal(size=num_rows)
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 2e-07,
+                'memory': 10.0
+            },
+            'reverse_transform': {
+                'time': 1e-07,
+                'memory': 100.0,
+            }
+        }
 
 
 class NormalNaNsGenerator(NumericalGenerator):
@@ -105,6 +224,23 @@ class NormalNaNsGenerator(NumericalGenerator):
     def generate(num_rows):
         return add_nans(NormalGenerator.generate(num_rows))
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 4e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 1e-06,
+                'memory': 100.0,
+            }
+        }
+
 
 class BigNormalGenerator(NumericalGenerator):
     """Generator that creates an array of big normally distributed float values."""
@@ -113,6 +249,23 @@ class BigNormalGenerator(NumericalGenerator):
     def generate(num_rows):
         return np.random.normal(scale=1e10, size=num_rows)
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 2e-07,
+                'memory': 10.0
+            },
+            'reverse_transform': {
+                'time': 1e-07,
+                'memory': 100.0,
+            }
+        }
+
 
 class BigNormalNaNsGenerator(NumericalGenerator):
     """Generator that creates an array of normally distributed float values, with NaNs."""
@@ -120,3 +273,20 @@ class BigNormalNaNsGenerator(NumericalGenerator):
     @staticmethod
     def generate(num_rows):
         return add_nans(BigNormalGenerator.generate(num_rows))
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 3e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 100.0,
+            }
+        }
