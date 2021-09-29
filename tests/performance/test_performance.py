@@ -41,20 +41,6 @@ def _get_all_dataset_generators():
     return generators
 
 
-# Temporary method, will be removed after hypertransformer is updated.
-def _get_subclasses(obj):
-    """Get all subclasses of the given class."""
-    subclasses = obj.__subclasses__()
-
-    if len(subclasses) == 0:
-        return []
-
-    for subclass in subclasses:
-        subclasses.extend(_get_subclasses(subclass))
-
-    return subclasses
-
-
 def _build_transformer_map():
     """Build a map of data type to transformer.
 
@@ -62,7 +48,7 @@ def _build_transformer_map():
         dict:
             A mapping of data type (str) to a list of transformers.
     """
-    transformers = _get_subclasses(BaseTransformer)
+    transformers = BaseTransformer.get_subclasses()
     transformers_map = {}
 
     for transformer in transformers:
@@ -83,16 +69,13 @@ transformer_map = _build_transformer_map()
 def test_performance(dataset_generator):
     """Run the performance tests for RDT.
 
-    This test should loop through every dataset generator,
-    load the relevant transformers, and run the ``profile_transformer``
+    This test should find all relevant transformers for the given
+    dataset generator, and run the ``profile_transformer``
     method, which will assert that the memory consumption
     and times are under the maximum acceptable values.
 
     Input:
-    - Transformer loaded from config
-    - Dataset generator loaded from config
-    - fit size loaded from config
-    - transform size loaded from config
+        dataset_generator (rdt.tests.dataset.BaseDatasetGenerator)
     """
     transformers = transformer_map.get(dataset_generator.DATA_TYPE, [])
 
