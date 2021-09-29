@@ -282,6 +282,7 @@ class CategoricalFuzzyTransformer(CategoricalTransformer):
             If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
             Defaults to ``False``.
     """
+
     def __init__(self, clip=False):
         super().__init__(fuzzy=True, clip=clip)
 

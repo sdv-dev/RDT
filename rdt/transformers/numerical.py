@@ -202,7 +202,7 @@ class NumericalBoundedTransformer(NumericalTransformer):
     This transformer replaces integer values with their float equivalent, bounded by the fitted
     data (the minimum and maximum values seen while fitting). It will also round all values to
     the maximum number of decimal places detected in the fitted data.
-    
+
     Non null float values are not modified.
 
     This class behaves exactly as the ``NumericalTransformer`` with ``min_value='auto'``,
@@ -225,9 +225,11 @@ class NumericalBoundedTransformer(NumericalTransformer):
             If ``False``, do not create the new column.
             Defaults to ``None``.
     """
+
     def __init__(self, dtype=None, nan='mean', null_column=None):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column, min_value='auto',
                          max_value='auto', rounding='auto')
+
 
 class GaussianCopulaTransformer(NumericalTransformer):
     r"""Transformer for numerical data based on copulas transformation.

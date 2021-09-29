@@ -180,5 +180,6 @@ class DatetimeRoundedTransformer(DatetimeTransformer):
             If ``False``, do not create the new column.
             Defaults to ``None``.
     """
+
     def __init__(self, nan='mean', null_column=None):
         super().__init__(nan=nan, null_column=null_column, strip_constant=True)
