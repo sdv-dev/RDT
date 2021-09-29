@@ -9,73 +9,80 @@ from rdt.transformers import IdentityTransformer
 
 class TestIdentityTransformer(TestCase):
 
-    def test___init__(self):
-        instance = IdentityTransformer()
-        assert instance.INPUT_TYPE is None
-        assert instance.OUTPUT_TYPES is None
-
-    def test_fit(self):
-        # setup
-        data = pd.DataFrame({
-            'a': np.array([1, 2, 3]),
-            'b': np.array(['a', 'b', 'c']),
-            'c': np.array([1., 2., 3.])
-        })
-
-        _fit_mock = Mock()
-        instance = IdentityTransformer()
-        instance._fit = _fit_mock
-
-        instance.INPUT_TYPE = {'a': 'int', 'b': 'object'}
-        instance.OUTPUT_TYPES = {'a': 'int', 'b': 'object'}
-
-        # run
-        instance.fit(data, columns=['a', 'b'])
-
-        # assert
-        _fit_data_arg = _fit_mock.call_args[0][0]
-        pd.testing.assert_frame_equal(data[['a', 'b']], _fit_data_arg)
-
     def test__fit(self):
+        """Test ``IdentityTransformer._fit`` function.
+
+        The ``_fit`` function is expected to learn the columns ``INPUT_TYPE`` and
+        ``OUTPUT_COLUMNS`` from the ``self.columns``.
+
+        Setup:
+            - mock self.columns to be a list with values.
+        Input:
+            - ``data``, a ``numpy.ndarray`` with numerical values.
+        Output:
+            - n/a
+        """
         # setup
-        data = pd.DataFrame({
-            'a': np.array([1, 2, 3]),
-            'b': np.array(['a', 'b', 'c']),
-            'c': np.array([1., 2., 3.])
-        })
-        instance = IdentityTransformer()
+        instance = Mock()
+        instance.columns = ['a', 'b', 'c']
 
         # run
-        instance.fit(data, columns=['a', 'b'])
+        data = np.array([0.5, 0.6, 0.7])
+        IdentityTransformer._fit(instance, data)
 
         # assert
-        dtypes = data.dtypes[['a', 'b']]
+        expected_input_type = {
+            'a': None,
+            'b': None,
+            'c': None,
+        }
+        expected_output_types = {
+            'a': None,
+            'b': None,
+            'c': None,
+        }
 
-        instance.INPUT_TYPE == dict(dtypes)
-        instance.OUTPUT_TYPES == dict(dtypes)
+        assert instance.INPUT_TYPE == expected_input_type
+        assert instance.OUTPUT_TYPES == expected_output_types
 
-    def test_transform(self):
-        data = pd.DataFrame({
-            'a': np.array([1, 2, 3]),
-            'b': np.array(['a', 'b', 'c']),
-            'c': np.array([1., 2., 3.])
-        })
 
-        instance = IdentityTransformer()
-        transformed = instance.transform(data)
+    def test__transform(self):
+        """Test ``IdentityTransformer._transform`` function.
+
+        The ``_transform`` function is expected to return the input object without modifying it.
+
+        Input:
+            - An `object` instance.
+        Output:
+            - Same ``object`` as input, unmodified.
+        """
+        # setup
+        instance = Mock()
+        input_object = object()
+
+        # run
+        output_object = IdentityTransformer._transform(instance, input_object)
 
         # assert
-        pd.testing.assert_frame_equal(data, transformed)
+        assert input_object == output_object
 
-    def test_reverse_transform(self):
-        data = pd.DataFrame({
-            'a': np.array([1, 2, 3]),
-            'b': np.array(['a', 'b', 'c']),
-            'c': np.array([1., 2., 3.])
-        })
+    def test__reverse_transform(self):
+        """Test ``IdentityTransformer._reverse_transform`` function.
 
-        instance = IdentityTransformer()
-        reverse_transformed = instance.reverse_transform(data)
+        The ``_reverse_transform`` function is expected to return the input object without
+        modifying it.
+
+        Input:
+            - An `object` instance.
+        Output:
+            - Same ``object`` as input, unmodified.
+        """
+        # setup
+        instance = Mock()
+        input_object = object()
+
+        # run
+        output_object = IdentityTransformer._transform(instance, input_object)
 
         # assert
-        pd.testing.assert_frame_equal(data, reverse_transformed)
+        assert input_object == output_object

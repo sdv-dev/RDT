@@ -20,7 +20,7 @@ class IdentityTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        self.INPUT_TYPES = {
+        self.INPUT_TYPE = {
             column: None
             for column in self.columns
         }
@@ -40,7 +40,7 @@ class IdentityTransformer(BaseTransformer):
         Returns:
             pandas.DataFrame or pandas.Series
         """
-        return columns_data
+        return data
 
     def _reverse_transform(self, data):
         """Return the same input data.
