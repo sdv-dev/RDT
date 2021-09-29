@@ -13,15 +13,15 @@ class IdentityTransformer(BaseTransformer):
     INPUT_TYPE = None
     OUTPUT_TYPES = None
 
-    def _fit(self, columns_data):
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Args:
             columns_data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        self.INPUT_TYPE = dict(columns_data.dtypes)
-        self.OUTPUT_TYPES = dict(columns_data.dtypes)
+        self.INPUT_TYPE = dict(data.dtypes)
+        self.OUTPUT_TYPES = dict(data.dtypes)
 
     def transform(self, columns_data):
         """Return the same input data.
