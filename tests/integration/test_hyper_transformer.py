@@ -1,4 +1,3 @@
-from rdt.transformers import BaseTransformer
 from unittest.mock import patch
 
 import numpy as np
@@ -6,7 +5,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
-from rdt.transformers import OneHotEncodingTransformer
+from rdt.transformers import BaseTransformer, OneHotEncodingTransformer, get_default_transformer
 
 
 class DummyTransformer(BaseTransformer):
@@ -215,6 +214,7 @@ def test_hypertransformer_no_inputs(default_transformers_mock):
         - The transformed data should contain all the ML ready data.
         - The reverse transformed data should be the same as the input.
     """
+    get_default_transformer.cache_clear()
     default_transformers_mock.return_value = {
         'numerical': DummyTransformer,
         'integer': DummyTransformer,

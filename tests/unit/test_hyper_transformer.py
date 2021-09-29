@@ -1,101 +1,649 @@
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, call, patch
 
-import numpy as np
 import pandas as pd
-import pytest
 
 from rdt import HyperTransformer
 from rdt.transformers import (
-    BooleanTransformer, DatetimeTransformer, NumericalTransformer, OneHotEncodingTransformer)
+    BooleanTransformer, CategoricalTransformer, DatetimeTransformer, GaussianCopulaTransformer,
+    NumericalTransformer, OneHotEncodingTransformer)
 
 
 class TestHyperTransformer(TestCase):
 
-    def test___init__(self):
+    @patch('rdt.hyper_transformer.HyperTransformer._create_multi_column_fields')
+    def test___init__(self, mock):
         """Test create new instance of HyperTransformer"""
         # Run
         ht = HyperTransformer()
 
         # Asserts
         self.assertTrue(ht.copy)
-        self.assertEqual(ht.dtypes, None)
+        self.assertEqual(ht.field_transformers, {})
+        self.assertEqual(ht.data_type_transformers, {})
+        self.assertEqual(ht.field_types, {})
+        mock.assert_called_once()
 
-    def test__analyze(self):
-        """Test _analyze"""
+    def test__create_multi_column_fields(self):
+        """Test the ``_create_multi_column_fields`` method.
+
+        This tests that the method goes through both the ``field_transformers``
+        dict and ``field_types`` dict to find multi_column fields and map
+        each column to its corresponding tuple.
+
+        Setup:
+            - instance.field_transformers will be populated with multi-column fields
+            - instance.field_types will be populated with multi-column fields
+
+        Output:
+            - A dict mapping each column name that is part of a multi-column
+            field to the tuple of columns in the field it belongs to.
+        """
         # Setup
-        hp = HyperTransformer(dtype_transformers={'O': 'one_hot_encoding'})
-
-        # Run
-        data = pd.DataFrame({
-            'int': [1, 2, None],
-            'float': [1.0, 2.0, None],
-            'object': ['foo', 'bar', None],
-            'category': [1, 2, None],
-            'bool': [True, False, None],
-            'datetime': pd.to_datetime(['1965-05-23', None, '1997-10-17']),
-        })
-        data['category'] = data['category'].astype('category')
-        result = hp._analyze(data)
-
-        # Asserts
-        assert isinstance(result, dict)
-        assert set(result.keys()) == {'int', 'float', 'object', 'category', 'bool', 'datetime'}
-
-        assert isinstance(result['int'], NumericalTransformer)
-        assert isinstance(result['float'], NumericalTransformer)
-        assert isinstance(result['object'], OneHotEncodingTransformer)
-        assert isinstance(result['category'], OneHotEncodingTransformer)
-        assert isinstance(result['bool'], BooleanTransformer)
-        assert isinstance(result['datetime'], DatetimeTransformer)
-
-    def test__analyze_invalid_dtype(self):
-        """Test _analyze when a list of dtypes containing an invalid dtype is passed."""
-        # Setup
-        hp = HyperTransformer(dtypes=['int', 'complex'])
-
-        # Run
-        data = pd.DataFrame({
-            'int': [1, 2, None],
-            'complex': [1.0 + 0j, 2.0 + 1j, None],
-        })
-        with pytest.raises(ValueError):
-            hp._analyze(data)
-
-    def test_fit_with_analyze(self):
-        """Test fit and analyze the transformers"""
-        # Setup
-        data = pd.DataFrame({
-            'integers': [1, 2, 3, 4],
-            'floats': [1.1, 2.2, 3.3, 4.4],
-            'booleans': [True, False, False, True]
-        })
-
-        int_mock = Mock()
-        float_mock = Mock()
-        bool_mock = Mock()
-
-        analyzed_data = {
-            'integers': int_mock,
-            'floats': float_mock,
-            'booleans': bool_mock
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            'a': BooleanTransformer,
+            'b': DatetimeTransformer,
+            ('c', 'd'): DatetimeTransformer,
+            'e': NumericalTransformer
+        }
+        ht.field_types = {
+            'f': 'categorical',
+            ('g', 'h'): 'datetime'
         }
 
         # Run
-        transformer = Mock()
-        transformer.transformers = None
-        transformer._analyze.return_value = analyzed_data
+        multi_column_fields = ht._create_multi_column_fields()
 
-        HyperTransformer.fit(transformer, data)
+        # Assert
+        expected = {
+            'c': ('c', 'd'),
+            'd': ('c', 'd'),
+            'g': ('g', 'h'),
+            'h': ('g', 'h')
+        }
+        self.assertEqual(multi_column_fields, expected)
 
-        # Asserts
-        expect_int_call_count = 1
-        expect_float_call_count = 1
-        expect_bool_call_count = 1
+    def test__get_next_transformer_field_transformer(self):
+        """Test the ``_get_next_transformer method.
 
-        self.assertEqual(int_mock.fit.call_count, expect_int_call_count)
-        self.assertEqual(float_mock.fit.call_count, expect_float_call_count)
-        self.assertEqual(bool_mock.fit.call_count, expect_bool_call_count)
+        This tests that if the transformer is defined in the
+        ``instance.field_transformers`` dict, then it is returned
+        even if the output type is final.
+
+        Setup:
+            - field_transformers is given a transformer for the
+            output field.
+            - field_types will be given a different transformer
+            for the output type of the output field.
+
+        Input:
+            - An output field name in field_transformers.
+            - Output type is numerical.
+            - next_transformers is None.
+
+        Output:
+            - The transformer defined in field_transformers.
+        """
+        # Setup
+        transformer = NumericalTransformer()
+        ht = HyperTransformer(
+            field_transformers={'a.out': transformer},
+            data_type_transformers={'numerical': GaussianCopulaTransformer()}
+        )
+
+        # Run
+        next_transformer = ht._get_next_transformer('a.out', 'numerical', None)
+
+        # Assert
+        self.assertEqual(next_transformer, transformer)
+
+    def test__get_next_transformer_final_output_type(self):
+        """Test the ``_get_next_transformer method.
+
+        This tests that if the transformer is not defined in the
+        ``instance.field_transformers`` dict and its output type
+        is in ``instance._transform_output_types``, then ``None``
+        is returned.
+
+        Setup:
+            - field_types will be given a transformer
+            for the output type of the output field.
+
+        Input:
+            - An output field name in field_transformers.
+            - Output type is numerical.
+            - next_transformers is None.
+
+        Output:
+            - None.
+        """
+        # Setup
+        ht = HyperTransformer(
+            data_type_transformers={'numerical': GaussianCopulaTransformer()}
+        )
+
+        # Run
+        next_transformer = ht._get_next_transformer('a.out', 'numerical', None)
+
+        # Assert
+        self.assertIsNone(next_transformer)
+
+    def test__get_next_transformer_next_transformers(self):
+        """Test the ``_get_next_transformer method.
+
+        This tests that if the transformer is not defined in the
+        ``instance.field_transformers`` dict and its output type
+        is not in ``instance._transform_output_types`` and the
+        ``next_transformers`` dict has a transformer for the output
+        field, then it is used.
+
+        Setup:
+            - field_types will be given a transformer
+            for the output type of the output field.
+
+        Input:
+            - An output field name in field_transformers.
+            - Output type is categorical.
+            - next_transformers is has a transformer defined
+            for the output field.
+
+        Output:
+            - The transformer defined in next_transformers.
+        """
+        # Setup
+        transformer = CategoricalTransformer()
+        ht = HyperTransformer(
+            data_type_transformers={'categorical': OneHotEncodingTransformer()}
+        )
+        next_transformers = {'a.out': transformer}
+
+        # Run
+        next_transformer = ht._get_next_transformer('a.out', 'categorical', next_transformers)
+
+        # Assert
+        self.assertEqual(next_transformer, transformer)
+
+    @patch('rdt.transformers.get_default_transformer')
+    def test__get_next_transformer_default_transformer(self, mock):
+        """Test the ``_get_next_transformer method.
+
+        This tests that if the transformer is not defined in the
+        ``instance.field_transformers`` dict or ``next_transformers``
+        and its output typeis not in ``instance._transform_output_types``
+        then the default_transformer is used.
+
+        Setup:
+            - A mock is used for ``get_default_transformer``.
+
+        Input:
+            - An output field name in field_transformers.
+            - Output type is categorical.
+            - next_transformers is None.
+
+        Output:
+            - The default transformer.
+        """
+        # Setup
+        transformer = CategoricalTransformer(fuzzy=True)
+        mock.return_value = transformer
+        ht = HyperTransformer(
+            data_type_transformers={'categorical': OneHotEncodingTransformer()}
+        )
+
+        # Run
+        next_transformer = ht._get_next_transformer('a.out', 'categorical', None)
+
+        # Assert
+        assert isinstance(next_transformer, CategoricalTransformer)
+        self.assertEqual(next_transformer.fuzzy, True)
+
+    def test__update_field_types(self):
+        """Test the ``_update_field_types`` method.
+
+        This tests that if any field types are missing in the
+        provided field_types dict, that the rest of the values
+        are filled in using the data types for the dtype.
+
+        Setup:
+            - field_types will only define a few of the fields.
+
+        Input:
+            - A DataFrame of various types.
+
+        Expected behavior:
+            - field types will have values for all fields in
+            the data.
+        """
+        # Setup
+        ht = HyperTransformer(field_types={'a': 'numerical', 'b': 'categorical'})
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': ['category1', 'category2', 'category3'],
+            'c': [True, False, True],
+            'd': [1.0, 2.0, 3.0]
+        })
+
+        # Run
+        ht._update_field_types(data)
+
+        # Assert
+        expected = {'a': 'numerical', 'b': 'categorical', 'c': 'boolean', 'd': 'float'}
+        self.assertEqual(ht.field_types, expected)
+
+    @patch('rdt.hyper_transformer.load_transformer')
+    def test__fit_field_transformer(self, load_transformer_mock):
+        """Test the ``_fit_field_transformer`` method.
+
+        This tests that the ``_fit_field_transformer`` behaves as expected.
+        It should fit the transformer it is provided, loops through its
+        outputs, transform the data if the output is not ML ready and call
+        itself recursively if it can.
+
+        Setup:
+            - A mock for ``load_transformer``.
+            - A mock for the transformer returned by ``load_transformer``.
+            The ``get_output_types`` method will return two outputs, one that
+            is ML ready and one that isn't.
+
+        Input:
+            - A DataFrame with one column.
+            - A column name to fit the transformer to.
+            - A transformer.
+
+        Output:
+            - A DataFrame with columns that result from transforming the
+            outputs of the original transformer.
+            - ``_output_columns`` should add the appropriate column names.
+            - ``_temp_columns`` should add the appropriate column names.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        transformed_data1 = pd.DataFrame({
+            'a.out1': [2, 4, 6],
+            'a.out2': ['1', '2', '3']
+        })
+        transformer1 = Mock()
+        transformer2 = Mock()
+        transformer1.get_output_types.return_value = {
+            'a.out1': 'categorical',
+            'a.out2': 'numerical'
+        }
+        transformer1.get_next_transformers.return_value = {
+            'a.out1': transformer2
+        }
+        transformer1.transform.return_value = transformed_data1
+        transformer2.get_output_types.return_value = {
+            'a.out1.value': 'numerical'
+        }
+        transformer2.get_next_transformers.return_value = None
+        load_transformer_mock.side_effect = [
+            transformer1,
+            transformer2,
+            None,
+            None
+        ]
+        ht = HyperTransformer()
+        ht._get_next_transformer = Mock()
+        ht._get_next_transformer.side_effect = [
+            transformer2,
+            None,
+            None
+        ]
+
+        # Run
+        out = ht._fit_field_transformer(data, 'a', transformer1)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a.out1': [2, 4, 6],
+            'a.out2': ['1', '2', '3']
+        })
+        self.assertEqual(ht._output_columns, ['a.out1.value', 'a.out2'])
+        self.assertEqual(ht._temp_columns, ['a.out1'])
+        pd.testing.assert_frame_equal(out, expected)
+        transformer1.fit.assert_called_once()
+        transformer1.transform.assert_called_once_with(data)
+        transformer2.fit.assert_called_once()
+        self.assertEqual(ht._transformers_sequence, [transformer1, transformer2])
+
+    @patch('rdt.hyper_transformer.load_transformer')
+    def test__fit_field_transformer_multi_column_field_not_ready(self, load_transformer_mock):
+        """Test the ``_fit_field_transformer`` method.
+
+        This tests that the ``_fit_field_transformer`` behaves as expected.
+        If the column is part of a multi-column field, and the other columns
+        aren't present in the data, then it should not fit the next transformer.
+        It should however, transform the data.
+
+        Setup:
+            - A mock for ``load_transformer``.
+            - A mock for the transformer returned by ``load_transformer``.
+            The ``get_output_types`` method will return one output that is part of
+            a multi-column field.
+            - A mock for ``_multi_column_fields`` to return the multi-column field.
+
+        Input:
+            - A DataFrame with two columns.
+            - A column name to fit the transformer to.
+            - A transformer.
+
+        Output:
+            - A DataFrame with columns that result from transforming the
+            outputs of the original transformer.
+            - ``_temp_columns`` should add the column name of the column in the
+            multi-column field.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        })
+        transformed_data1 = pd.DataFrame({
+            'a.out1': ['1', '2', '3'],
+            'b': [4, 5, 6]
+        })
+        transformer1 = Mock()
+        transformer2 = Mock()
+        transformer1.get_output_types.return_value = {
+            'a.out1': 'categorical'
+        }
+        transformer1.get_next_transformers.return_value = None
+        transformer1.transform.return_value = transformed_data1
+        load_transformer_mock.side_effect = [transformer1]
+        ht = HyperTransformer()
+        ht._get_next_transformer = Mock()
+        ht._get_next_transformer.side_effect = [transformer2]
+        ht._multi_column_fields = Mock()
+        ht._multi_column_fields.get.return_value = ('a.out1', 'b.out1')
+
+        # Run
+        out = ht._fit_field_transformer(data, 'a', transformer1)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a.out1': ['1', '2', '3'],
+            'b': [4, 5, 6]
+        })
+        self.assertEqual(ht._output_columns, [])
+        self.assertEqual(ht._temp_columns, ['a.out1'])
+        pd.testing.assert_frame_equal(out, expected)
+        transformer1.fit.assert_called_once()
+        transformer1.transform.assert_called_once_with(data)
+        transformer2.fit.assert_not_called()
+        self.assertEqual(ht._transformers_sequence, [transformer1])
+
+    @patch('rdt.hyper_transformer.load_transformer')
+    def test__fit_field_transformer_multi_column_field_ready(self, load_transformer_mock):
+        """Test the ``_fit_field_transformer`` method.
+
+        This tests that the ``_fit_field_transformer`` behaves as expected.
+        If the column is part of a multi-column field, and the other columns
+        are present in the data, then it should fit the next transformer.
+        It should also transform the data.
+
+        Setup:
+            - A mock for ``load_transformer``.
+            - A mock for the transformer returned by ``load_transformer``.
+            The ``get_output_types`` method will return one output that is part of
+            a multi-column field.
+            - A mock for ``_multi_column_fields`` to return the multi-column field.
+
+        Input:
+            - A DataFrame with the other columns in the multi-column field.
+            - A column name to fit the transformer to.
+            - A transformer.
+
+        Output:
+            - A DataFrame with columns that result from transforming the
+            outputs of the original transformer.
+            - ``_temp_columns`` should add the column name of the column in the
+            multi-column field.
+            - ``_output_columns`` should add the column name of the output of
+            the transformer used on the multi-column field.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b.out1': ['4', '5', '6']
+        })
+        transformed_data1 = pd.DataFrame({
+            'a.out1': ['1', '2', '3'],
+            'b.out1': ['4', '5', '6']
+        })
+        transformer1 = Mock()
+        transformer2 = Mock()
+        transformer1.get_output_types.return_value = {
+            'a.out1': 'categorical'
+        }
+        transformer1.get_next_transformers.return_value = None
+        transformer1.transform.return_value = transformed_data1
+        transformer2.get_output_types.return_value = {
+            'a.out1#b.out1': 'numerical'
+        }
+        load_transformer_mock.side_effect = [
+            transformer1,
+            transformer2
+        ]
+        ht = HyperTransformer()
+        ht._get_next_transformer = Mock()
+        ht._get_next_transformer.side_effect = [
+            transformer2,
+            None
+        ]
+        ht._multi_column_fields = Mock()
+        ht._multi_column_fields.get.return_value = ('a.out1', 'b.out1')
+
+        # Run
+        out = ht._fit_field_transformer(data, 'a', transformer1)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a.out1': ['1', '2', '3'],
+            'b.out1': ['4', '5', '6']
+        })
+        self.assertEqual(ht._output_columns, ['a.out1#b.out1'])
+        self.assertEqual(ht._temp_columns, ['a.out1'])
+        pd.testing.assert_frame_equal(out, expected)
+        transformer1.fit.assert_called_once()
+        transformer1.transform.assert_called_once_with(data)
+        transformer2.fit.assert_called_once()
+        transformer2.transform.assert_not_called()
+        self.assertEqual(ht._transformers_sequence, [transformer1, transformer2])
+
+    @patch('rdt.hyper_transformer.get_default_transformer')
+    def test_fit(self, get_default_transformer_mock):
+        """Test the ``fit`` method.
+
+        Tests that the ``fit`` method loops through the fields in ``field_transformers``
+        and ``field_types`` that are in the data. It should try to find a transformer
+        in ``data_type_transformers`` and then use the default if it doesn't find one
+        when looping through ``field_types``. It should then call ``_fit_field_transformer``
+        with the correct arguments.
+
+        Setup:
+            - A mock for ``_fit_field_transformer``.
+            - A mock for ``get_default_tranformer``.
+
+        Input:
+            - A DataFrame with multiple columns of different types.
+
+        Expected behavior:
+            - The ``_fit_field_transformer`` mock should be called with the correct
+            arguments in the correct order.
+        """
+        # Setup
+        int_transformer = Mock()
+        int_out_transformer = Mock()
+        float_transformer = Mock()
+        categorical_transformer = Mock()
+        bool_transformer = Mock()
+        datetime_transformer = Mock()
+
+        data = pd.DataFrame({
+            'integer': [1, 2, 1, 3],
+            'float': [0.1, 0.2, 0.1, 0.1],
+            'categorical': ['a', 'a', 'b', 'a'],
+            'bool': [False, False, True, False],
+            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'])
+        })
+        field_transformers = {
+            'integer': int_transformer,
+            'float': float_transformer,
+            'integer.out': int_out_transformer
+        }
+        data_type_transformers = {
+            'boolean': bool_transformer,
+            'categorical': categorical_transformer
+        }
+        get_default_transformer_mock.return_value = datetime_transformer
+        ht = HyperTransformer(
+            field_transformers=field_transformers,
+            data_type_transformers=data_type_transformers
+        )
+        ht._fit_field_transformer = Mock()
+        ht._fit_field_transformer.return_value = data
+
+        # Run
+        ht.fit(data)
+
+        # Assert
+        ht._fit_field_transformer.assert_has_calls([
+            call(data, 'integer', int_transformer),
+            call(data, 'float', float_transformer),
+            call(data, 'categorical', categorical_transformer),
+            call(data, 'bool', bool_transformer),
+            call(data, 'datetime', datetime_transformer)
+        ])
+
+    @patch('rdt.hyper_transformer.warnings')
+    def test_fit_warnings(self, warnings_mock):
+        """Test the ``fit`` method with warnings.
+
+        Tests that the ``fit`` method raises a warning when it sees a field
+        that has already been fit.
+
+        Setup:
+            - A mock for warnings.
+            - A mock for ``_fit_field_transformer``.
+            - field_transformers with duplicate definitions.
+
+        Input:
+            - A DataFrame with multiple columns of different types.
+
+        Expected behavior:
+            - Warnings should be raised whenever a field is seen that has
+            already been fit.
+        """
+        # Setup
+        int_transformer = Mock()
+        float_transformer = Mock()
+
+        data = pd.DataFrame({
+            'integer': [1, 2, 1, 3],
+            'float': [0.1, 0.2, 0.1, 0.1],
+        })
+        field_transformers = {
+            'integer': int_transformer,
+            'float': float_transformer,
+            ('integer',): int_transformer
+        }
+        ht = HyperTransformer(field_transformers=field_transformers)
+        ht._fit_field_transformer = Mock()
+        ht._fit_field_transformer.return_value = data
+
+        # Run
+        ht.fit(data)
+
+        # Assert
+        warnings_mock.warn.assert_called_once()
+
+    def test_transform(self):
+        """Test the ``transform`` method.
+
+        Tests that ``transform`` loops through the ``_transformers_sequence``
+        and calls ``transformer.transform`` in the correct order.
+
+        Setup:
+            - The ``_transformers_sequence`` will be hardcoded with a list
+            of transformer mocks.
+            - The ``_input_columns`` will be hardcoded.
+            - The ``_temp_columns`` will be hardcoded.
+
+        Input:
+            - A DataFrame of multiple types.
+
+        Output:
+            - The transformed DataFrame with the correct columns dropped.
+        """
+        # Setup
+        int_transformer = Mock()
+        int_out_transformer = Mock()
+        float_transformer = Mock()
+        categorical_transformer = Mock()
+        bool_transformer = Mock()
+        datetime_transformer = Mock()
+        data = pd.DataFrame({
+            'integer': [1, 2, 1, 3],
+            'float': [0.1, 0.2, 0.1, 0.1],
+            'categorical': ['a', 'a', 'b', 'a'],
+            'bool': [False, False, True, False],
+            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'])
+        })
+        transformed_data = pd.DataFrame({
+            'integer': [1, 2, 1, 3],
+            'float': [0.1, 0.2, 0.1, 0.1],
+            'categorical': ['a', 'a', 'b', 'a'],
+            'bool': [False, False, True, False],
+            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01']),
+            'integer.out': ['1', '2', '1', '3'],
+            'integer.out.value': [1, 2, 1, 3],
+            'float.value': [0.1, 0.2, 0.1, 0.1],
+            'categorical.value': [0.375, 0.375, 0.875, 0.375],
+            'bool.value': [0.0, 0.0, 1.0, 0.0],
+            'datetime.value': [
+                1.2649824e+18,
+                1.262304e+18,
+                1.2649824e+18,
+                1.262304e+18
+            ]
+        })
+        datetime_transformer.transform.return_value = transformed_data
+        ht = HyperTransformer()
+        ht._transformers_sequence = [
+            int_transformer,
+            int_out_transformer,
+            float_transformer,
+            categorical_transformer,
+            bool_transformer,
+            datetime_transformer
+        ]
+        ht._input_columns = list(data.columns)
+        ht._temp_columns = ['integer.out']
+
+        # Run
+        transformed = ht.transform(data)
+
+        # Assert
+        expected = pd.DataFrame({
+            'integer.out.value': [1, 2, 1, 3],
+            'float.value': [0.1, 0.2, 0.1, 0.1],
+            'categorical.value': [0.375, 0.375, 0.875, 0.375],
+            'bool.value': [0.0, 0.0, 1.0, 0.0],
+            'datetime.value': [
+                1.2649824e+18,
+                1.262304e+18,
+                1.2649824e+18,
+                1.262304e+18
+            ]
+        })
+        pd.testing.assert_frame_equal(transformed, expected)
+        int_transformer.transform.assert_called_once()
+        int_out_transformer.transform.assert_called_once()
+        float_transformer.transform.assert_called_once()
+        categorical_transformer.transform.assert_called_once()
+        bool_transformer.transform.assert_called_once()
+        datetime_transformer.transform.assert_called_once()
 
     def test_fit_transform(self):
         """Test call fit_transform"""
@@ -128,53 +676,89 @@ class TestHyperTransformer(TestCase):
             expect_call_args_transform
         )
 
-    def test__get_columns_one(self):
+    def test_reverse_transform(self):
+        """Test the ``reverse_transform`` method.
+
+        Tests that ``reverse_transform`` loops through the ``_transformers_sequence``
+        in reverse order and calls ``transformer.reverse_transform``.
+
+        Setup:
+            - The ``_transformers_sequence`` will be hardcoded with a list
+            of transformer mocks.
+            - The ``_output_columns`` will be hardcoded.
+            - The ``_temp_columns`` will be hardcoded.
+
+        Input:
+            - A DataFrame of multiple types.
+
+        Output:
+            - The reverse transformed DataFrame with the correct columns dropped.
+        """
+        # Setup
+        int_transformer = Mock()
+        int_out_transformer = Mock()
+        float_transformer = Mock()
+        categorical_transformer = Mock()
+        bool_transformer = Mock()
+        datetime_transformer = Mock()
         data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [1, 2, 3],
+            'integer.out.value': [1, 2, 1, 3],
+            'float.value': [0.1, 0.2, 0.1, 0.1],
+            'categorical.value': [0.375, 0.375, 0.875, 0.375],
+            'bool.value': [0.0, 0.0, 1.0, 0.0],
+            'datetime.value': [
+                1.2649824e+18,
+                1.262304e+18,
+                1.2649824e+18,
+                1.262304e+18
+            ]
         })
-
-        returned = HyperTransformer._get_columns(data, 'a')
-
-        np.testing.assert_equal(returned, np.array(['a']))
-
-    def test__get_columns_two(self):
-        data = pd.DataFrame({
-            'a': [4, 5, 6],
-            'a#1': [7, 8, 9],
-            'b': [4, 5, 6],
-            'b#1': [7, 8, 9],
+        reverse_transformed_data = pd.DataFrame({
+            'integer': [1, 2, 1, 3],
+            'float': [0.1, 0.2, 0.1, 0.1],
+            'categorical': ['a', 'a', 'b', 'a'],
+            'bool': [False, False, True, False],
+            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01']),
+            'integer.out': ['1', '2', '1', '3'],
+            'integer.out.value': [1, 2, 1, 3],
+            'float.value': [0.1, 0.2, 0.1, 0.1],
+            'categorical.value': [0.375, 0.375, 0.875, 0.375],
+            'bool.value': [0.0, 0.0, 1.0, 0.0],
+            'datetime.value': [
+                1.2649824e+18,
+                1.262304e+18,
+                1.2649824e+18,
+                1.262304e+18
+            ]
         })
+        int_transformer.reverse_transform.return_value = reverse_transformed_data
+        ht = HyperTransformer()
+        ht._transformers_sequence = [
+            int_transformer,
+            int_out_transformer,
+            float_transformer,
+            categorical_transformer,
+            bool_transformer,
+            datetime_transformer
+        ]
+        ht._output_columns = list(data.columns)
+        ht._temp_columns = ['integer.out']
 
-        returned = HyperTransformer._get_columns(data, 'b')
+        # Run
+        reverse_transformed = ht.reverse_transform(data)
 
-        expected = np.array([
-            'b',
-            'b#1',
-        ])
-        np.testing.assert_equal(returned, expected)
-
-    def test__get_columns_none(self):
-        data = pd.DataFrame({
-            'a': [1, 2, 3],
+        # Assert
+        expected = pd.DataFrame({
+            'integer': [1, 2, 1, 3],
+            'float': [0.1, 0.2, 0.1, 0.1],
+            'categorical': ['a', 'a', 'b', 'a'],
+            'bool': [False, False, True, False],
+            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'])
         })
-
-        returned = HyperTransformer._get_columns(data, 'b')
-
-        assert returned.empty
-
-    def test__get_columns_regex(self):
-        data = pd.DataFrame({
-            'a(b)': [4, 5, 6],
-            'a(b)#1': [7, 8, 9],
-            'b(b)': [4, 5, 6],
-            'b(b)#1': [7, 8, 9],
-        })
-
-        returned = HyperTransformer._get_columns(data, 'a(b)')
-
-        expected = np.array([
-            'a(b)',
-            'a(b)#1',
-        ])
-        np.testing.assert_equal(returned, expected)
+        pd.testing.assert_frame_equal(reverse_transformed, expected)
+        int_transformer.reverse_transform.assert_called_once()
+        int_out_transformer.reverse_transform.assert_called_once()
+        float_transformer.reverse_transform.assert_called_once()
+        categorical_transformer.reverse_transform.assert_called_once()
+        bool_transformer.reverse_transform.assert_called_once()
+        datetime_transformer.reverse_transform.assert_called_once()
