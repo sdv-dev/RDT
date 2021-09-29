@@ -113,11 +113,9 @@ def get_default_transformers():
             Mapping of data types to a transformer.
     """
     transformers_by_type = get_transformers_by_type()
-    defaults = {}
+    defaults = deepcopy(DEFAULT_TRANSFORMERS)
     for (data_type, transformers) in transformers_by_type.items():
-        if data_type in DEFAULT_TRANSFORMERS:
-            defaults[data_type] = DEFAULT_TRANSFORMERS[data_type]
-        else:
+        if data_type not in defaults:
             defaults[data_type] = transformers[0]
 
     return defaults
