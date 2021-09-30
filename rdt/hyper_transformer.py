@@ -1,5 +1,6 @@
 """Hyper transformer module."""
 
+from rdt.transformers.null import NullTransformer
 import warnings
 
 from rdt.transformers import get_default_transformer, load_transformer
@@ -88,7 +89,8 @@ class HyperTransformer:
         return multi_column_fields
 
     def __init__(self, copy=True, field_types=None, data_type_transformers=None,
-                 field_transformers=None, transform_output_types=None):
+                 field_transformers=None, transform_output_types=None, transform_nulls=True,
+                 fill_value='mean', null_column=None):
         self.copy = copy
         self.field_types = field_types or {}
         self.data_type_transformers = data_type_transformers or {}
@@ -99,6 +101,9 @@ class HyperTransformer:
         self._output_columns = []
         self._input_columns = []
         self._temp_columns = []
+        self._transform_nulls = transform_nulls
+        self._fill_value = fill_value
+        self._null_column = null_column
 
     @staticmethod
     def _field_in_data(field, data):
@@ -212,6 +217,14 @@ class HyperTransformer:
 
                 data = self._fit_field_transformer(data, field, transformer)
                 self._add_field_to_set(field, fitted_fields)
+        
+        if self._transform_nulls:
+            self._null_transformers = {}
+            output_fields = self.transform(data).columns # TODO: Find a better way of getting this without transforming?
+            for field in output_fields:
+                transformer = NullTransformer(self._fill_value, self._null_column)
+                transformer.fit(data[field])
+                self._null_transformers[field] = transformer
 
     def transform(self, data):
         """Transform the data.
@@ -238,6 +251,11 @@ class HyperTransformer:
             if column in self._input_columns or column in self._temp_columns
         ]
         data = data.drop(columns_to_drop, axis=1)
+
+        if self._transform_nulls:
+            for field, transformer in self._null_transformers.items():
+                data[field] = transformer.transform(data[field])
+        
         return data
 
     def fit_transform(self, data):
@@ -265,6 +283,10 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
+        if self._transform_nulls:
+            for field, transformer in self._null_transformers.items():
+                data[field] = transformer.reverse_transform(data[field])
+
         for transformer in reversed(self._transformers_sequence):
             data = transformer.reverse_transform(data, drop=False)
 
