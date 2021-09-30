@@ -17,15 +17,18 @@ class HyperTransformer:
 
     Args:
         field_transformers (dict or None):
-            Dict mapping field names to transformer to use. The keys can be a string
-            representing one field name or a tuple of multiple field names. Keys can
-            also specify transformers for fields derived by other transformers by
-            concatenating the name of the original field to the output name of the
-            transformer using ``.`` as a separator.
+            Dict used to overwrite thr transformer used for a field. If no transformer is
+            specified for a field, a default transformer is selected. The keys are fields
+            which can be defined as a string of the column name or a tuple of multiple column
+            names. Keys can also specify transformers for fields derived by other transformers.
+            This can be done by concatenating the name of the original field to the output name
+            using ``.`` as a separator (eg. {field_name}.{transformer_output_name}).
         field_types (dict or None):
-            Dict mapping field names to their data types.
+            Dict mapping field names to their data types. If not provided, the data type is
+            inferred using the column's Pandas ``dtype``.
         data_type_transformers (dict or None):
-            Dict mapping data types to transformers to use for that data type.
+            Dict used to overwrite the default transformer for a data type. The keys are
+            data types and the values are Transformers or Transformer instances.
         copy (bool):
             Whether to make a copy of the input data or not. Defaults to ``True``.
         transform_output_types (list or None):
@@ -145,10 +148,11 @@ class HyperTransformer:
     def _fit_field_transformer(self, data, field, transformer):
         """Fit a transformer to its corresponding field.
 
-        If the transformer outputs fields that aren't ML ready, then this method
-        recursively fits transformers to their outputs until they are. This method
-        keeps track of which fields are temporarily created by transformers as well
-        as which fields will be part of the final output from ``transform``.
+        This method fits a transformer to the specified field which can be a column
+        name or tuple of column names. If the transformer outputs fields that aren't
+        ML ready, then this method recursively fits transformers to their outputs until
+        they are. This method keeps track of which fields are temporarily created by
+        transformers as well as which fields will be part of the final output from ``transform``.
 
         Args:
             data (pandas.DataFrame):
