@@ -38,10 +38,7 @@ def _build_generator_map():
 
 def _find_dataset_generators(data_type, generators):
     """Find the dataset generators for the given data_type."""
-    if data_type is None or data_type not in generators:
-        return []
-
-    return generators[data_type]
+    return generators.get(data_type, [])
 
 
 def _validate_input_type(input_type):
@@ -74,7 +71,19 @@ def _validate_composition(transformer, reversed_data, input_data):
     This is only applicable if the transformer has the composition
     identity property.
     """
-    assert transformer.is_composition_identity()
+    if not transformer.is_composition_identity():
+        return
+
+    if isinstance(reversed_data, pd.DataFrame):
+        reversed_data = reversed_data[TEST_COL]
+    if isinstance(reversed_data, pd.DatetimeIndex):
+        reversed_data = reversed_data.to_series(
+            index=pd.RangeIndex(start=0, stop=DATA_SIZE, step=1)
+        )
+    if isinstance(reversed_data, np.ndarray):
+        reversed_data = pd.Series(reversed_data)
+    if pd.api.types.is_datetime64_any_dtype(reversed_data):
+        reversed_data = reversed_data.round('us')
 
     pd.testing.assert_series_equal(
         reversed_data,
@@ -109,18 +118,7 @@ def _test_transformer_with_dataset(transformer_class, input_data):
     out = transformer.reverse_transform(transformed)
     _validate_reverse_transformed_data(transformer, out, input_data.dtypes[TEST_COL])
 
-    reversed_data = out
-    if isinstance(out, pd.DataFrame):
-        reversed_data = out[TEST_COL]
-    if isinstance(out, pd.DatetimeIndex):
-        reversed_data = out.to_series(index=pd.RangeIndex(start=0, stop=DATA_SIZE, step=1))
-    if isinstance(reversed_data, np.ndarray):
-        out = pd.Series(reversed_data)
-    if pd.api.types.is_datetime64_any_dtype(reversed_data):
-        reversed_data = reversed_data.round('us')
-
-    if transformer.is_composition_identity():
-        _validate_composition(transformer, reversed_data, input_data)
+    _validate_composition(transformer, out, input_data)
 
 
 def _validate_hypertransformer_transformed_data(transformed_data):
