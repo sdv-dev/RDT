@@ -10,9 +10,6 @@ class IdentityTransformer(BaseTransformer):
     of this data is equal to the input.
     """
 
-    INPUT_TYPE = None
-    OUTPUT_TYPES = None
-
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -20,11 +17,6 @@ class IdentityTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        self.INPUT_TYPE = {
-            column: None
-            for column in self.columns
-        }
-
         self.OUTPUT_TYPES = {
             column: None
             for column in self.columns

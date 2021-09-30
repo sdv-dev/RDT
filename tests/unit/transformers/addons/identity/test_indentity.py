@@ -30,18 +30,12 @@ class TestIdentityTransformer(TestCase):
         IdentityTransformer._fit(instance, data)
 
         # assert
-        expected_input_type = {
-            'a': None,
-            'b': None,
-            'c': None,
-        }
         expected_output_types = {
             'a': None,
             'b': None,
             'c': None,
         }
 
-        assert instance.INPUT_TYPE == expected_input_type
         assert instance.OUTPUT_TYPES == expected_output_types
 
     def test__transform(self):
