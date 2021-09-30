@@ -1,6 +1,7 @@
 """Transformers module."""
 
 from collections import defaultdict
+from copy import deepcopy
 from functools import lru_cache
 
 from rdt.transformers.base import BaseTransformer
@@ -41,10 +42,8 @@ DEFAULT_TRANSFORMERS = {
 def load_transformer(transformer):
     """Load a new instance of a ``Transformer``.
 
-    The ``transformer`` is expected to be a ``dict`` containing  the transformer ``class``
-    and its ``kwargs``. The ``class`` entry can either be the actual ``class`` or its name.
-    For convenience, if an instance of a ``BaseTransformer`` is passed, it will be
-    returned unmodified.
+    The ``transformer`` is expected to be a ``string`` containing  the transformer ``class``
+    name, a transformer instance or a transformer type.
 
     Args:
         transformer (dict or BaseTransformer):
@@ -56,17 +55,12 @@ def load_transformer(transformer):
             BaseTransformer subclass instance.
     """
     if isinstance(transformer, BaseTransformer):
-        return transformer
+        return deepcopy(transformer)
 
-    transformer_class = transformer['class']
-    if isinstance(transformer_class, str):
-        transformer_class = TRANSFORMERS[transformer_class]
+    if isinstance(transformer, str):
+        transformer = TRANSFORMERS[transformer]
 
-    transformer_kwargs = transformer.get('kwargs')
-    if transformer_kwargs is None:
-        transformer_kwargs = {}
-
-    return transformer_class(**transformer_kwargs)
+    return transformer()
 
 
 def load_transformers(transformers):
@@ -119,11 +113,9 @@ def get_default_transformers():
             Mapping of data types to a transformer.
     """
     transformers_by_type = get_transformers_by_type()
-    defaults = {}
+    defaults = deepcopy(DEFAULT_TRANSFORMERS)
     for (data_type, transformers) in transformers_by_type.items():
-        if data_type in DEFAULT_TRANSFORMERS:
-            defaults[data_type] = DEFAULT_TRANSFORMERS[data_type]
-        else:
+        if data_type not in defaults:
             defaults[data_type] = transformers[0]
 
     return defaults
