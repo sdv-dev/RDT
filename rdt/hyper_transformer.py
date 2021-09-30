@@ -93,7 +93,7 @@ class HyperTransformer:
     def _analyze(self, data):
         """Build a ``dict`` with column names and transformers from a given ``pandas.DataFrame``.
 
-        When ``self.dtypes`` is ``None``, use the dtypes from the input data.
+        When ``self.dtypes`` is ``None``, use the dtypes from the input data.a
 
         When ``dtype`` is:
             - ``int``: a ``NumericalTransformer`` is created with ``dtype=int``.
