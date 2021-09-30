@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
 import pandas as pd
+import pytest
 
 from rdt import HyperTransformer
 from rdt.transformers import (
@@ -11,8 +12,38 @@ from rdt.transformers import (
 
 class TestHyperTransformer(TestCase):
 
+    def test__validate_field_transformers(self):
+        """Test the ``_validate_field_transformers`` method.
+
+        Tests that a ``ValueError`` is raised if a field has multiple
+        definitions in the ``field_transformers`` dict.
+
+        Setup:
+            - field_transformers set to have duplicate definitions.
+
+        Expected behavior:
+            - A ``ValueError`` should be raised if a field is defined
+            more than once.
+        """
+        # Setup
+        int_transformer = Mock()
+        float_transformer = Mock()
+
+        field_transformers = {
+            'integer': int_transformer,
+            'float': float_transformer,
+            ('integer',): int_transformer
+        }
+        ht = HyperTransformer()
+        ht.field_transformers = field_transformers
+
+        # Run / Assert
+        with pytest.raises(ValueError):
+            ht._validate_field_transformers()
+
     @patch('rdt.hyper_transformer.HyperTransformer._create_multi_column_fields')
-    def test___init__(self, mock):
+    @patch('rdt.hyper_transformer.HyperTransformer._validate_field_transformers')
+    def test___init__(self, validation_mock, multi_column_mock):
         """Test create new instance of HyperTransformer"""
         # Run
         ht = HyperTransformer()
@@ -22,7 +53,8 @@ class TestHyperTransformer(TestCase):
         self.assertEqual(ht.field_transformers, {})
         self.assertEqual(ht.data_type_transformers, {})
         self.assertEqual(ht.field_types, {})
-        mock.assert_called_once()
+        multi_column_mock.assert_called_once()
+        validation_mock.assert_called_once()
 
     def test__create_multi_column_fields(self):
         """Test the ``_create_multi_column_fields`` method.
@@ -451,6 +483,38 @@ class TestHyperTransformer(TestCase):
         transformer2.transform.assert_not_called()
         self.assertEqual(ht._transformers_sequence, [transformer1, transformer2])
 
+    @patch('rdt.hyper_transformer.warnings')
+    def test__validate_all_fields_fitted(self, warnings_mock):
+        """Test the ``_validate_all_fields_fitted`` method.
+
+        Tests that the ``_validate_all_fields_fitted`` method raises a warning
+        if there are fields in ``field_transformers`` that were not fitted.
+
+        Setup:
+            - A mock for warnings.
+            - A mock for ``_field_transformers`` with a misspelled field.
+            - A mock for ``_fitted_fields`` containing the other fields.
+
+        Expected behavior:
+            - Warnings should be raised.
+        """
+        # Setup
+        int_transformer = Mock()
+        float_transformer = Mock()
+        field_transformers = {
+            'integer': int_transformer,
+            'float': float_transformer,
+            'intege': int_transformer
+        }
+        ht = HyperTransformer(field_transformers=field_transformers)
+        ht._fitted_fields = set(['integer', 'float'])
+
+        # Run
+        ht._validate_all_fields_fitted()
+
+        # Assert
+        warnings_mock.warn.assert_called_once()
+
     @patch('rdt.hyper_transformer.get_default_transformer')
     def test_fit(self, get_default_transformer_mock):
         """Test the ``fit`` method.
@@ -463,6 +527,7 @@ class TestHyperTransformer(TestCase):
 
         Setup:
             - A mock for ``_fit_field_transformer``.
+            - A mock for ``_field_in_set``.
             - A mock for ``get_default_tranformer``.
 
         Input:
@@ -503,6 +568,9 @@ class TestHyperTransformer(TestCase):
         )
         ht._fit_field_transformer = Mock()
         ht._fit_field_transformer.return_value = data
+        ht._field_in_set = Mock()
+        ht._field_in_set.side_effect = [True, True, False, False, False]
+        ht._validate_all_fields_fitted = Mock()
 
         # Run
         ht.fit(data)
@@ -515,48 +583,7 @@ class TestHyperTransformer(TestCase):
             call(data, 'bool', bool_transformer),
             call(data, 'datetime', datetime_transformer)
         ])
-
-    @patch('rdt.hyper_transformer.warnings')
-    def test_fit_warnings(self, warnings_mock):
-        """Test the ``fit`` method with warnings.
-
-        Tests that the ``fit`` method raises a warning when it sees a field
-        that has already been fit.
-
-        Setup:
-            - A mock for warnings.
-            - A mock for ``_fit_field_transformer``.
-            - field_transformers with duplicate definitions.
-
-        Input:
-            - A DataFrame with multiple columns of different types.
-
-        Expected behavior:
-            - Warnings should be raised whenever a field is seen that has
-            already been fit.
-        """
-        # Setup
-        int_transformer = Mock()
-        float_transformer = Mock()
-
-        data = pd.DataFrame({
-            'integer': [1, 2, 1, 3],
-            'float': [0.1, 0.2, 0.1, 0.1],
-        })
-        field_transformers = {
-            'integer': int_transformer,
-            'float': float_transformer,
-            ('integer',): int_transformer
-        }
-        ht = HyperTransformer(field_transformers=field_transformers)
-        ht._fit_field_transformer = Mock()
-        ht._fit_field_transformer.return_value = data
-
-        # Run
-        ht.fit(data)
-
-        # Assert
-        warnings_mock.warn.assert_called_once()
+        ht._validate_all_fields_fitted.assert_called_once()
 
     def test_transform(self):
         """Test the ``transform`` method.
