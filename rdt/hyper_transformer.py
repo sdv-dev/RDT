@@ -112,6 +112,13 @@ class HyperTransformer:
         else:
             field_set.add(field)
 
+    @staticmethod
+    def _field_in_set(field, field_set):
+        if isinstance(field, tuple):
+            return all(column in field_set for column in field)
+
+        return field in field_set
+
     def _update_field_types(self, data):
         # get set of provided fields including multi-column fields
         provided_fields = set()
@@ -190,16 +197,14 @@ class HyperTransformer:
         # Loop through field_transformers that are first level
         for field in self.field_transformers:
             if self._field_in_data(field, data):
-                if field in fitted_fields:
+                if self._field_in_set(field, fitted_fields):
                     warnings.warn(FIELD_ALREADY_FIT_WARNING)
                 else:
                     data = self._fit_field_transformer(data, field, self.field_transformers[field])
                     self._add_field_to_set(field, fitted_fields)
 
         for (field, data_type) in self.field_types.items():
-            if field in fitted_fields:
-                warnings.warn(FIELD_ALREADY_FIT_WARNING)
-            else:
+            if not self._field_in_set(field, fitted_fields):
                 if data_type in self.data_type_transformers:
                     transformer = self.data_type_transformers[data_type]
                 else:

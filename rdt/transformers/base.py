@@ -240,7 +240,7 @@ class BaseTransformer:
         """Revert the transformations to the original values.
 
         Args:
-            data (pandas.DateFrame):
+            data (pandas.DataFrame):
                 The entire table.
             drop (bool):
                 Whether or not to drop derived columns.
