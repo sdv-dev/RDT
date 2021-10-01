@@ -48,8 +48,16 @@ development_requires = [
     # style check
     'flake8>=3.7.7,<4',
     'flake8-absolute-import>=1.0,<2',
+    'flake8-builtins>=1.5.3,<1.6',
+    'flake8-comprehensions>=3.6.1,<3.7',
+    'flake8-debugger>=4.0.0,<4.1',
     'flake8-docstrings>=1.5.0,<2',
-    'flake8-sfs>=0.0.3,<0.1',
+    'flake8-mock>=0.3,<0.4',
+    'flake8-variables-names>=0.0.4,<0.1',
+    'dlint>=0.11.0,<0.12',  # code security addon for flake8
+    'flake8-fixme>=1.1.1,<1.2',
+    'flake8-eradicate>=1.1.0,<1.2',
+    'flake8-mutable>=1.2.0,<1.3',
     'isort>=4.3.4,<5',
     'pylint>=2.5.3,<3',
 
