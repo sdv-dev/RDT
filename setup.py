@@ -58,6 +58,7 @@ development_requires = [
     'flake8-fixme>=1.1.1,<1.2',
     'flake8-eradicate>=1.1.0,<1.2',
     'flake8-mutable>=1.2.0,<1.3',
+    'flake8-print>=4.0.0,<4.1',
     'isort>=4.3.4,<5',
     'pylint>=2.5.3,<3',
 
