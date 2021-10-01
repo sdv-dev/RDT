@@ -1,33 +1,16 @@
-from unittest.mock import patch
-
 import numpy as np
 import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
-from rdt.transformers import BaseTransformer, OneHotEncodingTransformer, get_default_transformer
-
-
-class DummyTransformer(BaseTransformer):
-
-    INPUT_TYPE = 'any'
-    OUTPUT_TYPES = {
-        'value': 'float'
-    }
-
-    def _fit(self, data):
-        pass
-
-    def _transform(self, data):
-        return data
-
-    def _reverse_transform(self, data):
-        return data
+from rdt.transformers import (
+    BaseTransformer, BooleanTransformer, CategoricalTransformer, NumericalTransformer,
+    OneHotEncodingTransformer)
 
 
 class DummyTransformerNumerical(BaseTransformer):
 
-    INPUT_TYPE = 'any'
+    INPUT_TYPE = 'categorical'
     OUTPUT_TYPES = {
         'value': 'float'
     }
@@ -118,30 +101,34 @@ def get_input_data_without_nan():
         'float': [0.1, 0.2, 0.1, 0.1],
         'categorical': ['a', 'a', 'b', 'a'],
         'bool': [False, False, True, False],
-        'datetime': [
-            '2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'
-        ],
+        'datetime': ['2010-02-01', '2010-01-01', '2010-02-01', '2010-02-01'],
         'names': ['Jon', 'Arya', 'Jon', 'Jon'],
     })
     data['datetime'] = pd.to_datetime(data['datetime'])
-    data['bool'] = data['bool'].astype('O')  # boolean transformer returns O instead of bool
 
     return data
 
 
+def get_reversed():
+    reversed = get_input_data_without_nan()
+    reversed['bool'] = reversed['bool'].astype('O')
+    reversed['integer'] = reversed['integer'].astype('int32')
+    return reversed
+
+
 def get_transformed_data():
     return pd.DataFrame({
-        'integer': [1, 2, 1, 3],
-        'float': [0.1, 0.2, 0.1, 0.1],
-        'categorical': [0.375, 0.375, 0.875, 0.375],
-        'bool': [0.0, 0.0, 1.0, 0.0],
-        'datetime': [
+        'integer.value': [1, 2, 1, 3],
+        'float.value': [0.1, 0.2, 0.1, 0.1],
+        'categorical.value': [0.375, 0.375, 0.875, 0.375],
+        'bool.value': [0.0, 0.0, 1.0, 0.0],
+        'datetime.value': [
             1.2649824e+18,
             1.262304e+18,
             1.2649824e+18,
-            1.262304e+18
+            1.2649824e+18
         ],
-        'names': [0.375, 0.875, 0.375, 0.375]
+        'names.value': [0.375, 0.875, 0.375, 0.375]
     })
 
 
@@ -191,20 +178,16 @@ def get_transformers():
     }
 
 
-@patch('rdt.transformers.get_default_transformers')
-def test_hypertransformer_no_inputs(default_transformers_mock):
-    """Test the HyperTransformer with no transformers provided.
+def test_hypertransformer_default_inputs():
+    """Test the HyperTransformer with default parameters.
 
-    This tests that if no parameters are provided to the HyperTransformer,
+    This tests that if default parameters are provided to the HyperTransformer,
     the ``default_transformers`` method will be used to determine which
-    transformers to use for each field. Any output of a transformer that
-    is not ML ready should be recursively transformed till it is.
+    transformers to use for each field.
 
     Setup:
-        - A dummy transformer that just returns the input data.
-        - Another dummy transformer that returns data that is not ML ready.
-        - A dummy dict that replaces the ``default_transformers`` method
-        so that all the field types use the dummy transformers created.
+        - `data_type_transformers` will be set to use the `CategoricalTransformer`
+        for categorical data types so that the output is predictable.
 
     Input:
         - A dataframe with every data type.
@@ -213,15 +196,6 @@ def test_hypertransformer_no_inputs(default_transformers_mock):
         - The transformed data should contain all the ML ready data.
         - The reverse transformed data should be the same as the input.
     """
-    get_default_transformer.cache_clear()
-    default_transformers_mock.return_value = {
-        'numerical': DummyTransformer,
-        'integer': DummyTransformer,
-        'float': DummyTransformer,
-        'categorical': DummyTransformer,
-        'boolean': DummyTransformer,
-        'datetime': DummyTransformerNotMLReady,
-    }
     data = get_input_data_without_nan()
     expected_transformed = data.drop('datetime', axis=1)
     expected_transformed.columns = [
@@ -231,12 +205,10 @@ def test_hypertransformer_no_inputs(default_transformers_mock):
         'bool.value',
         'names.value'
     ]
-    expected_transformed['datetime.value.value'] = [
-        '2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'
-    ]
-    expected_reversed = data.copy()
+    expected_transformed = get_transformed_data()
+    expected_reversed = get_reversed()
 
-    ht = HyperTransformer()
+    ht = HyperTransformer(data_type_transformers={'categorical': CategoricalTransformer})
     ht.fit(data)
     transformed = ht.transform(data)
 
@@ -261,11 +233,11 @@ def test_hypertransformer_field_transformers():
     be recursively transformed till it is.
 
     Setup:
-        - A dummy transformer that just returns the input data.
-        - Another dummy transformer that returns data that is not ML ready.
+        - The datetime column is set to use a dumm transformer that stringifies
+        the input. That output is then set to use the categorical transformer.
 
     Input:
-        - A dict mapping each field to a dummy transformer.
+        - A dict mapping each field to a transformer.
         - A dataframe with every data type.
 
     Expected behavior:
@@ -273,27 +245,18 @@ def test_hypertransformer_field_transformers():
         - The reverse transformed data should be the same as the input.
     """
     field_transformers = {
-        'integer': DummyTransformer,
-        'float': DummyTransformer,
-        'categorical': DummyTransformer,
-        'bool': DummyTransformer,
+        'integer': NumericalTransformer(dtype=int),
+        'float': NumericalTransformer(dtype=float),
+        'categorical': CategoricalTransformer,
+        'bool': BooleanTransformer,
         'datetime': DummyTransformerNotMLReady,
-        'datetime.value': DummyTransformer,
-        'names': DummyTransformer
+        'datetime.value': CategoricalTransformer,
+        'names': CategoricalTransformer
     }
     data = get_input_data_without_nan()
-    expected_transformed = data.drop('datetime', axis=1)
-    expected_transformed.columns = [
-        'integer.value',
-        'float.value',
-        'categorical.value',
-        'bool.value',
-        'names.value'
-    ]
-    expected_transformed['datetime.value.value'] = [
-        '2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'
-    ]
-    expected_reversed = data.copy()
+    expected_transformed = get_transformed_data().drop('datetime.value', axis=1)
+    expected_transformed['datetime.value.value'] = [0.375, 0.875, 0.375, 0.375]
+    expected_reversed = get_reversed()
 
     ht = HyperTransformer(field_transformers=field_transformers)
     ht.fit(data)
@@ -416,7 +379,7 @@ def test_subset_of_columns():
     ht = HyperTransformer()
     ht.fit(data)
 
-    subset = data[[data.columns[0]]]
+    subset = get_reversed()[[data.columns[0]]]
     transformed = ht.transform(subset)
     reverse = ht.reverse_transform(transformed)
 
@@ -433,7 +396,7 @@ def test_subset_of_columns_nan_data():
     ht = HyperTransformer()
     ht.fit(data)
 
-    subset = data[[data.columns[0]]]
+    subset = get_reversed()[[data.columns[0]]]
     transformed = ht.transform(subset)
     reverse = ht.reverse_transform(transformed)
 
