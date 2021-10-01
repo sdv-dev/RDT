@@ -372,15 +372,6 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
         self._distribution = distribution
 
-    def is_composition_identity(self):
-        """Return whether composition of transform and reverse transform produces the input data.
-
-        Returns:
-            bool:
-                Whether or not transforming and then reverse transforming returns the input data.
-        """
-        return self.COMPOSITION_IS_IDENTITY
-
     @staticmethod
     def _get_distributions():
         try:

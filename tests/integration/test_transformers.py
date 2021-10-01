@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -28,16 +30,23 @@ def _build_generator_map():
             A mapping of data type (str) to a list of data
             generators (rdt.tests.datasets.BaseDatasetGenerator).
     """
-    generators = {}
+    generators = defaultdict(list)
 
-    for g in BaseDatasetGenerator.__subclasses__():
-        generators[g.DATA_TYPE] = g.__subclasses__()
+    for g in BaseDatasetGenerator.get_subclasses():
+        generators[g.DATA_TYPE].append(g)
 
     return generators
 
 
 def _find_dataset_generators(data_type, generators):
     """Find the dataset generators for the given data_type."""
+    if data_type is None:
+        all_generators = []
+        for generator_list in generators.values():
+            all_generators.extend(generator_list)
+
+        return all_generators
+
     return generators.get(data_type, [])
 
 
@@ -76,12 +85,9 @@ def _validate_composition(transformer, reversed_data, input_data):
 
     if isinstance(reversed_data, pd.DataFrame):
         reversed_data = reversed_data[TEST_COL]
-    if isinstance(reversed_data, pd.DatetimeIndex):
-        reversed_data = reversed_data.to_series(
-            index=pd.RangeIndex(start=0, stop=DATA_SIZE, step=1)
-        )
-    if isinstance(reversed_data, np.ndarray):
+    elif isinstance(reversed_data, np.ndarray):
         reversed_data = pd.Series(reversed_data)
+
     if pd.api.types.is_datetime64_any_dtype(reversed_data):
         reversed_data = reversed_data.round('us')
 
@@ -122,9 +128,11 @@ def _test_transformer_with_dataset(transformer_class, input_data):
 
 
 def _validate_hypertransformer_transformed_data(transformed_data):
-    """Check that the transformed data is of type float."""
-    for dt in transformed_data.dtypes:
-        assert dt.kind in DATA_TYPE_TO_DTYPES['numerical']
+    """Check that the transformed data is not null and of type float."""
+    assert transformed_data.notnull().all(axis=None)
+
+    for dtype in transformed_data.dtypes:
+        assert dtype.kind in DATA_TYPE_TO_DTYPES['numerical']
 
 
 def _validate_hypertransformer_reversed_transformed_data(transformer, reversed_data):
@@ -174,15 +182,16 @@ def test_transformer(subtests, transformer):
             The transformer to test.
     """
     input_data_type = transformer.get_input_type()
-    assert input_data_type is not None
 
     dataset_generators = _find_dataset_generators(input_data_type, generators)
     assert len(dataset_generators) > 0
 
     for dg in dataset_generators:
         with subtests.test(msg="test_transformer_with_dataset", generator=dg):
-            input_data = pd.Series(dg.generate(DATA_SIZE))
+            try:
+                data = pd.DataFrame({TEST_COL: dg.generate(DATA_SIZE)})
+            except NotImplementedError:
+                continue
 
-            data = pd.DataFrame({TEST_COL: input_data})
             _test_transformer_with_dataset(transformer, data)
             _test_transformer_with_hypertransformer(transformer, data)
