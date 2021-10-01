@@ -29,7 +29,6 @@ setup_requires = [
 tests_require = [
     'pytest>=3.4.2',
     'pytest-cov>=2.6.0',
-    'pydocstyle>=6.1.1,<6.2',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
 ]
@@ -47,10 +46,24 @@ development_requires = [
     'autodocsumm>=0.1.10',
 
     # style check
+    'pydocstyle>=6.1.1,<6.2',
     'flake8>=3.7.7,<4',
+    'flake8-aaa>=0.12.0.<0.13',
     'flake8-absolute-import>=1.0,<2',
+    'flake8-broken-line>=0.3.0,<0.4',
+    'flake8-builtins>=1.5.3,<1.6',
+    'flake8-commas>=2.0.0,<2.1',
+    'flake8-comprehensions>=3.6.1,<3.7',
+    'flake8-debugger>=4.0.0,<4.1',
     'flake8-docstrings>=1.5.0,<2',
+    'flake8-mock>=0.3,<0.4',
+    'flake8-print>=4.0.0,<4.1',
+    'flake8-pytest-style>=1.5.0,<1.6',
+    'flake8-quotes>=3.3.0,<3.4',
+    'flake8-use-fstring>=1.1,<1.2',
+    'flake8-variables-names>=0.0.4,<0.1'
     'flake8-sfs>=0.0.3,<0.1',
+    'dlint>=0.11.0,<0.12',  # code security addon for flake8
     'isort>=4.3.4,<5',
     'pylint>=2.5.3,<3',
 
