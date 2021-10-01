@@ -111,10 +111,11 @@ def test_dummy_transformer_dataframe_output():
             return out
 
         def _reverse_transform(self, data):
-            out = data[self.output_columns[0]].round().astype(bool).astype(object)
-            out.iloc[data[self.output_columns[1]] == 1] = np.nan
+            output = data[self.output_columns[0]]
+            output = output.round().astype(bool).astype(object)
+            output.iloc[data[self.output_columns[1]] == 1] = np.nan
 
-            return out
+            return output
 
     # Run
     data = pd.DataFrame({
@@ -175,15 +176,15 @@ def test_dummy_transformer_multi_column_input():
             # Convert multiple columns into a single datetime
             data = pd.to_datetime(data)
 
-            out = pd.DataFrame(dict(zip(
+            output = dict(zip(
                 self.output_columns,
-                [
-                    data.values.astype(np.float64),
-                    data.isnull().astype(np.float64)
-                ]
-            ))).fillna(-1)
+                [data.values.astype(np.float64), data.isnull().astype(np.float64)]
+            ))
 
-            return out
+            output = pd.DataFrame(output)
+            output.fillna(-1, inplace=True)
+
+            return output
 
         def _reverse_transform(self, data):
             datetimes = data.round().astype('datetime64[ns]')
