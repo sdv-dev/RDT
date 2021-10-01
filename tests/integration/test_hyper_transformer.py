@@ -212,10 +212,7 @@ def test_hypertransformer_default_inputs():
     ht.fit(data)
     transformed = ht.transform(data)
 
-    pd.testing.assert_frame_equal(
-        transformed.sort_index(axis=1),
-        expected_transformed.sort_index(axis=1)
-    )
+    pd.testing.assert_frame_equal(transformed, expected_transformed)
 
     reversed = ht.reverse_transform(transformed)
 
@@ -229,8 +226,9 @@ def test_hypertransformer_field_transformers():
     """Test the HyperTransformer with ``field_transformers`` provided.
 
     This tests that this transformers specified in the ``field_transformers``
-    argument are used. Any output of a transformer that is not ML ready should
-    be recursively transformed till it is.
+    argument are used. Any output of a transformer that is not ML ready (not
+    in the ``_transform_output_types`` list) should be recursively transformed
+    till it is.
 
     Setup:
         - The datetime column is set to use a dumm transformer that stringifies
@@ -254,7 +252,8 @@ def test_hypertransformer_field_transformers():
         'names': CategoricalTransformer
     }
     data = get_input_data_without_nan()
-    expected_transformed = get_transformed_data().drop('datetime.value', axis=1)
+    expected_transformed = get_transformed_data().rename(
+        columns={'datetime.value': 'datetime.value.value'})
     expected_transformed['datetime.value.value'] = [0.375, 0.875, 0.375, 0.375]
     expected_reversed = get_reversed()
 
@@ -263,8 +262,8 @@ def test_hypertransformer_field_transformers():
     transformed = ht.transform(data)
 
     pd.testing.assert_frame_equal(
-        transformed.sort_index(axis=1),
-        expected_transformed.sort_index(axis=1)
+        transformed,
+        expected_transformed
     )
 
     reversed = ht.reverse_transform(transformed)
@@ -327,8 +326,8 @@ def test_hypertransformer_field_transformers_multi_column_fields():
     transformed = ht.transform(data)
 
     pd.testing.assert_frame_equal(
-        transformed.sort_index(axis=1),
-        expected_transformed.sort_index(axis=1)
+        transformed,
+        expected_transformed
     )
 
     reversed = ht.reverse_transform(transformed)
