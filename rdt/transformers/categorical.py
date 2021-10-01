@@ -262,9 +262,8 @@ class CategoricalFuzzyTransformer(CategoricalTransformer):
     """Transformer for categorical data.
 
     This transformer computes a float representative for each one of the categories
-    found in the fit data, adding gaussian noise around the float representation
-    of each class, and then replaces the instances of these categories with
-    the corresponding representative.
+    found in the fit data. Then, when transforming, it replaces the instances of these
+    categories with the corresponding representatives plus some added gaussian noise.
 
     The representatives are decided by sorting the categorical values by their relative
     frequency, then dividing the ``[0, 1]`` interval by these relative frequencies, and
