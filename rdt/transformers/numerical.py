@@ -196,6 +196,109 @@ class NumericalTransformer(BaseTransformer):
         return data.astype(self._dtype)
 
 
+class NumericalRoundedBoundedTransformer(NumericalTransformer):
+    """Transformer for numerical data.
+
+    This transformer replaces integer values with their float equivalent, bounded by the fitted
+    data (the minimum and maximum values seen while fitting). It will also round all values to
+    the maximum number of decimal places detected in the fitted data.
+
+    Non null float values are not modified.
+
+    This class behaves exactly as the ``NumericalTransformer`` with ``min_value='auto'``,
+    ``max_value='auto'`` and ``rounding='auto'``.
+
+    Args:
+        dtype (data type):
+            Data type of the data to transform. It will be used when reversing the
+            transformation. If not provided, the dtype of the fit data will be used.
+            Defaults to ``None``.
+        nan (int, str or None):
+            Indicate what to do with the null values. If an integer is given, replace them
+            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
+            them with the corresponding aggregation. If ``None`` is given, do not replace them.
+            Defaults to ``'mean'``.
+        null_column (bool):
+            Whether to create a new column to indicate which values were null or not.
+            If ``None``, only create a new column when the data contains null values.
+            If ``True``, always create the new column whether there are null values or not.
+            If ``False``, do not create the new column.
+            Defaults to ``None``.
+    """
+
+    def __init__(self, dtype=None, nan='mean', null_column=None):
+        super().__init__(dtype=dtype, nan=nan, null_column=null_column, min_value='auto',
+                         max_value='auto', rounding='auto')
+
+
+class NumericalBoundedTransformer(NumericalTransformer):
+    """Transformer for numerical data.
+
+    This transformer replaces integer values with their float equivalent, bounded by the fitted
+    data (the minimum and maximum values seen while fitting).
+
+    Non null float values are not modified.
+
+    This class behaves exactly as the ``NumericalTransformer`` with ``min_value='auto'``,
+    ``max_value='auto'`` and ``rounding=None``.
+
+    Args:
+        dtype (data type):
+            Data type of the data to transform. It will be used when reversing the
+            transformation. If not provided, the dtype of the fit data will be used.
+            Defaults to ``None``.
+        nan (int, str or None):
+            Indicate what to do with the null values. If an integer is given, replace them
+            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
+            them with the corresponding aggregation. If ``None`` is given, do not replace them.
+            Defaults to ``'mean'``.
+        null_column (bool):
+            Whether to create a new column to indicate which values were null or not.
+            If ``None``, only create a new column when the data contains null values.
+            If ``True``, always create the new column whether there are null values or not.
+            If ``False``, do not create the new column.
+            Defaults to ``None``.
+    """
+
+    def __init__(self, dtype=None, nan='mean', null_column=None):
+        super().__init__(dtype=dtype, nan=nan, null_column=null_column, min_value='auto',
+                         max_value='auto', rounding=None)
+
+
+class NumericalRoundedTransformer(NumericalTransformer):
+    """Transformer for numerical data.
+
+    This transformer replaces integer values with their float equivalent, rounding all values to
+    the maximum number of decimal places detected in the fitted data.
+
+    Non null float values are not modified.
+
+    This class behaves exactly as the ``NumericalTransformer`` with ``min_value=None``,
+    ``max_value=None`` and ``rounding='auto'``.
+
+    Args:
+        dtype (data type):
+            Data type of the data to transform. It will be used when reversing the
+            transformation. If not provided, the dtype of the fit data will be used.
+            Defaults to ``None``.
+        nan (int, str or None):
+            Indicate what to do with the null values. If an integer is given, replace them
+            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
+            them with the corresponding aggregation. If ``None`` is given, do not replace them.
+            Defaults to ``'mean'``.
+        null_column (bool):
+            Whether to create a new column to indicate which values were null or not.
+            If ``None``, only create a new column when the data contains null values.
+            If ``True``, always create the new column whether there are null values or not.
+            If ``False``, do not create the new column.
+            Defaults to ``None``.
+    """
+
+    def __init__(self, dtype=None, nan='mean', null_column=None):
+        super().__init__(dtype=dtype, nan=nan, null_column=null_column, min_value=None,
+                         max_value=None, rounding='auto')
+
+
 class GaussianCopulaTransformer(NumericalTransformer):
     r"""Transformer for numerical data based on copulas transformation.
 
