@@ -433,7 +433,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
            issubclass(distribution, self._distributions['univariate']):
             return distribution()
 
-        raise TypeError('Invalid distribution: {}'.format(distribution))
+        raise TypeError(f'Invalid distribution: {distribution}')
 
     def _fit(self, data):
         """Fit the transformer to the data.
