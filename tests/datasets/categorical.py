@@ -382,7 +382,7 @@ class UniqueStringNaNsGenerator(CategoricalGenerator):
                 'memory': 1000.0
             },
             'transform': {
-                'time': 0.0003,
+                'time': 0.0005,
                 'memory': 1000000.0
             },
             'reverse_transform': {

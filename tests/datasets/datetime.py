@@ -50,11 +50,11 @@ class RandomGapDatetimeGenerator(DatetimeGenerator):
                 'memory': 500.0
             },
             'transform': {
-                'time': 1e-06,
+                'time': 5e-06,
                 'memory': 300.0
             },
             'reverse_transform': {
-                'time': 2e-06,
+                'time': 5e-06,
                 'memory': 1000.0,
             }
         }
@@ -78,11 +78,11 @@ class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
                 'memory': 500.0
             },
             'transform': {
-                'time': 1e-06,
+                'time': 5e-06,
                 'memory': 300.0
             },
             'reverse_transform': {
-                'time': 2e-06,
+                'time': 5e-06,
                 'memory': 1000.0,
             }
         }
@@ -132,11 +132,11 @@ class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
                 'memory': 500.0
             },
             'transform': {
-                'time': 1e-06,
+                'time': 5e-06,
                 'memory': 300.0
             },
             'reverse_transform': {
-                'time': 2e-06,
+                'time': 5e-06,
                 'memory': 1000.0,
             }
         }
@@ -162,11 +162,11 @@ class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
                 'memory': 500.0
             },
             'transform': {
-                'time': 1e-06,
+                'time': 5e-06,
                 'memory': 300.0
             },
             'reverse_transform': {
-                'time': 2e-06,
+                'time': 5e-06,
                 'memory': 1000.0,
             }
         }
@@ -192,11 +192,11 @@ class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
                 'memory': 500.0
             },
             'transform': {
-                'time': 1e-06,
+                'time': 5e-06,
                 'memory': 300.0
             },
             'reverse_transform': {
-                'time': 2e-06,
+                'time': 5e-06,
                 'memory': 1000.0,
             }
         }
