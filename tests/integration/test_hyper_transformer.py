@@ -53,7 +53,7 @@ class DummyTransformerNotMLReady(BaseTransformer):
         pass
 
     def _transform(self, data):
-        # Convert multiple columns into a single datetime
+        # Stringify input data
         return data.astype(str)
 
     def _reverse_transform(self, data):
@@ -79,7 +79,6 @@ class DummyTransformerMultiColumn(BaseTransformer):
             self.output_columns,
             [
                 data.values.astype(np.float64),
-
                 data.isnull().astype(np.float64)
             ]
         ))).fillna(-1)

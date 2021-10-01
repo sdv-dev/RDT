@@ -49,10 +49,10 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
 
         # Asserts
-        self.assertTrue(ht.copy)
-        self.assertEqual(ht.field_transformers, {})
-        self.assertEqual(ht.data_type_transformers, {})
-        self.assertEqual(ht.field_types, {})
+        assert ht.copy is True
+        assert ht.field_transformers == {}
+        assert ht.data_type_transformers == {}
+        assert ht.field_types == {}
         multi_column_mock.assert_called_once()
         validation_mock.assert_called_once()
 
@@ -94,7 +94,7 @@ class TestHyperTransformer(TestCase):
             'g': ('g', 'h'),
             'h': ('g', 'h')
         }
-        self.assertEqual(multi_column_fields, expected)
+        assert multi_column_fields == expected
 
     def test__get_next_transformer_field_transformer(self):
         """Test the ``_get_next_transformer method.
@@ -106,7 +106,7 @@ class TestHyperTransformer(TestCase):
         Setup:
             - field_transformers is given a transformer for the
             output field.
-            - field_types will be given a different transformer
+            - data_type_transformers will be given a different transformer
             for the output type of the output field.
 
         Input:
@@ -128,7 +128,7 @@ class TestHyperTransformer(TestCase):
         next_transformer = ht._get_next_transformer('a.out', 'numerical', None)
 
         # Assert
-        self.assertEqual(next_transformer, transformer)
+        assert next_transformer == transformer
 
     def test__get_next_transformer_final_output_type(self):
         """Test the ``_get_next_transformer method.
@@ -139,7 +139,7 @@ class TestHyperTransformer(TestCase):
         is returned.
 
         Setup:
-            - field_types will be given a transformer
+            - data_type_transformers will be given a transformer
             for the output type of the output field.
 
         Input:
@@ -159,7 +159,7 @@ class TestHyperTransformer(TestCase):
         next_transformer = ht._get_next_transformer('a.out', 'numerical', None)
 
         # Assert
-        self.assertIsNone(next_transformer)
+        assert next_transformer is None
 
     def test__get_next_transformer_next_transformers(self):
         """Test the ``_get_next_transformer method.
@@ -171,7 +171,7 @@ class TestHyperTransformer(TestCase):
         field, then it is used.
 
         Setup:
-            - field_types will be given a transformer
+            - data_type_transformers will be given a transformer
             for the output type of the output field.
 
         Input:
@@ -194,7 +194,7 @@ class TestHyperTransformer(TestCase):
         next_transformer = ht._get_next_transformer('a.out', 'categorical', next_transformers)
 
         # Assert
-        self.assertEqual(next_transformer, transformer)
+        assert next_transformer == transformer
 
     @patch('rdt.transformers.get_default_transformer')
     def test__get_next_transformer_default_transformer(self, mock):
@@ -228,7 +228,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         assert isinstance(next_transformer, CategoricalTransformer)
-        self.assertEqual(next_transformer.fuzzy, True)
+        assert next_transformer.fuzzy is True
 
     def test__update_field_types(self):
         """Test the ``_update_field_types`` method.
@@ -261,7 +261,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         expected = {'a': 'numerical', 'b': 'categorical', 'c': 'boolean', 'd': 'float'}
-        self.assertEqual(ht.field_types, expected)
+        assert ht.field_types == expected
 
     @patch('rdt.hyper_transformer.load_transformer')
     def test__fit_field_transformer(self, load_transformer_mock):
@@ -292,8 +292,8 @@ class TestHyperTransformer(TestCase):
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
         transformed_data1 = pd.DataFrame({
-            'a.out1': [2, 4, 6],
-            'a.out2': ['1', '2', '3']
+            'a.out1': ['2', '4', '6'],
+            'a.out2': [1, 2, 3]
         })
         transformer1 = Mock()
         transformer2 = Mock()
@@ -328,16 +328,16 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         expected = pd.DataFrame({
-            'a.out1': [2, 4, 6],
-            'a.out2': ['1', '2', '3']
+            'a.out1': ['2', '4', '6'],
+            'a.out2': [1, 2, 3]
         })
-        self.assertEqual(ht._output_columns, ['a.out1.value', 'a.out2'])
-        self.assertEqual(ht._temp_columns, ['a.out1'])
+        assert ht._output_columns == ['a.out1.value', 'a.out2']
+        assert ht._temp_columns == ['a.out1']
         pd.testing.assert_frame_equal(out, expected)
         transformer1.fit.assert_called_once()
         transformer1.transform.assert_called_once_with(data)
         transformer2.fit.assert_called_once()
-        self.assertEqual(ht._transformers_sequence, [transformer1, transformer2])
+        assert ht._transformers_sequence == [transformer1, transformer2]
 
     @patch('rdt.hyper_transformer.load_transformer')
     def test__fit_field_transformer_multi_column_field_not_ready(self, load_transformer_mock):
@@ -397,13 +397,13 @@ class TestHyperTransformer(TestCase):
             'a.out1': ['1', '2', '3'],
             'b': [4, 5, 6]
         })
-        self.assertEqual(ht._output_columns, [])
-        self.assertEqual(ht._temp_columns, ['a.out1'])
+        assert ht._output_columns == []
+        assert ht._temp_columns == ['a.out1']
         pd.testing.assert_frame_equal(out, expected)
         transformer1.fit.assert_called_once()
         transformer1.transform.assert_called_once_with(data)
         transformer2.fit.assert_not_called()
-        self.assertEqual(ht._transformers_sequence, [transformer1])
+        assert ht._transformers_sequence == [transformer1]
 
     @patch('rdt.hyper_transformer.load_transformer')
     def test__fit_field_transformer_multi_column_field_ready(self, load_transformer_mock):
@@ -474,14 +474,14 @@ class TestHyperTransformer(TestCase):
             'a.out1': ['1', '2', '3'],
             'b.out1': ['4', '5', '6']
         })
-        self.assertEqual(ht._output_columns, ['a.out1#b.out1'])
-        self.assertEqual(ht._temp_columns, ['a.out1'])
+        assert ht._output_columns == ['a.out1#b.out1']
+        assert ht._temp_columns == ['a.out1']
         pd.testing.assert_frame_equal(out, expected)
         transformer1.fit.assert_called_once()
         transformer1.transform.assert_called_once_with(data)
         transformer2.fit.assert_called_once()
         transformer2.transform.assert_not_called()
-        self.assertEqual(ht._transformers_sequence, [transformer1, transformer2])
+        assert ht._transformers_sequence == [transformer1, transformer2]
 
     @patch('rdt.hyper_transformer.warnings')
     def test__validate_all_fields_fitted(self, warnings_mock):
@@ -515,6 +515,41 @@ class TestHyperTransformer(TestCase):
         # Assert
         warnings_mock.warn.assert_called_once()
 
+    def get_data(self):
+        return pd.DataFrame({
+            'integer': [1, 2, 1, 3],
+            'float': [0.1, 0.2, 0.1, 0.1],
+            'categorical': ['a', 'a', 'b', 'a'],
+            'bool': [False, False, True, False],
+            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'])
+        })
+
+    def get_transformed_data(self, drop=False):
+        data = pd.DataFrame({
+            'integer': [1, 2, 1, 3],
+            'float': [0.1, 0.2, 0.1, 0.1],
+            'categorical': ['a', 'a', 'b', 'a'],
+            'bool': [False, False, True, False],
+            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01']),
+            'integer.out': ['1', '2', '1', '3'],
+            'integer.out.value': [1, 2, 1, 3],
+            'float.value': [0.1, 0.2, 0.1, 0.1],
+            'categorical.value': [0.375, 0.375, 0.875, 0.375],
+            'bool.value': [0.0, 0.0, 1.0, 0.0],
+            'datetime.value': [
+                1.2649824e+18,
+                1.262304e+18,
+                1.2649824e+18,
+                1.262304e+18
+            ]
+        })
+
+        if drop:
+            return data.drop(['integer', 'float', 'categorical', 'bool',
+                             'datetime', 'integer.out'], axis=1)
+
+        return data
+
     @patch('rdt.hyper_transformer.get_default_transformer')
     def test_fit(self, get_default_transformer_mock):
         """Test the ``fit`` method.
@@ -545,13 +580,7 @@ class TestHyperTransformer(TestCase):
         bool_transformer = Mock()
         datetime_transformer = Mock()
 
-        data = pd.DataFrame({
-            'integer': [1, 2, 1, 3],
-            'float': [0.1, 0.2, 0.1, 0.1],
-            'categorical': ['a', 'a', 'b', 'a'],
-            'bool': [False, False, True, False],
-            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'])
-        })
+        data = self.get_data()
         field_transformers = {
             'integer': int_transformer,
             'float': float_transformer,
@@ -610,31 +639,8 @@ class TestHyperTransformer(TestCase):
         categorical_transformer = Mock()
         bool_transformer = Mock()
         datetime_transformer = Mock()
-        data = pd.DataFrame({
-            'integer': [1, 2, 1, 3],
-            'float': [0.1, 0.2, 0.1, 0.1],
-            'categorical': ['a', 'a', 'b', 'a'],
-            'bool': [False, False, True, False],
-            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'])
-        })
-        transformed_data = pd.DataFrame({
-            'integer': [1, 2, 1, 3],
-            'float': [0.1, 0.2, 0.1, 0.1],
-            'categorical': ['a', 'a', 'b', 'a'],
-            'bool': [False, False, True, False],
-            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01']),
-            'integer.out': ['1', '2', '1', '3'],
-            'integer.out.value': [1, 2, 1, 3],
-            'float.value': [0.1, 0.2, 0.1, 0.1],
-            'categorical.value': [0.375, 0.375, 0.875, 0.375],
-            'bool.value': [0.0, 0.0, 1.0, 0.0],
-            'datetime.value': [
-                1.2649824e+18,
-                1.262304e+18,
-                1.2649824e+18,
-                1.262304e+18
-            ]
-        })
+        data = self.get_data()
+        transformed_data = self.get_transformed_data()
         datetime_transformer.transform.return_value = transformed_data
         ht = HyperTransformer()
         ht._transformers_sequence = [
@@ -652,18 +658,7 @@ class TestHyperTransformer(TestCase):
         transformed = ht.transform(data)
 
         # Assert
-        expected = pd.DataFrame({
-            'integer.out.value': [1, 2, 1, 3],
-            'float.value': [0.1, 0.2, 0.1, 0.1],
-            'categorical.value': [0.375, 0.375, 0.875, 0.375],
-            'bool.value': [0.0, 0.0, 1.0, 0.0],
-            'datetime.value': [
-                1.2649824e+18,
-                1.262304e+18,
-                1.2649824e+18,
-                1.262304e+18
-            ]
-        })
+        expected = self.get_transformed_data(True)
         pd.testing.assert_frame_equal(transformed, expected)
         int_transformer.transform.assert_called_once()
         int_out_transformer.transform.assert_called_once()
@@ -685,19 +680,13 @@ class TestHyperTransformer(TestCase):
         expect_call_args_fit = pd.DataFrame()
         expect_call_args_transform = pd.DataFrame()
 
-        self.assertEqual(
-            transformer.fit.call_count,
-            expect_call_count_fit
-        )
+        assert transformer.fit.call_count == expect_call_count_fit
         pd.testing.assert_frame_equal(
             transformer.fit.call_args[0][0],
             expect_call_args_fit
         )
 
-        self.assertEqual(
-            transformer.transform.call_count,
-            expect_call_count_transform
-        )
+        assert transformer.transform.call_count == expect_call_count_transform
         pd.testing.assert_frame_equal(
             transformer.transform.call_args[0][0],
             expect_call_args_transform
@@ -728,36 +717,8 @@ class TestHyperTransformer(TestCase):
         categorical_transformer = Mock()
         bool_transformer = Mock()
         datetime_transformer = Mock()
-        data = pd.DataFrame({
-            'integer.out.value': [1, 2, 1, 3],
-            'float.value': [0.1, 0.2, 0.1, 0.1],
-            'categorical.value': [0.375, 0.375, 0.875, 0.375],
-            'bool.value': [0.0, 0.0, 1.0, 0.0],
-            'datetime.value': [
-                1.2649824e+18,
-                1.262304e+18,
-                1.2649824e+18,
-                1.262304e+18
-            ]
-        })
-        reverse_transformed_data = pd.DataFrame({
-            'integer': [1, 2, 1, 3],
-            'float': [0.1, 0.2, 0.1, 0.1],
-            'categorical': ['a', 'a', 'b', 'a'],
-            'bool': [False, False, True, False],
-            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01']),
-            'integer.out': ['1', '2', '1', '3'],
-            'integer.out.value': [1, 2, 1, 3],
-            'float.value': [0.1, 0.2, 0.1, 0.1],
-            'categorical.value': [0.375, 0.375, 0.875, 0.375],
-            'bool.value': [0.0, 0.0, 1.0, 0.0],
-            'datetime.value': [
-                1.2649824e+18,
-                1.262304e+18,
-                1.2649824e+18,
-                1.262304e+18
-            ]
-        })
+        data = self.get_transformed_data(True)
+        reverse_transformed_data = self.get_transformed_data()
         int_transformer.reverse_transform.return_value = reverse_transformed_data
         ht = HyperTransformer()
         ht._transformers_sequence = [
@@ -775,13 +736,7 @@ class TestHyperTransformer(TestCase):
         reverse_transformed = ht.reverse_transform(data)
 
         # Assert
-        expected = pd.DataFrame({
-            'integer': [1, 2, 1, 3],
-            'float': [0.1, 0.2, 0.1, 0.1],
-            'categorical': ['a', 'a', 'b', 'a'],
-            'bool': [False, False, True, False],
-            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'])
-        })
+        expected = self.get_data()
         pd.testing.assert_frame_equal(reverse_transformed, expected)
         int_transformer.reverse_transform.assert_called_once()
         int_out_transformer.reverse_transform.assert_called_once()
