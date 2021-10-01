@@ -326,11 +326,11 @@ class GaussianCopulaTransformer(NumericalTransformer):
             return copy.deepcopy(distribution)
         if isinstance(distribution, tuple):
             return distribution[0](**distribution[1])
-        if isinstance(distribution, type) and \
-           issubclass(distribution, self._distributions['univariate']):
+        if isinstance(distribution, type) and issubclass(
+                distribution, self._distributions['univariate']):
             return distribution()
 
-        raise TypeError('Invalid distribution: {}'.format(distribution))
+        raise TypeError(f'Invalid distribution: {distribution}')
 
     def _fit(self, data):
         """Fit the transformer to the data.

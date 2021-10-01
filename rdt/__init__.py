@@ -15,7 +15,7 @@ from rdt.hyper_transformer import HyperTransformer
 
 __all__ = [
     'HyperTransformer',
-    'transformers'
+    'transformers',
 ]
 
 
@@ -53,6 +53,6 @@ def get_demo(dtypes=('int', 'float', 'str', 'datetime'), nans=0.2, size=10):
         nan_index = np.random.choice(range(size), size=int(size * nan), replace=False)
         column.iloc[nan_index] = np.nan
 
-        columns['{}_{}'.format(count, dtype)] = column
+        columns[f'{count}_{dtype}'] = column
 
     return pd.DataFrame(columns)

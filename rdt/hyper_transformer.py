@@ -134,7 +134,7 @@ class HyperTransformer:
 
             transformer_template = self.dtype_transformers.get(kind)
             if not transformer_template:
-                raise ValueError('Unsupported dtype: {}'.format(dtype))
+                raise ValueError(f'Unsupported dtype: {dtype}')
 
             if isinstance(transformer_template, str):
                 transformer_template = self._TRANSFORMER_TEMPLATES[transformer_template]
@@ -200,7 +200,7 @@ class HyperTransformer:
                 if len(shape) == 2:
                     drop_columns.append(column_name)
                     for index in range(shape[1]):
-                        new_column = '{}#{}'.format(column_name, index)
+                        new_column = f'{column_name}#{index}'
                         data[new_column] = transformed[:, index]
 
                 else:
@@ -239,7 +239,8 @@ class HyperTransformer:
             list[str]:
                 Names of the matching columns.
         """
-        regex = r'{}(#[0-9]+)?$'.format(re.escape(column_name))
+        column_name = re.escape(column_name)
+        regex = r'{column_name}(#[0-9]+)?$'
         return data.columns[data.columns.str.match(regex)]
 
     def reverse_transform(self, data):
