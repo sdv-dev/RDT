@@ -175,6 +175,7 @@ class HyperTransformer:
         transformer.fit(data, field)
         self._add_field_to_set(field, self._fitted_fields)
         self._transformers_sequence.append(transformer)
+        data = transformer.transform(data)
 
         output_types = transformer.get_output_types()
         next_transformers = transformer.get_next_transformers()
@@ -185,9 +186,6 @@ class HyperTransformer:
 
             if next_transformer:
                 self._temp_columns.append(output_name)
-                if output_name not in data:
-                    data = transformer.transform(data)
-
                 if self._field_in_data(output_field, data):
                     self._fit_field_transformer(data, output_field, next_transformer)
 
