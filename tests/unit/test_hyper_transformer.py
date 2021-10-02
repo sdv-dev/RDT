@@ -480,7 +480,7 @@ class TestHyperTransformer(TestCase):
         transformer1.fit.assert_called_once()
         transformer1.transform.assert_called_once_with(data)
         transformer2.fit.assert_called_once()
-        transformer2.transform.assert_not_called()
+        transformer2.transform.assert_called_once()
         assert ht._transformers_sequence == [transformer1, transformer2]
 
     @patch('rdt.hyper_transformer.warnings')
