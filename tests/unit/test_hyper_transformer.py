@@ -18,8 +18,8 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
 
         # Asserts
-        self.assertTrue(ht.copy)
-        self.assertEqual(ht.dtypes, None)
+        assert ht.copy
+        assert ht.dtypes is None
 
     def test__analyze(self):
         """Test _analyze"""
@@ -59,7 +59,8 @@ class TestHyperTransformer(TestCase):
             'int': [1, 2, None],
             'complex': [1.0 + 0j, 2.0 + 1j, None],
         })
-        with pytest.raises(ValueError):
+
+        with pytest.raises(ValueError, match='Unsupported dtype: complex'):
             hp._analyze(data)
 
     def test_fit_with_analyze(self):
@@ -93,9 +94,9 @@ class TestHyperTransformer(TestCase):
         expect_float_call_count = 1
         expect_bool_call_count = 1
 
-        self.assertEqual(int_mock.fit.call_count, expect_int_call_count)
-        self.assertEqual(float_mock.fit.call_count, expect_float_call_count)
-        self.assertEqual(bool_mock.fit.call_count, expect_bool_call_count)
+        assert int_mock.fit.call_count == expect_int_call_count
+        assert float_mock.fit.call_count == expect_float_call_count
+        assert bool_mock.fit.call_count == expect_bool_call_count
 
     def test_fit_transform(self):
         """Test call fit_transform"""
@@ -110,19 +111,13 @@ class TestHyperTransformer(TestCase):
         expect_call_args_fit = pd.DataFrame()
         expect_call_args_transform = pd.DataFrame()
 
-        self.assertEqual(
-            transformer.fit.call_count,
-            expect_call_count_fit
-        )
+        assert transformer.fit.call_count == expect_call_count_fit
         pd.testing.assert_frame_equal(
             transformer.fit.call_args[0][0],
             expect_call_args_fit
         )
 
-        self.assertEqual(
-            transformer.transform.call_count,
-            expect_call_count_transform
-        )
+        assert transformer.transform.call_count == expect_call_count_transform
         pd.testing.assert_frame_equal(
             transformer.transform.call_args[0][0],
             expect_call_args_transform

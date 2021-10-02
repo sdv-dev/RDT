@@ -16,8 +16,8 @@ class TestNullTransformer(TestCase):
         transformer = NullTransformer(None)
 
         # Asserts
-        self.assertIsNone(transformer.null_column, "null_column is None by default")
-        self.assertFalse(transformer.copy, "copy is False by default")
+        transformer.null_column is None
+        assert not transformer.copy
 
     def test_fit_fill_value_mean(self):
         """If fill_value is mean, _fill_value is the mean of the input data."""
