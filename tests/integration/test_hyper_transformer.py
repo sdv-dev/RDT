@@ -112,7 +112,6 @@ def get_input_data_without_nan():
 def get_reversed():
     reversed = get_input_data_without_nan()
     reversed['bool'] = reversed['bool'].astype('O')
-    reversed['integer'] = reversed['integer'].astype('int32')
     return reversed
 
 
