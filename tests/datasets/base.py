@@ -16,6 +16,7 @@ class BaseDatasetGenerator(ABC):
         Args:
             num_rows (int):
                 Number of rows to generate.
+
         Returns:
             numpy.ndarray of size ``num_rows``
         """

@@ -10,16 +10,17 @@ from tests.datasets.utils import add_nans
 
 
 class DatetimeGenerator(BaseDatasetGenerator):
-    """Base class for generators that generate datatime data"""
+    """Base class for generators that generate datatime data."""
 
     DATA_TYPE = 'datetime'
 
 
 class RandomGapDatetimeGenerator(DatetimeGenerator):
-    """Generator that creates dates with random gaps between them"""
+    """Generator that creates dates with random gaps between them."""
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         today = datetime.datetime.today()
         delta = datetime.timedelta(days=1)
         dates = [(np.random.random() * delta + today) for i in range(num_rows)]
@@ -44,10 +45,11 @@ class RandomGapDatetimeGenerator(DatetimeGenerator):
 
 
 class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
-    """Generator that creates dates with random gaps of seconds between them"""
+    """Generator that creates dates with random gaps of seconds between them."""
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         today = datetime.datetime.today()
         delta = datetime.timedelta(seconds=1)
         dates = [(np.random.random() * delta + today) for i in range(num_rows)]
@@ -72,10 +74,11 @@ class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
 
 
 class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
-    """Generator that creates dates with random gaps and NaNs"""
+    """Generator that creates dates with random gaps and NaNs."""
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         dates = RandomGapDatetimeGenerator.generate(num_rows)
         return add_nans(dates.astype('O'))
 
@@ -98,10 +101,11 @@ class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
 
 
 class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
-    """Generator that creates dates with hour gaps between them"""
+    """Generator that creates dates with hour gaps between them."""
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         today = datetime.datetime.today()
         delta = datetime.timedelta
         dates = [delta(hours=i) + today for i in range(num_rows)]
@@ -126,10 +130,12 @@ class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
 
 
 class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
-    """Generator that creates dates with 1 day gaps between them"""
+    """Generator that creates dates with 1 day gaps between them."""
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
+        today = datetime.datetime.today()
         delta = datetime.timedelta
 
         today = min(datetime.datetime.today(), pd.Timestamp.max - delta(num_rows))
@@ -156,10 +162,12 @@ class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
 
 
 class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
-    """Generator that creates dates with 1 week gaps between them"""
+    """Generator that creates dates with 1 week gaps between them."""
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
+        today = datetime.datetime.today()
         delta = datetime.timedelta
 
         today = datetime.datetime.today()

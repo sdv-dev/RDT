@@ -53,6 +53,7 @@ class RandomBooleanNaNsGenerator(BooleanGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         percent_null = np.random.randint(MIN_PERCENT, MAX_PERCENT_NULL)
         percent_true = (100 - percent_null) / 2
         percent_false = 100 - percent_true - percent_null
@@ -86,6 +87,7 @@ class RandomSkewedBooleanGenerator(BooleanGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         percent_true = np.random.randint(MIN_PERCENT, 100 - MIN_PERCENT)
 
         return np.random.choice(
@@ -117,6 +119,7 @@ class RandomSkewedBooleanNaNsGenerator(BooleanGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         percent_null = np.random.randint(MIN_PERCENT, MAX_PERCENT_NULL)
         percent_true = np.random.randint(MIN_PERCENT, 100 - percent_null - MIN_PERCENT)
         percent_false = 100 - percent_null - percent_true
@@ -146,10 +149,11 @@ class RandomSkewedBooleanNaNsGenerator(BooleanGenerator):
 
 
 class ConstantBooleanGenerator(BooleanGenerator):
-    """Generator that creates a constant array with either True or False"""
+    """Generator that creates a constant array with either True or False."""
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         constant = np.random.choice([True, False])
         return np.full(num_rows, constant)
 
@@ -176,6 +180,7 @@ class ConstantBooleanNaNsGenerator(BooleanGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         constant = np.random.choice([True, False])
         percent_null = np.random.randint(MIN_PERCENT, MAX_PERCENT_NULL)
 

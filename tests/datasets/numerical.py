@@ -17,6 +17,7 @@ class RandomIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         return np.random.randint(ii32.min, ii32.max, num_rows)
 
@@ -43,6 +44,7 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(RandomIntegerGenerator.generate(num_rows).astype(np.float))
 
     @staticmethod
@@ -68,6 +70,7 @@ class ConstantIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         constant = np.random.randint(ii32.min, ii32.max)
         return np.full(num_rows, constant)
@@ -95,6 +98,7 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(ConstantIntegerGenerator.generate(num_rows).astype(np.float))
 
     @staticmethod
@@ -120,6 +124,7 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         values = np.random.randint(ii32.min, ii32.max, size=2)
         additional_values = np.full(num_rows - 2, values[1])
@@ -150,6 +155,7 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         values = np.random.randint(ii32.min, ii32.max, size=2)
         additional_values = np.full(num_rows - 2, values[1]).astype(np.float)
@@ -180,6 +186,7 @@ class NormalGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return np.random.normal(size=num_rows)
 
     @staticmethod
@@ -205,6 +212,7 @@ class NormalNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(NormalGenerator.generate(num_rows))
 
     @staticmethod
@@ -230,6 +238,7 @@ class BigNormalGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return np.random.normal(scale=1e10, size=num_rows)
 
     @staticmethod
@@ -255,6 +264,7 @@ class BigNormalNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(BigNormalGenerator.generate(num_rows))
 
     @staticmethod

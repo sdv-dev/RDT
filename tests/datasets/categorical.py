@@ -18,6 +18,7 @@ class RandomIntegerGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         categories = [1, 2, 3, 4, 5]
         return np.random.choice(a=categories, size=num_rows)
 
@@ -44,6 +45,7 @@ class RandomIntegerNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(RandomIntegerGenerator.generate(num_rows).astype(np.float))
 
     @staticmethod
@@ -69,6 +71,7 @@ class RandomStringGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         categories = ['Alice', 'Bob', 'Charlie', 'Dave', 'Eve']
         return np.random.choice(a=categories, size=num_rows)
 
@@ -95,6 +98,7 @@ class RandomStringNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(RandomStringGenerator.generate(num_rows).astype('O'))
 
     @staticmethod
@@ -123,6 +127,7 @@ class RandomMixedGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         cat_size = 5
         categories = np.hstack([
             cat.astype('O') for cat in [
@@ -162,6 +167,7 @@ class RandomMixedNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         array = RandomMixedGenerator.generate(num_rows)
 
         length = len(array)
@@ -195,6 +201,7 @@ class SingleIntegerGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         constant = np.random.randint(0, 100)
         return np.full(num_rows, constant)
 
@@ -221,6 +228,7 @@ class SingleIntegerNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(SingleIntegerGenerator.generate(num_rows).astype(np.float))
 
     @staticmethod
@@ -246,6 +254,7 @@ class SingleStringGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         constant = 'A'
         return np.full(num_rows, constant)
 
@@ -272,6 +281,7 @@ class SingleStringNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(SingleStringGenerator.generate(num_rows).astype('O'))
 
     @staticmethod
@@ -297,6 +307,7 @@ class UniqueIntegerGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return np.arange(num_rows)
 
     @staticmethod
@@ -322,6 +333,7 @@ class UniqueIntegerNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(UniqueIntegerGenerator.generate(num_rows))
 
     @staticmethod
@@ -347,6 +359,7 @@ class UniqueStringGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return np.arange(num_rows).astype(str)
 
     @staticmethod
@@ -372,6 +385,7 @@ class UniqueStringNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(UniqueStringGenerator.generate(num_rows).astype('O'))
 
     @staticmethod
