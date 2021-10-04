@@ -242,7 +242,7 @@ def test_hypertransformer_field_transformers():
         - The reverse transformed data should be the same as the input.
     """
     field_transformers = {
-        'integer': NumericalTransformer(dtype=int),
+        'integer': NumericalTransformer(dtype=np.int64),
         'float': NumericalTransformer(dtype=float),
         'categorical': CategoricalTransformer,
         'bool': BooleanTransformer,
