@@ -253,14 +253,8 @@ class HyperTransformer:
         for transformer in self._transformers_sequence:
             data = transformer.transform(data, drop=False)
 
-        # columns_to_drop = [
-        #     column
-        #     for column in data
-        #     if column in self._input_columns or column in self._temp_columns
-        # ]
-        # data = data.drop(columns_to_drop, axis=1)
         transformed_columns = self._subset(self._output_columns, data.columns)
-        return data.reindex(unknown_columns + transformed_columns, axis=1)
+        return data.reindex(columns=unknown_columns + transformed_columns)
 
     def fit_transform(self, data):
         """Fit the transformers to the data and then transform it.
@@ -292,4 +286,4 @@ class HyperTransformer:
             data = transformer.reverse_transform(data, drop=False)
 
         reversed_columns = self._subset(self._input_columns, data.columns)
-        return data.reindex(unknown_columns + reversed_columns, axis=1)
+        return data.reindex(columns=unknown_columns + reversed_columns)
