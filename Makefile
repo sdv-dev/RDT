@@ -146,6 +146,7 @@ serve-docs: view-docs ## compile the docs watching for changes
 dist: clean ## builds source and wheel package
 	python setup.py sdist
 	python setup.py bdist_wheel
+	python rdt/transformers/addons/addons_setup.py
 	ls -l dist
 
 .PHONY: publish-confirm
