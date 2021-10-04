@@ -126,7 +126,7 @@ class BaseTransformer:
 
     @staticmethod
     def _set_columns_data(data, columns_data, columns):
-        if isinstance(columns_data, pd.Series) or isinstance(columns_data, pd.DataFrame):
+        if isinstance(columns_data, (pd.DataFrame, pd.Series)):
             columns_data.index = data.index
 
         if len(columns_data.shape) == 1:
