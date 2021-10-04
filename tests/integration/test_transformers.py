@@ -11,6 +11,8 @@ from tests.datasets import BaseDatasetGenerator
 DATA_SIZE = 1000
 TEST_COL = 'test_col'
 
+PRIMARY_DATA_TYPES = ['boolean', 'categorical', 'datetime', 'numerical']
+
 # Mapping of rdt data type to dtype
 DATA_TYPE_TO_DTYPES = {
     'boolean': ['b', 'O'],
@@ -20,6 +22,12 @@ DATA_TYPE_TO_DTYPES = {
     'integer': ['i'],
     'float': ['f', 'i'],
 }
+
+
+def _get_all_transformers():
+    """Get all transformers to be tested."""
+    all_transformers = BaseTransformer.get_subclasses()
+    return [t for t in all_transformers if t.__name__ != 'IdentityTransformer']
 
 
 def _build_generator_map():
@@ -41,11 +49,11 @@ def _build_generator_map():
 def _find_dataset_generators(data_type, generators):
     """Find the dataset generators for the given data_type."""
     if data_type is None:
-        all_generators = []
-        for generator_list in generators.values():
-            all_generators.extend(generator_list)
+        primary_generators = []
+        for primary_data_type in PRIMARY_DATA_TYPES:
+            primary_generators.extend(_find_dataset_generators(primary_data_type, generators))
 
-        return all_generators
+        return primary_generators
 
     return generators.get(data_type, [])
 
@@ -166,7 +174,7 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data):
     _validate_hypertransformer_reversed_transformed_data(transformer_class, out[TEST_COL])
 
 
-transformers = BaseTransformer.get_subclasses()
+transformers = _get_all_transformers()
 generators = _build_generator_map()
 
 
