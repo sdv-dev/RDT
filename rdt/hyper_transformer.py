@@ -92,6 +92,14 @@ class HyperTransformer:
 
         return field in field_set
 
+    @staticmethod
+    def _subset(input_list, other_list, not_in=False):
+        return [
+            element
+            for element in input_list
+            if (element in other_list) ^ not_in
+        ]
+
     def _create_multi_column_fields(self):
         multi_column_fields = {}
         for field in list(self.field_types) + list(self.field_transformers):
@@ -122,7 +130,6 @@ class HyperTransformer:
         self._transformers_sequence = []
         self._output_columns = []
         self._input_columns = []
-        self._temp_columns = []
         self._fitted_fields = set()
 
     @staticmethod
@@ -185,12 +192,12 @@ class HyperTransformer:
                 output_field, output_type, next_transformers)
 
             if next_transformer:
-                self._temp_columns.append(output_name)
                 if self._field_in_data(output_field, data):
                     self._fit_field_transformer(data, output_field, next_transformer)
 
             else:
-                self._output_columns.append(output_name)
+                if output_name not in self._output_columns:
+                    self._output_columns.append(output_name)
 
         return data
 
@@ -239,19 +246,21 @@ class HyperTransformer:
             pandas.DataFrame:
                 Transformed data.
         """
+        unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
         if self.copy:
             data = data.copy()
 
         for transformer in self._transformers_sequence:
             data = transformer.transform(data, drop=False)
 
-        columns_to_drop = [
-            column
-            for column in data
-            if column in self._input_columns or column in self._temp_columns
-        ]
-        data = data.drop(columns_to_drop, axis=1)
-        return data
+        # columns_to_drop = [
+        #     column
+        #     for column in data
+        #     if column in self._input_columns or column in self._temp_columns
+        # ]
+        # data = data.drop(columns_to_drop, axis=1)
+        transformed_columns = self._subset(self._output_columns, data.columns)
+        return data.reindex(unknown_columns + transformed_columns, axis=1)
 
     def fit_transform(self, data):
         """Fit the transformers to the data and then transform it.
@@ -278,13 +287,9 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
+        unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         for transformer in reversed(self._transformers_sequence):
             data = transformer.reverse_transform(data, drop=False)
 
-        columns_to_drop = [
-            col
-            for col in data
-            if col in self._output_columns or col in self._temp_columns
-        ]
-        reversed_data = data.drop(columns_to_drop, axis=1)
-        return reversed_data
+        reversed_columns = self._subset(self._input_columns, data.columns)
+        return data.reindex(unknown_columns + reversed_columns, axis=1)
