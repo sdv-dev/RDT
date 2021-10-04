@@ -379,7 +379,7 @@ def test_with_unfitted_columns():
     """HyperTransform should be able to transform even if there are unseen columns in data."""
     data = get_input_data_without_nan()
 
-    ht = HyperTransformer()
+    ht = HyperTransformer(data_type_transformers={'categorical': CategoricalTransformer})
     ht.fit(data)
 
     new_data = get_input_data_without_nan()
@@ -391,7 +391,7 @@ def test_with_unfitted_columns():
     expected_reversed = get_reversed()
     expected_reversed['z'] = new_column
     expected_reversed = expected_reversed.reindex(
-        ['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'], axis=1)
+        columns=['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'])
     pd.testing.assert_frame_equal(expected_reversed, reverse)
 
 
