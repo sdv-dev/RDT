@@ -368,11 +368,31 @@ def test_subset_of_columns():
     ht = HyperTransformer()
     ht.fit(data)
 
-    subset = get_reversed()[[data.columns[0]]]
+    subset = get_input_data_without_nan()[[data.columns[0]]]
     transformed = ht.transform(subset)
     reverse = ht.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(subset, reverse)
+
+
+def test_with_unfitted_columns():
+    """HyperTransform should be able to transform even if there are unseen columns in data."""
+    data = get_input_data_without_nan()
+
+    ht = HyperTransformer()
+    ht.fit(data)
+
+    new_data = get_input_data_without_nan()
+    new_column = pd.Series([6, 7, 8, 9])
+    new_data['z'] = new_column
+    transformed = ht.transform(new_data)
+    reverse = ht.reverse_transform(transformed)
+
+    expected_reversed = get_reversed()
+    expected_reversed['z'] = new_column
+    expected_reversed = expected_reversed.reindex(
+        ['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'], axis=1)
+    pd.testing.assert_frame_equal(expected_reversed, reverse)
 
 
 def test_subset_of_columns_nan_data():
