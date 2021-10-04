@@ -215,10 +215,7 @@ def test_hypertransformer_default_inputs():
 
     reversed = ht.reverse_transform(transformed)
 
-    pd.testing.assert_frame_equal(
-        expected_reversed.sort_index(axis=1),
-        reversed.sort_index(axis=1)
-    )
+    pd.testing.assert_frame_equal(expected_reversed, reversed)
 
 
 def test_hypertransformer_field_transformers():
@@ -267,10 +264,7 @@ def test_hypertransformer_field_transformers():
 
     reversed = ht.reverse_transform(transformed)
 
-    pd.testing.assert_frame_equal(
-        expected_reversed.sort_index(axis=1),
-        reversed.sort_index(axis=1)
-    )
+    pd.testing.assert_frame_equal(expected_reversed, reversed)
 
 
 def test_hypertransformer_field_transformers_multi_column_fields():
@@ -331,10 +325,7 @@ def test_hypertransformer_field_transformers_multi_column_fields():
 
     reversed = ht.reverse_transform(transformed)
 
-    pd.testing.assert_frame_equal(
-        expected_reversed.sort_index(axis=1),
-        reversed.sort_index(axis=1)
-    )
+    pd.testing.assert_frame_equal(expected_reversed, reversed)
 
 
 def test_single_category():

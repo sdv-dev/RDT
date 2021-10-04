@@ -287,7 +287,6 @@ class TestHyperTransformer(TestCase):
             - A DataFrame with columns that result from transforming the
             outputs of the original transformer.
             - ``_output_columns`` should add the appropriate column names.
-            - ``_temp_columns`` should add the appropriate column names.
         """
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -332,7 +331,6 @@ class TestHyperTransformer(TestCase):
             'a.out2': [1, 2, 3]
         })
         assert ht._output_columns == ['a.out1.value', 'a.out2']
-        assert ht._temp_columns == ['a.out1']
         pd.testing.assert_frame_equal(out, expected)
         transformer1.fit.assert_called_once()
         transformer1.transform.assert_called_once_with(data)
@@ -363,8 +361,6 @@ class TestHyperTransformer(TestCase):
         Output:
             - A DataFrame with columns that result from transforming the
             outputs of the original transformer.
-            - ``_temp_columns`` should add the column name of the column in the
-            multi-column field.
         """
         # Setup
         data = pd.DataFrame({
@@ -398,7 +394,6 @@ class TestHyperTransformer(TestCase):
             'b': [4, 5, 6]
         })
         assert ht._output_columns == []
-        assert ht._temp_columns == ['a.out1']
         pd.testing.assert_frame_equal(out, expected)
         transformer1.fit.assert_called_once()
         transformer1.transform.assert_called_once_with(data)
@@ -429,8 +424,6 @@ class TestHyperTransformer(TestCase):
         Output:
             - A DataFrame with columns that result from transforming the
             outputs of the original transformer.
-            - ``_temp_columns`` should add the column name of the column in the
-            multi-column field.
             - ``_output_columns`` should add the column name of the output of
             the transformer used on the multi-column field.
         """
@@ -475,7 +468,6 @@ class TestHyperTransformer(TestCase):
             'b.out1': ['4', '5', '6']
         })
         assert ht._output_columns == ['a.out1#b.out1']
-        assert ht._temp_columns == ['a.out1']
         pd.testing.assert_frame_equal(out, expected)
         transformer1.fit.assert_called_once()
         transformer1.transform.assert_called_once_with(data)
@@ -624,7 +616,7 @@ class TestHyperTransformer(TestCase):
             - The ``_transformers_sequence`` will be hardcoded with a list
             of transformer mocks.
             - The ``_input_columns`` will be hardcoded.
-            - The ``_temp_columns`` will be hardcoded.
+            - The ``_output_columns`` will be hardcoded.
 
         Input:
             - A DataFrame of multiple types.
@@ -652,13 +644,13 @@ class TestHyperTransformer(TestCase):
             datetime_transformer
         ]
         ht._input_columns = list(data.columns)
-        ht._temp_columns = ['integer.out']
+        expected = self.get_transformed_data(True)
+        ht._output_columns = list(expected.columns)
 
         # Run
         transformed = ht.transform(data)
 
         # Assert
-        expected = self.get_transformed_data(True)
         pd.testing.assert_frame_equal(transformed, expected)
         int_transformer.transform.assert_called_once()
         int_out_transformer.transform.assert_called_once()
@@ -702,7 +694,7 @@ class TestHyperTransformer(TestCase):
             - The ``_transformers_sequence`` will be hardcoded with a list
             of transformer mocks.
             - The ``_output_columns`` will be hardcoded.
-            - The ``_temp_columns`` will be hardcoded.
+            - The ``_input_columns`` will be hardcoded.
 
         Input:
             - A DataFrame of multiple types.
@@ -730,13 +722,13 @@ class TestHyperTransformer(TestCase):
             datetime_transformer
         ]
         ht._output_columns = list(data.columns)
-        ht._temp_columns = ['integer.out']
+        expected = self.get_data()
+        ht._input_columns = list(expected.columns)
 
         # Run
         reverse_transformed = ht.reverse_transform(data)
 
         # Assert
-        expected = self.get_data()
         pd.testing.assert_frame_equal(reverse_transformed, expected)
         int_transformer.reverse_transform.assert_called_once()
         int_out_transformer.reverse_transform.assert_called_once()
