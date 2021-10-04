@@ -76,6 +76,7 @@ def readme(c):
 @task
 def lint(c):
     c.run('flake8 rdt')
+    c.run('pydocstyle rdt')
     c.run('flake8 tests --ignore=D')
     c.run('isort -c --recursive rdt tests')
     c.run('pylint rdt tests/performance --rcfile=setup.cfg')
