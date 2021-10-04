@@ -4,6 +4,8 @@ from collections import defaultdict
 from copy import deepcopy
 from functools import lru_cache
 
+from numpy import float64, int64
+
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
 from rdt.transformers.categorical import (
@@ -31,8 +33,8 @@ TRANSFORMERS = {
 }
 DEFAULT_TRANSFORMERS = {
     'numerical': NumericalTransformer,
-    'integer': NumericalTransformer(dtype=int),
-    'float': NumericalTransformer(dtype=float),
+    'integer': NumericalTransformer(dtype=int64),
+    'float': NumericalTransformer(dtype=float64),
     'categorical': CategoricalTransformer(fuzzy=True),
     'boolean': BooleanTransformer,
     'datetime': DatetimeTransformer,
