@@ -422,6 +422,12 @@ def test_subset_of_columns_nan_data():
 
 
 def null_transformer_asserts(data, ht, transformed, expected):
+    """Helper function of all following tests.
+    
+    Asserts that the `transform` method of the `HyperTransformer` produces the expected columns
+    (it doesn't check for the order of the columns), and that the `reverse_transform` returns
+    the original data (again, doesn't check for order of columns).
+    """
     np.testing.assert_allclose(
         transformed.sort_index(axis=1).values,
         expected.sort_index(axis=1).values
@@ -429,6 +435,7 @@ def null_transformer_asserts(data, ht, transformed, expected):
 
     reversed_data = ht.reverse_transform(transformed)
 
+    # TODO: Not sure why this should be checked? It was done in the original test, so I copied
     original_names = data.pop('names')
     reversed_names = reversed_data.pop('names')
 
@@ -439,9 +446,9 @@ def null_transformer_asserts(data, ht, transformed, expected):
 
 
 def test_hypertransformer_transform_nulls_false():
-    """Test the HyperTransformer with ``transform_nulls = False``.
+    """Test the `HyperTransformer` with ``transform_nulls = False``.
 
-    When ``transform_nulls`` is ``False``, should not applying the ``NullTransformer`` at all.
+    When ``transform_nulls`` is ``False``, should not apply the ``NullTransformer`` at all.
 
     Setup:
         - Get the data and the transformers.
@@ -466,9 +473,9 @@ def test_hypertransformer_transform_nulls_false():
 
 
 def test_hypertransformer_transform_nulls_false_fill_value_mean():
-    """Test the HyperTransformer with ``transform_nulls = False`` and ``fill_value = 'mean'``.
+    """Test the `HyperTransformer` with ``transform_nulls = False`` and ``fill_value = 'mean'``.
 
-    When ``transform_nulls = False``, if ``fill_value`` is passed as anything other than None,
+    When ``transform_nulls = False``, if ``fill_value`` is passed as anything other than ``None``,
     it should raise an error.
 
     Setup:
