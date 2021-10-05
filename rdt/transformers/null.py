@@ -54,10 +54,7 @@ class NullTransformer():
             data (pandas.Series or numpy.ndarray):
                 Data to transform.
         """
-        if not isinstance(data, pd.Series):
-            data = pd.Series(data)
-
-        null_values = data.isna().array
+        null_values = data.isna().to_numpy()
         self.nulls = null_values.any()
         contains_not_null = not null_values.all()
         if self.fill_value == 'mean':
