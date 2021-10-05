@@ -35,7 +35,7 @@ class TestNumericalTransformer(TestCase):
         assert transformer.null_transformer.fill_value == expect_fill_value
         assert transformer._dtype == expect_dtype
 
-    def test__learn_rounding_digits_more_than_15_decimals(data):
+    def test__learn_rounding_digits_more_than_15_decimals(self):
         """Test the _learn_rounding_digits method with more than 15 decimals.
 
         If the data has more than 15 decimals, None should be returned.
@@ -51,7 +51,7 @@ class TestNumericalTransformer(TestCase):
 
         assert output is None
 
-    def test__learn_rounding_digits_less_than_15_decimals(data):
+    def test__learn_rounding_digits_less_than_15_decimals(self):
         """Test the _learn_rounding_digits method with less than 15 decimals.
 
         If the data has less than 15 decimals, the maximum number of decimals
@@ -68,7 +68,7 @@ class TestNumericalTransformer(TestCase):
 
         assert output == 3
 
-    def test__learn_rounding_digits_negative_decimals_float(data):
+    def test__learn_rounding_digits_negative_decimals_float(self):
         """Test the _learn_rounding_digits method with floats multiples of powers of 10.
 
         If the data has all multiples of 10, 100, or any other higher power of 10,
@@ -87,7 +87,7 @@ class TestNumericalTransformer(TestCase):
 
         assert output == -1
 
-    def test__learn_rounding_digits_negative_decimals_integer(data):
+    def test__learn_rounding_digits_negative_decimals_integer(self):
         """Test the _learn_rounding_digits method with integers multiples of powers of 10.
 
         If the data has all multiples of 10, 100, or any other higher power of 10,
