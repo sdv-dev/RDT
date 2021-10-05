@@ -607,9 +607,10 @@ def test_hypertransformer_fill_value_string_null_column_True():
     """Test the HyperTransformer with ``fill_value = string, null_column = True``.
 
     When ``fill_value`` is a string ``'filled_value'`` and ``null_column`` is ``True``,
-    it should (1) transform the data like the normal ``HyperTransformer``, (2) fill all the
-    transformed ``np.nan`` values with the ``'filled_value'`` string and (3) create a new
-    column for each column in the data, flagging which values contain ``nan``'s .
+    it should (1) transform the data like the normal ``HyperTransformer``, (2) for each
+    column in the data, create a new column flagging ``nan`` values with ``1.0`` (and
+    ``0.0`` otherwise) and (3) fill all the transformed ``np.nan`` values with the
+    ``'filled_value'`` string.
 
     Setup:
         - Get the data and the transformers.
@@ -654,9 +655,13 @@ def get_transformed_fill_value_none_null_column_true():
 
 
 def test_hypertransformer_fill_value_none_null_column_true():
-    """Test the HyperTransformer with ``transform_nulls = False``.
+    """Test the HyperTransformer with ``fill_value = string, null_column = True``.
 
-    When ``transform_nulls`` is ``False``, should not applying the ``NullTransformer`` at all.
+    When ``fill_value`` is a string ``'filled_value'`` and ``null_column`` is ``True``,
+    it should (1) transform the data like the normal ``HyperTransformer``, (2) for each
+    column in the data, create a new column flagging ``nan`` values with ``1.0`` (and
+    ``0.0`` otherwise) and (3) fill all the transformed ``np.nan`` values with the
+    ``'filled_value'`` string.
 
     Setup:
         - Get the data and the transformers.
@@ -699,9 +704,13 @@ def get_transformed_fill_value_string_null_column_none():
 
 
 def test_hypertransformer_fill_value_string_null_column_none():
-    """Test the HyperTransformer with ``transform_nulls = False``.
+    """Test the HyperTransformer with ``fill_value = string, null_column = True``.
 
-    When ``transform_nulls`` is ``False``, should not applying the ``NullTransformer`` at all.
+    When ``fill_value`` is a string ``'filled_value'`` and ``null_column`` is ``True``,
+    it should (1) transform the data like the normal ``HyperTransformer``, (2) for each
+    column in the data, create a new column flagging ``nan`` values with ``1.0`` (and
+    ``0.0`` otherwise) and (3) fill all the transformed ``np.nan`` values with the
+    ``'filled_value'`` string.
 
     Setup:
         - Get the data and the transformers.
