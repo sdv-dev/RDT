@@ -24,10 +24,15 @@ DATA_TYPE_TO_DTYPES = {
 }
 
 
+def _is_valid_transformer(transformer_name):
+    """Determine if transformer should be tested or not."""
+    return transformer_name != 'IdentityTransformer' and 'Dummy' not in transformer_name
+
+
 def _get_all_transformers():
     """Get all transformers to be tested."""
     all_transformers = BaseTransformer.get_subclasses()
-    return [t for t in all_transformers if t.__name__ != 'IdentityTransformer']
+    return [t for t in all_transformers if _is_valid_transformer(t.__name__)]
 
 
 def _build_generator_map():
@@ -40,8 +45,8 @@ def _build_generator_map():
     """
     generators = defaultdict(list)
 
-    for g in BaseDatasetGenerator.get_subclasses():
-        generators[g.DATA_TYPE].append(g)
+    for generator in BaseDatasetGenerator.get_subclasses():
+        generators[generator.DATA_TYPE].append(generator)
 
     return generators
 
@@ -162,8 +167,8 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data):
         input_data (pandas.Series):
             The data to test on.
     """
-    hypertransformer = HyperTransformer(transformers={
-        TEST_COL: {'class': transformer_class.__name__},
+    hypertransformer = HyperTransformer(field_transformers={
+        TEST_COL: transformer_class.__name__,
     })
     hypertransformer.fit(input_data)
 
