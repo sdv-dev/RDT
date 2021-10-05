@@ -1,61 +1,37 @@
 """Transformers module."""
 
-import importlib
-import json
-import os
 from collections import defaultdict
 from copy import deepcopy
 from functools import lru_cache
-from glob import glob
 
 import numpy as np
 
+from rdt.transformers.addons.import_addons import import_addons
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
-from rdt.transformers.categorical import (
-    CategoricalTransformer, LabelEncodingTransformer, OneHotEncodingTransformer)
+from rdt.transformers.categorical import CategoricalTransformer
 from rdt.transformers.datetime import DatetimeTransformer
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.numerical import GaussianCopulaTransformer, NumericalTransformer
-
-
-def _load_addons():
-    addons = []
-    addons_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'addons')
-    for addon_json_path in glob(f'{addons_path}/*/*.json'):
-        with open(addon_json_path, 'r', encoding='utf-8') as addon_json_file:
-            transformers = json.load(addon_json_file).get('transformers', [])
-            for transformer in transformers:
-                transformer = transformer.split('.')
-                module = '.'.join(transformer[:-1])
-                module = importlib.import_module(module)
-
-                transformer = transformer[-1]
-                transformer_class = getattr(module, transformer)
-                globals()[transformer] = transformer_class
-                addons.append(transformer)
-
-    return addons
-
-
-ADDONS = _load_addons()
+from rdt.transformers.numerical import NumericalTransformer
 
 __all__ = [
     'BaseTransformer',
-    'BooleanTransformer',
-    'CategoricalTransformer',
-    'DatetimeTransformer',
-    'GaussianCopulaTransformer',
-    'NumericalTransformer',
     'NullTransformer',
-    'OneHotEncodingTransformer',
-    'LabelEncodingTransformer',
-] + ADDONS
+    'load_transformer',
+    'get_transformers_by_type',
+    'get_default_transformers',
+    'get_default_transformer',
+]
+
+import_addons()
 
 TRANSFORMERS = {
     transformer.__name__: transformer
     for transformer in BaseTransformer.get_subclasses()
 }
+
+globals().update(TRANSFORMERS)
+__all__.extend(TRANSFORMERS.keys())
 
 DEFAULT_TRANSFORMERS = {
     'numerical': NumericalTransformer,
