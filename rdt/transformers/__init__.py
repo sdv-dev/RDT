@@ -91,27 +91,6 @@ def load_transformer(transformer):
     return transformer()
 
 
-def load_transformers(transformers):
-    """Load a dict of transfomers from a dict specification.
-
-    >>> nt = NumericalTransformer(dtype=float)
-    >>> transformers = {
-    ...     'a': nt,
-    ...     'b': {
-    ...         'class': 'NumericalTransformer',
-    ...         'kwargs': {
-    ...             'dtype': int
-    ...         }
-    ...     }
-    ... }
-    >>> load_transformers(transformers)
-    """
-    return {
-        name: load_transformer(transformer)
-        for name, transformer in transformers.items()
-    }
-
-
 def get_transformers_by_type():
     """Build a ``dict`` mapping data types to valid existing transformers for that type.
 
