@@ -110,9 +110,9 @@ def get_input_data_without_nan():
 
 
 def get_reversed():
-    reversed = get_input_data_without_nan()
-    reversed['bool'] = reversed['bool'].astype('O')
-    return reversed
+    reverse_transformed = get_input_data_without_nan()
+    reverse_transformed['bool'] = reverse_transformed['bool'].astype('O')
+    return reverse_transformed
 
 
 def get_transformed_data():
@@ -213,9 +213,9 @@ def test_hypertransformer_default_inputs():
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
-    reversed = ht.reverse_transform(transformed)
+    reverse_transformed = ht.reverse_transform(transformed)
 
-    pd.testing.assert_frame_equal(expected_reversed, reversed)
+    pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
 
 def test_hypertransformer_field_transformers():
@@ -262,9 +262,9 @@ def test_hypertransformer_field_transformers():
         expected_transformed
     )
 
-    reversed = ht.reverse_transform(transformed)
+    reverse_transformed = ht.reverse_transform(transformed)
 
-    pd.testing.assert_frame_equal(expected_reversed, reversed)
+    pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
 
 def test_hypertransformer_field_transformers_multi_column_fields():
@@ -323,9 +323,9 @@ def test_hypertransformer_field_transformers_multi_column_fields():
         expected_transformed
     )
 
-    reversed = ht.reverse_transform(transformed)
+    reverse_transformed = ht.reverse_transform(transformed)
 
-    pd.testing.assert_frame_equal(expected_reversed, reversed)
+    pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
 
 def test_single_category():

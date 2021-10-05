@@ -499,7 +499,7 @@ class TestHyperTransformer(TestCase):
             'intege': int_transformer
         }
         ht = HyperTransformer(field_transformers=field_transformers)
-        ht._fitted_fields = set(['integer', 'float'])
+        ht._fitted_fields = {'integer', 'float'}
 
         # Run
         ht._validate_all_fields_fitted()
