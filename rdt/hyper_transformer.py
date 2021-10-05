@@ -220,11 +220,14 @@ class HyperTransformer:
         
         if self._transform_nulls:
             self._null_transformers = {}
-            output_fields = self.transform(data).columns # TODO: Find a better way of getting this without transforming?
-            for field in output_fields:
+            output_fields = []
+            for transformer in self._transformers_sequence:
+                output_fields.extend(transformer.get_output_types().keys())
+
+            for output_field in output_fields:
                 transformer = NullTransformer(self._fill_value, self._null_column)
-                transformer.fit(data[field])
-                self._null_transformers[field] = transformer
+                transformer.fit(data[output_field])
+                self._null_transformers[output_field] = transformer
 
     def transform(self, data):
         """Transform the data.
