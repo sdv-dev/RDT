@@ -37,3 +37,7 @@ class BaseDatasetGenerator(ABC):
             subclasses += subclass.get_subclasses()
 
         return subclasses
+
+    @staticmethod
+    def get_performance_thresholds():
+        raise NotImplementedError()
