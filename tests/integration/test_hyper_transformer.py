@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -95,7 +97,7 @@ def get_input_data_with_nan():
     return data
 
 
-def get_input_data_without_nan():
+def get_input_data_without_nan(index=None):
     data = pd.DataFrame({
         'integer': [1, 2, 1, 3],
         'float': [0.1, 0.2, 0.1, 0.1],
@@ -105,18 +107,20 @@ def get_input_data_without_nan():
         'names': ['Jon', 'Arya', 'Jon', 'Jon'],
     })
     data['datetime'] = pd.to_datetime(data['datetime'])
+    if index:
+        data.index = index
 
     return data
 
 
-def get_reversed():
-    reverse_transformed = get_input_data_without_nan()
+def get_reversed(index=None):
+    reverse_transformed = get_input_data_without_nan(index)
     reverse_transformed['bool'] = reverse_transformed['bool'].astype('O')
     return reverse_transformed
 
 
-def get_transformed_data():
-    return pd.DataFrame({
+def get_transformed_data(index=None):
+    transformed = pd.DataFrame({
         'integer.value': [1, 2, 1, 3],
         'float.value': [0.1, 0.2, 0.1, 0.1],
         'categorical.value': [0.375, 0.375, 0.875, 0.375],
@@ -129,6 +133,10 @@ def get_transformed_data():
         ],
         'names.value': [0.375, 0.875, 0.375, 0.375]
     })
+    if index:
+        transformed.index = index
+
+    return transformed
 
 
 def get_transformed_nan_data():
@@ -195,7 +203,8 @@ def test_hypertransformer_default_inputs():
         - The transformed data should contain all the ML ready data.
         - The reverse transformed data should be the same as the input.
     """
-    data = get_input_data_without_nan()
+    index = random.shuffle(list(range(4)))
+    data = get_input_data_without_nan(index)
     expected_transformed = data.drop('datetime', axis=1)
     expected_transformed.columns = [
         'integer.value',
@@ -204,8 +213,8 @@ def test_hypertransformer_default_inputs():
         'bool.value',
         'names.value'
     ]
-    expected_transformed = get_transformed_data()
-    expected_reversed = get_reversed()
+    expected_transformed = get_transformed_data(index)
+    expected_reversed = get_reversed(index)
 
     ht = HyperTransformer(data_type_transformers={'categorical': CategoricalTransformer})
     ht.fit(data)
