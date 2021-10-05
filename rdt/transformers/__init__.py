@@ -1,12 +1,15 @@
 """Transformers module."""
 
+import importlib
+import json
+import sys
 from collections import defaultdict
 from copy import deepcopy
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 
-from rdt.transformers.addons.import_addons import import_addons
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
 from rdt.transformers.categorical import CategoricalTransformer
@@ -23,7 +26,21 @@ __all__ = [
     'get_default_transformer',
 ]
 
-import_addons()
+
+def _import_addons():
+    """Import all the addon modules."""
+    addons_path = Path(__file__).parent / 'addons'
+    for addon_json_path in addons_path.glob('*/*.json'):
+        with open(addon_json_path, 'r', encoding='utf-8') as addon_json_file:
+            transformers = json.load(addon_json_file).get('transformers', [])
+            for transformer in transformers:
+                transformer = transformer.split('.')
+                module = '.'.join(transformer[:-1])
+                if module not in sys.modules:
+                    importlib.import_module(module)
+
+
+_import_addons()
 
 TRANSFORMERS = {
     transformer.__name__: transformer
