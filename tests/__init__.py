@@ -9,10 +9,10 @@ def safe_compare_dataframes(first, second):
         bool
     """
 
-    if first.isnull().all().all():
+    if first.isna().all().all():
         return first.equals(second)
 
     else:
-        nulls = (first.isnull() == second.isnull()).all().all()
-        values = (first[~first.isnull()] == second[~second.isnull()]).all().all()
+        nulls = (first.isna() == second.isna()).all().all()
+        values = (first[~first.isna()] == second[~second.isna()]).all().all()
         return nulls and values

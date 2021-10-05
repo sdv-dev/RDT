@@ -104,7 +104,7 @@ def test_dummy_transformer_dataframe_output():
                 self.output_columns,
                 [
                     data.astype(np.float).fillna(-1),
-                    data.isnull().astype(np.float)
+                    data.isna().astype(np.float)
                 ]
             )))
 
@@ -178,8 +178,8 @@ def test_dummy_transformer_multi_column_input():
             out = pd.DataFrame(dict(zip(
                 self.output_columns,
                 [
-                    data.values.astype(np.float64),
-                    data.isnull().astype(np.float64)
+                    data.to_numpy().astype(np.float64),
+                    data.isna().astype(np.float64)
                 ]
             ))).fillna(-1)
 

@@ -198,9 +198,8 @@ class BaseTransformer:
         transformed_data = self._transform(columns_data)
 
         self._set_columns_data(data, transformed_data, self.output_columns)
-        data.drop(self.columns, axis=1, inplace=True)
 
-        return data
+        return data.drop(self.columns, axis=1)
 
     def fit_transform(self, data, columns):
         """Fit the transformer to the `columns` of the `data` and then transform them.
@@ -254,6 +253,5 @@ class BaseTransformer:
         reversed_data = self._reverse_transform(columns_data)
 
         self._set_columns_data(data, reversed_data, self.columns)
-        data.drop(self.output_columns, axis=1, inplace=True)
 
-        return data
+        return data.drop(self.output_columns, axis=1)

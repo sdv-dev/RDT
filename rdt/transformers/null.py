@@ -54,7 +54,10 @@ class NullTransformer():
             data (pandas.Series or numpy.ndarray):
                 Data to transform.
         """
-        null_values = data.isnull().values
+        if not isinstance(data, pd.Series):
+            data = pd.Series(data)
+
+        null_values = data.isna().array
         self.nulls = null_values.any()
         contains_not_null = not null_values.all()
         if self.fill_value == 'mean':
@@ -85,20 +88,20 @@ class NullTransformer():
             if not isinstance(data, pd.Series):
                 data = pd.Series(data)
 
-            isnull = data.isnull()
+            isna = data.isna()
             if self.nulls and self._fill_value is not None:
                 if not self.copy:
-                    data[isnull] = self._fill_value
+                    data[isna] = self._fill_value
                 else:
                     data = data.fillna(self._fill_value)
 
             if self._null_column:
-                return pd.concat([data, isnull.astype('int')], axis=1).values
+                return pd.concat([data, isna.astype('int')], axis=1).to_numpy()
 
-            if self._fill_value in data.values:
+            if self._fill_value in data.array:
                 warnings.warn(IRREVERSIBLE_WARNING)
 
-        return data.values
+        return data.array
 
     def reverse_transform(self, data):
         """Restore null values to the data.
@@ -116,16 +119,16 @@ class NullTransformer():
         """
         if self.nulls:
             if self._null_column:
-                isnull = data[:, 1] > 0.5
+                isna = data[:, 1] > 0.5
                 data = pd.Series(data[:, 0])
             else:
-                isnull = np.where(self._fill_value == data)[0]
+                isna = np.where(self._fill_value == data)[0]
                 data = pd.Series(data)
 
-            if isnull.any():
+            if isna.any():
                 if self.copy:
                     data = data.copy()
 
-                data.iloc[isnull] = np.nan
+                data.iloc[isna] = np.nan
 
         return data

@@ -33,7 +33,7 @@ class TestRandomGapDatetimeNaNsGenerator:
         assert len(output) == 10
         assert output.dtype == 'O'
         assert len(pd.unique(output)) > 1
-        assert pd.isnull(output).sum() > 0
+        assert pd.isna(output).sum() > 0
 
 
 class TestEqualGapHoursDatetimeGenerator:

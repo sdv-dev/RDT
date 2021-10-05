@@ -112,8 +112,8 @@ def test_hypertransformer_with_transformers():
     expected = get_transformed_data()
 
     np.testing.assert_allclose(
-        transformed.sort_index(axis=1).values,
-        expected.sort_index(axis=1).values
+        transformed.sort_index(axis=1).to_numpy(),
+        expected.sort_index(axis=1).to_numpy()
     )
 
     reversed_data = ht.reverse_transform(transformed)
@@ -138,8 +138,8 @@ def test_hypertransformer_with_transformers_nan_data():
     expected = get_transformed_nan_data()
 
     np.testing.assert_allclose(
-        transformed.sort_index(axis=1).values,
-        expected.sort_index(axis=1).values
+        transformed.sort_index(axis=1).to_numpy(),
+        expected.sort_index(axis=1).to_numpy()
     )
 
     reversed_data = ht.reverse_transform(transformed)
@@ -163,8 +163,8 @@ def test_hypertransformer_without_transformers():
     expected = get_transformed_data()
 
     np.testing.assert_allclose(
-        transformed.sort_index(axis=1).values,
-        expected.sort_index(axis=1).values
+        transformed.sort_index(axis=1).to_numpy(),
+        expected.sort_index(axis=1).to_numpy()
     )
 
     reversed_data = ht.reverse_transform(transformed)
@@ -188,8 +188,8 @@ def test_hypertransformer_without_transformers_nan_data():
     expected = get_transformed_nan_data()
 
     np.testing.assert_allclose(
-        transformed.sort_index(axis=1).values,
-        expected.sort_index(axis=1).values
+        transformed.sort_index(axis=1).to_numpy(),
+        expected.sort_index(axis=1).to_numpy()
     )
 
     reversed_data = ht.reverse_transform(transformed)
@@ -221,16 +221,16 @@ def test_single_category():
 
 @pytest.mark.xfail
 def test_dtype_category():
-    df = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
+    data = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
 
     ht = HyperTransformer()
-    ht.fit(df)
+    ht.fit(data)
 
-    trans = ht.transform(df)
+    trans = ht.transform(data)
 
     rever = ht.reverse_transform(trans)
 
-    pd.testing.assert_frame_equal(rever, df)
+    pd.testing.assert_frame_equal(rever, data)
 
 
 def test_empty_transformers():

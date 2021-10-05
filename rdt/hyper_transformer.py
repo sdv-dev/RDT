@@ -207,7 +207,7 @@ class HyperTransformer:
                     data[column_name] = transformed
 
         if drop_columns:
-            data.drop(drop_columns, axis=1, inplace=True)
+            data = data.drop(drop_columns, axis=1)
 
         return data
 
@@ -261,7 +261,7 @@ class HyperTransformer:
             columns = self._get_columns(data, column_name)
             if not columns.empty:
                 try:
-                    columns_data = data[columns].values
+                    columns_data = data[columns].to_numpy().array
                     reversed_data = transformer.reverse_transform(columns_data)
                 except AttributeError:
                     # temporarily support both old and new style transformers
@@ -272,6 +272,4 @@ class HyperTransformer:
                 data[column_name] = reversed_data
                 drop_columns.extend(set(columns) - {column_name})
 
-        data.drop(drop_columns, axis=1, inplace=True)
-
-        return data
+        return data.drop(drop_columns, axis=1)
