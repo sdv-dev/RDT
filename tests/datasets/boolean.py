@@ -42,7 +42,7 @@ class RandomBooleanGenerator(BooleanGenerator):
                 'memory': 200.0
             },
             'reverse_transform': {
-                'time': 2e-6,
+                'time': 5e-6,
                 'memory': 500.0,
             }
         }
