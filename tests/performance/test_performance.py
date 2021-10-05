@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers import BaseTransformer
+from rdt.transformers import get_transformers_by_type
 from tests.datasets import BaseDatasetGenerator
 from tests.performance.profiling import profile_transformer
 
@@ -41,25 +41,6 @@ def _get_all_dataset_generators():
     return generators
 
 
-def _build_transformer_map():
-    """Build a map of data type to transformer.
-
-    Output:
-        dict:
-            A mapping of data type (str) to a list of transformers.
-    """
-    transformers = BaseTransformer.get_subclasses()
-    transformers_map = {}
-
-    for transformer in transformers:
-        input_type = transformer.get_input_type()
-        input_type_transformers = transformers_map.get(input_type, [])
-        input_type_transformers.append(transformer)
-        transformers_map[input_type] = input_type_transformers
-
-    return transformers_map
-
-
 def _get_dataset_sizes(data_type):
     """Get a list of (fit_size, transform_size) for each dataset generator.
 
@@ -85,7 +66,7 @@ def _get_dataset_sizes(data_type):
 
 DATASET_SIZES = [1000, 10000, 100000]
 dataset_generators = _get_all_dataset_generators()
-transformer_map = _build_transformer_map()
+transformer_map = get_transformers_by_type()
 
 
 def _validate_metric_against_threshold(actual, expected_unit, size):
