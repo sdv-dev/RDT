@@ -423,7 +423,7 @@ def test_subset_of_columns_nan_data():
 
 def null_transformer_asserts(data, ht, transformed, expected):
     """Helper function of all following tests.
-    
+
     Asserts that the `transform` method of the `HyperTransformer` produces the expected columns
     (it doesn't check for the order of the columns), and that the `reverse_transform` returns
     the original data (again, doesn't check for order of columns).
@@ -489,9 +489,9 @@ def test_hypertransformer_transform_nulls_false_fill_value_mean():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = get_input_data_without_nan()
+    get_input_data_without_nan()
     transformers = get_transformers()
-    
+
     with np.testing.assert_raises(ValueError):
         HyperTransformer(transformers, transform_nulls=False, fill_value=False)
 
@@ -513,12 +513,12 @@ def test_hypertransformer_transform_nulls_false_null_column_true():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = get_input_data_without_nan()
+    get_input_data_without_nan()
     transformers = get_transformers()
-    
+
     with np.testing.assert_raises(ValueError):
         HyperTransformer(transformers, transform_nulls=False, null_column=None)
-    
+
 
 def get_transformed_fill_value_string():
     return pd.DataFrame({
@@ -748,7 +748,7 @@ def get_transformed_fill_value_none_null_column_true():
         'integer': [1, 2, 1, 3, 1],
         'integer.null': [0.0, 0.0, 0.0, 0.0, 0.0],
         'float': [0.1, 0.2, 0.1, np.nan, 0.1],
-        'float.null': [0.0, 0.0, 0.0, 1.0, 0.0],       
+        'float.null': [0.0, 0.0, 0.0, 1.0, 0.0],
         'categorical': [0.3, 0.3, np.nan, 0.7, 0.3],
         'categorical.null': [0.0, 0.0, 1.0, 0.0, 0.0],
         'bool': [0.0, np.nan, 0.0, 1.0, 0.0],
