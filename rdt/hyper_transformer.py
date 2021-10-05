@@ -1,19 +1,8 @@
 """Hyper transformer module."""
 
-<<<<<<< HEAD
-from rdt.transformers.null import NullTransformer
 import warnings
 
 from rdt.transformers import get_default_transformer, load_transformer
-
-FIELD_ALREADY_FIT_WARNING = (
-    'This field has already been fit. Only one transformer can be specified per field.'
-)
-=======
-import warnings
-
-from rdt.transformers import get_default_transformer, load_transformer
->>>>>>> v0.6.0-dev
 
 
 class HyperTransformer:
