@@ -472,10 +472,11 @@ def test_hypertransformer_transform_nulls_false():
     null_transformer_asserts(data, ht, transformed, expected)
 
 
+# TODO: what should be the default/behaviour?
 def test_hypertransformer_transform_nulls_false_fill_value_mean():
     """Test the `HyperTransformer` with ``transform_nulls = False`` and ``fill_value = 'mean'``.
 
-    When ``transform_nulls = False``, if ``fill_value`` is passed as anything other than ``None``,
+    When ``transform_nulls = False``, if ``fill_value`` is passed as anything other than None,
     it should raise an error.
 
     Setup:
@@ -497,9 +498,9 @@ def test_hypertransformer_transform_nulls_false_fill_value_mean():
 
 
 def test_hypertransformer_transform_nulls_false_null_column_true():
-    """Test the HyperTransformer with ``transform_nulls = False`` and ``null_column = 'mean'``.
+    """Test the ``HyperTransformer`` with ``transform_nulls = False, null_column = 'mean'``.
 
-    When ``transform_nulls = False``, if ``null_column`` is passed as anything other than None,
+    When ``transform_nulls = False``, if ``null_column`` is passed as anything other than False,
     it should raise an error.
 
     Setup:
@@ -517,7 +518,7 @@ def test_hypertransformer_transform_nulls_false_null_column_true():
     transformers = get_transformers()
     
     with np.testing.assert_raises(ValueError):
-        HyperTransformer(transformers, transform_nulls=False, null_column=True)
+        HyperTransformer(transformers, transform_nulls=False, null_column=None)
 
 
 # TODO: what should be the behaviour here? What if we pass False as fill_value?
@@ -559,7 +560,7 @@ def get_transformed_fill_value_string():
 
 
 def test_hypertransformer_fill_value_string():
-    """Test the HyperTransformer with ``fill_value = string``.
+    """Test the ``HyperTransformer`` with ``fill_value = string``.
 
     When ``fill_value`` is a string ``'filled_value'``, it should behave like the normal
     ``HyperTransformer``, but filling all the transformed ``np.nan`` values with the
@@ -637,7 +638,7 @@ def get_transformed_fill_value_mode():
         'categorical': [0.3, 0.3, 0.3, 0.7, 0.3],
         'bool': [0.0, 0.0, 0.0, 1.0, 0.0],
         'datetime': [
-            1.2649824e+18, 1.2649824e+18, 1.262304e+18,  # The first value is the mode (I hope?)
+            1.2649824e+18, 1.2649824e+18, 1.262304e+18,  # TODO: The first value is the mode (I hope?)
             1.2649824e+18, 1.262304e+18
         ],
         'names': [0.3, 0.8, 0.8, 0.3, 0.3],
