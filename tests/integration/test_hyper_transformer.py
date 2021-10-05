@@ -472,9 +472,8 @@ def test_hypertransformer_transform_nulls_false():
     null_transformer_asserts(data, ht, transformed, expected)
 
 
-# TODO: what should be the default/behaviour?
 def test_hypertransformer_transform_nulls_false_fill_value_mean():
-    """Test the `HyperTransformer` with ``transform_nulls = False`` and ``fill_value = 'mean'``.
+    """Test the `HyperTransformer` with ``transform_nulls = False`` and ``fill_value = False``.
 
     When ``transform_nulls = False``, if ``fill_value`` is passed as anything other than None,
     it should raise an error.
@@ -494,7 +493,7 @@ def test_hypertransformer_transform_nulls_false_fill_value_mean():
     transformers = get_transformers()
     
     with np.testing.assert_raises(ValueError):
-        HyperTransformer(transformers, transform_nulls=False, fill_value='mean')
+        HyperTransformer(transformers, transform_nulls=False, fill_value=False)
 
 
 def test_hypertransformer_transform_nulls_false_null_column_true():
@@ -519,30 +518,6 @@ def test_hypertransformer_transform_nulls_false_null_column_true():
     
     with np.testing.assert_raises(ValueError):
         HyperTransformer(transformers, transform_nulls=False, null_column=None)
-
-
-# TODO: what should be the behaviour here? What if we pass False as fill_value?
-def test_hypertransformer_fill_value_nan():
-    """Test the HyperTransformer with ``fill_value = np.nan``.
-
-    ???
-
-    Setup:
-        - Get the data and the transformers.
-
-    Input:
-        - A dataset without ``nan`` values.
-        - A dictionary of which transformers to apply to each column of the data.
-
-    Expected behavior:
-        - It should fit and transform the dataset.
-        - The results will be checked through the ``null_transformer_asserts`` method.
-    """
-    data = get_input_data_without_nan()
-    transformers = get_transformers()
-
-    with np.testing.assert_raises(ValueError):
-        HyperTransformer(transformers, fill_value=np.nan)
     
 
 def get_transformed_fill_value_string():
@@ -638,7 +613,7 @@ def get_transformed_fill_value_mode():
         'categorical': [0.3, 0.3, 0.3, 0.7, 0.3],
         'bool': [0.0, 0.0, 0.0, 1.0, 0.0],
         'datetime': [
-            1.2649824e+18, 1.2649824e+18, 1.262304e+18,  # TODO: The first value is the mode (I hope?)
+            1.262304e+18, 1.2649824e+18, 1.262304e+18,
             1.2649824e+18, 1.262304e+18
         ],
         'names': [0.3, 0.8, 0.8, 0.3, 0.3],
