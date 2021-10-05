@@ -3,7 +3,10 @@
 
 """The setup script."""
 
-from setuptools import setup, find_packages
+import json
+import os
+from glob import glob
+from setuptools import setup, find_namespace_packages
 
 with open('README.md', encoding='utf-8') as readme_file:
     readme = readme_file.read()
@@ -32,6 +35,14 @@ tests_require = [
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
 ]
+
+addons_require = []
+
+for addon_json in glob('rdt/transformers/addons/*/*.json'):
+    with open(addon_json, 'r', encoding='utf-8') as addon_json_file:
+        requirements = json.load(addon_json_file).get('requirements')
+        if requirements:
+            addons_require.extend(requirements)
 
 development_requires = [
     # general
@@ -94,8 +105,8 @@ setup(
     description='Reversible Data Transforms',
     extras_require={
         'copulas': copulas_requires,
-        'test': tests_require + copulas_requires,
-        'dev': development_requires + tests_require + copulas_requires,
+        'test': tests_require + copulas_requires + addons_require,
+        'dev': development_requires + tests_require + copulas_requires + addons_require,
     },
     include_package_data=True,
     install_requires=install_requires,
@@ -104,7 +115,7 @@ setup(
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
     name='rdt',
-    packages=find_packages(include=['rdt', 'rdt.*']),
+    packages=find_namespace_packages(include=['rdt', 'rdt.transformers']),
     python_requires='>=3.6,<3.9',
     setup_requires=setup_requires,
     test_suite='tests',
