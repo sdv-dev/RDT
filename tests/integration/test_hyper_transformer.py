@@ -555,9 +555,11 @@ def get_transformed_fill_value_object():
 
 
 def test_hypertransformer_fill_value_object():
-    """Test the HyperTransformer with ``transform_nulls = False``.
+    """Test the HyperTransformer with ``fill_value = object``.
 
-    When ``transform_nulls`` is ``False``, should not applying the ``NullTransformer`` at all.
+    When ``fill_value`` is an object, like ``{'key': 'value'}``, it should behave like the
+    normal ``HyperTransformer``, but filling all the transformed ``np.nan`` values with the
+    ``{'key': 'value'}`` object.
 
     Setup:
         - Get the data and the transformers.
@@ -602,9 +604,12 @@ def get_transformed_fill_value_string_null_column_True():
 
 
 def test_hypertransformer_fill_value_string_null_column_True():
-    """Test the HyperTransformer with ``transform_nulls = False``.
+    """Test the HyperTransformer with ``fill_value = string, null_column = True``.
 
-    When ``transform_nulls`` is ``False``, should not applying the ``NullTransformer`` at all.
+    When ``fill_value`` is a string ``'filled_value'`` and ``null_column`` is ``True``,
+    it should (1) transform the data like the normal ``HyperTransformer``, (2) fill all the
+    transformed ``np.nan`` values with the ``'filled_value'`` string and (3) create a new
+    column for each column in the data, flagging which values contain ``nan``'s .
 
     Setup:
         - Get the data and the transformers.
