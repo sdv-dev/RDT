@@ -152,3 +152,34 @@ class DatetimeTransformer(BaseTransformer):
             data = data * self.divider
 
         return pd.to_datetime(data)
+
+
+class DatetimeRoundedTransformer(DatetimeTransformer):
+    """Transformer for datetime data.
+
+    This transformer replaces datetime values with an integer timestamp transformed to float.
+    It optimizes the output values by finding the smallest time unit that is not zero on
+    the training datetimes and dividing the generated numerical values by the value of the next
+    smallest time unit. This, apart from reducing the orders of magnitued of the transformed
+    values, ensures that reverted values always are zero on the lower time units.
+
+    Null values are replaced using a ``NullTransformer``.
+
+    This class behaves exactly as the ``DatetimeTransformer`` with ``strip_constant=True``.
+
+    Args:
+        nan (int, str or None):
+            Indicate what to do with the null values. If an integer is given, replace them
+            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
+            them with the corresponding aggregation. If ``None`` is given, do not replace them.
+            Defaults to ``'mean'``.
+        null_column (bool):
+            Whether to create a new column to indicate which values were null or not.
+            If ``None``, only create a new column when the data contains null values.
+            If ``True``, always create the new column whether there are null values or not.
+            If ``False``, do not create the new column.
+            Defaults to ``None``.
+    """
+
+    def __init__(self, nan='mean', null_column=None):
+        super().__init__(nan=nan, null_column=null_column, strip_constant=True)

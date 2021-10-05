@@ -1,15 +1,13 @@
 """Test whether the performance of the Transformers is the expected one."""
 
-import hashlib
 import importlib
-import json
-import os
-import pathlib
 
 import numpy as np
 import pandas as pd
 import pytest
 
+from rdt.transformers import get_transformers_by_type
+from tests.datasets import BaseDatasetGenerator
 from tests.performance.profiling import profile_transformer
 
 
@@ -33,52 +31,107 @@ def get_fqn(obj):
     return f'{obj.__module__}.{obj.__name__}'
 
 
-TEST_CASES_PATH = pathlib.Path(__file__).parent / 'test_cases'
-TEST_CASES_PATH_LEN = len(str(TEST_CASES_PATH)) + 1
-TEST_CASES = [str(test_case) for test_case in TEST_CASES_PATH.rglob('*.json')]
-IDS = [test_case[TEST_CASES_PATH_LEN:] for test_case in TEST_CASES]
+def _get_all_dataset_generators():
+    """Get a list of all dataset generators."""
+    generators = []
+
+    for generator in BaseDatasetGenerator.__subclasses__():
+        generators.extend(generator.__subclasses__())
+
+    return generators
 
 
-@pytest.mark.parametrize('config_path', TEST_CASES, ids=IDS)
-def test_performance(config_path):
-    """Run the performance tests for RDT.
+def _get_dataset_sizes(data_type):
+    """Get a list of (fit_size, transform_size) for each dataset generator.
 
-    This test should loop through every test config file,
-    load the transformer and dataset generator needed,
-    run the ``profile_transformer`` method against them
-    and assert that the memory consumption and times are under
-    the maximum acceptable values.
+    Based on the data type of the dataset generator, return the list of
+    sizes to run performance tests on. Each element in this list is a tuple
+    of (fit_size, transform_size).
 
     Input:
-    - Transformer loaded from config
-    - Dataset generator loaded from config
-    - fit size loaded from config
-    - transform size loaded from config
+        input_type (str):
+            The type of data that the generator returns.
 
     Output:
-    - pd.Series containing the memory and time for ``fit``,
-    ``transform`` and ``reverse_transform``. This should be
-    don for each specified test config file.
+        sizes (list[tuple]):
+            A list of (fit_size, transform_size) configs to run tests on.
     """
-    with open(config_path, 'rt', encoding='utf8') as config_file:
-        config = json.load(config_file)
+    sizes = [(s, s) for s in DATASET_SIZES]
 
-    transformer_instance = get_instance(config['transformer'], **config['kwargs'])
-    dataset_generator = get_instance(config['dataset'])
+    if data_type == 'categorical':
+        sizes = [(s, max(s, 1000)) for s in DATASET_SIZES if s <= 10000]
 
-    out = profile_transformer(
-        transformer=transformer_instance,
-        dataset_generator=dataset_generator,
-        fit_size=config['fit_size'],
-        transform_size=config['transform_size'],
-    )
+    return sizes
 
-    assert out['Fit Time'] < config['expected']['fit']['time']
-    assert out['Fit Memory'] < config['expected']['fit']['memory']
-    assert out['Transform Time'] < config['expected']['transform']['time']
-    assert out['Transform Memory'] < config['expected']['transform']['memory']
-    assert out['Reverse Transform Time'] < config['expected']['reverse_transform']['time']
-    assert out['Reverse Transform Memory'] < config['expected']['reverse_transform']['memory']
+
+DATASET_SIZES = [1000, 10000, 100000]
+dataset_generators = _get_all_dataset_generators()
+transformer_map = get_transformers_by_type()
+
+
+def _validate_metric_against_threshold(actual, expected_unit, size):
+    """Validate that the observed metric is below the expected threshold.
+
+    Input:
+        actual (int or float):
+            The observed value.
+        expected_unit (int or float):
+            The expected unit of the metric (per row).
+        size (int):
+            Size of the dataset.
+    """
+    assert actual < size * expected_unit
+
+
+@pytest.mark.parametrize('dataset_generator', dataset_generators)
+def test_performance(dataset_generator):
+    """Run the performance tests for RDT.
+
+    This test should find all relevant transformers for the given
+    dataset generator, and run the ``profile_transformer``
+    method, which will assert that the memory consumption
+    and times are under the maximum acceptable values.
+
+    Input:
+        dataset_generator (rdt.tests.dataset.BaseDatasetGenerator)
+    """
+    transformers = transformer_map.get(dataset_generator.DATA_TYPE, [])
+
+    expected = dataset_generator.get_performance_thresholds()
+
+    dataset_sizes = _get_dataset_sizes(dataset_generator.DATA_TYPE)
+
+    for transformer in transformers:
+        transformer_instance = transformer()
+
+        for sizes in dataset_sizes:
+            fit_size, transform_size = sizes
+
+            out = profile_transformer(
+                transformer=transformer_instance,
+                dataset_generator=dataset_generator,
+                fit_size=fit_size,
+                transform_size=transform_size,
+            )
+
+            _validate_metric_against_threshold(
+                out['Fit Time'], expected['fit']['time'], fit_size)
+            _validate_metric_against_threshold(
+                out['Fit Memory'], expected['fit']['memory'], fit_size)
+            _validate_metric_against_threshold(
+                out['Transform Time'], expected['transform']['time'], transform_size)
+            _validate_metric_against_threshold(
+                out['Transform Memory'], expected['transform']['memory'], transform_size)
+            _validate_metric_against_threshold(
+                out['Reverse Transform Time'],
+                expected['reverse_transform']['time'],
+                transform_size,
+            )
+            _validate_metric_against_threshold(
+                out['Reverse Transform Memory'],
+                expected['reverse_transform']['memory'],
+                transform_size,
+            )
 
 
 def _round_to_magnitude(value):
@@ -132,130 +185,3 @@ def find_transformer_boundaries(transformer, dataset_generator, fit_size,
     ]
     means = pd.DataFrame(results).mean(axis=0)
     return (means * multiplier).apply(_round_to_magnitude)
-
-
-def make_test_case_config(transformer_class, transformer_kwargs, dataset_generator,
-                          fit_size, transform_size, iterations=1, multiplier=5,
-                          output_path=None, config_name=None):
-    """Create a Test Case JSON file for the indicated transformer and dataset.
-
-    If output path is not given, the test case is created with the filename
-    ``{config_name}_{dataset_generator}_{fit_size}_{transform_size}.json``
-    inside the folder ``{transformer_module}/{transformer_class_name}``.
-
-    Args:
-        transformer_class (type):
-            Class of the transformer to use.
-        tranformer_kwargs (dict):
-            Keyword arguments to pass to the transformer.
-        dataset_generator (type):
-            Dataset Generator class.
-        fit_size (int):
-            Number of values to use when fitting the transformer.
-        transform_size (int):
-            Number of values to use when transforming and reverse transforming.
-        iterations (int):
-            Number of iterations to perform.
-        multiplier (int):
-            The value used to multiply the average results before rounding them
-            up/down. Defaults to 5.
-        output_path (str):
-            Optional. Path where the output JSON file is written.
-        config_name (str):
-            Name that should be given to this kwargs config. If not given,
-            and default args are used, name is ``default``. Otherwise, a
-            hash is taken.
-    """
-    transformer_instance = transformer_class(**transformer_kwargs)
-    outputs = find_transformer_boundaries(
-        transformer=transformer_instance,
-        dataset_generator=dataset_generator,
-        fit_size=fit_size,
-        transform_size=transform_size,
-        iterations=iterations,
-        multiplier=multiplier
-    )
-    test_case = {
-        'dataset': get_fqn(dataset_generator),
-        'transformer': get_fqn(transformer_class),
-        'kwargs': transformer_kwargs,
-        'fit_size': fit_size,
-        'transform_size': transform_size,
-        'expected': {
-            'fit': {
-                'time': outputs['Fit Time'],
-                'memory': outputs['Fit Memory'],
-            },
-            'transform': {
-                'time': outputs['Transform Time'],
-                'memory': outputs['Transform Memory'],
-            },
-            'reverse_transform': {
-                'time': outputs['Reverse Transform Time'],
-                'memory': outputs['Reverse Transform Memory'],
-            },
-        }
-    }
-    if output_path is None:
-        if config_name:
-            config_str = config_name
-        elif transformer_kwargs:
-            config_hash = hashlib.md5()
-            config_hash.update(json.dumps(sorted(transformer_kwargs)).encode())
-            config_str = config_hash.hexdigest()[0:8]
-        else:
-            config_str = 'default'
-
-        file_name = f'{config_str}_{dataset_generator.__name__}_{fit_size}_{transform_size}.json'
-        module_name = transformer_class.__module__.rsplit('.', 1)[1]
-        output_path = TEST_CASES_PATH / module_name / transformer_class.__name__ / file_name
-
-    os.makedirs(output_path.parent, exist_ok=True)
-    with open(output_path, 'wt', encoding='utf8') as output_file:
-        json.dump(test_case, output_file, indent=4)
-
-    cwd = os.getcwd()
-    if str(output_path).startswith(cwd):
-        output_path = str(output_path)[len(cwd) + 1:]
-
-    print(f'Test case created: {output_path}')
-
-
-def make_test_case_configs(transformers, dataset_generators, fit_transform_sizes,
-                           iterations=1, multiplier=5):
-    """Create Test Case JSON files for multiple transformers and dataset generators.
-
-    Args:
-        transformers (List[Union[type, tuple[type, kwargs, name]]]):
-            List of transformer classes or transformer_class + kwargs tuples.
-        dataset_generators (List[type]):
-            List of dataset generator classes.
-        fit_transform_sizes (List[tuple[int, int]]):
-            List of tuples indicating fit size and transform size.
-        iterations (int):
-            Number of iterations to perform.
-        multiplier (int):
-            The value used to multiply the average results before rounding them
-            up/down. Defaults to 5.
-    """
-    for transformer in transformers:
-        if not isinstance(transformer, tuple):
-            transformer_class, transformer_kwargs, config_name = transformer, {}, None
-        elif len(transformer) == 2:
-            transformer_class, transformer_kwargs = transformer
-            config_name = None
-        else:
-            transformer_class, transformer_kwargs, config_name = transformer
-
-        for dataset_generator in dataset_generators:
-            for fit_size, transform_size in fit_transform_sizes:
-                make_test_case_config(
-                    transformer_class=transformer_class,
-                    transformer_kwargs=transformer_kwargs,
-                    dataset_generator=dataset_generator,
-                    fit_size=fit_size,
-                    transform_size=transform_size,
-                    iterations=iterations,
-                    multiplier=multiplier,
-                    config_name=config_name,
-                )

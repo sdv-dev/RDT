@@ -68,6 +68,15 @@ class CategoricalTransformer(BaseTransformer):
         """
         return not self.fuzzy
 
+    def is_composition_identity(self):
+        """Return whether composition of transform and reverse transform produces the input data.
+
+        Returns:
+            bool:
+                Whether or not transforming and then reverse transforming returns the input data.
+        """
+        return self.COMPOSITION_IS_IDENTITY and not self.fuzzy
+
     @staticmethod
     def _get_intervals(data):
         """Compute intervals for each categorical value.
@@ -258,6 +267,34 @@ class CategoricalTransformer(BaseTransformer):
         return self._reverse_transform_by_row(data)
 
 
+class CategoricalFuzzyTransformer(CategoricalTransformer):
+    """Transformer for categorical data.
+
+    This transformer computes a float representative for each one of the categories
+    found in the fit data. Then, when transforming, it replaces the instances of these
+    categories with the corresponding representatives plus some added gaussian noise.
+
+    The representatives are decided by sorting the categorical values by their relative
+    frequency, then dividing the ``[0, 1]`` interval by these relative frequencies, and
+    finally assigning the middle point of each interval to the corresponding category.
+
+    When the transformation is reverted, each value is assigned the category that
+    corresponds to the interval it falls in.
+
+    Null values are considered just another category.
+
+    This class behaves exactly as the ``CategoricalTransformer`` with ``fuzzy=True``.
+
+    Args:
+        clip (bool):
+            If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
+            Defaults to ``False``.
+    """
+
+    def __init__(self, clip=False):
+        super().__init__(fuzzy=True, clip=clip)
+
+
 class OneHotEncodingTransformer(BaseTransformer):
     """OneHotEncoding for categorical data.
 
@@ -271,6 +308,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         error_on_unknown (bool):
             If a value that was not seen during the fit stage is passed to
             transform, then an error will be raised if this is True.
+            Defaults to ``True``.
     """
 
     INPUT_TYPE = 'categorical'
