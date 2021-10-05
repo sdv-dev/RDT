@@ -361,6 +361,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
     """
 
     _univariate = None
+    COMPOSITION_IS_IDENTITY = False
 
     def __init__(self, dtype=None, nan='mean', null_column=None, distribution='parametric'):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column)
