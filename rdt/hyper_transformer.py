@@ -111,9 +111,9 @@ class HyperTransformer:
     def _validate_field_transformers(self):
         for field in self.field_transformers:
             if self._field_in_set(field, self._specified_fields):
-                raise ValueError(f'Multiple transformers specified for the field {field}.',
-                                 'Each field can have at most one transformer defined in',
-                                 'field_transformers')
+                raise ValueError(f'Multiple transformers specified for the field {field}. '
+                                 'Each field can have at most one transformer defined in '
+                                 'field_transformers.')
 
             self._add_field_to_set(field, self._specified_fields)
 
