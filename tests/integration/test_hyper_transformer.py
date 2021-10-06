@@ -353,7 +353,7 @@ def test_single_category():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail()
 def test_dtype_category():
     df = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
 
