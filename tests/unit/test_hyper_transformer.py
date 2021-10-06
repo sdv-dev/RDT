@@ -37,8 +37,13 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ht.field_transformers = field_transformers
 
-        # Run / Assert
-        with pytest.raises(ValueError):
+        # Run / Asser
+        error_msg = (
+            r'Multiple transformers specified for the field \(\'integer\',\). '
+            'Each field can have at most one transformer defined in field_transformers.'
+        )
+
+        with pytest.raises(ValueError, match=error_msg):
             ht._validate_field_transformers()
 
     @patch('rdt.hyper_transformer.HyperTransformer._create_multi_column_fields')
@@ -537,8 +542,14 @@ class TestHyperTransformer(TestCase):
         })
 
         if drop:
-            return data.drop(['integer', 'float', 'categorical', 'bool',
-                             'datetime', 'integer.out'], axis=1)
+            return data.drop([
+                'integer',
+                'float',
+                'categorical',
+                'bool',
+                'datetime',
+                'integer.out'
+            ], axis=1)
 
         return data
 

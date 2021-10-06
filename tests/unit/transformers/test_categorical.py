@@ -32,10 +32,24 @@ class TestCategoricalTransformer:
 
         # Asserts
         expected_intervals = {
-            'foo': (0, 0.5, 0.25, 0.5 / 6),
-            'bar': (0.5, 0.8333333333333333, 0.6666666666666666, 0.05555555555555555),
-            'tar': (0.8333333333333333, 0.9999999999999999, 0.9166666666666666,
-                    0.027777777777777776)
+            'foo': (
+                0,
+                0.5,
+                0.25,
+                0.5 / 6
+            ),
+            'bar': (
+                0.5,
+                0.8333333333333333,
+                0.6666666666666666,
+                0.05555555555555555
+            ),
+            'tar': (
+                0.8333333333333333,
+                0.9999999999999999,
+                0.9166666666666666,
+                0.027777777777777776
+            )
         }
         assert result[0] == expected_intervals
 
@@ -49,11 +63,26 @@ class TestCategoricalTransformer:
 
         # Asserts
         expected_intervals = {
-            'foo': (0, 0.5, 0.25, 0.5 / 6),
-            'bar': (0.5, 0.8333333333333333, 0.6666666666666666, 0.05555555555555555),
-            'tar': (0.8333333333333333, 0.9999999999999999, 0.9166666666666666,
-                    0.027777777777777776)
+            'foo': (
+                0,
+                0.5,
+                0.25,
+                0.5 / 6
+            ),
+            'bar': (
+                0.5,
+                0.8333333333333333,
+                0.6666666666666666,
+                0.05555555555555555
+            ),
+            'tar': (
+                0.8333333333333333,
+                0.9999999999999999,
+                0.9166666666666666,
+                0.027777777777777776
+            )
         }
+
         assert transformer.intervals == expected_intervals
 
     def test__get_value_no_fuzzy(self):
@@ -127,11 +156,26 @@ class TestCategoricalTransformer:
 
         # Asserts
         expected_intervals = {
-            'foo': (0, 0.5, 0.25, 0.5 / 6),
-            'bar': (0.5, 0.8333333333333333, 0.6666666666666666, 0.05555555555555555),
-            'tar': (0.8333333333333333, 0.9999999999999999, 0.9166666666666666,
-                    0.027777777777777776)
+            'foo': (
+                0,
+                0.5,
+                0.25,
+                0.5 / 6
+            ),
+            'bar': (
+                0.5,
+                0.8333333333333333,
+                0.6666666666666666,
+                0.05555555555555555
+            ),
+            'tar': (
+                0.8333333333333333,
+                0.9999999999999999,
+                0.9166666666666666,
+                0.027777777777777776
+            )
         }
+
         assert transformer.intervals == expected_intervals
 
         expect = pd.Series(data)
@@ -479,7 +523,7 @@ class TestOneHotEncodingTransformer:
         data = [[], [], []]
 
         # Assert
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match='Unexpected format.'):
             ohet._prepare_data(data)
 
     def test__prepare_data_nested_lists(self):
@@ -488,7 +532,7 @@ class TestOneHotEncodingTransformer:
         data = [[[]]]
 
         # Assert
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match='Unexpected format.'):
             ohet._prepare_data(data)
 
     def test__prepare_data_list_of_lists(self):

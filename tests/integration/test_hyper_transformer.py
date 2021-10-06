@@ -60,15 +60,15 @@ class DummyTransformerMultiColumn(BaseTransformer):
         data.columns = [c.replace('_str.value', '') for c in data.columns]
         data = pd.to_datetime(data)
 
-        out = pd.DataFrame(dict(zip(
+        output = dict(zip(
             self.output_columns,
-            [
-                data.values.astype(np.float64),
-                data.isnull().astype(np.float64)
-            ]
-        ))).fillna(-1)
+            [data.values.astype(np.float64), data.isnull().astype(np.float64)]
+        ))
 
-        return out
+        output = pd.DataFrame(output)
+        output.fillna(-1, inplace=True)
+
+        return output
 
     def _reverse_transform(self, data):
         datetimes = data.round().astype('datetime64[ns]')
@@ -317,9 +317,16 @@ def test_hypertransformer_field_transformers_multi_column_fields():
         ('year_str.value', 'month_str.value', 'day_str.value'): DummyTransformerMultiColumn
     }
     expected_transformed = pd.DataFrame({
-        'year#month#day.value': [9.783072e+17, 1.012608e+18, 1.046650e+18],
+        'year#month#day.value': [
+            9.783072e+17,
+            1.012608e+18,
+            1.046650e+18
+        ],
         'year_str.value#month_str.value#day_str.value.value': [
-            9.783072e+17, 1.012608e+18, 1.046650e+18]
+            9.783072e+17,
+            1.012608e+18,
+            1.046650e+18
+        ]
     })
     expected_reversed = data.copy()
 
@@ -353,7 +360,7 @@ def test_single_category():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-@pytest.mark.xfail
+@pytest.mark.xfail()
 def test_dtype_category():
     df = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
 
