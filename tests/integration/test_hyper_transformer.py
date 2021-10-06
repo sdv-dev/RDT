@@ -317,9 +317,16 @@ def test_hypertransformer_field_transformers_multi_column_fields():
         ('year_str.value', 'month_str.value', 'day_str.value'): DummyTransformerMultiColumn
     }
     expected_transformed = pd.DataFrame({
-        'year#month#day.value': [9.783072e+17, 1.012608e+18, 1.046650e+18],
+        'year#month#day.value': [
+            9.783072e+17,
+            1.012608e+18,
+            1.046650e+18
+        ],
         'year_str.value#month_str.value#day_str.value.value': [
-            9.783072e+17, 1.012608e+18, 1.046650e+18]
+            9.783072e+17,
+            1.012608e+18,
+            1.046650e+18
+        ]
     })
     expected_reversed = data.copy()
 
