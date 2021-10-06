@@ -243,7 +243,7 @@ class HyperTransformer:
                 transformer = NullTransformer(self._fill_value, self._null_column)
                 transformer.fit(data[output_column])
                 self._null_transformers[output_column] = transformer
-        
+
         elif self._null_column or self._fill_value:
             raise ValueError('When ``transform_nulls = False``, ``null_column`` and'
                              '``fill_value`` should both be ``None`` instead of '
