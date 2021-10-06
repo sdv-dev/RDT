@@ -1,3 +1,4 @@
+import importlib
 from collections import defaultdict
 
 import numpy as np
@@ -22,6 +23,21 @@ DATA_TYPE_TO_DTYPES = {
     'integer': ['i'],
     'float': ['f', 'i'],
 }
+
+
+def get_class(class_name):
+    """Get the specified class.
+
+    Args:
+        class (str):
+            Full name of class to import.
+    """
+    obj = None
+    if isinstance(class_name, str):
+        package, name = class_name.rsplit('.', 1)
+        obj = getattr(importlib.import_module(package), name)
+
+    return obj
 
 
 def _validate_helper(validate_fn, args, should_assert):
@@ -230,6 +246,9 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, shoul
 
 
 def validate_transformer(transformer, should_assert=False, subtests=None):
+    if isinstance(transformer, str):
+        transformer = get_class(transformer)
+
     input_data_type = transformer.get_input_type()
 
     dataset_generators = _find_dataset_generators(input_data_type, generators)
