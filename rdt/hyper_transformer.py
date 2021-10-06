@@ -119,7 +119,7 @@ class HyperTransformer:
             self._add_field_to_set(field, self._specified_fields)
 
     def __init__(self, copy=True, field_types=None, data_type_transformers=None,
-                 field_transformers=None, transform_output_types=None, transform_nulls=True,
+                 field_transformers=None, transform_output_types=None, transform_nulls=False,
                  fill_value=None, null_column=None):
         self.copy = copy
         self.field_types = field_types or {}
