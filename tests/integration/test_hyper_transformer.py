@@ -434,15 +434,7 @@ def null_transformer_asserts(data, ht, transformed, expected):
     )
 
     reversed_data = ht.reverse_transform(transformed)
-
-    # TODO: Not sure why this should be checked? It was done in the original test, so I copied
-    original_names = data.pop('names')
-    reversed_names = reversed_data.pop('names')
-
     pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
-
-    for name in original_names:
-        assert name not in reversed_names
 
 
 def test_hypertransformer_transform_nulls_false():
@@ -472,7 +464,7 @@ def test_hypertransformer_transform_nulls_false():
     null_transformer_asserts(data, ht, transformed, expected)
 
 
-def test_hypertransformer_transform_nulls_false_fill_value_mean():
+def test_hypertransformer_transform_nulls_false_fill_value_False():
     """Test the `HyperTransformer` with ``transform_nulls = False`` and ``fill_value = False``.
 
     When ``transform_nulls = False``, if ``fill_value`` is passed as anything other than None,
