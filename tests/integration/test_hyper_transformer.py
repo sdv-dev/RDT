@@ -262,7 +262,7 @@ def test_hypertransformer_field_transformers():
     expected_transformed['datetime.value.value'] = [0.375, 0.875, 0.375, 0.375]
     expected_reversed = get_reversed()
 
-    ht = HyperTransformer(field_transformers=field_transformers)
+    ht = HyperTransformer(field_transformers=field_transformers, transform_nulls=False)
     ht.fit(data)
     transformed = ht.transform(data)
 
@@ -323,7 +323,7 @@ def test_hypertransformer_field_transformers_multi_column_fields():
     })
     expected_reversed = data.copy()
 
-    ht = HyperTransformer(field_transformers=field_transformers)
+    ht = HyperTransformer(field_transformers=field_transformers, transform_nulls=False)
     ht.fit(data)
     transformed = ht.transform(data)
 
@@ -374,7 +374,7 @@ def test_subset_of_columns():
     """
     data = get_input_data_without_nan()
 
-    ht = HyperTransformer()
+    ht = HyperTransformer(transform_nulls=False)
     ht.fit(data)
 
     subset = get_input_data_without_nan()[[data.columns[0]]]
@@ -411,7 +411,7 @@ def test_subset_of_columns_nan_data():
     """
     data = get_input_data_with_nan()
 
-    ht = HyperTransformer()
+    ht = HyperTransformer(transform_nulls=False)
     ht.fit(data)
 
     subset = get_reversed()[[data.columns[0]]]
