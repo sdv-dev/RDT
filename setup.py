@@ -73,7 +73,7 @@ development_requires = [
     'flake8-print>=4.0.0,<4.1',
     'isort>=4.3.4,<5',
     'pylint>=2.5.3,<3',
-    'flake8-quotes>=3.3.0,<3.4',
+    'flake8-quotes>=3.3.0,<4',
     'pep8-naming>=0.12.1,<0.13',
 
     # fix style issues
