@@ -60,6 +60,7 @@ class NullTransformer():
         if self.fill_value == 'mean':
             self._fill_value = data.mean() if contains_not_null else 0
         elif self.fill_value == 'mode':
+            # If there are multiple values with the same frequency, select the smallest value
             self._fill_value = data.mode(dropna=True)[0] if contains_not_null else 0
         else:
             self._fill_value = self.fill_value
