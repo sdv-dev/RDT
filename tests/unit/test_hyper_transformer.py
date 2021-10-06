@@ -542,8 +542,14 @@ class TestHyperTransformer(TestCase):
         })
 
         if drop:
-            return data.drop(['integer', 'float', 'categorical', 'bool',
-                             'datetime', 'integer.out'], axis=1)
+            return data.drop([
+                'integer',
+                'float',
+                'categorical',
+                'bool',
+                'datetime',
+                'integer.out'
+            ], axis=1)
 
         return data
 
