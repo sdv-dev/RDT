@@ -20,3 +20,24 @@ class BaseDatasetGenerator(ABC):
             numpy.ndarray of size ``num_rows``
         """
         raise NotImplementedError()
+
+    @classmethod
+    def get_subclasses(cls):
+        """Recursively find subclasses of this Baseline.
+
+        Returns:
+            list:
+                List of all subclasses of this class.
+        """
+        subclasses = []
+        for subclass in cls.__subclasses__():
+            if ABC not in subclass.__bases__:
+                subclasses.append(subclass)
+
+            subclasses += subclass.get_subclasses()
+
+        return subclasses
+
+    @staticmethod
+    def get_performance_thresholds():
+        raise NotImplementedError()
