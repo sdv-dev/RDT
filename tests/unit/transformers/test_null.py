@@ -16,8 +16,8 @@ class TestNullTransformer(TestCase):
         transformer = NullTransformer(None)
 
         # Asserts
-        self.assertIsNone(transformer.null_column, "null_column is None by default")
-        self.assertFalse(transformer.copy, "copy is False by default")
+        self.assertIsNone(transformer.null_column, 'null_column is None by default')
+        self.assertFalse(transformer.copy, 'copy is False by default')
 
     def test_fit_fill_value_mean(self):
         """If fill_value is mean, _fill_value is the mean of the input data."""
@@ -177,9 +177,9 @@ class TestNullTransformer(TestCase):
         # Asserts
         expect = np.array([1.5, np.nan, 2.5])
 
-        np.testing.assert_array_equal(result, expect, "Unexpected transformed data")
+        np.testing.assert_array_equal(result, expect, 'Unexpected transformed data')
 
-    @pytest.mark.filterwarnings("ignore")
+    @pytest.mark.filterwarnings('ignore')
     def test_transform_with_nulls_fillvalue_no_copy(self):
         """Test transform data with nulls equal to True and fill_value
 
@@ -201,9 +201,9 @@ class TestNullTransformer(TestCase):
         # Asserts
         expect = np.array([1.5, 0, 2.5])
 
-        np.testing.assert_array_equal(result, expect, "Unexpected transformed data")
+        np.testing.assert_array_equal(result, expect, 'Unexpected transformed data')
 
-    @pytest.mark.filterwarnings("ignore")
+    @pytest.mark.filterwarnings('ignore')
     def test_transform_with_nulls_fillvalue_copy(self):
         """Test transform data with nulls equal to True and fill_value"""
         # Setup
@@ -221,7 +221,7 @@ class TestNullTransformer(TestCase):
         # Asserts
         expect = np.array([1.5, 0, 2.5])
 
-        np.testing.assert_array_equal(result, expect, "Unexpected transformed data")
+        np.testing.assert_array_equal(result, expect, 'Unexpected transformed data')
 
     def test_transform_with_nulls_null_column(self):
         """Test transform data with nulls equal to True and null_column"""
@@ -239,7 +239,7 @@ class TestNullTransformer(TestCase):
         # Asserts
         expect = np.array([[1.5, 0], [np.nan, 1], [2.5, 0]])
 
-        np.testing.assert_array_equal(result, expect, "Unexpected transformed data")
+        np.testing.assert_array_equal(result, expect, 'Unexpected transformed data')
 
     def test_reverse_transform_no_nulls(self):
         """Test reverse_transform with no nulls"""
@@ -255,7 +255,7 @@ class TestNullTransformer(TestCase):
         # Asserts
         expect = pd.Series([1.5, None, 2.5])
 
-        np.testing.assert_array_equal(result, expect, "Unextected reverse data")
+        np.testing.assert_array_equal(result, expect, 'Unextected reverse data')
 
     def test_reverse_transform_nulls_and_null_column(self):
         """Test reverse_transform with nulls and null_column"""
@@ -272,7 +272,7 @@ class TestNullTransformer(TestCase):
         # Asserts
         expect = pd.Series([1.5, np.nan, 2.5])
 
-        np.testing.assert_array_equal(result, expect, "Unextected reverse data")
+        np.testing.assert_array_equal(result, expect, 'Unextected reverse data')
 
     def test_reverse_transform_nulls_and_not_null_column(self):
         """Test reverse_transform with nulls and not null_column"""
@@ -290,4 +290,4 @@ class TestNullTransformer(TestCase):
         # Asserts
         expect = pd.Series([1.5, np.nan, 2.5])
 
-        np.testing.assert_array_equal(result, expect, "Unextected reverse data")
+        np.testing.assert_array_equal(result, expect, 'Unextected reverse data')
