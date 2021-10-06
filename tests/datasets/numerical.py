@@ -17,11 +17,13 @@ class RandomIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         return np.random.randint(ii32.min, ii32.max, num_rows)
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-03,
@@ -43,10 +45,12 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(RandomIntegerGenerator.generate(num_rows).astype(np.float))
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-03,
@@ -68,12 +72,14 @@ class ConstantIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         constant = np.random.randint(ii32.min, ii32.max)
         return np.full(num_rows, constant)
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-03,
@@ -95,10 +101,12 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(ConstantIntegerGenerator.generate(num_rows).astype(np.float))
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-03,
@@ -120,6 +128,7 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         values = np.random.randint(ii32.min, ii32.max, size=2)
         additional_values = np.full(num_rows - 2, values[1])
@@ -129,6 +138,7 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-03,
@@ -150,6 +160,7 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         values = np.random.randint(ii32.min, ii32.max, size=2)
         additional_values = np.full(num_rows - 2, values[1]).astype(np.float)
@@ -159,6 +170,7 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-03,
@@ -180,10 +192,12 @@ class NormalGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return np.random.normal(size=num_rows)
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-03,
@@ -205,10 +219,12 @@ class NormalNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(NormalGenerator.generate(num_rows))
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-03,
@@ -230,10 +246,12 @@ class BigNormalGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return np.random.normal(scale=1e10, size=num_rows)
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-03,
@@ -255,10 +273,12 @@ class BigNormalNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(BigNormalGenerator.generate(num_rows))
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-03,
