@@ -136,6 +136,7 @@ class HyperTransformer:
         self._output_columns = []
         self._input_columns = []
         self._fitted_fields = set()
+        self._null_transformers = {}
 
     @staticmethod
     def _field_in_data(field, data):
@@ -237,15 +238,11 @@ class HyperTransformer:
                 data = self._fit_field_transformer(data, field, transformer)
 
         if self._transform_nulls:
-            output_fields = []
-            for transformer in self._transformers_sequence:
-                output_fields.extend(transformer.get_output_types().keys())
-
             self._null_transformers = {}
-            for output_field in output_fields:
+            for output_column in self._output_columns:
                 transformer = NullTransformer(self._fill_value, self._null_column)
-                transformer.fit(data[output_field])
-                self._null_transformers[output_field] = transformer
+                transformer.fit(data[output_column])
+                self._null_transformers[output_column] = transformer
 
         self._validate_all_fields_fitted()
 
