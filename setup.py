@@ -3,7 +3,10 @@
 
 """The setup script."""
 
-from setuptools import setup, find_packages
+import json
+import os
+from glob import glob
+from setuptools import setup, find_namespace_packages
 
 with open('README.md', encoding='utf-8') as readme_file:
     readme = readme_file.read()
@@ -31,7 +34,16 @@ tests_require = [
     'pytest-cov>=2.6.0',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
+    'pytest-subtests>=0.5,<1.0',
 ]
+
+addons_require = []
+
+for addon_json in glob('rdt/transformers/addons/*/*.json'):
+    with open(addon_json, 'r', encoding='utf-8') as addon_json_file:
+        requirements = json.load(addon_json_file).get('requirements')
+        if requirements:
+            addons_require.extend(requirements)
 
 development_requires = [
     # general
@@ -48,11 +60,21 @@ development_requires = [
     # style check
     'flake8>=3.7.7,<4',
     'flake8-absolute-import>=1.0,<2',
+    'flake8-builtins>=1.5.3,<1.6',
+    'flake8-comprehensions>=3.6.1,<3.7',
+    'flake8-debugger>=4.0.0,<4.1',
     'flake8-docstrings>=1.5.0,<2',
-    'flake8-sfs>=0.0.3,<0.1',
+    'flake8-mock>=0.3,<0.4',
+    'flake8-variables-names>=0.0.4,<0.1',
+    'dlint>=0.11.0,<0.12',  # code security addon for flake8
+    'flake8-fixme>=1.1.1,<1.2',
+    'flake8-eradicate>=1.1.0,<1.2',
+    'flake8-mutable>=1.2.0,<1.3',
+    'flake8-print>=4.0.0,<4.1',
     'isort>=4.3.4,<5',
     'pylint>=2.5.3,<3',
     'flake8-quotes>=3.3.0,<3.4',
+    'pep8-naming>=0.12.1,<0.13',
 
     # fix style issues
     'autoflake>=1.1,<2',
@@ -86,8 +108,8 @@ setup(
     description='Reversible Data Transforms',
     extras_require={
         'copulas': copulas_requires,
-        'test': tests_require + copulas_requires,
-        'dev': development_requires + tests_require + copulas_requires,
+        'test': tests_require + copulas_requires + addons_require,
+        'dev': development_requires + tests_require + copulas_requires + addons_require,
     },
     include_package_data=True,
     install_requires=install_requires,
@@ -96,7 +118,7 @@ setup(
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
     name='rdt',
-    packages=find_packages(include=['rdt', 'rdt.*']),
+    packages=find_namespace_packages(include=['rdt', 'rdt.transformers']),
     python_requires='>=3.6,<3.9',
     setup_requires=setup_requires,
     test_suite='tests',
