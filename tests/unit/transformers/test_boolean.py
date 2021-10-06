@@ -15,8 +15,8 @@ class TestBooleanTransformer(TestCase):
         transformer = BooleanTransformer()
 
         # Asserts
-        self.assertEqual(transformer.nan, -1, "Unexpected nan")
-        self.assertIsNone(transformer.null_column, "null_column is None by default")
+        self.assertEqual(transformer.nan, -1, 'Unexpected nan')
+        self.assertIsNone(transformer.null_column, 'null_column is None by default')
 
     def test__fit_nan_ignore(self):
         """Test _fit nan equal to ignore"""
@@ -33,7 +33,7 @@ class TestBooleanTransformer(TestCase):
         self.assertEqual(
             transformer.null_transformer.fill_value,
             expect_fill_value,
-            "Unexpected fill value"
+            'Unexpected fill value'
         )
 
     def test__fit_nan_not_ignore(self):
@@ -51,7 +51,7 @@ class TestBooleanTransformer(TestCase):
         self.assertEqual(
             transformer.null_transformer.fill_value,
             expect_fill_value,
-            "Unexpected fill value"
+            'Unexpected fill value'
         )
 
     def test__fit_array(self):
@@ -69,7 +69,7 @@ class TestBooleanTransformer(TestCase):
         self.assertEqual(
             transformer.null_transformer.fill_value,
             expect_fill_value,
-            "Unexpected fill value"
+            'Unexpected fill value'
         )
 
     def test__transform_series(self):
@@ -89,7 +89,7 @@ class TestBooleanTransformer(TestCase):
         self.assertEqual(
             transformer.null_transformer.transform.call_count,
             expect_call_count,
-            "NullTransformer.transform must be called one time"
+            'NullTransformer.transform must be called one time'
         )
         pd.testing.assert_series_equal(
             transformer.null_transformer.transform.call_args[0][0],
@@ -113,7 +113,7 @@ class TestBooleanTransformer(TestCase):
         self.assertEqual(
             transformer.null_transformer.transform.call_count,
             expect_call_count,
-            "NullTransformer.transform must be called one time"
+            'NullTransformer.transform must be called one time'
         )
         pd.testing.assert_series_equal(
             transformer.null_transformer.transform.call_args[0][0],
@@ -139,7 +139,7 @@ class TestBooleanTransformer(TestCase):
         self.assertEqual(
             transformer.null_transformer.reverse_transform.call_count,
             expect_call_count,
-            "NullTransformer.reverse_transform should not be called when nan is ignore"
+            'NullTransformer.reverse_transform should not be called when nan is ignore'
         )
 
     def test__reverse_transform_nan_not_ignore(self):
@@ -163,7 +163,7 @@ class TestBooleanTransformer(TestCase):
         self.assertEqual(
             transformer.null_transformer.reverse_transform.call_count,
             expect_call_count,
-            "NullTransformer.reverse_transform should not be called when nan is ignore"
+            'NullTransformer.reverse_transform should not be called when nan is ignore'
         )
 
     def test__reverse_transform_not_null_values(self):

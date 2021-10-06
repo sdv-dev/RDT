@@ -200,7 +200,7 @@ def test_transformer(subtests, transformer):
     assert len(dataset_generators) > 0
 
     for dg in dataset_generators:
-        with subtests.test(msg="test_transformer_with_dataset", generator=dg):
+        with subtests.test(msg='test_transformer_with_dataset', generator=dg):
             try:
                 data = pd.DataFrame({TEST_COL: dg.generate(DATA_SIZE)})
             except NotImplementedError:
