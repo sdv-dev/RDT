@@ -523,7 +523,7 @@ class TestOneHotEncodingTransformer:
         data = [[], [], []]
 
         # Assert
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match='Unexpected format.'):
             ohet._prepare_data(data)
 
     def test__prepare_data_nested_lists(self):
@@ -532,7 +532,7 @@ class TestOneHotEncodingTransformer:
         data = [[[]]]
 
         # Assert
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match='Unexpected format.'):
             ohet._prepare_data(data)
 
     def test__prepare_data_list_of_lists(self):

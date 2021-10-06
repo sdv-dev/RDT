@@ -3,6 +3,7 @@
 import datetime
 
 import numpy as np
+import pandas as pd
 
 from tests.datasets.base import BaseDatasetGenerator
 from tests.datasets.utils import add_nans
@@ -24,6 +25,23 @@ class RandomGapDatetimeGenerator(DatetimeGenerator):
         dates = [(np.random.random() * delta + today) for i in range(num_rows)]
         return np.array(dates, dtype='datetime64')
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 5e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 5e-06,
+                'memory': 300.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 1000.0,
+            }
+        }
+
 
 class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with random gaps of seconds between them"""
@@ -35,6 +53,23 @@ class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
         dates = [(np.random.random() * delta + today) for i in range(num_rows)]
         return np.array(dates, dtype='datetime64')
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 5e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 5e-06,
+                'memory': 300.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 1000.0,
+            }
+        }
+
 
 class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
     """Generator that creates dates with random gaps and NaNs"""
@@ -43,6 +78,23 @@ class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
     def generate(num_rows):
         dates = RandomGapDatetimeGenerator.generate(num_rows)
         return add_nans(dates.astype('O'))
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 5e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 5e-06,
+                'memory': 1000.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 1000.0,
+            }
+        }
 
 
 class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
@@ -55,16 +107,52 @@ class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
         dates = [delta(hours=i) + today for i in range(num_rows)]
         return np.array(dates, dtype='datetime64')
 
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 5e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 5e-06,
+                'memory': 300.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 1000.0,
+            }
+        }
+
 
 class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
     """Generator that creates dates with 1 day gaps between them"""
 
     @staticmethod
     def generate(num_rows):
-        today = datetime.datetime.today()
         delta = datetime.timedelta
+
+        today = min(datetime.datetime.today(), pd.Timestamp.max - delta(num_rows))
         dates = [delta(i) + today for i in range(num_rows)]
+
         return np.array(dates, dtype='datetime64')
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 5e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 5e-06,
+                'memory': 300.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 1000.0,
+            }
+        }
 
 
 class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
@@ -72,7 +160,26 @@ class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def generate(num_rows):
-        today = datetime.datetime.today()
         delta = datetime.timedelta
-        dates = [delta(weeks=i) + today for i in range(num_rows)]
+
+        today = datetime.datetime.today()
+        dates = [min(delta(weeks=i) + today, pd.Timestamp.max) for i in range(num_rows)]
+
         return np.array(dates, dtype='datetime64')
+
+    @staticmethod
+    def get_performance_thresholds():
+        return {
+            'fit': {
+                'time': 5e-06,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 5e-06,
+                'memory': 300.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 1000.0,
+            }
+        }
