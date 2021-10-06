@@ -1,3 +1,5 @@
+import importlib
+
 import pandas as pd
 from tabulate import tabulate
 
@@ -16,6 +18,21 @@ CHECK_DETAILS = [
 ]
 
 
+def get_class(class_name):
+    """Get the specified class.
+
+    Args:
+        class (str):
+            Full name of class to import.
+    """
+    obj = None
+    if isinstance(class_name, str):
+        package, name = class_name.rsplit('.', 1)
+        obj = getattr(importlib.import_module(package), name)
+
+    return obj
+
+
 def validate_transformer_integration(transformer):
     """Validate the integration tests of a transformer.
 
@@ -31,6 +48,9 @@ def validate_transformer_integration(transformer):
             Whether or not the transformer passes all integration checks.
     """
     print(f'Validating Integration Tests for transformer {transformer}\n')
+
+    if isinstance(transformer, str):
+        transformer = get_class(transformer)
 
     results = validate_transformer(transformer)
 
