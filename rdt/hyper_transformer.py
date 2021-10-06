@@ -211,6 +211,9 @@ class HyperTransformer:
             else:
                 if output_name not in self._output_columns:
                     self._output_columns.append(output_name)
+                    if self._transform_nulls:
+                        null_transformer = NullTransformer(self._fill_value, self._null_column)
+                        self._transformers_sequence.append(null_transformer)
 
         return data
 
@@ -243,13 +246,6 @@ class HyperTransformer:
                     transformer = get_default_transformer(data_type)
 
                 data = self._fit_field_transformer(data, field, transformer)
-
-        if self._transform_nulls:
-            self._null_transformers = {}
-            for output_column in self._output_columns:
-                transformer = NullTransformer(self._fill_value, self._null_column)
-                transformer.fit(data[output_column])
-                self._null_transformers[output_column] = transformer
 
         self._validate_all_fields_fitted()
 
