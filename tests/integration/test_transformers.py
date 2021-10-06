@@ -24,6 +24,32 @@ DATA_TYPE_TO_DTYPES = {
 }
 
 
+def _validate_helper(validate_fn, args, should_assert):
+    """Wrap around validation functions to either return a boolean or assert.
+
+    Args:
+        validate_fn (function):
+            The function to validate.
+        args (list):
+            The args to pass into the function.
+        should_assert (bool):
+            Whether or not to raise AssertionErrors.
+
+    Output:
+        bool:
+            Whether or not the evaluated function was valid or not.
+    """
+    try:
+        validate_fn(*args)
+    except AssertionError as e:
+        if should_assert:
+            raise e
+        else:
+            return False
+
+    return True
+
+
 def _is_valid_transformer(transformer_name):
     """Determine if transformer should be tested or not."""
     return transformer_name != 'IdentityTransformer' and 'Dummy' not in transformer_name
@@ -63,9 +89,9 @@ def _find_dataset_generators(data_type, generators):
     return generators.get(data_type, [])
 
 
-def _validate_input_type(input_type):
-    """Check that the transformer input type is not null."""
-    assert input_type is not None
+def _validate_dataset_generators(dataset_generators):
+    """Check that the number of dataset generators is greater than zero."""
+    assert len(dataset_generators) > 0
 
 
 def _validate_transformed_data(transformer, transformed_data):
@@ -113,7 +139,7 @@ def _validate_composition(transformer, reversed_data, input_data):
     )
 
 
-def _test_transformer_with_dataset(transformer_class, input_data):
+def _test_transformer_with_dataset(transformer_class, input_data, should_assert):
     """Test the given transformer with the given input data.
 
     This method verifies the transformed data's dtype, the reverse
@@ -124,6 +150,8 @@ def _test_transformer_with_dataset(transformer_class, input_data):
             The transformer class to test.
         input_data (pandas.Series):
             The data to test on.
+        should_assert (bool):
+            Whether or not to raise AssertionErrors.
     """
     transformer = transformer_class()
     # Fit
@@ -131,13 +159,25 @@ def _test_transformer_with_dataset(transformer_class, input_data):
 
     # Transform
     transformed = transformer.transform(input_data)
-    _validate_transformed_data(transformer, transformed)
+    _validate_helper(
+        _validate_transformed_data,
+        [transformer, transformed],
+        should_assert,
+    )
 
     # Reverse transform
     out = transformer.reverse_transform(transformed)
-    _validate_reverse_transformed_data(transformer, out, input_data.dtypes[TEST_COL])
+    _validate_helper(
+        _validate_reverse_transformed_data,
+        [transformer, out, input_data.dtypes[TEST_COL]],
+        should_assert,
+    )
 
-    _validate_composition(transformer, out, input_data)
+    _validate_helper(
+        _validate_composition,
+        [transformer, out, input_data],
+        should_assert,
+    )
 
 
 def _validate_hypertransformer_transformed_data(transformed_data):
@@ -154,7 +194,7 @@ def _validate_hypertransformer_reversed_transformed_data(transformer, reversed_d
     assert reversed_data.dtype.kind in DATA_TYPE_TO_DTYPES[expected_data_type]
 
 
-def _test_transformer_with_hypertransformer(transformer_class, input_data):
+def _test_transformer_with_hypertransformer(transformer_class, input_data, should_assert):
     """Test the given transformer in the hypertransformer.
 
     Run the provided transformer using the hypertransformer using the provided
@@ -166,6 +206,8 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data):
             The transformer class to test.
         input_data (pandas.Series):
             The data to test on.
+        should_assert (bool):
+            Whether or not to raise AssertionErrors.
     """
     hypertransformer = HyperTransformer(field_transformers={
         TEST_COL: transformer_class.__name__,
@@ -173,10 +215,39 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data):
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)
-    _validate_hypertransformer_transformed_data(transformed)
+    _validate_helper(
+        _validate_hypertransformer_transformed_data,
+        [transformed],
+        should_assert,
+    )
 
     out = hypertransformer.reverse_transform(transformed)
-    _validate_hypertransformer_reversed_transformed_data(transformer_class, out[TEST_COL])
+    _validate_helper(
+        _validate_hypertransformer_reversed_transformed_data,
+        [transformer_class, out[TEST_COL]],
+        should_assert,
+    )
+
+
+def validate_transformer(transformer, should_assert=False, subtests=None):
+    input_data_type = transformer.get_input_type()
+
+    dataset_generators = _find_dataset_generators(input_data_type, generators)
+    _validate_helper(_validate_dataset_generators, [dataset_generators], should_assert)
+
+    for dg in dataset_generators:
+        try:
+            data = pd.DataFrame({TEST_COL: dg.generate(DATA_SIZE)})
+        except NotImplementedError:
+            continue
+
+        if subtests:
+            with subtests.test(msg="test_transformer_with_dataset", generator=dg):
+                _test_transformer_with_dataset(transformer, data, should_assert)
+                _test_transformer_with_hypertransformer(transformer, data, should_assert)
+        else:
+            _test_transformer_with_dataset(transformer, data, should_assert)
+            _test_transformer_with_hypertransformer(transformer, data, should_assert)
 
 
 transformers = _get_all_transformers()
@@ -194,17 +265,4 @@ def test_transformer(subtests, transformer):
         transformer (rdt.transformers.BaseTransformer):
             The transformer to test.
     """
-    input_data_type = transformer.get_input_type()
-
-    dataset_generators = _find_dataset_generators(input_data_type, generators)
-    assert len(dataset_generators) > 0
-
-    for dg in dataset_generators:
-        with subtests.test(msg='test_transformer_with_dataset', generator=dg):
-            try:
-                data = pd.DataFrame({TEST_COL: dg.generate(DATA_SIZE)})
-            except NotImplementedError:
-                continue
-
-            _test_transformer_with_dataset(transformer, data)
-            _test_transformer_with_hypertransformer(transformer, data)
+    validate_transformer(transformer, should_assert=True, subtests=subtests)
