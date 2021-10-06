@@ -136,7 +136,7 @@ def test_performance(dataset_generator):
 
 def _round_to_magnitude(value):
     if value == 0:
-        raise ValueError("Value cannot be exactly 0.")
+        raise ValueError('Value cannot be exactly 0.')
 
     for digits in range(-15, 15):
         rounded = np.round(value, digits)
@@ -144,7 +144,7 @@ def _round_to_magnitude(value):
             return rounded
 
     # We should never reach this line
-    raise ValueError("Value is too big")
+    raise ValueError('Value is too big')
 
 
 def find_transformer_boundaries(transformer, dataset_generator, fit_size,
