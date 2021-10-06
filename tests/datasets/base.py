@@ -16,6 +16,7 @@ class BaseDatasetGenerator(ABC):
         Args:
             num_rows (int):
                 Number of rows to generate.
+
         Returns:
             numpy.ndarray of size ``num_rows``
         """
@@ -40,4 +41,5 @@ class BaseDatasetGenerator(ABC):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         raise NotImplementedError()
