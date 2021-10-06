@@ -437,12 +437,14 @@ class TestNumericalTransformer(TestCase):
         - First column of the input array as entered, replacing the indicated value with a Nan.
         """
         # Setup
-        data = pd.DataFrame([
+        data = [
             [0., 0.],
             [1.2, 0.],
             [3.45, 1.],
             [6.789, 0.],
-        ], columns=['a', 'b'])
+        ]
+
+        data = pd.DataFrame(data, columns=['a', 'b'])
 
         # Run
         transformer = NumericalTransformer()
