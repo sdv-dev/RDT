@@ -19,7 +19,20 @@ def validate_transformer_integration(transformer):
     """
     results = validate_transformer(transformer)
 
-    print(pd.DataFrame(results.items(), columns=['Check', 'Correct']))
+    check_descriptions = [
+        'At least one Dataset Generator exists for the Transformer data type',
+        'The Transformer can transform data and produce output(s) of the indicated data type(s)',
+        ('The Transformer can reverse transform the data it produces, '
+         'going back to the original data type'),
+        ('Transforming data and reversing it recovers the original data, '
+         'if composition is identity is specified'),
+        'The HyperTransformer is able to use the Transformer and produce float values',
+        ('The HyperTransformer is able to reverse the data that it has previously transformed '
+         'and restore the original data type'),
+    ]
+    results_summary = pd.DataFrame(results.items(), columns=['Check', 'Correct'])
+    results_summary['Details'] = check_descriptions
+    print(results_summary)
 
     valid = True
     for check_result in results.values():
