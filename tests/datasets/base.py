@@ -41,4 +41,5 @@ class BaseDatasetGenerator(ABC):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         raise NotImplementedError()

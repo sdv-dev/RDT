@@ -28,6 +28,7 @@ class RandomGapDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 5e-06,
@@ -57,6 +58,7 @@ class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 5e-06,
@@ -84,6 +86,7 @@ class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 5e-06,
@@ -113,6 +116,7 @@ class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 5e-06,
@@ -145,6 +149,7 @@ class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 5e-06,
@@ -177,6 +182,7 @@ class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 5e-06,

@@ -24,6 +24,7 @@ class RandomIntegerGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -50,6 +51,7 @@ class RandomIntegerNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -77,6 +79,7 @@ class RandomStringGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -103,6 +106,7 @@ class RandomStringNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -143,6 +147,7 @@ class RandomMixedGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -180,6 +185,7 @@ class RandomMixedNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -207,6 +213,7 @@ class SingleIntegerGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -233,6 +240,7 @@ class SingleIntegerNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -260,6 +268,7 @@ class SingleStringGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -286,6 +295,7 @@ class SingleStringNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -312,6 +322,7 @@ class UniqueIntegerGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 2e-05,
@@ -338,6 +349,7 @@ class UniqueIntegerNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-05,
@@ -364,6 +376,7 @@ class UniqueStringGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 2e-05,
@@ -390,6 +403,7 @@ class UniqueStringNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 2e-05,

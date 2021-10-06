@@ -32,6 +32,7 @@ class RandomBooleanGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-6,
@@ -66,6 +67,7 @@ class RandomBooleanNaNsGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-6,
@@ -98,6 +100,7 @@ class RandomSkewedBooleanGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-6,
@@ -132,6 +135,7 @@ class RandomSkewedBooleanNaNsGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-6,
@@ -159,6 +163,7 @@ class ConstantBooleanGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-6,
@@ -192,6 +197,7 @@ class ConstantBooleanNaNsGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
+        """Return the expected threseholds."""
         return {
             'fit': {
                 'time': 1e-6,
