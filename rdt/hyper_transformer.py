@@ -286,4 +286,5 @@ class HyperTransformer:
             data = transformer.reverse_transform(data, drop=False)
 
         reversed_columns = self._subset(self._input_columns, data.columns)
+
         return data.reindex(columns=unknown_columns + reversed_columns)
