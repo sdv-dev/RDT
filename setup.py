@@ -34,6 +34,7 @@ tests_require = [
     'pytest-cov>=2.6.0',
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
+    'pytest-subtests>=0.5,<1.0',
 ]
 
 addons_require = []
@@ -73,6 +74,7 @@ development_requires = [
     'isort>=4.3.4,<5',
     'pylint>=2.5.3,<3',
     'flake8-pytest-style>=1.5.0,<2',
+    'pep8-naming>=0.12.1,<0.13',
 
     # fix style issues
     'autoflake>=1.1,<2',
