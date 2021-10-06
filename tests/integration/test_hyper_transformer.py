@@ -158,30 +158,12 @@ def get_transformed_nan_data():
 
 def get_transformers():
     return {
-        'integer': {
-            'class': 'NumericalTransformer',
-            'kwargs': {
-                'dtype': np.int64,
-            }
-        },
-        'float': {
-            'class': 'NumericalTransformer',
-            'kwargs': {
-                'dtype': np.float64,
-            }
-        },
-        'categorical': {
-            'class': 'CategoricalTransformer'
-        },
-        'bool': {
-            'class': 'BooleanTransformer'
-        },
-        'datetime': {
-            'class': 'DatetimeTransformer'
-        },
-        'names': {
-            'class': 'CategoricalTransformer',
-        },
+        'integer': 'NumericalTransformer',
+        'float': 'NumericalTransformer',
+        'categorical': 'CategoricalTransformer',
+        'bool': 'BooleanTransformer',
+        'datetime': 'DatetimeTransformer',
+        'names': 'CategoricalTransformer'
     }
 
 
@@ -428,6 +410,9 @@ def null_transformer_asserts(data, ht, transformed, expected):
     (it doesn't check for the order of the columns), and that the `reverse_transform` returns
     the original data (again, doesn't check for order of columns).
     """
+    print(transformed.sort_index(axis=1).values)
+    print("NTehnoehu")
+    print(expected.sort_index(axis=1).values)
     np.testing.assert_allclose(
         transformed.sort_index(axis=1).values,
         expected.sort_index(axis=1).values
@@ -456,7 +441,7 @@ def test_hypertransformer_transform_nulls_false():
     data = get_input_data_without_nan()
     transformers = get_transformers()
 
-    ht = HyperTransformer(transformers, transform_nulls=False)
+    ht = HyperTransformer(field_transformers=transformers, transform_nulls=False)
     ht.fit(data)
     transformed = ht.transform(data)
 
