@@ -83,15 +83,15 @@ class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
     def get_performance_thresholds():
         return {
             'fit': {
-                'time': 2e-06,
+                'time': 5e-06,
                 'memory': 500.0
             },
             'transform': {
-                'time': 4e-06,
+                'time': 5e-06,
                 'memory': 1000.0
             },
             'reverse_transform': {
-                'time': 2e-06,
+                'time': 5e-06,
                 'memory': 1000.0,
             }
         }
