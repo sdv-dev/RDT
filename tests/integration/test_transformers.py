@@ -283,7 +283,7 @@ def validate_transformer(transformer, should_assert=False, subtests=None):
             continue
 
         if subtests:
-            with subtests.test(msg="test_transformer_with_dataset", generator=dg):
+            with subtests.test(msg='test_transformer_with_dataset', generator=dg):
                 _test_transformer_with_dataset(transformer, data, should_assert, results)
                 _test_transformer_with_hypertransformer(transformer, data, should_assert, results)
         else:
