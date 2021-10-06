@@ -101,6 +101,10 @@ fix-lint: ## fix lint issues using autoflake, autopep8, and isort
 test-unit: ## run tests quickly with the default Python
 	invoke pytest
 
+.PHONY: test-integration
+test-integration: ## run integration tests
+	invoke integration
+
 .PHONY: test-readme
 test-readme: ## run the readme snippets
 	invoke readme
@@ -110,7 +114,7 @@ test-performance: ## run performance tests
 	invoke performance
 
 .PHONY: test
-test: test-unit test-readme ## test everything that needs test dependencies
+test: test-unit test-integration test-readme ## test everything that needs test dependencies
 
 .PHONY: test-all
 test-all: ## test using tox
@@ -146,6 +150,7 @@ serve-docs: view-docs ## compile the docs watching for changes
 dist: clean ## builds source and wheel package
 	python setup.py sdist
 	python setup.py bdist_wheel
+	python rdt/transformers/addons/addons_setup.py
 	ls -l dist
 
 .PHONY: publish-confirm
