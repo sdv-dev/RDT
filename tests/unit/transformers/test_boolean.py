@@ -15,8 +15,8 @@ class TestBooleanTransformer(TestCase):
         transformer = BooleanTransformer()
 
         # Asserts
-        assert transformer.nan == -1
-        assert transformer.null_column is None
+        assert transformer.nan == -1, 'Unexpected nan'
+        assert transformer.null_column is None, 'null_column is None by default'
 
     def test__fit_nan_ignore(self):
         """Test _fit nan equal to ignore"""
@@ -28,7 +28,7 @@ class TestBooleanTransformer(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer.null_transformer.fill_value is None
+        assert transformer.null_transformer.fill_value is None, 'Unexpected fill value'
 
     def test__fit_nan_not_ignore(self):
         """Test _fit nan not equal to ignore"""
@@ -40,7 +40,7 @@ class TestBooleanTransformer(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer.null_transformer.fill_value == 0
+        assert transformer.null_transformer.fill_value == 0, 'Unexpected fill value'
 
     def test__fit_array(self):
         """Test _fit with numpy.array"""
@@ -52,7 +52,7 @@ class TestBooleanTransformer(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer.null_transformer.fill_value == 0
+        assert transformer.null_transformer.fill_value == 0, 'Unexpected fill value'
 
     def test__transform_series(self):
         """Test transform pandas.Series"""
@@ -68,7 +68,8 @@ class TestBooleanTransformer(TestCase):
         expect_call_count = 1
         expect_call_args = pd.Series([0., 1., None, 1., 0.], dtype=float)
 
-        assert transformer.null_transformer.transform.call_count == expect_call_count
+        error_msg = 'NullTransformer.transform must be called one time'
+        assert transformer.null_transformer.transform.call_count == expect_call_count, error_msg
         pd.testing.assert_series_equal(
             transformer.null_transformer.transform.call_args[0][0],
             expect_call_args
@@ -88,7 +89,8 @@ class TestBooleanTransformer(TestCase):
         expect_call_count = 1
         expect_call_args = pd.Series([0., 1., None, 1., 0.], dtype=float)
 
-        assert transformer.null_transformer.transform.call_count == expect_call_count
+        error_msg = 'NullTransformer.transform must be called one time'
+        assert transformer.null_transformer.transform.call_count == expect_call_count, error_msg
         pd.testing.assert_series_equal(
             transformer.null_transformer.transform.call_args[0][0],
             expect_call_args
@@ -110,7 +112,9 @@ class TestBooleanTransformer(TestCase):
         expect_call_count = 0
 
         np.testing.assert_equal(result, expect)
-        assert transformer.null_transformer.reverse_transform.call_count == expect_call_count
+        error_msg = 'NullTransformer.reverse_transform should not be called when nan is ignore'
+        transformer_call_count = transformer.null_transformer.reverse_transform.call_count
+        assert transformer_call_count == expect_call_count, error_msg
 
     def test__reverse_transform_nan_not_ignore(self):
         """Test _reverse_transform with nan not equal to ignore"""
@@ -130,7 +134,10 @@ class TestBooleanTransformer(TestCase):
         expect_call_count = 1
 
         np.testing.assert_equal(result, expect)
-        assert transformer.null_transformer.reverse_transform.call_count == expect_call_count
+
+        error_msg = 'NullTransformer.reverse_transform should not be called when nan is ignore'
+        reverse_transform_call_count = transformer.null_transformer.reverse_transform.call_count
+        assert reverse_transform_call_count == expect_call_count, error_msg
 
     def test__reverse_transform_not_null_values(self):
         """Test _reverse_transform not null values correctly"""
