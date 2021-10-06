@@ -117,6 +117,12 @@ class HyperTransformer:
                                  'field_transformers')
 
             self._add_field_to_set(field, self._specified_fields)
+    
+    def _validate_transform_nulls(self):
+        if not self._transform_nulls and (self._null_column or self._fill_value):
+            raise ValueError('When ``transform_nulls = False``, ``null_column`` and'
+                             '``fill_value`` should both be ``None`` instead of '
+                             f'{self._null_column} and {self._fill_value}.')
 
     def __init__(self, copy=True, field_types=None, data_type_transformers=None,
                  field_transformers=None, transform_output_types=None, transform_nulls=True,
@@ -131,6 +137,7 @@ class HyperTransformer:
         self._transform_nulls = transform_nulls
         self._fill_value = fill_value
         self._null_column = null_column
+        self._validate_transform_nulls()
         self._multi_column_fields = self._create_multi_column_fields()
         self._transformers_sequence = []
         self._output_columns = []
@@ -243,11 +250,6 @@ class HyperTransformer:
                 transformer = NullTransformer(self._fill_value, self._null_column)
                 transformer.fit(data[output_column])
                 self._null_transformers[output_column] = transformer
-
-        elif self._null_column or self._fill_value:
-            raise ValueError('When ``transform_nulls = False``, ``null_column`` and'
-                             '``fill_value`` should both be ``None`` instead of '
-                             f'{self._null_column} and {self._fill_value}.')
 
         self._validate_all_fields_fitted()
 

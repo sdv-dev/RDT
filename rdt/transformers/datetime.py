@@ -42,7 +42,7 @@ class DatetimeTransformer(BaseTransformer):
     null_transformer = None
     divider = None
 
-    def __init__(self, nan='mean', null_column=None, strip_constant=False):
+    def __init__(self, nan=None, null_column=False, strip_constant=False):
         self.nan = nan
         self.null_column = null_column
         self.strip_constant = strip_constant
@@ -181,5 +181,5 @@ class DatetimeRoundedTransformer(DatetimeTransformer):
             Defaults to ``None``.
     """
 
-    def __init__(self, nan='mean', null_column=None):
+    def __init__(self, nan=None, null_column=False):
         super().__init__(nan=nan, null_column=null_column, strip_constant=True)

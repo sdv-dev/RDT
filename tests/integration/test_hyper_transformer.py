@@ -6,8 +6,8 @@ import pytest
 
 from rdt import HyperTransformer
 from rdt.transformers import (
-    BaseTransformer, BooleanTransformer, CategoricalTransformer, NumericalTransformer,
-    OneHotEncodingTransformer)
+    BaseTransformer, BooleanTransformer, CategoricalTransformer, DatetimeTransformer,
+    NumericalTransformer, OneHotEncodingTransformer)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -154,17 +154,6 @@ def get_transformed_nan_data():
         'datetime#1': [1.0, 0.0, 0.0, 0.0, 0.0],
         'names': [0.3, 0.8, 0.8, 0.3, 0.3],
     })
-
-
-def get_transformers():
-    return {
-        'integer': 'NumericalTransformer',
-        'float': 'NumericalTransformer',
-        'categorical': 'CategoricalTransformer',
-        'bool': 'BooleanTransformer',
-        'datetime': 'DatetimeTransformer',
-        'names': 'CategoricalTransformer'
-    }
 
 
 def test_hypertransformer_default_inputs():
@@ -403,6 +392,17 @@ def test_subset_of_columns_nan_data():
     pd.testing.assert_frame_equal(subset, reverse)
 
 
+def get_transformers():
+    return {
+        'integer': NumericalTransformer(),
+        'float': NumericalTransformer(),
+        'categorical': CategoricalTransformer(),
+        'bool': BooleanTransformer(),
+        'datetime': DatetimeTransformer(),
+        'names': CategoricalTransformer()
+    }
+
+
 def null_transformer_asserts(data, ht, transformed, expected):
     """Helper function of all following tests.
 
@@ -410,15 +410,16 @@ def null_transformer_asserts(data, ht, transformed, expected):
     (it doesn't check for the order of the columns), and that the `reverse_transform` returns
     the original data (again, doesn't check for order of columns).
     """
-    print(transformed.sort_index(axis=1).values)
-    print("NTehnoehu")
-    print(expected.sort_index(axis=1).values)
-    np.testing.assert_allclose(
+    print('transformed\n', transformed.sort_index(axis=1).values)
+    print('expected\n', expected.sort_index(axis=1).values)
+    np.testing.assert_equal(
         transformed.sort_index(axis=1).values,
         expected.sort_index(axis=1).values
     )
 
     reversed_data = ht.reverse_transform(transformed)
+    data['bool'] = data['bool'].astype('O')
+
     pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
 
 
@@ -466,11 +467,11 @@ def test_hypertransformer_transform_nulls_false_fill_value_False():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    get_input_data_without_nan()
+    data = get_input_data_without_nan()
     transformers = get_transformers()
 
     with np.testing.assert_raises(ValueError):
-        HyperTransformer(transformers, transform_nulls=False, fill_value=False)
+        HyperTransformer(transformers, transform_nulls=False, fill_value='filled_value')
 
 
 def test_hypertransformer_transform_nulls_false_null_column_true():
@@ -494,7 +495,7 @@ def test_hypertransformer_transform_nulls_false_null_column_true():
     transformers = get_transformers()
 
     with np.testing.assert_raises(ValueError):
-        HyperTransformer(transformers, transform_nulls=False, null_column=None)
+        HyperTransformer(transformers, transform_nulls=False, null_column=True)
 
 
 def get_transformed_fill_value_string():
@@ -532,7 +533,8 @@ def test_hypertransformer_fill_value_string():
     data = get_input_data_with_nan()
     transformers = get_transformers()
 
-    ht = HyperTransformer(transformers, fill_value='filled_value')
+    ht = HyperTransformer(field_transformers=transformers, fill_value='filled_value',
+                          null_column=False)
     ht.fit(data)
     transformed = ht.transform(data)
 

@@ -93,6 +93,7 @@ class NullTransformer():
                 else:
                     data = data.fillna(self._fill_value)
 
+            print('null_value: ', self._null_column)            
             if self._null_column:
                 return pd.concat([data, isnull.astype('int')], axis=1).values
 

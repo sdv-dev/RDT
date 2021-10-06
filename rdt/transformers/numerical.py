@@ -66,7 +66,7 @@ class NumericalTransformer(BaseTransformer):
     _min_value = None
     _max_value = None
 
-    def __init__(self, dtype=None, nan='mean', null_column=None, rounding=None,
+    def __init__(self, dtype=None, nan=None, null_column=False, rounding=None,
                  min_value=None, max_value=None):
         self.nan = nan
         self.null_column = null_column
@@ -226,7 +226,7 @@ class NumericalRoundedBoundedTransformer(NumericalTransformer):
             Defaults to ``None``.
     """
 
-    def __init__(self, dtype=None, nan='mean', null_column=None):
+    def __init__(self, dtype=None, nan=None, null_column=False):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column, min_value='auto',
                          max_value='auto', rounding='auto')
 
@@ -260,7 +260,7 @@ class NumericalBoundedTransformer(NumericalTransformer):
             Defaults to ``None``.
     """
 
-    def __init__(self, dtype=None, nan='mean', null_column=None):
+    def __init__(self, dtype=None, nan=None, null_column=False):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column, min_value='auto',
                          max_value='auto', rounding=None)
 
@@ -294,7 +294,7 @@ class NumericalRoundedTransformer(NumericalTransformer):
             Defaults to ``None``.
     """
 
-    def __init__(self, dtype=None, nan='mean', null_column=None):
+    def __init__(self, dtype=None, nan=None, null_column=False):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column, min_value=None,
                          max_value=None, rounding='auto')
 
@@ -363,7 +363,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
     _univariate = None
     COMPOSITION_IS_IDENTITY = False
 
-    def __init__(self, dtype=None, nan='mean', null_column=None, distribution='parametric'):
+    def __init__(self, dtype=None, nan=None, null_column=False, distribution='parametric'):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column)
         self._distributions = self._get_distributions()
 

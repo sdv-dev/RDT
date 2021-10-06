@@ -33,7 +33,7 @@ class BooleanTransformer(BaseTransformer):
 
     null_transformer = None
 
-    def __init__(self, nan=-1, null_column=None):
+    def __init__(self, nan=None, null_column=False):
         self.nan = nan
         self.null_column = null_column
 
