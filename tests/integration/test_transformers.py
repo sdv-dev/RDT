@@ -40,7 +40,7 @@ def get_class(class_name):
     return obj
 
 
-def _validate_helper(validate_fn, args, should_assert):
+def _validate_helper(validate_fn, args, should_assert, results):
     """Wrap around validation functions to either return a boolean or assert.
 
     Args:
@@ -50,20 +50,24 @@ def _validate_helper(validate_fn, args, should_assert):
             The args to pass into the function.
         should_assert (bool):
             Whether or not to raise AssertionErrors.
+        results (dict):
+            Cumulative results summary.
 
     Output:
-        bool:
-            Whether or not the evaluated function was valid or not.
+        dict:
+            Cumulative results summary.
     """
+    results[validate_fn] = results.get(validate_fn, True)
+
     try:
         validate_fn(*args)
     except AssertionError as e:
         if should_assert:
             raise e
         else:
-            return False
+            results[validate_fn] = False
 
-    return True
+    return results
 
 
 def _is_valid_transformer(transformer_name):
@@ -155,7 +159,7 @@ def _validate_composition(transformer, reversed_data, input_data):
     )
 
 
-def _test_transformer_with_dataset(transformer_class, input_data, should_assert):
+def _test_transformer_with_dataset(transformer_class, input_data, should_assert, results):
     """Test the given transformer with the given input data.
 
     This method verifies the transformed data's dtype, the reverse
@@ -168,6 +172,12 @@ def _test_transformer_with_dataset(transformer_class, input_data, should_assert)
             The data to test on.
         should_assert (bool):
             Whether or not to raise AssertionErrors.
+        results (dict):
+            Cumulative results summary.
+
+    Output:
+        dict:
+            The cumulative results of the integration checks.
     """
     transformer = transformer_class()
     # Fit
@@ -175,25 +185,30 @@ def _test_transformer_with_dataset(transformer_class, input_data, should_assert)
 
     # Transform
     transformed = transformer.transform(input_data)
-    _validate_helper(
+    resutls = _validate_helper(
         _validate_transformed_data,
         [transformer, transformed],
         should_assert,
+        results,
     )
 
     # Reverse transform
     out = transformer.reverse_transform(transformed)
-    _validate_helper(
+    resluts = _validate_helper(
         _validate_reverse_transformed_data,
         [transformer, out, input_data.dtypes[TEST_COL]],
         should_assert,
+        results,
     )
 
-    _validate_helper(
+    results = _validate_helper(
         _validate_composition,
         [transformer, out, input_data],
         should_assert,
+        results,
     )
+
+    return results
 
 
 def _validate_hypertransformer_transformed_data(transformed_data):
@@ -204,13 +219,13 @@ def _validate_hypertransformer_transformed_data(transformed_data):
         assert dtype.kind in DATA_TYPE_TO_DTYPES['numerical']
 
 
-def _validate_hypertransformer_reversed_transformed_data(transformer, reversed_data):
+def _validate_hypertransformer_reverse_transformed_data(transformer, reversed_data):
     """Check that the reverse transformed data has the same dtype as the input."""
     expected_data_type = transformer().get_input_type()
     assert reversed_data.dtype.kind in DATA_TYPE_TO_DTYPES[expected_data_type]
 
 
-def _test_transformer_with_hypertransformer(transformer_class, input_data, should_assert):
+def _test_transformer_with_hypertransformer(transformer_class, input_data, should_assert, results):
     """Test the given transformer in the hypertransformer.
 
     Run the provided transformer using the hypertransformer using the provided
@@ -224,6 +239,12 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, shoul
             The data to test on.
         should_assert (bool):
             Whether or not to raise AssertionErrors.
+        results (dict):
+            Cumulative results summary.
+
+    Output:
+        dict:
+            The cumulative results of the integration checks.
     """
     hypertransformer = HyperTransformer(field_transformers={
         TEST_COL: transformer_class.__name__,
@@ -231,28 +252,51 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, shoul
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)
-    _validate_helper(
+    results = _validate_helper(
         _validate_hypertransformer_transformed_data,
         [transformed],
         should_assert,
+        results,
     )
 
     out = hypertransformer.reverse_transform(transformed)
-    _validate_helper(
-        _validate_hypertransformer_reversed_transformed_data,
+    results = _validate_helper(
+        _validate_hypertransformer_reverse_transformed_data,
         [transformer_class, out[TEST_COL]],
         should_assert,
+        results,
     )
+
+    return results
 
 
 def validate_transformer(transformer, should_assert=False, subtests=None):
+    """Validate that the transformer passes all integration checks.
+
+    Args:
+        transformer (str or rdt.transformer.BaseTransformer):
+            The transformer to validate.
+        should_assert (bool):
+            Whether or not to raise AssertionErrors.
+        subtests:
+            Whether or not to test with subtests.
+
+    Output:
+        dict:
+            The cumulative results of the integration checks.
+    """
     if isinstance(transformer, str):
         transformer = get_class(transformer)
 
     input_data_type = transformer.get_input_type()
 
     dataset_generators = _find_dataset_generators(input_data_type, generators)
-    _validate_helper(_validate_dataset_generators, [dataset_generators], should_assert)
+    results = _validate_helper(
+        _validate_dataset_generators,
+        [dataset_generators],
+        should_assert,
+        {},
+    )
 
     for dg in dataset_generators:
         try:
@@ -262,11 +306,24 @@ def validate_transformer(transformer, should_assert=False, subtests=None):
 
         if subtests:
             with subtests.test(msg="test_transformer_with_dataset", generator=dg):
-                _test_transformer_with_dataset(transformer, data, should_assert)
-                _test_transformer_with_hypertransformer(transformer, data, should_assert)
+                results = _test_transformer_with_dataset(transformer, data, should_assert, results)
+                results = _test_transformer_with_hypertransformer(
+                    transformer, data, should_assert, results)
         else:
-            _test_transformer_with_dataset(transformer, data, should_assert)
-            _test_transformer_with_hypertransformer(transformer, data, should_assert)
+            results = _test_transformer_with_dataset(transformer, data, should_assert, results)
+            results = _test_transformer_with_hypertransformer(
+                transformer, data, should_assert, results)
+
+    return {
+        'Dataset Generators': results[_validate_dataset_generators],
+        'Output Types': results[_validate_transformed_data],
+        'Reverse Transform': results[_validate_reverse_transformed_data],
+        'Composition is Identity': results[_validate_composition],
+        'Hypertransformer': (
+            results[_validate_hypertransformer_transformed_data] and
+            results[_validate_hypertransformer_reverse_transformed_data]
+        ),
+    }
 
 
 transformers = _get_all_transformers()

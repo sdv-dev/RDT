@@ -1,4 +1,7 @@
+import pandas as pd
+
 from tests.integration.test_transformers import validate_transformer
+
 
 def validate_transformer_integration(transformer):
     """Validate the integration tests of a transformer.
@@ -14,4 +17,12 @@ def validate_transformer_integration(transformer):
         bool:
             Whether or not the transformer passes all integration checks.
     """
-    validate_transformer(transformer)
+    results = validate_transformer(transformer)
+
+    print(pd.DataFrame(results.items(), columns=['Check', 'Correct']))
+
+    valid = True
+    for check_result in results.values():
+        valid = valid and check_result
+
+    return valid
