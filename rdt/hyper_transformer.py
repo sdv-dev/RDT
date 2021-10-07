@@ -248,7 +248,7 @@ class HyperTransformer:
 
                 data = self._fit_field_transformer(data, field, transformer)
 
-        cols = []
+        null_column_names = []
         if self._transform_nulls:
             for output_column in self._output_columns:
                 transformer = NullTransformer(self._fill_value, self._null_column)
@@ -257,10 +257,9 @@ class HyperTransformer:
 
                 if transformer._null_column:
                     column_name = self._get_null_column_name(output_column)
-                    cols.append(column_name)
+                    null_column_names.append(column_name)
 
-        self._output_columns.extend(cols)
-
+        self._output_columns.extend(null_column_names)
         self._validate_all_fields_fitted()
 
     def transform(self, data):
@@ -291,7 +290,7 @@ class HyperTransformer:
                 if transformer._null_column:
                     column_name = self._get_null_column_name(field)
                     transformed_columns.append(column_name)
-                    data[f'{field}'] = transformed[:, 0]
+                    data[field] = transformed[:, 0]
                     data[column_name] = transformed[:, 1]
 
                 else:
@@ -327,10 +326,10 @@ class HyperTransformer:
         for field, transformer in self._null_transformers.items():
             if transformer._null_column:
                 column_name = self._get_null_column_name(field)
-                data[f'{field}'] = transformer.reverse_transform(
-                    data[[f'{field}', column_name]].values)
+                data[field] = transformer.reverse_transform(
+                    data[[field, column_name]].values)
             else:
-                data[f'{field}'] = transformer.reverse_transform(data[f'{field}'].values)
+                data[field] = transformer.reverse_transform(data[field].values)
 
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         for transformer in reversed(self._transformers_sequence):
