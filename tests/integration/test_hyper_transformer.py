@@ -681,7 +681,6 @@ def test_hypertransformer_fill_value_mode():
         expected_reverse.sort_index(axis=1), reversed_data.sort_index(axis=1))
 
 
-@pytest.mark.xfail() # Null_trans checks `if self._fill_value in data:`, but fill_value is object
 def test_hypertransformer_fill_value_object():
     """Test the HyperTransformer with ``fill_value = object``.
 
