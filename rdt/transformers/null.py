@@ -123,7 +123,7 @@ class NullTransformer():
                 isna = np.where(self._fill_value == data)[0]
                 data = pd.Series(data)
 
-            if isna.any():
+            if len(isna) > 0:
                 if self.copy:
                     data = data.copy()
 
