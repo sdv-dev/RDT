@@ -60,13 +60,15 @@ class DummyTransformerMultiColumn(BaseTransformer):
         data.columns = [c.replace('_str.value', '') for c in data.columns]
         data = pd.to_datetime(data)
 
+        float_data = data.to_numpy().astype(np.float64)
+        data_is_nan = data.isna().to_numpy().astype(np.float64)
+
         output = dict(zip(
             self.output_columns,
-            [data.values.astype(np.float64), data.isnull().astype(np.float64)]
+            [float_data, data_is_nan]
         ))
 
-        output = pd.DataFrame(output)
-        output.fillna(-1, inplace=True)
+        output = pd.DataFrame(output).fillna(-1)
 
         return output
 
@@ -333,16 +335,16 @@ def test_single_category():
 
 @pytest.mark.xfail()
 def test_dtype_category():
-    df = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
+    data = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
 
     ht = HyperTransformer()
-    ht.fit(df)
+    ht.fit(data)
 
-    trans = ht.transform(df)
+    trans = ht.transform(data)
 
     rever = ht.reverse_transform(trans)
 
-    pd.testing.assert_frame_equal(rever, df)
+    pd.testing.assert_frame_equal(rever, data)
 
 
 def test_subset_of_columns():
