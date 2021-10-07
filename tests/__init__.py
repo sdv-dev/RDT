@@ -1,3 +1,6 @@
+"""RDT test module."""
+
+
 def safe_compare_dataframes(first, second):
     """Compare two dataframes even if they have NaN values.
 
@@ -8,8 +11,12 @@ def safe_compare_dataframes(first, second):
     Returns:
         bool
     """
+<<<<<<< HEAD
 
     if first.isna().all().all():
+=======
+    if first.isnull().all().all():
+>>>>>>> v0.6.0-dev
         return first.equals(second)
 
     else:

@@ -361,6 +361,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
     """
 
     _univariate = None
+    COMPOSITION_IS_IDENTITY = False
 
     def __init__(self, dtype=None, nan='mean', null_column=None, distribution='parametric'):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column)
@@ -433,7 +434,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
            issubclass(distribution, self._distributions['univariate']):
             return distribution()
 
-        raise TypeError('Invalid distribution: {}'.format(distribution))
+        raise TypeError(f'Invalid distribution: {distribution}')
 
     def _fit(self, data):
         """Fit the transformer to the data.

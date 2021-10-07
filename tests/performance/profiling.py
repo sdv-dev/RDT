@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 
-def _profile_time(transformer, method_name, dataset, iterations=100, copy=False):
+def _profile_time(transformer, method_name, dataset, iterations=10, copy=False):
     total_time = 0
     for _ in range(iterations):
         if copy:

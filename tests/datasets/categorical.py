@@ -18,8 +18,27 @@ class RandomIntegerGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         categories = [1, 2, 3, 4, 5]
         return np.random.choice(a=categories, size=num_rows)
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 3e-06,
+                'memory': 400.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 1000.0,
+            }
+        }
 
 
 class RandomIntegerNaNsGenerator(CategoricalGenerator):
@@ -27,7 +46,26 @@ class RandomIntegerNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(RandomIntegerGenerator.generate(num_rows).astype(np.float))
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 5e-06,
+                'memory': 1000.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 1000.0,
+            }
+        }
 
 
 class RandomStringGenerator(CategoricalGenerator):
@@ -35,8 +73,27 @@ class RandomStringGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         categories = ['Alice', 'Bob', 'Charlie', 'Dave', 'Eve']
         return np.random.choice(a=categories, size=num_rows)
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 500.0
+            },
+            'transform': {
+                'time': 1e-05,
+                'memory': 500.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 1000.0,
+            }
+        }
 
 
 class RandomStringNaNsGenerator(CategoricalGenerator):
@@ -44,7 +101,26 @@ class RandomStringNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(RandomStringGenerator.generate(num_rows).astype('O'))
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 1e-05,
+                'memory': 1000.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 1000.0,
+            }
+        }
 
 
 class RandomMixedGenerator(CategoricalGenerator):
@@ -55,6 +131,7 @@ class RandomMixedGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         cat_size = 5
         categories = np.hstack([
             cat.astype('O') for cat in [
@@ -68,6 +145,24 @@ class RandomMixedGenerator(CategoricalGenerator):
 
         return np.random.choice(a=categories, size=num_rows)
 
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 1e-05,
+                'memory': 1000.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 2000.0,
+            }
+        }
+
 
 class RandomMixedNaNsGenerator(CategoricalGenerator):
     """Generator that creates an array of random mixed types with nans.
@@ -77,6 +172,7 @@ class RandomMixedNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         array = RandomMixedGenerator.generate(num_rows)
 
         length = len(array)
@@ -87,14 +183,51 @@ class RandomMixedNaNsGenerator(CategoricalGenerator):
 
         return array
 
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 1e-05,
+                'memory': 2000.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 2000.0,
+            }
+        }
+
 
 class SingleIntegerGenerator(CategoricalGenerator):
     """Generator that creates an array with a single integer."""
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         constant = np.random.randint(0, 100)
         return np.full(num_rows, constant)
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 3e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 400.0,
+            }
+        }
 
 
 class SingleIntegerNaNsGenerator(CategoricalGenerator):
@@ -102,7 +235,26 @@ class SingleIntegerNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(SingleIntegerGenerator.generate(num_rows).astype(np.float))
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 3e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 500.0,
+            }
+        }
 
 
 class SingleStringGenerator(CategoricalGenerator):
@@ -110,8 +262,27 @@ class SingleStringGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         constant = 'A'
         return np.full(num_rows, constant)
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 4e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 400.0,
+            }
+        }
 
 
 class SingleStringNaNsGenerator(CategoricalGenerator):
@@ -119,7 +290,26 @@ class SingleStringNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(SingleStringGenerator.generate(num_rows).astype('O'))
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 3e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 500.0,
+            }
+        }
 
 
 class UniqueIntegerGenerator(CategoricalGenerator):
@@ -127,7 +317,26 @@ class UniqueIntegerGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return np.arange(num_rows)
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 2e-05,
+                'memory': 2000.0
+            },
+            'transform': {
+                'time': 0.0002,
+                'memory': 500000.0
+            },
+            'reverse_transform': {
+                'time': 0.0003,
+                'memory': 1000000.0,
+            }
+        }
 
 
 class UniqueIntegerNaNsGenerator(CategoricalGenerator):
@@ -135,7 +344,26 @@ class UniqueIntegerNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(UniqueIntegerGenerator.generate(num_rows))
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-05,
+                'memory': 1000.0
+            },
+            'transform': {
+                'time': 0.0002,
+                'memory': 1000000.0
+            },
+            'reverse_transform': {
+                'time': 0.0002,
+                'memory': 1000000.0,
+            }
+        }
 
 
 class UniqueStringGenerator(CategoricalGenerator):
@@ -143,7 +371,26 @@ class UniqueStringGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return np.arange(num_rows).astype(str)
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 2e-05,
+                'memory': 2000.0
+            },
+            'transform': {
+                'time': 0.0002,
+                'memory': 500000.0
+            },
+            'reverse_transform': {
+                'time': 0.0003,
+                'memory': 1000000.0,
+            }
+        }
 
 
 class UniqueStringNaNsGenerator(CategoricalGenerator):
@@ -151,4 +398,23 @@ class UniqueStringNaNsGenerator(CategoricalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(UniqueStringGenerator.generate(num_rows).astype('O'))
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 2e-05,
+                'memory': 1000.0
+            },
+            'transform': {
+                'time': 0.0005,
+                'memory': 1000000.0
+            },
+            'reverse_transform': {
+                'time': 0.0002,
+                'memory': 1000000.0,
+            }
+        }

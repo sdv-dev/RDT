@@ -10,9 +10,14 @@ from invoke import task
 @task
 def pytest(c):
     c.run(
-        'pytest ./tests/unit ./tests/integration ./tests/performance/tests ./tests/datasets/tests '
+        'pytest ./tests/unit ./tests/performance/tests ./tests/datasets/tests '
         '--cov=rdt --cov-report=xml'
     )
+
+
+@task
+def integration(c):
+    c.run('pytest ./tests/integration')
 
 
 @task
@@ -71,7 +76,9 @@ def readme(c):
 @task
 def lint(c):
     c.run('flake8 rdt')
+    c.run('pydocstyle rdt')
     c.run('flake8 tests --ignore=D')
+    c.run('pydocstyle tests')
     c.run('isort -c --recursive rdt tests')
     c.run('pylint rdt tests/performance --rcfile=setup.cfg')
 

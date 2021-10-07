@@ -17,8 +17,27 @@ class RandomIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         return np.random.randint(ii32.min, ii32.max, num_rows)
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-03,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 5e-06,
+                'memory': 100.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 100.0,
+            }
+        }
 
 
 class RandomIntegerNaNsGenerator(NumericalGenerator):
@@ -26,7 +45,26 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(RandomIntegerGenerator.generate(num_rows).astype(np.float))
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-03,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 4e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 100.0,
+            }
+        }
 
 
 class ConstantIntegerGenerator(NumericalGenerator):
@@ -34,9 +72,28 @@ class ConstantIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         constant = np.random.randint(ii32.min, ii32.max)
         return np.full(num_rows, constant)
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-03,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 100.0,
+            }
+        }
 
 
 class ConstantIntegerNaNsGenerator(NumericalGenerator):
@@ -44,7 +101,26 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(ConstantIntegerGenerator.generate(num_rows).astype(np.float))
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-03,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 3e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 100.0,
+            }
+        }
 
 
 class AlmostConstantIntegerGenerator(NumericalGenerator):
@@ -52,6 +128,7 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         values = np.random.randint(ii32.min, ii32.max, size=2)
         additional_values = np.full(num_rows - 2, values[1])
@@ -59,12 +136,31 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
         np.random.shuffle(array)
         return array
 
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-03,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 100.0,
+            }
+        }
+
 
 class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
     """Generator that creates an array with 2 only values, one of them repeated, and NaNs."""
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         values = np.random.randint(ii32.min, ii32.max, size=2)
         additional_values = np.full(num_rows - 2, values[1]).astype(np.float)
@@ -72,13 +168,50 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
         np.random.shuffle(array)
         return array
 
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-03,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 3e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 100.0,
+            }
+        }
+
 
 class NormalGenerator(NumericalGenerator):
     """Generator that creates an array of normally distributed float values."""
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return np.random.normal(size=num_rows)
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-03,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-05,
+                'memory': 100.0
+            },
+            'reverse_transform': {
+                'time': 1e-05,
+                'memory': 100.0,
+            }
+        }
 
 
 class NormalNaNsGenerator(NumericalGenerator):
@@ -86,7 +219,26 @@ class NormalNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(NormalGenerator.generate(num_rows))
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-03,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 4e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 100.0,
+            }
+        }
 
 
 class BigNormalGenerator(NumericalGenerator):
@@ -94,7 +246,26 @@ class BigNormalGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return np.random.normal(scale=1e10, size=num_rows)
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-03,
+                'memory': 200.0
+            },
+            'transform': {
+                'time': 1e-06,
+                'memory': 100.0
+            },
+            'reverse_transform': {
+                'time': 5e-06,
+                'memory': 100.0,
+            }
+        }
 
 
 class BigNormalNaNsGenerator(NumericalGenerator):
@@ -102,4 +273,23 @@ class BigNormalNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def generate(num_rows):
+        """Generate a ``num_rows`` number of rows."""
         return add_nans(BigNormalGenerator.generate(num_rows))
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1e-03,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 3e-06,
+                'memory': 200.0
+            },
+            'reverse_transform': {
+                'time': 2e-06,
+                'memory': 100.0,
+            }
+        }

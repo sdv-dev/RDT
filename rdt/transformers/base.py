@@ -1,6 +1,8 @@
 """BaseTransformer module."""
 import abc
 
+import pandas as pd
+
 
 class BaseTransformer:
     """Base class for all transformers.
@@ -124,6 +126,9 @@ class BaseTransformer:
 
     @staticmethod
     def _set_columns_data(data, columns_data, columns):
+        if isinstance(columns_data, (pd.DataFrame, pd.Series)):
+            columns_data.index = data.index
+
         if len(columns_data.shape) == 1:
             data[columns[0]] = columns_data
         else:
@@ -177,12 +182,14 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def transform(self, data):
+    def transform(self, data, drop=True):
         """Transform the `self.columns` of the `data`.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
+            drop (bool):
+                Whether or not to drop original columns.
 
         Returns:
             pd.DataFrame:
@@ -198,6 +205,8 @@ class BaseTransformer:
         transformed_data = self._transform(columns_data)
 
         self._set_columns_data(data, transformed_data, self.output_columns)
+        if drop:
+            data.drop(self.columns, axis=1, inplace=True)
 
         return data.drop(self.columns, axis=1)
 
@@ -232,12 +241,14 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def reverse_transform(self, data):
+    def reverse_transform(self, data, drop=True):
         """Revert the transformations to the original values.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
+            drop (bool):
+                Whether or not to drop derived columns.
 
         Returns:
             pandas.DataFrame:
@@ -253,5 +264,7 @@ class BaseTransformer:
         reversed_data = self._reverse_transform(columns_data)
 
         self._set_columns_data(data, reversed_data, self.columns)
+        if drop:
+            data.drop(self.output_columns, axis=1, inplace=True)
 
         return data.drop(self.output_columns, axis=1)
