@@ -94,9 +94,7 @@ class NullTransformer():
                     data = data.fillna(self._fill_value)
 
             if self._null_column:
-                print('athu')
                 data = pd.concat([data, isnull.astype('int')], axis=1).values
-                print(data)
                 return data
 
             if self._fill_value in data.values:

@@ -418,13 +418,40 @@ def null_transformer_asserts(data, ht, transformed, expected):
     the original data (again, doesn't check for order of columns).
     """
     print(transformed)
+    print(expected)
+    print(transformed.sort_index(axis=1).values)
+    print(expected.sort_index(axis=1).values)
     np.testing.assert_equal(
         transformed.sort_index(axis=1).values,
         expected.sort_index(axis=1).values
     )
 
+    print('\n')
     reversed_data = ht.reverse_transform(transformed)
+    print(reversed_data.sort_index(axis=1))
+    print(data.sort_index(axis=1))
     pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
+
+
+class DummyTransformer4(BaseTransformer):
+
+    OUTPUT_TYPES = {'value': 'numerical'}
+
+    def _fit(self, data):
+        pass
+
+    def _transform(self, data):
+        for i, v in enumerate(data):
+            if v == 'abc':
+                data[i] = 1.0
+
+        return data
+
+    def _reverse_transform(self, data):
+        for i, v in enumerate(data):
+            if v == 1.0:
+                data[i] = 'abc'
+        return data
 
 
 def test_hypertransformer_transform_nulls_false():
@@ -443,18 +470,18 @@ def test_hypertransformer_transform_nulls_false():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = get_input_data_without_nan()
-    transformers = get_transformers()
+    data = pd.DataFrame({'col': ['abc', 'abc']})
+    transformers = {'col': DummyTransformer4()} 
 
     ht = HyperTransformer(field_transformers=transformers, transform_nulls=False)
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = get_transformed_data()
+    expected = pd.DataFrame({'col': [1.0, 1.0]})
     null_transformer_asserts(data, ht, transformed, expected)
 
 
-def test_hypertransformer_transform_nulls_false_fill_value_False():
+def test_hypertransformer_transform_nulls_false_fill_value_false():
     """Test the `HyperTransformer` with ``transform_nulls = False`` and ``fill_value = False``.
 
     When ``transform_nulls = False``, if ``fill_value`` is passed as anything other than None,
@@ -471,11 +498,8 @@ def test_hypertransformer_transform_nulls_false_fill_value_False():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    get_input_data_without_nan()
-    transformers = get_transformers()
-
     with np.testing.assert_raises(ValueError):
-        HyperTransformer(field_transformers=transformers, transform_nulls=False, fill_value='name')
+        HyperTransformer(field_transformers={}, transform_nulls=False, fill_value='name')
 
 
 def test_hypertransformer_transform_nulls_false_null_column_true():
@@ -495,24 +519,28 @@ def test_hypertransformer_transform_nulls_false_null_column_true():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    get_input_data_without_nan()
-    transformers = get_transformers()
-
     with np.testing.assert_raises(ValueError):
-        HyperTransformer(field_transformers=transformers, transform_nulls=False, null_column=True)
+        HyperTransformer(field_transformers={}, transform_nulls=False, null_column=True)
 
 
 class DummyTransformer(BaseTransformer):
 
-    OUTPUT_TYPES = {'value': 'categorical'}
+    OUTPUT_TYPES = {'value': 'float'}
 
     def _fit(self, data):
         pass
 
     def _transform(self, data):
+        for i, v in enumerate(data):
+            if v == 'abc':
+                data[i] = 1.0
+
         return data
 
     def _reverse_transform(self, data):
+        for i, v in enumerate(data):
+            if v == 1.0:
+                data[i] = 'abc'
         return data
 
 
@@ -542,7 +570,7 @@ def test_hypertransformer_fill_value_string():
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col': ['abc', 'filled_value']})
+    expected = pd.DataFrame({'col': [1.0, 'filled_value']})
     null_transformer_asserts(data, ht, transformed, expected)
 
 
@@ -689,7 +717,7 @@ class DummyTransformer3(BaseTransformer):
         return data
 
 
-def test_hypertransformer_fill_value_string_null_column_True():
+def test_hypertransformer_fill_value_string_null_column_true():
     """Test the HyperTransformer with ``fill_value = string, null_column = True``.
 
     When ``fill_value`` is a string ``'filled_value'`` and ``null_column`` is ``True``,
@@ -716,28 +744,8 @@ def test_hypertransformer_fill_value_string_null_column_True():
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col.value': [1.0, 'filled_value'], 'col.is_null': [0.0, 1.0]})
+    expected = pd.DataFrame({'col.value': [1.0, 'filled_value'], 'col.is_null': [0, 1]})
     null_transformer_asserts(data, ht, transformed, expected)
-
-
-def get_transformed_fill_value_none_null_column_true():
-    return pd.DataFrame({
-        'integer': [1, 2, 1, 3, 1],
-        'integer.null': [0.0, 0.0, 0.0, 0.0, 0.0],
-        'float': [0.1, 0.2, 0.1, np.nan, 0.1],
-        'float.null': [0.0, 0.0, 0.0, 1.0, 0.0],
-        'categorical': [0.4, 0.4, 0.4, 0.9, 0.4],
-        'categorical.null': [0.0, 0.0, 0.0, 0.0, 0.0],
-        'bool': [0.0, np.nan, 0.0, 1.0, 0.0],
-        'bool.null': [0.0, 1.0, 0.0, 0.0, 0.0],
-        'datetime': [
-            np.nan, 1.2649824e+18, 1.262304e+18,
-            1.2649824e+18, 1.262304e+18
-        ],
-        'datetime.null': [1.0, 0.0, 0.0, 0.0, 0.0],
-        'names': [0.3, 0.8, 0.8, 0.3, 0.3],
-        'names.null': [0.0, 0.0, 0.0, 0.0, 0.0]
-    })
 
 
 def test_hypertransformer_fill_value_none_null_column_true():
@@ -758,32 +766,85 @@ def test_hypertransformer_fill_value_none_null_column_true():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = get_input_data_with_nan()
-    transformers = get_transformers()
+    data = pd.DataFrame({'col': ['abc', np.nan]})
+    transformers = {'col': DummyTransformer3()}
 
-    ht = HyperTransformer(transformers, fill_value=None, null_column=True)
+    ht = HyperTransformer(field_transformers=transformers, fill_value=None, null_column=True)
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = get_transformed_fill_value_none_null_column_true()
+    expected = pd.DataFrame({'col.value': [1.0, np.nan], 'col.is_null': [0, 1]})
+
+    pd.testing.assert_frame_equal(
+        transformed.sort_index(axis=1),
+        expected.sort_index(axis=1),
+        check_dtype=False
+    )
+
+    reversed_data = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
+
+
+def test_hypertransformer_fill_value_string_multiple_columns():
+    """Test the HyperTransformer with ``fill_value = string, null_column = True``.
+
+    When ``fill_value`` is a string ``'filled_value'`` and ``null_column`` is ``True``,
+    it should (1) transform the data like the normal ``HyperTransformer``, (2) for each
+    column in the data, create a new column flagging ``nan`` values with ``1.0``'s (and
+    ``0.0``'s otherwise) and (3) fill all the transformed ``np.nan`` values with the
+    ``'filled_value'`` string.
+
+    Setup:
+        - Get the data and the transformers.
+
+    Input:
+        - A dataset without ``nan`` values.
+        - A dictionary of which transformers to apply to each column of the data.
+
+    Expected behavior:
+        - It should fit and transform the dataset.
+        - The results will be checked through the ``null_transformer_asserts`` method.
+    """
+    data = pd.DataFrame({'col': ['abc', np.nan], 'col2': ['abc', np.nan]})
+    transformers = {'col': DummyTransformer3(), 'col2': DummyTransformer3()}
+
+    ht = HyperTransformer(field_transformers=transformers, fill_value='filled_value', null_column=False)
+    ht.fit(data)
+    transformed = ht.transform(data)
+
+    expected = pd.DataFrame({'col.value': [1.0, 'filled_value'], 'col2.value': [1.0, 'filled_value']})
     null_transformer_asserts(data, ht, transformed, expected)
 
 
-def get_transformed_fill_value_string_null_column_none():
-    return pd.DataFrame({
-        'integer': [1, 2, 1, 3, 1],
-        'float': [0.1, 0.2, 0.1, 'filled_value', 0.1],
-        'float.null': [0.0, 0.0, 0.0, 1.0, 0.0],
-        'categorical': [0.4, 0.4, 0.4, 0.9, 0.4],
-        'bool': [0.0, 'filled_value', 0.0, 1.0, 0.0],
-        'bool.null': [0.0, 1.0, 0.0, 0.0, 0.0],
-        'datetime': [
-            'filled_value', 1.2649824e+18, 1.262304e+18,
-            1.2649824e+18, 1.262304e+18
-        ],
-        'datetime.null': [1.0, 0.0, 0.0, 0.0, 0.0],
-        'names': [0.3, 0.8, 0.8, 0.3, 0.3]
-    })
+def test_hypertransformer_fill_value_string_column_null_true_multiple_columns():
+    """Test the HyperTransformer with ``fill_value = string, null_column = True``.
+
+    When ``fill_value`` is a string ``'filled_value'`` and ``null_column`` is ``True``,
+    it should (1) transform the data like the normal ``HyperTransformer``, (2) for each
+    column in the data, create a new column flagging ``nan`` values with ``1.0``'s (and
+    ``0.0``'s otherwise) and (3) fill all the transformed ``np.nan`` values with the
+    ``'filled_value'`` string.
+
+    Setup:
+        - Get the data and the transformers.
+
+    Input:
+        - A dataset without ``nan`` values.
+        - A dictionary of which transformers to apply to each column of the data.
+
+    Expected behavior:
+        - It should fit and transform the dataset.
+        - The results will be checked through the ``null_transformer_asserts`` method.
+    """
+    data = pd.DataFrame({'col': ['abc', np.nan], 'col2': ['abc', np.nan]})
+    transformers = {'col': DummyTransformer3(), 'col2': DummyTransformer3()}
+
+    ht = HyperTransformer(field_transformers=transformers, fill_value='filled_value', null_column=True)
+    ht.fit(data)
+    transformed = ht.transform(data)
+
+    expected = pd.DataFrame({'col.value': [1.0, 'filled_value'], 'col2.value': [1.0, 'filled_value'], 'col.is_null': [0, 1], 'col2.is_null': [0, 1]})
+    null_transformer_asserts(data, ht, transformed, expected)
 
 
 def test_hypertransformer_fill_value_string_null_column_none():
@@ -806,12 +867,12 @@ def test_hypertransformer_fill_value_string_null_column_none():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = get_input_data_with_nan()
-    transformers = get_transformers()
+    data = pd.DataFrame({'col': ['abc', np.nan], 'col2': ['abc', 'abc']})
+    transformers = {'col': DummyTransformer3(), 'col2': DummyTransformer3()}
 
-    ht = HyperTransformer(transformers, fill_value='filled_value', null_column=None)
+    ht = HyperTransformer(field_transformers=transformers, fill_value='filled_value', null_column=None)
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = get_transformed_fill_value_string_null_column_True()
+    expected = pd.DataFrame({'col.value': [1.0, 'filled_value'], 'col2.value': [1.0, 1.0], 'col.is_null': [0, 1]})
     null_transformer_asserts(data, ht, transformed, expected)

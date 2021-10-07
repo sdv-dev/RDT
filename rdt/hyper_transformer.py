@@ -200,14 +200,10 @@ class HyperTransformer:
         output_types = transformer.get_output_types()
         next_transformers = transformer.get_next_transformers()
         for (output_name, output_type) in output_types.items():
-            print(output_name)
             output_field = self._multi_column_fields.get(output_name, output_name)
-            print(output_name)
             next_transformer = self._get_next_transformer(
                 output_field, output_type, next_transformers)
-            print(output_name)
-            print('1')
-            print(next_transformer)
+
             if next_transformer:
                 if self._field_in_data(output_field, data):
                     self._fit_field_transformer(data, output_field, next_transformer)
@@ -248,13 +244,20 @@ class HyperTransformer:
 
                 data = self._fit_field_transformer(data, field, transformer)
 
+        cols = []
         if self._transform_nulls:
-            print(self._output_columns)
+            #self._null_transformers = {} # TODO: delete this
             for output_column in self._output_columns:
                 transformer = NullTransformer(self._fill_value, self._null_column)
-                print(output_column)
                 transformer.fit(data[output_column])
                 self._null_transformers[output_column] = transformer
+                
+                if transformer._null_column:
+                    print('tohub,rphohunouh', output_column)
+                    name = ''.join(output_column.split('.')[:-1])
+                    cols.append(f'{name}.is_null')
+        
+        self._output_columns.extend(cols)
 
         self._validate_all_fields_fitted()
 
@@ -280,27 +283,21 @@ class HyperTransformer:
 
         transformed_columns = self._subset(self._output_columns, data.columns)
 
-        c = []
         if self._transform_nulls:
             for field, transformer in self._null_transformers.items():
                 transformed = transformer.transform(data[field])
-                if transformed.shape[1] == 1:
-                    data[field] = transformed
-                else:
-                    name = ''.join(field.split('.')[:-1])
-                    data[f'{name}.is_null'] = transformed[:, 1]
-                    data[field] = transformed[:, 0]
-                    print(data)
-                    c.append(f'{name}.is_null')
-
-                print('onteuhu')
                 print(field)
+                print(transformed)
+                if transformer._null_column:
+                    name = ''.join(field.split('.')[:-1])
+                    data[f'{field}'] = transformed[:,0]
+                    data[f'{name}.is_null'] = transformed[:,1]
+                    transformed_columns.append(f'{name}.is_null')
 
-                print('nothue')
+                else:
+                    data[field] = transformed
         
-        print(data)
-        data = data.reindex(columns=unknown_columns + transformed_columns+c)
-        print(data)
+        data = data.reindex(columns=unknown_columns + transformed_columns)
         return data
 
     def fit_transform(self, data):
@@ -328,14 +325,23 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
-        if self._transform_nulls:
-            for field, transformer in self._null_transformers.items():
-                data[field] = transformer.reverse_transform(data[field])
+        for field, transformer in self._null_transformers.items():
+            if transformer._null_column:
+                name = ''.join(field.split('.')[:-1])
+                data[f'{field}'] = transformer.reverse_transform(data[[f'{field}', f'{name}.is_null']].values)
+            else:
+                data[f'{field}'] = transformer.reverse_transform(data[f'{field}'].values)
 
+        print(self._output_columns)
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         for transformer in reversed(self._transformers_sequence):
             data = transformer.reverse_transform(data, drop=False)
 
         reversed_columns = self._subset(self._input_columns, data.columns)
-
-        return data.reindex(columns=unknown_columns + reversed_columns)
+        print(self._input_columns)
+        print('noteuheon', reversed_columns)
+        print(data)
+        data = data.reindex(columns=unknown_columns + reversed_columns)
+        print('oeanth', unknown_columns)
+        print(data)
+        return data
