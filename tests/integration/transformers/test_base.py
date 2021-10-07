@@ -27,7 +27,6 @@ def test_dummy_transformer_series_output():
         - The transformed data should be able to reversed to
           re-produce the input data.
     """
-
     # Setup
     class DummyTransformer(BaseTransformer):
 
@@ -86,7 +85,6 @@ def test_dummy_transformer_dataframe_output():
         - The transformed data should be able to reversed to
           re-produce the input data.
     """
-
     # Setup
     class DummyTransformer(BaseTransformer):
 
@@ -104,7 +102,7 @@ def test_dummy_transformer_dataframe_output():
                 self.output_columns,
                 [
                     data.astype(np.float).fillna(-1),
-                    data.isnull().astype(np.float)
+                    data.isna().astype(np.float)
                 ]
             )))
 
@@ -160,7 +158,6 @@ def test_dummy_transformer_multi_column_input():
         - The data should be able to be transformed and reverse
           transformed to re-produce the input data.
     """
-
     # Setup
     class DummyTransformer(BaseTransformer):
 
@@ -176,13 +173,15 @@ def test_dummy_transformer_multi_column_input():
             # Convert multiple columns into a single datetime
             data = pd.to_datetime(data)
 
+            float_data = data.to_numpy().astype(np.float64)
+            data_is_nan = data.isna().to_numpy().astype(np.float64)
+
             output = dict(zip(
                 self.output_columns,
-                [data.values.astype(np.float64), data.isnull().astype(np.float64)]
+                [float_data, data_is_nan]
             ))
 
-            output = pd.DataFrame(output)
-            output.fillna(-1, inplace=True)
+            output = pd.DataFrame(output).fillna(-1)
 
             return output
 

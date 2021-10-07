@@ -22,7 +22,7 @@ class TestRandomBooleanGenerator:
         assert len(output) == NUM_ROWS
         assert output.dtype == bool
         assert len(pd.unique(output)) == 2
-        assert pd.isnull(output).sum() == 0
+        assert pd.isna(output).sum() == 0
 
 
 class TestRandomBooleanNaNsGenerator:
@@ -42,7 +42,7 @@ class TestRandomBooleanNaNsGenerator:
         assert len(output) == NUM_ROWS
         assert output.dtype == 'O'
         assert len(pd.unique(output)) == 3
-        assert pd.isnull(output).sum() > 0
+        assert pd.isna(output).sum() > 0
 
 
 class TestRandomSkewedBooleanGenerator:
@@ -62,7 +62,7 @@ class TestRandomSkewedBooleanGenerator:
         assert len(output) == NUM_ROWS
         assert output.dtype == bool
         assert len(pd.unique(output)) == 2
-        assert pd.isnull(output).sum() == 0
+        assert pd.isna(output).sum() == 0
 
 
 class TestRandomSkewedBooleanNaNsGenerator:
@@ -83,7 +83,7 @@ class TestRandomSkewedBooleanNaNsGenerator:
         assert len(output) == NUM_ROWS
         assert output.dtype == 'O'
         assert len(pd.unique(output)) == 3
-        assert pd.isnull(output).sum() > 0
+        assert pd.isna(output).sum() > 0
 
 
 class TestConstantBooleanGenerator:
@@ -104,7 +104,7 @@ class TestConstantBooleanGenerator:
         assert len(output) == NUM_ROWS
         assert output.dtype == bool
         assert len(pd.unique(output)) == 1
-        assert pd.isnull(output).sum() == 0
+        assert pd.isna(output).sum() == 0
 
 
 class TestConstantBooleanNaNsGenerator:
@@ -114,4 +114,4 @@ class TestConstantBooleanNaNsGenerator:
         assert len(output) == NUM_ROWS
         assert output.dtype == 'O'
         assert len(pd.unique(output)) == 2
-        assert pd.isnull(output).sum() > 0
+        assert pd.isna(output).sum() > 0

@@ -50,7 +50,7 @@ class CategoricalTransformer(BaseTransformer):
         intervals = state.get('intervals')
         if intervals:
             for key in list(intervals):
-                if pd.isnull(key):
+                if pd.isna(key):
                     intervals[np.nan] = intervals.pop(key)
 
         self.__dict__ = state
@@ -103,7 +103,7 @@ class CategoricalTransformer(BaseTransformer):
             end = start + prob
             mean = start + prob / 2
             std = prob / 6
-            if pd.isnull(value):
+            if pd.isna(value):
                 value = np.nan
 
             intervals[value] = (start, end, mean, std)
@@ -143,9 +143,9 @@ class CategoricalTransformer(BaseTransformer):
         for category, values in self.intervals.items():
             mean, std = values[2:]
             if category is np.nan:
-                mask = data.isnull()
+                mask = data.isna()
             else:
-                mask = (data.values == category)
+                mask = (data.to_numpy() == category)
 
             if self.fuzzy:
                 result[mask] = norm.rvs(mean, std, size=mask.sum())
@@ -156,7 +156,7 @@ class CategoricalTransformer(BaseTransformer):
 
     def _get_value(self, category):
         """Get the value that represents this category."""
-        if pd.isnull(category):
+        if pd.isna(category):
             category = np.nan
 
         mean, std = self.intervals[category][2:]
@@ -198,7 +198,7 @@ class CategoricalTransformer(BaseTransformer):
         if self.clip:
             return data.clip(0, 1)
 
-        return np.mod(data, 1)
+        return data % 1
 
     def _reverse_transform_by_matrix(self, data):
         """Reverse transform the data with matrix operations."""
@@ -207,7 +207,7 @@ class CategoricalTransformer(BaseTransformer):
 
         data = np.broadcast_to(data, (num_categories, num_rows)).T
         means = np.broadcast_to(self.means, (num_rows, num_categories))
-        diffs = np.abs(np.subtract(data, means))
+        diffs = np.abs(data - means)
         indexes = np.argmin(diffs, axis=1)
 
         self._get_category_from_index = list(self.means.index).__getitem__
@@ -220,7 +220,7 @@ class CategoricalTransformer(BaseTransformer):
         # loop over categories
         for category, values in self.intervals.items():
             start = values[0]
-            mask = (start <= data.values)
+            mask = (start <= data.to_numpy())
             result[mask] = category
 
         return pd.Series(result, index=data.index, dtype=self.dtype)
@@ -374,7 +374,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         """
         data = self._prepare_data(data)
 
-        null = pd.isnull(data)
+        null = pd.isna(data)
         self._uniques = list(pd.unique(data[~null]))
         self._dummy_na = null.any()
         self._num_dummies = len(self._uniques)
@@ -402,7 +402,7 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         if self._dummy_na:
             null = np.zeros((rows, 1), dtype=int)
-            null[pd.isnull(data)] = 1
+            null[pd.isna(data)] = 1
             array = np.append(array, null, axis=1)
 
         return array

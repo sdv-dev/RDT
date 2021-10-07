@@ -142,7 +142,7 @@ def _test_transformer_with_dataset(transformer_class, input_data):
 
 def _validate_hypertransformer_transformed_data(transformed_data):
     """Check that the transformed data is not null and of type float."""
-    assert transformed_data.notnull().all(axis=None)
+    assert transformed_data.notna().all(axis=None)
 
     for dtype in transformed_data.dtypes:
         assert dtype.kind in DATA_TYPE_TO_DTYPES['numerical']
