@@ -79,21 +79,21 @@ class DatetimeTransformer(BaseTransformer):
         multipliers = [10] * 9 + [60, 60, 24]
         for multiplier in multipliers:
             candidate = self.divider * multiplier
-            if np.mod(transformed, candidate).any():
+            if (transformed % candidate).any():
                 break
 
             self.divider = candidate
 
     def _transform_helper(self, datetimes):
         """Transform datetime values to integer."""
-        nulls = datetimes.isnull()
-        integers = pd.to_numeric(datetimes, errors='coerce').values.astype(np.float64)
+        nulls = datetimes.isna()
+        integers = pd.to_numeric(datetimes, errors='coerce').to_numpy().astype(np.float64)
         integers[nulls] = np.nan
         transformed = pd.Series(integers)
 
         if self.strip_constant:
             self._find_divider(transformed)
-            transformed = transformed.floordiv(self.divider)
+            transformed = transformed // self.divider
 
         return transformed
 
