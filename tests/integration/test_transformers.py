@@ -287,10 +287,7 @@ def validate_transformer(transformer, should_assert=False, subtests=None):
     _validate_helper(_validate_dataset_generators, [dataset_generators], should_assert, results)
 
     for dg in dataset_generators:
-        try:
-            data = pd.DataFrame({TEST_COL: dg.generate(DATA_SIZE)})
-        except NotImplementedError:
-            continue
+        data = pd.DataFrame({TEST_COL: dg.generate(DATA_SIZE)})
 
         if subtests:
             with subtests.test(msg='test_transformer_with_dataset', generator=dg):

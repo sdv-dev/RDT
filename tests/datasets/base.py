@@ -33,13 +33,19 @@ class BaseDatasetGenerator(ABC):
         subclasses = []
         for subclass in cls.__subclasses__():
             if ABC not in subclass.__bases__:
-                subclasses.append(subclass)
+                try:
+                    subclass()
+                except TypeError:
+                    pass
+                else:
+                    subclasses.append(subclass)
 
             subclasses += subclass.get_subclasses()
 
         return subclasses
 
     @staticmethod
+    @abstractmethod
     def get_performance_thresholds():
         """Return the expected threseholds."""
         raise NotImplementedError()
