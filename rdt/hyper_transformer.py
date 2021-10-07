@@ -200,10 +200,14 @@ class HyperTransformer:
         output_types = transformer.get_output_types()
         next_transformers = transformer.get_next_transformers()
         for (output_name, output_type) in output_types.items():
+            print(output_name)
             output_field = self._multi_column_fields.get(output_name, output_name)
+            print(output_name)
             next_transformer = self._get_next_transformer(
                 output_field, output_type, next_transformers)
-
+            print(output_name)
+            print('1')
+            print(next_transformer)
             if next_transformer:
                 if self._field_in_data(output_field, data):
                     self._fit_field_transformer(data, output_field, next_transformer)
@@ -245,9 +249,10 @@ class HyperTransformer:
                 data = self._fit_field_transformer(data, field, transformer)
 
         if self._transform_nulls:
-            self._null_transformers = {}
+            print(self._output_columns)
             for output_column in self._output_columns:
                 transformer = NullTransformer(self._fill_value, self._null_column)
+                print(output_column)
                 transformer.fit(data[output_column])
                 self._null_transformers[output_column] = transformer
 
@@ -275,11 +280,28 @@ class HyperTransformer:
 
         transformed_columns = self._subset(self._output_columns, data.columns)
 
+        c = []
         if self._transform_nulls:
             for field, transformer in self._null_transformers.items():
-                data[field] = transformer.transform(data[field])
+                transformed = transformer.transform(data[field])
+                if transformed.shape[1] == 1:
+                    data[field] = transformed
+                else:
+                    name = ''.join(field.split('.')[:-1])
+                    data[f'{name}.is_null'] = transformed[:, 1]
+                    data[field] = transformed[:, 0]
+                    print(data)
+                    c.append(f'{name}.is_null')
 
-        return data.reindex(columns=unknown_columns + transformed_columns)
+                print('onteuhu')
+                print(field)
+
+                print('nothue')
+        
+        print(data)
+        data = data.reindex(columns=unknown_columns + transformed_columns+c)
+        print(data)
+        return data
 
     def fit_transform(self, data):
         """Fit the transformers to the data and then transform it.
