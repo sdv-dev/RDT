@@ -577,6 +577,7 @@ class DummyFloatTransformer(BaseTransformer):
         return data
 
 
+#empty data TODO
 def test_hypertransformer_fill_value_mean():
     """Test the HyperTransformer with ``fill_value = mean``.
 
@@ -596,11 +597,13 @@ def test_hypertransformer_fill_value_mean():
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
     data = pd.DataFrame({
-        'col': [1.0, np.nan, 0.0]
+        'col1': [1.0, np.nan, np.nan, 0.0],
+        'col2': [np.nan, 2.0, 1.0, 0.0]
     })
 
     transformers = {
-        'col': DummyFloatTransformer()
+        'col1': DummyFloatTransformer(),
+        'col2': DummyFloatTransformer()
     }
 
     ht = HyperTransformer(field_transformers=transformers, fill_value='mean', null_column=False)
@@ -608,45 +611,9 @@ def test_hypertransformer_fill_value_mean():
     transformed = ht.transform(data)
 
     expected = pd.DataFrame({
-        'col': [1.0, 0.5, 0.0]
+        'col1.value': [1.0, 0.5, 0.5, 0.0],
+        'col2.value': [1.0, 2.0, 1.0, 0.0]
     })
-    null_transformer_asserts(data, ht, transformed, expected)
-
-
-def test_hypertransformer_fill_value_mean2():
-    """Test the HyperTransformer with ``fill_value = mean``.
-
-    When ``fill_value`` is the string ``'mean'``, it should behave like the normal
-    ``HyperTransformer``, but filling all the transformed ``np.nan`` values with the
-    mean of the values of the column.
-
-    Setup:
-        - Get the data and the transformers.
-
-    Input:
-        - A dataset without ``nan`` values.
-        - A dictionary of which transformers to apply to each column of the data.
-
-    Expected behavior:
-        - It should fit and transform the dataset.
-        - The results will be checked through the ``null_transformer_asserts`` method.
-    """
-    data = pd.DataFrame({
-        'col': [1.0, np.nan, 0.0, 0.5]
-    })
-
-    transformers = {
-        'col': DummyFloatTransformer()
-    }
-
-    ht = HyperTransformer(field_transformers=transformers, fill_value='mean', null_column=False)
-    ht.fit(data)
-    transformed = ht.transform(data)
-
-    expected = pd.DataFrame({
-        'col': [1.0, 0.5, 0.0, 0.5]
-    })
-
     np.testing.assert_equal(
         transformed.sort_index(axis=1).values,
         expected.sort_index(axis=1).values
@@ -655,7 +622,8 @@ def test_hypertransformer_fill_value_mean2():
     # The reverse is different from the original data, since the mean of the values was present
     # within the data
     expected_reverse = pd.DataFrame({
-        'col': [1.0, np.nan, 0.0, np.nan]
+        'col1': [1.0, np.nan, np.nan, 0.0],
+        'col2': [np.nan, 2.0, np.nan, 0.0]
     })
     reversed_data = ht.reverse_transform(transformed)
 
