@@ -326,10 +326,9 @@ class HyperTransformer:
         for field, transformer in self._null_transformers.items():
             if transformer.creates_null_column():
                 column_name = self._get_null_column_name(field)
-                data[field] = transformer.reverse_transform(
-                    data[[field, column_name]].values)
+                data[field] = transformer.reverse_transform(data[[field, column_name]].to_numpy())
             else:
-                data[field] = transformer.reverse_transform(data[field].values)
+                data[field] = transformer.reverse_transform(data[field].to_numpy())
 
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         for transformer in reversed(self._transformers_sequence):
