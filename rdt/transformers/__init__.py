@@ -91,6 +91,7 @@ def load_transformer(transformer):
     return transformer()
 
 
+@lru_cache()
 def get_transformers_by_type():
     """Build a ``dict`` mapping data types to valid existing transformers for that type.
 
