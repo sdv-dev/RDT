@@ -553,7 +553,7 @@ def test_hypertransformer_fill_value_string():
     null_transformer_asserts(data, ht, transformed, expected)
 
 
-class DummyTransformerMean(BaseTransformer):
+class DummyFloatTransformer(BaseTransformer):
 
     OUTPUT_TYPES = {'value': 'float'}
 
@@ -590,7 +590,7 @@ def test_hypertransformer_fill_value_mean():
     })
 
     transformers = {
-        'col': DummyTransformerMean()
+        'col': DummyFloatTransformer()
     }
 
     ht = HyperTransformer(field_transformers=transformers, fill_value='mean', null_column=False)
@@ -598,12 +598,62 @@ def test_hypertransformer_fill_value_mean():
     transformed = ht.transform(data)
 
     expected = pd.DataFrame({
-        'col': [1.0, 0.5, 0.0]  # it bugs out if there is only one value
+        'col': [1.0, 0.5, 0.0]
     })
     null_transformer_asserts(data, ht, transformed, expected)
 
 
-@pytest.mark.xfail()
+def test_hypertransformer_fill_value_mean2():
+    """Test the HyperTransformer with ``fill_value = mean``.
+
+    When ``fill_value`` is the string ``'mean'``, it should behave like the normal
+    ``HyperTransformer``, but filling all the transformed ``np.nan`` values with the
+    mean of the values of the column.
+
+    Setup:
+        - Get the data and the transformers.
+
+    Input:
+        - A dataset without ``nan`` values.
+        - A dictionary of which transformers to apply to each column of the data.
+
+    Expected behavior:
+        - It should fit and transform the dataset.
+        - The results will be checked through the ``null_transformer_asserts`` method.
+    """
+    data = pd.DataFrame({
+        'col': [1.0, np.nan, 0.0, 0.5]
+    })
+
+    transformers = {
+        'col': DummyFloatTransformer()
+    }
+
+    ht = HyperTransformer(field_transformers=transformers, fill_value='mean', null_column=False)
+    ht.fit(data)
+    transformed = ht.transform(data)
+
+    expected = pd.DataFrame({
+        'col': [1.0, 0.5, 0.0, 0.5]
+    })
+
+    np.testing.assert_equal(
+        transformed.sort_index(axis=1).values,
+        expected.sort_index(axis=1).values
+    )
+
+    # The reverse is different from the original data, since the mean of the values was present
+    # within the data
+    expected_reverse = pd.DataFrame({
+        'col': [1.0, np.nan, 0.0, np.nan]
+    })
+    reversed_data = ht.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(
+        expected_reverse.sort_index(axis=1), reversed_data.sort_index(axis=1))
+
+
+
 def test_hypertransformer_fill_value_mode():
     """Test the HyperTransformer with ``fill_value = mode``.
 
@@ -627,7 +677,7 @@ def test_hypertransformer_fill_value_mode():
     })
 
     transformers = {
-        'col': DummyTransformerMean()
+        'col': DummyFloatTransformer()
     }
 
     ht = HyperTransformer(field_transformers=transformers, fill_value='mode', null_column=False)
@@ -637,9 +687,24 @@ def test_hypertransformer_fill_value_mode():
     expected = pd.DataFrame({
         'col': [2.0, 1.0, 2.0, 2.0]
     })
-    null_transformer_asserts(data, ht, transformed, expected)
+
+    np.testing.assert_equal(
+        transformed.sort_index(axis=1).values,
+        expected.sort_index(axis=1).values
+    )
+
+    # The reverse is different from the original data, since the mode of the values was present
+    # within the data
+    expected_reverse = pd.DataFrame({
+        'col': [np.nan, 1.0, np.nan, np.nan]
+    })
+    reversed_data = ht.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(
+        expected_reverse.sort_index(axis=1), reversed_data.sort_index(axis=1))
 
 
+@pytest.mark.xfail() # Null_trans checks `if self._fill_value in data:`, but fill_value is object
 def test_hypertransformer_fill_value_object():
     """Test the HyperTransformer with ``fill_value = object``.
 
@@ -712,6 +777,7 @@ def test_hypertransformer_fill_value_string_null_column_true():
         field_transformers=transformers,
         fill_value='filled_value',
         null_column=True)
+
     ht.fit(data)
     transformed = ht.transform(data)
 
