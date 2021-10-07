@@ -82,22 +82,23 @@ class NullTransformer():
         Returns:
             numpy.ndarray
         """
-        if self.nulls:
-            if not isinstance(data, pd.Series):
-                data = pd.Series(data)
+        if not isinstance(data, pd.Series):
+            data = pd.Series(data)
 
-            isna = data.isna()
-            if self.nulls and self._fill_value is not None:
+        isna = pd.Series()
+        if self.nulls:
+            if self._fill_value is not None:
+                isna = data.isna()
                 if not self.copy:
                     data[isna] = self._fill_value
                 else:
                     data = data.fillna(self._fill_value)
 
-            if self._null_column:
-                return pd.concat([data, isna.astype('int')], axis=1).to_numpy()
+        if self._null_column:
+            return pd.concat([data, isna.astype('int')], axis=1).to_numpy()
 
-            if self._fill_value in data.array:
-                warnings.warn(IRREVERSIBLE_WARNING)
+        if self._fill_value in data.array and not self._null_column:
+            warnings.warn(IRREVERSIBLE_WARNING)
 
         return data.array
 
