@@ -716,9 +716,14 @@ def test_hypertransformer_fill_value_object():
     transformed = ht.transform(data)
 
     expected = pd.DataFrame({
-        'col': [1.0, {'a': 'b'}]
+        'col.value': [1.0, {'a': 'b'}]
     })
-    null_transformer_asserts(data, ht, transformed, expected)
+    pd.testing.assert_frame_equal(
+        transformed.sort_index(axis=1), expected.sort_index(axis=1))
+
+    reversed_data = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(
+        data.sort_index(axis=1), reversed_data.sort_index(axis=1))
 
 
 def test_hypertransformer_fill_value_string_null_column_true():
@@ -742,11 +747,13 @@ def test_hypertransformer_fill_value_string_null_column_true():
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
     data = pd.DataFrame({
-        'col': ['abc', np.nan]
+        'col1': ['abc', np.nan],
+        'col2': [np.nan, np.nan]
     })
 
     transformers = {
-        'col': DummyTransformer()
+        'col1': DummyTransformer(),
+        'col2': DummyTransformer()
     }
 
     ht = HyperTransformer(
@@ -758,10 +765,17 @@ def test_hypertransformer_fill_value_string_null_column_true():
     transformed = ht.transform(data)
 
     expected = pd.DataFrame({
-        'col.value': [1.0, 'filled_value'],
-        'col.is_null': [0, 1]
+        'col1.value': [1.0, 'filled_value'],
+        'col1.is_null': [0, 1],
+        'col2.value': ['filled_value', 'filled_value'],
+        'col2.is_null': [1, 1]
     })
-    null_transformer_asserts(data, ht, transformed, expected)
+    pd.testing.assert_frame_equal(
+        transformed.sort_index(axis=1), expected.sort_index(axis=1), check_dtype=False)
+
+    reversed_data = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(
+        data.sort_index(axis=1), reversed_data.sort_index(axis=1), check_dtype=False)
 
 
 def test_hypertransformer_fill_value_none_null_column_true():
@@ -783,11 +797,13 @@ def test_hypertransformer_fill_value_none_null_column_true():
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
     data = pd.DataFrame({
-        'col': ['abc', np.nan]
+        'col1': ['abc', 'a', 'a', 'abc'],
+        'col2': [1.0, 1.0, 1.0, np.nan]
     })
 
     transformers = {
-        'col': DummyTransformer()
+        'col1': DummyTransformer(),
+        'col2': DummyFloatTransformer()
     }
 
     ht = HyperTransformer(field_transformers=transformers, fill_value=None, null_column=True)
@@ -795,15 +811,14 @@ def test_hypertransformer_fill_value_none_null_column_true():
     transformed = ht.transform(data)
 
     expected = pd.DataFrame({
-        'col.value': [1.0, np.nan],
-        'col.is_null': [0, 1]
+        'col1.value': [1.0, 'a', 'a', 1.0],
+        'col1.is_null': [0, 0, 0, 0],
+        'col2.value': [1.0, 1.0, 1.0, np.nan],
+        'col2.is_null': [0, 0, 0, 1]
     })
 
     pd.testing.assert_frame_equal(
-        transformed.sort_index(axis=1),
-        expected.sort_index(axis=1),
-        check_dtype=False
-    )
+        transformed.sort_index(axis=1), expected.sort_index(axis=1), check_dtype=False)
 
     reversed_data = ht.reverse_transform(transformed)
     pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))

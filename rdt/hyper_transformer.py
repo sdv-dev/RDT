@@ -286,7 +286,9 @@ class HyperTransformer:
 
         if self._transform_nulls:
             for field, transformer in self._null_transformers.items():
+                print(field)
                 transformed = transformer.transform(data[field])
+                print(transformed)
                 if transformer.creates_null_column():
                     column_name = self._get_null_column_name(field)
                     transformed_columns.append(column_name)
