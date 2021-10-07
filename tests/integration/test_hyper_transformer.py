@@ -425,15 +425,11 @@ class DummyTransformer(BaseTransformer):
         pass
 
     def _transform(self, data):
-        for i, value in enumerate(data):
-            if value == 'abc':
-                data[i] = 1.0
+        data.loc[data == 'abc'] = 1.0
         return data
 
     def _reverse_transform(self, data):
-        for i, value in enumerate(data):
-            if value == 1.0:
-                data[i] = 'abc'
+        data.loc[data == 1.0] = 'abc'
         return data
 
 
@@ -454,11 +450,13 @@ def test_hypertransformer_transform_nulls_false():
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
     data = pd.DataFrame({
-        'col': ['abc', 'abc']
+        'col1': ['abc', 'abc'],
+        'col2': [np.nan, 'a']
     })
 
     transformers = {
-        'col': DummyTransformer()
+        'col1': DummyTransformer(),
+        'col2': DummyTransformer()
     }
 
     ht = HyperTransformer(field_transformers=transformers, transform_nulls=False)
@@ -466,9 +464,14 @@ def test_hypertransformer_transform_nulls_false():
     transformed = ht.transform(data)
 
     expected = pd.DataFrame({
-        'col': [1.0, 1.0]
+        'col1.value': [1.0, 1.0],
+        'col2.value': [np.nan, 'a']
     })
-    null_transformer_asserts(data, ht, transformed, expected)
+    pd.testing.assert_frame_equal(
+        transformed.sort_index(axis=1), expected.sort_index(axis=1), check_dtype=False)
+
+    reversed_data = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
 
 
 def test_hypertransformer_transform_nulls_false_fill_value_false():
@@ -532,11 +535,13 @@ def test_hypertransformer_fill_value_string():
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
     data = pd.DataFrame({
-        'col': ['abc', np.nan]
+        'col1': ['abc', 'abc'],
+        'col2': [np.nan, 'a']
     })
 
     transformers = {
-        'col': DummyTransformer()
+        'col1': DummyTransformer(),
+        'col2': DummyTransformer()
     }
 
     ht = HyperTransformer(
@@ -548,9 +553,14 @@ def test_hypertransformer_fill_value_string():
     transformed = ht.transform(data)
 
     expected = pd.DataFrame({
-        'col': [1.0, 'filled_value']
+        'col1.value': [1.0, 1.0],
+        'col2.value': ['filled_value', 'a']
     })
-    null_transformer_asserts(data, ht, transformed, expected)
+    pd.testing.assert_frame_equal(
+        transformed.sort_index(axis=1), expected.sort_index(axis=1), check_dtype=False)
+
+    reversed_data = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(data.sort_index(axis=1), reversed_data.sort_index(axis=1))
 
 
 class DummyFloatTransformer(BaseTransformer):
@@ -651,7 +661,6 @@ def test_hypertransformer_fill_value_mean2():
 
     pd.testing.assert_frame_equal(
         expected_reverse.sort_index(axis=1), reversed_data.sort_index(axis=1))
-
 
 
 def test_hypertransformer_fill_value_mode():
