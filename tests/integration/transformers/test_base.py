@@ -178,11 +178,10 @@ def test_dummy_transformer_multi_column_input():
 
             output = dict(zip(
                 self.output_columns,
-                [data.values.astype(np.float64), data.isnull().astype(np.float64)]
+                [data.array.astype(np.float64), data.isna().astype(np.float64)]
             ))
 
-            output = pd.DataFrame(output)
-            output.fillna(-1, inplace=True)
+            output = pd.DataFrame(output).fillna(-1)
 
             return output
 
