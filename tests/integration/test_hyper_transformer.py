@@ -451,14 +451,21 @@ def test_hypertransformer_transform_nulls_false():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = pd.DataFrame({'col': ['abc', 'abc']})
-    transformers = {'col': DummyTransformer()}
+    data = pd.DataFrame({
+        'col': ['abc', 'abc']
+    })
+
+    transformers = {
+        'col': DummyTransformer()
+    }
 
     ht = HyperTransformer(field_transformers=transformers, transform_nulls=False)
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col': [1.0, 1.0]})
+    expected = pd.DataFrame({
+        'col': [1.0, 1.0]
+    })
     null_transformer_asserts(data, ht, transformed, expected)
 
 
@@ -522,15 +529,25 @@ def test_hypertransformer_fill_value_string():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = pd.DataFrame({'col': ['abc', np.nan]})
-    transformers = {'col': DummyTransformer()}
+    data = pd.DataFrame({
+        'col': ['abc', np.nan]
+    })
 
-    ht = HyperTransformer(field_transformers=transformers, fill_value='filled_value',
-                          null_column=False)
+    transformers = {
+        'col': DummyTransformer()
+    }
+
+    ht = HyperTransformer(
+        field_transformers=transformers,
+        fill_value='filled_value',
+        null_column=False)
+
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col': [1.0, 'filled_value']})
+    expected = pd.DataFrame({
+        'col': [1.0, 'filled_value']
+    })
     null_transformer_asserts(data, ht, transformed, expected)
 
 
@@ -566,14 +583,21 @@ def test_hypertransformer_fill_value_mean():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = pd.DataFrame({'col': [1.0, np.nan, 0.0]})
-    transformers = {'col': DummyTransformerMean()}
+    data = pd.DataFrame({
+        'col': [1.0, np.nan, 0.0]
+    })
+
+    transformers = {
+        'col': DummyTransformerMean()
+    }
 
     ht = HyperTransformer(field_transformers=transformers, fill_value='mean', null_column=False)
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col': [1.0, 0.5, 0.0]})  # it bugs out if there is only one value
+    expected = pd.DataFrame({
+        'col': [1.0, 0.5, 0.0]  # it bugs out if there is only one value
+    })
     null_transformer_asserts(data, ht, transformed, expected)
 
 
@@ -596,14 +620,21 @@ def test_hypertransformer_fill_value_mode():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = pd.DataFrame({'col': [2.0, 1.0, np.nan, 2.0]})
-    transformers = {'col': DummyTransformerMean()}  # create transformer for this
+    data = pd.DataFrame({
+        'col': [2.0, 1.0, np.nan, 2.0]
+    })
+
+    transformers = {
+        'col': DummyTransformerMean()
+    }
 
     ht = HyperTransformer(field_transformers=transformers, fill_value='mode', null_column=False)
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col': [2.0, 1.0, 2.0, 2.0]})
+    expected = pd.DataFrame({
+        'col': [2.0, 1.0, 2.0, 2.0]
+    })
     null_transformer_asserts(data, ht, transformed, expected)
 
 
@@ -625,18 +656,25 @@ def test_hypertransformer_fill_value_object():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = pd.DataFrame({'col': ['abc', np.nan]})
-    transformers = {'col': DummyTransformer()}
+    data = pd.DataFrame({
+        'col': ['abc', np.nan]
+    })
+
+    transformers = {
+        'col': DummyTransformer()
+    }
 
     ht = HyperTransformer(
         field_transformers=transformers,
-        fill_value={
-            'a': 'b'},
+        fill_value={'a': 'b'},
         null_column=False)
+
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col': [1.0, {'a': 'b'}]})
+    expected = pd.DataFrame({
+        'col': [1.0, {'a': 'b'}]
+    })
     null_transformer_asserts(data, ht, transformed, expected)
 
 
@@ -660,8 +698,13 @@ def test_hypertransformer_fill_value_string_null_column_true():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = pd.DataFrame({'col': ['abc', np.nan]})
-    transformers = {'col': DummyTransformer()}
+    data = pd.DataFrame({
+        'col': ['abc', np.nan]
+    })
+
+    transformers = {
+        'col': DummyTransformer()
+    }
 
     ht = HyperTransformer(
         field_transformers=transformers,
@@ -670,7 +713,10 @@ def test_hypertransformer_fill_value_string_null_column_true():
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col.value': [1.0, 'filled_value'], 'col.is_null': [0, 1]})
+    expected = pd.DataFrame({
+        'col.value': [1.0, 'filled_value'],
+        'col.is_null': [0, 1]
+    })
     null_transformer_asserts(data, ht, transformed, expected)
 
 
@@ -692,14 +738,22 @@ def test_hypertransformer_fill_value_none_null_column_true():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = pd.DataFrame({'col': ['abc', np.nan]})
-    transformers = {'col': DummyTransformer()}
+    data = pd.DataFrame({
+        'col': ['abc', np.nan]
+    })
+
+    transformers = {
+        'col': DummyTransformer()
+    }
 
     ht = HyperTransformer(field_transformers=transformers, fill_value=None, null_column=True)
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col.value': [1.0, np.nan], 'col.is_null': [0, 1]})
+    expected = pd.DataFrame({
+        'col.value': [1.0, np.nan],
+        'col.is_null': [0, 1]
+    })
 
     pd.testing.assert_frame_equal(
         transformed.sort_index(axis=1),
@@ -731,19 +785,28 @@ def test_hypertransformer_fill_value_string_multiple_columns():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = pd.DataFrame({'col': ['abc', np.nan], 'col2': ['abc', np.nan]})
-    transformers = {'col': DummyTransformer(), 'col2': DummyTransformer()}
+    data = pd.DataFrame({
+        'col': ['abc', np.nan],
+        'col2': ['abc', np.nan]
+    })
+
+    transformers = {
+        'col': DummyTransformer(),
+        'col2': DummyTransformer()
+    }
 
     ht = HyperTransformer(
         field_transformers=transformers,
         fill_value='filled_value',
         null_column=False)
+
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col.value': [1.0, 'filled_value'],
-                             'col2.value': [1.0, 'filled_value']
-                             })
+    expected = pd.DataFrame({
+        'col.value': [1.0, 'filled_value'],
+        'col2.value': [1.0, 'filled_value']
+    })
     null_transformer_asserts(data, ht, transformed, expected)
 
 
@@ -767,21 +830,30 @@ def test_hypertransformer_fill_value_string_column_null_true_multiple_columns():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = pd.DataFrame({'col': ['abc', np.nan], 'col2': ['abc', np.nan]})
-    transformers = {'col': DummyTransformer(), 'col2': DummyTransformer()}
+    data = pd.DataFrame({
+        'col': ['abc', np.nan],
+        'col2': ['abc', np.nan]
+    })
+
+    transformers = {
+        'col': DummyTransformer(),
+        'col2': DummyTransformer()
+    }
 
     ht = HyperTransformer(
         field_transformers=transformers,
         fill_value='filled_value',
         null_column=True)
+
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col.value': [1.0, 'filled_value'],
-                             'col2.value': [1.0, 'filled_value'],
-                             'col.is_null': [0, 1],
-                             'col2.is_null': [0, 1]
-                             })
+    expected = pd.DataFrame({
+        'col.value': [1.0, 'filled_value'],
+        'col2.value': [1.0, 'filled_value'],
+        'col.is_null': [0, 1],
+        'col2.is_null': [0, 1]
+    })
     null_transformer_asserts(data, ht, transformed, expected)
 
 
@@ -805,18 +877,27 @@ def test_hypertransformer_fill_value_string_null_column_none():
         - It should fit and transform the dataset.
         - The results will be checked through the ``null_transformer_asserts`` method.
     """
-    data = pd.DataFrame({'col': ['abc', np.nan], 'col2': ['abc', 'abc']})
-    transformers = {'col': DummyTransformer(), 'col2': DummyTransformer()}
+    data = pd.DataFrame({
+        'col': ['abc', np.nan],
+        'col2': ['abc', 'abc']
+    })
+
+    transformers = {
+        'col': DummyTransformer(),
+        'col2': DummyTransformer()
+    }
 
     ht = HyperTransformer(
         field_transformers=transformers,
         fill_value='filled_value',
         null_column=None)
+
     ht.fit(data)
     transformed = ht.transform(data)
 
-    expected = pd.DataFrame({'col.value': [1.0, 'filled_value'],
-                             'col2.value': [1.0, 1.0],
-                             'col.is_null': [0, 1]
-                             })
+    expected = pd.DataFrame({
+        'col.value': [1.0, 'filled_value'],
+        'col2.value': [1.0, 1.0],
+        'col.is_null': [0, 1]
+    })
     null_transformer_asserts(data, ht, transformed, expected)

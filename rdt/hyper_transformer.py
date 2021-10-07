@@ -255,7 +255,7 @@ class HyperTransformer:
                 transformer.fit(data[output_column])
                 self._null_transformers[output_column] = transformer
 
-                if transformer._null_column:
+                if transformer.creates_null_column():
                     column_name = self._get_null_column_name(output_column)
                     null_column_names.append(column_name)
 
@@ -287,7 +287,7 @@ class HyperTransformer:
         if self._transform_nulls:
             for field, transformer in self._null_transformers.items():
                 transformed = transformer.transform(data[field])
-                if transformer._null_column:
+                if transformer.creates_null_column():
                     column_name = self._get_null_column_name(field)
                     transformed_columns.append(column_name)
                     data[field] = transformed[:, 0]
@@ -324,7 +324,7 @@ class HyperTransformer:
                 reversed data.
         """
         for field, transformer in self._null_transformers.items():
-            if transformer._null_column:
+            if transformer.creates_null_column():
                 column_name = self._get_null_column_name(field)
                 data[field] = transformer.reverse_transform(
                     data[[field, column_name]].values)
