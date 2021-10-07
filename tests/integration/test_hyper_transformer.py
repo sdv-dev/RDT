@@ -60,9 +60,12 @@ class DummyTransformerMultiColumn(BaseTransformer):
         data.columns = [c.replace('_str.value', '') for c in data.columns]
         data = pd.to_datetime(data)
 
+        float_data = data.to_numpy().astype(np.float64)
+        data_is_nan = data.isna().to_numpy().astype(np.float64)
+
         output = dict(zip(
             self.output_columns,
-            [data.array.astype(np.float64), data.isna().astype(np.float64)]
+            [float_data, data_is_nan]
         ))
 
         output = pd.DataFrame(output).fillna(-1)
@@ -187,24 +190,9 @@ def get_transformers():
 def test_hypertransformer_default_inputs():
     """Test the HyperTransformer with default parameters.
 
-<<<<<<< HEAD
-    ht = HyperTransformer(transformers)
-    ht.fit(data)
-    transformed = ht.transform(data)
-
-    expected = get_transformed_data()
-
-    np.testing.assert_allclose(
-        transformed.sort_index(axis=1).to_numpy(),
-        expected.sort_index(axis=1).to_numpy()
-    )
-
-    reversed_data = ht.reverse_transform(transformed)
-=======
     This tests that if default parameters are provided to the HyperTransformer,
     the ``default_transformers`` method will be used to determine which
     transformers to use for each field.
->>>>>>> v0.6.0-dev
 
     Setup:
         - `data_type_transformers` will be set to use the `CategoricalTransformer`
