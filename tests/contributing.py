@@ -1,4 +1,5 @@
 import importlib
+import traceback
 
 import pandas as pd
 from tabulate import tabulate
@@ -64,7 +65,12 @@ def validate_transformer_integration(transformer):
     if isinstance(transformer, str):
         transformer = get_class(transformer)
 
-    results = validate_transformer(transformer)
+    try:
+        results = validate_transformer(transformer)
+    except Exception as error:
+        print(f'ERROR: Transformer errored out during validation: {error}\n')
+        print(''.join(traceback.TracebackException.from_exception(error).format()))
+        return False
 
     valid = True
     for check_result in results.values():
