@@ -85,14 +85,12 @@ class NullTransformer():
         if not isinstance(data, pd.Series):
             data = pd.Series(data)
 
-        isna = pd.Series()
-        if self.nulls:
-            if self._fill_value is not None:
-                isna = data.isna()
-                if not self.copy:
-                    data[isna] = self._fill_value
-                else:
-                    data = data.fillna(self._fill_value)
+        isna = data.isna()
+        if self.nulls and self._fill_value is not None:
+            if not self.copy:
+                data[isna] = self._fill_value
+            else:
+                data = data.fillna(self._fill_value)
 
         if self._null_column:
             return pd.concat([data, isna.astype('int')], axis=1).to_numpy()
