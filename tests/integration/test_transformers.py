@@ -13,8 +13,6 @@ TEST_COL = 'test_col'
 
 PRIMARY_DATA_TYPES = ['boolean', 'categorical', 'datetime', 'numerical']
 
-VALIDATION_PASS = 'validation_pass'
-
 
 # Mapping of rdt data type to dtype
 DATA_TYPE_TO_DTYPES = {
@@ -27,7 +25,7 @@ DATA_TYPE_TO_DTYPES = {
 }
 
 
-def _validate_helper(validator_function, args, should_assert, results):
+def _validate_helper(validator_function, args, steps):
     """Wrap around validation functions to either return a boolean or assert.
 
     Args:
@@ -35,27 +33,13 @@ def _validate_helper(validator_function, args, should_assert, results):
             The function to validate.
         args (list):
             The args to pass into the function.
-        should_assert (bool):
-            Whether or not to raise AssertionErrors.
-        results (dict):
-            Cumulative results summary.
-
-    Output:
-        bool:
-            Whether or not the validation passed.
+        steps (list):
+            List of steps that the validation has completed.
     """
-    try:
-        validator_function(*args)
-    except AssertionError as e:
-        if should_assert:
-            raise e
-        else:
-            results[validator_function.__name__] = str(e)
+    if steps:
+        steps.append(validator_function.__name__)
 
-        return False
-
-    results[validator_function.__name__] = VALIDATION_PASS
-    return True
+    validator_function(*args)
 
 
 def _is_valid_transformer(transformer_name):
@@ -148,7 +132,7 @@ def _validate_composition(transformer, reversed_data, input_data):
     )
 
 
-def _test_transformer_with_dataset(transformer_class, input_data, should_assert, results):
+def _test_transformer_with_dataset(transformer_class, input_data, steps):
     """Test the given transformer with the given input data.
 
     This method verifies the transformed data's dtype, the reverse
@@ -159,14 +143,8 @@ def _test_transformer_with_dataset(transformer_class, input_data, should_assert,
             The transformer class to test.
         input_data (pandas.Series):
             The data to test on.
-        should_assert (bool):
-            Whether or not to raise AssertionErrors.
-        results (dict):
-            Cumulative results summary.
-
-    Output:
-        bool:
-            Whether or not the validation passed.
+        steps (list):
+            List of steps that the validation has completed.
     """
     transformer = transformer_class()
     # Fit
@@ -174,34 +152,26 @@ def _test_transformer_with_dataset(transformer_class, input_data, should_assert,
 
     # Transform
     transformed = transformer.transform(input_data)
-    valid = _validate_helper(
+    _validate_helper(
         _validate_transformed_data,
         [transformer, transformed],
-        should_assert,
-        results,
+        steps,
     )
-    if not valid:
-        return valid
 
     # Reverse transform
     out = transformer.reverse_transform(transformed)
-    valid = _validate_helper(
+    _validate_helper(
         _validate_reverse_transformed_data,
         [transformer, out, input_data.dtypes[TEST_COL]],
-        should_assert,
-        results,
+        steps,
     )
-    if not valid:
-        return valid
 
     if transformer.is_composition_identity():
-        valid = _validate_helper(
+        _validate_helper(
             _validate_composition,
             [transformer, out, input_data],
-            should_assert,
-            results,
+            steps,
         )
-    return valid
 
 
 def _validate_hypertransformer_transformed_data(transformed_data):
@@ -219,7 +189,7 @@ def _validate_hypertransformer_reverse_transformed_data(transformer, reversed_da
     assert reversed_data.dtype.kind in DATA_TYPE_TO_DTYPES[expected_data_type], message
 
 
-def _test_transformer_with_hypertransformer(transformer_class, input_data, should_assert, results):
+def _test_transformer_with_hypertransformer(transformer_class, input_data, steps):
     """Test the given transformer in the hypertransformer.
 
     Run the provided transformer using the hypertransformer using the provided
@@ -231,14 +201,8 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, shoul
             The transformer class to test.
         input_data (pandas.Series):
             The data to test on.
-        should_assert (bool):
-            Whether or not to raise AssertionErrors.
-        results (dict):
-            Cumulative results summary.
-
-    Output:
-        bool:
-            Whether or not the validation passed.
+        steps (list):
+            List of steps that the validation has completed.
     """
     hypertransformer = HyperTransformer(field_transformers={
         TEST_COL: transformer_class.__name__,
@@ -246,64 +210,46 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, shoul
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)
-    valid = _validate_helper(
+    _validate_helper(
         _validate_hypertransformer_transformed_data,
         [transformed],
-        should_assert,
-        results,
+        steps
     )
-    if not valid:
-        return valid
 
     out = hypertransformer.reverse_transform(transformed)
-    valid = _validate_helper(
+    _validate_helper(
         _validate_hypertransformer_reverse_transformed_data,
         [transformer_class, out[TEST_COL]],
-        should_assert,
-        results,
+        steps,
     )
-    return valid
 
 
-def validate_transformer(transformer, should_assert=False, subtests=None):
+def validate_transformer(transformer, steps=None, subtests=None):
     """Validate that the transformer passes all integration checks.
 
     Args:
         transformer (rdt.transformer.BaseTransformer):
             The transformer to validate.
-        should_assert (bool):
-            Whether or not to raise AssertionErrors.
+        steps (list):
+            List of steps that the validation has completed.
         subtests:
             Whether or not to test with subtests.
-
-    Output:
-        dict:
-            The cumulative results of the integration checks.
     """
     input_data_type = transformer.get_input_type()
 
     dataset_generators = _find_dataset_generators(input_data_type, generators)
-    results = {}
-    _validate_helper(_validate_dataset_generators, [dataset_generators], should_assert, results)
+    _validate_helper(_validate_dataset_generators, [dataset_generators], steps)
 
     for dg in dataset_generators:
         data = pd.DataFrame({TEST_COL: dg.generate(DATA_SIZE)})
 
         if subtests:
             with subtests.test(msg='test_transformer_with_dataset', generator=dg):
-                valid = _test_transformer_with_dataset(transformer, data, should_assert, results)
-                if not valid:
-                    return results
-
-                _test_transformer_with_hypertransformer(transformer, data, should_assert, results)
+                _test_transformer_with_dataset(transformer, data, steps)
+                _test_transformer_with_hypertransformer(transformer, data, steps)
         else:
-            valid = _test_transformer_with_dataset(transformer, data, should_assert, results)
-            if not valid:
-                return results
-
-            _test_transformer_with_hypertransformer(transformer, data, should_assert, results)
-
-    return results
+            _test_transformer_with_dataset(transformer, data, steps)
+            _test_transformer_with_hypertransformer(transformer, data, steps)
 
 
 transformers = _get_all_transformers()
@@ -321,4 +267,4 @@ def test_transformer(subtests, transformer):
         transformer (rdt.transformers.BaseTransformer):
             The transformer to test.
     """
-    validate_transformer(transformer, should_assert=True, subtests=subtests)
+    validate_transformer(transformer, subtests=subtests)
