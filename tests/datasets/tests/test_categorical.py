@@ -31,7 +31,7 @@ class TestRandomStringGenerator:
         assert len(output) == 10
         assert output.dtype.type == np.str_
         assert len(pd.unique(output)) < 6
-        assert pd.isnull(output).sum() == 0
+        assert pd.isna(output).sum() == 0
 
 
 class TestRandomStringNaNsGenerator:
@@ -41,7 +41,7 @@ class TestRandomStringNaNsGenerator:
         assert len(output) == 10
         assert output.dtype.type == np.object_
         assert len(pd.unique(output)) < 7
-        assert sum(pd.isnull(output)) > 0
+        assert sum(pd.isna(output)) > 0
 
 
 class TestRandomMixedGenerator:
@@ -50,7 +50,7 @@ class TestRandomMixedGenerator:
         output = categorical.RandomMixedGenerator.generate(10)
         assert len(output) == 10
         assert output.dtype.type == np.object_
-        assert pd.isnull(output).sum() == 0
+        assert pd.isna(output).sum() == 0
 
 
 class TestRandomMixedNaNsGenerator:
@@ -59,7 +59,7 @@ class TestRandomMixedNaNsGenerator:
         output = categorical.RandomMixedNaNsGenerator.generate(10)
         assert len(output) == 10
         assert output.dtype.type == np.object_
-        assert sum(pd.isnull(output)) > 0
+        assert sum(pd.isna(output)) > 0
 
 
 class TestSingleIntegerGenerator:
@@ -89,7 +89,7 @@ class TestSingleStringGenerator:
         assert len(output) == 10
         assert output.dtype.type == np.str_
         assert len(pd.unique(output)) == 1
-        assert pd.isnull(output).sum() == 0
+        assert pd.isna(output).sum() == 0
 
 
 class TestSingleStringNaNsGenerator:
@@ -99,7 +99,7 @@ class TestSingleStringNaNsGenerator:
         assert len(output) == 10
         assert output.dtype.type == np.object_
         assert len(pd.unique(output)) == 2
-        assert sum(pd.isnull(output)) >= 1
+        assert sum(pd.isna(output)) >= 1
 
 
 class TestUniqueIntegerGenerator:
@@ -131,14 +131,14 @@ class TestUniqueStringGenerator:
         assert len(output) == 10
         assert output.dtype.type == np.str_
         assert len(pd.unique(output)) == 10
-        assert pd.isnull(output).sum() == 0
+        assert pd.isna(output).sum() == 0
 
 
 class TestUniqueStringNaNsGenerator:
 
     def test(self):
         output = categorical.UniqueStringNaNsGenerator.generate(10)
-        nulls = sum(pd.isnull(output))
+        nulls = sum(pd.isna(output))
 
         assert len(output) == 10
         assert output.dtype == np.object_
