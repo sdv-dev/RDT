@@ -145,7 +145,7 @@ class CategoricalTransformer(BaseTransformer):
             if category is np.nan:
                 mask = data.isna()
             else:
-                mask = (data.array == category)
+                mask = (data.to_numpy() == category)
 
             if self.fuzzy:
                 result[mask] = norm.rvs(mean, std, size=mask.sum())
@@ -207,7 +207,7 @@ class CategoricalTransformer(BaseTransformer):
 
         data = np.broadcast_to(data, (num_categories, num_rows)).T
         means = np.broadcast_to(self.means, (num_rows, num_categories))
-        diffs = np.abs(np.subtract(data, means))  # noqa
+        diffs = np.abs(data - means)
         indexes = np.argmin(diffs, axis=1)
 
         self._get_category_from_index = list(self.means.index).__getitem__
@@ -220,7 +220,7 @@ class CategoricalTransformer(BaseTransformer):
         # loop over categories
         for category, values in self.intervals.items():
             start = values[0]
-            mask = (start <= data.array)
+            mask = (start <= data.to_numpy())
             result[mask] = category
 
         return pd.Series(result, index=data.index, dtype=self.dtype)

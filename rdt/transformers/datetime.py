@@ -87,7 +87,7 @@ class DatetimeTransformer(BaseTransformer):
     def _transform_helper(self, datetimes):
         """Transform datetime values to integer."""
         nulls = datetimes.isna()
-        integers = pd.to_numeric(datetimes, errors='coerce').array.astype(np.float64)
+        integers = pd.to_numeric(datetimes, errors='coerce').to_numpy().astype(np.float64)
         integers[nulls] = np.nan
         transformed = pd.Series(integers)
 

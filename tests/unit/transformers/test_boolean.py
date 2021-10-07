@@ -196,7 +196,7 @@ class TestBooleanTransformer(TestCase):
         expected = np.array([True, False, True])
 
         assert isinstance(result, pd.Series)
-        np.testing.assert_equal(result.array, expected)
+        np.testing.assert_equal(result.to_numpy(), expected)
 
     def test__reverse_transform_float_values_out_of_range(self):
         """Test the ``_reverse_transform`` method with decimals that are out of range.
