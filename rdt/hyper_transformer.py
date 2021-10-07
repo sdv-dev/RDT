@@ -220,6 +220,10 @@ class HyperTransformer:
             warnings.warn('The following fields were specified in the input arguments but not'
                           + f'found in the data: {non_fitted_fields}')
 
+    @staticmethod
+    def _get_null_column_name(field):
+        return ''.join(field.split('.')[:-1]) + '.is_null'
+
     def fit(self, data):
         """Fit the transformers to the data.
 
@@ -246,17 +250,15 @@ class HyperTransformer:
 
         cols = []
         if self._transform_nulls:
-            #self._null_transformers = {} # TODO: delete this
             for output_column in self._output_columns:
                 transformer = NullTransformer(self._fill_value, self._null_column)
                 transformer.fit(data[output_column])
                 self._null_transformers[output_column] = transformer
-                
+
                 if transformer._null_column:
-                    print('tohub,rphohunouh', output_column)
-                    name = ''.join(output_column.split('.')[:-1])
-                    cols.append(f'{name}.is_null')
-        
+                    column_name = self._get_null_column_name(output_column)
+                    cols.append(column_name)
+
         self._output_columns.extend(cols)
 
         self._validate_all_fields_fitted()
@@ -286,19 +288,16 @@ class HyperTransformer:
         if self._transform_nulls:
             for field, transformer in self._null_transformers.items():
                 transformed = transformer.transform(data[field])
-                print(field)
-                print(transformed)
                 if transformer._null_column:
-                    name = ''.join(field.split('.')[:-1])
-                    data[f'{field}'] = transformed[:,0]
-                    data[f'{name}.is_null'] = transformed[:,1]
-                    transformed_columns.append(f'{name}.is_null')
+                    column_name = self._get_null_column_name(field)
+                    transformed_columns.append(column_name)
+                    data[f'{field}'] = transformed[:, 0]
+                    data[column_name] = transformed[:, 1]
 
                 else:
                     data[field] = transformed
-        
-        data = data.reindex(columns=unknown_columns + transformed_columns)
-        return data
+
+        return data.reindex(columns=unknown_columns + transformed_columns)
 
     def fit_transform(self, data):
         """Fit the transformers to the data and then transform it.
@@ -327,21 +326,16 @@ class HyperTransformer:
         """
         for field, transformer in self._null_transformers.items():
             if transformer._null_column:
-                name = ''.join(field.split('.')[:-1])
-                data[f'{field}'] = transformer.reverse_transform(data[[f'{field}', f'{name}.is_null']].values)
+                column_name = self._get_null_column_name(field)
+                data[f'{field}'] = transformer.reverse_transform(
+                    data[[f'{field}', column_name]].values)
             else:
                 data[f'{field}'] = transformer.reverse_transform(data[f'{field}'].values)
 
-        print(self._output_columns)
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         for transformer in reversed(self._transformers_sequence):
             data = transformer.reverse_transform(data, drop=False)
 
         reversed_columns = self._subset(self._input_columns, data.columns)
-        print(self._input_columns)
-        print('noteuheon', reversed_columns)
-        print(data)
-        data = data.reindex(columns=unknown_columns + reversed_columns)
-        print('oeanth', unknown_columns)
-        print(data)
-        return data
+
+        return data.reindex(columns=unknown_columns + reversed_columns)
