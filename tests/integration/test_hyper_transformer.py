@@ -87,7 +87,7 @@ def get_input_data_with_nan():
     data = pd.DataFrame({
         'integer': [1, 2, 1, 3, 1],
         'float': [0.1, 0.2, 0.1, np.nan, 0.1],
-        'categorical': ['a', 'a', 'a', 'b', 'a'],
+        'categorical': ['a', 'a', np.nan, 'b', 'a'],
         'bool': [False, np.nan, False, True, False],
         'datetime': [
             np.nan, '2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'
