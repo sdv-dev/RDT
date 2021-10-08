@@ -49,4 +49,5 @@ def download_single_table_dataset(dataset_name):
         DataFrame
     """
     tables_dict = download_dataset(dataset_name)
-    return list(tables_dict.values())[0]
+    table_name = list(tables_dict.keys())[0]
+    return tables_dict[table_name]
