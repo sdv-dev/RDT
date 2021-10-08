@@ -381,10 +381,10 @@ def validate_transformer_performance(transformer):
         pandas.DataFrame:
             Performance results of the transformer.
     """
-    print(f'Validating Performance for transformer {transformer}\n')
-
     if isinstance(transformer, str):
         transformer = get_class(transformer)
+
+    print(f'Validating Performance for transformer {transformer.__name__}\n')
 
     results = validate_performance_for_transformer(transformer)
 
