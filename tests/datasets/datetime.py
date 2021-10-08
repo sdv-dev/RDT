@@ -1,6 +1,7 @@
 """Dataset Generators for datetime transformers."""
 
 import datetime
+from abc import ABC
 
 import numpy as np
 import pandas as pd
@@ -9,7 +10,7 @@ from tests.datasets.base import BaseDatasetGenerator
 from tests.datasets.utils import add_nans
 
 
-class DatetimeGenerator(BaseDatasetGenerator):
+class DatetimeGenerator(BaseDatasetGenerator, ABC):
     """Base class for generators that generate datatime data."""
 
     DATA_TYPE = 'datetime'

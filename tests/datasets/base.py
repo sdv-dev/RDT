@@ -33,12 +33,7 @@ class BaseDatasetGenerator(ABC):
         subclasses = []
         for subclass in cls.__subclasses__():
             if ABC not in subclass.__bases__:
-                try:
-                    subclass()
-                except TypeError:
-                    pass
-                else:
-                    subclasses.append(subclass)
+                subclasses.append(subclass)
 
             subclasses += subclass.get_subclasses()
 

@@ -1,5 +1,7 @@
 """Dataset Generators for categorical transformers."""
 
+from abc import ABC
+
 import numpy as np
 
 from tests.datasets.base import BaseDatasetGenerator
@@ -7,7 +9,7 @@ from tests.datasets.datetime import RandomGapDatetimeGenerator
 from tests.datasets.utils import add_nans
 
 
-class CategoricalGenerator(BaseDatasetGenerator):
+class CategoricalGenerator(BaseDatasetGenerator, ABC):
     """Base class for generators that generate catgorical data."""
 
     DATA_TYPE = 'categorical'
