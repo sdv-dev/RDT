@@ -171,9 +171,10 @@ class TestNullTransformer(TestCase):
         # Run
         transformer = Mock()
         transformer.nulls = False
+        transformer._null_column = False
 
         result = NullTransformer.transform(transformer, data)
-
+        print(transformer._null_column)
         # Asserts
         expect = np.array([1.5, np.nan, 2.5])
 
