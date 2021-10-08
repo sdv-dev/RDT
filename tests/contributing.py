@@ -6,6 +6,7 @@ import inspect
 import subprocess
 import traceback
 
+import numpy as np
 import pandas as pd
 from tabulate import tabulate
 
@@ -17,6 +18,7 @@ from tests.code_style import (
 from tests.integration.test_transformers import validate_transformer
 from tests.quality.test_quality import (
     TEST_THRESHOLD, get_regression_scores, get_results_table, get_test_cases)
+from tests.performance import validate_performance_for_transformer
 
 # Mapping of validation method to (check name, check description).
 CHECK_DETAILS = {
@@ -363,3 +365,43 @@ def validate_transformer_quality(transformer):
     print(tabulate(transformer_results, headers='keys', showindex=False))
 
     return transformer_results
+
+
+def validate_transformer_performance(transformer):
+    """Validate the performance of a transformer.
+
+    Run the specified Transformer on all the Dataset Generators of the indicated data type
+    and produce a report about its performance and how it compares to the other
+    Transformers of the same data type.
+
+    Args:
+        transformer (string or rdt.transformers.BaseTransformer):
+            The transformer to validate.
+    Output:
+        pandas.DataFrame:
+            Performance results of the transformer.
+    """
+    print(f'Validating Performance for transformer {transformer}\n')
+
+    if isinstance(transformer, str):
+        transformer = get_class(transformer)
+
+    results = validate_performance_for_transformer(transformer)
+
+    if results['Valid'].all():
+        print('SUCCESS: The Performance Tests were successful.')
+    else:
+        print('ERROR: One or more Performance Tests were NOT successful.')
+
+    final_results = pd.DataFrame()
+    final_results['Evaluation Metric'] = results['Test']
+    final_results['Value'] = results['Value']
+    final_results['Units'] = np.where(
+        final_results['Evaluation Metric'].str.contains('Time'),
+        's / row',
+        'Mb / row',
+    )
+    final_results['Acceptable'] = np.where(results['Valid'], 'Yes', 'No')
+    final_results['Compared to average'] = results['Value'] / results['Average']
+
+    return final_results

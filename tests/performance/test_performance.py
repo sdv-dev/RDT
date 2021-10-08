@@ -7,8 +7,17 @@ import pandas as pd
 import pytest
 
 from rdt.transformers import get_transformers_by_type
-from tests.datasets import BaseDatasetGenerator
+from tests.datasets import BaseDatasetGenerator, get_dataset_generators_by_type
 from tests.performance.profiling import profile_transformer
+
+TEST_NAMES = [
+    'Fit Time',
+    'Transform Time',
+    'Reverse Transform Time',
+    'Fit Memory',
+    'Transform Memory',
+    'Reverse Transform Memory',
+]
 
 
 def get_instance(obj, **kwargs):
@@ -29,16 +38,6 @@ def get_instance(obj, **kwargs):
 def get_fqn(obj):
     """Get the fully qualified name of the given object."""
     return f'{obj.__module__}.{obj.__name__}'
-
-
-def _get_all_dataset_generators():
-    """Get a list of all dataset generators."""
-    generators = []
-
-    for generator in BaseDatasetGenerator.__subclasses__():
-        generators.extend(generator.__subclasses__())
-
-    return generators
 
 
 def _get_dataset_sizes(data_type):
@@ -65,7 +64,7 @@ def _get_dataset_sizes(data_type):
 
 
 DATASET_SIZES = [1000, 10000, 100000]
-dataset_generators = _get_all_dataset_generators()
+dataset_generators = BaseDatasetGenerator.get_subclasses()
 transformer_map = get_transformers_by_type()
 
 
@@ -83,17 +82,20 @@ def _validate_metric_against_threshold(actual, expected_unit, size):
     assert actual < size * expected_unit
 
 
-@pytest.mark.parametrize('dataset_generator', dataset_generators)
-def test_performance(dataset_generator):
-    """Run the performance tests for RDT.
+def validate_performance(dataset_generator, should_assert=False, desired_transformer=None):
+    """Validate the performance of all transformers for a dataset_generator.
 
-    This test should find all relevant transformers for the given
-    dataset generator, and run the ``profile_transformer``
-    method, which will assert that the memory consumption
-    and times are under the maximum acceptable values.
+    Args:
+        dataset_generator (rdt.tests.datasets.BaseDatasetGenerator):
+            The dataset generator to performance tests against.
+        should_assert (bool):
+            Whether or not to raise AssertionErrors.
+        desired_transformer (rdt.transformers.BaseTransformer or None):
+            The transformer to record performance for, if specified.
 
-    Input:
-        dataset_generator (rdt.tests.dataset.BaseDatasetGenerator)
+    Output:
+        pandas.DataFrame:
+            The performance results for all transformers evaluated.
     """
     transformers = transformer_map.get(dataset_generator.DATA_TYPE, [])
 
@@ -101,8 +103,16 @@ def test_performance(dataset_generator):
 
     dataset_sizes = _get_dataset_sizes(dataset_generator.DATA_TYPE)
 
+    results = pd.DataFrame(
+        [[test_name, None, 0, 0, True] for test_name in TEST_NAMES],
+        columns=['Test', 'Value', 'Total', 'NumTransformers', 'Valid'],
+    )
+    results.loc[:, 'NumTransformers'] = len(transformers)
+
     for transformer in transformers:
         transformer_instance = transformer()
+
+        metrics = {}
 
         for sizes in dataset_sizes:
             fit_size, transform_size = sizes
@@ -114,24 +124,109 @@ def test_performance(dataset_generator):
                 transform_size=transform_size,
             )
 
-            _validate_metric_against_threshold(
-                out['Fit Time'], expected['fit']['time'], fit_size)
-            _validate_metric_against_threshold(
-                out['Fit Memory'], expected['fit']['memory'], fit_size)
-            _validate_metric_against_threshold(
-                out['Transform Time'], expected['transform']['time'], transform_size)
-            _validate_metric_against_threshold(
-                out['Transform Memory'], expected['transform']['memory'], transform_size)
-            _validate_metric_against_threshold(
-                out['Reverse Transform Time'],
-                expected['reverse_transform']['time'],
-                transform_size,
-            )
-            _validate_metric_against_threshold(
-                out['Reverse Transform Memory'],
-                expected['reverse_transform']['memory'],
-                transform_size,
-            )
+            for test_name in TEST_NAMES:
+                metric = test_name.split(' ', maxsplit=-1)[-1].lower()
+                function_name = '_'.join(test_name.split(' ')[:-1]).lower()
+
+                size = fit_size if function_name == 'fit' else transform_size
+
+                metrics[test_name] = max(metrics.get(test_name, 0), out[test_name] / size)
+
+                try:
+                    _validate_metric_against_threshold(
+                        out[test_name], expected[function_name][metric], size)
+                except AssertionError as error:
+                    results.loc[results.Test == test_name, 'Valid'] = False
+
+                    if should_assert:
+                        raise error
+
+        for test_name in TEST_NAMES:
+            results.loc[results.Test == test_name, 'Total'] += metrics[test_name]
+            if desired_transformer and desired_transformer == transformer:
+                results.loc[results.Test == test_name, 'Value'] = metrics[test_name]
+
+    return results
+
+
+def validate_performance_for_transformer(desired_transformer):
+    """Validate performance for the desired transformer.
+
+    Validate the performance of the specified transformer against all
+    transformers of that data type.
+
+    Args:
+        desired_transformer (rdt.transformers.BaseTransformer):
+            The transformer to evaluate.
+
+    Output:
+        pandas.DataFrame:
+            The average performance results for the desired transformer
+            against all transformers of that data type.
+    """
+    dataset_generator_map = get_dataset_generators_by_type()
+    data_type = desired_transformer.get_input_type()
+
+    dataset_generators_for_type = dataset_generator_map.get(data_type, [])
+    results = pd.DataFrame(
+        [[test_name, 0, 0, 0, True] for test_name in TEST_NAMES],
+        columns=['Test', 'Value', 'Total', 'NumTransformers', 'Valid'],
+    )
+
+    for dataset_generator in dataset_generators_for_type:
+        results_for_type = validate_performance(
+            dataset_generator,
+            desired_transformer=desired_transformer,
+        )
+
+        for test_name in TEST_NAMES:
+            results.loc[
+                results.Test == test_name,
+                'Total',
+            ] += results_for_type.loc[
+                results_for_type.Test == test_name,
+                'Total',
+            ]
+            results.loc[
+                results.Test == test_name,
+                'NumTransformers',
+            ] += results_for_type.loc[
+                results_for_type.Test == test_name,
+                'NumTransformers',
+            ]
+            results.loc[
+                results.Test == test_name,
+                'Valid',
+            ] &= results_for_type.loc[
+                results_for_type.Test == test_name,
+                'Valid',
+            ]
+
+        results['Value'] = results['Value'] + results_for_type['Value']
+
+    average_results = pd.DataFrame()
+    average_results['Test'] = results['Test']
+    average_results['Value'] = results['Value'] / len(dataset_generators_for_type)
+    average_results['Average'] = results['Total'] / results['NumTransformers']
+    average_results['Valid'] = results['Valid']
+
+    return average_results
+
+
+@pytest.mark.parametrize('dataset_generator', dataset_generators)
+def test_performance(dataset_generator):
+    """Run the performance tests for RDT.
+
+    This test should find all relevant transformers for the given
+    dataset generator, and run the ``profile_transformer``
+    method, which will assert that the memory consumption
+    and times are under the maximum acceptable values.
+
+    Input:
+        dataset_generator (rdt.tests.dataset.BaseDatasetGenerator):
+            The dataset generator to performance tests against.
+    """
+    validate_performance(dataset_generator, should_assert=True)
 
 
 def _round_to_magnitude(value):
