@@ -1,4 +1,4 @@
-"""RDT Contributing test module."""
+"""RDT code style module."""
 
 import importlib
 import inspect
@@ -86,3 +86,29 @@ def validate_transformer_addon(transformer):
                 module_py = True
 
         return all([init_file_exist, config_json_exist, config_json_is_valid, module_py])
+
+
+def validate_test_location(transformer):
+    """Validate if the test file exists in the expected location."""
+    valid_test_location = False
+
+    transformer_file = Path(inspect.getfile(transformer))
+    transformer_folder = transformer_file.parent
+    rdt_unit_test_path = Path(__file__) / 'unit'
+    test_location = None
+
+    if transformer_folder.match('transformers'):
+        test_location = rdt_unit_test_path / 'transformers' / f'test_{transformer_file.name}'
+
+    elif transformer_folder.parent.match('transformers'):
+        test_location = rdt_unit_test_path / 'transformers' / transformer_folder
+        test_location = test_location / f'test_{transformer_file.name}'
+
+    elif transformer_folder.parent.match('addons'):
+        test_location = rdt_unit_test_path / 'transformers' / 'addons'
+        test_location = test_location / f'test_{transformer_file.name}'
+
+    if test_location is None:
+        return False
+
+    return test_location.exists()
