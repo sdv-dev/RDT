@@ -1,7 +1,10 @@
 """RDT Contributing test module."""
 
+import importlib
 import inspect
+import json
 import re
+from pathlib import Path
 
 from rdt.transformers.base import BaseTransformer
 
@@ -50,9 +53,9 @@ def _validate_config_json(config_path, transformer_name):
         if name == transformer_name:
             declared = True
             try:
-                obj = getattr(importlib.import_module(package), name)
+                getattr(importlib.import_module(package), name)
                 imported = True
-            except ImportError as e:
+            except ImportError:
                 imported = False
 
             config_is_valid.extend([declared, imported])
@@ -70,7 +73,6 @@ def validate_transformer_addon(transformer):
 
     is_addon = transformer_folder.parent.match('addons')
     if is_addon:
-        modules = []
         documents = list(transformer_folder.iterdir())
         for document in documents:
             if document.match('__init__.py'):
