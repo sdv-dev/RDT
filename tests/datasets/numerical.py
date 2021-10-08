@@ -1,12 +1,14 @@
 """Dataset Generators for numerical transformers."""
 
+from abc import ABC
+
 import numpy as np
 
 from tests.datasets.base import BaseDatasetGenerator
 from tests.datasets.utils import add_nans
 
 
-class NumericalGenerator(BaseDatasetGenerator):
+class NumericalGenerator(BaseDatasetGenerator, ABC):
     """Base class for generators that create numerical data."""
 
     DATA_TYPE = 'numerical'
