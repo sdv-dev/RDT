@@ -1,4 +1,5 @@
 import os.path as op
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,11 +9,11 @@ from sklearn.metrics import r2_score
 from rdt import HyperTransformer
 from rdt.transformers import NumericalTransformer, get_transformers_by_type
 
-
 TEST_PREFIX = op.join(op.dirname(__file__), 'datasets')
 TEST_CASES = [
     ('categorical', 'adult.csv')
 ]
+THRESHOLD = 0.4
 
 TYPE_TO_DTYPE = {
     'numerical': ['number'],
@@ -22,13 +23,15 @@ TYPE_TO_DTYPE = {
     'datetime': ['datetime'],
 }
 
+
 def format_array(array):
     if not isinstance(array, np.ndarray):
         array = array.to_numpy()
-    
+
     if len(array.shape) == 1:
         array = array.reshape(-1, 1)
     return array
+
 
 def get_regression_score(features, target, training_size_perc=0.8):
     training_size = round(training_size_perc * features.shape[0])
@@ -41,14 +44,16 @@ def get_regression_score(features, target, training_size_perc=0.8):
     predictions = model.predict(X_test)
     return r2_score(y_test, predictions)
 
+
 def find_columns(data, data_type):
     dtypes = TYPE_TO_DTYPE.get(data_type, data_type)
     columns = set()
     for dtype in dtypes:
         selected = data.select_dtypes(dtype)
         columns.update(set(selected.columns))
-    
+
     return columns
+
 
 def get_transformer_scores(data, data_type, transformers):
     columns_to_predict = find_columns(data, 'numerical')
@@ -59,7 +64,9 @@ def get_transformer_scores(data, data_type, transformers):
 
     for column in columns_to_predict:
         target = data[column].to_frame()
-        target = format_array(NumericalTransformer(null_column=False).fit_transform(target, list(target.columns)))
+        numerical_transformer = NumericalTransformer(null_column=False)
+        target = numerical_transformer.fit_transform(target, list(target.columns))
+        target = format_array(target)
         scores = []
         for transformer in transformers:
             ht = HyperTransformer(data_type_transformers={data_type: transformer})
@@ -68,6 +75,18 @@ def get_transformer_scores(data, data_type, transformers):
             scores.append(get_regression_score(transformed_features, target))
         all_scores[column] = pd.Series(scores, index=index)
     return all_scores
+
+
+def validate_relative_score(scores, transformer):
+    scores_without_transformer = scores.drop(transformer)
+    means = scores_without_transformer.mean()
+    standard_deviations = scores_without_transformer.std()
+    for column in means.index:
+        mean_score = means[column]
+        std = standard_deviations[column]
+        if mean_score > THRESHOLD:
+            assert scores.loc[transformer, column] > mean_score - std
+
 
 @pytest.mark.parametrize('test_case', TEST_CASES)
 def test_quality(test_case):
@@ -78,3 +97,5 @@ def test_quality(test_case):
     data = pd.read_csv(file_name)
     transformers = get_transformers_by_type()[data_type]
     scores = get_transformer_scores(data, data_type, transformers)
+    for transformer in scores.index:
+        validate_relative_score(scores, transformer)
