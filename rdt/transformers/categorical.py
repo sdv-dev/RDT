@@ -72,7 +72,7 @@ class CategoricalTransformer(BaseTransformer):
         end = 0
         elements = len(data)
 
-        intervals = dict()
+        intervals = {}
         means = []
         starts = []
         for value, frequency in frequencies.items():
@@ -103,7 +103,7 @@ class CategoricalTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        self.mapping = dict()
+        self.mapping = {}
         self.dtype = data.dtype
 
         if isinstance(data, np.ndarray):

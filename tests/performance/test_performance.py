@@ -60,7 +60,7 @@ def test_performance(config_path):
     ``transform`` and ``reverse_transform``. This should be
     don for each specified test config file.
     """
-    with open(config_path, 'r') as config_file:
+    with open(config_path, 'rt', encoding='utf8') as config_file:
         config = json.load(config_file)
 
     transformer_instance = get_instance(config['transformer'], **config['kwargs'])
@@ -211,7 +211,7 @@ def make_test_case_config(transformer_class, transformer_kwargs, dataset_generat
         output_path = TEST_CASES_PATH / module_name / transformer_class.__name__ / file_name
 
     os.makedirs(output_path.parent, exist_ok=True)
-    with open(output_path, 'w') as output_file:
+    with open(output_path, 'wt', encoding='utf8') as output_file:
         json.dump(test_case, output_file, indent=4)
 
     cwd = os.getcwd()

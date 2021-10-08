@@ -1,5 +1,15 @@
 # History
 
+## 0.5.3 - 2021-10-07
+
+This release fixes a bug with learning rounding digits in the `NumericalTransformer`,
+and includes a few housekeeping improvements.
+
+### Issues closed
+
+* Update learn rounding digits to handle all nan data - Issue [#244](https://github.com/sdv-dev/RDT/issues/244) by @katxiao
+* Adapt to latest PyLint housekeeping - Issue [#216](https://github.com/sdv-dev/RDT/issues/216) by @fealho
+
 ## 0.5.2 - 2021-08-16
 
 This release fixes a couple of bugs introduced by the previous release regarding the
@@ -7,8 +17,9 @@ This release fixes a couple of bugs introduced by the previous release regarding
 
 ### Issues closed
 
-* BooleanTransformer.reverse_transform sometimes crashes with TypeError - Isssue [#210](https://github.com/sdv-dev/RDT/issues/210) by @katxiao
-* OneHotEncoder causing shape misalignment in CopulaGAN, CTGAN, and TVAE - Issue [#208](https://github.com/sdv-dev/RDT/issues/210) by @sarahmish
+* BooleanTransformer.reverse_transform sometimes crashes with TypeError - Issue [#210](https://github.com/sdv-dev/RDT/issues/210) by @katxiao
+* OneHotEncoder causing shape misalignment in CopulaGAN, CTGAN, and TVAE - Issue [#208](https://github.com/sdv-dev/RDT/issues/208) by @sarahmish
+* Boolean.transformer.reverse_transform modifies the input data - Issue [#211](https://github.com/sdv-dev/RDT/issues/211) by @katxiao
 
 ## 0.5.1 - 2021-08-11
 

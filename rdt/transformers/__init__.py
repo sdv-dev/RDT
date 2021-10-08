@@ -53,7 +53,7 @@ def load_transformer(transformer):
 
     transformer_kwargs = transformer.get('kwargs')
     if transformer_kwargs is None:
-        transformer_kwargs = dict()
+        transformer_kwargs = {}
 
     return transformer_class(**transformer_kwargs)
 

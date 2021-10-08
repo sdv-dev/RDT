@@ -105,6 +105,22 @@ class TestNumericalTransformer(TestCase):
 
         assert output == -1
 
+    def test__learn_rounding_digits_all_nans(data):
+        """Test the _learn_rounding_digits method with data that is all NaNs.
+
+        If the data is all NaNs, expect that the output is None.
+
+        Input:
+        - An array of NaNs.
+        Output:
+        - None
+        """
+        data = np.array([np.nan, np.nan, np.nan, np.nan])
+
+        output = NumericalTransformer._learn_rounding_digits(data)
+
+        assert output is None
+
     def test_fit_rounding_none(self):
         """Test fit rounding parameter with ``None``
 

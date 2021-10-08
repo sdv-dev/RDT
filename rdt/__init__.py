@@ -5,7 +5,7 @@
 
 __author__ = """MIT Data To AI Lab"""
 __email__ = 'dailabmit@gmail.com'
-__version__ = '0.5.2'
+__version__ = '0.5.3.dev1'
 
 import numpy as np
 import pandas as pd
@@ -36,7 +36,7 @@ def get_demo(dtypes=('int', 'float', 'str', 'datetime'), nans=0.2, size=10):
     if np.isscalar(nans):
         nans = [nans] * len(dtypes)
 
-    columns = dict()
+    columns = {}
     for count, (dtype, nan) in enumerate(zip(dtypes, nans)):
         if dtype == 'int':
             column = np.random.randint(100, size=size)
