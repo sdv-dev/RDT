@@ -36,12 +36,12 @@ def format_array(array):
 def get_regression_score(features, target, training_size_perc=0.8):
     training_size = round(training_size_perc * features.shape[0])
     y_training = target[0:training_size]
-    X_training = features[0:training_size]
-    model = LinearRegression().fit(X_training, y_training)
+    x_training = features[0:training_size]
+    model = LinearRegression().fit(x_training, y_training)
 
     y_test = target[training_size:]
-    X_test = features[training_size:]
-    predictions = model.predict(X_test)
+    x_test = features[training_size:]
+    predictions = model.predict(x_test)
     return r2_score(y_test, predictions)
 
 
