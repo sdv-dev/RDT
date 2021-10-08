@@ -36,7 +36,7 @@ def _validate_helper(validator_function, args, steps):
         steps (list):
             List of steps that the validation has completed.
     """
-    if steps:
+    if steps is not None:
         steps.append(validator_function.__name__)
 
     validator_function(*args)

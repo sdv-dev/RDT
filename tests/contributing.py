@@ -76,10 +76,10 @@ def validate_transformer_integration(transformer):
         bool:
             Whether or not the transformer passes all integration checks.
     """
-    print(f'Validating Integration Tests for transformer {transformer}\n')
-
     if isinstance(transformer, str):
         transformer = get_class(transformer)
+
+    print(f'Validating Integration Tests for transformer {transformer.__name__}\n')
 
     steps = []
     validation_error = None
@@ -105,14 +105,14 @@ def validate_transformer_integration(transformer):
     result_summaries = []
     seen_checks = set()
     failed_step = None if validation_error is None else steps[-1]
-    for i in range(len(steps)):
-        check, details = CHECK_DETAILS[steps[i]]
+    for step in steps:
+        check, details = CHECK_DETAILS[step]
         if check in seen_checks:
             continue
 
-        seen_checks.update([check])
+        seen_checks.add(check)
 
-        if failed_step and steps[i] == failed_step:
+        if failed_step and step == failed_step:
             result_summaries.append([check, 'No', validation_error])
         else:
             result_summaries.append([check, 'Yes', details])
