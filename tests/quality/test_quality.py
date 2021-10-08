@@ -1,17 +1,15 @@
-import os.path as op
-
 import numpy as np
 import pandas as pd
 import pytest
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score
+from sklearn.model_selection import cross_val_score
 
 from rdt import HyperTransformer
 from rdt.transformers import NumericalTransformer, get_transformers_by_type
+from tests.quality.utils import download_single_table_dataset
 
-TEST_PREFIX = op.join(op.dirname(__file__), 'datasets')
 TEST_CASES = [
-    ('categorical', 'adult.csv')
+    ('categorical', 'adult')
 ]
 THRESHOLD = 0.4
 
@@ -33,16 +31,10 @@ def format_array(array):
     return array
 
 
-def get_regression_score(features, target, training_size_perc=0.8):
-    training_size = round(training_size_perc * features.shape[0])
-    y_training = target[0:training_size]
-    x_training = features[0:training_size]
-    model = LinearRegression().fit(x_training, y_training)
-
-    y_test = target[training_size:]
-    x_test = features[training_size:]
-    predictions = model.predict(x_test)
-    return r2_score(y_test, predictions)
+def get_regression_score(features, target):
+    model = LinearRegression()
+    scores = cross_val_score(model, features, target)
+    return np.mean(scores)
 
 
 def find_columns(data, data_type):
@@ -80,22 +72,34 @@ def get_transformer_scores(data, data_type, transformers):
 def validate_relative_score(scores, transformer):
     scores_without_transformer = scores.drop(transformer)
     means = scores_without_transformer.mean()
+    means_above_threshold = means > THRESHOLD
     standard_deviations = scores_without_transformer.std()
-    for column in means.index:
-        mean_score = means[column]
-        std = standard_deviations[column]
-        if mean_score > THRESHOLD:
-            assert scores.loc[transformer, column] > mean_score - std
+    minimum_scores = means[means_above_threshold] - standard_deviations[means_above_threshold]
+
+    assert all(scores.loc[transformer, means_above_threshold] > minimum_scores)
 
 
 @pytest.mark.parametrize('test_case', TEST_CASES)
-def test_quality(test_case):
+def test_quality(subtests, test_case):
     """Run all the quality test cases.
+
+    This test goes through each test case and tests all the transformers
+    of the test case's type against the test case's dataset. First, all
+    the transformers of the data type are used to transform every column
+    in the dataset of that type. A regression model is then trained on
+    those transformed column to try and predict every numerical column
+    in the dataset. The scores for each transformer are then compared to
+    the mean score of the rest of the transformers to make sure none are more
+    than one standard deviation away.
     """
+    dataset_name = test_case[1]
+    data = download_single_table_dataset(dataset_name)
     data_type = test_case[0]
-    file_name = op.join(TEST_PREFIX, test_case[1])
-    data = pd.read_csv(file_name)
     transformers = get_transformers_by_type()[data_type]
     scores = get_transformer_scores(data, data_type, transformers)
+
     for transformer in scores.index:
-        validate_relative_score(scores, transformer)
+        with subtests.test(
+                msg=f'Testing transformer {transformer} with dataset {dataset_name}',
+                transformer=transformer):
+            validate_relative_score(scores, transformer)
