@@ -1,14 +1,7 @@
 """Transformer for data that contains Null values."""
 
-import warnings
-
 import numpy as np
 import pandas as pd
-
-IRREVERSIBLE_WARNING = (
-    'Replacing nulls with existing value without `null_column`, which is not reversible. '
-    'Use `null_column=True` to ensure that the transformation is reversible.'
-)
 
 
 class NullTransformer():
