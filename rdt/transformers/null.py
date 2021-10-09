@@ -96,9 +96,6 @@ class NullTransformer():
         if self._null_column:
             return pd.concat([data, isna.astype('int')], axis=1).to_numpy()
 
-        if self._fill_value in data.array and not self._null_column:
-            warnings.warn(IRREVERSIBLE_WARNING)
-
         return data.array
 
     def reverse_transform(self, data):
