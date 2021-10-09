@@ -82,10 +82,11 @@ class NullTransformer():
         Returns:
             numpy.ndarray
         """
-        if not isinstance(data, pd.Series):
-            data = pd.Series(data)
+        if self._null_column or (self.nulls and self._fill_value is not None):
+            isna = data.isna()
+            if not isinstance(data, pd.Series):
+                data = pd.Series(data)
 
-        isna = data.isna()
         if self.nulls and self._fill_value is not None:
             if not self.copy:
                 data[isna] = self._fill_value
