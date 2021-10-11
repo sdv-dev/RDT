@@ -151,19 +151,19 @@ def validate_test_names(transformer):
         if isinstance(function, (FunctionType, classmethod, staticmethod))
     ]
 
-    test_function_exists = []
+    test_functions_is_valid = []
 
-    for transformer_function in transformer_functions:
-        count = len(test_function_exists)
-        simple_test = f'test_{transformer_function}'
-        described_test = f'test_{transformer_function}_'
-        for test in test_functions:
+    for test in test_functions:
+        count = len(test_functions_is_valid)
+        for transformer_function in transformer_functions:
+            simple_test = f'test_{transformer_function}'
+            described_test = f'test_{transformer_function}_'
             if test.startswith(described_test):
-                test_function_exists.append(True)
-            if test.startswith(simple_test):
-                test_function_exists.append(True)
+                test_functions_is_valid.append(True)
+            elif test.startswith(simple_test):
+                test_functions_is_valid.append(True)
 
-        if count == len(test_function_exists):
-            test_function_exists.append(False)
+        if count == len(test_functions_is_valid):
+            test_functions_is_valid.append(False)
 
-    return len(test_function_exists) >= len(transformer_functions)
+    return all(test_functions_is_valid)
