@@ -9,6 +9,12 @@ from types import FunctionType
 
 from rdt.transformers.base import BaseTransformer
 
+NOT_IMPORTABLE = [
+    '__init__.py',
+    'addons_setup.py',
+    'setup.py',
+]
+
 
 def validate_transformer_name(transformer):
     """Return whether or not the ``Transformer`` ends with the ``Transformer`` nomenclature."""
@@ -118,14 +124,30 @@ def validate_test_location(transformer):
     return test_location.exists()
 
 
+def _load_module_from_path(path):
+    """Return the module from a given ``PosixPath``."""
+    module_path = path.parent
+    module_name = path.name.split('.')[0]
+    if module_path.name == 'transformers':
+        module_path = f'rdt.transformers.{module_name}'
+    elif module_path.parent.name == 'transformers':
+        module_path = f'rdt.transformers.{module_path.parent.name}.{module_name}'
+    elif module_path.parent.name == 'addons':
+        module_path = f'rdt.transformers.addons.{module_path.parent.name}.{module_name}'
+
+    spec = importlib.util.spec_from_file_location(module_path, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    return module
+
+
 def validate_test_names(transformer):
     """Validate if the test methods are properly specified."""
     test_file = _get_test_location(transformer)
 
     # load the module
-    spec = importlib.util.spec_from_file_location(f'Test{transformer.__name__}', test_file)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = _load_module_from_path(test_file)
 
     # get test class
     try:
@@ -167,3 +189,29 @@ def validate_test_names(transformer):
             test_functions_is_valid.append(False)
 
     return all(test_functions_is_valid)
+
+
+def _find_transformers(path):
+    transformers_found = {}
+    for directory in path.iterdir():
+        if not directory.name.startswith('_'):
+            if directory.is_dir():
+                transformers_found.update(_find_transformers(directory))
+            elif directory.name.endswith('.py') and directory.name not in NOT_IMPORTABLE:
+                # load the module
+                module = _load_module_from_path(directory)
+                transformers_found.update({
+                    name: obj
+                    for name, obj in inspect.getmembers(module, inspect.isclass)
+                })
+
+    return transformers_found
+
+
+def find_all_transformers():
+    """Return a list of classes found under ``rdt.transformers`` subfolders."""
+    current_path = Path(__file__).parent
+    rdt_transformers_path = current_path.parent / 'rdt' / 'transformers'
+    transformers_found = _find_transformers(rdt_transformers_path)
+
+    return transformers_found
