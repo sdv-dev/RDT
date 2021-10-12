@@ -15,10 +15,12 @@ from tests.code_style import (
     load_transformer, validate_test_location, validate_test_names, validate_transformer_addon,
     validate_transformer_importable_from_parent_module, validate_transformer_module,
     validate_transformer_name, validate_transformer_subclass)
+from rdt.transformers import get_transformers_by_type
+from tests.datasets import get_dataset_generators_by_type
 from tests.integration.test_transformers import validate_transformer
 from tests.quality.test_quality import (
     TEST_THRESHOLD, get_regression_scores, get_results_table, get_test_cases)
-from tests.performance import validate_performance_for_transformer
+from tests.performance import TEST_NAMES, validate_performance
 
 # Mapping of validation method to (check name, check description).
 CHECK_DETAILS = {
@@ -83,7 +85,8 @@ def validate_transformer_integration(transformer):
     Args:
         transformer (string or rdt.transformers.BaseTransformer):
             The transformer to validate.
-    Output:
+
+    Returns:
         bool:
             Whether or not the transformer passes all integration checks.
     """
@@ -367,7 +370,7 @@ def validate_transformer_quality(transformer):
     return transformer_results
 
 
-def validate_transformer_performance(transformer):
+def validate_transformer_performance(desired_transformer):
     """Validate the performance of a transformer.
 
     Run the specified Transformer on all the Dataset Generators of the indicated data type
@@ -375,33 +378,58 @@ def validate_transformer_performance(transformer):
     Transformers of the same data type.
 
     Args:
-        transformer (string or rdt.transformers.BaseTransformer):
+        desired_transformer (string or rdt.transformers.BaseTransformer):
             The transformer to validate.
-    Output:
+
+    Returns:
         pandas.DataFrame:
             Performance results of the transformer.
     """
-    if isinstance(transformer, str):
-        transformer = get_class(transformer)
+    if isinstance(desired_transformer, str):
+        desired_transformer = get_class(desired_transformer)
 
-    print(f'Validating Performance for transformer {transformer.__name__}\n')
+    print(f'Validating Performance for transformer {desired_transformer.__name__}\n')
+    data_type = desired_transformer.get_input_type()
 
-    results = validate_performance_for_transformer(transformer)
+    transformer_map = get_transformers_by_type()
+    dataset_generator_map = get_dataset_generators_by_type()
 
-    if results['Valid'].all():
+    transformers = transformer_map.get(data_type, [])
+    dataset_generators = dataset_generator_map.get(data_type, [])
+
+    total_results = pd.DataFrame(
+        [[test_name, 0, 0, True] for test_name in TEST_NAMES],
+        columns=['Test', 'Value', 'Total', 'Valid'],
+    )
+
+    for transformer in transformers:
+        for dataset_generator in dataset_generators:
+            results = {}
+            validate_performance(transformer, dataset_generator, results=results)
+
+            for test in TEST_NAMES:
+                value, valid = results[test]
+                total_results.loc[total_results.Test == test, 'Total'] += value
+                total_results.loc[total_results.Test == test, 'Valid'] &= valid
+
+                if transformer == desired_transformer:
+                    total_results.loc[total_results.Test == test, 'Value'] += value
+
+    if total_results['Valid'].all():
         print('SUCCESS: The Performance Tests were successful.')
     else:
         print('ERROR: One or more Performance Tests were NOT successful.')
 
     final_results = pd.DataFrame()
-    final_results['Evaluation Metric'] = results['Test']
-    final_results['Value'] = results['Value']
+    final_results['Evaluation Metric'] = total_results['Test']
+    final_results['Value'] = total_results['Value'] / len(dataset_generators)
     final_results['Units'] = np.where(
         final_results['Evaluation Metric'].str.contains('Time'),
         's / row',
         'Mb / row',
     )
-    final_results['Acceptable'] = np.where(results['Valid'], 'Yes', 'No')
-    final_results['Compared to average'] = results['Value'] / results['Average']
+    final_results['Acceptable'] = np.where(total_results['Valid'], 'Yes', 'No')
+    average = total_results['Total'] / (len(transformers) * len(dataset_generators))
+    final_results['Compared to average'] = final_results['Value'] / average
 
     return final_results

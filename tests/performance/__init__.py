@@ -1,9 +1,10 @@
 """Functions to evaluate and test the performance of the RDT Transformers."""
 
 from tests.performance import profiling
-from tests.performance.test_performance import validate_performance_for_transformer
+from tests.performance.test_performance import TEST_NAMES, validate_performance
 
 __all__ = [
     'profiling',
-    'validate_performance_for_transformer',
+    'TEST_NAMES',
+    'validate_performance',
 ]
