@@ -6,6 +6,7 @@ from rdt.transformers import get_default_transformer, load_transformer
 from rdt.transformers.null import NullTransformer
 
 
+# pylint: disable=R0902
 class HyperTransformer:
     """HyperTransformer class.
 
