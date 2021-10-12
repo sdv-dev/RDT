@@ -286,16 +286,18 @@ class HyperTransformer:
         transformed_columns = self._subset(self._output_columns, data.columns)
 
         if self._transform_nulls:
-            for field, transformer in self._null_transformers.items():
-                transformed = transformer.transform(data[field])
-                if transformer.creates_null_column():
-                    column_name = self._get_null_column_name(field)
-                    transformed_columns.append(column_name)
-                    data[field] = transformed[:, 0]
-                    data[column_name] = transformed[:, 1]
+            for field in data.columns:
+                if field in self._null_transformers.keys():
+                    transformer = self._null_transformers[field]
+                    transformed = transformer.transform(data[field])
+                    if transformer.creates_null_column():
+                        column_name = self._get_null_column_name(field)
+                        transformed_columns.append(column_name)
+                        data[field] = transformed[:, 0]
+                        data[column_name] = transformed[:, 1]
 
-                else:
-                    data[field] = transformed
+                    else:
+                        data[field] = transformed
 
         return data.reindex(columns=unknown_columns + transformed_columns)
 
@@ -324,12 +326,14 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
-        for field, transformer in self._null_transformers.items():
-            if transformer.creates_null_column():
-                column_name = self._get_null_column_name(field)
-                data[field] = transformer.reverse_transform(data[[field, column_name]].to_numpy())
-            else:
-                data[field] = transformer.reverse_transform(data[field].to_numpy())
+        for field in data.columns:
+            if field in self._null_transformers.keys():
+                transformer = self._null_transformers[field]
+                if transformer.creates_null_column():
+                    column_name = self._get_null_column_name(field)
+                    data[field] = transformer.reverse_transform(data[[field, column_name]].to_numpy())
+                else:
+                    data[field] = transformer.reverse_transform(data[field].to_numpy())
 
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         for transformer in reversed(self._transformers_sequence):

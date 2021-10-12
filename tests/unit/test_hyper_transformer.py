@@ -645,7 +645,7 @@ class TestHyperTransformer(TestCase):
         data = self.get_data()
         transformed_data = self.get_transformed_data()
         datetime_transformer.transform.return_value = transformed_data
-        ht = HyperTransformer(transform_nulls=False)
+        ht = HyperTransformer()
         ht._transformers_sequence = [
             int_transformer,
             int_out_transformer,
@@ -723,7 +723,7 @@ class TestHyperTransformer(TestCase):
         data = self.get_transformed_data(True)
         reverse_transformed_data = self.get_transformed_data()
         int_transformer.reverse_transform.return_value = reverse_transformed_data
-        ht = HyperTransformer(transform_nulls=False)
+        ht = HyperTransformer()
         ht._transformers_sequence = [
             int_transformer,
             int_out_transformer,
