@@ -1,11 +1,13 @@
 import random
 
+import pytest
 import numpy as np
 import pandas as pd
 
 from rdt import HyperTransformer
 from rdt.transformers import (
-    BaseTransformer, BooleanTransformer, CategoricalTransformer, NumericalTransformer)
+    BaseTransformer, BooleanTransformer, CategoricalTransformer, NumericalTransformer,
+    OneHotEncodingTransformer)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -313,6 +315,87 @@ def test_hypertransformer_field_transformers_multi_column_fields():
     reverse_transformed = ht.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
+
+
+def test_single_category():
+    ht = HyperTransformer(field_transformers={
+        'a': OneHotEncodingTransformer()
+    })
+    data = pd.DataFrame({
+        'a': ['a', 'a', 'a']
+    })
+
+    ht.fit(data)
+    transformed = ht.transform(data)
+
+    reverse = ht.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(data, reverse)
+
+
+@pytest.mark.xfail()
+def test_dtype_category():
+    data = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
+
+    ht = HyperTransformer()
+    ht.fit(data)
+
+    trans = ht.transform(data)
+
+    rever = ht.reverse_transform(trans)
+    pd.testing.assert_frame_equal(rever, data)
+
+
+
+def test_subset_of_columns():
+    """HyperTransform should be able to transform a subset of the training columns.
+    See https://github.com/sdv-dev/RDT/issues/152
+    """
+    data = get_input_data_without_nan()
+
+    ht = HyperTransformer()
+    ht.fit(data)
+
+    subset = get_input_data_without_nan()[[data.columns[0]]]
+    transformed = ht.transform(subset)
+    reverse = ht.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(subset, reverse)
+
+
+def test_with_unfitted_columns():
+    """HyperTransform should be able to transform even if there are unseen columns in data."""
+    data = get_input_data_without_nan()
+    ht = HyperTransformer(data_type_transformers={'categorical': CategoricalTransformer})
+    ht.fit(data)
+
+    new_data = get_input_data_without_nan()
+    new_column = pd.Series([6, 7, 8, 9])
+    new_data['z'] = new_column
+    transformed = ht.transform(new_data)
+    reverse = ht.reverse_transform(transformed)
+
+    expected_reversed = get_reversed()
+    expected_reversed['z'] = new_column
+    expected_reversed = expected_reversed.reindex(
+        columns=['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'])
+    pd.testing.assert_frame_equal(expected_reversed, reverse)
+
+
+def test_subset_of_columns_nan_data():
+    """HyperTransform should be able to transform a subset of the training columns.
+    See https://github.com/sdv-dev/RDT/issues/152
+    """
+    data = get_input_data_with_nan()
+
+    ht = HyperTransformer()
+    ht.fit(data)
+
+    subset = get_reversed()[[data.columns[0]]]
+    transformed = ht.transform(subset)
+    reverse = ht.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(subset, reverse)
 
 
 class DummyTransformer(BaseTransformer):
