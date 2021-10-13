@@ -18,6 +18,7 @@ TYPE_TO_DTYPE = {
     'int': ['int'],
     'categorical': ['object', 'category'],
     'datetime': ['datetime'],
+    'boolean': ['bool']
 }
 
 
