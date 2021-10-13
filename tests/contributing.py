@@ -389,13 +389,10 @@ def validate_transformer_performance(desired_transformer):
         desired_transformer = get_class(desired_transformer)
 
     print(f'Validating Performance for transformer {desired_transformer.__name__}\n')
+
     data_type = desired_transformer.get_input_type()
-
-    transformer_map = get_transformers_by_type()
-    dataset_generator_map = get_dataset_generators_by_type()
-
-    transformers = transformer_map.get(data_type, [])
-    dataset_generators = dataset_generator_map.get(data_type, [])
+    transformers = get_transformers_by_type().get(data_type, [])
+    dataset_generators = get_dataset_generators_by_type().get(data_type, [])
 
     total_results = pd.DataFrame(
         [[test_name, 0, 0, True] for test_name in TEST_NAMES],
