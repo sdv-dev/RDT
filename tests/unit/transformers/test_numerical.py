@@ -106,7 +106,7 @@ class TestNumericalTransformer(TestCase):
 
         assert output == -1
 
-    def test__learn_rounding_digits_all_nans(data):
+    def test__learn_rounding_digits_all_nans(self):
         """Test the _learn_rounding_digits method with data that is all NaNs.
 
         If the data is all NaNs, expect that the output is None.
