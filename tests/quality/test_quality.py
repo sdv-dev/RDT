@@ -9,9 +9,9 @@ from rdt import HyperTransformer
 from rdt.transformers import NumericalTransformer, get_transformers_by_type
 from tests.quality.utils import download_single_table_dataset
 
-THRESHOLD = 0.4
+THRESHOLD = 0.2
 MAX_SIZE = 5000000
-TYPES_TO_SKIP = {'numerical', 'float', 'integer', None}
+TYPES_TO_SKIP = {'numerical', 'float', 'integer', 'id', None}
 
 TYPE_TO_DTYPE = {
     'numerical': ['number'],
@@ -39,9 +39,16 @@ def get_regression_score(features, target):
     return np.mean(scores)
 
 
-def find_columns(data, data_type):
-    dtypes = TYPE_TO_DTYPE.get(data_type, data_type)
+def find_columns(data, data_type, metadata=None):
+    if metadata:
+        return {
+            column
+            for column in metadata['fields']
+            if metadata['fields'][column]['type'] == data_type
+        }
+
     columns = set()
+    dtypes = TYPE_TO_DTYPE.get(data_type, data_type)
     for dtype in dtypes:
         selected = data.select_dtypes(dtype)
         columns.update(set(selected.columns))
@@ -49,9 +56,9 @@ def find_columns(data, data_type):
     return columns
 
 
-def get_transformer_scores(data, data_type, transformers):
+def get_transformer_scores(data, data_type, transformers, metadata=None):
     columns_to_predict = find_columns(data, 'numerical')
-    columns_to_transform = find_columns(data, data_type)
+    columns_to_transform = find_columns(data, data_type, metadata)
     all_scores = pd.DataFrame()
     index = [transformer.__name__ for transformer in transformers]
     features = data[columns_to_transform]
@@ -75,12 +82,15 @@ def get_transformer_scores(data, data_type, transformers):
 
 def validate_relative_score(scores, transformer):
     scores_without_transformer = scores.drop(transformer)
+    if len(scores_without_transformer) == 0:
+        return
+
     means = scores_without_transformer.mean()
     means_above_threshold = means > THRESHOLD
-    standard_deviations = scores_without_transformer.std()
-    minimum_scores = means[means_above_threshold] - standard_deviations[means_above_threshold]
+    standard_deviations = scores.std()
+    minimum_scores = means[means_above_threshold] - 2 * standard_deviations[means_above_threshold]
 
-    assert all(scores.loc[transformer, means_above_threshold] > minimum_scores)
+    assert all(scores.loc[transformer, means_above_threshold] >= minimum_scores)
 
 
 def get_test_cases():
@@ -119,8 +129,8 @@ def test_quality(subtests):
 
     for data_type, dataset_name in test_cases:
         transformers = transformers_by_type[data_type]
-        data = download_single_table_dataset(dataset_name)
-        scores = get_transformer_scores(data, data_type, transformers)
+        (data, metadata) = download_single_table_dataset(dataset_name)
+        scores = get_transformer_scores(data, data_type, transformers, metadata)
         if any(scores.mean() > THRESHOLD):
             tested_data_types[data_type] = True
 

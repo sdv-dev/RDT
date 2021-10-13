@@ -18,7 +18,7 @@ def download_dataset(dataset_name):
             Name of dataset to download.
 
     Returns:
-        Dict mapping table names to their DataFrames.
+        Dict mapping table names to tuples of their DataFrames and metadata.
     """
     url = DATA_URL.format(dataset_name)
     response = urllib.request.urlopen(url)
@@ -30,10 +30,11 @@ def download_dataset(dataset_name):
             metadata = json.load(metadata_file)
         tables = metadata['tables']
         for table in tables:
-            file_name = tables[table]['path']
+            table_meta = tables[table]
+            file_name = table_meta['path']
             file_path = f'{dataset_name}/{file_name}'
             with zf.open(file_path) as table_file:
-                tables_dict[table] = pd.read_csv(table_file)
+                tables_dict[table] = (pd.read_csv(table_file), table_meta)
 
     return tables_dict
 
@@ -46,7 +47,7 @@ def download_single_table_dataset(dataset_name):
             Name of dataset to download.
 
     Returns:
-        DataFrame
+        Tuple of DataFrame and metadata
     """
     tables_dict = download_dataset(dataset_name)
     table_name = list(tables_dict.keys())[0]
