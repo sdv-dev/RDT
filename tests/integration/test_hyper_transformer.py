@@ -1,8 +1,8 @@
 import random
 
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 
 from rdt import HyperTransformer
 from rdt.transformers import (
@@ -344,7 +344,6 @@ def test_dtype_category():
 
     rever = ht.reverse_transform(trans)
     pd.testing.assert_frame_equal(rever, data)
-
 
 
 def test_subset_of_columns():
