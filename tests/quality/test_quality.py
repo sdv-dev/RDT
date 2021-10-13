@@ -11,6 +11,8 @@ from rdt.transformers import NumericalTransformer, get_transformers_by_type
 from tests.quality.utils import download_single_table_dataset
 
 THRESHOLD = 0.4
+MAX_SIZE = 5000000
+TYPES_TO_PREDICT = {'numerical', 'float', 'integer'}
 
 TYPE_TO_DTYPE = {
     'numerical': ['number'],
@@ -28,6 +30,7 @@ def format_array(array):
 
     if len(array.shape) == 1:
         array = array.reshape(-1, 1)
+
     return array
 
 
@@ -65,7 +68,9 @@ def get_transformer_scores(data, data_type, transformers):
             ht.fit(features)
             transformed_features = ht.transform(features).to_numpy()
             scores.append(get_regression_score(transformed_features, target))
+
         all_scores[column] = pd.Series(scores, index=index)
+
     return all_scores
 
 
@@ -80,15 +85,13 @@ def validate_relative_score(scores, transformer):
 
 
 def get_test_cases():
-    max_size = 5000000
     test_cases = []
-    types_to_skip = {'numerical', 'float', 'integer'}
     path = os.path.join(os.path.dirname(__file__), 'dataset_info.csv')
     datasets = pd.read_csv(path)
     for _, row in datasets.iterrows():
-        if row['modality'] == 'single-table' and row['table_size'] < max_size:
+        if row['modality'] == 'single-table' and row['table_size'] < MAX_SIZE:
             for data_type in eval(row['table_types']):
-                if data_type not in types_to_skip:
+                if data_type not in TYPES_TO_PREDICT:
                     test_cases.append((data_type, row['name']))
 
     return test_cases
@@ -97,8 +100,8 @@ def get_test_cases():
 test_cases = get_test_cases()
 
 
-@pytest.mark.parametrize('test_case', test_cases)
-def test_quality(subtests, test_case):
+@pytest.mark.parametrize(('data_type', 'dataset_name'), test_cases)
+def test_quality(subtests, data_type, dataset_name):
     """Run all the quality test cases.
 
     This test goes through each test case and tests all the transformers
@@ -110,9 +113,7 @@ def test_quality(subtests, test_case):
     the mean score of the rest of the transformers to make sure none are more
     than one standard deviation away.
     """
-    dataset_name = test_case[1]
     data = download_single_table_dataset(dataset_name)
-    data_type = test_case[0]
     transformers = get_transformers_by_type()[data_type]
     scores = get_transformer_scores(data, data_type, transformers)
 
