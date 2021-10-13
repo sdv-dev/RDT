@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 import pandas as pd
-import pytest
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_score
 
@@ -12,7 +11,7 @@ from tests.quality.utils import download_single_table_dataset
 
 THRESHOLD = 0.4
 MAX_SIZE = 5000000
-TYPES_TO_PREDICT = {'numerical', 'float', 'integer'}
+TYPES_TO_SKIP = {'numerical', 'float', 'integer', None}
 
 TYPE_TO_DTYPE = {
     'numerical': ['number'],
@@ -91,17 +90,13 @@ def get_test_cases():
     for _, row in datasets.iterrows():
         if row['modality'] == 'single-table' and row['table_size'] < MAX_SIZE:
             for data_type in eval(row['table_types']):
-                if data_type not in TYPES_TO_PREDICT:
+                if data_type not in TYPES_TO_SKIP:
                     test_cases.append((data_type, row['name']))
 
     return test_cases
 
 
-test_cases = get_test_cases()
-
-
-@pytest.mark.parametrize(('data_type', 'dataset_name'), test_cases)
-def test_quality(subtests, data_type, dataset_name):
+def test_quality(subtests):
     """Run all the quality test cases.
 
     This test goes through each test case and tests all the transformers
@@ -113,12 +108,26 @@ def test_quality(subtests, data_type, dataset_name):
     the mean score of the rest of the transformers to make sure none are more
     than one standard deviation away.
     """
-    data = download_single_table_dataset(dataset_name)
-    transformers = get_transformers_by_type()[data_type]
-    scores = get_transformer_scores(data, data_type, transformers)
+    transformers_by_type = get_transformers_by_type()
+    test_cases = get_test_cases()
+    data_types_to_test = [
+        data_type
+        for data_type in transformers_by_type.keys()
+        if data_type not in TYPES_TO_SKIP
+    ]
+    tested_data_types = dict.fromkeys(data_types_to_test, False)
 
-    for transformer in scores.index:
-        with subtests.test(
-                msg=f'Testing transformer {transformer} with dataset {dataset_name}',
-                transformer=transformer):
-            validate_relative_score(scores, transformer)
+    for data_type, dataset_name in test_cases:
+        transformers = transformers_by_type[data_type]
+        data = download_single_table_dataset(dataset_name)
+        scores = get_transformer_scores(data, data_type, transformers)
+        if any(scores.mean() > THRESHOLD):
+            tested_data_types[data_type] = True
+
+        for transformer in scores.index:
+            with subtests.test(
+                    msg=f'Testing transformer {transformer} with dataset {dataset_name}',
+                    transformer=transformer):
+                validate_relative_score(scores, transformer)
+
+    assert all(tested_data_types[data_type] is True for data_type in tested_data_types)
