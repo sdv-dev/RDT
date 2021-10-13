@@ -2,12 +2,10 @@ import random
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from rdt import HyperTransformer
 from rdt.transformers import (
-    BaseTransformer, BooleanTransformer, CategoricalTransformer, NumericalTransformer,
-    OneHotEncodingTransformer)
+    BaseTransformer, BooleanTransformer, CategoricalTransformer, NumericalTransformer)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -237,6 +235,7 @@ def test_hypertransformer_field_transformers():
 
     ht = HyperTransformer(field_transformers=field_transformers)
     ht.fit(data)
+    transformed = ht.transform(data)
 
     pd.testing.assert_frame_equal(
         transformed,
@@ -304,12 +303,16 @@ def test_hypertransformer_field_transformers_multi_column_fields():
 
     ht = HyperTransformer(field_transformers=field_transformers)
     ht.fit(data)
+    transformed = ht.transform(data)
 
-    subset = get_reversed()[[data.columns[0]]]
-    transformed = ht.transform(subset)
-    reverse = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(
+        transformed,
+        expected_transformed
+    )
 
-    pd.testing.assert_frame_equal(subset, reverse)
+    reverse_transformed = ht.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
 
 class DummyTransformer(BaseTransformer):
