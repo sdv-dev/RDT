@@ -835,13 +835,7 @@ def test_hypertransformer_empty_data():
 
 
 def test_hypertransformer_transform_subset():
-    """Test the HyperTransformer with ``fill_value = string, null_column = None``.
-
-    When ``fill_value`` is a string ``'filled_value'`` and ``null_column`` is ``None``,
-    it should (1) transform the data like the normal ``HyperTransformer``, (2) for each
-    column in the data that contains ``nan`` values it should create a new column flagging
-    the ``nan`` values with ``1.0``'s (and``0.0``'s otherwise) and (3) fill all the transformed
-    ``np.nan`` values with the ``'filled_value'`` string.
+    """Test the HyperTransformer when only a subset of the fitted data is transformed.
 
     Input:
         - A dataset with ``nan`` values.
@@ -878,5 +872,62 @@ def test_hypertransformer_transform_subset():
 
     reversed_data = ht.reverse_transform(transformed)
     expected_reverse = pd.DataFrame({'col1': ['abc', np.nan]})
+    pd.testing.assert_frame_equal(
+        expected_reverse.sort_index(axis=1), reversed_data.sort_index(axis=1))
+
+
+def test_hypertransformer_reverse_transform_subset():
+    """Test the HyperTransformer when only a subset of the fitted data is reverse transformed.
+
+    Input:
+        - A dataset with ``nan`` values.
+        - A dictionary of which transformers to apply to each column of the data.
+
+    Expected behavior:
+        - It should fit, transform and reverse transform the dataset.
+        - The reverse transform of the transformed value should return the original data.
+    """
+    data = pd.DataFrame({
+        'col1': ['abc', np.nan],
+        'col2': ['abc', 'abc'],
+        'col3': [np.nan, np.nan],
+        'col4': [np.nan, 'abc']
+    })
+
+    transformers = {
+        'col1': DummyTransformer(),
+        'col2': DummyTransformer(),
+        'col3': DummyTransformer(),
+        'col4': DummyTransformer()
+    }
+
+    ht = HyperTransformer(
+        field_transformers=transformers,
+        fill_value='filled_value',
+        null_column=True
+    )
+    ht.fit(data)
+
+    transformed = ht.transform(data)
+
+    expected = pd.DataFrame({
+        'col1.value': [1.0, 'filled_value'],
+        'col1.is_null': [0, 1],
+        'col2.value': [1.0, 1.0],
+        'col2.is_null': [0, 0],
+        'col3.value': ['filled_value', 'filled_value'],
+        'col3.is_null': [1, 1],
+        'col4.value': ['filled_value', 1.0],
+        'col4.is_null': [1, 0]
+    })
+    pd.testing.assert_frame_equal(
+        transformed.sort_index(axis=1), expected.sort_index(axis=1), check_dtype=False)
+
+    transformed_subset = transformed[['col1.value', 'col1.is_null', 'col3.value', 'col4.is_null']]
+    reversed_data = ht.reverse_transform(transformed_subset)
+    expected_reverse = pd.DataFrame({
+        'col1': ['abc', np.nan],
+        'col3': ['filled_value', 'filled_value']
+    })
     pd.testing.assert_frame_equal(
         expected_reverse.sort_index(axis=1), reversed_data.sort_index(axis=1))
