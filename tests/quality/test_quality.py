@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,9 +10,6 @@ from rdt import HyperTransformer
 from rdt.transformers import NumericalTransformer, get_transformers_by_type
 from tests.quality.utils import download_single_table_dataset
 
-TEST_CASES = [
-    ('categorical', 'adult')
-]
 THRESHOLD = 0.4
 
 TYPE_TO_DTYPE = {
@@ -79,7 +78,25 @@ def validate_relative_score(scores, transformer):
     assert all(scores.loc[transformer, means_above_threshold] > minimum_scores)
 
 
-@pytest.mark.parametrize('test_case', TEST_CASES)
+def get_test_cases():
+    max_size = 5000000
+    test_cases = []
+    types_to_skip = {'numerical', 'float', 'integer'}
+    path = os.path.join(os.path.dirname(__file__), 'dataset_info.csv')
+    datasets = pd.read_csv(path)
+    for _, row in datasets.iterrows():
+        if row['modality'] == 'single-table' and row['table_size'] < max_size:
+            for data_type in eval(row['table_types']):
+                if data_type not in types_to_skip:
+                    test_cases.append((data_type, row['name']))
+
+    return test_cases
+
+
+test_cases = get_test_cases()
+
+
+@pytest.mark.parametrize('test_case', test_cases)
 def test_quality(subtests, test_case):
     """Run all the quality test cases.
 
