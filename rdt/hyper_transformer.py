@@ -85,7 +85,7 @@ class HyperTransformer:
         if isinstance(field, tuple):
             field_set.update(field)
         else:
-            field_set.add(field)  # noqa -> set can't use opreator
+            field_set.add(field) # noqa -> set can't use opreator
 
     @staticmethod
     def _field_in_set(field, field_set):

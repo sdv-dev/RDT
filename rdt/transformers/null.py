@@ -87,6 +87,7 @@ class NullTransformer():
             if not isinstance(data, pd.Series):
                 data = pd.Series(data)
 
+<<<<<<< HEAD
         if not self._null_column and (self._fill_value == data.array).any():
             warnings.warn(IRREVERSIBLE_WARNING)
 
@@ -98,6 +99,20 @@ class NullTransformer():
 
         if self._null_column:
             return pd.concat([data, isna.astype('int')], axis=1).to_numpy()
+=======
+            isna = data.isna()
+            if self.nulls and self._fill_value is not None:
+                if not self.copy:
+                    data[isna] = self._fill_value
+                else:
+                    data = data.fillna(self._fill_value)
+
+            if self._null_column:
+                return pd.concat([data, isna.astype('int')], axis=1).to_numpy()
+
+            if self._fill_value in data:
+                warnings.warn(IRREVERSIBLE_WARNING)
+>>>>>>> v0.6.0-dev
 
         return data.array
 
@@ -123,7 +138,11 @@ class NullTransformer():
                 isna = np.where(self._fill_value == data)[0]
                 data = pd.Series(data)
 
+<<<<<<< HEAD
             if len(isna) > 0:
+=======
+            if isna.any():
+>>>>>>> v0.6.0-dev
                 if self.copy:
                     data = data.copy()
 
