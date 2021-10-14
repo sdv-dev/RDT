@@ -59,7 +59,7 @@ def _validate_config_json(config_path, transformer_name):
                 getattr(importlib.import_module(package), name)
                 assert True
             except ImportError:
-                assert pytest.fail(), f'Could not import {name} from {package}'
+                assert pytest.fail(f'Could not import {name} from {package}')
 
 
 def validate_transformer_addon(transformer):
@@ -151,12 +151,12 @@ def validate_test_names(transformer):
     try:
         module = _load_module_from_path(test_file)
     except FileNotFoundError:
-        assert pytest.fail(), 'The expected test module was not found.'
+        assert pytest.fail('The expected test module was not found.')
 
     try:
         test_class = getattr(module, f'Test{transformer.__name__}')
     except AttributeError:
-        assert pytest.fail(), 'The expected test class was not found.'
+        assert pytest.fail('The expected test class was not found.')
 
     # get the test methods that start with test
     test_functions = inspect.getmembers(test_class, predicate=inspect.isfunction)
@@ -167,7 +167,7 @@ def validate_test_names(transformer):
     ]
 
     if not test_functions:
-        assert pytest.fail(), 'No test functions found within the test module.'
+        assert pytest.fail('No test functions found within the test module.')
 
     transformer_functions = [
         name
@@ -179,8 +179,8 @@ def validate_test_names(transformer):
     for test in test_functions:
         count = len(valid_test_functions)
         for transformer_function in transformer_functions:
-            simple_test = f'test_{transformer_function}'
-            described_test = f'test_{transformer_function}_'
+            simple_test = fr'test_{transformer_function}'
+            described_test = fr'test_{transformer_function}_'
             if test.startswith(described_test):
                 assert True
                 valid_test_functions.append(test)
@@ -189,7 +189,7 @@ def validate_test_names(transformer):
                 valid_test_functions.append(test)
 
         if count == len(valid_test_functions):
-            assert pytest.fail(), f'No function name was found for the test: {test}'
+            assert pytest.fail(f'No function name was found for the test: {test}')
 
 
 def load_transformer(transformer):
