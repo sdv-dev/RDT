@@ -2,7 +2,6 @@ import random
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from rdt import HyperTransformer
 from rdt.transformers import (
@@ -333,7 +332,6 @@ def test_single_category():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-@pytest.mark.xfail()
 def test_dtype_category():
     data = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
 
@@ -451,8 +449,7 @@ def test_hypertransformer_transform_nulls_false():
         'col1.value': [1.0, 1.0],
         'col2.value': [np.nan, 'a']
     })
-    pd.testing.assert_frame_equal(
-        transformed, expected, check_dtype=False)
+    pd.testing.assert_frame_equal(transformed, expected, check_dtype=False)
 
     reversed_data = ht.reverse_transform(transformed)
     pd.testing.assert_frame_equal(data, reversed_data)
@@ -526,8 +523,7 @@ def test_hypertransformer_fill_value_string():
         'col1.value': [1.0, 1.0],
         'col2.value': ['filled_value', 'a']
     })
-    pd.testing.assert_frame_equal(
-        transformed, expected, check_dtype=False)
+    pd.testing.assert_frame_equal(transformed, expected, check_dtype=False)
 
     reversed_data = ht.reverse_transform(transformed)
     pd.testing.assert_frame_equal(data, reversed_data)
@@ -597,8 +593,7 @@ def test_hypertransformer_fill_value_mean():
         'col1': [1.0, np.nan, np.nan, 0.0],
         'col2': [np.nan, 2.0, np.nan, 0.0]
     })
-    pd.testing.assert_frame_equal(
-        expected_reverse, reversed_data)
+    pd.testing.assert_frame_equal(expected_reverse, reversed_data)
 
 
 def test_hypertransformer_fill_value_mode():
@@ -640,15 +635,13 @@ def test_hypertransformer_fill_value_mode():
     expected = pd.DataFrame({
         'col.value': [2.0, 1.0, 2.0, 2.0]
     })
-    pd.testing.assert_frame_equal(
-        transformed, expected)
+    pd.testing.assert_frame_equal(transformed, expected)
 
     reversed_data = ht.reverse_transform(transformed)
     expected_reverse = pd.DataFrame({
         'col': [np.nan, 1.0, np.nan, np.nan]
     })
-    pd.testing.assert_frame_equal(
-        expected_reverse, reversed_data)
+    pd.testing.assert_frame_equal(expected_reverse, reversed_data)
 
 
 def test_hypertransformer_fill_value_object():
@@ -742,12 +735,10 @@ def test_hypertransformer_fill_value_string_null_column_true():
         'col1.is_null': [0, 1],
         'col2.is_null': [1, 1]
     })
-    pd.testing.assert_frame_equal(
-        transformed, expected, check_dtype=False)
+    pd.testing.assert_frame_equal(transformed, expected, check_dtype=False)
 
     reversed_data = ht.reverse_transform(transformed)
-    pd.testing.assert_frame_equal(
-        data, reversed_data, check_dtype=False)
+    pd.testing.assert_frame_equal(data, reversed_data, check_dtype=False)
 
 
 def test_hypertransformer_fill_value_none_null_column_true():
@@ -790,8 +781,7 @@ def test_hypertransformer_fill_value_none_null_column_true():
         'col1.is_null': [0, 0, 0, 0],
         'col2.is_null': [0, 0, 0, 1]
     })
-    pd.testing.assert_frame_equal(
-        transformed, expected, check_dtype=False)
+    pd.testing.assert_frame_equal(transformed, expected, check_dtype=False)
 
     reversed_data = ht.reverse_transform(transformed)
     pd.testing.assert_frame_equal(data, reversed_data)
@@ -843,8 +833,7 @@ def test_hypertransformer_fill_value_string_null_column_none():
         'col2.value': [1.0, 1.0],
         'col1.is_null': [0, 1]
     })
-    pd.testing.assert_frame_equal(
-        transformed, expected, check_dtype=False)
+    pd.testing.assert_frame_equal(transformed, expected, check_dtype=False)
 
     reversed_data = ht.reverse_transform(transformed)
     pd.testing.assert_frame_equal(data, reversed_data)
@@ -908,13 +897,11 @@ def test_hypertransformer_transform_subset():
         'col1.value': [1.0, 'filled_value'],
         'col1.is_null': [0, 1]
     })
-    pd.testing.assert_frame_equal(
-        transformed, expected, check_dtype=False)
+    pd.testing.assert_frame_equal(transformed, expected, check_dtype=False)
 
     reversed_data = ht.reverse_transform(transformed)
     expected_reverse = pd.DataFrame({'col1': ['abc', np.nan]})
-    pd.testing.assert_frame_equal(
-        expected_reverse, reversed_data)
+    pd.testing.assert_frame_equal(expected_reverse, reversed_data)
 
 
 def test_hypertransformer_reverse_transform_subset():
@@ -973,8 +960,7 @@ def test_hypertransformer_reverse_transform_subset():
         'col3.is_null': [1, 1],
         'col4.is_null': [1, 0]
     })
-    pd.testing.assert_frame_equal(
-        transformed, expected, check_dtype=False)
+    pd.testing.assert_frame_equal(transformed, expected, check_dtype=False)
 
     transformed_subset = transformed[['col1.value', 'col1.is_null', 'col3.value', 'col4.is_null']]
     reversed_data = ht.reverse_transform(transformed_subset)
