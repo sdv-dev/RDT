@@ -39,16 +39,17 @@ def download_dataset(dataset_name):
     return tables_dict
 
 
-def download_single_table_dataset(dataset_name):
+def download_single_table(dataset_name, table_name):
     """Download data for a single table dataset.
 
     Args:
         dataset_name (str):
-            Name of dataset to download.
+            Name of dataset the table belongs to.
+        table_name (str):
+            Name of table to download.
 
     Returns:
         Tuple of DataFrame and metadata
     """
     tables_dict = download_dataset(dataset_name)
-    table_name = list(tables_dict.keys())[0]
     return tables_dict[table_name]

@@ -7,7 +7,7 @@ from sklearn.model_selection import cross_val_score
 
 from rdt import HyperTransformer
 from rdt.transformers import NumericalTransformer, get_transformers_by_type
-from tests.quality.utils import download_single_table_dataset
+from tests.quality.utils import download_single_table
 
 THRESHOLD = 0.2
 MAX_SIZE = 5000000
@@ -98,10 +98,10 @@ def get_test_cases():
     path = os.path.join(os.path.dirname(__file__), 'dataset_info.csv')
     datasets = pd.read_csv(path)
     for _, row in datasets.iterrows():
-        if row['modality'] == 'single-table' and row['table_size'] < MAX_SIZE:
+        if row['table_size'] < MAX_SIZE and row['modality'] in ['single-table', 'timeseries']:
             for data_type in eval(row['table_types']):
                 if data_type not in TYPES_TO_SKIP:
-                    test_cases.append((data_type, row['name']))
+                    test_cases.append((data_type, row['name'], row['table_name']))
 
     return test_cases
 
@@ -127,9 +127,9 @@ def test_quality(subtests):
     ]
     tested_data_types = dict.fromkeys(data_types_to_test, False)
 
-    for data_type, dataset_name in test_cases:
+    for data_type, dataset_name, table_name in test_cases:
         transformers = transformers_by_type[data_type]
-        (data, metadata) = download_single_table_dataset(dataset_name)
+        (data, metadata) = download_single_table(dataset_name, table_name)
         scores = get_transformer_scores(data, data_type, transformers, metadata)
         if any(scores.mean() > THRESHOLD):
             tested_data_types[data_type] = True
