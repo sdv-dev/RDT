@@ -19,7 +19,6 @@ install_requires = [
     'pandas>=1.1,<1.1.5',
     'scipy>=1.4.1,<2',
     'psutil>=5.7,<6',
-    'tabulate>=0.8.9,<1',
 ]
 
 copulas_requires = [
@@ -36,7 +35,6 @@ tests_require = [
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
     'pytest-subtests>=0.5,<1.0',
-    'tabulate>=0.8.9,<1',
 ]
 
 addons_require = []
@@ -94,6 +92,7 @@ development_requires = [
     # Advanced testing
     'coverage>=4.5.1,<6',
     'tox>=2.9.1,<4',
+    'tabulate>=0.8.9,<1',
 
     # Invoking test commands
     'invoke'

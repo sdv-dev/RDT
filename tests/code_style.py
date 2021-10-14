@@ -7,79 +7,69 @@ import re
 from pathlib import Path
 from types import FunctionType
 
-import pandas as pd
-from tabulate import tabulate
+import pytest
 
+from rdt.transformers import TRANSFORMERS
 from rdt.transformers.base import BaseTransformer
-
-NOT_IMPORTABLE = [
-    '__init__.py',
-    'addons_setup.py',
-    'setup.py',
-]
 
 
 def validate_transformer_name(transformer):
-    """Return whether or not the ``Transformer`` ends with the ``Transformer`` nomenclature."""
-    return transformer.__name__.endswith('Transformer')
+    """Test whether or not the ``Transformer`` ends with the ``Transformer`` nomenclature."""
+    fail_message = 'Transformer name must end with ``Transformer``.'
+    assert transformer.__name__.endswith('Transformer'), fail_message
 
 
 def validate_transformer_subclass(transformer):
-    """Return whether or not the ``Transformer`` is a subclass of ``BaseTransformer``."""
-    return issubclass(transformer, BaseTransformer)
+    """Test whether or not the ``Transformer`` is a subclass of ``BaseTransformer``."""
+    fail_message = 'Transformer must be a subclass of ``BaseTransformer``.'
+    assert issubclass(transformer, BaseTransformer), fail_message
 
 
 def validate_transformer_module(transformer):
-    """Return whether or not the ``Transformer`` is inside the right module."""
+    """Test whether or not the ``Transformer`` is inside the right module."""
     transformer_file = Path(inspect.getfile(transformer))
     transformer_folder = transformer_file.parent
-
     is_valid = False
+
     if transformer_folder.match('transformers'):
         is_valid = True
     elif transformer_folder.parent.match('transformers'):
         is_valid = True
     elif transformer_folder.parent.match('addons'):
         is_valid = True
+    elif transformer_folder.parent.parent.match('addons'):
+        is_valid = True
 
-    return is_valid
+    assert is_valid, 'The transformer module is not placed inside a valid path.'
 
 
 def _validate_config_json(config_path, transformer_name):
-
     with open(config_path, 'r', encoding='utf-8') as config_file:
         config_dict = json.load(config_file)
 
-    required_keys = ['name', 'transformers']
-    has_required_keys = set(config_dict.keys()).issuperset(required_keys)
-    config_is_valid = [has_required_keys]
+    transformers_not_found = 'The key ``transformers``  was not found in the config.json file.'
+    assert 'transformers' in config_dict, transformers_not_found
+    assert 'name' in config_dict, 'The key ``name`` was not found in the config.json file.'
 
-    declared = False
     transformers = config_dict.get('transformers', [])
     for transformer in transformers:
         package, name = transformer.rsplit('.', 1)
         if name == transformer_name:
-            declared = True
             try:
                 getattr(importlib.import_module(package), name)
-                imported = True
+                assert True
             except ImportError:
-                imported = False
-
-            config_is_valid.extend([declared, imported])
-
-    if len(config_is_valid) > 1:
-        return all(config_is_valid)
-
-    return False
+                assert pytest.fail(), f'Could not import {name} from {package}'
 
 
 def validate_transformer_addon(transformer):
-    """Validate if a ``Transformer`` is a valid ``addon``."""
+    """Assert if a ``Transformer`` is a valid ``addon``."""
     transformer_file = Path(inspect.getfile(transformer))
     transformer_folder = transformer_file.parent
-
     is_addon = transformer_folder.parent.match('addons')
+
+    init_file_exist, module_py, config_json_exist = False, False, False
+
     if is_addon:
         documents = list(transformer_folder.iterdir())
         for document in documents:
@@ -89,17 +79,19 @@ def validate_transformer_addon(transformer):
                 module_py = True
             elif document.match('config.json'):
                 config_json_exist = True
-                config_json_is_valid = _validate_config_json(document, transformer.__name__)
+                _validate_config_json(document, transformer.__name__)
 
-        return all([init_file_exist, config_json_exist, config_json_is_valid, module_py])
+        assert init_file_exist, 'Missing __init__.py file within the addon folder.'
+        assert config_json_exist, 'Missing the config.json file within the addon folder.'
+        assert module_py, 'Missing addon module that contains the code.'
 
 
 def _get_test_location(transformer):
     transformer_file = Path(inspect.getfile(transformer))
     transformer_folder = transformer_file.parent
     rdt_unit_test_path = Path(__file__).parent / 'unit'
-    test_location = None
 
+    test_location = None
     if transformer_folder.match('transformers'):
         test_location = rdt_unit_test_path / 'transformers' / f'test_{transformer_file.name}'
 
@@ -111,6 +103,11 @@ def _get_test_location(transformer):
         test_location = rdt_unit_test_path / 'transformers' / 'addons' / transformer_folder.name
         test_location = test_location / f'test_{transformer_file.name}'
 
+    elif transformer_folder.parent.parent.match('addons'):
+        test_location = rdt_unit_test_path / 'transformers' / 'addons'
+        test_location = test_location / transformer_folder.parent.name / transformer_folder.name
+        test_location = test_location / f'test_{transformer_file.name}'
+
     return test_location
 
 
@@ -118,9 +115,9 @@ def validate_test_location(transformer):
     """Validate if the test file exists in the expected location."""
     test_location = _get_test_location(transformer)
     if test_location is None:
-        return False
+        return False, 'The expected test location was not found.'
 
-    return test_location.exists()
+    assert test_location.exists(), 'The expected test location does not exist.'
 
 
 def _load_module_from_path(path):
@@ -133,6 +130,11 @@ def _load_module_from_path(path):
         module_path = f'rdt.transformers.{module_path.parent.name}.{module_name}'
     elif module_path.parent.name == 'addons':
         module_path = f'rdt.transformers.addons.{module_path.parent.name}.{module_name}'
+    elif module_path.parent.parent.name == 'addons':
+        module_path = (
+            f'rdt.transformers.addons.{module_path.parent.parent.name}'
+            f'.{module_path.parent.name}.{module_name}'
+        )
 
     spec = importlib.util.spec_from_file_location(module_path, path)
     module = importlib.util.module_from_spec(spec)
@@ -149,14 +151,12 @@ def validate_test_names(transformer):
     try:
         module = _load_module_from_path(test_file)
     except FileNotFoundError:
-        return False
+        assert pytest.fail(), 'The expected test module was not found.'
 
-    # get test class
     try:
         test_class = getattr(module, f'Test{transformer.__name__}')
-
     except AttributeError:
-        return False  # The test class doesn't exist
+        assert pytest.fail(), 'The expected test class was not found.'
 
     # get the test methods that start with test
     test_functions = inspect.getmembers(test_class, predicate=inspect.isfunction)
@@ -167,7 +167,7 @@ def validate_test_names(transformer):
     ]
 
     if not test_functions:
-        return False  # No test functions found
+        assert pytest.fail(), 'No test functions found within the test module.'
 
     transformer_functions = [
         name
@@ -175,73 +175,41 @@ def validate_test_names(transformer):
         if isinstance(function, (FunctionType, classmethod, staticmethod))
     ]
 
-    test_functions_is_valid = []
-
+    valid_test_functions = []
     for test in test_functions:
-        count = len(test_functions_is_valid)
+        count = len(valid_test_functions)
         for transformer_function in transformer_functions:
             simple_test = f'test_{transformer_function}'
             described_test = f'test_{transformer_function}_'
             if test.startswith(described_test):
-                test_functions_is_valid.append(True)
+                assert True
+                valid_test_functions.append(test)
             elif test.startswith(simple_test):
-                test_functions_is_valid.append(True)
+                assert True
+                valid_test_functions.append(test)
 
-        if count == len(test_functions_is_valid):
-            test_functions_is_valid.append(False)
-
-    return all(test_functions_is_valid)
-
-
-def get_all_transformers():
-    """Return all the transformers."""
-    return BaseTransformer.get_subclasses()
+        if count == len(valid_test_functions):
+            assert pytest.fail(), f'No function name was found for the test: {test}'
 
 
-def get_all_transformers_as_dict():
-    """Return all the transformers."""
-    return {
-        transformer.__name__: transformer
-        for transformer in BaseTransformer.get_subclasses()
-    }
+def load_transformer(transformer):
+    """Load the transformer class from a given string."""
+    if len(transformer.split('.')) == 1:
+        return TRANSFORMERS[transformer]
+    else:
+        package, name = transformer.rsplit('.', 1)
+        return getattr(importlib.import_module(package), name)
 
 
-def validate_transformer(transformer):
+@pytest.mark.parametrize('transformer', TRANSFORMERS.values(), ids=TRANSFORMERS.keys())  # noqa
+def test_transformer_code_style(transformer):
     """Validate a transformer."""
-    if isinstance(transformer, str):
-        transformer = getattr(importlib.import_module('rdt.transformers'), transformer)
+    if not inspect.isclass(transformer):
+        transformer = load_transformer(transformer)
 
-    result = {
-        'transformer': transformer.__name__,
-        'valid_name': validate_transformer_name(transformer),
-        'is_subclass': validate_transformer_subclass(transformer),
-        'valid_transformer_module': validate_transformer_module(transformer),
-        'valid_test_location': validate_test_location(transformer),
-        'valid_test_naming': validate_test_names(transformer),
-    }
-
-    valid_addon = validate_transformer_addon(transformer)
-    if valid_addon is None:
-        valid_addon = 'NaN'
-
-    result['valid_addon'] = valid_addon
-    return result
-
-
-def validate_all_transformers():
-    """Run the validation methods for all the transformers."""
-    results = [
-        validate_transformer(transformer)
-        for transformer in get_all_transformers()
-    ]
-
-    results = pd.DataFrame(results)
-    results = results.set_index('transformer')
-
-    return results
-
-
-if __name__ == '__main__':
-    results = validate_all_transformers()
-
-    print(tabulate(results, tablefmt='github', headers=results.columns))  # noqa
+    validate_transformer_name(transformer)
+    validate_transformer_subclass(transformer)
+    validate_transformer_module(transformer)
+    validate_test_location(transformer)
+    validate_test_names(transformer)
+    validate_transformer_addon(transformer)  # pass if it's not an addon

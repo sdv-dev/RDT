@@ -81,6 +81,7 @@ def lint(c):
     c.run('pydocstyle tests')
     c.run('isort -c --recursive rdt tests')
     c.run('pylint rdt tests/performance --rcfile=setup.cfg')
+    c.run('pytest tests/code_style.py -v --disable-warnings --no-header')
 
 
 def remove_readonly(func, path, _):
