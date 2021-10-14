@@ -6,42 +6,6 @@ from rdt.transformers.datetime import DatetimeRoundedTransformer, DatetimeTransf
 
 class TestDatetimeTransformer:
 
-    def test___init___no_strip(self):
-        dtt = DatetimeTransformer(strip_constant=False)
-        data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
-
-        # Run
-        dtt._fit(data.copy().to_numpy())
-        transformed = dtt._transform(data.copy().to_numpy())
-        reverted = dtt._reverse_transform(transformed)
-
-        # Asserts
-        expect_trans = np.array([
-            [350006400000000000, 1.0],
-            [845510400000000000, 0.0],
-            [-145497600000000000, 0.0]
-        ])
-        np.testing.assert_almost_equal(expect_trans, transformed)
-        pd.testing.assert_series_equal(reverted, data)
-
-    def test___init___strip(self):
-        dtt = DatetimeTransformer(strip_constant=True)
-        data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
-
-        # Run
-        dtt._fit(data.copy().to_numpy())
-        transformed = dtt._transform(data.copy().to_numpy())
-        reverted = dtt._reverse_transform(transformed)
-
-        # Asserts
-        expect_trans = np.array([
-            [4051.0, 1.0],
-            [9786.0, 0.0],
-            [-1684.0, 0.0]
-        ])
-        np.testing.assert_almost_equal(expect_trans, transformed)
-        pd.testing.assert_series_equal(reverted, data)
-
     def test__reverse_transform_all_none(self):
         dt = pd.to_datetime(['2020-01-01'])
         dtt = DatetimeTransformer(strip_constant=True)

@@ -54,7 +54,7 @@ class TestCategoricalTransformer:
         }
         assert result[0] == expected_intervals
 
-    def test__fit(self):
+    def test__fit_intervals(self):
         # Setup
         transformer = CategoricalTransformer()
 
@@ -89,7 +89,6 @@ class TestCategoricalTransformer:
     def test__get_value_no_fuzzy(self):
         # Setup
         transformer = CategoricalTransformer(fuzzy=False)
-        transformer.fuzzy = False
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
@@ -98,6 +97,7 @@ class TestCategoricalTransformer:
         result = transformer._get_value('foo')
 
         # Asserts
+        assert not transformer.fuzzy, '``fuzzy`` has to be False.'
         assert result == 0.25
 
     @patch('scipy.stats.norm.rvs')
@@ -561,7 +561,7 @@ class TestOneHotEncodingTransformer:
         np.testing.assert_array_equal(out, expected)
 
     def test__fit_dummies_no_nans(self):
-        """Test the ``fit`` method without nans.
+        """Test the ``_fit`` method without nans.
 
         Check that ``self.dummies`` does not
         contain nans.
@@ -581,7 +581,7 @@ class TestOneHotEncodingTransformer:
         np.testing.assert_array_equal(ohet.dummies, ['a', 2, 'c'])
 
     def test__fit_dummies_nans(self):
-        """Test the ``fit`` method without nans.
+        """Test the ``_fit`` method without nans.
 
         Check that ``self.dummies`` contain ``np.nan``.
 
@@ -600,7 +600,7 @@ class TestOneHotEncodingTransformer:
         np.testing.assert_array_equal(ohet.dummies, ['a', 2, 'c', np.nan])
 
     def test__fit_no_nans(self):
-        """Test the ``fit`` method without nans.
+        """Test the ``_fit`` method without nans.
 
         Check that the settings of the transformer
         are properly set based on the input. Encoding
@@ -624,7 +624,7 @@ class TestOneHotEncodingTransformer:
         assert not ohet._dummy_na
 
     def test__fit_no_nans_numeric(self):
-        """Test the ``fit`` method without nans.
+        """Test the ``_fit`` method without nans.
 
         Check that the settings of the transformer
         are properly set based on the input. Encoding
@@ -648,7 +648,7 @@ class TestOneHotEncodingTransformer:
         assert not ohet._dummy_na
 
     def test__fit_nans(self):
-        """Test the ``fit`` method with nans.
+        """Test the ``_fit`` method with nans.
 
         Check that the settings of the transformer
         are properly set based on the input. Encoding
@@ -672,7 +672,7 @@ class TestOneHotEncodingTransformer:
         assert ohet._dummy_na
 
     def test__fit_nans_numeric(self):
-        """Test the ``fit`` method with nans.
+        """Test the ``_fit`` method with nans.
 
         Check that the settings of the transformer
         are properly set based on the input. Encoding
