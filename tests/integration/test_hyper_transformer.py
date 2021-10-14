@@ -912,7 +912,7 @@ def test_hypertransformer_reverse_transform_subset():
     `col1`, `col2`,`col3`, `col4`. The reverse transform of, for example, the subset
     [`col1.value`, `col1.is_null`, `col3.value`, `col4.is_null`] should be `col1` completely
     reversed and `col3` reversed without applying the null transformer. `col2` and `col4`
-    should not be returned. 
+    should not be returned.
 
     Setup:
         - `field_transformers` will be set to the `DummyTransformer` for all columns.

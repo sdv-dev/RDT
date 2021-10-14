@@ -85,7 +85,7 @@ class HyperTransformer:
         if isinstance(field, tuple):
             field_set.update(field)
         else:
-            field_set.add(field) # noqa -> set can't use opreator
+            field_set.add(field)  # noqa -> set can't use opreator
 
     @staticmethod
     def _field_in_set(field, field_set):
@@ -287,7 +287,7 @@ class HyperTransformer:
 
         if self._transform_nulls:
             for field in data.columns:
-                if field in self._null_transformers.keys():
+                if field in self._null_transformers:
                     transformer = self._null_transformers[field]
                     transformed = transformer.transform(data[field])
                     if transformer.creates_null_column():
@@ -327,7 +327,7 @@ class HyperTransformer:
                 reversed data.
         """
         for field in data.columns:
-            if field in self._null_transformers.keys():
+            if field in self._null_transformers:
                 transformer = self._null_transformers[field]
                 column_name = self._get_null_column_name(field)
                 if transformer.creates_null_column():
