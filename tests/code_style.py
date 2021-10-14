@@ -212,4 +212,4 @@ def test_transformer_code_style(transformer):
     validate_transformer_module(transformer)
     validate_test_location(transformer)
     validate_test_names(transformer)
-    validate_transformer_addon(transformer)  # pass if it's not an addon
+    validate_transformer_addon(transformer)
