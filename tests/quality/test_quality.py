@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -56,7 +57,7 @@ def find_columns(data, data_type, metadata=None):
     return columns
 
 
-def get_transformer_scores(data, data_type, transformers, metadata=None):
+def get_dataset_transformer_scores(data, data_type, transformers, metadata=None):
     columns_to_predict = find_columns(data, 'numerical')
     columns_to_transform = find_columns(data, data_type, metadata)
     all_scores = pd.DataFrame()
@@ -93,15 +94,16 @@ def validate_relative_score(scores, transformer):
     assert all(scores.loc[transformer, means_above_threshold] >= minimum_scores)
 
 
-def get_test_cases():
+def get_test_cases(data_types):
     test_cases = []
     path = os.path.join(os.path.dirname(__file__), 'dataset_info.csv')
     datasets = pd.read_csv(path)
     for _, row in datasets.iterrows():
-        if row['table_size'] < MAX_SIZE and row['modality'] in ['single-table', 'timeseries']:
-            for data_type in eval(row['table_types']):
-                if data_type not in TYPES_TO_SKIP:
-                    test_cases.append((data_type, row['name'], row['table_name']))
+        if row['table_size'] < MAX_SIZE and row['modality'] == 'single-table':
+            table_types = eval(row['table_types'])
+            table_types_to_test = data_types.intersection(table_types)
+            if len(table_types_to_test) > 0:
+                test_cases.append((row['name'], row['table_name'], table_types_to_test))
 
     return test_cases
 
@@ -109,35 +111,53 @@ def get_test_cases():
 def test_quality(subtests):
     """Run all the quality test cases.
 
-    This test goes through each test case and tests all the transformers
-    of the test case's type against the test case's dataset. First, all
-    the transformers of the data type are used to transform every column
-    in the dataset of that type. A regression model is then trained on
-    those transformed column to try and predict every numerical column
-    in the dataset. The scores for each transformer are then compared to
-    the mean score of the rest of the transformers to make sure none are more
-    than one standard deviation away.
+    This test has multiple steps.
+        1. It creates a list of test cases. Each test case has a dataset
+        and a set of data types to test for the dataset.
+        2. A dictionary is created mapping data types to another dict mapping
+        datasets to the scores for that dataset with that data type. This is
+        done by looping through the test cases and doing the following:
+            - For every transformer of the data type, transform all the
+            columns of that data type.
+            - For every numerical column in the dataset, the transformed
+            columns are used as features to train a regression model.
+            - A DataFrame of scores is created where the index is the
+            transformer name, and the column values are the scores for
+            the different numerical columns in the dataset.
+        3. Once the scores are gathered, the transformers for each data type
+        are looped through and the following happens:
+            - The dict mapping datasets to scores is pulled for the type.
+            - If it is empty, this means no datasets had high enough scores
+            and the test fails.
+            - Otherwise, for each DataFrame of scores, the transformer in
+            question's score is compared to the mean score of the other
+            transformers. If it is within two standard deviations, the test passes.
     """
     transformers_by_type = get_transformers_by_type()
-    test_cases = get_test_cases()
-    data_types_to_test = [
+    data_types_to_test = {
         data_type
         for data_type in transformers_by_type.keys()
         if data_type not in TYPES_TO_SKIP
-    ]
-    tested_data_types = dict.fromkeys(data_types_to_test, False)
+    }
+    test_cases = get_test_cases(data_types_to_test)
 
-    for data_type, dataset_name, table_name in test_cases:
-        transformers = transformers_by_type[data_type]
+    all_scores = defaultdict(dict)
+    for dataset_name, table_name, data_types in test_cases:
         (data, metadata) = download_single_table(dataset_name, table_name)
-        scores = get_transformer_scores(data, data_type, transformers, metadata)
-        if any(scores.mean() > THRESHOLD):
-            tested_data_types[data_type] = True
+        for data_type in data_types:
+            transformers = transformers_by_type[data_type]
+            scores = get_dataset_transformer_scores(data, data_type, transformers, metadata)
+            if any(scores.mean() > THRESHOLD):
+                all_scores[data_type][dataset_name] = scores
 
-        for transformer in scores.index:
+    for data_type in all_scores:
+        for transformer in transformers_by_type[data_type]:
+            transformer_name = transformer.__name__
+            data_type_results = all_scores[data_type]
             with subtests.test(
-                    msg=f'Testing transformer {transformer} with dataset {dataset_name}',
+                    msg=f'Testing transformer {transformer_name}',
                     transformer=transformer):
-                validate_relative_score(scores, transformer)
-
-    assert all(tested_data_types[data_type] is True for data_type in tested_data_types)
+                assert data_type_results
+                for dataset in data_type_results:
+                    scores = data_type_results[dataset]
+                    validate_relative_score(scores, transformer_name)
