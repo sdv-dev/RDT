@@ -223,7 +223,7 @@ class HyperTransformer:
 
     @staticmethod
     def _get_null_column_name(field):
-        return ''.join(field.split('.')[:-1]) + '.is_null'
+        return field.rsplit('.', 1)[0] + '.is_null'
 
     def fit(self, data):
         """Fit the transformers to the data.

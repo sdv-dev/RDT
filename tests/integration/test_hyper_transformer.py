@@ -970,3 +970,41 @@ def test_hypertransformer_reverse_transform_subset():
     })
     pd.testing.assert_frame_equal(
         expected_reverse, reversed_data)
+
+
+def test_hypertransformer_column_names_with_symbols():
+    """Test the HyperTransformer with a column name with dots in it.
+
+    Setup:
+        - `field_transformers` will be set to the `DummyTransformer` for all columns.
+        - `fill_value` will be the string `filled`.
+        - `null_column` will be set to `True`.
+
+    Input:
+        - A dataset where the column has multiple dots in
+        - A dictionary of which transformers to apply to each column of the data.
+
+    Expected behavior:
+        - It should fit, transform and reverse transform the dataset.
+        - The reverse transform of the transformed value should return the original data.
+    """
+    data = pd.DataFrame({
+        '.a.b.c.': [np.nan]
+    })
+
+    transformers = {
+        '.a.b.c.': DummyTransformer(),
+    }
+
+    ht = HyperTransformer(field_transformers=transformers, fill_value='filled', null_column=True)
+    ht.fit(data)
+
+    transformed = ht.transform(data)
+    expected = pd.DataFrame({
+        '.a.b.c..value': ['filled'],
+        '.a.b.c..is_null': [1]
+    })
+    pd.testing.assert_frame_equal(transformed, expected, check_dtype=False)
+
+    reversed_data = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(data, reversed_data, check_dtype=False)
