@@ -5,8 +5,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers import (
-    CategoricalTransformer, LabelEncodingTransformer, OneHotEncodingTransformer)
+from rdt.transformers.categorical import (
+    CategoricalFuzzyTransformer, CategoricalTransformer, LabelEncodingTransformer,
+    OneHotEncodingTransformer)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
@@ -53,7 +54,7 @@ class TestCategoricalTransformer:
         }
         assert result[0] == expected_intervals
 
-    def test_fit(self):
+    def test__fit_intervals(self):
         # Setup
         transformer = CategoricalTransformer()
 
@@ -88,7 +89,6 @@ class TestCategoricalTransformer:
     def test__get_value_no_fuzzy(self):
         # Setup
         transformer = CategoricalTransformer(fuzzy=False)
-        transformer.fuzzy = False
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
@@ -97,6 +97,7 @@ class TestCategoricalTransformer:
         result = transformer._get_value('foo')
 
         # Asserts
+        assert not transformer.fuzzy, '``fuzzy`` has to be False.'
         assert result == 0.25
 
     @patch('scipy.stats.norm.rvs')
@@ -143,7 +144,7 @@ class TestCategoricalTransformer:
 
         pd.testing.assert_series_equal(result, expect)
 
-    def test_reverse_transform_array(self):
+    def test__reverse_transform_array(self):
         """Test reverse_transform a numpy.array"""
         # Setup
         data = np.array(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
@@ -296,7 +297,7 @@ class TestCategoricalTransformer:
         assert (transformed == expected).all()
 
     @patch('psutil.virtual_memory')
-    def test__reverse_transfrom_by_matrix_called(self, psutil_mock):
+    def test__reverse_transform_by_matrix_called(self, psutil_mock):
         """Test that the `_reverse_transform_by_matrix` method is called.
 
         When there is enough virtual memory, expect that the
@@ -331,7 +332,7 @@ class TestCategoricalTransformer:
         assert reverse == categorical_transformer_mock._reverse_transform_by_matrix.return_value
 
     @patch('psutil.virtual_memory')
-    def test__reverse_transfrom_by_matrix(self, psutil_mock):
+    def test__reverse_transform_by_matrix(self, psutil_mock):
         """Test the _reverse_transform_by_matrix method with numerical data
 
         Expect that the transformed data is correctly reverse transformed.
@@ -559,8 +560,8 @@ class TestOneHotEncodingTransformer:
         expected = pd.Series(['a', 'b', 'c'])
         np.testing.assert_array_equal(out, expected)
 
-    def test_fit_dummies_no_nans(self):
-        """Test the ``fit`` method without nans.
+    def test__fit_dummies_no_nans(self):
+        """Test the ``_fit`` method without nans.
 
         Check that ``self.dummies`` does not
         contain nans.
@@ -579,8 +580,8 @@ class TestOneHotEncodingTransformer:
         # Assert
         np.testing.assert_array_equal(ohet.dummies, ['a', 2, 'c'])
 
-    def test_fit_dummies_nans(self):
-        """Test the ``fit`` method without nans.
+    def test__fit_dummies_nans(self):
+        """Test the ``_fit`` method without nans.
 
         Check that ``self.dummies`` contain ``np.nan``.
 
@@ -598,8 +599,8 @@ class TestOneHotEncodingTransformer:
         # Assert
         np.testing.assert_array_equal(ohet.dummies, ['a', 2, 'c', np.nan])
 
-    def test_fit_no_nans(self):
-        """Test the ``fit`` method without nans.
+    def test__fit_no_nans(self):
+        """Test the ``_fit`` method without nans.
 
         Check that the settings of the transformer
         are properly set based on the input. Encoding
@@ -622,8 +623,8 @@ class TestOneHotEncodingTransformer:
         assert ohet._dummy_encoded
         assert not ohet._dummy_na
 
-    def test_fit_no_nans_numeric(self):
-        """Test the ``fit`` method without nans.
+    def test__fit_no_nans_numeric(self):
+        """Test the ``_fit`` method without nans.
 
         Check that the settings of the transformer
         are properly set based on the input. Encoding
@@ -646,8 +647,8 @@ class TestOneHotEncodingTransformer:
         assert not ohet._dummy_encoded
         assert not ohet._dummy_na
 
-    def test_fit_nans(self):
-        """Test the ``fit`` method with nans.
+    def test__fit_nans(self):
+        """Test the ``_fit`` method with nans.
 
         Check that the settings of the transformer
         are properly set based on the input. Encoding
@@ -670,8 +671,8 @@ class TestOneHotEncodingTransformer:
         assert ohet._dummy_encoded
         assert ohet._dummy_na
 
-    def test_fit_nans_numeric(self):
-        """Test the ``fit`` method with nans.
+    def test__fit_nans_numeric(self):
+        """Test the ``_fit`` method with nans.
 
         Check that the settings of the transformer
         are properly set based on the input. Encoding
@@ -694,7 +695,7 @@ class TestOneHotEncodingTransformer:
         assert not ohet._dummy_encoded
         assert ohet._dummy_na
 
-    def test_fit_single(self):
+    def test__fit_single(self):
         # Setup
         ohet = OneHotEncodingTransformer()
 
@@ -764,7 +765,7 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test__transform_nans(self):
+    def test__transform_nans_encoded(self):
         """Test the ``_transform`` method with nans.
 
         The values passed to ``_transform`` should be
@@ -829,7 +830,7 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test__transform_single(self):
+    def test__transform_single_column(self):
         """Test the ``_transform`` with one category.
 
         The values passed to ``_transform`` should be
@@ -981,7 +982,7 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test_transform_no_nans(self):
+    def test__transform_no_nans(self):
         """Test the ``transform`` without nans.
 
         In this test ``transform`` should return an identity
@@ -1008,7 +1009,7 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test_transform_nans(self):
+    def test__transform_nans(self):
         """Test the ``transform`` with nans.
 
         In this test ``transform`` should return an identity matrix
@@ -1035,7 +1036,7 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test_transform_single(self):
+    def test__transform_single_column_filled_with_ones(self):
         """Test the ``transform`` on a single category.
 
         In this test ``transform`` should return a column
@@ -1062,7 +1063,7 @@ class TestOneHotEncodingTransformer:
         ])
         np.testing.assert_array_equal(out, expected)
 
-    def test_transform_unknown(self):
+    def test__transform_unknown(self):
         """Test the ``transform`` with unknown data.
 
         In this test ``transform`` should raise an error
@@ -1081,7 +1082,7 @@ class TestOneHotEncodingTransformer:
         with np.testing.assert_raises(ValueError):
             ohet._transform(['b'])
 
-    def test_transform_numeric(self):
+    def test__transform_numeric(self):
         """Test the ``transform`` on numeric input.
 
         In this test ``transform`` should return a matrix
@@ -1109,7 +1110,7 @@ class TestOneHotEncodingTransformer:
         assert not ohet._dummy_encoded
         np.testing.assert_array_equal(out, expected)
 
-    def test_reverse_transform_no_nans(self):
+    def test__reverse_transform_no_nans(self):
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'b', 'c'])
@@ -1127,7 +1128,7 @@ class TestOneHotEncodingTransformer:
         expected = pd.Series(['a', 'b', 'c'])
         pd.testing.assert_series_equal(out, expected)
 
-    def test_reverse_transform_nans(self):
+    def test__reverse_transform_nans(self):
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'b', None])
@@ -1145,7 +1146,7 @@ class TestOneHotEncodingTransformer:
         expected = pd.Series(['a', 'b', None])
         pd.testing.assert_series_equal(out, expected)
 
-    def test_reverse_transform_single(self):
+    def test__reverse_transform_single(self):
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'a', 'a'])
@@ -1163,7 +1164,7 @@ class TestOneHotEncodingTransformer:
         expected = pd.Series(['a', 'a', 'a'])
         pd.testing.assert_series_equal(out, expected)
 
-    def test_reverse_transform_1d(self):
+    def test__reverse_transform_1d(self):
         # Setup
         ohet = OneHotEncodingTransformer()
         data = pd.Series(['a', 'a', 'a'])
@@ -1180,7 +1181,7 @@ class TestOneHotEncodingTransformer:
 
 class TestLabelEncodingTransformer:
 
-    def test_reverse_transform_clips_values(self):
+    def test__reverse_transform_clips_values(self):
         """Test the ``reverse_transform`` method with values not in map.
 
         If a value that is not in ``values_to_categories`` is passed
@@ -1202,3 +1203,14 @@ class TestLabelEncodingTransformer:
 
         # Assert
         pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
+
+
+class TestCategoricalFuzzyTransformer:
+
+    def test___init__(self):
+        """Test that the ``__init__`` method uses ``fuzzy==True`` by default."""
+        # Setup
+        transformer = CategoricalFuzzyTransformer()
+
+        # Assert
+        assert transformer.fuzzy
