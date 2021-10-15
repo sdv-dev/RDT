@@ -221,10 +221,6 @@ class HyperTransformer:
             warnings.warn('The following fields were specified in the input arguments but not'
                           + f'found in the data: {non_fitted_fields}')
 
-    @staticmethod
-    def _get_null_column_name(field):
-        return field.rsplit('.', 1)[0] + '.is_null'
-
     def _fit_null_values(self, data):
         null_column_names = []
         if self._transform_nulls:
@@ -234,7 +230,7 @@ class HyperTransformer:
                 self._null_transformers[output_column] = transformer
 
                 if transformer.creates_null_column():
-                    column_name = self._get_null_column_name(output_column)
+                    column_name = f'{output_column}.is_null'
                     null_column_names.append(column_name)
 
         return data, null_column_names
@@ -275,7 +271,7 @@ class HyperTransformer:
                     transformer = self._null_transformers[field]
                     transformed = transformer.transform(data[field])
                     if transformer.creates_null_column():
-                        column_name = self._get_null_column_name(field)
+                        column_name = f'{field}.is_null'
                         transformed_columns.append(column_name)
                         data[field] = transformed[:, 0]
                         data[column_name] = transformed[:, 1].astype('int64')
@@ -329,7 +325,7 @@ class HyperTransformer:
         for field in data.columns:
             if field in self._null_transformers:
                 transformer = self._null_transformers[field]
-                column_name = self._get_null_column_name(field)
+                column_name = f'{field}.is_null'
                 if transformer.creates_null_column():
                     if column_name in data:
                         data[field] = \
@@ -338,6 +334,16 @@ class HyperTransformer:
                     data[field] = transformer.reverse_transform(data[field].to_numpy())
 
         return data
+
+    def _get_unpaired_null_columns(self, data):
+        unpaired_null_columns = []
+        for field in data.columns:
+            if '.' in field:
+                column_name, is_null = field.rsplit('.', 1)
+                if is_null == 'is_null' and column_name not in data.columns:
+                    unpaired_null_columns.append(field)
+
+        return unpaired_null_columns
 
     def reverse_transform(self, data):
         """Revert the transformations back to the original values.
@@ -350,6 +356,10 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
+        # If a column 'col.transformed.is_null' has no accompanying 'col.transformed' column,
+        # just return the 'col.transformed.is_null' column unmodified
+        unpaired_null_columns = self._get_unpaired_null_columns(data)
+
         data = self._reverse_transform_null_values(data)
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         for transformer in reversed(self._transformers_sequence):
@@ -357,4 +367,4 @@ class HyperTransformer:
 
         reversed_columns = self._subset(self._input_columns, data.columns)
 
-        return data.reindex(columns=unknown_columns + reversed_columns)
+        return data.reindex(columns=unknown_columns + reversed_columns + unpaired_null_columns)

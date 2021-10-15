@@ -739,8 +739,8 @@ def test_hypertransformer_fill_value_string_null_column_true():
     expected = pd.DataFrame({
         'col1.value': [1.0, 'filled_value', 'filled_value'],
         'col2.value': ['filled_value', 'filled_value', 'hello'],
-        'col1.is_null': [0, 1, 1],
-        'col2.is_null': [1, 1, 0]
+        'col1.value.is_null': [0, 1, 1],
+        'col2.value.is_null': [1, 1, 0]
     })
     pd.testing.assert_frame_equal(transformed, expected)
 
@@ -785,8 +785,8 @@ def test_hypertransformer_fill_value_none_null_column_true():
     expected = pd.DataFrame({
         'col1.value': [1.0, 'a', 'a', 1.0],
         'col2.value': [1.0, 1.0, 1.0, np.nan],
-        'col1.is_null': [0, 0, 0, 0],
-        'col2.is_null': [0, 0, 0, 1]
+        'col1.value.is_null': [0, 0, 0, 0],
+        'col2.value.is_null': [0, 0, 0, 1]
     })
     pd.testing.assert_frame_equal(transformed, expected)
 
@@ -838,7 +838,7 @@ def test_hypertransformer_fill_value_string_null_column_none():
     expected = pd.DataFrame({
         'col1.value': [1.0, 'filled_value'],
         'col2.value': [1.0, 1.0],
-        'col1.is_null': [0, 1]
+        'col1.value.is_null': [0, 1]
     })
     pd.testing.assert_frame_equal(transformed, expected)
 
@@ -902,7 +902,7 @@ def test_hypertransformer_transform_subset():
 
     expected = pd.DataFrame({
         'col1.value': [1.0, 'filled_value'],
-        'col1.is_null': [0, 1]
+        'col1.value.is_null': [0, 1]
     })
     pd.testing.assert_frame_equal(transformed, expected)
 
@@ -962,18 +962,21 @@ def test_hypertransformer_reverse_transform_subset():
         'col2.value': [1.0, 1.0],
         'col3.value': ['filled_value', 'filled_value'],
         'col4.value': ['filled_value', 1.0],
-        'col1.is_null': [0, 1],
-        'col2.is_null': [0, 0],
-        'col3.is_null': [1, 1],
-        'col4.is_null': [1, 0]
+        'col1.value.is_null': [0, 1],
+        'col2.value.is_null': [0, 0],
+        'col3.value.is_null': [1, 1],
+        'col4.value.is_null': [1, 0]
     })
     pd.testing.assert_frame_equal(transformed, expected)
 
-    transformed_subset = transformed[['col1.value', 'col1.is_null', 'col3.value', 'col4.is_null']]
+    transformed_subset = transformed[
+        ['col1.value', 'col1.value.is_null', 'col3.value', 'col4.value.is_null']
+    ]
     reversed_data = ht.reverse_transform(transformed_subset)
     expected_reverse = pd.DataFrame({
         'col1': ['abc', np.nan],
-        'col3': ['filled_value', 'filled_value']
+        'col3': ['filled_value', 'filled_value'],
+        'col4.value.is_null': [1, 0]
     })
     pd.testing.assert_frame_equal(
         expected_reverse, reversed_data)
@@ -1009,7 +1012,7 @@ def test_hypertransformer_column_names_with_dots():
     transformed = ht.transform(data)
     expected = pd.DataFrame({
         '.a.b.c..value': ['filled', 'a'],
-        '.a.b.c..is_null': [1, 0]
+        '.a.b.c..value.is_null': [1, 0]
     })
     pd.testing.assert_frame_equal(transformed, expected)
 
