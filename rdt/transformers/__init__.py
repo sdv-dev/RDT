@@ -34,8 +34,7 @@ def _import_addons():
         with open(addon_json_path, 'r', encoding='utf-8') as addon_json_file:
             transformers = json.load(addon_json_file).get('transformers', [])
             for transformer in transformers:
-                transformer = transformer.split('.')
-                module = '.'.join(transformer[:-1])
+                module = transformer.rsplit('.', 1)[0]
                 if module not in sys.modules:
                     importlib.import_module(module)
 
