@@ -224,6 +224,20 @@ class HyperTransformer:
     @staticmethod
     def _get_null_column_name(field):
         return field.rsplit('.', 1)[0] + '.is_null'
+    
+    def _fit_null_values(self, data):
+        null_column_names = []
+        if self._transform_nulls:
+            for output_column in self._output_columns:
+                transformer = NullTransformer(self._fill_value, self._null_column)
+                transformer.fit(data[output_column])
+                self._null_transformers[output_column] = transformer
+
+                if transformer.creates_null_column():
+                    column_name = self._get_null_column_name(output_column)
+                    null_column_names.append(column_name)
+        
+        return data, null_column_names
 
     def fit(self, data):
         """Fit the transformers to the data.
@@ -249,19 +263,27 @@ class HyperTransformer:
 
                 data = self._fit_field_transformer(data, field, transformer)
 
-        null_column_names = []
-        if self._transform_nulls:
-            for output_column in self._output_columns:
-                transformer = NullTransformer(self._fill_value, self._null_column)
-                transformer.fit(data[output_column])
-                self._null_transformers[output_column] = transformer
-
-                if transformer.creates_null_column():
-                    column_name = self._get_null_column_name(output_column)
-                    null_column_names.append(column_name)
-
+        data, null_column_names = self._fit_null_values(data)
         self._output_columns.extend(null_column_names)
         self._validate_all_fields_fitted()
+    
+    def _transform_null_values(self, data):
+        transformed_columns = []
+        if self._transform_nulls:
+            for field in data.columns:
+                if field in self._null_transformers:
+                    transformer = self._null_transformers[field]
+                    transformed = transformer.transform(data[field])
+                    if transformer.creates_null_column():
+                        column_name = self._get_null_column_name(field)
+                        transformed_columns.append(column_name)
+                        data[field] = transformed[:, 0]
+                        data[column_name] = transformed[:, 1]
+
+                    else:
+                        data[field] = transformed
+        
+        return data, transformed_columns
 
     def transform(self, data):
         """Transform the data.
@@ -284,20 +306,8 @@ class HyperTransformer:
             data = transformer.transform(data, drop=False)
 
         transformed_columns = self._subset(self._output_columns, data.columns)
-
-        if self._transform_nulls:
-            for field in data.columns:
-                if field in self._null_transformers:
-                    transformer = self._null_transformers[field]
-                    transformed = transformer.transform(data[field])
-                    if transformer.creates_null_column():
-                        column_name = self._get_null_column_name(field)
-                        transformed_columns.append(column_name)
-                        data[field] = transformed[:, 0]
-                        data[column_name] = transformed[:, 1]
-
-                    else:
-                        data[field] = transformed
+        data, null_columns = self._transform_null_values(data)
+        transformed_columns.extend(null_columns)
 
         return data.reindex(columns=unknown_columns + transformed_columns)
 
@@ -315,6 +325,20 @@ class HyperTransformer:
         self.fit(data)
         return self.transform(data)
 
+    def _reverse_transform_null_values(self, data):
+        for field in data.columns:
+            if field in self._null_transformers:
+                transformer = self._null_transformers[field]
+                column_name = self._get_null_column_name(field)
+                if transformer.creates_null_column():
+                    if column_name in data:
+                        data[field] = \
+                            transformer.reverse_transform(data[[field, column_name]].to_numpy())
+                else:
+                    data[field] = transformer.reverse_transform(data[field].to_numpy())   
+
+        return data 
+
     def reverse_transform(self, data):
         """Revert the transformations back to the original values.
 
@@ -326,17 +350,7 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
-        for field in data.columns:
-            if field in self._null_transformers:
-                transformer = self._null_transformers[field]
-                column_name = self._get_null_column_name(field)
-                if transformer.creates_null_column():
-                    if column_name in data:
-                        data[field] = \
-                            transformer.reverse_transform(data[[field, column_name]].to_numpy())
-                else:
-                    data[field] = transformer.reverse_transform(data[field].to_numpy())
-
+        data = self._reverse_transform_null_values(data)
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         for transformer in reversed(self._transformers_sequence):
             data = transformer.reverse_transform(data, drop=False)
