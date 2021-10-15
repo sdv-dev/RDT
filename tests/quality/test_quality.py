@@ -158,9 +158,10 @@ def get_results_table(regression_scores):
             transformer_average = frame['score'].mean()
             dataset_rows = (valid_scores['dataset_name'] == dataset_name)
             transformer_rows = (valid_scores['transformer_name'] != transformer_name)
-            average_without_transformer = valid_scores.loc[
+            data_without_transformer = valid_scores.loc[
                 dataset_rows & transformer_rows
-            ]['score'].mean()
+            ]
+            average_without_transformer = data_without_transformer['score'].mean()
 
             row = pd.Series({
                 'transformer_name': transformer_name,
