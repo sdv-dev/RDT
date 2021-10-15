@@ -224,7 +224,7 @@ class HyperTransformer:
     @staticmethod
     def _get_null_column_name(field):
         return field.rsplit('.', 1)[0] + '.is_null'
-    
+
     def _fit_null_values(self, data):
         null_column_names = []
         if self._transform_nulls:
@@ -236,7 +236,7 @@ class HyperTransformer:
                 if transformer.creates_null_column():
                     column_name = self._get_null_column_name(output_column)
                     null_column_names.append(column_name)
-        
+
         return data, null_column_names
 
     def fit(self, data):
@@ -266,7 +266,7 @@ class HyperTransformer:
         data, null_column_names = self._fit_null_values(data)
         self._output_columns.extend(null_column_names)
         self._validate_all_fields_fitted()
-    
+
     def _transform_null_values(self, data):
         transformed_columns = []
         if self._transform_nulls:
@@ -282,7 +282,7 @@ class HyperTransformer:
 
                     else:
                         data[field] = transformed
-        
+
         return data, transformed_columns
 
     def transform(self, data):
@@ -335,9 +335,9 @@ class HyperTransformer:
                         data[field] = \
                             transformer.reverse_transform(data[[field, column_name]].to_numpy())
                 else:
-                    data[field] = transformer.reverse_transform(data[field].to_numpy())   
+                    data[field] = transformer.reverse_transform(data[field].to_numpy())
 
-        return data 
+        return data
 
     def reverse_transform(self, data):
         """Revert the transformations back to the original values.
