@@ -9,6 +9,7 @@ from types import FunctionType
 
 import pytest
 
+import rdt.transformers
 from rdt.transformers import TRANSFORMERS
 from rdt.transformers.base import BaseTransformer
 
@@ -53,10 +54,10 @@ def _validate_config_json(config_path, transformer_name):
 
     transformers = config_dict.get('transformers', [])
     for transformer in transformers:
-        package, name = transformer.rsplit('.', 1)
+        module, name = transformer.rsplit('.', 1)
         if name == transformer_name:
-            imported_transformer = getattr(importlib.import_module(package), name, None)
-            assert imported_transformer is not None, f'Could not import {name} from {package}'
+            imported_transformer = getattr(importlib.import_module(module), name, None)
+            assert imported_transformer is not None, f'Could not import {name} from {module}'
 
 
 def validate_transformer_addon(transformer):
@@ -81,6 +82,15 @@ def validate_transformer_addon(transformer):
         assert init_file_exist, 'Missing __init__.py file within the addon folder.'
         assert config_json_exist, 'Missing the config.json file within the addon folder.'
         assert module_py, 'Missing addon module that contains the code.'
+
+
+def validate_transformer_importable_from_parent_module(transformer):
+    """Validate wheter the transformer can be imported from the parent module."""
+    name = transformer.__name__
+    module = getattr(transformer, '__module__', '')
+    module = module.rsplit('.', 1)[0]
+    imported_transformer = getattr(importlib.import_module(module), name, None)
+    assert imported_transformer is not None, f'Could not import {name} from {module}'
 
 
 def _get_test_location(transformer):
@@ -200,3 +210,4 @@ def test_transformer_code_style(transformer):
     validate_test_location(transformer)
     validate_test_names(transformer)
     validate_transformer_addon(transformer)
+    validate_transformer_importable_from_parent_module(transformer)
