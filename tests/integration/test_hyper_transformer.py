@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from rdt import HyperTransformer
 from rdt.transformers import (
@@ -405,8 +406,10 @@ class DummyTransformer(BaseTransformer):
         pass
 
     def _transform(self, data):
-        data.loc[data == 'abc'] = 1.0
-        return data
+        new_data = pd.Series(np.zeros(len(data)))
+        new_data[data == 'abc'] = 1.0
+        new_data[data != 'abc'] = data[data != 'abc']
+        return new_data
 
     def _reverse_transform(self, data):
         data.loc[data == 1.0] = 'abc'
@@ -449,7 +452,7 @@ def test_hypertransformer_transform_nulls_false():
         'col1.value': [1.0, 1.0],
         'col2.value': [np.nan, 'a']
     })
-    pd.testing.assert_frame_equal(transformed, expected, check_dtype=False)
+    pd.testing.assert_frame_equal(transformed, expected)
 
     reversed_data = ht.reverse_transform(transformed)
     pd.testing.assert_frame_equal(data, reversed_data)
@@ -581,7 +584,9 @@ def test_hypertransformer_fill_value_mean():
     ht = HyperTransformer(field_transformers=transformers, fill_value='mean', null_column=False)
     ht.fit(data)
 
-    transformed = ht.transform(data)
+    with pytest.warns(Warning):
+        transformed = ht.transform(data)
+
     expected = pd.DataFrame({
         'col1.value': [1.0, 0.5, 0.5, 0.0],
         'col2.value': [1.0, 2.0, 1.0, 0.0]
@@ -972,7 +977,7 @@ def test_hypertransformer_reverse_transform_subset():
         expected_reverse, reversed_data)
 
 
-def test_hypertransformer_column_names_with_symbols():
+def test_hypertransformer_column_names_with_dots():
     """Test the HyperTransformer with a column name with dots in it.
 
     Setup:

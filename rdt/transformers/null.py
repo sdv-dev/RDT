@@ -88,7 +88,7 @@ class NullTransformer():
             if not isinstance(data, pd.Series):
                 data = pd.Series(data)
 
-        if not self._null_column and (self._fill_value == data.array).any():
+        if not self._null_column and np.any(self._fill_value == data.to_numpy()):
             warnings.warn(IRREVERSIBLE_WARNING)
 
         if values_must_be_filled:
