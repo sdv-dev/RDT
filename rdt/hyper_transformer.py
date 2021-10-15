@@ -278,7 +278,7 @@ class HyperTransformer:
                         column_name = self._get_null_column_name(field)
                         transformed_columns.append(column_name)
                         data[field] = transformed[:, 0]
-                        data[column_name] = transformed[:, 1]
+                        data[column_name] = transformed[:, 1].astype('int64')
 
                     else:
                         data[field] = transformed
