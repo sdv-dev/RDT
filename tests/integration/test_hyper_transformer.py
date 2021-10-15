@@ -745,8 +745,6 @@ def test_hypertransformer_fill_value_string_null_column_true():
     pd.testing.assert_frame_equal(transformed, expected)
 
     reversed_data = ht.reverse_transform(transformed)
-    print(reversed_data)
-    print(reversed_data["col2"].dtype)
     pd.testing.assert_frame_equal(data, reversed_data)
 
 
