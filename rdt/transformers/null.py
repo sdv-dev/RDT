@@ -82,7 +82,8 @@ class NullTransformer():
         Returns:
             numpy.ndarray
         """
-        if self._null_column or (self.nulls and self._fill_value is not None):
+        values_must_be_filled = self.nulls and self._fill_value is not None
+        if self._null_column or values_must_be_filled:
             isna = data.isna()
             if not isinstance(data, pd.Series):
                 data = pd.Series(data)
@@ -90,7 +91,7 @@ class NullTransformer():
         if not self._null_column and (self._fill_value == data.array).any():
             warnings.warn(IRREVERSIBLE_WARNING)
 
-        if self.nulls and self._fill_value is not None:
+        if values_must_be_filled:
             if not self.copy:
                 data[isna] = self._fill_value
             else:
