@@ -6,7 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.numerical import GaussianCopulaTransformer, NumericalTransformer
+from rdt.transformers.numerical import (
+    GaussianCopulaTransformer, NumericalBoundedTransformer, NumericalRoundedBoundedTransformer,
+    NumericalRoundedTransformer, NumericalTransformer)
 
 
 class TestNumericalTransformer(TestCase):
@@ -774,3 +776,45 @@ class TestGaussianCopulaTransformer:
 
         with pytest.raises(TypeError):
             ct._get_univariate()
+
+
+class TestNumericalBoundedTransformer(TestCase):
+
+    def test___init__(self):
+        """super() arguments are properly passed and set as attributes."""
+        nt = NumericalBoundedTransformer(dtype='int', null_column=False)
+
+        assert nt.dtype == 'int'
+        assert nt.nan == 'mean'
+        assert nt.null_column is False
+        assert nt.min_value == 'auto'
+        assert nt.max_value == 'auto'
+        assert nt.rounding is None
+
+
+class TestNumericalRoundedTransformer(TestCase):
+
+    def test___init__(self):
+        """super() arguments are properly passed and set as attributes."""
+        nt = NumericalRoundedTransformer(dtype='int', null_column=False)
+
+        assert nt.dtype == 'int'
+        assert nt.nan == 'mean'
+        assert nt.null_column is False
+        assert nt.min_value is None
+        assert nt.max_value is None
+        assert nt.rounding == 'auto'
+
+
+class TestNumericalRoundedBoundedTransformer(TestCase):
+
+    def test___init__(self):
+        """super() arguments are properly passed and set as attributes."""
+        nt = NumericalRoundedBoundedTransformer(dtype='int', null_column=False)
+
+        assert nt.dtype == 'int'
+        assert nt.nan == 'mean'
+        assert nt.null_column is False
+        assert nt.min_value == 'auto'
+        assert nt.max_value == 'auto'
+        assert nt.rounding == 'auto'
