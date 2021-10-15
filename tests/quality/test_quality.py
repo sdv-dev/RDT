@@ -10,7 +10,8 @@ from rdt import HyperTransformer
 from rdt.transformers import NumericalTransformer, get_transformers_by_type
 from tests.quality.utils import download_single_table
 
-THRESHOLD = 0.2
+R2_THRESHOLD = 0.2
+TEST_THRESHOLD = 0.35
 MAX_SIZE = 5000000
 TYPES_TO_SKIP = {'numerical', 'float', 'integer', 'id', None}
 
@@ -57,11 +58,10 @@ def find_columns(data, data_type, metadata=None):
     return columns
 
 
-def get_dataset_transformer_scores(data, data_type, transformers, metadata=None):
+def get_transformer_regression_scores(data, data_type, dataset_name, transformers, metadata=None):
     columns_to_predict = find_columns(data, 'numerical')
     columns_to_transform = find_columns(data, data_type, metadata)
-    all_scores = pd.DataFrame()
-    index = [transformer.__name__ for transformer in transformers]
+    scores = pd.DataFrame()
     features = data[columns_to_transform]
 
     for column in columns_to_predict:
@@ -69,29 +69,20 @@ def get_dataset_transformer_scores(data, data_type, transformers, metadata=None)
         numerical_transformer = NumericalTransformer(null_column=False)
         target = numerical_transformer.fit_transform(target, list(target.columns))
         target = format_array(target)
-        scores = []
         for transformer in transformers:
             ht = HyperTransformer(data_type_transformers={data_type: transformer})
             ht.fit(features)
             transformed_features = ht.transform(features).to_numpy()
-            scores.append(get_regression_score(transformed_features, target))
+            score = get_regression_score(transformed_features, target)
+            row = pd.Series({
+                'transformer_name': transformer.__name__,
+                'dataset_name': dataset_name,
+                'column': column,
+                'score': score
+            })
+            scores = scores.append(row, ignore_index=True)
 
-        all_scores[column] = pd.Series(scores, index=index)
-
-    return all_scores
-
-
-def validate_relative_score(scores, transformer):
-    scores_without_transformer = scores.drop(transformer)
-    if len(scores_without_transformer) == 0:
-        return
-
-    means = scores_without_transformer.mean()
-    means_above_threshold = means > THRESHOLD
-    standard_deviations = scores.std()
-    minimum_scores = means[means_above_threshold] - 2 * standard_deviations[means_above_threshold]
-
-    assert all(scores.loc[transformer, means_above_threshold] >= minimum_scores)
+    return scores
 
 
 def get_test_cases(data_types):
@@ -108,30 +99,105 @@ def get_test_cases(data_types):
     return test_cases
 
 
+def get_regression_scores(test_cases, transformers_by_type):
+    """Create table of all regression scores for test cases.
+
+    Args:
+        test_cases (list):
+            List of test cases. Each test case is a tuple containing
+            the dataset name, the name of the table to use from the
+            dataset, and the data types to test against for that table.
+        transformers_by_type (dict):
+            Dict mapping data type to list of transformers that have that
+            type as their input type.
+
+    Returns:
+        DataFrame where each row has a dataset name, transformer name,
+        column name and regression score. The regression score is the
+        coefficient of determination for the transformer predicting the column.
+    """
+    all_scores = defaultdict(pd.DataFrame)
+    for dataset_name, table_name, data_types in test_cases:
+        (data, metadata) = download_single_table(dataset_name, table_name)
+        for data_type in data_types:
+            transformers = transformers_by_type[data_type]
+            regression_scores = get_transformer_regression_scores(
+                data, data_type, dataset_name, transformers, metadata)
+            all_scores[data_type] = all_scores[data_type].append(
+                regression_scores, ignore_index=True)
+
+    return all_scores
+
+
+def get_results_table(regression_scores):
+    """Create a table of results for each transformer on each dataset.
+
+    Args:
+        regression_scores (dict):
+            Dict mapping data types to a DataFrame where each row has
+            a table name, column name, transformer name and coefficient
+            of determination for that transformer predicting that column.
+
+    Returns:
+        A DataFrame where each row has a transformer name, dataset name,
+        average score for the dataset and a score comparing the transformer's
+        average score for the dataset to the average of the average score for
+        the dataset across all transformers of the same data type.
+    """
+    results = pd.DataFrame()
+    for _, scores in regression_scores.items():
+        table_column_groups = scores.groupby(['dataset_name', 'column'])
+        valid = []
+        for _, frame in table_column_groups:
+            if frame['score'].mean() >= R2_THRESHOLD:
+                valid.extend(frame.index)
+
+        valid_scores = scores.loc[valid]
+        transformer_dataset_groups = valid_scores.groupby(['dataset_name', 'transformer_name'])
+        for (dataset_name, transformer_name), frame in transformer_dataset_groups:
+            transformer_average = frame['score'].mean()
+            dataset_rows = (valid_scores['dataset_name'] == dataset_name)
+            transformer_rows = (valid_scores['transformer_name'] != transformer_name)
+            average_without_transformer = valid_scores.loc[
+                dataset_rows & transformer_rows
+            ]['score'].mean()
+
+            row = pd.Series({
+                'transformer_name': transformer_name,
+                'dataset_name': dataset_name,
+                'score': transformer_average,
+                'Compared to Average': transformer_average / average_without_transformer
+            })
+            results = results.append(row, ignore_index=True)
+
+    return results
+
+
 def test_quality(subtests):
     """Run all the quality test cases.
 
     This test has multiple steps.
         1. It creates a list of test cases. Each test case has a dataset
         and a set of data types to test for the dataset.
-        2. A dictionary is created mapping data types to another dict mapping
-        datasets to the scores for that dataset with that data type. This is
-        done by looping through the test cases and doing the following:
+        2. A dictionary is created mapping data types to a DataFrame
+        containing the regression scores obtained from running the
+        transformers of that type against the datasets in the test cases.
+        Each row in the DataFrame has the transformer name, dataset name,
+        column name and score. The scores are computed as follows:
             - For every transformer of the data type, transform all the
             columns of that data type.
             - For every numerical column in the dataset, the transformed
             columns are used as features to train a regression model.
-            - A DataFrame of scores is created where the index is the
-            transformer name, and the column values are the scores for
-            the different numerical columns in the dataset.
-        3. Once the scores are gathered, the transformers for each data type
-        are looped through and the following happens:
-            - The dict mapping datasets to scores is pulled for the type.
-            - If it is empty, this means no datasets had high enough scores
-            and the test fails.
-            - Otherwise, for each DataFrame of scores, the transformer in
-            question's score is compared to the mean score of the other
-            transformers. If it is within two standard deviations, the test passes.
+            - The score is the coefficient of determination obtained from
+            that model trying to predict the target column.
+        3. Once the scores are gathered, a results table is created containing.
+        Each row has a transformer name, dataset name, average score for the dataset
+        and a score comparing the transformer's average score for the dataset to
+        the average of the average score for the dataset across all transformers of
+        the same data type.
+        4. For every unique transformer in the results, a test is run to check
+        that the transformer's score for each table is either higher than the
+        threshold, or the comparitive score is higher than the threshold.
     """
     transformers_by_type = get_transformers_by_type()
     data_types_to_test = {
@@ -140,24 +206,12 @@ def test_quality(subtests):
         if data_type not in TYPES_TO_SKIP
     }
     test_cases = get_test_cases(data_types_to_test)
+    all_regression_scores = get_regression_scores(test_cases, transformers_by_type)
+    results = get_results_table(all_regression_scores)
 
-    all_scores = defaultdict(dict)
-    for dataset_name, table_name, data_types in test_cases:
-        (data, metadata) = download_single_table(dataset_name, table_name)
-        for data_type in data_types:
-            transformers = transformers_by_type[data_type]
-            scores = get_dataset_transformer_scores(data, data_type, transformers, metadata)
-            if any(scores.mean() > THRESHOLD):
-                all_scores[data_type][dataset_name] = scores
-
-    for data_type in all_scores:
-        for transformer in transformers_by_type[data_type]:
-            transformer_name = transformer.__name__
-            data_type_results = all_scores[data_type]
-            with subtests.test(
-                    msg=f'Testing transformer {transformer_name}',
-                    transformer=transformer):
-                assert data_type_results
-                for dataset in data_type_results:
-                    scores = data_type_results[dataset]
-                    validate_relative_score(scores, transformer_name)
+    for transformer, frame in results.groupby('transformer_name'):
+        with subtests.test(
+                msg=f'Testing transformer {transformer}',
+                transformer=transformer):
+            relative_scores = frame['Compared to Average']
+            assert all((relative_scores > TEST_THRESHOLD) | (frame['score'] > TEST_THRESHOLD))
