@@ -9,7 +9,6 @@ from types import FunctionType
 
 import pytest
 
-import rdt.transformers
 from rdt.transformers import TRANSFORMERS
 from rdt.transformers.base import BaseTransformer
 
