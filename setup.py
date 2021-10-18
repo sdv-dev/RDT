@@ -35,6 +35,7 @@ tests_require = [
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
     'pytest-subtests>=0.5,<1.0',
+    'scikit-learn>=0.23,<1',
 ]
 
 addons_require = []

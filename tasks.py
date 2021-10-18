@@ -24,6 +24,10 @@ def integration(c):
 def performance(c):
     c.run('pytest -v ./tests/performance/test_performance.py')
 
+@task
+def quality(c):
+    c.run('pytest -v ./tests/quality/test_quality.py')
+
 
 @task
 def install_minimum(c):
