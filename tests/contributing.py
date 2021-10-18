@@ -1,8 +1,8 @@
 """Validation methods for contributing to RDT."""
 
 
-import inspect
 import importlib
+import inspect
 import subprocess
 import traceback
 
@@ -166,6 +166,7 @@ def _custom_validation(function, tag, success_message, error_message, transforme
             'output_capture': error
         }
 
+
 def _validate_third_party_checks(transformer_path):
     results = [
         _validate_third_party_code_style(
@@ -294,7 +295,7 @@ def validate_transformer_code_style(transformer):
     table = pd.DataFrame(results)
     print(tabulate(table, headers='keys', showindex=False))
     for check, error in errors:
-        print(f'\nThe check \'{check}\' produced the following error/s:')
+        print(f"\nThe check '{check}' produced the following error/s:")
         print(error)
 
     return not bool(errors)
