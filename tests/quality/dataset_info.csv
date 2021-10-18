@@ -1,0 +1,465 @@
+name,modality,table_name,table_size,table_types,num_columns
+Accidents_v1,multi-table,nesreca,116875043,"{'categorical', 'numerical', 'id'}",39
+Accidents_v1,multi-table,oseba,53946127,"{'numerical', 'id', 'categorical'}",18
+Accidents_v1,multi-table,upravna_enota,18895,"{'numerical', 'id', 'categorical'}",30
+adult,single-table,adult,3518605,"{'numerical', 'categorical'}",15
+airbnb-simplified,multi-table,users,24853881,"{'categorical', 'numerical', 'id', 'datetime'}",16
+airbnb-simplified,multi-table,sessions,339783556,"{'categorical', 'numerical', 'id'}",6
+alarm,single-table,alarm,4174494,"{'categorical', 'boolean'}",37
+ArticularyWordRecognition,timeseries,ArticularyWordRecognition,7159925,"{'numerical', 'categorical'}",11
+asia,single-table,asia,512941,{'categorical'},8
+Atherosclerosis_v1,multi-table,Contr,1831553,"{'numerical', 'id'}",68
+Atherosclerosis_v1,multi-table,Death,10178,"{'numerical', 'id'}",6
+Atherosclerosis_v1,multi-table,Entry,922465,"{'numerical', 'id'}",172
+Atherosclerosis_v1,multi-table,Letter,65132,"{'numerical', 'id'}",61
+AtrialFibrillation,timeseries,AtrialFibrillation,515784,"{'numerical', 'categorical'}",4
+AustralianFootball_v1,multi-table,match_stats,14886357,"{'numerical', 'id', 'categorical'}",29
+AustralianFootball_v1,multi-table,matches,564376,"{'numerical', 'id', 'categorical'}",48
+AustralianFootball_v1,multi-table,players,145744,"{'numerical', 'id', 'categorical'}",14
+AustralianFootball_v1,multi-table,teams,11484,"{'numerical', 'id', 'categorical'}",102
+BasicMotions,timeseries,BasicMotions,585892,"{'numerical', 'categorical'}",8
+Biodegradability_v1,multi-table,atom,227168,"{'numerical', 'id', 'categorical'}",5
+Biodegradability_v1,multi-table,bond,368561,"{'numerical', 'id'}",4
+Biodegradability_v1,multi-table,gmember,250730,{'id'},3
+Biodegradability_v1,multi-table,group,28478,"{'numerical', 'id', 'categorical'}",3
+Biodegradability_v1,multi-table,molecule,16418,"{'numerical', 'id'}",6
+Bupa_v1,multi-table,alkphos,3761,"{'numerical', 'id'}",3
+Bupa_v1,multi-table,bupa,2317,{'id'},2
+Bupa_v1,multi-table,bupa_name,1622,{'id'},1
+Bupa_v1,multi-table,bupa_type,33,"{'numerical', 'id'}",2
+Bupa_v1,multi-table,drinks,4439,"{'numerical', 'id'}",3
+Bupa_v1,multi-table,gammagt,3723,"{'numerical', 'id'}",3
+Bupa_v1,multi-table,mcv,3721,"{'numerical', 'id'}",3
+Bupa_v1,multi-table,sgot,3705,"{'numerical', 'id'}",3
+Bupa_v1,multi-table,sgpt,3711,"{'numerical', 'id'}",3
+Carcinogenesis_v1,multi-table,atom,672046,"{'numerical', 'id', 'categorical'}",12
+Carcinogenesis_v1,multi-table,canc,13644,"{'numerical', 'id'}",10
+Carcinogenesis_v1,multi-table,sbond_1,411376,"{'numerical', 'id'}",5
+Carcinogenesis_v1,multi-table,sbond_2,25596,"{'numerical', 'id'}",5
+Carcinogenesis_v1,multi-table,sbond_3,322,"{'numerical', 'id'}",5
+Carcinogenesis_v1,multi-table,sbond_7,115692,"{'numerical', 'id'}",5
+census,single-table,census,140903311,"{'numerical', 'categorical'}",41
+census_extended,single-table,census_extended,6446832,"{'categorical', 'numerical', 'datetime'}",18
+CharacterTrajectories,timeseries,CharacterTrajectories,13597656,"{'numerical', 'categorical'}",5
+Chess_v1,multi-table,game,62503,"{'categorical', 'numerical', 'id'}",34
+Chess_v1,multi-table,opening,225355,"{'numerical', 'id', 'categorical'}",23
+child,single-table,child,2304075,{'categorical'},20
+CORA_v1,multi-table,cites,178944,"{'numerical', 'id'}",4
+CORA_v1,multi-table,content,1833409,"{'categorical', 'numerical', 'id'}",4
+CORA_v1,multi-table,paper,216522,"{'numerical', 'id', 'categorical'}",11
+Countries_v1,multi-table,Data,6959955,"{'numerical', 'id', 'categorical'}",58
+Countries_v1,multi-table,Metadata - Countries,479372,"{'numerical', 'id', 'categorical'}",161
+Countries_v1,multi-table,Metadata - Indicators,155908,"{'numerical', 'id', 'categorical'}",160
+Countries_v1,multi-table,target,4985,"{'numerical', 'id'}",3
+covtype,single-table,covtype,75170062,"{'numerical', 'categorical'}",55
+credit,single-table,credit,18155180,{'numerical'},30
+Cricket,timeseries,Cricket,13589407,"{'numerical', 'categorical'}",8
+DCG_v1,multi-table,sentences,15906,"{'numerical', 'id', 'categorical'}",4
+DCG_v1,multi-table,terms,155002,"{'categorical', 'numerical', 'id'}",5
+DuckDuckGeese,timeseries,DuckDuckGeese,310781086,"{'numerical', 'categorical'}",1347
+Dunur_v1,multi-table,aunt,268,{'id'},3
+Dunur_v1,multi-table,brother,200,{'id'},3
+Dunur_v1,multi-table,daughter,408,{'id'},3
+Dunur_v1,multi-table,dunur,576,{'id'},3
+Dunur_v1,multi-table,father,384,{'id'},3
+Dunur_v1,multi-table,husband,334,{'id'},3
+Dunur_v1,multi-table,husband2,196,{'id'},3
+Dunur_v1,multi-table,mother,400,{'id'},3
+Dunur_v1,multi-table,nephew,254,{'id'},3
+Dunur_v1,multi-table,niece,278,{'id'},3
+Dunur_v1,multi-table,person,2244,"{'numerical', 'id'}",19
+Dunur_v1,multi-table,sister,200,{'id'},3
+Dunur_v1,multi-table,son,376,{'id'},3
+Dunur_v1,multi-table,target,9707,"{'numerical', 'id'}",5
+Dunur_v1,multi-table,uncle,264,{'id'},3
+Dunur_v1,multi-table,wife,334,{'id'},3
+Dunur_v1,multi-table,wife2,196,{'id'},3
+EchoNASDAQ,single-table,data,7147922,"{'categorical', 'numerical', 'id'}",8
+EigenWorms,timeseries,EigenWorms,322987999,"{'numerical', 'categorical'}",8
+Elti_v1,multi-table,brother,914,{'id'},3
+Elti_v1,multi-table,daughter,798,{'id'},3
+Elti_v1,multi-table,elti,224,{'id'},3
+Elti_v1,multi-table,father,920,{'id'},3
+Elti_v1,multi-table,husband,426,{'id'},3
+Elti_v1,multi-table,mother,894,{'id'},3
+Elti_v1,multi-table,person,2817,"{'numerical', 'id'}",13
+Elti_v1,multi-table,sister,758,{'id'},3
+Elti_v1,multi-table,son,1016,{'id'},3
+Elti_v1,multi-table,target,33442,"{'numerical', 'id'}",5
+Elti_v1,multi-table,wife,426,{'id'},3
+Epilepsy,timeseries,Epilepsy,1897560,"{'numerical', 'categorical'}",5
+ERing,timeseries,ERing,1097289,"{'numerical', 'categorical'}",6
+EthanolConcentration,timeseries,EthanolConcentration,33254981,"{'numerical', 'categorical'}",5
+Facebook_v1,multi-table,edges,240536,"{'numerical', 'id'}",4
+Facebook_v1,multi-table,feat,307686,"{'numerical', 'id'}",268
+FaceDetection,timeseries,FaceDetection,795965144,"{'numerical', 'categorical'}",146
+financial_v1,multi-table,account,686416,"{'numerical', 'id', 'categorical'}",22
+financial_v1,multi-table,card,28838,"{'numerical', 'id', 'categorical'}",5
+financial_v1,multi-table,client,137113,"{'categorical', 'numerical', 'id'}",5
+financial_v1,multi-table,disp,186840,"{'numerical', 'id', 'categorical'}",7
+financial_v1,multi-table,district,7184,"{'numerical', 'id', 'categorical'}",19
+financial_v1,multi-table,loan,30894,"{'numerical', 'id', 'categorical'}",8
+financial_v1,multi-table,order,259480,"{'numerical', 'id', 'categorical'}",7
+financial_v1,multi-table,trans,69707410,"{'numerical', 'id', 'categorical'}",11
+FingerMovements,timeseries,FingerMovements,3288834,"{'numerical', 'categorical'}",30
+FNHK_v1,multi-table,pripady,7233255,"{'numerical', 'id', 'categorical'}",27
+FNHK_v1,multi-table,vykony,122865015,"{'numerical', 'id', 'categorical'}",8
+FNHK_v1,multi-table,zup,13997729,"{'numerical', 'id', 'categorical'}",8
+ftp_v1,multi-table,product,3199448,"{'categorical', 'numerical', 'id'}",8
+ftp_v1,multi-table,session,1583981,"{'numerical', 'id', 'categorical'}",5
+genes_v1,multi-table,Classification,42995,"{'numerical', 'id', 'categorical'}",7
+genes_v1,multi-table,Genes,590037,"{'categorical', 'numerical', 'id'}",10
+genes_v1,multi-table,Interactions,60611,"{'categorical', 'numerical', 'id'}",6
+got_families,multi-table,characters,98,"{'categorical', 'numerical', 'id'}",3
+got_families,multi-table,families,55,"{'categorical', 'id'}",2
+got_families,multi-table,character_families,196,"{'categorical', 'numerical', 'id'}",4
+grid,single-table,grid,96004,{'numerical'},2
+gridr,single-table,gridr,96003,{'numerical'},2
+HandMovementDirection,timeseries,HandMovementDirection,11723892,"{'numerical', 'categorical'}",12
+Handwriting,timeseries,Handwriting,6033398,"{'numerical', 'categorical'}",5
+Heartbeat,timeseries,Heartbeat,91500107,"{'numerical', 'categorical'}",63
+Hepatitis_std_v1,multi-table,Bio,437,"{'numerical', 'id'}",5
+Hepatitis_std_v1,multi-table,dispat,25051,"{'numerical', 'id'}",12
+Hepatitis_std_v1,multi-table,indis,168578,"{'numerical', 'id'}",12
+Hepatitis_std_v1,multi-table,inf,1767,"{'numerical', 'id'}",3
+Hepatitis_std_v1,multi-table,rel11,10132,"{'numerical', 'id'}",4
+Hepatitis_std_v1,multi-table,rel12,125296,"{'numerical', 'id'}",4
+Hepatitis_std_v1,multi-table,rel13,3633,"{'numerical', 'id'}",4
+imdb_ijs_v1,multi-table,actors,26995961,"{'categorical', 'numerical', 'id'}",6
+imdb_ijs_v1,multi-table,directors,6593522,"{'numerical', 'id', 'categorical'}",12
+imdb_ijs_v1,multi-table,directors_genres,6705011,"{'numerical', 'id', 'categorical'}",5
+imdb_ijs_v1,multi-table,movies,38002990,"{'numerical', 'id', 'categorical'}",14
+imdb_ijs_v1,multi-table,movies_directors,11929246,"{'numerical', 'id'}",4
+imdb_ijs_v1,multi-table,movies_genres,13788403,"{'numerical', 'id', 'categorical'}",4
+imdb_ijs_v1,multi-table,roles,186777354,"{'numerical', 'id', 'categorical'}",5
+imdb_MovieLens_v1,multi-table,actors,6188803,"{'numerical', 'id', 'categorical'}",11
+imdb_MovieLens_v1,multi-table,directors,32344,"{'numerical', 'id'}",5
+imdb_MovieLens_v1,multi-table,movies,497669,"{'categorical', 'numerical', 'id'}",21
+imdb_MovieLens_v1,multi-table,movies2actors,5691467,"{'numerical', 'id'}",5
+imdb_MovieLens_v1,multi-table,movies2directors,184717,"{'categorical', 'numerical', 'id'}",5
+imdb_MovieLens_v1,multi-table,u2base,35525509,"{'numerical', 'id'}",5
+imdb_MovieLens_v1,multi-table,users,121380,"{'numerical', 'id', 'categorical'}",6
+imdb_small_v1,multi-table,actors,66290,"{'categorical', 'numerical', 'id'}",7
+imdb_small_v1,multi-table,directors,2218,"{'numerical', 'id', 'categorical'}",9
+imdb_small_v1,multi-table,directors_genres,9901,"{'numerical', 'id', 'categorical'}",4
+imdb_small_v1,multi-table,movies,1734,"{'numerical', 'id', 'categorical'}",8
+imdb_small_v1,multi-table,movies_directors,1386,"{'numerical', 'id'}",4
+imdb_small_v1,multi-table,movies_genres,3685,"{'numerical', 'id', 'categorical'}",4
+imdb_small_v1,multi-table,roles,126939,"{'numerical', 'id', 'categorical'}",5
+InsectWingbeat,timeseries,InsectWingbeat,624230012,"{'numerical', 'categorical'}",202
+insurance,single-table,insurance,3927307,"{'categorical', 'boolean'}",27
+intrusion,single-table,intrusion,50164050,"{'numerical', 'categorical'}",41
+JapaneseVowels,timeseries,JapaneseVowels,1235400,"{'numerical', 'categorical'}",14
+KRK_v1,single-table,krk,26629,"{'numerical', 'id', 'categorical'}",9
+legalActs_v1,multi-table,legalact_link,672512,"{'numerical', 'id'}",4
+legalActs_v1,multi-table,legalact_people,36284583,"{'numerical', 'id'}",4
+legalActs_v1,multi-table,legalacts,203820863,"{'categorical', 'numerical', 'id'}",32
+legalActs_v1,multi-table,people,304928,"{'numerical', 'id', 'categorical'}",6
+legalActs_v1,multi-table,scrapefix,10600,"{'categorical', 'numerical', 'id'}",4
+Libras,timeseries,Libras,431607,"{'numerical', 'categorical'}",4
+LSST,timeseries,LSST,10212900,"{'numerical', 'categorical'}",8
+Mesh_v1,multi-table,circuit,157,{'id'},1
+Mesh_v1,multi-table,circuit_hole,21,{'id'},1
+Mesh_v1,multi-table,cont_loaded,259,{'id'},1
+Mesh_v1,multi-table,element,31752,"{'numerical', 'id'}",28
+Mesh_v1,multi-table,equal,1398,{'id'},3
+Mesh_v1,multi-table,fixed,426,{'id'},1
+Mesh_v1,multi-table,free,403,{'id'},1
+Mesh_v1,multi-table,half_circuit,78,{'id'},1
+Mesh_v1,multi-table,half_circuit_hole,60,{'id'},1
+Mesh_v1,multi-table,llong,32,{'id'},1
+Mesh_v1,multi-table,long_for_hole,16,{'id'},1
+Mesh_v1,multi-table,mesh,1341,{'id'},2
+Mesh_v1,multi-table,mesh_test,346,"{'numerical', 'id'}",2
+Mesh_v1,multi-table,mesh_test_Neg,4065,"{'numerical', 'id'}",2
+Mesh_v1,multi-table,neighbour_xy,2560,{'id'},3
+Mesh_v1,multi-table,neighbour_yz,1288,{'id'},2
+Mesh_v1,multi-table,neighbour_zx,2350,{'id'},3
+Mesh_v1,multi-table,nnumber,109,"{'numerical', 'id'}",2
+Mesh_v1,multi-table,noload,758,{'id'},1
+Mesh_v1,multi-table,notimportant,129,{'id'},1
+Mesh_v1,multi-table,one_side_fixed,131,{'id'},1
+Mesh_v1,multi-table,one_side_loaded,57,{'id'},1
+Mesh_v1,multi-table,opposite,1004,{'id'},3
+Mesh_v1,multi-table,quarter_circuit,29,{'id'},1
+Mesh_v1,multi-table,short_for_hole,55,{'id'},1
+Mesh_v1,multi-table,sshort,236,{'id'},1
+Mesh_v1,multi-table,two_side_fixed,127,{'id'},1
+Mesh_v1,multi-table,two_side_loaded,9,{'id'},1
+Mesh_v1,multi-table,usual,309,{'id'},1
+mnist12,single-table,mnist12,20300726,"{'numerical', 'categorical'}",145
+mnist28,single-table,mnist28,109903926,"{'numerical', 'categorical'}",785
+Mooney_Family_v1,multi-table,aunt,1922,{'id'},3
+Mooney_Family_v1,multi-table,aunt1,1922,{'id'},3
+Mooney_Family_v1,multi-table,aunt2,1922,{'id'},3
+Mooney_Family_v1,multi-table,aunt3,1922,{'id'},3
+Mooney_Family_v1,multi-table,aunt4,1922,{'id'},3
+Mooney_Family_v1,multi-table,aunt5,1922,{'id'},3
+Mooney_Family_v1,multi-table,brother,1124,{'id'},3
+Mooney_Family_v1,multi-table,brother1,1124,{'id'},3
+Mooney_Family_v1,multi-table,brother2,1124,{'id'},3
+Mooney_Family_v1,multi-table,brother3,1124,{'id'},3
+Mooney_Family_v1,multi-table,brother4,1124,{'id'},3
+Mooney_Family_v1,multi-table,brother5,1124,{'id'},3
+Mooney_Family_v1,multi-table,daughter,1236,{'id'},3
+Mooney_Family_v1,multi-table,daughter1,1236,{'id'},3
+Mooney_Family_v1,multi-table,daughter2,1236,{'id'},3
+Mooney_Family_v1,multi-table,daughter3,1236,{'id'},3
+Mooney_Family_v1,multi-table,daughter4,1236,{'id'},3
+Mooney_Family_v1,multi-table,daughter5,1236,{'id'},3
+Mooney_Family_v1,multi-table,father,1258,{'id'},3
+Mooney_Family_v1,multi-table,father1,1258,{'id'},3
+Mooney_Family_v1,multi-table,father2,1258,{'id'},3
+Mooney_Family_v1,multi-table,father3,1258,{'id'},3
+Mooney_Family_v1,multi-table,father4,1258,{'id'},3
+Mooney_Family_v1,multi-table,father5,1258,{'id'},3
+Mooney_Family_v1,multi-table,husband,610,{'id'},3
+Mooney_Family_v1,multi-table,husband1,610,{'id'},3
+Mooney_Family_v1,multi-table,husband2,610,{'id'},3
+Mooney_Family_v1,multi-table,husband3,610,{'id'},3
+Mooney_Family_v1,multi-table,husband4,610,{'id'},3
+Mooney_Family_v1,multi-table,husband5,610,{'id'},3
+Mooney_Family_v1,multi-table,mother,1380,{'id'},3
+Mooney_Family_v1,multi-table,mother1,1380,{'id'},3
+Mooney_Family_v1,multi-table,mother2,1380,{'id'},3
+Mooney_Family_v1,multi-table,mother3,1380,{'id'},3
+Mooney_Family_v1,multi-table,mother4,1380,{'id'},3
+Mooney_Family_v1,multi-table,mother5,1380,{'id'},3
+Mooney_Family_v1,multi-table,nephew,1810,{'id'},3
+Mooney_Family_v1,multi-table,nephew1,1810,{'id'},3
+Mooney_Family_v1,multi-table,nephew2,1810,{'id'},3
+Mooney_Family_v1,multi-table,nephew3,1810,{'id'},3
+Mooney_Family_v1,multi-table,nephew4,1810,{'id'},3
+Mooney_Family_v1,multi-table,nephew5,1810,{'id'},3
+Mooney_Family_v1,multi-table,niece,2144,{'id'},3
+Mooney_Family_v1,multi-table,niece1,2144,{'id'},3
+Mooney_Family_v1,multi-table,niece2,2144,{'id'},3
+Mooney_Family_v1,multi-table,niece3,2144,{'id'},3
+Mooney_Family_v1,multi-table,niece4,2144,{'id'},3
+Mooney_Family_v1,multi-table,niece5,2144,{'id'},3
+Mooney_Family_v1,multi-table,person,4794,"{'numerical', 'id'}",13
+Mooney_Family_v1,multi-table,sister,1008,{'id'},3
+Mooney_Family_v1,multi-table,sister1,1008,{'id'},3
+Mooney_Family_v1,multi-table,sister2,1008,{'id'},3
+Mooney_Family_v1,multi-table,sister3,1008,{'id'},3
+Mooney_Family_v1,multi-table,sister4,1008,{'id'},3
+Mooney_Family_v1,multi-table,sister5,1008,{'id'},3
+Mooney_Family_v1,multi-table,son,1402,{'id'},3
+Mooney_Family_v1,multi-table,son1,1402,{'id'},3
+Mooney_Family_v1,multi-table,son2,1402,{'id'},3
+Mooney_Family_v1,multi-table,son3,1402,{'id'},3
+Mooney_Family_v1,multi-table,son4,1402,{'id'},3
+Mooney_Family_v1,multi-table,son5,1402,{'id'},3
+Mooney_Family_v1,multi-table,uncle,2032,{'id'},3
+Mooney_Family_v1,multi-table,uncle1,2032,{'id'},3
+Mooney_Family_v1,multi-table,uncle2,2032,{'id'},3
+Mooney_Family_v1,multi-table,uncle3,2032,{'id'},3
+Mooney_Family_v1,multi-table,uncle4,2032,{'id'},3
+Mooney_Family_v1,multi-table,uncle5,2032,{'id'},3
+Mooney_Family_v1,multi-table,wife,610,{'id'},3
+MotorImagery,timeseries,MotorImagery,556992014,"{'numerical', 'categorical'}",66
+MuskSmall_v1,multi-table,conformation,330417,"{'numerical', 'id'}",169
+MuskSmall_v1,multi-table,molecule,1646,"{'numerical', 'id'}",4
+mutagenesis_v1,multi-table,atom,247493,"{'numerical', 'id', 'categorical'}",10
+mutagenesis_v1,multi-table,bond,167905,"{'numerical', 'id'}",5
+mutagenesis_v1,multi-table,molecule,15553,"{'numerical', 'id', 'categorical'}",11
+nasdaq100_2019,timeseries,nasdaq100_2019,2839317,"{'numerical', 'id', 'categorical', 'datetime'}",8
+nations_v1,multi-table,country,311,"{'categorical', 'numerical', 'id'}",4
+nations_v1,multi-table,relation,471550,"{'categorical', 'numerical', 'id'}",6
+nations_v1,multi-table,stat,5269,"{'numerical', 'id'}",113
+NATOPS,timeseries,NATOPS,4464030,"{'numerical', 'categorical'}",26
+NBA_v1,multi-table,Actions,47209,"{'numerical', 'id'}",24
+NBA_v1,multi-table,Game,2578,"{'numerical', 'id', 'categorical'}",8
+NBA_v1,multi-table,Player,9183,"{'categorical', 'numerical', 'id'}",4
+NBA_v1,multi-table,Team,2733,"{'numerical', 'id', 'categorical'}",17
+NCAA_v1,multi-table,regular_season_compact_results,6946153,"{'numerical', 'id', 'categorical'}",10
+NCAA_v1,multi-table,regular_season_detailed_results,7263023,"{'numerical', 'id', 'categorical'}",36
+NCAA_v1,multi-table,seasons,17782,"{'numerical', 'id', 'categorical'}",101
+NCAA_v1,multi-table,target,12135,"{'numerical', 'id'}",8
+NCAA_v1,multi-table,teams,239198,"{'numerical', 'id', 'categorical'}",121
+NCAA_v1,multi-table,tourney_compact_results,101731,"{'numerical', 'id', 'categorical'}",10
+NCAA_v1,multi-table,tourney_detailed_results,94808,"{'numerical', 'id', 'categorical'}",36
+NCAA_v1,multi-table,tourney_seeds,54635,"{'categorical', 'numerical', 'id'}",5
+NCAA_v1,multi-table,tourney_slots,65146,"{'categorical', 'numerical', 'id'}",6
+news,single-table,news,6192526,{'numerical'},59
+PEMS-SF,timeseries,PEMS-SF,420946121,"{'numerical', 'categorical'}",965
+PenDigits,timeseries,PenDigits,1835778,"{'numerical', 'categorical'}",4
+PhonemeSpectra,timeseries,PhonemeSpectra,153556827,"{'numerical', 'categorical'}",13
+Pima_v1,multi-table,age,11436,"{'numerical', 'id'}",3
+Pima_v1,multi-table,bmi,11414,"{'numerical', 'id'}",3
+Pima_v1,multi-table,diastolic,11398,"{'numerical', 'id'}",3
+Pima_v1,multi-table,numPreg,10016,"{'numerical', 'id'}",3
+Pima_v1,multi-table,pedigree,15338,"{'numerical', 'id'}",3
+Pima_v1,multi-table,pima,5278,"{'categorical', 'id'}",2
+Pima_v1,multi-table,plasma,12568,"{'numerical', 'id'}",3
+Pima_v1,multi-table,serum,11188,"{'numerical', 'id'}",3
+Pima_v1,multi-table,tricepts,10974,"{'numerical', 'id'}",3
+PremierLeague_v1,multi-table,Actions,4982779,"{'numerical', 'id', 'categorical'}",208
+PremierLeague_v1,multi-table,Matches,39382,"{'numerical', 'id', 'categorical'}",17
+PremierLeague_v1,multi-table,Players,59243,"{'numerical', 'id', 'categorical'}",16
+PremierLeague_v1,multi-table,Teams,2050,"{'numerical', 'id', 'categorical'}",9
+PTE_v1,multi-table,active,738,{'id'},1
+PTE_v1,multi-table,postestactive,105,{'id'},1
+PTE_v1,multi-table,postestactive_Neg,100,{'id'},1
+PTE_v1,multi-table,pte_active,2013,{'id'},2
+PTE_v1,multi-table,pte_alcohol,482,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_alkyl_halide,8296,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_ames,638,{'id'},1
+PTE_v1,multi-table,pte_amine,13620,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_atm,369675,"{'numerical', 'id', 'categorical'}",8
+PTE_v1,multi-table,pte_atm_bond_count,49514,"{'numerical', 'id'}",3
+PTE_v1,multi-table,pte_atm_count,3611,"{'numerical', 'id'}",3
+PTE_v1,multi-table,pte_atm_max_charge,6916,"{'numerical', 'id'}",3
+PTE_v1,multi-table,pte_atm_min_charge,7412,"{'numerical', 'id'}",3
+PTE_v1,multi-table,pte_bond,340454,"{'numerical', 'id'}",5
+PTE_v1,multi-table,pte_bond_count,3611,"{'numerical', 'id'}",3
+PTE_v1,multi-table,pte_drug,54806,"{'numerical', 'id'}",34
+PTE_v1,multi-table,pte_ester,14062,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_ether,21490,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_five_ring,6736,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_has_property,24109,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_imine,794,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_ind,9338,"{'categorical', 'numerical', 'id'}",4
+PTE_v1,multi-table,pte_ketone,11184,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_methoxy,5628,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_methyl,36290,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_mutagenic,658,{'id'},1
+PTE_v1,multi-table,pte_nitro,3538,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_non_ar_5c_ring,2880,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_non_ar_6c_ring,36918,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_non_ar_hetero_5_ring,7142,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_non_ar_hetero_6_ring,9396,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_number,41,"{'numerical', 'id'}",2
+PTE_v1,multi-table,pte_phenol,3090,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_six_ring,45636,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_sulfide,4008,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_sulfo,2392,"{'categorical', 'id'}",3
+PTE_v1,multi-table,pte_testactive,282,"{'categorical', 'id'}",2
+PTE_v1,multi-table,pte_testactive_Neg,285,"{'categorical', 'id'}",2
+Pyrimidine_v1,multi-table,molecule,13613,"{'numerical', 'id'}",25
+Pyrimidine_v1,multi-table,position,15164,"{'numerical', 'id'}",13
+RacketSports,timeseries,RacketSports,758794,"{'numerical', 'categorical'}",8
+restbase_v1,multi-table,generalinfo,598989,"{'numerical', 'id', 'categorical'}",8
+restbase_v1,multi-table,geographic,17119,"{'numerical', 'id', 'categorical'}",14
+restbase_v1,multi-table,location,393484,"{'numerical', 'id', 'categorical'}",5
+ring,single-table,ring,83485,{'numerical'},2
+rossmann,multi-table,store,45010,"{'numerical', 'id', 'boolean', 'categorical'}",10
+rossmann,multi-table,historical,33170389,"{'numerical', 'id', 'categorical', 'datetime'}",9
+SalesDB_v1,multi-table,Customers,1565497,"{'numerical', 'id', 'categorical'}",18
+SalesDB_v1,multi-table,Employees,759,"{'categorical', 'numerical', 'id'}",6
+SalesDB_v1,multi-table,Products,21681,"{'categorical', 'numerical', 'id'}",5
+SalesDB_v1,multi-table,Sales,210624434,"{'numerical', 'id'}",6
+Same_gen_v1,multi-table,parent,1790,{'id'},3
+Same_gen_v1,multi-table,person,1610,"{'numerical', 'id'}",7
+Same_gen_v1,multi-table,same_gen,9056,{'id'},3
+Same_gen_v1,multi-table,target,33441,"{'numerical', 'id'}",5
+SAP_v1,multi-table,Customers,48022312,"{'numerical', 'id', 'categorical'}",20
+SAP_v1,multi-table,Demog,61179,"{'numerical', 'id'}",41
+SAP_v1,multi-table,Mailings1_2,2619281,"{'categorical', 'numerical', 'id', 'boolean'}",5
+SAP_v1,multi-table,Sales,170154050,"{'categorical', 'numerical', 'id'}",5
+SAT_v1,multi-table,class,655,"{'numerical', 'id'}",20
+SAT_v1,multi-table,fault,724,"{'numerical', 'id'}",3
+SAT_v1,multi-table,fault_test,7160,"{'numerical', 'id'}",3
+SAT_v1,multi-table,gmt_mission_phase,10649,"{'categorical', 'numerical', 'id'}",3
+SAT_v1,multi-table,succ,23316,"{'numerical', 'id'}",4
+SAT_v1,multi-table,time,40956,"{'numerical', 'id'}",8
+SAT_v1,multi-table,tm001_eod_relay,7349,{'id'},2
+SAT_v1,multi-table,tm002_battov_temp,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm004_eoc_signaled,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm007_switch,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm009_switch,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm011_eod_override,7349,{'id'},2
+SAT_v1,multi-table,tm013_switch,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm015_eod_signaled,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm017_switch,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm018_switch,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm021_eoc_disabled,7349,{'id'},2
+SAT_v1,multi-table,tm022_switch,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm029_ovt_disabled,7349,{'id'},2
+SAT_v1,multi-table,tm031_switch,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm038_switch,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm039_eod_disabled,7349,{'id'},2
+SAT_v1,multi-table,tm040_switch,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm042_switch,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm043_switch,7349,{'id'},2
+SAT_v1,multi-table,tm054_supply_1a,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm055_supply_1b,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm057_supply_2c,7349,{'id'},2
+SAT_v1,multi-table,tm058_asr_or_switch_10,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm070_supply_3c,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm071_asr_or_switch_20,7349,{'id'},2
+SAT_v1,multi-table,tm211_bus_voltage,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm220_supply_1c,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm222_charging,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,tm257_battery_voltage,9663,"{'numerical', 'id'}",3
+SAT_v1,multi-table,trfl,117,"{'numerical', 'id'}",6
+SelfRegulationSCP1,timeseries,SelfRegulationSCP1,28225595,"{'numerical', 'categorical'}",8
+SelfRegulationSCP2,timeseries,SelfRegulationSCP2,26730357,"{'numerical', 'categorical'}",9
+SpokenArabicDigits,timeseries,SpokenArabicDigits,41702169,"{'numerical', 'categorical'}",15
+StandWalkJump,timeseries,StandWalkJump,2636733,"{'numerical', 'categorical'}",6
+Student_loan_v1,multi-table,bool,47,"{'numerical', 'id'}",2
+Student_loan_v1,multi-table,disabled,1041,{'id'},1
+Student_loan_v1,multi-table,enlist,6891,"{'categorical', 'id'}",2
+Student_loan_v1,multi-table,enrolled,41808,"{'numerical', 'id', 'categorical'}",5
+Student_loan_v1,multi-table,filed_for_bankrupcy,1051,{'id'},1
+Student_loan_v1,multi-table,longest_absense_from_school,14918,"{'numerical', 'id'}",3
+Student_loan_v1,multi-table,male,5414,{'id'},1
+Student_loan_v1,multi-table,no_payment_due,14903,{'id'},2
+Student_loan_v1,multi-table,person,47986,"{'numerical', 'id'}",10
+Student_loan_v1,multi-table,unemployed,1075,{'id'},1
+student_placements,single-table,student_placements,21159,"{'id', 'datetime', 'categorical', 'numerical', 'boolean'}",17
+student_placements_pii,single-table,student_placements_pii,31345,"{'id', 'datetime', 'categorical', 'numerical', 'boolean'}",18
+Telstra_v1,multi-table,event_type,1377443,"{'categorical', 'numerical', 'id'}",4
+Telstra_v1,multi-table,log_feature,2461422,"{'numerical', 'id', 'categorical'}",5
+Telstra_v1,multi-table,resource_type,1016011,"{'categorical', 'numerical', 'id'}",4
+Telstra_v1,multi-table,severity_type,497275,"{'categorical', 'numerical', 'id'}",3
+Telstra_v1,multi-table,target,632758,"{'numerical', 'id', 'categorical'}",7
+Toxicology_v1,multi-table,atom,255765,"{'categorical', 'numerical', 'id'}",4
+Toxicology_v1,multi-table,bond,237030,"{'categorical', 'id'}",3
+Toxicology_v1,multi-table,connected,1124952,{'id'},4
+Toxicology_v1,multi-table,molecule,4796,"{'numerical', 'id', 'categorical'}",4
+trains_v1,multi-table,cars,3478,"{'numerical', 'id', 'categorical'}",11
+trains_v1,multi-table,trains,285,"{'categorical', 'numerical', 'id'}",4
+Triazine_v1,multi-table,molecule,27697,"{'numerical', 'id'}",21
+Triazine_v1,multi-table,position,75185,"{'numerical', 'id'}",14
+TubePricing_v1,multi-table,bill_of_materials,789229,"{'numerical', 'id'}",4
+TubePricing_v1,multi-table,comp_adaptor,3821,"{'numerical', 'id', 'categorical'}",21
+TubePricing_v1,multi-table,comp_boss,15088,"{'numerical', 'id', 'categorical'}",16
+TubePricing_v1,multi-table,comp_elbow,26472,"{'categorical', 'numerical', 'id'}",17
+TubePricing_v1,multi-table,comp_float,890,"{'numerical', 'id', 'categorical'}",8
+TubePricing_v1,multi-table,comp_hfl,504,"{'categorical', 'numerical', 'id'}",10
+TubePricing_v1,multi-table,comp_nut,5713,"{'numerical', 'id', 'categorical'}",12
+TubePricing_v1,multi-table,comp_other,29267,"{'categorical', 'numerical', 'id'}",4
+TubePricing_v1,multi-table,comp_sleeve,3266,"{'numerical', 'id', 'categorical'}",11
+TubePricing_v1,multi-table,comp_straight,32640,"{'numerical', 'id', 'categorical'}",13
+TubePricing_v1,multi-table,comp_tee,528,"{'numerical', 'id', 'categorical'}",15
+TubePricing_v1,multi-table,comp_threaded,29546,"{'numerical', 'id', 'categorical'}",33
+TubePricing_v1,multi-table,components,466661,"{'numerical', 'id', 'categorical'}",53
+TubePricing_v1,multi-table,spec,503579,"{'categorical', 'id'}",2
+TubePricing_v1,multi-table,target,3927154,"{'numerical', 'id', 'categorical'}",12
+TubePricing_v1,multi-table,tube,4145477,"{'categorical', 'numerical', 'id'}",40
+TubePricing_v1,multi-table,tube_end_form,4061,"{'numerical', 'id', 'categorical'}",24
+TubePricing_v1,multi-table,type_component,16844,"{'numerical', 'id', 'categorical'}",111
+TubePricing_v1,multi-table,type_connection,5163,"{'numerical', 'id', 'categorical'}",54
+TubePricing_v1,multi-table,type_end_form,3406,"{'numerical', 'id', 'categorical'}",47
+university_v1,multi-table,RA,544,"{'numerical', 'id', 'categorical'}",6
+university_v1,multi-table,course,172,"{'numerical', 'id'}",5
+university_v1,multi-table,prof,123,"{'numerical', 'id'}",5
+university_v1,multi-table,registration,1662,"{'numerical', 'id'}",6
+university_v1,multi-table,student,1177,"{'numerical', 'id'}",9
+UTube_v1,multi-table,utube_attributes,61372,"{'categorical', 'numerical', 'id'}",7
+UTube_v1,multi-table,utube_states,9106,"{'categorical', 'numerical', 'id'}",3
+UWaveGestureLibrary,timeseries,UWaveGestureLibrary,5218219,"{'numerical', 'categorical'}",5
+UW_std_v1,multi-table,advisedBy,2193,"{'numerical', 'id'}",4
+UW_std_v1,multi-table,course,5047,"{'numerical', 'id', 'categorical'}",7
+UW_std_v1,multi-table,person,20740,"{'categorical', 'numerical', 'id'}",18
+UW_std_v1,multi-table,taughtBy,3514,"{'numerical', 'id'}",4
+walmart,multi-table,stores,532,"{'categorical', 'numerical', 'id'}",3
+walmart,multi-table,features,592289,"{'numerical', 'id', 'boolean', 'datetime'}",12
+walmart,multi-table,depts,12842546,"{'numerical', 'id', 'boolean', 'datetime'}",5
+WebKP_v1,multi-table,cites,275106,{'id'},3
+WebKP_v1,multi-table,content,8769900,"{'categorical', 'id'}",3
+WebKP_v1,multi-table,webpage,53930,"{'categorical', 'numerical', 'id'}",4
+world_v1,multi-table,City,172841,"{'categorical', 'numerical', 'id'}",6
+world_v1,multi-table,Country,50811,"{'numerical', 'id', 'categorical'}",27
+world_v1,multi-table,CountryLanguage,34612,"{'numerical', 'id', 'categorical'}",6

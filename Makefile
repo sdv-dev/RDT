@@ -113,6 +113,10 @@ test-readme: ## run the readme snippets
 test-performance: ## run performance tests
 	invoke performance
 
+.PHONY: test-quality
+test-quality: ## run quality tests
+	invoke quality
+
 .PHONY: test
 test: test-unit test-integration test-readme ## test everything that needs test dependencies
 
