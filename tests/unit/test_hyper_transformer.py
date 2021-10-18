@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -255,10 +256,10 @@ class TestHyperTransformer(TestCase):
         # Setup
         ht = HyperTransformer(field_types={'a': 'numerical', 'b': 'categorical'})
         data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': ['category1', 'category2', 'category3'],
-            'c': [True, False, True],
-            'd': [1.0, 2.0, 3.0]
+            'a': [np.nan, 1, 2, 3],
+            'b': [np.nan, 'category1', 'category2', 'category3'],
+            'c': [np.nan, True, False, True],
+            'd': [np.nan, 1.0, 2.0, 3.0]
         })
 
         # Run
