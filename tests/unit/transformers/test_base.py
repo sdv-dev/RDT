@@ -109,46 +109,52 @@ class TestBaseTransformer:
             assert input_type == expected
 
     def test__add_prefix_none(self):
-        """Test the ``_add_prefix`` method.
+        """Test the ``_add_prefix`` method when passed a ``None``.
 
-        Setup:
-            -
+        The method should simply return ``None`` when ``None`` is passed as an argument.
 
         Input:
-            -
+            - a None value.
 
-        Expected behavior:
-            -
+        Output:
+            - a None value.
         """
+        # Setup
         dictionary = None
         base_transformer = BaseTransformer()
+
+        # Run
         output = base_transformer._add_prefix(dictionary)
 
+        # Assert
         expected = None
         assert output == expected
 
     def test__add_prefix_dictionary(self):
-        """Test the ``_add_prefix`` method.
+        """Test the ``_add_prefix`` method when passed a dictionary.
 
         Setup:
-            -
+            - set the ``column_prefix`` of the ``BaseTransformer`` to ``'colulumn_name'``.
 
         Input:
-            -
-
-        Expected behavior:
-            -
+            - a dictionary of strings to strings.
+        
+        Output:
+            - the input dictionary with ``column_prefix`` added to the beginning of the keys.
         """
+        # Setup
         dictionary = {
             'day': 'numerical',
             'month': 'categorical',
             'year': 'numerical'
         }
-
         transformer = BaseTransformer()
         transformer.column_prefix = 'column_name'
+
+        # Run
         output = transformer._add_prefix(dictionary)
 
+        # Assert
         expected = {
             'column_name.day': 'numerical',
             'column_name.month': 'categorical',
@@ -160,21 +166,24 @@ class TestBaseTransformer:
         """Test the ``get_output_types`` method.
 
         Setup:
-            -
+            - set the ``column_prefix`` of the ``BaseTransformer`` to ``'colulumn_name'``.
+            - set the ``OUTPUT_TYPES`` of the ``BaseTransformer`` to a dictionary.
 
-        Input:
-            -
-
-        Expected behavior:
-            -
+        Output:
+            - the dictionary set in ``OUTPUT_TYPES`` with the ``column_prefix`` string
+            added to the beginning of the keys.
         """
+        # Setup
         base_transformer = BaseTransformer()
         base_transformer.column_prefix = 'column_name'
         base_transformer.OUTPUT_TYPES = {
             'value': 'numerical'
         }
+
+        # Run
         output = base_transformer.get_output_types()
 
+        # Assert
         expected = {
             'column_name.value': 'numerical'
         }
@@ -184,70 +193,72 @@ class TestBaseTransformer:
         """Test the ``is_transform_deterministic`` method.
 
         Setup:
-            -
+            - set the ``DETERMINISTIC_TRANSFORM`` of the ``BaseTransformer`` to True.
 
-        Input:
-            -
-
-        Expected behavior:
-            -
+        Output:
+            - the booloan value stored in ``DETERMINISTIC_TRANSFORM``. 
         """
+        # Setup
         base_transformer = BaseTransformer()
         base_transformer.DETERMINISTIC_TRANSFORM = True
-        output = base_transformer.is_transform_deterministic()
-        expected = True
 
+        # Run
+        output = base_transformer.is_transform_deterministic()
+
+        # Assert
+        expected = True
         assert output == expected
 
     def test_is_reverse_deterministic(self):
         """Test the ``is_reverse_deterministic`` method.
 
         Setup:
-            -
+            - set the ``DETERMINISTIC_REVERSE`` of the ``BaseTransformer`` to True.
 
-        Input:
-            -
-
-        Expected behavior:
-            -
+        Output:
+            - the booloan value stored in ``DETERMINISTIC_REVERSE``. 
         """
+        # Setup
         base_transformer = BaseTransformer()
         base_transformer.DETERMINISTIC_REVERSE = True
-        output = base_transformer.is_reverse_deterministic()
-        expected = True
 
+        # Run
+        output = base_transformer.is_reverse_deterministic()
+
+        # Assert
+        expected = True
         assert output == expected
 
     def test_is_composition_identity(self):
         """Test the ``is_composition_identity`` method.
 
         Setup:
-            -
+            - set the ``COMPOSITION_IS_IDENTITY`` of the ``BaseTransformer`` to True.
 
-        Input:
-            -
-
-        Expected behavior:
-            -
+        Output:
+            - the booloan value stored in ``COMPOSITION_IS_IDENTITY``. 
         """
+        # Setup
         base_transformer = BaseTransformer()
         base_transformer.COMPOSITION_IS_IDENTITY = True
-        output = base_transformer.is_composition_identity()
-        expected = True
 
+        # Run
+        output = base_transformer.is_composition_identity()
+
+        # Assert
+        expected = True
         assert output == expected
 
     def test_get_next_transformers(self):
         """Test the ``get_next_transformers`` method.
 
         Setup:
-            -
+            - set the ``column_prefix`` of the ``BaseTransformer`` to a string.
+            - set the ``NEXT_TRANSFORMERS`` of the ``BaseTransformer`` to a dictionary.
 
-        Input:
-            -
-
-        Expected behavior:
-            -
+        Output:
+            - the dictionary set in ``NEXT_TRANSFORMERS`` with the ``column_prefix`` string
+            added to the beginning of the keys.
         """
         base_transformer = BaseTransformer()
         base_transformer.column_prefix = 'column_name'
