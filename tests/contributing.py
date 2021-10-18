@@ -290,7 +290,7 @@ def validate_transformer_code_style(transformer):
     if valid:
         print('\nSUCCESS: The code style is correct.\n')
     else:
-        print('\nERROR the code stlye is NOT correct.\n')
+        print('\nERROR the code style is NOT correct.\n')
 
     table = pd.DataFrame(results)
     print(tabulate(table, headers='keys', showindex=False))
