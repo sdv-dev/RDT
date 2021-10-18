@@ -13,7 +13,7 @@ def check_dependencies(c):
 
 
 @task
-def pytest(c):
+def unit(c):
     c.run(
         'python -m pytest ./tests/unit ./tests/performance/tests ./tests/datasets/tests '
         '--cov=rdt --cov-report=xml'
@@ -64,7 +64,7 @@ def install_minimum(c):
 def minimum(c):
     install_minimum(c)
     check_dependencies(c)
-    pytest(c)
+    unit(c)
     integration(c)
 
 
