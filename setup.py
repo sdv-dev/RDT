@@ -59,6 +59,8 @@ development_requires = [
     'autodocsumm>=0.1.10',
 
     # style check
+    'pycodestyle<2.8.0,>=2.7.0',
+    'pyflakes<2.4.0,>=2.3.0',
     'flake8>=3.7.7,<4',
     'flake8-absolute-import>=1.0,<2',
     'flake8-builtins>=1.5.3,<1.6',
