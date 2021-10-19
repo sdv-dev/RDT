@@ -134,7 +134,6 @@ def get_transformed_data():
     }, index=index)
 
 
-
 DETERMINISTIC_CATEGORICAL = deepcopy(DEFAULT_TRANSFORMERS)
 DETERMINISTIC_CATEGORICAL['categorical'] = CategoricalTransformer
 
