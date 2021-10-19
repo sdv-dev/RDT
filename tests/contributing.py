@@ -346,7 +346,11 @@ def validate_transformer_unit_tests(transformer):
     rounded_score = round(score / 100, 2)
     if rounded_score < 1.0:
         print(f'\nERROR: The unit tests only cover {round(cov.json_report(), 2)}% of your code.')
-        print('\nFull coverage report here:\n')
-        cov.report(show_missing=True)
+
+    else:
+        print(f'\nSUCCESS: The unit tests cover {round(cov.json_report(), 2)}% of your code.')
+
+    print('\nFull coverage report here:\n')
+    cov.report(show_missing=True)
 
     return rounded_score
