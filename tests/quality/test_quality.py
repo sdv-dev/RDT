@@ -59,6 +59,26 @@ def find_columns(data, data_type, metadata=None):
 
 
 def get_transformer_regression_scores(data, data_type, dataset_name, transformers, metadata=None):
+    """Returns regression scores for a list of transformers.
+
+    Args:
+        data (pandas.DataFrame):
+            The dataset containing columns to predict and train with.
+        data_type (string):
+            The data type of the transformer.
+        dataset_name (string):
+            The name of the dataset.
+        transformers (list):
+            List of transformer instances.
+        metadata (dict):
+            Dictionary containing metadata for the table.
+
+    Returns:
+        pandas.DataFrame containing the score for each column predicted
+        in the dataset. To get the scores, a regression model is trained.
+        The features used are the output of transforming all the columns
+        of the data type using a transformer in the transformers list.
+    """
     columns_to_predict = find_columns(data, 'numerical')
     columns_to_transform = find_columns(data, data_type, metadata)
     scores = pd.DataFrame()
