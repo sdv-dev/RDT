@@ -269,6 +269,7 @@ def validate_transformer_code_style(transformer):
     Args:
         transformer (string or rdt.transformers.BaseTransformer):
             The transformer to validate.
+
     Returns:
         bool:
             Whether or not the transformer passes all code style checks.
@@ -313,6 +314,7 @@ def validate_transformer_unit_tests(transformer):
     Args:
         transformer (string or rdt.transformers.BaseTransformer):
             The transformer to validate.
+
     Returns:
         float:
             A ``float`` value representing the test coverage where 1.0 is 100%.

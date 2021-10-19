@@ -47,7 +47,7 @@ def _validate_config_json(config_path, transformer_name):
     with open(config_path, 'r', encoding='utf-8') as config_file:
         try:
             config_dict = json.load(config_file)
-        except JSONDecodeError as error:
+        except json.JSONDecodeError:
             config_dict = None
 
     config_error_msg = f'{config_path} does not have valid json format.'
