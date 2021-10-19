@@ -76,9 +76,121 @@ file named after the data type that the transformer operates on. For example, if
 writing a transformer that works with ``categorical`` data, your transformer should be placed
 inside the ``rdt/transformers/categorical.py`` module.
 
+Validate Code Style
+~~~~~~~~~~~~~~~~~~~
+
+Validate the style of your code using the ``validate_transformer_code_style`` function::
+
+    from tests.contribution import validate_transformer_code_style
+    validate_transformer_code_style('rdt.transformers.<YourTransformer>')
+
+Fix any style errors that are reported.
+
+Unit Tests
+~~~~~~~~~~
+Unit tests should cover specific cases for each of the following methods: ``__init__``,
+``fit``, ``transform`` and ``reverse_transform``.
+
+Creating Unit Tests
+"""""""""""""""""""
+
+There should be unit tests created specifically for the new transformer you add.
+They can be added under ``tests/unit/transformers/{transformer_module}``. The unit tests are
+expected to cover 100% of your transformer's code.
+
+Validate Unit Tests
+"""""""""""""""""""
+
+Validate the results and coverage of your transformer's unit tests using the
+``validate_transformer_unit_tests`` function::
+
+    from tests.contribution import validate_transformer_unit_tests
+    validate_transformer_unit_tests('rdt.transformers.<YourTransformer>')
+
+Fix any unit test errors that are reported.
+
+Integration Tests
+~~~~~~~~~~~~~~~~~
+
+Integration tests should test the entire workflow of going from input data, to fitting, to
+transforming and finally reverse transforming the data. By default, we run integration tests
+for each transformer that validate the following checks:
+
+1. The Transformer correctly defines the data type that it supports.
+2. At least one Dataset Generator exists for the Transformer data type.
+3. The Transformer can transform data and produces outputs of the indicated data types.
+4. The Transformer can reverse transform the data it produces, recovering the original data type.
+   If ``is_composite_identity``, we expect that the reverse transformed data is equal to the
+   original data.
+5. The HyperTransformer is able to use the Transformer and produce float values.
+6. The HyperTransformer is able to reverse the data that has previously transformed,
+   and restore the original data type.
+
+Add Integration Tests
+"""""""""""""""""""""
+
+If you wish to test any specific end-to-end scenarios that were not covered in the above checks, 
+add a new integration test. Integration tests can be added under
+``tests/unit/transformers/{transformer_module}``.
+
+Validate Integration Tests
+""""""""""""""""""""""""""
+
+Validate the results of your transformer's integration tests using the
+``validate_transformer_integration`` function::
+
+    from tests.contribution import validate_transformer_integration
+    validate_transformer_integration('rdt.transformers.<YourTransformer>')
+
+Fix any integration test errors that are reported.
+
+Transformer Performance
+~~~~~~~~~~~~~~~~~~~~~~~
+
+We want to ensure our transformers are as efficient as possible, in terms of time and memory.
+In order to do so, we run performance tests on each transformer, based on the input data type
+specified by the transformer.
+
+We generate test data using Dataset Generators. Each transformer should have at least one
+Dataset Generator that produces data of the transformer's input type.
+If there are any specific dataset characteristics that you think may affect your transformer
+performance (e.g. constant data, mostly null data), consider adding a Dataset Generator
+for that scenario as well.
+
+Creating Dataset Generators
+"""""""""""""""""""""""""""
+
+In order to test performance, we have a class that is responsible for generating data to test
+the transformer methods against. Each subclass implements two static method, ``generate`` 
+and ``get_performance_thresholds``.
+
+1. ``generate`` takes in the number of rows to generate, and outputs the expected number
+   of data rows.
+2. ``get_performance_thresholds`` returns the time and memory threshold for each of the required
+   transformer methods. These thresolds are per row.
+
+You should make a generator for every type of column that you believe would be useful to test
+against. For some examples, you can look in this
+folder: https://github.com/sdv-dev/RDT/tree/master/tests/datasets
+
+The generators each have a ``DATA_TYPE`` class variable. This should match the data type that your ``transformer`` accepts as input.
+
+Validate Performance
+""""""""""""""""""""
+
+Validate the performance of your transformer using the
+``validate_transformer_performance`` function::
+
+    from tests.contribution import validate_transformer_performance
+    validate_transformer_performance('rdt.transformers.<YourTransformer>')
+
+Fix any performance issues that are reported. If there are no errors but performance
+can be improved, this function should be used for reference.
+
 Common Performance Pitfalls
 """""""""""""""""""""""""""
-It is important to try to keep the performance of these transformers as efficient as possible.
+
+It is important to keep the performance of these transformers as efficient as possible.
 Below are some tips and common pitfalls to avoid when developing your transformer, so as to
 optimize performance.
 
@@ -94,105 +206,42 @@ optimize performance.
 6. If you are working with a series that has booleans and null values, there is a
    `nullable boolean type`_ that can be leveraged to avoid having to filter out null values.
 
-Create Performance Notebook
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Transformer Quality
+~~~~~~~~~~~~~~~~~~~
 
-Once your transformer is complete, please follow the format in this sample `Colab Notebook`_
-that runs common performance metrics on the implemented methods and create one for your
-transformer. This can help you find inefficiencies in the transformer and may give you ideas
-for improvements.
+To assess the quality of a transformer, We run quality tests that apply the Transformer
+n all the real world datasets that contain the Transformer input data type. The quality tests
+look at how well the original correlations are preserved and how good a synthetic data generator
+is when trained on the data produced by this Transformer. We compare the transformer's quality
+results to that of other transformers of the same Data Type.
 
-Add Unit and Integration Tests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Validate Quality
+""""""""""""""""
 
-There should be unit tests and integration tests created specifically for the new transformer
-you add. Unit tests should cover specific cases for each of the following methods: ``__init__``,
-``fit``, ``transform`` and ``reverse_transform``. They can be added under
-``tests/unit/transformers/{transformer_module}``.
+Validate the quality of your transformer using the
+``validate_transformer_quality`` function::
 
-The integration tests should test the whole workflow of going from input data, to fitting, to
-transforming and finally reverse transforming the data. The tests should make sure the reversed
-data is in the same format or exactly identical to the input data. Integration tests can be
-added under ``tests/unit/transformers/{transformer_module}``.
+    from tests.contribution import validate_transformer_quality
+    validate_transformer_quality('rdt.transformers.<YourTransformer>')
 
-Adding Performance Tests
-~~~~~~~~~~~~~~~~~~~~~~~~
+Fix any quality issues that are reported. If there are no errors but quality can be improved,
+this function should be used for reference.
 
-Once the new ``transformer`` is complete and has been analyzed for performance, performance tests
-should be added for it. If it is a completely new ``transformer``, add a folder with the same name
-as it to this directory: ``/tests/performance/test_cases``. Otherwise, add the test cases to the
-appropriate existing folder.
+If there are no results, this means that we do not have a real world dataset with your
+transformer's data type. Please find a suitable dataset and open an issue requesting for it
+to be added.
 
-The naming convention for the test case files is as follows:
-
-``{description of arguments}_{dataset_generator_name}_{fit_size}_{transform_size}.json``
-
-For example, if we use the default arguments with the ``ConstantIntegerGenerator``, and generate
-1000 rows for ``fit`` as well as ``transform``, then we would have the name
-``default_ConstantIntegerGenerator_1000_1000.json``.
-
-Each test case configuration file has the following format::
-
-   {
-      "dataset": "tests.performance.datasets.UniqueCategories",
-      "transformer": "rdt.transformers.categorical.CategoricalTransformer,
-      "kwargs": {},
-      "fit_rows": 1000,
-      "transform_rows": 10000,
-      "expected": {
-         "fit": {
-               "time": 0.3,
-               "memory": 400
-         },
-         "transform": {
-               "time": 0.3,
-               "memory": 400
-         },
-         "reverse_transform": {
-               "time": 0.3,
-               "memory": 400
-         }
-      }
-   }
-
-The configuration should specify the full Python path of the transformer, the keyword arguments
-that need to be passed to the transformer when creating its instance, the full Python path of
-the dataset generator (explained in more detail below), the number of rows to generate for both
-``fit`` and ``transform`` and the max allowable time and memory for each method.
-
-There is a function called ``make_test_case_configs`` in ``tests/performance/test_performance.py``
-that can be used to generate test cases once you have the dataset generators created.
-
-Create Dataset generators
+Finalize Your Transformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to test performance, we have a class that is responsible for generating data to test
-the transformer methods against. Each subclass implements one static method, ``generate`` that
-takes in the number of rows to generate. You should make a generator for every type of column
-that you believe would be useful to test against. For some examples, you can look in this
-folder: https://github.com/sdv-dev/RDT/tree/master/tests/performance/datasets
+Re-run all the previous validations until they pass. For a final verification, run
+``validate_pull_request`` and fix any errors reported::
 
-The generators also each have the following class variables:
+    from tests.contribution import validate_pull_request
+    validate_pull_request('rdt.transformers.<YourTransformer>')
 
-1. ``TYPE``
-2. ``SUBTYPE``
-
-These should match the type and subtype of data that your ``transformer`` is used for.
-
-Maintainer's Checklist
-~~~~~~~~~~~~~~~~~~~~~~
-
-Once you have done everything above, you can create a PR. Be sure to look over the
-checklist below to make sure your PR is ready for review.
-
-1. Verify that the profiling notebook was created and used to find any obvious bottlenecks.
-2. Verify that performance test cases were created.
-3. Verify that the timings and memory values for these test cases are reasonable compared
-   to other similar transformers if possible.
-4. Verify that unit and integration tests were added for the transformers.
-5. Create an issue that is assigned to the user making the PR and verify that the PR resolves
-   that issue.
-6. Review the ``Pull Request Guidelines`` below.
+Once you have done everything above, you can create a PR. Follow the steps below to create a PR.
+Review and fill out the checklist in the PR template to ensure your code is ready for review.
 
 Get Started!
 ------------
