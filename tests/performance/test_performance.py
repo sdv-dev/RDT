@@ -85,65 +85,64 @@ def _get_performance_test_cases():
 test_cases = _get_performance_test_cases()
 
 
-def _validate_metric_against_threshold(actual, expected_unit, size):
-    """Validate that the observed metric is below the expected threshold.
-
-    Args:
-        actual (int or float):
-            The observed value.
-        expected_unit (int or float):
-            The expected unit of the metric (per row).
-        size (int):
-            Size of the dataset.
-    """
-    assert actual < size * expected_unit
-
-
-def validate_performance(transformer, dataset_generator, should_assert=False, results=None):
-    """Validate the performance of all transformers for a dataset_generator.
+def evaluate_transformer_performance(transformer, dataset_generator):
+    """Evaluate the given transformer's performance against the given dataset generator.
 
     Args:
         transformer (rdt.transformers.BaseTransformer):
             The transformer to evaluate.
         dataset_generator (rdt.tests.datasets.BaseDatasetGenerator):
-            The dataset generator to performance tests against.
-        should_assert (bool):
-            Whether or not to raise AssertionErrors.
-        results (dict or None):
-            If not None, performance results will be collected and stored in results.
+            The dataset generator to performance test against.
+
+    Returns:
+        pandas.DataFrame:
+            The performance test results.
     """
     transformer_instance = transformer()
-    expected = dataset_generator.get_performance_thresholds()
 
-    dataset_sizes = _get_dataset_sizes(dataset_generator.DATA_TYPE)
-    for sizes in dataset_sizes:
-        fit_size, transform_size = sizes
+    sizes = _get_dataset_sizes(dataset_generator.DATA_TYPE)
 
-        out = profile_transformer(
+    out = []
+    for fit_size, transform_size in sizes:
+        performance = profile_transformer(
             transformer=transformer_instance,
             dataset_generator=dataset_generator,
             fit_size=fit_size,
             transform_size=transform_size,
         )
+        size = np.array([fit_size, transform_size, transform_size] * 2)
+        out.append(performance / size)
 
-        for test_name in TEST_NAMES:
-            metric = test_name.split(' ', maxsplit=-1)[-1].lower()
-            function_name = '_'.join(test_name.split(' ')[:-1]).lower()
-            size = fit_size if function_name == 'fit' else transform_size
+    return pd.DataFrame(out).max(axis=0)
 
-            valid = True
-            try:
-                _validate_metric_against_threshold(
-                    out[test_name], expected[function_name][metric], size)
-            except AssertionError as error:
-                valid = False
-                if should_assert:
-                    raise error
 
-            if results is not None:
-                max_metric, prev_valid = results.get(test_name, (0, True))
-                max_metric = max(max_metric, out[test_name] / size)
-                results[test_name] = (max_metric, prev_valid and valid)
+def validate_performance(performance, dataset_generator, should_assert=False):
+    """Validate the performance of all transformers for a dataset_generator.
+
+    Args:
+        performance (pd.DataFrame):
+            The performance metrics of a transformer against a dataset_generator.
+        dataset_generator (rdt.tests.datasets.BaseDatasetGenerator):
+            The dataset generator to performance test against.
+        should_assert (bool):
+            Whether or not to raise AssertionErrors.
+
+    Returns:
+        list[bool]:
+            A list of if each performance metric was valid or not.
+    """
+    expected = dataset_generator.get_performance_thresholds()
+    out = []
+    for test_name, value in performance.items():
+        function, metric = test_name.lower().replace(' ', '_').rsplit('_', 1)
+        expected_metric = expected[function][metric]
+        valid = value < expected_metric
+        out.append(valid)
+
+        if should_assert and not valid:
+            raise AssertionError(f'{function} {metric}: {value} > {expected_metric}')
+
+    return out
 
 
 @pytest.mark.parametrize(('transformer', 'dataset_generator'), test_cases)
@@ -161,7 +160,8 @@ def test_performance(transformer, dataset_generator):
         dataset_generator (rdt.tests.dataset.BaseDatasetGenerator):
             The dataset generator to performance tests against.
     """
-    validate_performance(transformer, dataset_generator, should_assert=True)
+    performance = evaluate_transformer_performance(transformer, dataset_generator)
+    validate_performance(performance, dataset_generator, should_assert=True)
 
 
 def _round_to_magnitude(value):
