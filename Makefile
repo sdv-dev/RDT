@@ -99,7 +99,7 @@ fix-lint: ## fix lint issues using autoflake, autopep8, and isort
 
 .PHONY: test-unit
 test-unit: ## run tests quickly with the default Python
-	invoke pytest
+	invoke unit
 
 .PHONY: test-integration
 test-integration: ## run integration tests
