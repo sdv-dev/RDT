@@ -68,16 +68,6 @@ file named after the data type that the transformer operates on. For example, if
 writing a transformer that works with ``categorical`` data, your transformer should be placed
 inside the ``rdt/transformers/categorical.py`` module.
 
-Validate Code Style
-~~~~~~~~~~~~~~~~~~~
-
-Validate the style of your code using the ``validate_transformer_code_style`` function::
-
-    from tests.contribution import validate_transformer_code_style
-    validate_transformer_code_style('rdt.transformers.<YourTransformer>')
-
-Fix any style errors that are reported.
-
 Unit Tests
 ~~~~~~~~~~
 Unit tests should cover specific cases for each of the following methods: ``__init__``,
@@ -123,17 +113,6 @@ Tests can be run locally using::
 Specific tests can be singled out using::
     $ python -m pytest -k 'foo'
 
-Validate Unit Tests
-"""""""""""""""""""
-
-Validate the results and coverage of your transformer's unit tests using the
-``validate_transformer_unit_tests`` function::
-
-    from tests.contribution import validate_transformer_unit_tests
-    validate_transformer_unit_tests('rdt.transformers.<YourTransformer>')
-
-Fix any unit test errors that are reported.
-
 Integration Tests
 ~~~~~~~~~~~~~~~~~
 
@@ -157,17 +136,6 @@ Add Integration Tests
 If you wish to test any specific end-to-end scenarios that were not covered in the above checks, 
 add a new integration test. Integration tests can be added under
 ``tests/unit/transformers/{transformer_module}``.
-
-Validate Integration Tests
-""""""""""""""""""""""""""
-
-Validate the results of your transformer's integration tests using the
-``validate_transformer_integration`` function::
-
-    from tests.contribution import validate_transformer_integration
-    validate_transformer_integration('rdt.transformers.<YourTransformer>')
-
-Fix any integration test errors that are reported.
 
 Transformer Performance
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -200,18 +168,6 @@ folder: https://github.com/sdv-dev/RDT/tree/master/tests/datasets
 
 The generators each have a ``DATA_TYPE`` class variable. This should match the data type that your
 ``transformer`` accepts as input.
-
-Validate Performance
-""""""""""""""""""""
-
-Validate the performance of your transformer using the
-``validate_transformer_performance`` function::
-
-    from tests.contribution import validate_transformer_performance
-    validate_transformer_performance('rdt.transformers.<YourTransformer>')
-
-Fix any performance issues that are reported. If there are no errors but performance
-can be improved, this function should be used for reference.
 
 Common Performance Pitfalls
 """""""""""""""""""""""""""
@@ -261,6 +217,55 @@ steps:
    one of the `RDT core contributors`_ on GitHub and ask them to add the dataset. Once this is
    done, the quality tests should pass.
 
+Validate Code
+~~~~~~~~~~~~~
+
+The following functions should be run to assure that your code is ready for a pull request.
+
+Validate Code Style
+~~~~~~~~~~~~~~~~~~~
+
+Validate the style of your code using the ``validate_transformer_code_style`` function::
+
+    from tests.contribution import validate_transformer_code_style
+    validate_transformer_code_style('rdt.transformers.<YourTransformer>')
+
+Fix any style errors that are reported.
+
+Validate Unit Tests
+"""""""""""""""""""
+
+Validate the results and coverage of your transformer's unit tests using the
+``validate_transformer_unit_tests`` function::
+
+    from tests.contribution import validate_transformer_unit_tests
+    validate_transformer_unit_tests('rdt.transformers.<YourTransformer>')
+
+Fix any unit test errors that are reported.
+
+Validate Integration Tests
+""""""""""""""""""""""""""
+
+Validate the results of your transformer's integration tests using the
+``validate_transformer_integration`` function::
+
+    from tests.contribution import validate_transformer_integration
+    validate_transformer_integration('rdt.transformers.<YourTransformer>')
+
+Fix any integration test errors that are reported.
+
+Validate Performance
+""""""""""""""""""""
+
+Validate the performance of your transformer using the
+``validate_transformer_performance`` function::
+
+    from tests.contribution import validate_transformer_performance
+    validate_transformer_performance('rdt.transformers.<YourTransformer>')
+
+Fix any performance issues that are reported. If there are no errors but performance
+can be improved, this function should be used for reference.
+
 Validate Quality
 """"""""""""""""
 
@@ -274,8 +279,8 @@ Fix any quality issues that are reported. If there are no errors but quality can
 this function should be used for reference.
 
 If there are no results, this means that we do not have a real world dataset with your
-transformer's data type. Please find a suitable dataset and open an issue requesting for it
-to be added.
+transformer's data type. Please follow the steps in the ``Adding a Dataset`` section if
+this happens.
 
 Finalize Your Transformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~
