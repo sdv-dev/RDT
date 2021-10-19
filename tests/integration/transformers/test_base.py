@@ -39,7 +39,7 @@ def test_dummy_transformer_series_output():
             pass
 
         def _transform(self, data):
-            return data.astype(np.float)
+            return data.astype(float)
 
         def _reverse_transform(self, data):
             return data.round() != 0
@@ -101,8 +101,8 @@ def test_dummy_transformer_dataframe_output():
             out = pd.DataFrame(dict(zip(
                 self.output_columns,
                 [
-                    data.astype(np.float).fillna(-1),
-                    data.isna().astype(np.float)
+                    data.astype(float).fillna(-1),
+                    data.isna().astype(float)
                 ]
             )))
 
@@ -173,8 +173,8 @@ def test_dummy_transformer_multi_column_input():
             # Convert multiple columns into a single datetime
             data = pd.to_datetime(data)
 
-            float_data = data.to_numpy().astype(np.float64)
-            data_is_nan = data.isna().to_numpy().astype(np.float64)
+            float_data = data.to_numpy().astype(float)
+            data_is_nan = data.isna().to_numpy().astype(float)
 
             output = dict(zip(
                 self.output_columns,
