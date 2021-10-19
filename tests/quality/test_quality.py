@@ -167,7 +167,7 @@ def get_results_table(regression_scores):
                 'transformer_name': transformer_name,
                 'dataset_name': dataset_name,
                 'score': transformer_average,
-                'Compared to Average': transformer_average / average_without_transformer
+                'score_relative_to_average': transformer_average / average_without_transformer
             })
             results = results.append(row, ignore_index=True)
 
@@ -191,11 +191,11 @@ def test_quality(subtests):
             columns are used as features to train a regression model.
             - The score is the coefficient of determination obtained from
             that model trying to predict the target column.
-        3. Once the scores are gathered, a results table is created containing.
-        Each row has a transformer name, dataset name, average score for the dataset
-        and a score comparing the transformer's average score for the dataset to
-        the average of the average score for the dataset across all transformers of
-        the same data type.
+        3. Once the scores are gathered, a results table is created. Each row has
+        a transformer name, dataset name, average score for the dataset and a score
+        comparing the transformer's average score for the dataset to the average
+        of the average score for the dataset across all transformers of the same
+        data type.
         4. For every unique transformer in the results, a test is run to check
         that the transformer's score for each table is either higher than the
         threshold, or the comparitive score is higher than the threshold.
@@ -214,5 +214,5 @@ def test_quality(subtests):
         with subtests.test(
                 msg=f'Testing transformer {transformer}',
                 transformer=transformer):
-            relative_scores = frame['Compared to Average']
+            relative_scores = frame['score_relative_to_average']
             assert all((relative_scores > TEST_THRESHOLD) | (frame['score'] > TEST_THRESHOLD))
