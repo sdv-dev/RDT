@@ -16,7 +16,6 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install invoke
-        pip install .[test]
-    - name: Test quality
+        python -m pip install invoke .[test]
+    - name: Run quality tests
       run: invoke quality
