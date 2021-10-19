@@ -85,75 +85,54 @@ class DummyTransformerMultiColumn(BaseTransformer):
         return out
 
 
-def get_input_data_with_nan():
-    index = [4, 6, 3, 8, 'a']
-    datetimes = pd.to_datetime([np.nan, '2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'])
+def get_input_data():
+    index = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
+    datetimes = pd.to_datetime([
+        np.nan,
+        '2010-02-01',
+        '2010-01-01',
+        '2010-01-01',
+        '2010-01-01',
+        '2010-02-01',
+        '2010-01-01',
+        '2010-01-01',
+    ])
     data = pd.DataFrame({
-        'integer': [1, 2, 1, 3, 1],
-        'float': [0.1, 0.2, 0.1, np.nan, 0.1],
-        'categorical': ['a', 'a', np.nan, 'b', 'a'],
-        'bool': [False, np.nan, False, True, False],
+        'integer': [1, 2, 1, 3, 1, 4, 2, 3],
+        'float': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
+        'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
+        'bool': [False, np.nan, False, True, False, True, True, False],
         'datetime': datetimes,
-        'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon'],
+        'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
     }, index=index)
 
     return data
-
-
-def get_input_data_without_nan():
-    index = [4, 6, 3, 'a']
-    datetimes = pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-02-01'])
-    data = pd.DataFrame({
-        'integer': [1, 2, 1, 3],
-        'float': [0.1, 0.2, 0.1, 0.1],
-        'categorical': ['a', 'a', 'b', 'a'],
-        'bool': [False, False, True, False],
-        'datetime': datetimes,
-        'names': ['Jon', 'Arya', 'Jon', 'Jon'],
-    }, index=index)
-
-    return data
-
-
-def get_reversed():
-    reverse_transformed = get_input_data_without_nan()
-    reverse_transformed['bool'] = reverse_transformed['bool'].astype('O')
-    return reverse_transformed
 
 
 def get_transformed_data():
-    index = [4, 6, 3, 'a']
-    transformed = pd.DataFrame({
-        'integer.value': [1, 2, 1, 3],
-        'float.value': [0.1, 0.2, 0.1, 0.1],
-        'categorical.value': [0.375, 0.375, 0.875, 0.375],
-        'bool.value': [0.0, 0.0, 1.0, 0.0],
-        'datetime.value': [
-            1.2649824e+18,
-            1.262304e+18,
-            1.2649824e+18,
-            1.2649824e+18
-        ],
-        'names.value': [0.375, 0.875, 0.375, 0.375]
-    }, index=index)
-
-    return transformed
-
-
-def get_transformed_data_with_nan():
-    index = [4, 6, 3, 8, 'a']
-    datetimes = [1.2636432e+18, 1.2649824e+18, 1.262304e+18, 1.2649824e+18, 1.262304e+18]
+    index = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
+    datetimes = [
+        1.263069e+18,
+        1.264982e+18,
+        1.262304e+18,
+        1.262304e+18,
+        1.262304e+18,
+        1.264982e+18,
+        1.262304e+18,
+        1.262304e+18
+    ]
     return pd.DataFrame({
-        'integer.value': [1, 2, 1, 3, 1],
-        'float.value': [0.1, 0.2, 0.1, 0.125, 0.1],
-        'float.is_null': [0.0, 0.0, 0.0, 1.0, 0.0],
-        'categorical.value': [0.3, 0.3, 0.9, 0.7, 0.3],
-        'bool.value': [0.0, -1.0, 0.0, 1.0, 0.0],
-        'bool.is_null': [0.0, 1.0, 0.0, 0.0, 0.0],
+        'integer.value': [1, 2, 1, 3, 1, 4, 2, 3],
+        'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
+        'float.is_null': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+        'categorical.value': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
+        'bool.value': [0.0, -1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0],
+        'bool.is_null': [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         'datetime.value': datetimes,
-        'datetime.is_null': [1.0, 0.0, 0.0, 0.0, 0.0],
-        'names.value': [0.3, 0.8, 0.8, 0.3, 0.3],
+        'datetime.is_null': [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        'names.value': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
     }, index=index)
+
 
 
 DETERMINISTIC_CATEGORICAL = deepcopy(DEFAULT_TRANSFORMERS)
@@ -180,7 +159,7 @@ def test_hypertransformer_default_inputs():
         - The reverse transformed data should be the same as the input.
     """
     # setup
-    data = get_input_data_with_nan()
+    data = get_input_data()
 
     # run
     ht = HyperTransformer()
@@ -189,10 +168,10 @@ def test_hypertransformer_default_inputs():
     reverse_transformed = ht.reverse_transform(transformed)
 
     # assert
-    expected_transformed = get_transformed_data_with_nan()
+    expected_transformed = get_transformed_data()
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
-    expected_reversed = get_input_data_with_nan()
+    expected_reversed = get_input_data()
     pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
 
@@ -226,7 +205,7 @@ def test_hypertransformer_field_transformers():
         'datetime.value': CategoricalTransformer,
         'names': CategoricalTransformer
     }
-    data = get_input_data_with_nan()
+    data = get_input_data()
 
     # run
     ht = HyperTransformer(field_transformers=field_transformers)
@@ -235,14 +214,15 @@ def test_hypertransformer_field_transformers():
     reverse_transformed = ht.reverse_transform(transformed)
 
     # assert
-    expected_transformed = get_transformed_data_with_nan()
+    expected_transformed = get_transformed_data()
     del expected_transformed['datetime.is_null']
     rename = {'datetime.value': 'datetime.value.value'}
     expected_transformed = expected_transformed.rename(columns=rename)
-    expected_transformed['datetime.value.value'] = [0.9, 0.6, 0.2, 0.6, 0.2]
+    transformed_datetimes = [0.9375, 0.75, 0.3125, 0.3125, 0.3125, 0.75, 0.3125, 0.3125]
+    expected_transformed['datetime.value.value'] = transformed_datetimes
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
-    expected_reversed = get_input_data_with_nan()
+    expected_reversed = get_input_data()
     pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
 
@@ -352,12 +332,12 @@ def test_subset_of_columns_nan_data():
     See https://github.com/sdv-dev/RDT/issues/152
     """
     # setup
-    data = get_input_data_with_nan()
+    data = get_input_data()
+    subset = data[[data.columns[0]]].copy()
     ht = HyperTransformer()
     ht.fit(data)
 
     # run
-    subset = get_reversed()[[data.columns[0]]]
     transformed = ht.transform(subset)
     reverse = ht.reverse_transform(transformed)
 
@@ -368,19 +348,19 @@ def test_subset_of_columns_nan_data():
 def test_with_unfitted_columns():
     """HyperTransform should be able to transform even if there are unseen columns in data."""
     # setup
-    data = get_input_data_without_nan()
+    data = get_input_data()
     ht = HyperTransformer(data_type_transformers={'categorical': CategoricalTransformer})
     ht.fit(data)
 
     # run
-    new_data = get_input_data_without_nan()
-    new_column = pd.Series([6, 7, 8, 9])
+    new_data = get_input_data()
+    new_column = pd.Series([4, 5, 6, 7, 8, 9])
     new_data['z'] = new_column
     transformed = ht.transform(new_data)
     reverse = ht.reverse_transform(transformed)
 
     # assert
-    expected_reversed = get_reversed()
+    expected_reversed = get_input_data()
     expected_reversed['z'] = new_column
     expected_reversed = expected_reversed.reindex(
         columns=['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'])
