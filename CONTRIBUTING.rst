@@ -24,10 +24,9 @@ Ready to contribute? Here's how to set up `Reversible Data Transforms` for local
     $ cd RDT/
     $ make install-develop
 
-4. Claim or file an issue on GitHub::
-
-   If there is already an issue on GitHub for the contribution you wish to make, claim it.
-   If not, please file an issue and then claim it before creating a branch.
+4. Claim or file an issue on GitHub. If there is already an issue on GitHub for the
+   contribution you wish to make, claim it. If not, please file an issue and then claim
+   it before creating a branch.
 
 5. Create a branch for local development::
 
@@ -46,6 +45,8 @@ Ready to contribute? Here's how to set up `Reversible Data Transforms` for local
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-branch
 
+.. _Code Style:
+
 Code Style
 ----------
 
@@ -53,16 +54,20 @@ RDT follows certain coding style guidelines. Any change made should conform to t
 guidelines. RDT using the following third party libraries to check the code style.
 
 * flake8::
+
     $ flake8 rdt
     $ flake8 tests --ignore=D
 
 * isort::
+
     $ isort -c --recursive rdt tests
 
 * pylint::
+
     $ pylint rdt tests/performance --rcfile=setup.cfg
 
 * pydocstyle::
+
     $ pydocstyle rdt
     $ pydocstyle tests
 
@@ -78,7 +83,7 @@ Testing Guidelines
 ------------------
 
 Creating Unit Tests
-"""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~
 
 There should be unit tests created specifically for any changes you add.
 The unit tests are expected to cover 100% of your contribution's code based on the
@@ -113,13 +118,17 @@ coverage report. All the Unit Tests should comply with the following requirement
    mocked.
 
 Tests can be run locally using::
+
     $ python -m pytest tests.test_rdt
 
 Specific tests can be singled out using::
+
     $ python -m pytest -k 'foo'
 
+.. _Creating Integration Tests:
+
 Creating Integration Tests
-""""""""""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Integration tests should test the entire workflow of going from input data, to fitting, to
 transforming and finally reverse transforming the data. By default, we run integration tests
@@ -137,13 +146,13 @@ for each transformer that validate the following checks:
 
 If you wish to test any specific end-to-end scenarios that were not covered in the above checks, 
 add a new integration test. Integration tests can be added under
-``tests/integration/path/to/test_a_module.py.``.
+``tests/integration/path/to/test_a_module.py``.
 
 Adding a New Transformer
 ------------------------
 
 In addition to tests and following the code style, there are extra steps that need to be taken
-when adding a new `Transformer` class. They are described in detail in this section.
+when adding a new ``Transformer`` class. They are described in detail in this section.
 
 Creating Transformer Class
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,7 +177,7 @@ Unit Tests
 ~~~~~~~~~~
 
 * Unit tests should cover specific cases for each of the following methods: ``__init__``,
-``fit``, ``transform`` and ``reverse_transform``.
+   ``fit``, ``transform`` and ``reverse_transform``.
 * The tests should go in a module called ``tests/unit/transformers/{transformer_module}``.
 
 Validating Unit Tests
@@ -183,9 +192,9 @@ The transformer unit tests and their coverage can be validated using the
 Integration Tests
 ~~~~~~~~~~~~~~~~~
 
-* As described in the :ref:`Creating Integration Tests` section, we already run some integration
-tests by default for each transformer. Before putting up a PR, confirm that those tests pass
-and any other tests that may be needed are added.
+* As described in the `Creating Integration Tests`_ section, we already run some integration
+   tests by default for each transformer. Before putting up a PR, confirm that those tests pass
+   and any other tests that may be needed are added.
 * Integration tests should be added under ``tests/unit/transformers/{transformer_module}``.
 
 Validating Integration Tests
@@ -208,6 +217,8 @@ Dataset Generator that produces data of the transformer's input type.
 If there are any specific dataset characteristics that you think may affect your transformer
 performance (e.g. constant data, mostly null data), consider adding a Dataset Generator
 for that scenario as well.
+
+.. _Creating Dataset Generators:
 
 Creating Dataset Generators
 """""""""""""""""""""""""""
@@ -268,6 +279,8 @@ look at how well the original correlations are preserved by using transformed da
 regression models that predict other columns in the data. We compare the transformer's quality
 results to that of other transformers of the same data type.
 
+.. _Adding a Dataset:
+
 Adding a Dataset
 """"""""""""""""
 
@@ -279,7 +292,7 @@ steps:
 1. Find a dataset containing the data type your transformer uses as an input.
 
 2. Test your transformer against this dataset by loading it into a ``DataFrame`` and using the
-``get_transformer_regression_scores`` in the ``test_quality`` package::
+   ``get_transformer_regression_scores`` in the ``test_quality`` package::
 
     from tests.quality.test_quality import get_transformer_regression_scores
     get_transformer_regression_scores(data, data_type, dataset_name, [transformer])
@@ -320,27 +333,28 @@ Summary of Steps to Add a New Transformer
 3. Create a branch in this repository using the naming convention
    issue-[issue-number]-[transformer-name] (eg. issue-123-address-transformer).
 4. Implement the Transformer class.
-5. Run the ``validate_transformer_code_stye`` function described in the :ref:`Code Style` section
+5. Run the ``validate_transformer_code_stye`` function described in the `Code Style`_ section
    and fix the reported errors.
 6. Implement Unit Tests for the Transformer.
 7. Run the ``validate_transformer_unit_tests`` function and fix the reported errors.
-8. Run the ``validate_transformer_integration``funtion and fix the reported errors.
+8. Run the ``validate_transformer_integration`` function and fix the reported errors.
 9. If required, implement the `Dataset Generators` for the new data type. This is described in the
-   :ref:`Creating Dataset Generators` section.
+   `Creating Dataset Generators`_ section.
 10. Run the ``validate_transformer_performance`` function and fix any errors reported.
-   If there are no errors but performance can be improved, this function should be used for
-   reference.
+    If there are no errors but performance can be improved, this function should be used for
+    reference.
 11. If this transformer is expected to help preserve relationships in the data, run the
-   ``validate_transformer_quality`` function. If the quality is too low, make the
-   necessary enhancements to the transformer.
+    ``validate_transformer_quality`` function. If the quality is too low, make the
+    necessary enhancements to the transformer.
 12. If the quality tests fail because there is no dataset for the transformer's data type,
-   follow the steps in the ::ref:`Adding a Dataset` section to add a real world dataset
-   containing the new data type to the quality tests.
+    follow the steps in the `Adding a Dataset`_ section to add a real world dataset
+    containing the new data type to the quality tests.
 13. Run the ``validate_pull_request`` function as a final check and fix any errors reported.
 14. After all the previous steps pass, all the new and modified files can be committed and pushed
-   to github, and a Pull Request can be submitted. Follow the steps in the
-   :ref:`Pull Request Guidelines` section to submit your Pull Request.
+    to github, and a Pull Request can be submitted. Follow the steps in the
+    `Pull Request Guidelines`_ section to submit your Pull Request.
 
+.. _Pull Request Guidelines:
 
 Pull Request Guidelines
 -----------------------
@@ -359,5 +373,6 @@ Before you submit a pull request, check that it meets these guidelines:
     from tests.contributing import validate_pull_request
     validate_pull_request('rdt.transformers.<YourTransformer>')
 
+.. _Github actions page: https://github.com/sdv-dev/RDT/actions
 .. _nullable boolean type: https://pandas.pydata.org/pandas-docs/version/1.0/user_guide/boolean.html
-.._RDT core contributors: https://github.com/orgs/sdv-dev/teams/core-contributors
+.. _RDT core contributors: https://github.com/orgs/sdv-dev/teams/core-contributors
