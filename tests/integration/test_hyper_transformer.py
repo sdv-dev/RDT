@@ -135,11 +135,11 @@ def get_transformed_data():
     }, index=TEST_DATA_INDEX)
 
 
-DETERMINISTIC_CATEGORICAL = deepcopy(DEFAULT_TRANSFORMERS)
-DETERMINISTIC_CATEGORICAL['categorical'] = CategoricalTransformer
+DETERMINISTIC_DEFAULT_TRANSFORMERS = deepcopy(DEFAULT_TRANSFORMERS)
+DETERMINISTIC_DEFAULT_TRANSFORMERS['categorical'] = CategoricalTransformer
 
 
-@patch('rdt.transformers.DEFAULT_TRANSFORMERS', DETERMINISTIC_CATEGORICAL)
+@patch('rdt.transformers.DEFAULT_TRANSFORMERS', DETERMINISTIC_DEFAULT_TRANSFORMERS)
 def test_hypertransformer_default_inputs():
     """Test the HyperTransformer with default parameters.
 
