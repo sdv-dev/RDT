@@ -11,11 +11,14 @@ import pandas as pd
 import pytest
 from tabulate import tabulate
 
+from rdt.transformers import get_transformers_by_type
 from tests.code_style import (
     get_test_location, load_transformer, validate_test_location, validate_test_names,
     validate_transformer_addon, validate_transformer_importable_from_parent_module,
     validate_transformer_module, validate_transformer_name, validate_transformer_subclass)
 from tests.integration.test_transformers import validate_transformer
+from tests.quality.test_quality import (
+    TEST_THRESHOLD, get_regression_scores, get_results_table, get_test_cases)
 
 # Mapping of validation method to (check name, check description).
 CHECK_DETAILS = {
@@ -362,3 +365,64 @@ def validate_transformer_unit_tests(transformer):
     print(export_dir.absolute().as_uri())
 
     return rounded_score
+
+
+def validate_transformer_quality(transformer):
+    """Validate quality tests for a transformer.
+
+    This function creates a DataFrame containing the results
+    from running the quality tests for this transformer against
+    all the datasets with columns of its input type. It does the
+    following steps:
+    1. A DataFrame containing the regression scores obtained from running the
+    transformers of the input type against the datasets in the test cases is
+    created. Each row in the DataFrame has the transformer name, dataset name,
+    column name and score. The scores are computed as follows:
+        - For every transformer of the data type, transform all the
+        columns of that data type.
+        - For every numerical column in the dataset, the transformed
+        columns are used as features to train a regression model.
+        - The score is the coefficient of determination obtained from
+        that model trying to predict the target column.
+    2. Once the scores are gathered, a results table is created. Each row has
+    a transformer name, dataset name, average score for the dataset,
+    a score comparing the transformer's average score for the dataset to
+    the average of the average score for the dataset across all transformers of
+    the same data type, and whether or not the score passed the test threshold.
+    3. The table described above is printed when this function is run.
+
+    Returns:
+        DataFrame containing the following columns for each dataset the transformer
+        is validated against: ``Dataset``, ``Score``, ``Compared To Average``, ``Acceptable``.
+    """
+    if isinstance(transformer, str):
+        transformer = get_class(transformer)
+
+    print(f'Validating Quality Tests for transformer {transformer.__name__}\n')
+
+    input_type = transformer.get_input_type()
+    test_cases = get_test_cases({input_type})
+    regression_scores = get_regression_scores(test_cases, get_transformers_by_type())
+    results = get_results_table(regression_scores)
+
+    transformer_results = results[results['transformer_name'] == transformer.__name__]
+    transformer_results = transformer_results.drop('transformer_name', axis=1)
+    transformer_results['Acceptable'] = False
+    passing_relative_scores = transformer_results['score_relative_to_average'] > TEST_THRESHOLD
+    acceptable_indices = passing_relative_scores | (transformer_results['score'] > TEST_THRESHOLD)
+    transformer_results.loc[acceptable_indices, 'Acceptable'] = True
+    new_names = {
+        'dataset_name': 'Dataset',
+        'score': 'Score',
+        'score_relative_to_average': 'Compared To Average'
+    }
+    transformer_results = transformer_results.rename(columns=new_names)
+
+    if transformer_results['Acceptable'].all():
+        print('SUCCESS: The quality tests were successful.\n')
+    else:
+        print('Failure: The quality tests were NOT successful.\n')
+
+    print(tabulate(transformer_results, headers='keys', showindex=False))
+
+    return transformer_results
