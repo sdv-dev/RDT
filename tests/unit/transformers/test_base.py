@@ -847,6 +847,35 @@ class TestBaseTransformer:
         })
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)
 
+    def test_fit_transform(self):
+        """Test the ``fit_transform`` method.
+
+        Setup:
+            -
+
+        Input:
+            -
+
+        Expected behavior:
+            -
+        """
+        # Setup
+        self = Mock(spec_set=BaseTransformer)
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9]
+        })
+        columns = ['a', 'b', 'c']
+
+        # Run
+        out = BaseTransformer.fit_transform(self, data, columns)
+
+        # Assert
+        self.fit.assert_called_once_with(data)
+        self.transform.assert_called_once_with(data)
+        assert out == self.transform.return_value
+
     def test_reverse_transform_incorrect_columns(self):
         """Test the ``reverse_transform`` method when the columns are not in the data.
 
@@ -885,7 +914,7 @@ class TestBaseTransformer:
 
         Setup:
             - set ``self.output_columns`` to a list of columns from the data.
-            - set `self.columns` to the output column names.
+            - set ``self.columns`` to the output column names.
             - mock ``self._reverse_transform`` and return some dummy data.
 
         Input:

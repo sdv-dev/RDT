@@ -263,6 +263,7 @@ class BaseTransformer:
         columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
 
+        print(self.columns, reversed_data)
         self._set_columns_data(data, reversed_data, self.columns)
         if drop:
             data = data.drop(self.output_columns, axis=1)
