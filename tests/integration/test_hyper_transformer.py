@@ -85,8 +85,10 @@ class DummyTransformerMultiColumn(BaseTransformer):
         return out
 
 
+TEST_DATA_INDEX = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
+
+
 def get_input_data():
-    index = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
     datetimes = pd.to_datetime([
         np.nan,
         '2010-02-01',
@@ -104,13 +106,12 @@ def get_input_data():
         'bool': [False, np.nan, False, True, False, True, True, False],
         'datetime': datetimes,
         'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
-    }, index=index)
+    }, index=TEST_DATA_INDEX)
 
     return data
 
 
 def get_transformed_data():
-    index = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
     datetimes = [
         1.263069e+18,
         1.264982e+18,
@@ -131,7 +132,7 @@ def get_transformed_data():
         'datetime.value': datetimes,
         'datetime.is_null': [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         'names.value': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
-    }, index=index)
+    }, index=TEST_DATA_INDEX)
 
 
 DETERMINISTIC_CATEGORICAL = deepcopy(DEFAULT_TRANSFORMERS)
