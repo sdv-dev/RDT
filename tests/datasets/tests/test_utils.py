@@ -18,7 +18,7 @@ def test_add_nulls_int():
 
 
 def test_add_nulls_float():
-    array = np.arange(100).astype(np.float)
+    array = np.arange(100).astype(float)
 
     with_nans = utils.add_nans(array)
 

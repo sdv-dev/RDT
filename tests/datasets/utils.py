@@ -15,7 +15,7 @@ def add_nans(array):
             The same array with some values replaced by NaNs.
     """
     if array.dtype.kind == 'i':
-        array = array.astype(np.float)
+        array = array.astype(float)
 
     length = len(array)
     num_nulls = np.random.randint(1, length)

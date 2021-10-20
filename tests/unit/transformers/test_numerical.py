@@ -27,12 +27,12 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan')
+        transformer = NumericalTransformer(dtype=float, nan='nan')
         transformer._fit(data)
 
         # Asserts
         expect_fill_value = 'nan'
-        expect_dtype = np.float
+        expect_dtype = float
 
         assert transformer.null_transformer.fill_value == expect_fill_value
         assert transformer._dtype == expect_dtype
@@ -140,7 +140,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding=None)
+        transformer = NumericalTransformer(dtype=float, nan='nan', rounding=None)
         transformer._fit(data)
 
         # Asserts
@@ -164,7 +164,7 @@ class TestNumericalTransformer(TestCase):
         expected_digits = 3
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding=expected_digits)
+        transformer = NumericalTransformer(dtype=float, nan='nan', rounding=expected_digits)
         transformer._fit(data)
 
         # Asserts
@@ -187,7 +187,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1, 2.1, 3.12, 4.123, 5.1234, 6.123, 7.12, 8.1, 9], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
         transformer._fit(data)
 
         # Asserts
@@ -212,7 +212,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame(big_numbers, columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
         transformer._fit(data)
 
         # Asserts
@@ -238,7 +238,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([0.000000000000001], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
         transformer._fit(data)
 
         # Asserts
@@ -262,7 +262,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([15000, 4000, 60000, np.inf], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
         transformer._fit(data)
 
         # Asserts
@@ -284,7 +284,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([0, 0, 0], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
         transformer._fit(data)
 
         # Asserts
@@ -307,7 +307,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([-500, -220, -10], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
         transformer._fit(data)
 
         # Asserts
@@ -329,7 +329,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan',
+        transformer = NumericalTransformer(dtype=float, nan='nan',
                                            min_value=None, max_value=None)
         transformer._fit(data)
 
@@ -352,7 +352,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan',
+        transformer = NumericalTransformer(dtype=float, nan='nan',
                                            min_value=1, max_value=10)
         transformer._fit(data)
 
@@ -376,7 +376,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([-100, -5000, 0, None, 100, 4000], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan',
+        transformer = NumericalTransformer(dtype=float, nan='nan',
                                            min_value='auto', max_value='auto')
         transformer._fit(data)
 
@@ -398,7 +398,7 @@ class TestNumericalTransformer(TestCase):
         data = np.random.random(10)
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer = NumericalTransformer(dtype=float, nan=None)
         transformer._rounding_digits = None
         result = transformer._reverse_transform(data)
 
@@ -454,7 +454,7 @@ class TestNumericalTransformer(TestCase):
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
         transformer._rounding_digits = None
-        transformer._dtype = np.float
+        transformer._dtype = float
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -487,7 +487,7 @@ class TestNumericalTransformer(TestCase):
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
         transformer._rounding_digits = None
-        transformer._dtype = np.int
+        transformer._dtype = int
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -510,7 +510,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([1.1111, 2.2222, 3.3333, 4.44444, 5.555555])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer = NumericalTransformer(dtype=float, nan=None)
         transformer._rounding_digits = 2
         result = transformer._reverse_transform(data)
 
@@ -535,15 +535,15 @@ class TestNumericalTransformer(TestCase):
         data = np.array([2000.0, 120.0, 3100.0, 40100.0])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.int, nan=None)
-        transformer._dtype = np.int
+        transformer = NumericalTransformer(dtype=int, nan=None)
+        transformer._dtype = int
         transformer._rounding_digits = -3
         result = transformer._reverse_transform(data)
 
         # Assert
         expected_data = np.array([2000, 0, 3000, 40000])
         np.testing.assert_array_equal(result, expected_data)
-        assert result.dtype == np.int
+        assert result.dtype == int
 
     def test__reverse_transform_rounding_negative_rounding_float(self):
         """Test ``_reverse_transform`` when ``rounding`` is a negative int
@@ -562,14 +562,14 @@ class TestNumericalTransformer(TestCase):
         data = np.array([2000.0, 120.0, 3100.0, 40100.0])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer = NumericalTransformer(dtype=float, nan=None)
         transformer._rounding_digits = -3
         result = transformer._reverse_transform(data)
 
         # Assert
         expected_data = np.array([2000.0, 0.0, 3000.0, 40000.0])
         np.testing.assert_array_equal(result, expected_data)
-        assert result.dtype == np.float
+        assert result.dtype == float
 
     def test__reverse_transform_rounding_zero(self):
         """Test ``_reverse_transform`` when ``rounding`` is a negative int
@@ -587,7 +587,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([2000.554, 120.2, 3101, 4010])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer = NumericalTransformer(dtype=float, nan=None)
         transformer._rounding_digits = 0
         result = transformer._reverse_transform(data)
 
@@ -610,7 +610,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 400, np.inf])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer = NumericalTransformer(dtype=float, nan=None)
         transformer._min_value = -300
         result = transformer._reverse_transform(data)
 
@@ -633,7 +633,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer = NumericalTransformer(dtype=float, nan=None)
         transformer._max_value = 400
         result = transformer._reverse_transform(data)
 
@@ -656,7 +656,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan=None)
+        transformer = NumericalTransformer(dtype=float, nan=None)
         transformer._max_value = 400
         transformer._min_value = -300
         result = transformer._reverse_transform(data)
@@ -700,7 +700,7 @@ class TestNumericalTransformer(TestCase):
         expected_data = np.array([-300, -300, np.nan, -250, 0, np.nan, 400, 400])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.float, nan='nan')
+        transformer = NumericalTransformer(dtype=float, nan='nan')
         transformer._max_value = 400
         transformer._min_value = -300
         transformer.null_transformer = Mock()
