@@ -16,7 +16,7 @@ def check_dependencies(c):
 def unit(c):
     c.run(
         'python -m pytest ./tests/unit ./tests/performance/tests ./tests/datasets/tests '
-        '--cov=rdt --cov-report=xml'
+        '--cov=rdt --cov-report=xml --cov-fail-under=100'
     )
 
 
