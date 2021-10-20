@@ -34,9 +34,9 @@ Ready to contribute? Here's how to set up `Reversible Data Transforms` for local
     $ git checkout -b issue-[issue-number]-description-of-your-bugfix-or-feature
 
    The naming scheme for your branch should have a prefix of the format ``issue-X``
-   where X is the associated issue number, such as ``issue-3-fix-foo-bug``. If you
+   where X is the associated issue's number (eg. ``issue-123-fix-foo-bug``). If you
    are not developing on your own fork, further prefix the branch with your GitHub
-   username, like ``githubusername/gh-3-fix-foo-bug``.
+   username, like ``githubusername/gh-123-fix-foo-bug``.
 
    Now you can make your changes locally.
 
@@ -46,45 +46,50 @@ Ready to contribute? Here's how to set up `Reversible Data Transforms` for local
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-branch
 
-Adding a New Transformer
-------------------------
+Code Style
+----------
 
-Create Transformer Class
-~~~~~~~~~~~~~~~~~~~~~~~~
+RDT follows certain coding style guidelines. Any change made should conform to these
+guidelines. RDT using the following third party libraries to check the code style.
 
-All new Transformer classes should inherit from `BaseTransformer` or one of its child classes.
-There are only three required methods for a transformer:
+* flake8::
+    $ flake8 rdt
+    $ flake8 tests --ignore=D
 
-1. ``_fit(data: pd.DataFrame)``: Used to store and learn any values from the input data that
-   might be useful for the transformer.
-2. ``_transform(data: pd.DataFrame)``: Used to transform the input data into completely numeric
-   data. This method should not modify the internal state of the Transformer instance.
-3. ``_reverse_transform(data: pd.DataFrame)``: Used to convert data that is completely numeric
-   back into the format of the fitted data. This method should not modify the internal state of
-   the Transformer instance.
+* isort::
+    $ isort -c --recursive rdt tests
 
-Each transformer class should be placed inside the ``rdt/transformers`` folder, in a module
-file named after the data type that the transformer operates on. For example, if you are
-writing a transformer that works with ``categorical`` data, your transformer should be placed
-inside the ``rdt/transformers/categorical.py`` module.
+* pylint::
+    $ pylint rdt tests/performance --rcfile=setup.cfg
 
-Unit Tests
-~~~~~~~~~~
-Unit tests should cover specific cases for each of the following methods: ``__init__``,
-``fit``, ``transform`` and ``reverse_transform``.
+* pydocstyle::
+    $ pydocstyle rdt
+    $ pydocstyle tests
+
+Any of the commands above can be run directly to check the code, or you could run
+the custom code validation function, ``validate_transformer_code_style``::
+
+    from tests.contributing import validate_transformer_code_style
+    validate_transformer_code_style('rdt.transformers.<YourTransformer>')
+
+Make sure to fix any style errors that are reported.
+
+Testing Guidelines
+------------------
 
 Creating Unit Tests
 """""""""""""""""""
 
-There should be unit tests created specifically for the new transformer you add.
-The unit tests are expected to cover 100% of your transformer's code based on the
+There should be unit tests created specifically for any changes you add.
+The unit tests are expected to cover 100% of your contribution's code based on the
 coverage report. All the Unit Tests should comply with the following requirements:
 
 1. Unit Tests should be based only in unittest and pytest modules.
 
-2. The tests should go in a module called ``tests/unit/transformers/{transformer_module}``.
-   Note that the module name has the ``test_`` prefix and is located in a path similar
-   to the one of the tested module, just inside the ``tests`` folder.
+2. The tests that cover a module called ``rdt/path/to/a_module.py`` should be implemented
+   in a separated module called ``tests/unit/path/to/test_a_module.py.`` Note that the module
+   name has the ``test_`` prefix and is located in a path similar to the one of the tested
+   module, just inside the tests folder.
 
 3. Each method of the tested module should have at least one associated test method, and
    each test method should cover only **one** use case or scenario.
@@ -113,8 +118,8 @@ Tests can be run locally using::
 Specific tests can be singled out using::
     $ python -m pytest -k 'foo'
 
-Integration Tests
-~~~~~~~~~~~~~~~~~
+Creating Integration Tests
+""""""""""""""""""""""""""
 
 Integration tests should test the entire workflow of going from input data, to fitting, to
 transforming and finally reverse transforming the data. By default, we run integration tests
@@ -130,12 +135,66 @@ for each transformer that validate the following checks:
 6. The HyperTransformer is able to reverse the data that has previously transformed,
    and restore the original data type.
 
-Add Integration Tests
-"""""""""""""""""""""
-
 If you wish to test any specific end-to-end scenarios that were not covered in the above checks, 
 add a new integration test. Integration tests can be added under
-``tests/unit/transformers/{transformer_module}``.
+``tests/integration/path/to/test_a_module.py.``.
+
+Adding a New Transformer
+------------------------
+
+In addition to tests and following the code style, there are extra steps that need to be taken
+when adding a new `Transformer` class. They are described in detail in this section.
+
+Creating Transformer Class
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All new Transformer classes should inherit from `BaseTransformer` or one of its child classes.
+There are only three required methods for a transformer:
+
+1. ``_fit(data: pd.DataFrame)``: Used to store and learn any values from the input data that
+   might be useful for the transformer.
+2. ``_transform(data: pd.DataFrame)``: Used to transform the input data into completely numeric
+   data. This method should not modify the internal state of the Transformer instance.
+3. ``_reverse_transform(data: pd.DataFrame)``: Used to convert data that is completely numeric
+   back into the format of the fitted data. This method should not modify the internal state of
+   the Transformer instance.
+
+Each transformer class should be placed inside the ``rdt/transformers`` folder, in a module
+file named after the data type that the transformer operates on. For example, if you are
+writing a transformer that works with ``categorical`` data, your transformer should be placed
+inside the ``rdt/transformers/categorical.py`` module.
+
+Unit Tests
+~~~~~~~~~~
+
+* Unit tests should cover specific cases for each of the following methods: ``__init__``,
+``fit``, ``transform`` and ``reverse_transform``.
+* The tests should go in a module called ``tests/unit/transformers/{transformer_module}``.
+
+Validating Unit Tests
+"""""""""""""""""""""
+
+The transformer unit tests and their coverage can be validated using the
+``validate_transformer_unit_tests`` function::
+
+    from tests.contributing import validate_transformer_unit_tests
+    validate_transformer_unit_tests('rdt.transformers.<YourTransformer>')
+
+Integration Tests
+~~~~~~~~~~~~~~~~~
+
+* As described in the :ref:`Creating Integration Tests` section, we already run some integration
+tests by default for each transformer. Before putting up a PR, confirm that those tests pass
+and any other tests that may be needed are added.
+* Integration tests should be added under ``tests/unit/transformers/{transformer_module}``.
+
+Validating Integration Tests
+""""""""""""""""""""""""""""
+
+Integration tests can be validated using the ``validate_transformer_integration`` function::
+
+    from tests.contributing import validate_transformer_integration
+    validate_transformer_integration('rdt.transformers.<YourTransformer>')
 
 Transformer Performance
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -188,6 +247,18 @@ optimize performance.
 6. If you are working with a series that has booleans and null values, there is a
    `nullable boolean type`_ that can be leveraged to avoid having to filter out null values.
 
+Validating Performance
+""""""""""""""""""""""
+
+Validate the performance of your transformer using the
+``validate_transformer_performance`` function::
+
+    from tests.contributing import validate_transformer_performance
+    validate_transformer_performance('rdt.transformers.<YourTransformer>')
+
+Fix any performance issues that are reported. If there are no errors but performance
+can be improved, this function should be used for reference.
+
 Transformer Quality
 ~~~~~~~~~~~~~~~~~~~
 
@@ -217,70 +288,16 @@ steps:
    one of the `RDT core contributors`_ on GitHub and ask them to add the dataset. Once this is
    done, the quality tests should pass.
 
-Validate Code
-~~~~~~~~~~~~~
-
-The following functions should be run to assure that your code is ready for a pull request.
-
-Validate Code Style
-~~~~~~~~~~~~~~~~~~~
-
-Validate the style of your code using the ``validate_transformer_code_style`` function::
-
-    from tests.contribution import validate_transformer_code_style
-    validate_transformer_code_style('rdt.transformers.<YourTransformer>')
-
-Fix any style errors that are reported.
-
-Validate Unit Tests
-"""""""""""""""""""
-
-Validate the results and coverage of your transformer's unit tests using the
-``validate_transformer_unit_tests`` function::
-
-    from tests.contribution import validate_transformer_unit_tests
-    validate_transformer_unit_tests('rdt.transformers.<YourTransformer>')
-
-Fix any unit test errors that are reported.
-
-Validate Integration Tests
-""""""""""""""""""""""""""
-
-Validate the results of your transformer's integration tests using the
-``validate_transformer_integration`` function::
-
-    from tests.contribution import validate_transformer_integration
-    validate_transformer_integration('rdt.transformers.<YourTransformer>')
-
-Fix any integration test errors that are reported.
-
-Validate Performance
-""""""""""""""""""""
-
-Validate the performance of your transformer using the
-``validate_transformer_performance`` function::
-
-    from tests.contribution import validate_transformer_performance
-    validate_transformer_performance('rdt.transformers.<YourTransformer>')
-
-Fix any performance issues that are reported. If there are no errors but performance
-can be improved, this function should be used for reference.
-
-Validate Quality
-""""""""""""""""
+Validating Quality
+""""""""""""""""""
 
 Validate the quality of your transformer using the
 ``validate_transformer_quality`` function::
 
-    from tests.contribution import validate_transformer_quality
+    from tests.contributing import validate_transformer_quality
     validate_transformer_quality('rdt.transformers.<YourTransformer>')
 
-Fix any quality issues that are reported. If there are no errors but quality can be improved,
-this function should be used for reference.
-
-If there are no results, this means that we do not have a real world dataset with your
-transformer's data type. Please follow the steps in the ``Adding a Dataset`` section if
-this happens.
+Fix any quality issues that are reported.
 
 Finalize Your Transformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -288,11 +305,42 @@ Finalize Your Transformer
 Re-run all the previous validations until they pass. For a final verification, run
 ``validate_pull_request`` and fix any errors reported::
 
-    from tests.contribution import validate_pull_request
+    from tests.contributing import validate_pull_request
     validate_pull_request('rdt.transformers.<YourTransformer>')
 
 Once you have done everything above, you can create a PR. Follow the steps below to create a PR.
 Review and fill out the checklist in the PR template to ensure your code is ready for review.
+
+Summary of Steps to Add a New Transformer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. If it does not exist, open an Issue in Github and describe the Transformer that will be added,
+   including the data type that it handles and how it will handle it.
+2. Create and clone a fork of the RDT repository.
+3. Create a branch in this repository using the naming convention
+   issue-[issue-number]-[transformer-name] (eg. issue-123-address-transformer).
+4. Implement the Transformer class.
+5. Run the ``validate_transformer_code_stye`` function described in the :ref:`Code Style` section
+   and fix the reported errors.
+6. Implement Unit Tests for the Transformer.
+7. Run the ``validate_transformer_unit_tests`` function and fix the reported errors.
+8. Run the ``validate_transformer_integration``funtion and fix the reported errors.
+9. If required, implement the `Dataset Generators` for the new data type. This is described in the
+   :ref:`Creating Dataset Generators` section.
+10. Run the ``validate_transformer_performance`` function and fix any errors reported.
+   If there are no errors but performance can be improved, this function should be used for
+   reference.
+11. If this transformer is expected to help preserve relationships in the data, run the
+   ``validate_transformer_quality`` function. If the quality is too low, make the
+   necessary enhancements to the transformer.
+12. If the quality tests fail because there is no dataset for the transformer's data type,
+   follow the steps in the ::ref:`Adding a Dataset` section to add a real world dataset
+   containing the new data type to the quality tests.
+13. Run the ``validate_pull_request`` function as a final check and fix any errors reported.
+14. After all the previous steps pass, all the new and modified files can be committed and pushed
+   to github, and a Pull Request can be submitted. Follow the steps in the
+   :ref:`Pull Request Guidelines` section to submit your Pull Request.
+
 
 Pull Request Guidelines
 -----------------------
@@ -306,6 +354,10 @@ Before you submit a pull request, check that it meets these guidelines:
 3. The pull request should include unit tests that cover all the changed code
 4. The pull request should work for all the supported Python versions. Check the `Github actions
    page`_ and make sure that all the checks pass.
+5. Make sure the ``validate_pull_request`` function passes by running::
+
+    from tests.contributing import validate_pull_request
+    validate_pull_request('rdt.transformers.<YourTransformer>')
 
 .. _nullable boolean type: https://pandas.pydata.org/pandas-docs/version/1.0/user_guide/boolean.html
 .._RDT core contributors: https://github.com/orgs/sdv-dev/teams/core-contributors
