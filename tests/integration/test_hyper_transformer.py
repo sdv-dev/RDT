@@ -157,16 +157,16 @@ def test_hypertransformer_default_inputs():
         - The transformed data should contain all the ML ready data.
         - The reverse transformed data should be the same as the input.
     """
-    # setup
+    # Setup
     data = get_input_data()
 
-    # run
+    # Run
     ht = HyperTransformer()
     ht.fit(data)
     transformed = ht.transform(data)
     reverse_transformed = ht.reverse_transform(transformed)
 
-    # assert
+    # Assert
     expected_transformed = get_transformed_data()
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
@@ -194,7 +194,7 @@ def test_hypertransformer_field_transformers():
         - The transformed data should contain all the ML ready data.
         - The reverse transformed data should be the same as the input.
     """
-    # setup
+    # Setup
     field_transformers = {
         'integer': NumericalTransformer(dtype=np.int64),
         'float': NumericalTransformer(dtype=float),
@@ -206,13 +206,13 @@ def test_hypertransformer_field_transformers():
     }
     data = get_input_data()
 
-    # run
+    # Run
     ht = HyperTransformer(field_transformers=field_transformers)
     ht.fit(data)
     transformed = ht.transform(data)
     reverse_transformed = ht.reverse_transform(transformed)
 
-    # assert
+    # Assert
     expected_transformed = get_transformed_data()
     del expected_transformed['datetime.is_null']
     rename = {'datetime.value': 'datetime.value.value'}
@@ -250,7 +250,7 @@ def test_hypertransformer_field_transformers_multi_column_fields():
         - The transformed data should contain all the ML ready data.
         - The reverse transformed data should be the same as the input.
     """
-    # setup
+    # Setup
     data = pd.DataFrame({
         'year': [2001, 2002, 2003],
         'month': [1, 2, 3],
@@ -280,20 +280,20 @@ def test_hypertransformer_field_transformers_multi_column_fields():
     })
     expected_reversed = data.copy()
 
-    # run
+    # Run
     ht = HyperTransformer(field_transformers=field_transformers)
     ht.fit(data)
     transformed = ht.transform(data)
     reverse_transformed = ht.reverse_transform(transformed)
 
-    # assert
+    # Assert
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
 
 def test_single_category():
     """Test that categorical variables with a single value are supported."""
-    # setup
+    # Setup
     ht = HyperTransformer(field_transformers={
         'a': OneHotEncodingTransformer()
     })
@@ -301,27 +301,27 @@ def test_single_category():
         'a': ['a', 'a', 'a']
     })
 
-    # run
+    # Run
     ht.fit(data)
     transformed = ht.transform(data)
     reverse = ht.reverse_transform(transformed)
 
-    # assert
+    # Assert
     pd.testing.assert_frame_equal(data, reverse)
 
 
 def test_dtype_category():
     """Test that categorical variables of dtype category are supported."""
-    # setup
+    # Setup
     data = pd.DataFrame({'a': ['a', 'b', 'c']}, dtype='category')
 
-    # run
+    # Run
     ht = HyperTransformer()
     ht.fit(data)
     transformed = ht.transform(data)
     reverse = ht.reverse_transform(transformed)
 
-    # assert
+    # Assert
     pd.testing.assert_frame_equal(reverse, data)
 
 
@@ -330,35 +330,35 @@ def test_subset_of_columns_nan_data():
 
     See https://github.com/sdv-dev/RDT/issues/152
     """
-    # setup
+    # Setup
     data = get_input_data()
     subset = data[[data.columns[0]]].copy()
     ht = HyperTransformer()
     ht.fit(data)
 
-    # run
+    # Run
     transformed = ht.transform(subset)
     reverse = ht.reverse_transform(transformed)
 
-    # assert
+    # Assert
     pd.testing.assert_frame_equal(subset, reverse)
 
 
 def test_with_unfitted_columns():
     """HyperTransform should be able to transform even if there are unseen columns in data."""
-    # setup
+    # Setup
     data = get_input_data()
     ht = HyperTransformer(data_type_transformers={'categorical': CategoricalTransformer})
     ht.fit(data)
 
-    # run
+    # Run
     new_data = get_input_data()
     new_column = pd.Series([4, 5, 6, 7, 8, 9])
     new_data['z'] = new_column
     transformed = ht.transform(new_data)
     reverse = ht.reverse_transform(transformed)
 
-    # assert
+    # Assert
     expected_reversed = get_input_data()
     expected_reversed['z'] = new_column
     expected_reversed = expected_reversed.reindex(
