@@ -348,18 +348,14 @@ def validate_transformer_unit_tests(transformer):
         print('\nERROR: The unit tests failed.')
 
     score = cov.report(show_missing=True)
-
     rounded_score = round(score / 100, 3)
     if rounded_score < 1.0:
         print(f'\nERROR: The unit tests only cover {round(score, 3)}% of your code.')
-
     else:
         print(f'\nSUCCESS: The unit tests cover {round(score, 3)}% of your code.')
 
     cov.html_report()
-
     print('\nFull coverage report here:\n')
-
     coverage_name = module_name.replace('.', '_')
     export_dir = Path('htmlcov') / f'{coverage_name}_py.html'
     print(export_dir.absolute().as_uri())
