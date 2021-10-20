@@ -48,7 +48,7 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
     @staticmethod
     def generate(num_rows):
         """Generate a ``num_rows`` number of rows."""
-        return add_nans(RandomIntegerGenerator.generate(num_rows).astype(np.float))
+        return add_nans(RandomIntegerGenerator.generate(num_rows).astype(float))
 
     @staticmethod
     def get_performance_thresholds():
@@ -104,7 +104,7 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
     @staticmethod
     def generate(num_rows):
         """Generate a ``num_rows`` number of rows."""
-        return add_nans(ConstantIntegerGenerator.generate(num_rows).astype(np.float))
+        return add_nans(ConstantIntegerGenerator.generate(num_rows).astype(float))
 
     @staticmethod
     def get_performance_thresholds():
@@ -165,7 +165,7 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
         """Generate a ``num_rows`` number of rows."""
         ii32 = np.iinfo(np.int32)
         values = np.random.randint(ii32.min, ii32.max, size=2)
-        additional_values = np.full(num_rows - 2, values[1]).astype(np.float)
+        additional_values = np.full(num_rows - 2, values[1]).astype(float)
         array = np.concatenate([values, add_nans(additional_values)])
         np.random.shuffle(array)
         return array

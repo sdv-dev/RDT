@@ -49,7 +49,7 @@ class RandomIntegerNaNsGenerator(CategoricalGenerator):
     @staticmethod
     def generate(num_rows):
         """Generate a ``num_rows`` number of rows."""
-        return add_nans(RandomIntegerGenerator.generate(num_rows).astype(np.float))
+        return add_nans(RandomIntegerGenerator.generate(num_rows).astype(float))
 
     @staticmethod
     def get_performance_thresholds():
@@ -238,7 +238,7 @@ class SingleIntegerNaNsGenerator(CategoricalGenerator):
     @staticmethod
     def generate(num_rows):
         """Generate a ``num_rows`` number of rows."""
-        return add_nans(SingleIntegerGenerator.generate(num_rows).astype(np.float))
+        return add_nans(SingleIntegerGenerator.generate(num_rows).astype(float))
 
     @staticmethod
     def get_performance_thresholds():

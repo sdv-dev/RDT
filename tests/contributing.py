@@ -7,6 +7,7 @@ import traceback
 from pathlib import Path
 
 import coverage
+import numpy as np
 import pandas as pd
 import pytest
 from tabulate import tabulate
@@ -16,7 +17,9 @@ from tests.code_style import (
     get_test_location, load_transformer, validate_test_location, validate_test_names,
     validate_transformer_addon, validate_transformer_importable_from_parent_module,
     validate_transformer_module, validate_transformer_name, validate_transformer_subclass)
+from tests.datasets import get_dataset_generators_by_type
 from tests.integration.test_transformers import validate_transformer
+from tests.performance import evaluate_transformer_performance, validate_performance
 from tests.quality.test_quality import (
     TEST_THRESHOLD, get_regression_scores, get_results_table, get_test_cases)
 
@@ -422,3 +425,68 @@ def validate_transformer_quality(transformer):
     print(tabulate(transformer_results, headers='keys', showindex=False))
 
     return transformer_results
+
+
+def validate_transformer_performance(transformer):
+    """Validate the performance of a transformer.
+
+    Run the specified Transformer on all the Dataset Generators of the indicated data type
+    and produce a report about its performance and how it compares to the other
+    Transformers of the same data type.
+
+    Args:
+        transformer (string or rdt.transformers.BaseTransformer):
+            The transformer to validate.
+
+    Returns:
+        pandas.DataFrame:
+            Performance results of the transformer.
+    """
+    if isinstance(transformer, str):
+        transformer = get_class(transformer)
+
+    print(f'Validating Performance for transformer {transformer.__name__}\n')
+
+    data_type = transformer.get_input_type()
+    transformers = get_transformers_by_type().get(data_type, [])
+    dataset_generators = get_dataset_generators_by_type().get(data_type, [])
+
+    total_results = pd.DataFrame()
+    for current_transformer in transformers:
+        for dataset_generator in dataset_generators:
+            performance = evaluate_transformer_performance(current_transformer, dataset_generator)
+            valid = validate_performance(performance, dataset_generator)
+
+            results = pd.DataFrame({
+                'Value': performance.to_numpy(),
+                'Valid': valid,
+                'transformer': current_transformer.__name__,
+                'dataset': dataset_generator.__name__,
+            })
+            results['Evaluation Metric'] = performance.index
+            total_results = total_results.append(results)
+
+    if total_results['Valid'].all():
+        print('SUCCESS: The Performance Tests were successful.')
+    else:
+        print('ERROR: One or more Performance Tests were NOT successful.')
+
+    other_results = total_results[total_results.transformer != transformer.__name__]
+    average = other_results.groupby('Evaluation Metric')['Value'].mean()
+
+    total_results = total_results[total_results.transformer == transformer.__name__]
+    final_results = total_results.groupby('Evaluation Metric').agg({
+        'Value': 'mean',
+        'Valid': 'any'
+    })
+    final_results = final_results.rename(columns={'Valid': 'Acceptable'})
+    final_results['Units'] = np.where(
+        final_results.index.str.contains('Time'),
+        's / row',
+        'Mb / row',
+    )
+    final_results['Acceptable'] = np.where(final_results['Acceptable'], 'Yes', 'No')
+    final_results['Compared to Average'] = final_results['Value'].div(average).replace(
+        np.inf, np.nan)
+
+    return final_results.reset_index()
