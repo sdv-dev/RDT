@@ -4,6 +4,7 @@ import importlib
 import inspect
 import subprocess
 import traceback
+from pathlib import Path
 
 import coverage
 import pandas as pd
@@ -79,7 +80,8 @@ def validate_transformer_integration(transformer):
     Args:
         transformer (string or rdt.transformers.BaseTransformer):
             The transformer to validate.
-    Output:
+
+    Returns:
         bool:
             Whether or not the transformer passes all integration checks.
     """
@@ -342,15 +344,21 @@ def validate_transformer_unit_tests(transformer):
     else:
         print('\nERROR: The unit tests failed.')
 
-    score = cov.json_report()
-    rounded_score = round(score / 100, 2)
+    score = cov.report(show_missing=True)
+
+    rounded_score = round(score / 100, 3)
     if rounded_score < 1.0:
-        print(f'\nERROR: The unit tests only cover {round(cov.json_report(), 2)}% of your code.')
+        print(f'\nERROR: The unit tests only cover {round(score, 3)}% of your code.')
 
     else:
-        print(f'\nSUCCESS: The unit tests cover {round(cov.json_report(), 2)}% of your code.')
+        print(f'\nSUCCESS: The unit tests cover {round(score, 3)}% of your code.')
+
+    cov.html_report()
 
     print('\nFull coverage report here:\n')
-    cov.report(show_missing=True)
+
+    coverage_name = module_name.replace('.', '_')
+    export_dir = Path('htmlcov') / f'{coverage_name}_py.html'
+    print(export_dir.absolute().as_uri())
 
     return rounded_score
