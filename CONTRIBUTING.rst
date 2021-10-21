@@ -193,8 +193,8 @@ Integration Tests
 ~~~~~~~~~~~~~~~~~
 
 * As described in the `Creating Integration Tests`_ section, we already run some integration
-   tests by default for each transformer. Before putting up a PR, confirm that those tests pass
-   and any other tests that may be needed are added.
+  tests by default for each transformer. Before putting up a PR, confirm that those tests pass
+  and any other tests that may be needed are added.
 * Integration tests should be added under ``tests/unit/transformers/{transformer_module}``.
 
 Validating Integration Tests
