@@ -113,6 +113,8 @@ Let's start by setting the necessary attributes and writing the ``__init__`` met
 
 .. code-block:: Python
 
+class PhoneNumberTransformer(BaseTransformer):
+
     INPUT_TYPE = 'phone_number'
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
@@ -126,7 +128,7 @@ Now we can write the ``_fit`` method.
 .. code-block:: Python
 
     def _fit(self, columns_data):
-        number = ''.join(s.loc[0].split('-')
+        number = ''.join(s.loc[0][0].split('-'))
         self.has_country_code = len(number) == 11
 
 Since the ``country_code`` may or may not be present, we can overwrite the
@@ -137,11 +139,12 @@ Since the ``country_code`` may or may not be present, we can overwrite the
     def get_output_types(self):
         output_types = {
             'area_code': 'categorical',
-            'number': 'integer'
+            'exchange': 'integer',
+            'line': 'integer'
         }
         if self.has_country_code:
             output_types['country_code'] = 'categorical'
-        
+
         return self._add_prefix(output_types)
 
     def get_next_transformers(self):
@@ -161,9 +164,9 @@ in a dictionary. Now that we have this information, we can write the ``_transfor
 .. code-block:: Python
 
     def _transform(self, data):
-        return split_numbers = data.str.split('-', expand=True)
+        return data.str.split('-', expand=True)
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         if self.has_country_code:
             country_code = data.iloc[:, 0].astype('str')
             area_code = data.iloc[:, 1].astype('str')
