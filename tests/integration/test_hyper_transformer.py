@@ -349,7 +349,7 @@ def test_with_unfitted_columns():
     """HyperTransform should be able to transform even if there are unseen columns in data."""
     # Setup
     data = get_input_data()
-    ht = HyperTransformer(data_type_transformers={'categorical': CategoricalTransformer})
+    ht = HyperTransformer(default_data_type_transformers={'categorical': CategoricalTransformer})
     ht.fit(data)
 
     # Run
