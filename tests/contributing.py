@@ -1,20 +1,22 @@
 """Validation methods for contributing to RDT."""
 
-
 import importlib
 import inspect
 import subprocess
 import traceback
+from pathlib import Path
 
+import coverage
 import numpy as np
 import pandas as pd
+import pytest
 from tabulate import tabulate
 
 from rdt.transformers import get_transformers_by_type
 from tests.code_style import (
-    load_transformer, validate_test_location, validate_test_names, validate_transformer_addon,
-    validate_transformer_importable_from_parent_module, validate_transformer_module,
-    validate_transformer_name, validate_transformer_subclass)
+    get_test_location, load_transformer, validate_test_location, validate_test_names,
+    validate_transformer_addon, validate_transformer_importable_from_parent_module,
+    validate_transformer_module, validate_transformer_name, validate_transformer_subclass)
 from tests.datasets import get_dataset_generators_by_type
 from tests.integration.test_transformers import validate_transformer
 from tests.performance import evaluate_transformer_performance, validate_performance
@@ -275,7 +277,8 @@ def validate_transformer_code_style(transformer):
     Args:
         transformer (string or rdt.transformers.BaseTransformer):
             The transformer to validate.
-    Output:
+
+    Returns:
         bool:
             Whether or not the transformer passes all code style checks.
     """
@@ -306,6 +309,61 @@ def validate_transformer_code_style(transformer):
         print(error)
 
     return not bool(errors)
+
+
+def validate_transformer_unit_tests(transformer):
+    """Validate the unit tests of a transformer.
+
+    This function finds the module where the unit tests of the transformer
+    have been implemented and runs them using ``pytest``, capturing the code
+    coverage of the tests (how many lines of the source code are executed
+    during the tests).
+
+    Args:
+        transformer (string or rdt.transformers.BaseTransformer):
+            The transformer to validate.
+
+    Returns:
+        float:
+            A ``float`` value representing the test coverage where 1.0 is 100%.
+    """
+    if not inspect.isclass(transformer):
+        transformer = load_transformer(transformer)
+
+    source_location = inspect.getfile(transformer)
+    test_location = get_test_location(transformer)
+    module_name = getattr(transformer, '__module__', None)
+
+    print(f'Validating source file {source_location}\n')
+
+    pytest_run = f'-v --disable-warnings --no-header {test_location}'
+    pytest_run = pytest_run.split(' ')
+
+    cov = coverage.Coverage(source=[module_name])
+
+    cov.start()
+    pytest_output = pytest.main(pytest_run)
+    cov.stop()
+
+    if pytest_output is pytest.ExitCode.OK:
+        print('\nSUCCESS: The unit tests passed.')
+    else:
+        print('\nERROR: The unit tests failed.')
+
+    score = cov.report(show_missing=True)
+    rounded_score = round(score / 100, 3)
+    if rounded_score < 1.0:
+        print(f'\nERROR: The unit tests only cover {round(score, 3)}% of your code.')
+    else:
+        print(f'\nSUCCESS: The unit tests cover {round(score, 3)}% of your code.')
+
+    cov.html_report()
+    print('\nFull coverage report here:\n')
+    coverage_name = module_name.replace('.', '_')
+    export_dir = Path('htmlcov') / f'{coverage_name}_py.html'
+    print(export_dir.absolute().as_uri())
+
+    return rounded_score
 
 
 def validate_transformer_quality(transformer):

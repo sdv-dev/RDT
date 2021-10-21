@@ -45,7 +45,13 @@ def validate_transformer_module(transformer):
 
 def _validate_config_json(config_path, transformer_name):
     with open(config_path, 'r', encoding='utf-8') as config_file:
-        config_dict = json.load(config_file)
+        try:
+            config_dict = json.load(config_file)
+        except json.JSONDecodeError:
+            config_dict = None
+
+    config_error_msg = f'{config_path} does not have valid json format.'
+    assert config_dict is not None, config_error_msg
 
     transformers_not_found = 'The key ``transformers``  was not found in the config.json file.'
     assert 'transformers' in config_dict, transformers_not_found
@@ -92,7 +98,8 @@ def validate_transformer_importable_from_parent_module(transformer):
     assert imported_transformer is not None, f'Could not import {name} from {module}'
 
 
-def _get_test_location(transformer):
+def get_test_location(transformer):
+    """Return the expected unit test location of a transformer."""
     transformer_file = Path(inspect.getfile(transformer))
     transformer_folder = transformer_file.parent
     rdt_unit_test_path = Path(__file__).parent / 'unit'
@@ -119,7 +126,7 @@ def _get_test_location(transformer):
 
 def validate_test_location(transformer):
     """Validate if the test file exists in the expected location."""
-    test_location = _get_test_location(transformer)
+    test_location = get_test_location(transformer)
     if test_location is None:
         return False, 'The expected test location was not found.'
 
@@ -152,7 +159,7 @@ def _load_module_from_path(path):
 
 def validate_test_names(transformer):
     """Validate if the test methods are properly specified."""
-    test_file = _get_test_location(transformer)
+    test_file = get_test_location(transformer)
     module = _load_module_from_path(test_file)
 
     test_class = getattr(module, f'Test{transformer.__name__}', None)
