@@ -544,7 +544,7 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         }, index=[2, 0, 1])
-        pd.testing.assert_frame_equal(data, expected)
+        pd.testing.assert_frame_equal(data, expected, check_dtype=False)
 
     def test__set_columns_2d_array(self):
         """Test the ``_set_columns_data`` method.
