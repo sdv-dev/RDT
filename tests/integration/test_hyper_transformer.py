@@ -195,7 +195,7 @@ def test_hypertransformer_default_inputs():
     transformers to use for each field.
 
     Setup:
-        - `data_type_transformers` will be set to use the `CategoricalTransformer`
+        - `default_data_type_transformers` will be set to use the `CategoricalTransformer`
         for categorical data types so that the output is predictable.
 
     Input:
@@ -218,7 +218,7 @@ def test_hypertransformer_default_inputs():
     expected_transformed = get_transformed_data(index)
     expected_reversed = get_reversed(index)
 
-    ht = HyperTransformer(data_type_transformers={'categorical': CategoricalTransformer})
+    ht = HyperTransformer(default_data_type_transformers={'categorical': CategoricalTransformer})
     ht.fit(data)
     transformed = ht.transform(data)
 
@@ -397,7 +397,7 @@ def test_with_unfitted_columns():
     """HyperTransform should be able to transform even if there are unseen columns in data."""
     data = get_input_data_without_nan()
 
-    ht = HyperTransformer(data_type_transformers={'categorical': CategoricalTransformer})
+    ht = HyperTransformer(default_data_type_transformers={'categorical': CategoricalTransformer})
     ht.fit(data)
 
     new_data = get_input_data_without_nan()

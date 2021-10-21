@@ -56,8 +56,8 @@ class TestHyperTransformer(TestCase):
         # Asserts
         assert ht.copy is True
         assert ht.field_transformers == {}
-        assert ht.data_type_transformers == {}
-        assert ht.field_types == {}
+        assert ht.default_data_type_transformers == {}
+        assert ht.field_data_types == {}
         multi_column_mock.assert_called_once()
         validation_mock.assert_called_once()
 
@@ -65,12 +65,12 @@ class TestHyperTransformer(TestCase):
         """Test the ``_create_multi_column_fields`` method.
 
         This tests that the method goes through both the ``field_transformers``
-        dict and ``field_types`` dict to find multi_column fields and map
+        dict and ``field_data_types`` dict to find multi_column fields and map
         each column to its corresponding tuple.
 
         Setup:
             - instance.field_transformers will be populated with multi-column fields
-            - instance.field_types will be populated with multi-column fields
+            - instance.field_data_types will be populated with multi-column fields
 
         Output:
             - A dict mapping each column name that is part of a multi-column
@@ -84,7 +84,7 @@ class TestHyperTransformer(TestCase):
             ('c', 'd'): DatetimeTransformer,
             'e': NumericalTransformer
         }
-        ht.field_types = {
+        ht.field_data_types = {
             'f': 'categorical',
             ('g', 'h'): 'datetime'
         }
@@ -111,7 +111,7 @@ class TestHyperTransformer(TestCase):
         Setup:
             - field_transformers is given a transformer for the
             output field.
-            - data_type_transformers will be given a different transformer
+            - default_data_type_transformers will be given a different transformer
             for the output type of the output field.
 
         Input:
@@ -126,7 +126,7 @@ class TestHyperTransformer(TestCase):
         transformer = NumericalTransformer()
         ht = HyperTransformer(
             field_transformers={'a.out': transformer},
-            data_type_transformers={'numerical': GaussianCopulaTransformer()}
+            default_data_type_transformers={'numerical': GaussianCopulaTransformer()}
         )
 
         # Run
@@ -144,7 +144,7 @@ class TestHyperTransformer(TestCase):
         is returned.
 
         Setup:
-            - data_type_transformers will be given a transformer
+            - default_data_type_transformers will be given a transformer
             for the output type of the output field.
 
         Input:
@@ -157,7 +157,7 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer(
-            data_type_transformers={'numerical': GaussianCopulaTransformer()}
+            default_data_type_transformers={'numerical': GaussianCopulaTransformer()}
         )
 
         # Run
@@ -176,7 +176,7 @@ class TestHyperTransformer(TestCase):
         field, then it is used.
 
         Setup:
-            - data_type_transformers will be given a transformer
+            - default_data_type_transformers will be given a transformer
             for the output type of the output field.
 
         Input:
@@ -191,7 +191,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformer = CategoricalTransformer()
         ht = HyperTransformer(
-            data_type_transformers={'categorical': OneHotEncodingTransformer()}
+            default_data_type_transformers={'categorical': OneHotEncodingTransformer()}
         )
         next_transformers = {'a.out': transformer}
 
@@ -225,7 +225,7 @@ class TestHyperTransformer(TestCase):
         transformer = CategoricalTransformer(fuzzy=True)
         mock.return_value = transformer
         ht = HyperTransformer(
-            data_type_transformers={'categorical': OneHotEncodingTransformer()}
+            default_data_type_transformers={'categorical': OneHotEncodingTransformer()}
         )
 
         # Run
@@ -235,15 +235,15 @@ class TestHyperTransformer(TestCase):
         assert isinstance(next_transformer, CategoricalTransformer)
         assert next_transformer.fuzzy is True
 
-    def test__update_field_types(self):
-        """Test the ``_update_field_types`` method.
+    def test__update_field_data_types(self):
+        """Test the ``_update_field_data_types`` method.
 
         This tests that if any field types are missing in the
-        provided field_types dict, that the rest of the values
+        provided field_data_types dict, that the rest of the values
         are filled in using the data types for the dtype.
 
         Setup:
-            - field_types will only define a few of the fields.
+            - field_data_types will only define a few of the fields.
 
         Input:
             - A DataFrame of various types.
@@ -253,7 +253,7 @@ class TestHyperTransformer(TestCase):
             the data.
         """
         # Setup
-        ht = HyperTransformer(field_types={'a': 'numerical', 'b': 'categorical'})
+        ht = HyperTransformer(field_data_types={'a': 'numerical', 'b': 'categorical'})
         data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': ['category1', 'category2', 'category3'],
@@ -262,11 +262,11 @@ class TestHyperTransformer(TestCase):
         })
 
         # Run
-        ht._update_field_types(data)
+        ht._update_field_data_types(data)
 
         # Assert
         expected = {'a': 'numerical', 'b': 'categorical', 'c': 'boolean', 'd': 'float'}
-        assert ht.field_types == expected
+        assert ht.field_data_types == expected
 
     @patch('rdt.hyper_transformer.load_transformer')
     def test__fit_field_transformer(self, load_transformer_mock):
@@ -558,9 +558,9 @@ class TestHyperTransformer(TestCase):
         """Test the ``fit`` method.
 
         Tests that the ``fit`` method loops through the fields in ``field_transformers``
-        and ``field_types`` that are in the data. It should try to find a transformer
-        in ``data_type_transformers`` and then use the default if it doesn't find one
-        when looping through ``field_types``. It should then call ``_fit_field_transformer``
+        and ``field_data_types`` that are in the data. It should try to find a transformer
+        in ``default_data_type_transformers`` and then use the default if it doesn't find one
+        when looping through ``field_data_types``. It should then call ``_fit_field_transformer``
         with the correct arguments.
 
         Setup:
@@ -589,14 +589,14 @@ class TestHyperTransformer(TestCase):
             'float': float_transformer,
             'integer.out': int_out_transformer
         }
-        data_type_transformers = {
+        default_data_type_transformers = {
             'boolean': bool_transformer,
             'categorical': categorical_transformer
         }
         get_default_transformer_mock.return_value = datetime_transformer
         ht = HyperTransformer(
             field_transformers=field_transformers,
-            data_type_transformers=data_type_transformers
+            default_data_type_transformers=default_data_type_transformers
         )
         ht._fit_field_transformer = Mock()
         ht._fit_field_transformer.return_value = data

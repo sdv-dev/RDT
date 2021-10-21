@@ -70,7 +70,7 @@ def get_transformer_regression_scores(data, data_type, dataset_name, transformer
         target = numerical_transformer.fit_transform(target, list(target.columns))
         target = format_array(target)
         for transformer in transformers:
-            ht = HyperTransformer(data_type_transformers={data_type: transformer})
+            ht = HyperTransformer(default_data_type_transformers={data_type: transformer})
             ht.fit(features)
             transformed_features = ht.transform(features).to_numpy()
             score = get_regression_score(transformed_features, target)
