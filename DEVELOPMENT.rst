@@ -1,8 +1,13 @@
 .. highlight:: shell
+.. _Development Guide:
 
 =================
 Development Guide
 =================
+
+.. contents:: Table of contents
+   :local:
+   :depth: 3
 
 This guide describes in detail the main technical components of RDT as well as how to develop
 them.
@@ -113,22 +118,22 @@ Let's start by setting the necessary attributes and writing the ``__init__`` met
 
 .. code-block:: Python
 
-class PhoneNumberTransformer(BaseTransformer):
+    class PhoneNumberTransformer(BaseTransformer):
 
-    INPUT_TYPE = 'phone_number'
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
+        INPUT_TYPE = 'phone_number'
+        DETERMINISTIC_TRANSFORM = True
+        DETERMINISTIC_REVERSE = True
+        COMPOSITION_IS_IDENTITY = True
 
-    def __init__(self):
-        self.has_country_code = None
+        def __init__(self):
+            self.has_country_code = None
 
 Now we can write the ``_fit`` method.
 
 .. code-block:: Python
 
     def _fit(self, columns_data):
-        number = ''.join(s.loc[0][0].split('-'))
+        number = ''.join(columns_data.loc[0].split('-'))
         self.has_country_code = len(number) == 11
 
 Since the ``country_code`` may or may not be present, we can overwrite the
@@ -180,4 +185,168 @@ in a dictionary. Now that we have this information, we can write the ``_transfor
         return area_code + '-' + exchange + '-' + line
 
 We don't have to worry about the naming of the output columns because the ``BaseTransformer``
-handles that for us. Just like that, we have built a transformer for a new data type!
+handles that for us. Let's view the complete class below.
+
+.. code-block:: Python
+    class PhoneNumberTransformer(BaseTransformer):
+
+        INPUT_TYPE = 'phone_number'
+        DETERMINISTIC_TRANSFORM = True
+        DETERMINISTIC_REVERSE = True
+        COMPOSITION_IS_IDENTITY = True
+
+        def __init__(self):
+            self.has_country_code = None
+        
+        def _fit(self, columns_data):
+            number = ''.join(columns_data.loc[0].split('-'))
+            self.has_country_code = len(number) == 11
+
+        def get_output_types(self):
+            output_types = {
+                'area_code': 'categorical',
+                'exchange': 'integer',
+                'line': 'integer'
+            }
+            if self.has_country_code:
+                output_types['country_code'] = 'categorical'
+
+            return self._add_prefix(output_types)
+
+        def get_next_transformers(self):
+            next_transformers = {
+                'country_code': 'CategoricalTransformer',
+                'area_code': 'CategoricalTransformer'
+            }
+            if self.has_country_code:
+                next_transformers['country_code'] = 'CategoricalTransformer'
+
+            return self._add_prefix(next_transformers)
+        
+        def _transform(self, data):
+            return data.str.split('-', expand=True)
+
+        def _reverse_transform(self, data):
+            if self.has_country_code:
+                country_code = data.iloc[:, 0].astype('str')
+                area_code = data.iloc[:, 1].astype('str')
+                exchange = data.iloc[:, 2].astype('str')
+                line = data.iloc[:, 3].astype('str')
+                return country_code + '-' + area_code + '-' + exchange + '-' + line
+            
+            area_code = data.iloc[:, 0].astype('str')
+            exchange = data.iloc[:, 1].astype('str')
+            line = data.iloc[:, 2].astype('str')
+            return area_code + '-' + exchange + '-' + line
+
+Now we can see our `PhoneNumberTransformer` in action.
+
+.. code-block:: Python
+
+    transformer = PhoneNumberTransformer()
+    data = pd.DataFrame({
+        'phone_numbers': ['1-773-404-7845', '1-773-543-4780', '1-111-111-1111']
+    })
+    transformer.fit(data, ['phone_numbers'])
+    transformed = transformer.transform(data)
+    print(transformed)
+    reversed = transformer.reverse_transform(transformed)
+    print(reversed)
+
+We can also run it using the `HyperTransformer`.
+
+.. code-block:: Python
+
+    ht = HyperTransformer(
+        data_type_transformers={'phone_number': PhoneNumberTransformer},
+        field_types={'phone_numbers': 'phone_number'}
+    )
+    ht.fit(data)
+    transformed = ht.transform(data)
+    print(transformed)
+    reversed = ht.reverse_transform(transformed)
+    print(reversed)
+
+Dataset Generators
+------------------
+
+In RDT, performance tests are run to assure that each transformer is efficient. In order to run
+these tests, we have classes that generate datasets of a certain data type. If a new transformer
+introduces a new data type, the a ``DatasetGenerator`` class will need to be added for it.
+
+BaseDatasetGenerator
+""""""""""""""""""""
+
+All dataset generators inherit from the ``BaseDatasetGenerator`` class. It has the following
+class attribute:
+
+* ``DATA_TYPE`` (str) - The data type for the class to generate.
+
+They must implement the following methods.
+
+* ``generate(num_rows)`` - Takes in an int representing the number of rows to generate. Returns a
+  ``numpy.ndarray`` of size ``num_rows`` where each value is of the class' ``DATA_TYPE``.
+
+* ``get_performance_thresholds()`` - Returns a dict mapping each of the main methods for a
+  transformer (``fit``, ``transform``, ``reverse_transform``) to the expected time and memory it
+  takes for those methods to run on 1 row.
+
+Implementing a DatasetGenerator
+"""""""""""""""""""""""""""""""
+
+To create a new ``DatasetGenerator``, the methods described above need to be implemented. The
+class should be placed in a new file in the following location ``tests/datasets/{DATA_TYPE}.py``.
+Each generator must inherit from the base class as well as ``abc.ABC``.
+
+Example DatasetGenerator
+************************
+
+Let's create a ``DatasetGenerator`` for the ``phone_number`` data type that we introduced earlier.
+We can start by implementing the ``generate`` method and setting the ``DATA_TYPE``.
+
+.. code-block:: Python
+
+    from abc import ABC
+
+    import numpy as np
+
+    from tests.datasets.base import BaseDatasetGenerator
+
+    class PhoneNumberGenerator(BaseDatasetGenerator, ABC):
+        DATA_TYPE = 'phone_number'
+        
+        @staticmethod
+        def generate(num_rows):
+            area_codes = np.random.randint(low=100, high=999, size=num_rows).astype(str)
+            exchange = np.random.randint(low=100, high=999, size=num_rows).astype(str)
+            line = np.random.randint(low=1000, high=9999, size=num_rows).astype(str)
+            return np.apply_along_axis('-'.join, 0, [area_codes, exchange, line])
+
+In order for the tests to run, the generator must also implement the ``get_performance_thresholds``
+method. The times are specified in seconds and the memory in bytes.
+
+.. code-block:: Python
+
+    @staticmethod
+    def get_performance_thresholds():
+        """Return the expected threseholds."""
+        return {
+            'fit': {
+                'time': 1,
+                'memory': 100.0
+            },
+            'transform': {
+                'time': 1,
+                'memory': 1000.0
+            },
+            'reverse_transform': {
+                'time': 1,
+                'memory': 1000.0,
+            }
+        }
+
+To view the result of the generator we can run the following:
+
+.. code-block:: Python
+
+    PhoneNumberGenerator.generate(100)
