@@ -145,7 +145,9 @@ class HyperTransformer:
 
         for field in data:
             if field not in provided_fields:
-                self.field_types[field] = self._DTYPES_TO_DATA_TYPES[data[field].dtype.kind]
+                clean_data = data[field].dropna()
+                kind = clean_data.infer_objects().dtype.kind
+                self.field_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
