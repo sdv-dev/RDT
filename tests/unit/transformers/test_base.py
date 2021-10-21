@@ -375,8 +375,8 @@ class TestBaseTransformer:
         data = pd.DataFrame()
         columns = ['a', 'b']
         base_transformer = BaseTransformer()
-        missing = set(columns) - set(data.columns)
-        error_msg = (f'Columns {missing} were not present in the data.')
+        missing = set(columns)
+        error_msg = f'Columns {missing} were not present in the data.'
 
         # Run / Assert
         with pytest.raises(KeyError, match=error_msg):
