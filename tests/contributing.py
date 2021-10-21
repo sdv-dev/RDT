@@ -18,7 +18,6 @@ from tests.code_style import (
     validate_transformer_addon, validate_transformer_importable_from_parent_module,
     validate_transformer_module, validate_transformer_name, validate_transformer_subclass)
 from tests.datasets import get_dataset_generators_by_type
-
 from tests.integration.test_transformers import validate_transformer
 from tests.performance import evaluate_transformer_performance, validate_performance
 from tests.quality.test_quality import (
