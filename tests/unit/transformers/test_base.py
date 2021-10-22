@@ -47,7 +47,7 @@ class TestBaseTransformer:
             containing only a ``INPUT_TYPE`` attribute.
 
         Output:
-            - the string stored in the ``INPUT_TYPE`` attribute.q
+            - the string stored in the ``INPUT_TYPE`` attribute.
         """
         # Setup
         class Dummy(BaseTransformer):
