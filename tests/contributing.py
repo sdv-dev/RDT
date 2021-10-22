@@ -493,6 +493,17 @@ def validate_transformer_performance(transformer):
 
 
 def check_clean_repository():
+    """Check whether or not the repository has only expected changes.
+
+    This function checks if there are unexpected changes on the current branch
+    against the master branch. If there are modifications outside ``rdt/transformers``,
+    ``tests/unit``, ``tests/integration`` or ``tests/datasets`` this will return a ``False``.
+
+    Returns:
+        bool:
+            ``True`` if the changes are applied only to the expected subfolders, ``False``
+            if any other file has been modified outside of that range.
+    """
     run_command = 'git diff --name-only master'.split(' ')
     output_capture = subprocess.run(run_command, capture_output=True).stdout.decode()
     output_capture = output_capture.splitlines()
@@ -534,7 +545,20 @@ def _build_validation_dict(tag, result, success_details, error_details):
 
 
 def validate_pull_request(transformer):
-    """Validate whether a pull request can be made for a ``Transformer``."""
+    """Validate whether a pull request can be made for a ``Transformer``.
+
+    Runs all the validations for a ``Transformer`` and also checks if there
+    are unexpected modifications to the repository other than the ``transformers``,
+    ``tests`` and ``tests/datasets``.
+
+    Args:
+        transformer (string or rdt.transformers.BaseTransformer):
+            The transformer to validate.
+
+    Returns:
+        bool:
+            Boolean indicating whether or not a pull request can be made.
+    """
     if not inspect.isclass(transformer):
         transformer = load_transformer(transformer)
 
