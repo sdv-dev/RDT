@@ -690,8 +690,8 @@ class TestBaseTransformer:
 
         Validate that the ``fit`` method (1) sets ``self.columns`` to the passed columns of the
         data, (2) sets ``self.column_prefix`` to the appropriate string (the joined column names
-        separated by a hashtag) and (3) sets ``self.output_columns`` to the correct dictionary mapping
-        column names to accepted output data types.
+        separated by a hashtag) and (3) sets ``self.output_columns`` to the correct dictionary
+        mapping column names to accepted output data types.
 
         Setup:
             - create a dummy class which inherits from the ``BaseTransformer``, which defines:
