@@ -166,7 +166,7 @@ file named after the data type that the transformer operates on. For example, if
 writing a transformer that works with ``categorical`` data, your transformer should be placed
 inside the ``rdt/transformers/categorical.py`` module.
 
-For more detailed guide on writing transformers, refer to the :ref:`Development Guide`.
+For more detailed guide on writing transformers, refer to the `Development Guide`_.
 
 On top of adding the new class, unit tests must be written to cover all of the methods the new
 class uses. In some cases, integration tests may also be required. More details on this can be
@@ -285,7 +285,7 @@ against. For some examples, you can look in the `dataset generator folder`_.
 The generators each have a ``DATA_TYPE`` class variable. This should match the data type that your
 ``transformer`` accepts as input.
 
-More details can be found in the :ref:`Development Guide`.
+More details can be found in the `Development Guide`_.
 
 Common Performance Pitfalls
 ***************************
@@ -409,3 +409,4 @@ Summary of Steps to Add a New Transformer
 .. _nullable boolean type: https://pandas.pydata.org/pandas-docs/version/1.0/user_guide/boolean.html
 .. _RDT core contributors: https://github.com/orgs/sdv-dev/teams/core-contributors
 .. _dataset generator folder: https://github.com/sdv-dev/RDT/tree/master/tests/datasets
+.. _Development Guide: DEVELOPMENT.rst

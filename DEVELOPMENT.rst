@@ -1,5 +1,4 @@
 .. highlight:: shell
-.. _Development Guide:
 
 =================
 Development Guide
