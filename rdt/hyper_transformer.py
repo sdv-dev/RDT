@@ -159,15 +159,16 @@ class HyperTransformer:
         """
         return self.field_data_types
 
-    def set_field_data_types(self, field_data_types):
-        """Set the ``field_data_types`` dict.
+    def update_field_data_types(self, field_data_types):
+        """Update the ``field_data_types`` dict.
 
         Args:
             field_data_types (dict):
                 Mapping of fields to their data types. Fields can be defined as a string
-                representing a column name or a tuple of multiple column names.
+                representing a column name or a tuple of multiple column names. It will
+                update the existing ``field_data_types`` values.
         """
-        self.field_data_types = field_data_types
+        self.field_data_types.update(field_data_types)
 
     def get_default_data_type_transformers(self):
         """Get the ``default_data_type_transformer`` dict.

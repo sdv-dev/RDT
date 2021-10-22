@@ -773,13 +773,14 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert out == {'a': 'categorical', 'b': 'integer'}
 
-    def test_set_field_data_types(self):
-        """Test the ``set_field_data_types`` method.
+    def test_update_field_data_types(self):
+        """Test the ``update_field_data_types`` method.
 
-        This method should overwrite the ``field_data_types`` attribute.
+        This method should update the ``field_data_types`` attribute.
 
         Setup:
-            - Initialize ``HyperTransformer`` with no ``field_data_types``.
+            - Initialize ``HyperTransformer`` with ``field_data_types`` having
+            one entry.
 
         Input:
             - Dict mapping fields to data types.
@@ -789,10 +790,10 @@ class TestHyperTransformer(TestCase):
             'a': 'categorical',
             'b': 'integer'
         }
-        ht = HyperTransformer()
+        ht = HyperTransformer(field_data_types={'a': 'float'})
 
         # Run
-        ht.set_field_data_types(field_data_types)
+        ht.update_field_data_types(field_data_types)
 
         # Assert
         assert ht.field_data_types == {'a': 'categorical', 'b': 'integer'}
