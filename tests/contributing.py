@@ -60,6 +60,19 @@ CHECK_DETAILS = {
 }
 
 
+
+# Allowed paths for file modifications
+VALID_PATHS = [
+    'rdt/transformers/',
+    'rdt/transformers/addons/',
+    'tests/unit/transformers/',
+    'tests/unit/transformers/addons/',
+    'tests/integration/transformers/',
+    'tests/datasets/'
+]
+
+
+
 def validate_transformer_integration(transformer):
     """Validate the integration tests of a transformer.
 
@@ -493,24 +506,15 @@ def check_clean_repository():
     output_capture = output_capture.splitlines()
 
     validated_paths = []
-    valid_paths = [
-        'rdt/transformers/',
-        'rdt/transformers/addons/',
-        'tests/unit/transformers/',
-        'tests/unit/transformers/addons/',
-        'tests/integration/transformers/',
-        'tests/datasets/',
-    ]
-
     count = 0
     for capture in output_capture:
         file_path = Path(capture)
-        for valid_path in valid_paths:
-            if file_path.match(valid_path):
-                validated_paths.append(True)
-            elif file_path.parent.match(valid_path):
-                validated_paths.append(True)
-            elif file_path.parent.parent.match(valid_path):
+        for valid_path in VALID_PATHS:
+            if any([
+                file_path.match(valid_path),
+                file_path.parent.match(valid_path),
+                file_path.parent.parent.match(valid_path)
+            ]):
                 validated_paths.append(True)
 
         if len(validated_paths) == count:
@@ -546,7 +550,7 @@ def validate_pull_request(transformer):
     if not inspect.isclass(transformer):
         transformer = get_transformer_class(transformer)
 
-    code_style = validate_transformer_code_style(transformer),
+    code_style = validate_transformer_code_style(transformer)
     unit_tests = validate_transformer_unit_tests(transformer)
     integration_tests = validate_transformer_integration(transformer)
     performance_tests = validate_transformer_performance(transformer)
