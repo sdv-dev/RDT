@@ -1,6 +1,5 @@
 """Validation methods for contributing to RDT."""
 
-import importlib
 import inspect
 import subprocess
 import traceback
@@ -12,11 +11,11 @@ import pandas as pd
 import pytest
 from tabulate import tabulate
 
-from rdt.transformers import get_transformers_by_type
+from rdt.transformers import get_transformer_class, get_transformers_by_type
 from tests.code_style import (
-    get_test_location, load_transformer, validate_test_location, validate_test_names,
-    validate_transformer_addon, validate_transformer_importable_from_parent_module,
-    validate_transformer_module, validate_transformer_name, validate_transformer_subclass)
+    get_test_location, validate_test_location, validate_test_names, validate_transformer_addon,
+    validate_transformer_importable_from_parent_module, validate_transformer_module,
+    validate_transformer_name, validate_transformer_subclass)
 from tests.datasets import get_dataset_generators_by_type
 from tests.integration.test_transformers import validate_transformer
 from tests.performance import evaluate_transformer_performance, validate_performance
@@ -61,21 +60,6 @@ CHECK_DETAILS = {
 }
 
 
-def get_class(class_name):
-    """Get the specified class.
-
-    Args:
-        class (str):
-            Full name of class to import.
-    """
-    obj = None
-    if isinstance(class_name, str):
-        package, name = class_name.rsplit('.', 1)
-        obj = getattr(importlib.import_module(package), name)
-
-    return obj
-
-
 def validate_transformer_integration(transformer):
     """Validate the integration tests of a transformer.
 
@@ -92,7 +76,7 @@ def validate_transformer_integration(transformer):
             Whether or not the transformer passes all integration checks.
     """
     if isinstance(transformer, str):
-        transformer = get_class(transformer)
+        transformer = get_transformer_class(transformer)
 
     print(f'Validating Integration Tests for transformer {transformer.__name__}\n')
 
@@ -283,7 +267,7 @@ def validate_transformer_code_style(transformer):
             Whether or not the transformer passes all code style checks.
     """
     if not inspect.isclass(transformer):
-        transformer = load_transformer(transformer)
+        transformer = get_transformer_class(transformer)
 
     transformer_path = inspect.getfile(transformer)
     print(f'Validating source file {transformer_path}')
@@ -328,7 +312,7 @@ def validate_transformer_unit_tests(transformer):
             A ``float`` value representing the test coverage where 1.0 is 100%.
     """
     if not inspect.isclass(transformer):
-        transformer = load_transformer(transformer)
+        transformer = get_transformer_class(transformer)
 
     source_location = inspect.getfile(transformer)
     test_location = get_test_location(transformer)
@@ -395,7 +379,7 @@ def validate_transformer_quality(transformer):
         is validated against: ``Dataset``, ``Score``, ``Compared To Average``, ``Acceptable``.
     """
     if isinstance(transformer, str):
-        transformer = get_class(transformer)
+        transformer = get_transformer_class(transformer)
 
     print(f'Validating Quality Tests for transformer {transformer.__name__}\n')
 
@@ -443,7 +427,7 @@ def validate_transformer_performance(transformer):
             Performance results of the transformer.
     """
     if isinstance(transformer, str):
-        transformer = get_class(transformer)
+        transformer = get_transformer_class(transformer)
 
     print(f'Validating Performance for transformer {transformer.__name__}\n')
 
@@ -560,7 +544,7 @@ def validate_pull_request(transformer):
             Boolean indicating whether or not a pull request can be made.
     """
     if not inspect.isclass(transformer):
-        transformer = load_transformer(transformer)
+        transformer = get_transformer_class(transformer)
 
     code_style = validate_transformer_code_style(transformer),
     unit_tests = validate_transformer_unit_tests(transformer)
@@ -570,7 +554,7 @@ def validate_pull_request(transformer):
     clean_repository = check_clean_repository()
 
     unit_bool = unit_tests == 1.0
-    performance_bool = not 'No' in performance_tests['Acceptable'].unique()
+    performance_bool = 'No' not in performance_tests['Acceptable'].unique()
     quality_bool = quality_tests['Acceptable'].all()
 
     results = [
@@ -588,7 +572,7 @@ def validate_pull_request(transformer):
         ),
         _build_validation_dict(
             'Integration tests',
-            integration_tests ,
+            integration_tests,
             'The integration tests run successfully.',
             'The integration tests did not run successfully!',
         ),
