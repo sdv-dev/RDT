@@ -59,8 +59,6 @@ CHECK_DETAILS = {
     ),
 }
 
-
-
 # Allowed paths for file modifications
 VALID_PATHS = [
     'rdt/transformers/',
@@ -70,7 +68,6 @@ VALID_PATHS = [
     'tests/integration/transformers/',
     'tests/datasets/'
 ]
-
 
 
 def validate_transformer_integration(transformer):
