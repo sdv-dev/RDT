@@ -47,7 +47,7 @@ class TestBaseTransformer:
             containing only a ``INPUT_TYPE`` attribute.
 
         Output:
-            - the string stored in the ``INPUT_TYPE`` attribute.
+            - the string stored in the ``INPUT_TYPE`` attribute.q
         """
         # Setup
         class Dummy(BaseTransformer):
@@ -262,6 +262,9 @@ class TestBaseTransformer:
         Input:
             - a data frame.
             - a list of a subset of the columns of the dataframe.
+
+        Side effects:
+            - the ``self.columns`` attribute should be set to the list of the passed columns.
         """
         # Setup
         data = pd.DataFrame({
@@ -288,6 +291,9 @@ class TestBaseTransformer:
         Input:
             - a data frame.
             - a tuple of a subset of the columns of the dataframe.
+
+        Side effects:
+            - the ``self.columns`` attribute should be set to a list of the passed columns.
         """
         # Setup
         data = pd.DataFrame({
@@ -317,6 +323,9 @@ class TestBaseTransformer:
         Input:
             - a data frame.
             - a tuple which is the name of a column.
+
+        Side effects:
+            - the ``self.columns`` attribute should be set to a list containing the passed tuple.
         """
         # Setup
         data = pd.DataFrame({
@@ -343,6 +352,9 @@ class TestBaseTransformer:
         Input:
             - a data frame.
             - a string with the name of one of the columns of the dataframe.
+
+       Side effects:
+            - the ``self.columns`` attribute should be set to a list containing the passed string.
         """
         # Setup
         data = pd.DataFrame({
@@ -588,8 +600,8 @@ class TestBaseTransformer:
     def test__build_output_columns(self):
         """Test the ``_build_output_columns`` method.
 
-        Validate that the this method stores the correct values in ``column_prefix`` and
-        ``output_columns``.
+        Validate that the this method stores the correct values in ``self.column_prefix`` and
+        ``self.output_columns``.
 
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer`` where:
@@ -599,11 +611,11 @@ class TestBaseTransformer:
         Input:
             - a dataframe.
 
-        Expected behavior:
-            - ``column_prefix`` should be set to the elements stored in ``columns`` joined by
-            hashtags (e.g. ['a', 'b'] -> 'a#b').
-            - ``output_columns`` should be set to a list of the keys of what's returned from the
-            ``get_output_types`` method.
+        Side effect:
+            - ``self.column_prefix`` should be set to the elements stored in ``self.columns``
+            joined by hashtags (e.g. ['a', 'b'] -> 'a#b').
+            - ``self.output_columns`` should be set to a list of the keys of what's returned
+            from the ``get_output_types`` method.
         """
         # Setup
         data = pd.DataFrame({
@@ -645,11 +657,11 @@ class TestBaseTransformer:
             - a dataframe where the generated column name already exists
             (e.g. ['a', 'b', 'a#b.value']).
 
-        Expected behavior:
-            - ``column_prefix`` should be set to the elements stored in ``columns`` joined by
-            hashtags, with a hashtag added at the end (e.g. ['a', 'b'] -> 'a#b#').
-            - ``output_columns`` should be set to a list of the keys of what's returned from the
-            ``get_output_types`` method.
+        Side effect:
+            - ``self.column_prefix`` should be set to the elements stored in ``self.columns``
+            joined by hashtags, with a hashtag added at the end (e.g. ['a', 'b'] -> 'a#b#').
+            - ``self.output_columns`` should be set to a list of the keys of what's returned
+            from the ``get_output_types`` method.
         """
         # Setup
         data = pd.DataFrame({
@@ -678,7 +690,7 @@ class TestBaseTransformer:
 
         Validate that the ``fit`` method (1) sets ``self.columns`` to the passed columns of the
         data, (2) sets ``self.column_prefix`` to the appropriate string (the joined column names
-        separated by a) and (3) sets ``self.output_columns`` to the correct dictionary mapping
+        separated by a hashtag) and (3) sets ``self.output_columns`` to the correct dictionary mapping
         column names to accepted output data types.
 
         Setup:
@@ -689,6 +701,13 @@ class TestBaseTransformer:
         Input:
             - a dataframe.
             - a list of column names from the dataframe.
+
+        Side effects:
+            - ``self.columns`` should be set to the passed columns of the data.
+            - ``self.column_prefix`` should be set to the joined column names
+            separated by a hashtag.
+            - ``self.output_columns`` should be set to the correct dictionary mapping
+            column names to accepted output data types.
         """
         # Setup
         data = pd.DataFrame({
@@ -775,6 +794,10 @@ class TestBaseTransformer:
 
         Output:
             - the transformed data.
+
+        Side effects:
+            - ``self._transform`` should be called with the correct data
+            and should store it in ``self._passed_data``.
         """
         # Setup
         data = pd.DataFrame({
@@ -829,6 +852,10 @@ class TestBaseTransformer:
 
         Output:
             - the transformed data.
+
+        Side effects:
+            - ``self._transform`` should be called with the correct data
+            and should store it in ``self._passed_data``.
         """
         # Setup
         data = pd.DataFrame({
@@ -856,6 +883,7 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
         })
         pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
+
         expected_transformed = pd.DataFrame({
             'c': [7, 8, 9],
             'a#b.value': [0.0, 0.0, 0.0],
@@ -877,6 +905,9 @@ class TestBaseTransformer:
 
         Output:
             - the dataframe resulting from fitting and transforming the passed data.
+
+        Side effects:
+            - ``fit`` and ``transform`` should each be called once.
         """
         # Setup
         self = Mock(spec_set=BaseTransformer)
@@ -946,6 +977,10 @@ class TestBaseTransformer:
 
         Output:
             - the transformed data.
+
+        Side effects:
+            - ``self._reverse_transform`` should be called with the correct data
+            and should store it in ``self._passed_data``.
         """
         # Setup
         data = pd.DataFrame({
@@ -1002,6 +1037,10 @@ class TestBaseTransformer:
 
         Output:
             - the transformed data.
+
+        Side effects:
+            - ``self._reverse_transform`` should be called with the correct data
+            and should store it in ``self._passed_data``.
         """
         # Setup
         data = pd.DataFrame({
