@@ -9,7 +9,7 @@ from types import FunctionType
 
 import pytest
 
-from rdt.transformers import TRANSFORMERS
+from rdt.transformers import TRANSFORMERS, get_transformer_class
 from rdt.transformers.base import BaseTransformer
 
 
@@ -195,20 +195,11 @@ def validate_test_names(transformer):
         assert len(valid_test_functions) > count, fail_message
 
 
-def load_transformer(transformer):
-    """Load the transformer class from a given string."""
-    if len(transformer.split('.')) == 1:
-        return TRANSFORMERS[transformer]
-    else:
-        package, name = transformer.rsplit('.', 1)
-        return getattr(importlib.import_module(package), name)
-
-
 @pytest.mark.parametrize('transformer', TRANSFORMERS.values(), ids=TRANSFORMERS.keys())  # noqa
 def test_transformer_code_style(transformer):
     """Validate a transformer."""
     if not inspect.isclass(transformer):
-        transformer = load_transformer(transformer)
+        transformer = get_transformer_class(transformer)
 
     validate_transformer_name(transformer)
     validate_transformer_subclass(transformer)
