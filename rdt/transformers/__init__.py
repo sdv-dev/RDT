@@ -20,7 +20,8 @@ from rdt.transformers.numerical import NumericalTransformer
 __all__ = [
     'BaseTransformer',
     'NullTransformer',
-    'load_transformer',
+    'get_transformer_class',
+    'get_transformer_instance',
     'get_transformers_by_type',
     'get_default_transformers',
     'get_default_transformer',
@@ -59,7 +60,25 @@ DEFAULT_TRANSFORMERS = {
 }
 
 
-def load_transformer(transformer):
+def get_transformer_class(transformer):
+    """Return a ``transformer`` class from a ``str``.
+
+    Args:
+        transforemr (str):
+            Python path or transformer's name.
+
+    Returns:
+        BaseTransformer:
+            BaseTransformer subclass class object.
+    """
+    if len(transformer.split('.')) == 1:
+        return TRANSFORMERS[transformer]
+
+    package, name = transformer.rsplit('.', 1)
+    return TRANSFORMERS.get(name, getattr(importlib.import_module(package), name))
+
+
+def get_transformer_instance(transformer):
     """Load a new instance of a ``Transformer``.
 
     The ``transformer`` is expected to be a ``string`` containing  the transformer ``class``

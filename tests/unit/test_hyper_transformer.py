@@ -269,8 +269,8 @@ class TestHyperTransformer(TestCase):
         expected = {'a': 'numerical', 'b': 'categorical', 'c': 'boolean', 'd': 'float'}
         assert ht.field_types == expected
 
-    @patch('rdt.hyper_transformer.load_transformer')
-    def test__fit_field_transformer(self, load_transformer_mock):
+    @patch('rdt.hyper_transformer.get_transformer_instance')
+    def test__fit_field_transformer(self, get_transformer_instance_mock):
         """Test the ``_fit_field_transformer`` method.
 
         This tests that the ``_fit_field_transformer`` behaves as expected.
@@ -279,8 +279,8 @@ class TestHyperTransformer(TestCase):
         itself recursively if it can.
 
         Setup:
-            - A mock for ``load_transformer``.
-            - A mock for the transformer returned by ``load_transformer``.
+            - A mock for ``get_transformer_instance``.
+            - A mock for the transformer returned by ``get_transformer_instance``.
             The ``get_output_types`` method will return two outputs, one that
             is ML ready and one that isn't.
 
@@ -314,7 +314,7 @@ class TestHyperTransformer(TestCase):
             'a.out1.value': 'numerical'
         }
         transformer2.get_next_transformers.return_value = None
-        load_transformer_mock.side_effect = [
+        get_transformer_instance_mock.side_effect = [
             transformer1,
             transformer2,
             None,
@@ -343,8 +343,11 @@ class TestHyperTransformer(TestCase):
         transformer2.fit.assert_called_once()
         assert ht._transformers_sequence == [transformer1, transformer2]
 
-    @patch('rdt.hyper_transformer.load_transformer')
-    def test__fit_field_transformer_multi_column_field_not_ready(self, load_transformer_mock):
+    @patch('rdt.hyper_transformer.get_transformer_instance')
+    def test__fit_field_transformer_multi_column_field_not_ready(
+        self,
+        get_transformer_instance_mock
+    ):
         """Test the ``_fit_field_transformer`` method.
 
         This tests that the ``_fit_field_transformer`` behaves as expected.
@@ -353,8 +356,8 @@ class TestHyperTransformer(TestCase):
         It should however, transform the data.
 
         Setup:
-            - A mock for ``load_transformer``.
-            - A mock for the transformer returned by ``load_transformer``.
+            - A mock for ``get_transformer_instance``.
+            - A mock for the transformer returned by ``get_transformer_instance``.
             The ``get_output_types`` method will return one output that is part of
             a multi-column field.
             - A mock for ``_multi_column_fields`` to return the multi-column field.
@@ -384,7 +387,7 @@ class TestHyperTransformer(TestCase):
         }
         transformer1.get_next_transformers.return_value = None
         transformer1.transform.return_value = transformed_data1
-        load_transformer_mock.side_effect = [transformer1]
+        get_transformer_instance_mock.side_effect = [transformer1]
         ht = HyperTransformer()
         ht._get_next_transformer = Mock()
         ht._get_next_transformer.side_effect = [transformer2]
@@ -406,8 +409,8 @@ class TestHyperTransformer(TestCase):
         transformer2.fit.assert_not_called()
         assert ht._transformers_sequence == [transformer1]
 
-    @patch('rdt.hyper_transformer.load_transformer')
-    def test__fit_field_transformer_multi_column_field_ready(self, load_transformer_mock):
+    @patch('rdt.hyper_transformer.get_transformer_instance')
+    def test__fit_field_transformer_multi_column_field_ready(self, get_transformer_instance_mock):
         """Test the ``_fit_field_transformer`` method.
 
         This tests that the ``_fit_field_transformer`` behaves as expected.
@@ -416,8 +419,8 @@ class TestHyperTransformer(TestCase):
         It should also transform the data.
 
         Setup:
-            - A mock for ``load_transformer``.
-            - A mock for the transformer returned by ``load_transformer``.
+            - A mock for ``get_transformer_instance``.
+            - A mock for the transformer returned by ``get_transformer_instance``.
             The ``get_output_types`` method will return one output that is part of
             a multi-column field.
             - A mock for ``_multi_column_fields`` to return the multi-column field.
@@ -452,7 +455,7 @@ class TestHyperTransformer(TestCase):
         transformer2.get_output_types.return_value = {
             'a.out1#b.out1': 'numerical'
         }
-        load_transformer_mock.side_effect = [
+        get_transformer_instance_mock.side_effect = [
             transformer1,
             transformer2
         ]

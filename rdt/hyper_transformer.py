@@ -2,7 +2,7 @@
 
 import warnings
 
-from rdt.transformers import get_default_transformer, load_transformer
+from rdt.transformers import get_default_transformer, get_transformer_instance
 
 
 class HyperTransformer:
@@ -180,7 +180,7 @@ class HyperTransformer:
             transformer (Transformer):
                 Instance of transformer class that will fit the data.
         """
-        transformer = load_transformer(transformer)
+        transformer = get_transformer_instance(transformer)
         transformer.fit(data, field)
         self._add_field_to_set(field, self._fitted_fields)
         self._transformers_sequence.append(transformer)

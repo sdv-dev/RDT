@@ -1,26 +1,26 @@
-from rdt.transformers import BooleanTransformer, load_transformer
+from rdt.transformers import BooleanTransformer, get_transformer_instance
 
 
-def test_load_transformer_instance():
+def test_get_transformer_instance_instance():
     transformer = BooleanTransformer(nan=None)
 
-    returned = load_transformer(transformer)
+    returned = get_transformer_instance(transformer)
 
     assert isinstance(returned, BooleanTransformer)
     assert returned.nan is None
 
 
-def test_load_transformer_str():
+def test_get_transformer_instance_str():
     transformer = 'BooleanTransformer'
 
-    returned = load_transformer(transformer)
+    returned = get_transformer_instance(transformer)
 
     assert isinstance(returned, BooleanTransformer)
 
 
-def test_load_transformer_class():
+def test_get_transformer_instance_class():
     transformer = BooleanTransformer
 
-    returned = load_transformer(transformer)
+    returned = get_transformer_instance(transformer)
 
     assert isinstance(returned, BooleanTransformer)
