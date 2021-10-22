@@ -12,7 +12,6 @@
 
    API Reference <api/rdt>
    contributing
-   development
    authors
    history
 
