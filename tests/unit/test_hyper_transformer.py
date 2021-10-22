@@ -751,3 +751,98 @@ class TestHyperTransformer(TestCase):
         categorical_transformer.reverse_transform.assert_called_once()
         bool_transformer.reverse_transform.assert_called_once()
         datetime_transformer.reverse_transform.assert_called_once()
+
+    def test_get_field_data_types(self):
+        """Test the ``get_field_data_types`` method.
+
+        This method should return the ``field_data_types`` attribute.
+
+        Output:
+            - Dict mapping fields to data types.
+        """
+        # Setup
+        field_data_types = {
+            'a': 'categorical',
+            'b': 'integer'
+        }
+        ht = HyperTransformer(field_data_types=field_data_types)
+
+        # Run
+        out = ht.get_field_data_types()
+
+        # Assert
+        assert out == {'a': 'categorical', 'b': 'integer'}
+
+    def test_set_field_data_types(self):
+        """Test the ``set_field_data_types`` method.
+
+        This method should overwrite the ``field_data_types`` attribute.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with no ``field_data_types``.
+
+        Input:
+            - Dict mapping fields to data types.
+        """
+        # Setup
+        field_data_types = {
+            'a': 'categorical',
+            'b': 'integer'
+        }
+        ht = HyperTransformer()
+
+        # Run
+        ht.set_field_data_types(field_data_types)
+
+        # Assert
+        assert ht.field_data_types == {'a': 'categorical', 'b': 'integer'}
+
+    def test_get_default_data_type_transformers(self):
+        """Test the ``get_default_data_type_transformers`` method.
+
+        This method should return the ``default_data_type_transformers`` attribute.
+
+        Output:
+            - Dict mapping data types to transformers.
+        """
+        # Setup
+        data_type_transformers = {
+            'categorical': CategoricalTransformer,
+            'integer': NumericalTransformer
+        }
+        ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
+
+        # Run
+        out = ht.get_default_data_type_transformers()
+
+        # Assert
+        assert out == {'categorical': CategoricalTransformer, 'integer': NumericalTransformer}
+
+    def test_update_default_data_type_transformers(self):
+        """Test the ``update_default_data_type_transformers`` method.
+
+        This method should update the ``default_data_type_transformers`` attribute.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``default_data_type_transformers``
+            dict that only has some types set.
+
+        Input:
+            - Dict mapping new data types to transformers.
+        """
+        # Setup
+        data_type_transformers = {
+            'categorical': CategoricalTransformer,
+            'integer': NumericalTransformer
+        }
+        ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
+
+        # Run
+        ht.update_default_data_type_transformers({'boolean': BooleanTransformer})
+
+        # Assert
+        assert ht.default_data_type_transformers == {
+            'categorical': CategoricalTransformer,
+            'integer': NumericalTransformer,
+            'boolean': BooleanTransformer
+        }

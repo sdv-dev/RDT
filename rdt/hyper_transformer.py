@@ -149,6 +149,47 @@ class HyperTransformer:
                 kind = clean_data.infer_objects().dtype.kind
                 self.field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
 
+    def get_field_data_types(self):
+        """Get the ``field_data_types`` dict.
+
+        Returns:
+            dict:
+                Mapping of fields to their data types. Fields can be defined as a string
+                representing a column name or a tuple of multiple column names.
+        """
+        return self.field_data_types
+
+    def set_field_data_types(self, field_data_types):
+        """Set the ``field_data_types`` dict.
+
+        Args:
+            field_data_types (dict):
+                Mapping of fields to their data types. Fields can be defined as a string
+                representing a column name or a tuple of multiple column names.
+        """
+        self.field_data_types = field_data_types
+
+    def get_default_data_type_transformers(self):
+        """Get the ``default_data_type_transformer`` dict.
+
+        Returns:
+            dict:
+                The ``default_data_type_transformers`` dictionary. The keys are
+                data types and the values are Transformers or Transformer instances.
+        """
+        return self.default_data_type_transformers
+
+    def update_default_data_type_transformers(self, new_data_type_transformers):
+        """Update the ``default_data_type_transformer`` dict.
+
+        Args:
+            new_data_type_transformers (dict):
+                Dict mapping data types to the default transformer class or instance to use for
+                them. This dict does not need to contain an entry for every data type. It will be
+                used to overwrite the existing defaults.
+        """
+        self.default_data_type_transformers.update(new_data_type_transformers)
+
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
         if output_field in self.field_transformers:
