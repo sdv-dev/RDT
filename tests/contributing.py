@@ -36,15 +36,15 @@ CHECK_DETAILS = {
     '_validate_reverse_transformed_data': (
         'Reverse Transform',
         (
-            'The Transformer can reverse transform the data it produces, going back to the ',
-            'original data type.',
+            'The Transformer can reverse transform the data it produces, going back to the '
+            'original data type.'
         ),
     ),
     '_validate_composition': (
         'Composition is Identity',
         (
-            'Transforming data and reversing it recovers the original data, if composition is ',
-            'identity is specified.',
+            'Transforming data and reversing it recovers the original data, if composition is '
+            'identity is specified.'
         ),
     ),
     '_validate_hypertransformer_transformed_data': (
@@ -54,8 +54,8 @@ CHECK_DETAILS = {
     '_validate_hypertransformer_reverse_transformed_data': (
         'Hypertransformer can reverse transform',
         (
-            'The HyperTransformer is able to reverse the data that it has previously transformed ',
-            'and restore the original data type.',
+            'The HyperTransformer is able to reverse the data that it has previously transformed '
+            'and restore the original data type.'
         ),
     ),
 }
@@ -490,3 +490,124 @@ def validate_transformer_performance(transformer):
         np.inf, np.nan)
 
     return final_results.reset_index()
+
+
+def check_clean_repository():
+    run_command = 'git diff --name-only master'.split(' ')
+    output_capture = subprocess.run(run_command, capture_output=True).stdout.decode()
+    output_capture = output_capture.splitlines()
+
+    validated_paths = []
+    valid_paths = [
+        'rdt/transformers/',
+        'rdt/transformers/addons/',
+        'tests/unit/transformers/',
+        'tests/unit/transformers/addons/',
+        'tests/integration/transformers/',
+        'tests/datasets/',
+    ]
+
+    count = 0
+    for capture in output_capture:
+        file_path = Path(capture)
+        for valid_path in valid_paths:
+            if file_path.match(valid_path):
+                validated_paths.append(True)
+            elif file_path.parent.match(valid_path):
+                validated_paths.append(True)
+            elif file_path.parent.parent.match(valid_path):
+                validated_paths.append(True)
+
+        if len(validated_paths) == count:
+            print(f'\nUnexpected changes to: {file_path}')
+            validated_paths.append(False)
+
+    return all(validated_paths)
+
+
+def _build_validation_dict(tag, result, success_details, error_details):
+    return {
+        'Check': tag,
+        'Correct': 'Yes' if result else 'No',
+        'Details': success_details if result else error_details,
+    }
+
+
+def validate_pull_request(transformer):
+    """Validate whether a pull request can be made for a ``Transformer``."""
+    if not inspect.isclass(transformer):
+        transformer = load_transformer(transformer)
+
+    code_style = validate_transformer_code_style(transformer),
+    unit_tests = validate_transformer_unit_tests(transformer)
+    integration_tests = validate_transformer_integration(transformer)
+    performance_tests = validate_transformer_performance(transformer)
+    quality_tests = validate_transformer_quality(transformer)
+    clean_repository = check_clean_repository()
+
+    unit_bool = unit_tests == 1.0
+    performance_bool = not 'No' in performance_tests['Acceptable'].unique()
+    quality_bool = quality_tests['Acceptable'].all()
+
+    results = [
+        _build_validation_dict(
+            'Code Style',
+            code_style,
+            'Code Style is acceptable.',
+            'Code Style is unacceptable!'
+        ),
+        _build_validation_dict(
+            'Unit Tests',
+            unit_bool,
+            'The unit tests are correct and run successfully.',
+            'The unit tests did not run successfully or the coverage is not a 100%.'
+        ),
+        _build_validation_dict(
+            'Integration tests',
+            integration_tests ,
+            'The integration tests run successfully.',
+            'The integration tests did not run successfully!',
+        ),
+        _build_validation_dict(
+            'Performance Tests',
+            performance_bool,
+            'The performance of the transformer is acceptable.',
+            'The performance of the transformer is unacceptable!'
+        ),
+        _build_validation_dict(
+            'Quality tests',
+            quality_bool,
+            'The output data quality is acceptable.',
+            'The output data quality is unacceptable.',
+        ),
+        _build_validation_dict(
+            'Clean Repository',
+            clean_repository,
+            'There are no unexpected changes in the repository.',
+            'There are unexpected changes in the repository!'
+        ),
+
+    ]
+
+    results = pd.DataFrame(results)
+
+    success = all([
+        code_style,
+        unit_bool,
+        integration_tests,
+        performance_bool,
+        quality_bool,
+        clean_repository
+    ])
+
+    print('\n')
+    print(tabulate(results, headers='keys', showindex=False))
+
+    if success:
+        print('\nSUCCESS: The Pull Request can be made!')
+        print('You can now commit all your changes, push to GitHub and create a Pull Request.')
+    else:
+        print('\nERROR: The Pull Request can not be made!')
+        print('Fix the reported errors and try again.')
+
+    return success
