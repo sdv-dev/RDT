@@ -136,6 +136,7 @@ class TestBaseTransformer:
             OUTPUT_TYPES = {
                 'value': 'numerical'
             }
+
         dummy_transformer = Dummy()
 
         # Run
@@ -240,6 +241,7 @@ class TestBaseTransformer:
             NEXT_TRANSFORMERS = {
                 'value': 'NullTransformer'
             }
+
         dummy_transformer = Dummy()
 
         # Run
@@ -440,7 +442,7 @@ class TestBaseTransformer:
         expected = pd.Series([4, 5, 6], name='b')
         pd.testing.assert_series_equal(columns_data, expected)
 
-    def test__set_columns_series(self):
+    def test__set_columns_data_series(self):
         """Test the ``_set_columns_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
@@ -512,7 +514,7 @@ class TestBaseTransformer:
         }, index=[2, 0, 1])
         pd.testing.assert_frame_equal(data, expected)
 
-    def test__set_columns_1d_array(self):
+    def test__set_columns_data_1d_array(self):
         """Test the ``_set_columns_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
@@ -533,7 +535,7 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
         }, index=[2, 0, 1])
         columns = ['c']
-        columns_data = np.array([7, 8, 9])
+        columns_data = np.array([7, 8, 9], dtype=np.int64)
 
         # Run
         BaseTransformer._set_columns_data(data, columns_data, columns)
@@ -544,9 +546,9 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         }, index=[2, 0, 1])
-        pd.testing.assert_frame_equal(data, expected, check_dtype=False)
+        pd.testing.assert_frame_equal(data, expected)
 
-    def test__set_columns_2d_array(self):
+    def test__set_columns_data_2d_array(self):
         """Test the ``_set_columns_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
@@ -616,6 +618,7 @@ class TestBaseTransformer:
                 'value': 'numerical',
                 'is_null': 'float'
             }
+
         dummy_transformer = Dummy()
 
         # Run
