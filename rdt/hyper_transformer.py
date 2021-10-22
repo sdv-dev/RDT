@@ -2,6 +2,7 @@
 
 import warnings
 
+from rdt.errors import NotFittedError
 from rdt.transformers import get_default_transformer, get_transformer_instance
 
 
@@ -13,7 +14,7 @@ class HyperTransformer:
 
     Args:
         field_transformers (dict or None):
-            Dict used to overwrite thr transformer used for a field. If no transformer is
+            Dict used to overwrite the transformer used for a field. If no transformer is
             specified for a field, a default transformer is selected. The keys are fields
             which can be defined as a string of the column name or a tuple of multiple column
             names. Keys can also specify transformers for fields derived by other transformers.
@@ -137,7 +138,7 @@ class HyperTransformer:
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
-    def _update_field_data_types(self, data):
+    def _populate_field_data_types(self, data):
         # get set of provided fields including multi-column fields
         provided_fields = set()
         for field in self.field_data_types.keys():
@@ -169,6 +170,7 @@ class HyperTransformer:
                 update the existing ``field_data_types`` values.
         """
         self.field_data_types.update(field_data_types)
+        self._transformers_sequence = []
 
     def get_default_data_type_transformers(self):
         """Get the ``default_data_type_transformer`` dict.
@@ -190,6 +192,7 @@ class HyperTransformer:
                 used to overwrite the existing defaults.
         """
         self.default_data_type_transformers.update(new_data_type_transformers)
+        self._transformers_sequence = []
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
@@ -259,7 +262,7 @@ class HyperTransformer:
                 Data to fit the transformers to.
         """
         self._input_columns = list(data.columns)
-        self._update_field_data_types(data)
+        self._populate_field_data_types(data)
 
         # Loop through field_transformers that are first level
         for field in self.field_transformers:
@@ -290,6 +293,9 @@ class HyperTransformer:
             pandas.DataFrame:
                 Transformed data.
         """
+        if not self._transformers_sequence:
+            raise NotFittedError
+
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
         if self.copy:
             data = data.copy()
@@ -325,6 +331,9 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
+        if not self._transformers_sequence:
+            raise NotFittedError
+
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         for transformer in reversed(self._transformers_sequence):
             data = transformer.reverse_transform(data, drop=False)

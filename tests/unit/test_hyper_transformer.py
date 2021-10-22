@@ -236,8 +236,8 @@ class TestHyperTransformer(TestCase):
         assert isinstance(next_transformer, CategoricalTransformer)
         assert next_transformer.fuzzy is True
 
-    def test__update_field_data_types(self):
-        """Test the ``_update_field_data_types`` method.
+    def test__populate_field_data_types(self):
+        """Test the ``_populate_field_data_types`` method.
 
         This tests that if any field types are missing in the
         provided field_data_types dict, that the rest of the values
@@ -263,7 +263,7 @@ class TestHyperTransformer(TestCase):
         })
 
         # Run
-        ht._update_field_data_types(data)
+        ht._populate_field_data_types(data)
 
         # Assert
         expected = {'a': 'numerical', 'b': 'categorical', 'c': 'boolean', 'd': 'float'}
