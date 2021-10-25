@@ -268,9 +268,9 @@ Now we can see our `USPhoneNumberTransformer` in action.
     In [2]: transformed
     Out [2]:
         phone_numbers.area_code	phone_numbers.exchange	phone_numbers.line	phone_numbers.country_code
-    0	                      1	                   202	               555                        0191
-    1	                      1	                   202	               555                        0151
-    2	                      1	                   202	               867                        5309
+    0	                      1	                   202	               555	                      0191
+    1	                      1	                   202	               555	                      0151
+    2	                      1	                   202	               867	                      5309
     
     In [3] reverse_transformed = transformer.reverse_transform(transformed)
 
