@@ -898,3 +898,38 @@ class TestHyperTransformer(TestCase):
             'boolean': BooleanTransformer
         }
         assert ht._transformers_sequence == []
+
+    def test_set_first_transformers_for_fields(self):
+        """Test the ``set_first_transformers_for_fields`` method.
+
+        This method should update the ``field_transformers`` attribute.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``field_transformers`` dict that only
+            has some fields set.
+
+        Input:
+            - Dict mapping one new field to a transformer and one old field to a different
+            transformer.
+        """
+        # Setup
+        field_transformers = {
+            'a': CategoricalTransformer,
+            'b': NumericalTransformer
+        }
+        ht = HyperTransformer(field_transformers=field_transformers)
+        ht._transformers_sequence = [CategoricalTransformer()]
+
+        # Run
+        ht.set_first_transformers_for_fields({
+            'c': BooleanTransformer,
+            'b': CategoricalTransformer
+        })
+
+        # Assert
+        assert ht.field_transformers == {
+            'a': CategoricalTransformer,
+            'b': CategoricalTransformer,
+            'c': BooleanTransformer
+        }
+        assert ht._transformers_sequence == []

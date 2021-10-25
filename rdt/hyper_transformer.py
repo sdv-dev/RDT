@@ -167,7 +167,8 @@ class HyperTransformer:
             field_data_types (dict):
                 Mapping of fields to their data types. Fields can be defined as a string
                 representing a column name or a tuple of multiple column names. It will
-                update the existing ``field_data_types`` values.
+                update the existing ``field_data_types`` values. Calling this method will
+                require ``fit`` to be run again.
         """
         self.field_data_types.update(field_data_types)
         self._transformers_sequence = []
@@ -189,9 +190,24 @@ class HyperTransformer:
             new_data_type_transformers (dict):
                 Dict mapping data types to the default transformer class or instance to use for
                 them. This dict does not need to contain an entry for every data type. It will be
-                used to overwrite the existing defaults.
+                used to overwrite the existing defaults. Calling this method will require ``fit``
+                to be run again.
         """
         self.default_data_type_transformers.update(new_data_type_transformers)
+        self._transformers_sequence = []
+
+    def set_first_transformers_for_fields(self, field_transformers):
+        """Set the first transformer to use for certain fields.
+
+        Args:
+            field_transformers (dict):
+                Dict mapping fields to a transformer class name or instance. This transformer will
+                be the first used on that field when the ``HyperTransformer`` calls ``transform``.
+                The fields or keys can be defined as strings representing a single column name, or
+                tuples of strings representing multiple column names. Calling this method will
+                require ``fit`` to be run again.
+        """
+        self.field_transformers.update(field_transformers)
         self._transformers_sequence = []
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
