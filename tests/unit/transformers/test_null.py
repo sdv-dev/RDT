@@ -18,7 +18,7 @@ class TestNullTransformer:
         Input:
             - nothing
 
-        Expected Behavior:
+        Expected Side Effects:
             - The `fill_value` attribute should be `None`.
             - The `null_column` attribute should be `None`.
             - The `copy` attribute should be `False`.
@@ -40,7 +40,7 @@ class TestNullTransformer:
         Input:
             - Values different than the defaults.
 
-        Expected Behavior:
+        Expected Side Effects:
             - The attributes should be populated with the given values.
         """
         # Run
@@ -254,7 +254,7 @@ class TestNullTransformer:
         Input:
             - pd.Series of integers that contains nulls.
 
-        Expected behavior:
+        Expected Side Effects:
             - the null_column attribute should be set to True.
             - the nulls attribute should be set to True.
             - the fill_value should be set to the mean of the given integers.
@@ -285,7 +285,7 @@ class TestNullTransformer:
         Input:
             - pd.Series of strings that contains no nulls.
 
-        Expected behavior:
+        Expected Side Effects:
             - the null_column attribute should be set to False.
             - the nulls attribute should be set to False.
             - the fill_value should be set to the mode of the given strings.
@@ -317,7 +317,7 @@ class TestNullTransformer:
         Input:
             - 2 pd.Series, one containing nulls and the other not containing nulls.
 
-        Expected behavior:
+        Expected Side Effects:
             - the _null_column attribute should be set to True or False as indicated
               in the Transformer creation.
             - the nulls attribute should be True or False depending on whether
@@ -370,11 +370,11 @@ class TestNullTransformer:
         Input:
             - A pd.Series of integers with nulls.
 
-        Output:
+        Expected Output:
             - Same data as the input, replacing the nulls with the
               scalar value.
 
-        Side Effect:
+        Expected Side Effects:
             - The input data has the null values replaced.
         """
         # Setup
@@ -409,11 +409,11 @@ class TestNullTransformer:
         Input:
             - A pd.Series of strings with nulls.
 
-        Output:
+        Expected Output:
             - Exactly the same as the input, replacing the nulls with the
               scalar value.
 
-        Side Effect:
+        Expected Side Effects:
             - The input data has the null values replaced.
         """
         # Setup
@@ -452,11 +452,11 @@ class TestNullTransformer:
         Input:
             - A pd.Series of integers with nulls.
 
-        Output:
+        Expected Output:
             - Same data as the input, replacing the nulls with the
               scalar value.
 
-        Side Effect:
+        Expected Side Effects:
             - The input data has not been modified.
         """
         # Setup
@@ -491,11 +491,11 @@ class TestNullTransformer:
         Input:
             - A pd.Series of strings with nulls.
 
-        Output:
+        Expected Output:
             - Exactly the same as the input, replacing the nulls with the
               scalar value.
 
-        Side Effect:
+        Expected Side Effects:
             - The input data has not been modified.
         """
         # Setup
@@ -533,11 +533,11 @@ class TestNullTransformer:
         Input:
             - A pd.Series of strings with nulls, containing the fill_value.
 
-        Output:
+        Expected Output:
             - Exactly the same as the input, replacing the nulls with the
               scalar value.
 
-        Side Effect:
+        Expected Side Effects:
             - A UserWarning is raised.
         """
         # Setup
@@ -569,11 +569,11 @@ class TestNullTransformer:
         Input:
             - 2d numpy array with variate float values.
 
-        Output:
+        Expected Output:
             - pd.Series containing the first column from the input data
               with the values indicated by the first column replaced by nans.
 
-        Side Effect:
+        Expected Side Effects:
             - the input data should not have been modified.
         """
         # Setup
@@ -614,11 +614,11 @@ class TestNullTransformer:
         Input:
             - 2d numpy array with variate float values.
 
-        Output:
+        Expected Output:
             - pd.Series containing the first column from the input data
               with the values indicated by the first column replaced by nans.
 
-        Side Effect:
+        Expected Side Effects:
             - the input data should have been modified.
         """
         # Setup
@@ -664,7 +664,7 @@ class TestNullTransformer:
         Input:
             - 2d numpy array with variate float values.
 
-        Output:
+        Expected Output:
             - pd.Series containing the first column from the input data unmodified.
         """
         # Setup
@@ -701,7 +701,7 @@ class TestNullTransformer:
             - 1d numpy array with variate float values, containing the _fill_value
               among them.
 
-        Output:
+        Expected Output:
             - pd.Series containing the same data as input, with the values that
               match the _fill_value replaced by nans.
         """
@@ -733,7 +733,7 @@ class TestNullTransformer:
             - 1d numpy array with variate float values, containing the _fill_value
               among them.
 
-        Output:
+        Expected Output:
             - pd.Series containing the same data as input, without modification.
         """
         # Setup
