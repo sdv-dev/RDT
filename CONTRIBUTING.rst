@@ -197,10 +197,13 @@ Validating Code Style
 To validate the overall code style for your transformer, you can use the custom code validation
 function, ``validate_transformer_code_style``. This function returns a boolean indicating whether
 or not the transformer passed all the code style checks. It also prints a table describing each
-check and whether or not it passed::
+check and whether or not it passed.
 
-   >>> from tests.contributing import validate_transformer_code_style
-   >>> validate_transformer_code_style('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+.. code-block:: Python
+
+   In [1]: from tests.contributing import validate_transformer_code_style
+
+   In [2]: valid = validate_transformer_code_style('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
    Validating source file C:\Datacebo\RDT\rdt\transformers\boolean.py
 
    SUCCESS: The code style is correct.
@@ -218,7 +221,9 @@ check and whether or not it passed::
    Valid test function names  Yes        The transformer tests are named correctly.
    Valid transformer addon    Yes        The addon is configured properly.
    Importable from module     Yes        The transformer can be imported from the parent module.
-   True
+
+   In [3]: valid
+   Out[3]: True
 
 Unit Tests
 """"""""""
@@ -234,10 +239,13 @@ Validating Unit Tests
 The transformer unit tests and their coverage can be validated using the
 ``validate_transformer_unit_tests`` function. This function returns a ``float`` value representing
 the test coverage where 1.0 is 100%. It also prints each test and whether or not it passed. It also
-prints a table summarizing the test coverage and provides a link to the full coverage report.::
+prints a table summarizing the test coverage and provides a link to the full coverage report.
 
-   >>> from tests.contributing import validate_transformer_unit_tests
-   >>> validate_transformer_unit_tests('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+.. code-block:: Python
+
+   In [1]: from tests.contributing import validate_transformer_unit_tests
+
+   In [2]: test_coverage = validate_transformer_unit_tests('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
    Validating source file C:\Datacebo\RDT\rdt\transformers\boolean.py
 
    ================================================= test session starts =================================================
@@ -270,7 +278,9 @@ prints a table summarizing the test coverage and provides a link to the full cov
    Full coverage report here:
 
    file:///C:/Datacebo/RDT/htmlcov/rdt_transformers_boolean_py.html
-   0.486
+
+   In [3]: test_coverage
+   Out [3]: 0.486
 
 Integration Tests
 """""""""""""""""
@@ -302,10 +312,13 @@ Validating Integration Tests
 
 Integration tests can be validated using the ``validate_transformer_integration`` function. This
 function returns a boolean representing whether or not the transformer passes all integration
-checks. It also prints a table describing each check and whether or not it passed.::
+checks. It also prints a table describing each check and whether or not it passed.
 
-   >>> from tests.contributing import validate_transformer_integration
-   >>> validate_transformer_integration('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+.. code-block:: Python
+
+   In [1]: from tests.contributing import validate_transformer_integration
+
+   In [2]: valid = validate_transformer_integration('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
    Validating Integration Tests for transformer BooleanTransformer
 
    SUCCESS: The integration tests were successful.
@@ -317,7 +330,9 @@ checks. It also prints a table describing each check and whether or not it passe
    Reverse Transform                       Yes        The Transformer can reverse transform the data it produces, going back to the original data type.
    Hypertransformer can transform          Yes        The HyperTransformer is able to use the Transformer and produce float values.
    Hypertransformer can reverse transform  Yes        The HyperTransformer is able to reverse the data that it has previously transformed and restore the original data type.
-   True
+
+   In [3]: valid
+   Out [3]: True
 
 .. _Transformer Performance:
 
@@ -380,13 +395,19 @@ Validating Performance
 
 Validate the performance of your transformer using the ``validate_transformer_performance``
 function. This function returns a ``pandas.DataFrame`` containing the performance results
-of the transformer.::
+of the transformer.
 
-   >>> from tests.contributing import validate_transformer_performance
-   >>> validate_transformer_performance('rdt.transformers.DatetimeTransformer') # Replace DatetimeTransformer with your transformer
+.. code-block:: Python
+
+   In [1]: from tests.contributing import validate_transformer_performance
+
+   In [2]: results = validate_transformer_performance('rdt.transformers.DatetimeTransformer') # Replace DatetimeTransformer with your transformer
    Validating Performance for transformer DatetimeTransformer
 
    SUCCESS: The Performance Tests were successful.
+
+   In [3]: results
+   Out [3]:
             Evaluation Metric         Value Acceptable     Units  Compared to Average
    0                Fit Memory  9.334700e+01        Yes  Mb / row             0.757455
    1                  Fit Time  6.232677e-07        Yes   s / row             0.574041
@@ -436,14 +457,19 @@ Validating Quality
 
 Validate the quality of your transformer using the ``validate_transformer_quality`` function.
 This function returns a ``pandas.DataFrame`` containing the scores attained by the transformer
-on each dataset, how that score compares to average and whether or not it is acceptable.::
+on each dataset, how that score compares to average and whether or not it is acceptable.
 
-   >>> from tests.contributing import validate_transformer_quality
-   >>> validate_transformer_quality('rdt.transformers.CategoricalTransformer') # Replace CategoricalTransformer with your transformer
+.. code-block:: Python
+
+   In [1]: from tests.contributing import validate_transformer_quality
+
+   In [2]: results = validate_transformer_quality('rdt.transformers.CategoricalTransformer') # Replace CategoricalTransformer with your transformer
    Validating Quality Tests for transformer CategoricalTransformer
 
    SUCCESS: The quality tests were successful.
 
+   In [3]: results
+   Out [3]:
                      Dataset     Score  Compared To Average  Acceptable
    0                   adult  0.223325             0.443181        True
    1      student_placements  0.457490             0.994631        True
@@ -456,10 +482,13 @@ Finalize Your Transformer
 
 Re-run all the previous validations until they pass. For a final verification, run
 ``validate_pull_request`` and fix any errors reported. This function runs all the checks described
-above. It also prints a table summarizing the results of all these checks.::
+above. It also prints a table summarizing the results of all these checks.
 
-   >>> from tests.contributing import validate_pull_request
-   >>> validate_pull_request('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+.. code-block:: Python
+
+   In [1]: from tests.contributing import validate_pull_request
+
+   In [2]: valid = validate_pull_request('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
    ...................
 
    Check              Correct    Details
@@ -474,7 +503,8 @@ above. It also prints a table summarizing the results of all these checks.::
    SUCCESS: The Pull Request can be made!
    You can now commit all your changes, push to GitHub and create a Pull Request.
 
-   True
+   In [3]: valid
+   Out [3]: True
 
 Once you have done everything above, you can create a PR. Do this by following the steps in the
 `Pull Request Guidelines`_ section. Review and fill out the checklist in the PR template to ensure
