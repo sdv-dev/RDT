@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
+from rdt.errors import NotFittedError
 from rdt.transformers import (
     BooleanTransformer, CategoricalTransformer, DatetimeTransformer, GaussianCopulaTransformer,
     NumericalTransformer, OneHotEncodingTransformer)
@@ -674,6 +675,29 @@ class TestHyperTransformer(TestCase):
         bool_transformer.transform.assert_called_once()
         datetime_transformer.transform.assert_called_once()
 
+    def test_transform_raises_error_if_transformer_sequence_is_empty(self):
+        """Test that ``transform`` raises an error.
+
+        The ``transform`` method should raise a ``NotFittedError`` if the
+        ``_transformers_sequence`` is empty.
+
+        Setup:
+            - The ``_transformers_sequence`` will not be set.
+
+        Input:
+            - A DataFrame of multiple types.
+
+        Expected behavior:
+            - A ``NotFittedError`` is raised.
+        """
+        # Setup
+        data = self.get_data()
+        ht = HyperTransformer()
+
+        # Run
+        with pytest.raises(NotFittedError):
+            ht.transform(data)
+
     def test_fit_transform(self):
         """Test call fit_transform"""
         # Run
@@ -752,6 +776,29 @@ class TestHyperTransformer(TestCase):
         bool_transformer.reverse_transform.assert_called_once()
         datetime_transformer.reverse_transform.assert_called_once()
 
+    def test_reverse_transform_raises_error_if_transformer_sequence_is_empty(self):
+        """Test that ``reverse_transform`` raises an error.
+
+        The ``reverse_transform`` method should raise a ``NotFittedError`` if the
+        ``_transformers_sequence`` is empty.
+
+        Setup:
+            - The ``_transformers_sequence`` will not be set.
+
+        Input:
+            - A DataFrame of multiple types.
+
+        Expected behavior:
+            - A ``NotFittedError`` is raised.
+        """
+        # Setup
+        data = self.get_transformed_data()
+        ht = HyperTransformer()
+
+        # Run
+        with pytest.raises(NotFittedError):
+            ht.reverse_transform(data)
+
     def test_get_field_data_types(self):
         """Test the ``get_field_data_types`` method.
 
@@ -791,12 +838,14 @@ class TestHyperTransformer(TestCase):
             'b': 'integer'
         }
         ht = HyperTransformer(field_data_types={'a': 'float'})
+        ht._transformers_sequence = [CategoricalTransformer()]
 
         # Run
         ht.update_field_data_types(field_data_types)
 
         # Assert
         assert ht.field_data_types == {'a': 'categorical', 'b': 'integer'}
+        assert ht._transformers_sequence == []
 
     def test_get_default_data_type_transformers(self):
         """Test the ``get_default_data_type_transformers`` method.
@@ -837,6 +886,7 @@ class TestHyperTransformer(TestCase):
             'integer': NumericalTransformer
         }
         ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
+        ht._transformers_sequence = [CategoricalTransformer()]
 
         # Run
         ht.update_default_data_type_transformers({'boolean': BooleanTransformer})
@@ -847,3 +897,4 @@ class TestHyperTransformer(TestCase):
             'integer': NumericalTransformer,
             'boolean': BooleanTransformer
         }
+        assert ht._transformers_sequence == []
