@@ -195,10 +195,30 @@ Validating Code Style
 *********************
 
 To validate the overall code style for your transformer, you can use the custom code validation
-function, ``validate_transformer_code_style``::
+function, ``validate_transformer_code_style``. This function returns a boolean indicating whether
+or not the transformer passed all the code style checks. It also prints a table describing each
+check and whether or not it passed::
 
-    from tests.contributing import validate_transformer_code_style
-    validate_transformer_code_style('rdt.transformers.<YourTransformer>')
+   >>> from tests.contributing import validate_transformer_code_style
+   >>> validate_transformer_code_style('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+   Validating source file C:\Datacebo\RDT\rdt\transformers\boolean.py
+
+   SUCCESS: The code style is correct.
+
+   Check                      Correct    Details
+   -------------------------  ---------  ---------------------------------------------------------
+   flake8                     Yes        Code follows PEP8 standards.
+   isort                      Yes        Imports are properly sorted.
+   pylint                     Yes        Code is properly formatted and structured.
+   pydocstyle                 Yes        The docstrings are properly written.
+   Transformer Name           Yes        Transformer name ends with ``Transformer``.
+   Transformer is subclass    Yes        The transformer is subclass of ``BaseTransformer``.
+   Valid module               Yes        The transformer is placed inside a valid module.
+   Valid test module          Yes        The transformer tests are placed inside the valid module.
+   Valid test function names  Yes        The transformer tests are named correctly.
+   Valid transformer addon    Yes        The addon is configured properly.
+   Importable from module     Yes        The transformer can be imported from the parent module.
+   True
 
 Unit Tests
 """"""""""
@@ -214,8 +234,8 @@ Validating Unit Tests
 The transformer unit tests and their coverage can be validated using the
 ``validate_transformer_unit_tests`` function::
 
-    from tests.contributing import validate_transformer_unit_tests
-    validate_transformer_unit_tests('rdt.transformers.<YourTransformer>')
+   >>> from tests.contributing import validate_transformer_unit_tests
+   >>> validate_transformer_unit_tests('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
 
 Integration Tests
 """""""""""""""""

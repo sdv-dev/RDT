@@ -18,7 +18,7 @@ The goal of RDT is to be able to transform data that is not machine learning rea
 is. By machine learning ready, we mean that the data should consist of data types that most machine
 learning models can process. Usually this means outputting numeric data with no nulls. On top of this,
 RDT also enforces that those transformations can be reversed, so that data of the original form can
-be attained again. RDT accomplishes this with the use of two main classes:
+be obtained again. RDT accomplishes this with the use of two main classes:
 
 * ``BaseTransformer``
 * ``HyperTransformer``
@@ -32,26 +32,42 @@ data. To enable transformers to do this, the ``BaseTransformer`` has the followi
 
 * ``INPUT_TYPE`` (str) - The input type for the transformer.
 * ``OUTPUT_TYPES`` (dict) - Dictionary mapping transformed column names to their data types.
-* ``DETERMINISTIC_TRANSFORM`` (bool) - Whether or not calling ``transform`` yields deterministic
+* ``DETERMINISTIC_TRANSFORM`` (bool) - Whether or not calling ``transform`` yields a deterministic
   output.
-* ``DETERMINISTIC_REVERSE`` (bool) - Whether or not calling ``reverse_transform`` yields deterministic
-  output.
+* ``DETERMINISTIC_REVERSE`` (bool) - Whether or not calling ``reverse_transform`` yields a
+  deterministic output.
 * ``COMPOSITION_IS_IDENTITY`` (bool) - Whether or not calling ``transform`` and then
-  ``reverse_transform`` back to back yields deterministic output.
+  ``reverse_transform`` back to back yields data identical to the ``transform`` input (the original
+  data).
 * ``NEXT_TRANSFORMERS`` (dict) - Dictionary mapping transformed column names to Transformer class names
-  to use on them.
+  to use on them. This is optional. It can also be partially defined, meaning that some transformed
+  columns can have an entry in the dict, but not all of them need to.
 * ``columns`` (list) - List of column names that the transformer will transform. Set during ``fit``.
-* ``column_prefix`` (str) - Names of input columns joined with `#`. Set during ``fit``.
 * ``output_columns`` (list) - List of column names in the output from calling ``transform``. Set
   during ``fit``.
+* ``column_prefix`` (str) - Prefix that will be added to the output columns to make them unique on
+  the table. For transformers that act on a single column this is the column name, and for
+  transformers that act on multiple columns this is their names joined by `#`. Set during ``fit``.
 
-It also has the following methods:
+It also has the following default methods, which the ``Transformer`` subclasses may overwrite when
+necessary:
 
-* ``get_output_types()`` - Returns ``OUTPUT_TYPES`` with ``column_prefix`` prepended to keys.
-* ``is_transform_deterministic()`` - Returns ``DETERMINISTIC_TRANSFORM``.
-* ``is_reverse_deterministic()`` - Returns ``DETERMINISTIC_REVERSE``.
-* ``is_composition_identity()`` - Returns ``COMPOSITION_IS_IDENTITY``.
-* ``get_next_transformers()`` - Returns ``NEXT_TRANSFORMERS``.
+* ``get_output_types()`` - Returns the name of the columns that the transform method creates. By
+  default this will be the ``OUTPUT_TYPES`` dictionary with the column names prepended with the
+  ``column_prefix`` with a dot (`.`) as the separator.
+* ``is_transform_deterministic()`` - Returns a boolean indicating whether the output of the
+  ``transform`` method is deterministic. By default this is the value of the
+  ``DETERMINISTIC_TRANSFORM`` attribute.
+* ``is_reverse_deterministic()`` - Returns a boolean indicating whether the output of the
+  ``reverse_transform``method is deterministic. By default this is the value of the
+  ``DETERMINISTIC_REVERSE`` attribute.
+* ``is_composition_identity()`` - Returns a boolean indicating whether the output of calling
+  ``transform`` and then ``reverse_transform`` on the transformed output is deterministic. By
+  default this is the ``COMPOSITION_IS_IDENTITY`` attribute.
+* ``get_next_transformers()`` - Returns a dictionary mapping the names of the columns that the
+  ``transform`` method creates to the next transformer to use for those columns. By default this
+  will be the ``NEXT_TRANSFORMERS`` dictionary with the keys prepended with the ``column_prefix``
+  with a dot (`.`) as a separator.
 * ``fit(data, columns)`` - Takes in ``pandas.DataFrame`` and list of column names and stores
   the information needed to run ``transform``.
 * ``transform(data, drop)`` - Takes in ``pandas.DataFrame`` and bool saying whether or not to
@@ -108,7 +124,7 @@ Example Transformer
 """""""""""""""""""
 
 Now that we have some background information on how Transformers work in RDT, let's create a new
-one. For this example, we will create a simple ``PhoneNumberTransformer``. The goal of this
+one. For this example, we will create a simple ``USPhoneNumberTransformer``. The goal of this
 transformer is to take strings containing phone numbers into numeric data. For the sake of
 simplicity, we will assume all phone numbers are of the format `###-###-####` or
 `#-###-###-####`.
@@ -117,7 +133,7 @@ Let's start by setting the necessary attributes and writing the ``__init__`` met
 
 .. code-block:: Python
 
-    class PhoneNumberTransformer(BaseTransformer):
+    class USPhoneNumberTransformer(BaseTransformer):
 
         INPUT_TYPE = 'phone_number'
         DETERMINISTIC_TRANSFORM = True
@@ -187,7 +203,7 @@ We don't have to worry about the naming of the output columns because the ``Base
 handles that for us. Let's view the complete class below.
 
 .. code-block:: Python
-    class PhoneNumberTransformer(BaseTransformer):
+    class USPhoneNumberTransformer(BaseTransformer):
 
         INPUT_TYPE = 'phone_number'
         DETERMINISTIC_TRANSFORM = True
@@ -238,11 +254,11 @@ handles that for us. Let's view the complete class below.
             line = data.iloc[:, 2].astype('str')
             return area_code + '-' + exchange + '-' + line
 
-Now we can see our `PhoneNumberTransformer` in action.
+Now we can see our `USPhoneNumberTransformer` in action.
 
 .. code-block:: Python
 
-    transformer = PhoneNumberTransformer()
+    transformer = USPhoneNumberTransformer()
     data = pd.DataFrame({
         'phone_numbers': ['1-773-404-7845', '1-773-543-4780', '1-111-111-1111']
     })
@@ -257,7 +273,7 @@ We can also run it using the `HyperTransformer`.
 .. code-block:: Python
 
     ht = HyperTransformer(
-        data_type_transformers={'phone_number': PhoneNumberTransformer},
+        data_type_transformers={'phone_number': USPhoneNumberTransformer},
         field_types={'phone_numbers': 'phone_number'}
     )
     ht.fit(data)
@@ -311,7 +327,7 @@ We can start by implementing the ``generate`` method and setting the ``DATA_TYPE
 
     from tests.datasets.base import BaseDatasetGenerator
 
-    class PhoneNumberGenerator(BaseDatasetGenerator, ABC):
+    class USPhoneNumberGenerator(BaseDatasetGenerator, ABC):
         DATA_TYPE = 'phone_number'
         
         @staticmethod
@@ -348,4 +364,4 @@ To view the result of the generator we can run the following:
 
 .. code-block:: Python
 
-    PhoneNumberGenerator.generate(100)
+    USPhoneNumberGenerator.generate(100)
