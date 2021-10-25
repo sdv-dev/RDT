@@ -126,7 +126,7 @@ test-all: ## test using tox
 
 .PHONY: coverage
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source rdt -m pytest
+	coverage run --source rdt -m pytest tests/unit
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
