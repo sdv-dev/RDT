@@ -382,7 +382,6 @@ def validate_transformer_quality(transformer):
     a score comparing the transformer's average score for the dataset to
     the average of the average score for the dataset across all transformers of
     the same data type, and whether or not the score passed the test threshold.
-    3. The table described above is printed when this function is run.
 
     Returns:
         DataFrame containing the following columns for each dataset the transformer
@@ -416,9 +415,7 @@ def validate_transformer_quality(transformer):
     else:
         print('Failure: The quality tests were NOT successful.\n')
 
-    print(tabulate(transformer_results, headers='keys', showindex=False))
-
-    return transformer_results
+    return transformer_results.reset_index(drop=True)
 
 
 def validate_transformer_performance(transformer):
