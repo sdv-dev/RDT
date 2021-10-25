@@ -471,10 +471,10 @@ above. It also prints a table summarizing the results of all these checks.::
    Quality tests      Yes        The output data quality is acceptable.
    Clean Repository   Yes        There are no unexpected changes in the repository.
 
-   ERROR: The Pull Request can not be made!
-   Fix the reported errors and try again.
+   SUCCESS: The Pull Request can be made!
+   You can now commit all your changes, push to GitHub and create a Pull Request.
 
-   False
+   True
 
 Once you have done everything above, you can create a PR. Do this by following the steps in the
 `Pull Request Guidelines`_ section. Review and fill out the checklist in the PR template to ensure
