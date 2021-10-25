@@ -286,8 +286,8 @@ We can also run it using the `HyperTransformer`.
 .. code-block:: Python
 
     In [1]: ht = HyperTransformer(
-                data_type_transformers={'phone_number': USPhoneNumberTransformer},
-                field_types={'phone_numbers': 'phone_number'}
+                default_data_type_transformers={'phone_number': USPhoneNumberTransformer},
+                field_data_types={'phone_numbers': 'phone_number'}
             )
             ht.fit(data)
             transformed = ht.transform(data)
