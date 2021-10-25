@@ -258,29 +258,55 @@ Now we can see our `USPhoneNumberTransformer` in action.
 
 .. code-block:: Python
 
-    transformer = USPhoneNumberTransformer()
-    data = pd.DataFrame({
-        'phone_numbers': ['1-773-404-7845', '1-773-543-4780', '1-111-111-1111']
-    })
-    transformer.fit(data, ['phone_numbers'])
-    transformed = transformer.transform(data)
-    print(transformed)
-    reversed = transformer.reverse_transform(transformed)
-    print(reversed)
+    In [1]: transformer = USPhoneNumberTransformer()
+            data = pd.DataFrame({
+                'phone_numbers': ['1-202-555-0191', '1-202-555-0151', '1-202-867-5309']
+            })
+            transformer.fit(data, ['phone_numbers'])
+            transformed = transformer.transform(data)
+    
+    In [2]: transformed
+    Out [2]:
+        phone_numbers.area_code	phone_numbers.exchange	phone_numbers.line	phone_numbers.country_code
+    0	                      1	                   202	               555	                      0191
+    1	                      1	                   202	               555 	                      0151
+    2	                      1	                   202	               867                     	  5309
+    
+    In [3] reverse_transformed = transformer.reverse_transform(transformed)
+
+    In [4] reverse_transformed
+    Out [4]
+            phone_numbers
+    0	   1-202-555-0191
+    1	   1-202-555-0151
+    2	   1-202-867-5309
 
 We can also run it using the `HyperTransformer`.
 
 .. code-block:: Python
 
-    ht = HyperTransformer(
-        data_type_transformers={'phone_number': USPhoneNumberTransformer},
-        field_types={'phone_numbers': 'phone_number'}
-    )
-    ht.fit(data)
-    transformed = ht.transform(data)
-    print(transformed)
-    reversed = ht.reverse_transform(transformed)
-    print(reversed)
+    In [1]: ht = HyperTransformer(
+                data_type_transformers={'phone_number': USPhoneNumberTransformer},
+                field_types={'phone_numbers': 'phone_number'}
+            )
+            ht.fit(data)
+            transformed = ht.transform(data)
+
+    In [2]: transformed
+    Out [2]:
+        phone_numbers.area_code.value	phone_numbers.exchange	phone_numbers.line	phone_numbers.country_code.value
+    0	                          0.5	                   202	               555	                        0.500000
+    1	                          0.5	                   202	               555	                        0.166667
+    2	                          0.5	                   202	               867	                        0.833333
+
+    In [3]: reverse_transformed = ht.reverse_transform(transformed)
+
+    In [4]: reverse_transformed
+    Out [4]:
+            phone_numbers
+    0	   1-202-555-0191
+    1	   1-202-555-0151
+    2	   1-202-867-5309
 
 Dataset Generators
 ------------------
