@@ -59,7 +59,7 @@ necessary:
   ``transform`` method is deterministic. By default this is the value of the
   ``DETERMINISTIC_TRANSFORM`` attribute.
 * ``is_reverse_deterministic()`` - Returns a boolean indicating whether the output of the
-  ``reverse_transform``method is deterministic. By default this is the value of the
+  ``reverse_transform`` method is deterministic. By default this is the value of the
   ``DETERMINISTIC_REVERSE`` attribute.
 * ``is_composition_identity()`` - Returns a boolean indicating whether the output of calling
   ``transform`` and then ``reverse_transform`` on the transformed output is deterministic. By

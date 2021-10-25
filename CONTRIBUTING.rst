@@ -232,10 +232,45 @@ Validating Unit Tests
 *********************
 
 The transformer unit tests and their coverage can be validated using the
-``validate_transformer_unit_tests`` function::
+``validate_transformer_unit_tests`` function. This function returns a ``float`` value representing
+the test coverage where 1.0 is 100%. It also prints each test and whether or not it passed. It also
+prints a table summarizing the test coverage and provides a link to the full coverage report.::
 
    >>> from tests.contributing import validate_transformer_unit_tests
    >>> validate_transformer_unit_tests('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+   Validating source file C:\Datacebo\RDT\rdt\transformers\boolean.py
+
+   ================================================= test session starts =================================================
+   collected 12 items
+
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test___init__ PASSED                            [  8%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__fit_array PASSED                          [ 16%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__fit_nan_ignore PASSED                     [ 25%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__fit_nan_not_ignore PASSED                 [ 33%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_2d_ndarray PASSED       [ 41%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_float_values PASSED     [ 50%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_float_values_out_of_range PASSED [ 58%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_nan_ignore PASSED       [ 66%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_nan_not_ignore PASSED   [ 75%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_not_null_values PASSED  [ 83%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__transform_array PASSED                    [ 91%]
+   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__transform_series PASSED                   [100%]
+
+   ============================================ 12 passed, 1 warning in 0.08s ============================================
+
+   SUCCESS: The unit tests passed.
+   Name                          Stmts   Miss  Cover   Missing
+   -----------------------------------------------------------
+   rdt\transformers\boolean.py      37     19    49%   3-36, 40-55, 68, 88, 100
+   -----------------------------------------------------------
+   TOTAL                            37     19    49%
+
+   ERROR: The unit tests only cover 48.649% of your code.
+
+   Full coverage report here:
+
+   file:///C:/Datacebo/RDT/htmlcov/rdt_transformers_boolean_py.html
+   0.486
 
 Integration Tests
 """""""""""""""""
@@ -265,10 +300,24 @@ add a new integration test. Integration tests can be added under
 Validating Integration Tests
 ****************************
 
-Integration tests can be validated using the ``validate_transformer_integration`` function::
+Integration tests can be validated using the ``validate_transformer_integration`` function. This
+function returns a boolean representing whether or not the transformer passes all integration
+checks. It also prints a table describing each check and whether or not it passed.::
 
-    from tests.contributing import validate_transformer_integration
-    validate_transformer_integration('rdt.transformers.<YourTransformer>')
+   >>> from tests.contributing import validate_transformer_integration
+   >>> validate_transformer_integration('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+   Validating Integration Tests for transformer BooleanTransformer
+
+   SUCCESS: The integration tests were successful.
+
+   Check                                   Correct    Details
+   --------------------------------------  ---------  -----------------------------------------------------------------------------------------------------------------------
+   Dataset Generators                      Yes        At least one Dataset Generator exists for the Transformer data type.
+   Output Types                            Yes        The Transformer can transform data and produce output(s) of the indicated data type(s).
+   Reverse Transform                       Yes        The Transformer can reverse transform the data it produces, going back to the original data type.
+   Hypertransformer can transform          Yes        The HyperTransformer is able to use the Transformer and produce float values.
+   Hypertransformer can reverse transform  Yes        The HyperTransformer is able to reverse the data that it has previously transformed and restore the original data type.
+   True
 
 .. _Transformer Performance:
 
@@ -329,11 +378,22 @@ optimize performance.
 Validating Performance
 **********************
 
-Validate the performance of your transformer using the
-``validate_transformer_performance`` function::
+Validate the performance of your transformer using the ``validate_transformer_performance``
+function. This function returns a ``pandas.DataFrame`` containing the performance results
+of the transformer.::
 
-    from tests.contributing import validate_transformer_performance
-    validate_transformer_performance('rdt.transformers.<YourTransformer>')
+   >>> from tests.contributing import validate_transformer_performance
+   >>> validate_transformer_performance('rdt.transformers.DatetimeTransformer') # Replace DatetimeTransformer with your transformer
+   Validating Performance for transformer DatetimeTransformer
+
+   SUCCESS: The Performance Tests were successful.
+            Evaluation Metric         Value Acceptable     Units  Compared to Average
+   0                Fit Memory  9.334700e+01        Yes  Mb / row             0.757455
+   1                  Fit Time  6.232677e-07        Yes   s / row             0.574041
+   2  Reverse Transform Memory  1.451382e+02        Yes  Mb / row             0.966153
+   3    Reverse Transform Time  6.641531e-07        Yes   s / row             1.080660
+   4          Transform Memory  8.896317e+01        Yes  Mb / row             0.656664
+   5            Transform Time  5.217231e-07        Yes   s / row             0.484631
 
 Fix any performance issues that are reported. If there are no errors but performance
 can be improved, this function should be used for reference.
@@ -374,11 +434,20 @@ steps:
 Validating Quality
 ******************
 
-Validate the quality of your transformer using the
-``validate_transformer_quality`` function::
+Validate the quality of your transformer using the ``validate_transformer_quality`` function.
+This function returns a ``pandas.DataFrame`` containing the scores attained by the transformer
+on each dataset, how that score compares to average and whether or not it is acceptable.::
 
-    from tests.contributing import validate_transformer_quality
-    validate_transformer_quality('rdt.transformers.<YourTransformer>')
+   >>> from tests.contributing import validate_transformer_quality
+   >>> validate_transformer_quality('rdt.transformers.CategoricalTransformer') # Replace CategoricalTransformer with your transformer
+   Validating Quality Tests for transformer CategoricalTransformer
+
+   SUCCESS: The quality tests were successful.
+
+                     Dataset     Score  Compared To Average  Acceptable
+   0                   adult  0.223325             0.443181        True
+   1      student_placements  0.457490             0.994631        True
+   2  student_placements_pii  0.457490             0.988428        True
 
 Fix any quality issues that are reported.
 
@@ -386,10 +455,26 @@ Finalize Your Transformer
 """""""""""""""""""""""""
 
 Re-run all the previous validations until they pass. For a final verification, run
-``validate_pull_request`` and fix any errors reported::
+``validate_pull_request`` and fix any errors reported. This function runs all the checks described
+above. It also prints a table summarizing the results of all these checks.::
 
-    from tests.contributing import validate_pull_request
-    validate_pull_request('rdt.transformers.<YourTransformer>')
+   >>> from tests.contributing import validate_pull_request
+   >>> validate_pull_request('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+   ...................
+
+   Check              Correct    Details
+   -----------------  ---------  ----------------------------------------------------------------------
+   Code Style         Yes        Code Style is acceptable.
+   Unit Tests         Yes        The unit tests are correct and run successfully.
+   Integration tests  Yes        The integration tests run successfully.
+   Performance Tests  Yes        The performance of the transformer is acceptable.
+   Quality tests      Yes        The output data quality is acceptable.
+   Clean Repository   Yes        There are no unexpected changes in the repository.
+
+   ERROR: The Pull Request can not be made!
+   Fix the reported errors and try again.
+
+   False
 
 Once you have done everything above, you can create a PR. Do this by following the steps in the
 `Pull Request Guidelines`_ section. Review and fill out the checklist in the PR template to ensure
