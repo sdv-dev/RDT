@@ -260,7 +260,7 @@ class BigNormalGenerator(NumericalGenerator):
                 'memory': 200.0
             },
             'transform': {
-                'time': 1e-06,
+                'time': 5e-06,
                 'memory': 100.0
             },
             'reverse_transform': {
