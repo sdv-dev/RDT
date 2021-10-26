@@ -2,6 +2,7 @@
 
 import warnings
 
+from rdt.errors import NotFittedError
 from rdt.transformers import get_default_transformer, get_transformer_instance
 
 
@@ -13,16 +14,16 @@ class HyperTransformer:
 
     Args:
         field_transformers (dict or None):
-            Dict used to overwrite thr transformer used for a field. If no transformer is
+            Dict used to overwrite the transformer used for a field. If no transformer is
             specified for a field, a default transformer is selected. The keys are fields
             which can be defined as a string of the column name or a tuple of multiple column
             names. Keys can also specify transformers for fields derived by other transformers.
             This can be done by concatenating the name of the original field to the output name
             using ``.`` as a separator (eg. {field_name}.{transformer_output_name}).
-        field_types (dict or None):
+        field_data_types (dict or None):
             Dict mapping field names to their data types. If not provided, the data type is
             inferred using the column's Pandas ``dtype``.
-        data_type_transformers (dict or None):
+        default_data_type_transformers (dict or None):
             Dict used to overwrite the default transformer for a data type. The keys are
             data types and the values are Transformers or Transformer instances.
         copy (bool):
@@ -40,11 +41,11 @@ class HyperTransformer:
 
         Create a ``HyperTransformer`` passing a dict mapping fields to data types.
 
-        >>> field_types = {
+        >>> field_data_types = {
         ...     'a': 'categorical',
         ...     'b': 'numerical
         ... }
-        >>> ht = HyperTransformer(field_types=field_types)
+        >>> ht = HyperTransformer(field_data_types=field_data_types)
 
         Create a ``HyperTransformer`` passing a ``field_transformers`` dict.
         (Note: The transformers used in this example may not exist and are just used
@@ -58,11 +59,11 @@ class HyperTransformer:
         >>> ht = HyperTransformer(field_transformers=field_transformers)
 
         Create a ``HyperTransformer`` passing a dict mapping data types to transformers.
-        >>> data_type_transformers = {
+        >>> default_data_type_transformers = {
         ...     'categorical': LabelEncodingTransformer(),
         ...     'numerical': NumericalTransformer()
         ... }
-        >>> ht = HyperTransformer(data_type_transformers=data_type_transformers)
+        >>> ht = HyperTransformer(default_data_type_transformers=default_data_type_transformers)
     """
 
     _DTYPES_TO_DATA_TYPES = {
@@ -102,7 +103,7 @@ class HyperTransformer:
 
     def _create_multi_column_fields(self):
         multi_column_fields = {}
-        for field in list(self.field_types) + list(self.field_transformers):
+        for field in list(self.field_data_types) + list(self.field_transformers):
             if isinstance(field, tuple):
                 for column in field:
                     multi_column_fields[column] = field
@@ -117,11 +118,11 @@ class HyperTransformer:
 
             self._add_field_to_set(field, self._specified_fields)
 
-    def __init__(self, copy=True, field_types=None, data_type_transformers=None,
+    def __init__(self, copy=True, field_data_types=None, default_data_type_transformers=None,
                  field_transformers=None, transform_output_types=None):
         self.copy = copy
-        self.field_types = field_types or {}
-        self.data_type_transformers = data_type_transformers or {}
+        self.field_data_types = field_data_types or {}
+        self.default_data_type_transformers = default_data_type_transformers or {}
         self.field_transformers = field_transformers or {}
         self._specified_fields = set()
         self._validate_field_transformers()
@@ -137,17 +138,77 @@ class HyperTransformer:
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
-    def _update_field_types(self, data):
+    def _populate_field_data_types(self, data):
         # get set of provided fields including multi-column fields
         provided_fields = set()
-        for field in self.field_types.keys():
+        for field in self.field_data_types.keys():
             self._add_field_to_set(field, provided_fields)
 
         for field in data:
             if field not in provided_fields:
                 clean_data = data[field].dropna()
                 kind = clean_data.infer_objects().dtype.kind
-                self.field_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
+                self.field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
+
+    def get_field_data_types(self):
+        """Get the ``field_data_types`` dict.
+
+        Returns:
+            dict:
+                Mapping of fields to their data types. Fields can be defined as a string
+                representing a column name or a tuple of multiple column names.
+        """
+        return self.field_data_types
+
+    def update_field_data_types(self, field_data_types):
+        """Update the ``field_data_types`` dict.
+
+        Args:
+            field_data_types (dict):
+                Mapping of fields to their data types. Fields can be defined as a string
+                representing a column name or a tuple of multiple column names. It will
+                update the existing ``field_data_types`` values. Calling this method will
+                require ``fit`` to be run again.
+        """
+        self.field_data_types.update(field_data_types)
+        self._transformers_sequence = []
+
+    def get_default_data_type_transformers(self):
+        """Get the ``default_data_type_transformer`` dict.
+
+        Returns:
+            dict:
+                The ``default_data_type_transformers`` dictionary. The keys are
+                data types and the values are Transformers or Transformer instances.
+        """
+        return self.default_data_type_transformers
+
+    def update_default_data_type_transformers(self, new_data_type_transformers):
+        """Update the ``default_data_type_transformer`` dict.
+
+        Args:
+            new_data_type_transformers (dict):
+                Dict mapping data types to the default transformer class or instance to use for
+                them. This dict does not need to contain an entry for every data type. It will be
+                used to overwrite the existing defaults. Calling this method will require ``fit``
+                to be run again.
+        """
+        self.default_data_type_transformers.update(new_data_type_transformers)
+        self._transformers_sequence = []
+
+    def set_first_transformers_for_fields(self, field_transformers):
+        """Set the first transformer to use for certain fields.
+
+        Args:
+            field_transformers (dict):
+                Dict mapping fields to a transformer class name or instance. This transformer will
+                be the first used on that field when the ``HyperTransformer`` calls ``transform``.
+                The fields or keys can be defined as strings representing a single column name, or
+                tuples of strings representing multiple column names. Calling this method will
+                require ``fit`` to be run again.
+        """
+        self.field_transformers.update(field_transformers)
+        self._transformers_sequence = []
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
@@ -217,17 +278,17 @@ class HyperTransformer:
                 Data to fit the transformers to.
         """
         self._input_columns = list(data.columns)
-        self._update_field_types(data)
+        self._populate_field_data_types(data)
 
         # Loop through field_transformers that are first level
         for field in self.field_transformers:
             if self._field_in_data(field, data):
                 data = self._fit_field_transformer(data, field, self.field_transformers[field])
 
-        for (field, data_type) in self.field_types.items():
+        for (field, data_type) in self.field_data_types.items():
             if not self._field_in_set(field, self._fitted_fields):
-                if data_type in self.data_type_transformers:
-                    transformer = self.data_type_transformers[data_type]
+                if data_type in self.default_data_type_transformers:
+                    transformer = self.default_data_type_transformers[data_type]
                 else:
                     transformer = get_default_transformer(data_type)
 
@@ -248,6 +309,9 @@ class HyperTransformer:
             pandas.DataFrame:
                 Transformed data.
         """
+        if not self._transformers_sequence:
+            raise NotFittedError
+
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
         if self.copy:
             data = data.copy()
@@ -283,6 +347,9 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
+        if not self._transformers_sequence:
+            raise NotFittedError
+
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         for transformer in reversed(self._transformers_sequence):
             data = transformer.reverse_transform(data, drop=False)
