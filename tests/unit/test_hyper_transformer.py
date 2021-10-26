@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
+from rdt.errors import NotFittedError
 from rdt.transformers import (
     BooleanTransformer, CategoricalTransformer, DatetimeTransformer, GaussianCopulaTransformer,
     NumericalTransformer, OneHotEncodingTransformer)
@@ -57,8 +58,8 @@ class TestHyperTransformer(TestCase):
         # Asserts
         assert ht.copy is True
         assert ht.field_transformers == {}
-        assert ht.data_type_transformers == {}
-        assert ht.field_types == {}
+        assert ht.default_data_type_transformers == {}
+        assert ht.field_data_types == {}
         multi_column_mock.assert_called_once()
         validation_mock.assert_called_once()
 
@@ -66,12 +67,12 @@ class TestHyperTransformer(TestCase):
         """Test the ``_create_multi_column_fields`` method.
 
         This tests that the method goes through both the ``field_transformers``
-        dict and ``field_types`` dict to find multi_column fields and map
+        dict and ``field_data_types`` dict to find multi_column fields and map
         each column to its corresponding tuple.
 
         Setup:
             - instance.field_transformers will be populated with multi-column fields
-            - instance.field_types will be populated with multi-column fields
+            - instance.field_data_types will be populated with multi-column fields
 
         Output:
             - A dict mapping each column name that is part of a multi-column
@@ -85,7 +86,7 @@ class TestHyperTransformer(TestCase):
             ('c', 'd'): DatetimeTransformer,
             'e': NumericalTransformer
         }
-        ht.field_types = {
+        ht.field_data_types = {
             'f': 'categorical',
             ('g', 'h'): 'datetime'
         }
@@ -112,7 +113,7 @@ class TestHyperTransformer(TestCase):
         Setup:
             - field_transformers is given a transformer for the
             output field.
-            - data_type_transformers will be given a different transformer
+            - default_data_type_transformers will be given a different transformer
             for the output type of the output field.
 
         Input:
@@ -127,7 +128,7 @@ class TestHyperTransformer(TestCase):
         transformer = NumericalTransformer()
         ht = HyperTransformer(
             field_transformers={'a.out': transformer},
-            data_type_transformers={'numerical': GaussianCopulaTransformer()}
+            default_data_type_transformers={'numerical': GaussianCopulaTransformer()}
         )
 
         # Run
@@ -145,7 +146,7 @@ class TestHyperTransformer(TestCase):
         is returned.
 
         Setup:
-            - data_type_transformers will be given a transformer
+            - default_data_type_transformers will be given a transformer
             for the output type of the output field.
 
         Input:
@@ -158,7 +159,7 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer(
-            data_type_transformers={'numerical': GaussianCopulaTransformer()}
+            default_data_type_transformers={'numerical': GaussianCopulaTransformer()}
         )
 
         # Run
@@ -177,7 +178,7 @@ class TestHyperTransformer(TestCase):
         field, then it is used.
 
         Setup:
-            - data_type_transformers will be given a transformer
+            - default_data_type_transformers will be given a transformer
             for the output type of the output field.
 
         Input:
@@ -192,7 +193,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformer = CategoricalTransformer()
         ht = HyperTransformer(
-            data_type_transformers={'categorical': OneHotEncodingTransformer()}
+            default_data_type_transformers={'categorical': OneHotEncodingTransformer()}
         )
         next_transformers = {'a.out': transformer}
 
@@ -226,7 +227,7 @@ class TestHyperTransformer(TestCase):
         transformer = CategoricalTransformer(fuzzy=True)
         mock.return_value = transformer
         ht = HyperTransformer(
-            data_type_transformers={'categorical': OneHotEncodingTransformer()}
+            default_data_type_transformers={'categorical': OneHotEncodingTransformer()}
         )
 
         # Run
@@ -236,15 +237,15 @@ class TestHyperTransformer(TestCase):
         assert isinstance(next_transformer, CategoricalTransformer)
         assert next_transformer.fuzzy is True
 
-    def test__update_field_types(self):
-        """Test the ``_update_field_types`` method.
+    def test__populate_field_data_types(self):
+        """Test the ``_populate_field_data_types`` method.
 
         This tests that if any field types are missing in the
-        provided field_types dict, that the rest of the values
+        provided field_data_types dict, that the rest of the values
         are filled in using the data types for the dtype.
 
         Setup:
-            - field_types will only define a few of the fields.
+            - field_data_types will only define a few of the fields.
 
         Input:
             - A DataFrame of various types.
@@ -254,7 +255,7 @@ class TestHyperTransformer(TestCase):
             the data.
         """
         # Setup
-        ht = HyperTransformer(field_types={'a': 'numerical', 'b': 'categorical'})
+        ht = HyperTransformer(field_data_types={'a': 'numerical', 'b': 'categorical'})
         data = pd.DataFrame({
             'a': [np.nan, 1, 2, 3],
             'b': [np.nan, 'category1', 'category2', 'category3'],
@@ -263,11 +264,11 @@ class TestHyperTransformer(TestCase):
         })
 
         # Run
-        ht._update_field_types(data)
+        ht._populate_field_data_types(data)
 
         # Assert
         expected = {'a': 'numerical', 'b': 'categorical', 'c': 'boolean', 'd': 'float'}
-        assert ht.field_types == expected
+        assert ht.field_data_types == expected
 
     @patch('rdt.hyper_transformer.get_transformer_instance')
     def test__fit_field_transformer(self, get_transformer_instance_mock):
@@ -562,9 +563,9 @@ class TestHyperTransformer(TestCase):
         """Test the ``fit`` method.
 
         Tests that the ``fit`` method loops through the fields in ``field_transformers``
-        and ``field_types`` that are in the data. It should try to find a transformer
-        in ``data_type_transformers`` and then use the default if it doesn't find one
-        when looping through ``field_types``. It should then call ``_fit_field_transformer``
+        and ``field_data_types`` that are in the data. It should try to find a transformer
+        in ``default_data_type_transformers`` and then use the default if it doesn't find one
+        when looping through ``field_data_types``. It should then call ``_fit_field_transformer``
         with the correct arguments.
 
         Setup:
@@ -593,14 +594,14 @@ class TestHyperTransformer(TestCase):
             'float': float_transformer,
             'integer.out': int_out_transformer
         }
-        data_type_transformers = {
+        default_data_type_transformers = {
             'boolean': bool_transformer,
             'categorical': categorical_transformer
         }
         get_default_transformer_mock.return_value = datetime_transformer
         ht = HyperTransformer(
             field_transformers=field_transformers,
-            data_type_transformers=data_type_transformers
+            default_data_type_transformers=default_data_type_transformers
         )
         ht._fit_field_transformer = Mock()
         ht._fit_field_transformer.return_value = data
@@ -673,6 +674,29 @@ class TestHyperTransformer(TestCase):
         categorical_transformer.transform.assert_called_once()
         bool_transformer.transform.assert_called_once()
         datetime_transformer.transform.assert_called_once()
+
+    def test_transform_raises_error_if_transformer_sequence_is_empty(self):
+        """Test that ``transform`` raises an error.
+
+        The ``transform`` method should raise a ``NotFittedError`` if the
+        ``_transformers_sequence`` is empty.
+
+        Setup:
+            - The ``_transformers_sequence`` will not be set.
+
+        Input:
+            - A DataFrame of multiple types.
+
+        Expected behavior:
+            - A ``NotFittedError`` is raised.
+        """
+        # Setup
+        data = self.get_data()
+        ht = HyperTransformer()
+
+        # Run
+        with pytest.raises(NotFittedError):
+            ht.transform(data)
 
     def test_fit_transform(self):
         """Test call fit_transform"""
@@ -751,3 +775,161 @@ class TestHyperTransformer(TestCase):
         categorical_transformer.reverse_transform.assert_called_once()
         bool_transformer.reverse_transform.assert_called_once()
         datetime_transformer.reverse_transform.assert_called_once()
+
+    def test_reverse_transform_raises_error_if_transformer_sequence_is_empty(self):
+        """Test that ``reverse_transform`` raises an error.
+
+        The ``reverse_transform`` method should raise a ``NotFittedError`` if the
+        ``_transformers_sequence`` is empty.
+
+        Setup:
+            - The ``_transformers_sequence`` will not be set.
+
+        Input:
+            - A DataFrame of multiple types.
+
+        Expected behavior:
+            - A ``NotFittedError`` is raised.
+        """
+        # Setup
+        data = self.get_transformed_data()
+        ht = HyperTransformer()
+
+        # Run
+        with pytest.raises(NotFittedError):
+            ht.reverse_transform(data)
+
+    def test_get_field_data_types(self):
+        """Test the ``get_field_data_types`` method.
+
+        This method should return the ``field_data_types`` attribute.
+
+        Output:
+            - Dict mapping fields to data types.
+        """
+        # Setup
+        field_data_types = {
+            'a': 'categorical',
+            'b': 'integer'
+        }
+        ht = HyperTransformer(field_data_types=field_data_types)
+
+        # Run
+        out = ht.get_field_data_types()
+
+        # Assert
+        assert out == {'a': 'categorical', 'b': 'integer'}
+
+    def test_update_field_data_types(self):
+        """Test the ``update_field_data_types`` method.
+
+        This method should update the ``field_data_types`` attribute.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``field_data_types`` having
+            one entry.
+
+        Input:
+            - Dict mapping fields to data types.
+        """
+        # Setup
+        field_data_types = {
+            'a': 'categorical',
+            'b': 'integer'
+        }
+        ht = HyperTransformer(field_data_types={'a': 'float'})
+        ht._transformers_sequence = [CategoricalTransformer()]
+
+        # Run
+        ht.update_field_data_types(field_data_types)
+
+        # Assert
+        assert ht.field_data_types == {'a': 'categorical', 'b': 'integer'}
+        assert ht._transformers_sequence == []
+
+    def test_get_default_data_type_transformers(self):
+        """Test the ``get_default_data_type_transformers`` method.
+
+        This method should return the ``default_data_type_transformers`` attribute.
+
+        Output:
+            - Dict mapping data types to transformers.
+        """
+        # Setup
+        data_type_transformers = {
+            'categorical': CategoricalTransformer,
+            'integer': NumericalTransformer
+        }
+        ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
+
+        # Run
+        out = ht.get_default_data_type_transformers()
+
+        # Assert
+        assert out == {'categorical': CategoricalTransformer, 'integer': NumericalTransformer}
+
+    def test_update_default_data_type_transformers(self):
+        """Test the ``update_default_data_type_transformers`` method.
+
+        This method should update the ``default_data_type_transformers`` attribute.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``default_data_type_transformers``
+            dict that only has some types set.
+
+        Input:
+            - Dict mapping new data types to transformers.
+        """
+        # Setup
+        data_type_transformers = {
+            'categorical': CategoricalTransformer,
+            'integer': NumericalTransformer
+        }
+        ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
+        ht._transformers_sequence = [CategoricalTransformer()]
+
+        # Run
+        ht.update_default_data_type_transformers({'boolean': BooleanTransformer})
+
+        # Assert
+        assert ht.default_data_type_transformers == {
+            'categorical': CategoricalTransformer,
+            'integer': NumericalTransformer,
+            'boolean': BooleanTransformer
+        }
+        assert ht._transformers_sequence == []
+
+    def test_set_first_transformers_for_fields(self):
+        """Test the ``set_first_transformers_for_fields`` method.
+
+        This method should update the ``field_transformers`` attribute.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``field_transformers`` dict that only
+            has some fields set.
+
+        Input:
+            - Dict mapping one new field to a transformer and one old field to a different
+            transformer.
+        """
+        # Setup
+        field_transformers = {
+            'a': CategoricalTransformer,
+            'b': NumericalTransformer
+        }
+        ht = HyperTransformer(field_transformers=field_transformers)
+        ht._transformers_sequence = [CategoricalTransformer()]
+
+        # Run
+        ht.set_first_transformers_for_fields({
+            'c': BooleanTransformer,
+            'b': CategoricalTransformer
+        })
+
+        # Assert
+        assert ht.field_transformers == {
+            'a': CategoricalTransformer,
+            'b': CategoricalTransformer,
+            'c': BooleanTransformer
+        }
+        assert ht._transformers_sequence == []
