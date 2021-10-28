@@ -414,9 +414,9 @@ class TestCategoricalTransformer:
 
         Output:
             - a numpy array containing the transformed data.
-        
+
         Side effect:
-            - ``rvs_mock`` should be called four times, one for each element of the 
+            - ``rvs_mock`` should be called four times, one for each element of the
             intervals dictionary.
         """
         # Setup
