@@ -208,15 +208,17 @@ class TestCategoricalTransformer:
         # Setup
         transformer = CategoricalTransformer(fuzzy=False)
         transformer.intervals = {
+            'foo': (0, 0.5, 0.25, 0.5 / 6),
             np.nan: (0, 0.5, 0.25, 0.5 / 6),
         }
 
         # Run
-        result = transformer._get_value(np.nan)
+        result_foo = transformer._get_value('foo')
+        result_nan = transformer._get_value(np.nan)
 
         # Asserts
-        assert not transformer.fuzzy, '``fuzzy`` has to be False.'
-        assert result == 0.25
+        assert result_foo == 0.25
+        assert result_nan == 0.25
 
     @patch('scipy.stats.norm.rvs')
     def test__get_value_fuzzy(self, rvs_mock):
@@ -394,7 +396,8 @@ class TestCategoricalTransformer:
         expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
         assert (transformed == expected).all()
 
-    def test__transform_by_category_fuzzy_true(self):
+    @patch('scipy.stats.norm.rvs')
+    def test__transform_by_category_fuzzy_true(self, rvs_mock):
         """Test the ``_transform_by_category`` method when ``fuzzy`` is True.
 
         Validate that the data is transformed correctly when ``fuzzy`` is True. The
@@ -414,23 +417,26 @@ class TestCategoricalTransformer:
             - a numpy array containing the transformed data.
         """
         # Setup
+        def rvs_mock_func(loc, scale, **kwargs):
+            return loc
+
+        rvs_mock.side_effect = rvs_mock_func
+
         data = pd.Series([1, 3, 3, 2, 1])
         transformer = CategoricalTransformer(fuzzy=True)
         transformer.intervals = {
-            4: (0, 0.25, 0.125, 0.0001),
-            3: (0.25, 0.5, 0.375, 0.0001),
-            2: (0.5, 0.75, 0.625, 0.0001),
-            1: (0.75, 1.0, 0.875, 0.0001),
+            4: (0, 0.25, 0.125, 0.041666666666666664),
+            3: (0.25, 0.5, 0.375, 0.041666666666666664),
+            2: (0.5, 0.75, 0.625, 0.041666666666666664),
+            1: (0.75, 1.0, 0.875, 0.041666666666666664),
         }
 
         # Run
-        output = transformer._transform_by_category(data)
+        transformed = transformer._transform_by_category(data)
 
         # Assert
-        expected_lower = [0.75, 0.25, 0.25, 0.5, 0.75]
-        expected_upper = [1., 0.5, 0.5, 0.75, 1.0]
-        assert (output < expected_upper).all()
-        assert (output > expected_lower).all()
+        expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
+        assert (transformed == expected).all()
 
     def test__transform_by_row_called(self):
         """Test that the `_transform_by_row` method is called.

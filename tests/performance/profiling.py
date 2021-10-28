@@ -7,7 +7,6 @@ import tracemalloc
 from copy import deepcopy
 from multiprocessing import Process, Value
 
-import numpy as np
 import pandas as pd
 
 
@@ -72,7 +71,7 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     fit_size = fit_size or transform_size
     fit_dataset = pd.Series(dataset_generator.generate(fit_size))
     replace = transform_size > fit_size
-    transform_dataset = pd.Series(np.random.choice(fit_dataset, transform_size, replace=replace))
+    transform_dataset = fit_dataset.sample(transform_size, replace=replace)
 
     try:
         fit_time = _profile_time(transformer, 'fit', fit_dataset, copy=True)

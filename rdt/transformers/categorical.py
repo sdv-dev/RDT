@@ -224,7 +224,6 @@ class CategoricalTransformer(BaseTransformer):
 
     def _get_category_from_start(self, value):
         lower = self.starts.loc[:value]
-        # NOTE: shouldn't this be self.starts[self.starts<value]
         return lower.iloc[-1].category
 
     def _reverse_transform_by_row(self, data):

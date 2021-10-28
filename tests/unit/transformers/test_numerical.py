@@ -209,7 +209,6 @@ class TestNumericalTransformer(TestCase):
         Side effect:
             - it sets the ``null_transformer.fill_value``.
             - it sets the ``_dtype``.
-
         """
         # Setup
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
