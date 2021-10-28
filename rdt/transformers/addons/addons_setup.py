@@ -65,7 +65,6 @@ def _build_setup(addon_json):
 
 
 def _run():
-
     path = sys.argv[0]
     base_path = os.path.realpath(path).replace(path, '')
 
@@ -75,18 +74,14 @@ def _run():
         shutil.rmtree(build_path)
 
     families = deepcopy(sys.argv[1:])
-    all_families = [
-        family
-        for family in os.listdir('.')
-        if os.path.isdir(family)
-    ]
+    all_families = [family for family in os.listdir('.') if os.path.isdir(family)]
 
     families = list(set(families).intersection(set(all_families)))
     for addon in glob(f'{ADDONS_PATH}/*/*.json'):
         with TemporaryDirectory() as temp_dir:
             build_command = [
-                path, 'bdist_wheel', '--dist-dir', 'dist', '--bdist-dir', temp_dir,
-                'sdist', '--dist-dir', 'dist', 'egg_info', '--egg-base', temp_dir
+                path, 'bdist_wheel', '--keep-temp', '--dist-dir', 'dist', '--bdist-dir', temp_dir,
+                'sdist', '--keep-temp', '--dist-dir', 'dist', 'egg_info', '--egg-base', temp_dir
             ]
 
             base_name = os.path.basename(os.path.dirname(addon))
@@ -94,7 +89,6 @@ def _run():
 
             if not families:
                 _build_setup(addon)
-
             else:
                 if os.path.basename(os.path.dirname(addon)) in families:
                     _build_setup(addon)
