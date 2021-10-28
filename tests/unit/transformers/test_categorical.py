@@ -1,5 +1,5 @@
 import re
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
@@ -400,21 +400,24 @@ class TestCategoricalTransformer:
     def test__transform_by_category_fuzzy_true(self, rvs_mock):
         """Test the ``_transform_by_category`` method when ``fuzzy`` is True.
 
-        Validate that the data is transformed correctly when ``fuzzy`` is True. The
-        transformed values must fall within the specified intervals (we can't test the
-        exact values since the the results are randomized).
+        Validate that the data is transformed correctly when ``fuzzy`` is True.
 
         Setup:
             - the categorical transformer is instantiated with ``fuzzy`` as True,
             and the appropriate ``intervals`` attribute is set.
             - the ``intervals`` attribute is set to a a dictionary of intervals corresponding
             to the elements of the passed data.
+            - set the ``side_effect`` of the ``rvs_mock`` to the appropriate function.
 
         Input:
             - a pandas series.
 
         Output:
             - a numpy array containing the transformed data.
+        
+        Side effect:
+            - ``rvs_mock`` should be called four times, one for each element of the 
+            intervals dictionary.
         """
         # Setup
         def rvs_mock_func(loc, scale, **kwargs):
@@ -437,6 +440,12 @@ class TestCategoricalTransformer:
         # Assert
         expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
         assert (transformed == expected).all()
+        rvs_mock.assert_has_calls([
+            call(0.125, 0.041666666666666664, size=0),
+            call(0.375, 0.041666666666666664, size=2),
+            call(0.625, 0.041666666666666664, size=1),
+            call(0.875, 0.041666666666666664, size=2),
+        ])
 
     def test__transform_by_row_called(self):
         """Test that the `_transform_by_row` method is called.
