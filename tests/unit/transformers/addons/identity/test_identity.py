@@ -74,7 +74,7 @@ class TestIdentityTransformer(TestCase):
         input_object = object()
 
         # run
-        output_object = IdentityTransformer._transform(instance, input_object)
+        output_object = IdentityTransformer._reverse_transform(instance, input_object)
 
         # assert
         assert input_object == output_object

@@ -104,9 +104,6 @@ class DatetimeTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
         transformed = self._transform_helper(data)
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(transformed)
@@ -121,11 +118,7 @@ class DatetimeTransformer(BaseTransformer):
         Returns:
             numpy.ndarray
         """
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
         data = self._transform_helper(data)
-
         return self.null_transformer.transform(data)
 
     def _reverse_transform(self, data):

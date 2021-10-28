@@ -131,9 +131,6 @@ class NumericalTransformer(BaseTransformer):
             data (pandas.DataFrame or pandas.Series):
                 Data to fit.
         """
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
         self._dtype = self.dtype or data.dtype
         self._min_value = data.min() if self.min_value == 'auto' else self.min_value
         self._max_value = data.max() if self.max_value == 'auto' else self.max_value
@@ -159,9 +156,6 @@ class NumericalTransformer(BaseTransformer):
         Returns:
             numpy.ndarray
         """
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
         return self.null_transformer.transform(data)
 
     def _reverse_transform(self, data):

@@ -114,11 +114,8 @@ def get_transformers_by_type():
     data_type_transformers = defaultdict(list)
     transformer_classes = BaseTransformer.get_subclasses()
     for transformer in transformer_classes:
-        try:
-            input_type = transformer.get_input_type()
-            data_type_transformers[input_type].append(transformer)
-        except AttributeError:
-            pass
+        input_type = transformer.get_input_type()
+        data_type_transformers[input_type].append(transformer)
 
     return data_type_transformers
 

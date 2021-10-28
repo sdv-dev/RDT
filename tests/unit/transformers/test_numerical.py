@@ -1,11 +1,13 @@
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import copulas
 import numpy as np
 import pandas as pd
 import pytest
+from copulas import univariate
 
+from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
     GaussianCopulaTransformer, NumericalBoundedTransformer, NumericalRoundedBoundedTransformer,
     NumericalRoundedTransformer, NumericalTransformer)
@@ -21,21 +23,89 @@ class TestNumericalTransformer(TestCase):
         assert nt.nan == 'mode'
         assert nt.null_column is False
 
-    def test__fit(self):
-        """Test _fit nan mean with numpy.array"""
+    def test_get_output_types(self):
+        """Test the ``get_output_types`` method when a null column is created.
+
+        When a null column is created, this method should apply the ``_add_prefix``
+        method to the following dictionary of output types:
+
+        output_types = {
+            'value': 'float',
+            'is_null': 'float'
+        }
+
+        Setup:
+            - initialize a ``NumericalTransformer`` transformer which:
+                - sets ``self.null_transformer`` to a ``NullTransformer`` where
+                ``self.null_column`` is True.
+                - sets ``self.column_prefix`` to a string.
+
+        Output:
+            - the ``output_types`` dictionary, but with the ``self.column_prefix``
+            added to the beginning of the keys.
+        """
         # Setup
-        data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
+        transformer = NumericalTransformer()
+        transformer.null_transformer = NullTransformer(fill_value='fill')
+        transformer.null_transformer._null_column = True
+        transformer.column_prefix = 'a#b'
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan')
-        transformer._fit(data)
+        output = transformer.get_output_types()
 
-        # Asserts
-        expect_fill_value = 'nan'
-        expect_dtype = float
+        # Assert
+        expected = {
+            'a#b.value': 'float',
+            'a#b.is_null': 'float'
+        }
+        assert output == expected
 
-        assert transformer.null_transformer.fill_value == expect_fill_value
-        assert transformer._dtype == expect_dtype
+    def test_is_composition_identity_null_transformer_true(self):
+        """Test the ``is_composition_identity`` method with a ``null_transformer``.
+
+        When the attribute ``null_transformer`` is not None and a null column is not created,
+        this method should simply return False.
+
+        Setup:
+            - initialize a ``NumericalTransformer`` transformer which sets
+            ``self.null_transformer`` to a ``NullTransformer`` where
+            ``self.null_column`` is False.
+
+        Output:
+            - False
+        """
+        # Setup
+        transformer = NumericalTransformer()
+        transformer.null_transformer = NullTransformer(fill_value='fill')
+
+        # Run
+        output = transformer.is_composition_identity()
+
+        # Assert
+        assert output is False
+
+    def test_is_composition_identity_null_transformer_false(self):
+        """Test the ``is_composition_identity`` method without a ``null_transformer``.
+
+        When the attribute ``null_transformer`` is None, this method should return
+        the value stored in the ``COMPOSITION_IS_IDENTITY`` attribute.
+
+        Setup:
+            - initialize a ``NumericalTransformer`` transformer which sets
+            ``self.null_transformer`` to None.
+
+        Output:
+            - the value stored in ``self.COMPOSITION_IS_IDENTITY``.
+        """
+        # Setup
+        transformer = NumericalTransformer()
+        transformer.null_transformer = None
+
+        # Run
+        output = transformer.is_composition_identity()
+
+        # Assert
+        assert output is True
 
     def test__learn_rounding_digits_more_than_15_decimals(self):
         """Test the _learn_rounding_digits method with more than 15 decimals.
@@ -123,6 +193,36 @@ class TestNumericalTransformer(TestCase):
         output = NumericalTransformer._learn_rounding_digits(data)
 
         assert output is None
+
+    def test__fit(self):
+        """Test the ``_fit`` method with numpy.array.
+
+        Validate that the ``_dtype`` and ``.null_transformer.fill_value`` attributes
+        are set correctly.
+
+        Setup:
+            - initialize a ``NumericalTransformer`` with the ``nan` parameter set to ``'nan'``.
+
+        Input:
+            - a pandas dataframe containing a None.
+
+        Side effect:
+            - it sets the ``null_transformer.fill_value``.
+            - it sets the ``_dtype``.
+
+        """
+        # Setup
+        data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
+        transformer = NumericalTransformer(dtype=float, nan='nan')
+
+        # Run
+        transformer._fit(data)
+
+        # Asserts
+        expect_fill_value = 'nan'
+        assert transformer.null_transformer.fill_value == expect_fill_value
+        expect_dtype = float
+        assert transformer._dtype == expect_dtype
 
     def test__fit_rounding_none(self):
         """Test _fit rounding parameter with ``None``
@@ -383,6 +483,32 @@ class TestNumericalTransformer(TestCase):
         # Asserts
         assert transformer._min_value['a'] == -5000
         assert transformer._max_value['a'] == 4000
+
+    def test__transform(self):
+        """Test the ``_transform`` method.
+
+        Validate that this method calls the ``self.null_transformer.transform`` method once.
+
+        Setup:
+            - create an instance of a ``NumericalTransformer`` and set ``self.null_transformer``
+            to a ``NullTransformer``.
+
+        Input:
+            - a pandas series.
+
+        Output:
+            - the transformed numpy array.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3])
+        transformer = NumericalTransformer()
+        transformer.null_transformer = Mock()
+
+        # Run
+        transformer._transform(data)
+
+        # Assert
+        assert transformer.null_transformer.transform.call_count == 1
 
     def test__reverse_transform_rounding_none(self):
         """Test ``_reverse_transform`` when ``rounding`` is ``None``
@@ -713,6 +839,54 @@ class TestNumericalTransformer(TestCase):
         np.testing.assert_array_equal(result, expected_data)
 
 
+class TestNumericalBoundedTransformer(TestCase):
+
+    def test___init__(self):
+        """super() arguments are properly passed and set as attributes."""
+        # Run
+        nt = NumericalBoundedTransformer(dtype='int', null_column=False)
+
+        # Assert
+        assert nt.dtype == 'int'
+        assert nt.nan == 'mean'
+        assert nt.null_column is False
+        assert nt.min_value == 'auto'
+        assert nt.max_value == 'auto'
+        assert nt.rounding is None
+
+
+class TestNumericalRoundedTransformer(TestCase):
+
+    def test___init__(self):
+        """super() arguments are properly passed and set as attributes."""
+        # Run
+        nt = NumericalRoundedTransformer(dtype='int', null_column=False)
+
+        # Assert
+        assert nt.dtype == 'int'
+        assert nt.nan == 'mean'
+        assert nt.null_column is False
+        assert nt.min_value is None
+        assert nt.max_value is None
+        assert nt.rounding == 'auto'
+
+
+class TestNumericalRoundedBoundedTransformer(TestCase):
+
+    def test___init__(self):
+        """super() arguments are properly passed and set as attributes."""
+        # Run
+        nt = NumericalRoundedBoundedTransformer(dtype='int', null_column=False)
+
+        # Assert
+        assert nt.dtype == 'int'
+        assert nt.nan == 'mean'
+        assert nt.null_column is False
+        assert nt.min_value == 'auto'
+        assert nt.max_value == 'auto'
+        assert nt.rounding == 'auto'
+
+
 class TestGaussianCopulaTransformer:
 
     def test___init__super_attrs(self):
@@ -736,85 +910,377 @@ class TestGaussianCopulaTransformer:
 
         assert ct._distribution is univariate
 
+    def test__get_distributions_copulas_not_installed(self):
+        """Test the ``_get_distributions`` method when copulas is not installed.
+
+        Validate that this method raises the appropriate error message when copulas is
+        not installed.
+
+        Raise:
+            - ImportError('\n\nIt seems like `copulas` is not installed.\n'
+            'Please install it using:\n\n    pip install rdt[copulas]')
+        """
+        __py_import__ = __import__
+
+        def custom_import(name, *args):
+            if name == 'copulas':
+                raise ImportError('Simulate copulas not being importable.')
+            return __py_import__(name, *args)
+        with patch('builtins.__import__', side_effect=custom_import):
+            with pytest.raises(ImportError, match=r'pip install rdt\[copulas\]'):
+                GaussianCopulaTransformer._get_distributions()
+
+    def test__get_distributions(self):
+        """Test the ``_get_distributions`` method.
+
+        Validate that this method returns the correct dictionary of distributions.
+
+        Setup:
+            - instantiate a ``GaussianCopulaTransformer``.
+        """
+        # Setup
+        transformer = GaussianCopulaTransformer()
+
+        # Run
+        distributions = transformer._get_distributions()
+
+        # Assert
+        expected = {
+            'univariate': univariate.Univariate,
+            'parametric': (
+                univariate.Univariate, {
+                    'parametric': univariate.ParametricType.PARAMETRIC,
+                },
+            ),
+            'bounded': (
+                univariate.Univariate,
+                {
+                    'bounded': univariate.BoundedType.BOUNDED,
+                },
+            ),
+            'semi_bounded': (
+                univariate.Univariate,
+                {
+                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
+                },
+            ),
+            'parametric_bounded': (
+                univariate.Univariate,
+                {
+                    'parametric': univariate.ParametricType.PARAMETRIC,
+                    'bounded': univariate.BoundedType.BOUNDED,
+                },
+            ),
+            'parametric_semi_bounded': (
+                univariate.Univariate,
+                {
+                    'parametric': univariate.ParametricType.PARAMETRIC,
+                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
+                },
+            ),
+            'gaussian': univariate.GaussianUnivariate,
+            'gamma': univariate.GammaUnivariate,
+            'beta': univariate.BetaUnivariate,
+            'student_t': univariate.StudentTUnivariate,
+            'gaussian_kde': univariate.GaussianKDE,
+            'truncated_gaussian': univariate.TruncatedGaussian,
+        }
+        assert distributions == expected
+
     def test__get_univariate_instance(self):
-        """If a univariate instance is passed, make a copy."""
+        """Test the ``_get_univariate`` method when the distribution is univariate.
+
+        Validate that a deepcopy of the distribution stored in ``self._distribution`` is returned.
+
+        Setup:
+            - create an instance of a ``GaussianCopulaTransformer`` with ``distribution`` set
+            to ``univariate.Univariate``.
+
+        Output:
+            - a copy of the value stored in ``self._distribution``.
+        """
+        # Setup
         distribution = copulas.univariate.Univariate()
         ct = GaussianCopulaTransformer(distribution=distribution)
 
+        # Run
         univariate = ct._get_univariate()
 
+        # Assert
         assert univariate is not distribution
         assert isinstance(univariate, copulas.univariate.Univariate)
         assert dir(univariate) == dir(distribution)
 
     def test__get_univariate_tuple(self):
-        """If a tuple is passed, create an instance using the given args."""
+        """Test the ``_get_univariate`` method when the distribution is a tuple.
+
+        When the distribution is passed as a tuple, it should return an instance
+        with the passed arguments.
+
+        Setup:
+            - create an instance of a ``GaussianCopulaTransformer`` and set
+            ``distribution`` to a tuple.
+
+        Output:
+            - an instance of ``copulas.univariate.Univariate`` with the passed arguments.
+        """
+        # Setup
         distribution = (
             copulas.univariate.Univariate,
             {'candidates': 'a_candidates_list'}
         )
         ct = GaussianCopulaTransformer(distribution=distribution)
 
+        # Run
         univariate = ct._get_univariate()
 
+        # Assert
         assert isinstance(univariate, copulas.univariate.Univariate)
         assert univariate.candidates == 'a_candidates_list'
 
     def test__get_univariate_class(self):
-        """If a class is passed, create an instance without args."""
+        """Test the ``_get_univariate`` method when the distribution is a class.
+
+        When ``distribution`` is passed as a class, it should return an instance
+        without passing arguments.
+
+        Setup:
+            - create an instance of a ``GaussianCopulaTransformer`` and set ``distribution``
+            to ``univariate.Univariate``.
+
+        Output:
+            - an instance of ``copulas.univariate.Univariate`` without any arguments.
+        """
+        # Setup
         distribution = copulas.univariate.Univariate
         ct = GaussianCopulaTransformer(distribution=distribution)
 
+        # Run
         univariate = ct._get_univariate()
 
+        # Assert
         assert isinstance(univariate, copulas.univariate.Univariate)
 
     def test__get_univariate_error(self):
-        """If something else is passed, rasie a TypeError."""
+        """Test the ``_get_univariate`` method when ``distribution`` is invalid.
+
+        Validate that it raises an error if an invalid distribution is stored in
+        ``distribution``.
+
+        Setup:
+            - create an instance of a ``GaussianCopulaTransformer`` and set ``self._distribution``
+            improperly.
+
+        Raise:
+            - TypeError(f'Invalid distribution: {distribution}')
+        """
+        # Setup
         distribution = 123
         ct = GaussianCopulaTransformer(distribution=distribution)
 
+        # Run / Assert
         with pytest.raises(TypeError):
             ct._get_univariate()
 
+    def test__fit(self):
+        """Test the ``_fit`` method.
 
-class TestNumericalBoundedTransformer(TestCase):
+        Validate that ``_fit`` calls ``_get_univariate``.
 
-    def test___init__(self):
-        """super() arguments are properly passed and set as attributes."""
-        nt = NumericalBoundedTransformer(dtype='int', null_column=False)
+        Setup:
+            - create an instance of the ``GaussianCopulaTransformer``.
+            - mock the  ``_get_univariate`` method.
 
-        assert nt.dtype == 'int'
-        assert nt.nan == 'mean'
-        assert nt.null_column is False
-        assert nt.min_value == 'auto'
-        assert nt.max_value == 'auto'
-        assert nt.rounding is None
+        Input:
+            - a pandas series of float values.
 
+        Side effect:
+            - call the `_get_univariate`` method.
+        """
+        # Setup
+        data = pd.Series([0.0, np.nan, 1.0])
+        ct = GaussianCopulaTransformer()
+        ct._get_univariate = Mock()
 
-class TestNumericalRoundedTransformer(TestCase):
+        # Run
+        ct._fit(data)
 
-    def test___init__(self):
-        """super() arguments are properly passed and set as attributes."""
-        nt = NumericalRoundedTransformer(dtype='int', null_column=False)
+        # Assert
+        ct._get_univariate.return_value.fit.assert_called_once()
+        call_value = ct._get_univariate.return_value.fit.call_args_list[0]
+        np.testing.assert_array_equal(
+            call_value[0][0],
+            np.array([0.0, 0.5, 1.0])
+        )
 
-        assert nt.dtype == 'int'
-        assert nt.nan == 'mean'
-        assert nt.null_column is False
-        assert nt.min_value is None
-        assert nt.max_value is None
-        assert nt.rounding == 'auto'
+    def test__copula_transform(self):
+        """Test the ``_copula_transform`` method.
 
+        Validate that ``_copula_transform`` calls ``_get_univariate``.
 
-class TestNumericalRoundedBoundedTransformer(TestCase):
+        Setup:
+            - create an instance of the ``GaussianCopulaTransformer``.
+            - mock  ``_univariate``.
 
-    def test___init__(self):
-        """super() arguments are properly passed and set as attributes."""
-        nt = NumericalRoundedBoundedTransformer(dtype='int', null_column=False)
+        Input:
+            - a pandas series of float values.
 
-        assert nt.dtype == 'int'
-        assert nt.nan == 'mean'
-        assert nt.null_column is False
-        assert nt.min_value == 'auto'
-        assert nt.max_value == 'auto'
-        assert nt.rounding == 'auto'
+        Ouput:
+            - a numpy array of the transformed data.
+        """
+        # Setup
+        ct = GaussianCopulaTransformer()
+        ct._univariate = Mock()
+        ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75])
+        data = pd.Series([0.0, 1.0, 2.0])
+
+        # Run
+        transformed_data = ct._copula_transform(data)
+
+        # Assert
+        expected = np.array([-0.67449, 0, 0.67449])
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__transform(self):
+        """Test the ``_transform`` method.
+
+        Validate that ``_transform`` produces the correct values when ``null_column`` is True.
+
+        Setup:
+            - create an instance of the ``GaussianCopulaTransformer``, where:
+                - ``self._univariate`` is a mock.
+                - ``self.null_transformer``  is a ``NullTransformer``.
+                - fit the ``self.null_transformer``.
+
+        Input:
+            - a pandas series of float values.
+
+        Ouput:
+            - a numpy array of the transformed data.
+        """
+        # Setup
+        data = pd.Series([0.0, 1.0, 2.0, np.nan])
+        ct = GaussianCopulaTransformer()
+        ct._univariate = Mock()
+        ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
+        ct.null_transformer = NullTransformer(None, null_column=True)
+        ct.null_transformer.fit(data)
+
+        # Run
+        transformed_data = ct._transform(data)
+
+        # Assert
+        expected = np.array([
+            [-0.67449, 0, 0.67449, 0],
+            [0, 0, 0, 1.0]
+        ]).T
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__transform_null_column_none(self):
+        """Test the ``_transform`` method.
+
+        Validate that ``_transform`` produces the correct values when ``null_column`` is None.
+
+        Setup:
+            - create an instance of the ``GaussianCopulaTransformer``, where:
+                - ``self._univariate`` is a mock.
+                - ``self.null_transformer``  is a ``NullTransformer``.
+                - fit the ``self.null_transformer``.
+
+        Input:
+            - a pandas series of float values.
+
+        Ouput:
+            - a numpy array of the transformed data.
+        """
+        # Setup
+        data = pd.Series([
+            0.0, 1.0, 2.0, 1.0
+        ])
+        ct = GaussianCopulaTransformer()
+        ct._univariate = Mock()
+        ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
+        ct.null_transformer = NullTransformer(None, null_column=None)
+
+        # Run
+        ct.null_transformer.fit(data)
+        transformed_data = ct._transform(data)
+
+        # Assert
+        expected = np.array([-0.67449, 0, 0.67449, 0]).T
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__reverse_transform(self):
+        """Test the ``_reverse_transform`` method.
+
+        Validate that ``_reverse_transform`` produces the correct values when
+        ``null_column`` is True.
+
+        Setup:
+            - create an instance of the ``GaussianCopulaTransformer``, where:
+                - ``self._univariate`` is a mock.
+                - ``self.null_transformer``  is a ``NullTransformer``.
+                - fit the ``self.null_transformer``.
+
+        Input:
+            - a pandas series of float values.
+
+        Ouput:
+            - a numpy array of the transformed data.
+        """
+        # Setup
+        data = np.array([
+            [-0.67449, 0, 0.67449, 0],
+            [0, 0, 0, 1.0],
+        ]).T
+        expected = pd.Series([
+            0.0, 1.0, 2.0, np.nan
+        ])
+        ct = GaussianCopulaTransformer()
+        ct._univariate = Mock()
+        ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
+        ct.null_transformer = NullTransformer(None, null_column=True)
+
+        # Run
+        ct.null_transformer.fit(expected)
+        transformed_data = ct._reverse_transform(data)
+
+        # Assert
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__reverse_transform_null_column_none(self):
+        """Test the ``_reverse_transform`` method.
+
+        Validate that ``_reverse_transform`` produces the correct values when
+        ``null_column`` is None.
+
+        Setup:
+            - create an instance of the ``GaussianCopulaTransformer``, where:
+                - ``self._univariate`` is a mock.
+                - ``self.null_transformer``  is a ``NullTransformer``.
+                - fit the ``self.null_transformer``.
+
+        Input:
+            - a pandas series of float values.
+
+        Ouput:
+            - a numpy array of the transformed data.
+        """
+        # Setup
+        data = pd.Series(
+            [-0.67449, 0, 0.67449, 0]
+        ).T
+        expected = pd.Series([
+            0.0, 1.0, 2.0, 1.0
+        ])
+        ct = GaussianCopulaTransformer()
+        ct._univariate = Mock()
+        ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
+        ct.null_transformer = NullTransformer(None, null_column=None)
+
+        # Run
+        ct.null_transformer.fit(expected)
+        transformed_data = ct._reverse_transform(data)
+
+        # Assert
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)

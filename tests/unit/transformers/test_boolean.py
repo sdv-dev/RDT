@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers import BooleanTransformer
+from rdt.transformers.null import NullTransformer
 
 
 class TestBooleanTransformer(TestCase):
@@ -17,6 +18,43 @@ class TestBooleanTransformer(TestCase):
         # Asserts
         assert transformer.nan == -1, 'Unexpected nan'
         assert transformer.null_column is None, 'null_column is None by default'
+
+    def test_get_output_types_null_column_created(self):
+        """Test the ``get_output_types`` method when a null column is created.
+
+        When a null column is created, this method should apply the ``_add_prefix``
+        method to the following dictionary of output types:
+
+        output_types = {
+            'value': 'float',
+            'is_null': 'float'
+        }
+
+        Setup:
+            - initialize a ``BooleanTransformer`` transformer which:
+                - sets ``self.null_transformer`` to a ``NullTransformer`` where
+                ``self._null_column`` is True.
+                - sets ``self.column_prefix`` to a string.
+
+        Output:
+            - the ``output_types`` dictionary, but with ``self.column_prefix``
+            added to the beginning of the keys.
+        """
+        # Setup
+        transformer = BooleanTransformer()
+        transformer.null_transformer = NullTransformer(fill_value='fill')
+        transformer.null_transformer._null_column = True
+        transformer.column_prefix = 'abc'
+
+        # Run
+        output = transformer.get_output_types()
+
+        # Assert
+        expected = {
+            'abc.value': 'float',
+            'abc.is_null': 'float'
+        }
+        assert output == expected
 
     def test__fit_nan_ignore(self):
         """Test _fit nan equal to ignore"""
@@ -99,7 +137,7 @@ class TestBooleanTransformer(TestCase):
     def test__reverse_transform_nan_ignore(self):
         """Test _reverse_transform with nan equal to ignore"""
         # Setup
-        data = np.array([0.0, 1.0, 0.0, 1.0, 0.0])
+        data = pd.Series([0.0, 1.0, 0.0, 1.0, 0.0])
 
         # Run
         transformer = Mock()

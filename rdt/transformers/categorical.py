@@ -182,9 +182,6 @@ class CategoricalTransformer(BaseTransformer):
         Returns:
             numpy.ndarray:
         """
-        if not isinstance(data, pd.Series):
-            data = pd.Series(data)
-
         if len(self.means) < len(data):
             return self._transform_by_category(data)
 
@@ -227,6 +224,7 @@ class CategoricalTransformer(BaseTransformer):
 
     def _get_category_from_start(self, value):
         lower = self.starts.loc[:value]
+        # NOTE: shouldn't this be self.starts[self.starts<value]
         return lower.iloc[-1].category
 
     def _reverse_transform_by_row(self, data):
@@ -243,12 +241,6 @@ class CategoricalTransformer(BaseTransformer):
         Returns:
             pandas.Series
         """
-        if not isinstance(data, pd.Series):
-            if len(data.shape) > 1:
-                data = data[:, 0]
-
-            data = pd.Series(data)
-
         data = self._normalize(data)
 
         num_rows = len(data)
@@ -501,9 +493,6 @@ class LabelEncodingTransformer(BaseTransformer):
         Returns:
             numpy.ndarray:
         """
-        if not isinstance(data, pd.Series):
-            data = pd.Series(data)
-
         return pd.Series(data).map(self.categories_to_values)
 
     def _reverse_transform(self, data):
