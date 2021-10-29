@@ -9,8 +9,8 @@ def test_no_strip():
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
 
     # Run
-    dtt._fit(data.copy().to_numpy())
-    transformed = dtt._transform(data.copy().to_numpy())
+    dtt._fit(data.copy())
+    transformed = dtt._transform(data.copy())
     reverted = dtt._reverse_transform(transformed)
 
     # Asserts
@@ -28,8 +28,8 @@ def test_strip():
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
 
     # Run
-    dtt._fit(data.copy().to_numpy())
-    transformed = dtt._transform(data.copy().to_numpy())
+    dtt._fit(data.copy())
+    transformed = dtt._transform(data.copy())
     reverted = dtt._reverse_transform(transformed)
 
     # Asserts

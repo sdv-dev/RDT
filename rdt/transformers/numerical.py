@@ -131,9 +131,6 @@ class NumericalTransformer(BaseTransformer):
             data (pandas.DataFrame or pandas.Series):
                 Data to fit.
         """
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
         self._dtype = self.dtype or data.dtype
         self._min_value = data.min() if self.min_value == 'auto' else self.min_value
         self._max_value = data.max() if self.max_value == 'auto' else self.max_value
@@ -153,22 +150,19 @@ class NumericalTransformer(BaseTransformer):
         are left unmodified.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to transform.
 
         Returns:
             numpy.ndarray
         """
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
         return self.null_transformer.transform(data)
 
     def _reverse_transform(self, data):
         """Convert data back into the original format.
 
         Args:
-            data (numpy.ndarray):
+            data (pd.Series or numpy.ndarray):
                 Data to transform.
 
         Returns:
@@ -440,7 +434,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
         """Fit the transformer to the data.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to fit to.
         """
         self._univariate = self._get_univariate()
@@ -460,7 +454,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
         """Transform numerical data.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to transform.
 
         Returns:
@@ -478,7 +472,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
         """Convert data back into the original format.
 
         Args:
-            data (numpy.ndarray):
+            data (pd.Series or numpy.ndarray):
                 Data to transform.
 
         Returns:
