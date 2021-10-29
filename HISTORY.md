@@ -1,5 +1,89 @@
 # History
 
+## 0.6.0 - 2021-10-29
+
+This release makes major changes to the underlying code for RDT as well as the API for both the `HyperTransformer` and `BaseTransformer`.
+The changes enable the following functionality:
+
+* The `HyperTransformer` can now apply a sequence of transformers to a column.
+* Transformers can now take multiple columns as an input.
+* RDT has been expanded to allow for infinite data types to be added instead of being restricted to `pandas.dtypes`.
+* Users can define acceptable output types for running `HyperTransformer.transform`.
+* The `HyperTransformer` will continuously apply transformations to the input fields until only acceptable data types are in the output. 
+* Transformers can return data of any data type.
+* Transformers now have named outputs and output types.
+* Transformers can suggest which transformer to use on any of their outputs.
+
+To take advantage of this functionality, the following API changes were made:
+
+* The `HyperTransformer` has new initialization parameters that allow users to specify data types for any field in their data as well as
+specify which transformer to use for a field or data type. The parameters are:
+    * `field_transformers` - A dictionary allowing users to specify which transformer to use for a field or derived field. Derived fields
+    are fields created by running `transform` on the input data.
+    * `field_data_types` - A dictionary allowing users to specify the data type of a field.
+    * `default_data_type_transformers` - A dictionary allowing users to specify the default transformer to use for a data type.
+    * `transform_output_types` - A dictionary allowing users to specify which data types are acceptable for the output of `transform`.
+    This is a result of the fact that transformers can now be applied in a sequence, and not every transformer will return numeric data.
+* Methods were also added to the `HyperTransformer` to allow these parameters to be modified. These include `get_field_data_types`,
+`update_field_data_types`, `get_default_data_type_transformers`, `update_default_data_type_transformers` and `set_first_transformers_for_fields`.
+* The `BaseTransformer` now requires the column names it will transform to be provided to `fit`, `transform` and `reverse_transform`.
+* The `BaseTransformer` added the following method to allow for users to see its output fields and output types: `get_output_types`.
+* The `BaseTransformer` added the following method to allow for users to see the next suggested transformer for each output field:
+`get_next_transformers`. 
+
+On top of the changes to the API and the capabilities of RDT, many automated checks and tests were also added to ensure that contributions
+to the library abide by the current code style, stay performant and result in data of a high quality. These tests run on every push to the
+repository. They can also be run locally via the following functions:
+
+* `validate_transformer_code_style` - Checks that new code follows the code style.
+* `validate_transformer_quality` - Tests that new transformers yield data that maintains relationships between columns.
+* `validate_transformer_performance` - Tests that new transformers don't take too much time or memory.
+* `validate_transformer_unit_tests` - Checks that the unit tests cover all new code, follow naming conventions and pass.
+* `validate_transformer_integration` - Checks that the integration tests follow naming conventions and pass.
+
+### New Features
+
+* Update HyperTransformer API - Issue [#298](https://github.com/sdv-dev/RDT/issues/298) by @amontanez24
+* Create validate_pull_request function - Issue [#254](https://github.com/sdv-dev/RDT/issues/254) by @pvk-developer
+* Create validate_transformer_unit_tests function - Issue [#249](https://github.com/sdv-dev/RDT/issues/249) by @pvk-developer
+* Create validate_transformer_performance function - Issue [#251](https://github.com/sdv-dev/RDT/issues/251) by @katxiao
+* Create validate_transformer_quality function - Issue [#253](https://github.com/sdv-dev/RDT/issues/253) by @amontanez24
+* Create validate_transformer_code_style function - Issue [#248](https://github.com/sdv-dev/RDT/issues/248) by @pvk-developer
+* Create validate_transformer_integration function - Issue [#250](https://github.com/sdv-dev/RDT/issues/250) by @katxiao
+* Enable users to specify transformers to use in HyperTransformer - Issue [#233](https://github.com/sdv-dev/RDT/issues/233) by @amontanez24 and @csala
+* Addons implementation - Issue [#225](https://github.com/sdv-dev/RDT/issues/225) by @pvk-developer
+* Create ways for HyperTransformer to know which transformers to apply to each data type - Issue [#232](https://github.com/sdv-dev/RDT/issues/232) by @amontanez24 and @csala
+* Update categorical transformers - PR [#231](https://github.com/sdv-dev/RDT/pull/231) by @fealho
+* Update numerical transformer - PR [#227](https://github.com/sdv-dev/RDT/pull/227) by @fealho
+* Update datetime transformer - PR [#230](https://github.com/sdv-dev/RDT/pull/230) by @fealho
+* Update boolean transformer - PR [#228](https://github.com/sdv-dev/RDT/pull/228) by @fealho
+* Update null transformer - PR [#229](https://github.com/sdv-dev/RDT/pull/229) by @fealho
+* Update the baseclass - PR [#224](https://github.com/sdv-dev/RDT/pull/224) by @fealho
+
+### Bugs fixed
+
+* If the input data has a different index, the reverse transformed data may be out of order - Issue [#277](https://github.com/sdv-dev/RDT/issues/277) by @amontanez24
+
+### Documentation changes
+
+* RDT contributing guide - Issue [#301](https://github.com/sdv-dev/RDT/issues/301) by @katxiao and @amontanez24
+
+### Internal improvements
+
+* Add PR template for new transformers - Issue [#307](https://github.com/sdv-dev/RDT/issues/307) by @katxiao
+* Implement Quality Tests for Transformers - Issue [#252](https://github.com/sdv-dev/RDT/issues/252) by @amontanez24
+* Update performance test structure - Issue [#257](https://github.com/sdv-dev/RDT/issues/257) by @katxiao
+* Automated integration test for transformers - Issue [#223](https://github.com/sdv-dev/RDT/issues/223) by @katxiao
+* Move datasets to its own module - Issue [#235](https://github.com/sdv-dev/RDT/issues/235) by @katxiao
+* Fix missing coverage in rdt unit tests - Issue [#219](https://github.com/sdv-dev/RDT/issues/219) by @fealho
+* Add repo-wide automation - Issue [#309](https://github.com/sdv-dev/RDT/issues/309) by @katxiao
+
+### Other issues closed
+
+* DeprecationWarning: np.float is a deprecated alias for the builtin float - Issue [#304](https://github.com/sdv-dev/RDT/issues/304) by @csala
+* Add pip check to CI workflows - Issue [#290](https://github.com/sdv-dev/RDT/issues/290) by @csala
+* Should Transformers subclasses exist for specific configurations? - Issue [#243](https://github.com/sdv-dev/RDT/issues/243) by @fealho
+
 ## 0.5.3 - 2021-10-07
 
 This release fixes a bug with learning rounding digits in the `NumericalTransformer`,

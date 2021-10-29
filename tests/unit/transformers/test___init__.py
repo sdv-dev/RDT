@@ -1,68 +1,68 @@
-from rdt.transformers import (
-    BooleanTransformer, DatetimeTransformer, NumericalTransformer, load_transformer,
-    load_transformers)
+from rdt.transformers import BooleanTransformer, get_transformer_class, get_transformer_instance
 
 
-def test_load_transformer_instance():
-    transformer = BooleanTransformer()
+def test_get_transformer_class_transformer_name():
+    """Test the ``get_transformer_class`` method.
 
-    returned = load_transformer(transformer)
+    Validate the method returns the correct class when passed the class name.
 
-    assert returned is transformer
+    Input:
+        - a string describing the transformer name.
+
+    Output:
+        - the class corresponding to the transformer name.
+    """
+    # Setup
+    transformer_name = 'BooleanTransformer'
+
+    # Run
+    returned = get_transformer_class(transformer_name)
+
+    # Assert
+    assert returned == BooleanTransformer
 
 
-def test_load_transformer_str():
-    transformer = {
-        'class': 'BooleanTransformer',
-    }
+def test_get_transformer_class_transformer_path():
+    """Test the ``get_transformer_class`` method.
 
-    returned = load_transformer(transformer)
+    Validate the method returns the correct class when passed the class path.
+
+    Input:
+        - a string describing the transformer path.
+
+    Output:
+        - the class corresponding to the transformer path.
+    """
+    # Setup
+    transformer_path = 'rdt.transformers.BooleanTransformer'
+
+    # Run
+    returned = get_transformer_class(transformer_path)
+
+    # Assert
+    assert returned == BooleanTransformer
+
+
+def test_get_transformer_instance_instance():
+    transformer = BooleanTransformer(nan=None)
+
+    returned = get_transformer_instance(transformer)
 
     assert isinstance(returned, BooleanTransformer)
-
-
-def test_load_transformer_class():
-    transformer = {
-        'class': BooleanTransformer,
-    }
-
-    returned = load_transformer(transformer)
-
-    assert isinstance(returned, BooleanTransformer)
-
-
-def test_load_transformer_kwargs():
-    transformer = {
-        'class': BooleanTransformer,
-        'kwargs': {
-            'nan': None
-        }
-    }
-
-    returned = load_transformer(transformer)
-
     assert returned.nan is None
 
 
-def test_load_transformers():
-    transformers = {
-        'bool': BooleanTransformer(),
-        'int': {
-            'class': 'NumericalTransformer',
-            'kwargs': {
-                'dtype': 'int'
-            }
-        },
-        'datetime': {
-            'class': DatetimeTransformer,
-        }
-    }
+def test_get_transformer_instance_str():
+    transformer = 'BooleanTransformer'
 
-    returned = load_transformers(transformers)
+    returned = get_transformer_instance(transformer)
 
-    assert isinstance(returned, dict)
-    assert set(returned.keys()) == {'bool', 'int', 'datetime'}
-    assert isinstance(returned['bool'], BooleanTransformer)
-    assert isinstance(returned['int'], NumericalTransformer)
-    assert returned['int'].dtype == 'int'
-    assert isinstance(returned['datetime'], DatetimeTransformer)
+    assert isinstance(returned, BooleanTransformer)
+
+
+def test_get_transformer_instance_class():
+    transformer = BooleanTransformer
+
+    returned = get_transformer_instance(transformer)
+
+    assert isinstance(returned, BooleanTransformer)

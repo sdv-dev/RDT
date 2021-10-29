@@ -8,16 +8,30 @@ from invoke import task
 
 
 @task
-def pytest(c):
+def check_dependencies(c):
+    c.run('python -m pip check')
+
+
+@task
+def unit(c):
     c.run(
-        'pytest ./tests/unit ./tests/integration ./tests/performance/tests '
-        '--cov=rdt --cov-report=xml'
+        'python -m pytest ./tests/unit ./tests/performance/tests ./tests/datasets/tests '
+        '--cov=rdt --cov-report=xml --cov-fail-under=100'
     )
 
 
 @task
+def integration(c):
+    c.run('python -m pytest ./tests/integration')
+
+
+@task
 def performance(c):
-    c.run('pytest -v ./tests/performance/test_performance.py')
+    c.run('python -m pytest -v ./tests/performance/test_performance.py')
+
+@task
+def quality(c):
+    c.run('pytest -v ./tests/quality/test_quality.py')
 
 
 @task
@@ -49,8 +63,9 @@ def install_minimum(c):
 @task
 def minimum(c):
     install_minimum(c)
-    c.run('python -m pip check')
-    c.run('python -m pytest ./tests/unit ./tests/integration ./tests/performance/tests')
+    check_dependencies(c)
+    unit(c)
+    integration(c)
 
 
 @task
@@ -70,10 +85,14 @@ def readme(c):
 
 @task
 def lint(c):
+    check_dependencies(c)
     c.run('flake8 rdt')
+    c.run('pydocstyle rdt')
     c.run('flake8 tests --ignore=D')
+    c.run('pydocstyle tests')
     c.run('isort -c --recursive rdt tests')
     c.run('pylint rdt tests/performance --rcfile=setup.cfg')
+    c.run('pytest tests/code_style.py -v --disable-warnings --no-header')
 
 
 def remove_readonly(func, path, _):

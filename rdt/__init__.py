@@ -5,7 +5,7 @@
 
 __author__ = """MIT Data To AI Lab"""
 __email__ = 'dailabmit@gmail.com'
-__version__ = '0.5.3'
+__version__ = '0.6.0.dev2'
 
 import numpy as np
 import pandas as pd
@@ -53,6 +53,6 @@ def get_demo(dtypes=('int', 'float', 'str', 'datetime'), nans=0.2, size=10):
         nan_index = np.random.choice(range(size), size=int(size * nan), replace=False)
         column.iloc[nan_index] = np.nan
 
-        columns['{}_{}'.format(count, dtype)] = column
+        columns[f'{count}_{dtype}'] = column
 
     return pd.DataFrame(columns)

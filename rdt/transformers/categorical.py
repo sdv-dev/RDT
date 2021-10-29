@@ -33,6 +33,11 @@ class CategoricalTransformer(BaseTransformer):
             Defaults to ``False``.
     """
 
+    INPUT_TYPE = 'categorical'
+    OUTPUT_TYPES = {'value': 'float'}
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = True
+
     mapping = None
     intervals = None
     starts = None
@@ -45,7 +50,7 @@ class CategoricalTransformer(BaseTransformer):
         intervals = state.get('intervals')
         if intervals:
             for key in list(intervals):
-                if pd.isnull(key):
+                if pd.isna(key):
                     intervals[np.nan] = intervals.pop(key)
 
         self.__dict__ = state
@@ -53,6 +58,24 @@ class CategoricalTransformer(BaseTransformer):
     def __init__(self, fuzzy=False, clip=False):
         self.fuzzy = fuzzy
         self.clip = clip
+
+    def is_transform_deterministic(self):
+        """Return whether the transform is deterministic.
+
+        Returns:
+            bool:
+                Whether or not the transform is deterministic.
+        """
+        return not self.fuzzy
+
+    def is_composition_identity(self):
+        """Return whether composition of transform and reverse transform produces the input data.
+
+        Returns:
+            bool:
+                Whether or not transforming and then reverse transforming returns the input data.
+        """
+        return self.COMPOSITION_IS_IDENTITY and not self.fuzzy
 
     @staticmethod
     def _get_intervals(data):
@@ -80,7 +103,7 @@ class CategoricalTransformer(BaseTransformer):
             end = start + prob
             mean = start + prob / 2
             std = prob / 6
-            if pd.isnull(value):
+            if pd.isna(value):
                 value = np.nan
 
             intervals[value] = (start, end, mean, std)
@@ -93,21 +116,18 @@ class CategoricalTransformer(BaseTransformer):
 
         return intervals, means, starts
 
-    def fit(self, data):
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Create the mapping dict to save the label encoding.
         Finally, compute the intervals for each categorical value.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to fit the transformer to.
         """
         self.mapping = {}
         self.dtype = data.dtype
-
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
 
         self.intervals, self.means, self.starts = self._get_intervals(data)
         self._get_category_from_index = list(self.means.index).__getitem__
@@ -120,9 +140,9 @@ class CategoricalTransformer(BaseTransformer):
         for category, values in self.intervals.items():
             mean, std = values[2:]
             if category is np.nan:
-                mask = data.isnull()
+                mask = data.isna()
             else:
-                mask = (data.values == category)
+                mask = (data.to_numpy() == category)
 
             if self.fuzzy:
                 result[mask] = norm.rvs(mean, std, size=mask.sum())
@@ -133,7 +153,7 @@ class CategoricalTransformer(BaseTransformer):
 
     def _get_value(self, category):
         """Get the value that represents this category."""
-        if pd.isnull(category):
+        if pd.isna(category):
             category = np.nan
 
         mean, std = self.intervals[category][2:]
@@ -147,21 +167,18 @@ class CategoricalTransformer(BaseTransformer):
         """Transform the data row by row."""
         return data.fillna(np.nan).apply(self._get_value).to_numpy()
 
-    def transform(self, data):
+    def _transform(self, data):
         """Transform categorical values to float values.
 
         Replace the categories with their float representative value.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to transform.
 
         Returns:
             numpy.ndarray:
         """
-        if not isinstance(data, pd.Series):
-            data = pd.Series(data)
-
         if len(self.means) < len(data):
             return self._transform_by_category(data)
 
@@ -175,7 +192,7 @@ class CategoricalTransformer(BaseTransformer):
         if self.clip:
             return data.clip(0, 1)
 
-        return np.mod(data, 1)
+        return data % 1
 
     def _reverse_transform_by_matrix(self, data):
         """Reverse transform the data with matrix operations."""
@@ -184,7 +201,7 @@ class CategoricalTransformer(BaseTransformer):
 
         data = np.broadcast_to(data, (num_categories, num_rows)).T
         means = np.broadcast_to(self.means, (num_rows, num_categories))
-        diffs = np.abs(np.subtract(data, means))
+        diffs = np.abs(data - means)
         indexes = np.argmin(diffs, axis=1)
 
         self._get_category_from_index = list(self.means.index).__getitem__
@@ -197,7 +214,7 @@ class CategoricalTransformer(BaseTransformer):
         # loop over categories
         for category, values in self.intervals.items():
             start = values[0]
-            mask = (start <= data.values)
+            mask = (start <= data.to_numpy())
             result[mask] = category
 
         return pd.Series(result, index=data.index, dtype=self.dtype)
@@ -210,22 +227,16 @@ class CategoricalTransformer(BaseTransformer):
         """Reverse transform the data by iterating over each row."""
         return data.apply(self._get_category_from_start).astype(self.dtype)
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
 
         Args:
-            data (numpy.ndarray):
+            data (pd.Series):
                 Data to revert.
 
         Returns:
             pandas.Series
         """
-        if not isinstance(data, pd.Series):
-            if len(data.shape) > 1:
-                data = data[:, 0]
-
-            data = pd.Series(data)
-
         data = self._normalize(data)
 
         num_rows = len(data)
@@ -244,6 +255,34 @@ class CategoricalTransformer(BaseTransformer):
         return self._reverse_transform_by_row(data)
 
 
+class CategoricalFuzzyTransformer(CategoricalTransformer):
+    """Transformer for categorical data.
+
+    This transformer computes a float representative for each one of the categories
+    found in the fit data. Then, when transforming, it replaces the instances of these
+    categories with the corresponding representatives plus some added gaussian noise.
+
+    The representatives are decided by sorting the categorical values by their relative
+    frequency, then dividing the ``[0, 1]`` interval by these relative frequencies, and
+    finally assigning the middle point of each interval to the corresponding category.
+
+    When the transformation is reverted, each value is assigned the category that
+    corresponds to the interval it falls in.
+
+    Null values are considered just another category.
+
+    This class behaves exactly as the ``CategoricalTransformer`` with ``fuzzy=True``.
+
+    Args:
+        clip (bool):
+            If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
+            Defaults to ``False``.
+    """
+
+    def __init__(self, clip=False):
+        super().__init__(fuzzy=True, clip=clip)
+
+
 class OneHotEncodingTransformer(BaseTransformer):
     """OneHotEncoding for categorical data.
 
@@ -257,7 +296,12 @@ class OneHotEncodingTransformer(BaseTransformer):
         error_on_unknown (bool):
             If a value that was not seen during the fit stage is passed to
             transform, then an error will be raised if this is True.
+            Defaults to ``True``.
     """
+
+    INPUT_TYPE = 'categorical'
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
 
     dummies = None
     _dummy_na = None
@@ -277,7 +321,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         otherwise returns it.
 
         Args:
-            data (pandas.Series, numpy.ndarray, list or list of lists):
+            data (pandas.Series or pandas.DataFrame):
                 Data to prepare.
 
         Returns:
@@ -296,7 +340,42 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return data
 
-    def _transform(self, data):
+    def get_output_types(self):
+        """Return the output types produced by this transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to the produced data types.
+        """
+        output_types = {f'value{i}': 'float' for i in range(len(self.dummies))}
+
+        return self._add_prefix(output_types)
+
+    def _fit(self, data):
+        """Fit the transformer to the data.
+
+        Get the pandas `dummies` which will be used later on for OneHotEncoding.
+
+        Args:
+            data (pandas.Series or pandas.DataFrame):
+                Data to fit the transformer to.
+        """
+        data = self._prepare_data(data)
+
+        null = pd.isna(data)
+        self._uniques = list(pd.unique(data[~null]))
+        self._dummy_na = null.any()
+        self._num_dummies = len(self._uniques)
+        self._indexer = list(range(self._num_dummies))
+        self.dummies = self._uniques.copy()
+
+        if not np.issubdtype(data.dtype, np.number):
+            self._dummy_encoded = True
+
+        if self._dummy_na:
+            self.dummies.append(np.nan)
+
+    def _transform_helper(self, data):
         if self._dummy_encoded:
             coder = self._indexer
             codes = pd.Categorical(data, categories=self._uniques).codes
@@ -311,47 +390,23 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         if self._dummy_na:
             null = np.zeros((rows, 1), dtype=int)
-            null[pd.isnull(data)] = 1
+            null[pd.isna(data)] = 1
             array = np.append(array, null, axis=1)
 
         return array
 
-    def fit(self, data):
-        """Fit the transformer to the data.
-
-        Get the pandas `dummies` which will be used later on for OneHotEncoding.
-
-        Args:
-            data (pandas.Series, numpy.ndarray, list or list of lists):
-                Data to fit the transformer to.
-        """
-        data = self._prepare_data(data)
-
-        null = pd.isnull(data)
-        self._uniques = list(pd.unique(data[~null]))
-        self._dummy_na = null.any()
-        self._num_dummies = len(self._uniques)
-        self._indexer = list(range(self._num_dummies))
-        self.dummies = self._uniques.copy()
-
-        if not np.issubdtype(data.dtype, np.number):
-            self._dummy_encoded = True
-
-        if self._dummy_na:
-            self.dummies.append(np.nan)
-
-    def transform(self, data):
+    def _transform(self, data):
         """Replace each category with the OneHot vectors.
 
         Args:
-            data (pandas.Series, numpy.ndarray, list or list of lists):
+            data (pandas.Series, list or list of lists):
                 Data to transform.
 
         Returns:
             numpy.ndarray:
         """
         data = self._prepare_data(data)
-        array = self._transform(data)
+        array = self._transform_helper(data)
 
         if self.error_on_unknown:
             unknown = array.sum(axis=1) == 0
@@ -361,20 +416,24 @@ class OneHotEncodingTransformer(BaseTransformer):
 
         return array
 
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
 
         Args:
-            data (numpy.ndarray):
+            data (pd.Series or numpy.ndarray):
                 Data to revert.
 
         Returns:
             pandas.Series
         """
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
         if data.ndim == 1:
             data = data.reshape(-1, 1)
 
         indices = np.argmax(data, axis=1)
+
         return pd.Series(indices).map(self.dummies.__getitem__)
 
 
@@ -394,10 +453,16 @@ class LabelEncodingTransformer(BaseTransformer):
             integer value.
     """
 
+    INPUT_TYPE = 'categorical'
+    OUTPUT_TYPES = {'value': 'integer'}
+    DETERMINISTIC_TRANSFORM = True
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = True
+
     values_to_categories = None
     categories_to_values = None
 
-    def fit(self, data):
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Generate a unique integer representation for each category and
@@ -405,7 +470,7 @@ class LabelEncodingTransformer(BaseTransformer):
         `values_to_categories`.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to fit the transformer to.
         """
         self.values_to_categories = dict(enumerate(pd.unique(data)))
@@ -414,33 +479,27 @@ class LabelEncodingTransformer(BaseTransformer):
             for value, category in self.values_to_categories.items()
         }
 
-    def transform(self, data):
+    def _transform(self, data):
         """Replace each category with its corresponding integer value.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to transform.
 
         Returns:
             numpy.ndarray:
         """
-        if not isinstance(data, pd.Series):
-            data = pd.Series(data)
+        return pd.Series(data).map(self.categories_to_values)
 
-        return data.map(self.categories_to_values)
-
-    def reverse_transform(self, data):
+    def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
 
         Args:
-            data (numpy.ndarray):
+            data (pd.Series or numpy.ndarray):
                 Data to revert.
 
         Returns:
             pandas.Series
         """
-        if isinstance(data, np.ndarray) and (data.ndim == 2):
-            data = data[:, 0]
-
         data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
-        return pd.Series(data).round().map(self.values_to_categories)
+        return data.round().map(self.values_to_categories)

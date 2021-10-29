@@ -5,20 +5,21 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.base import BaseTransformer
-
 IRREVERSIBLE_WARNING = (
     'Replacing nulls with existing value without `null_column`, which is not reversible. '
     'Use `null_column=True` to ensure that the transformation is reversible.'
 )
 
 
-class NullTransformer(BaseTransformer):
+class NullTransformer():
     """Transformer for data that contains Null values.
 
     Args:
         fill_value (object or None):
-            Value to replace nulls. If ``None``, nans are not replaced.
+            Value to replace nulls, or strategy to compute the value, which can
+            be ``mean`` or ``mode``. If ``None`` is given, the ``mean`` or ``mode``
+            strategy will be applied depending on whether the input data is numerical
+            or not. Defaults to `None`.
         null_column (bool):
             Whether to create a new column to indicate which values were null or not.
             If ``None``, only create a new column when the data contains null values.
@@ -33,10 +34,52 @@ class NullTransformer(BaseTransformer):
     _null_column = None
     _fill_value = None
 
-    def __init__(self, fill_value, null_column=None, copy=False):
+    def __init__(self, fill_value=None, null_column=None, copy=False):
         self.fill_value = fill_value
         self.null_column = null_column
         self.copy = copy
+
+    def creates_null_column(self):
+        """Indicate whether this transformer creates a null column on transform.
+
+        Returns:
+            bool:
+                Whether a null column is created on transform.
+        """
+        return bool(self._null_column)
+
+    def _get_fill_value(self, data, null_values):
+        """Get the fill value to use for the given data.
+
+        Args:
+            data (pd.Series):
+                The data that is being transformed.
+            null_values (np.array):
+                Array of boolean values that indicate which values in the
+                input data are nulls.
+
+        Return:
+            object:
+                The fill value that needs to be used.
+        """
+        fill_value = self.fill_value
+
+        if fill_value in (None, 'mean', 'mode') and null_values.all():
+            return 0
+
+        if fill_value is None:
+            if pd.api.types.is_numeric_dtype(data):
+                fill_value = 'mean'
+            else:
+                fill_value = 'mode'
+
+        if fill_value == 'mean':
+            return data.mean()
+
+        if fill_value == 'mode':
+            return data.mode(dropna=True)[0]
+
+        return fill_value
 
     def fit(self, data):
         """Fit the transformer to the data.
@@ -44,18 +87,13 @@ class NullTransformer(BaseTransformer):
         Evaluate if the transformer has to create the null column or not.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to transform.
         """
-        null_values = data.isnull().values
+        null_values = data.isna().to_numpy()
         self.nulls = null_values.any()
-        contains_not_null = not null_values.all()
-        if self.fill_value == 'mean':
-            self._fill_value = data.mean() if contains_not_null else 0
-        elif self.fill_value == 'mode':
-            self._fill_value = data.mode(dropna=True)[0] if contains_not_null else 0
-        else:
-            self._fill_value = self.fill_value
+
+        self._fill_value = self._get_fill_value(data, null_values)
 
         if self.null_column is None:
             self._null_column = self.nulls
@@ -74,24 +112,20 @@ class NullTransformer(BaseTransformer):
         Returns:
             numpy.ndarray
         """
-        if self.nulls:
-            if not isinstance(data, pd.Series):
-                data = pd.Series(data)
-
-            isnull = data.isnull()
-            if self.nulls and self._fill_value is not None:
-                if not self.copy:
-                    data[isnull] = self._fill_value
-                else:
-                    data = data.fillna(self._fill_value)
-
-            if self._null_column:
-                return pd.concat([data, isnull.astype('int')], axis=1).values
-
-            if self._fill_value in data.values:
+        isna = data.isna()
+        if isna.any():
+            if not self._null_column and self._fill_value in data.to_numpy():
                 warnings.warn(IRREVERSIBLE_WARNING)
 
-        return data.values
+            if not self.copy:
+                data[isna] = self._fill_value
+            else:
+                data = data.fillna(self._fill_value)
+
+        if self._null_column:
+            return pd.concat([data, isna.astype(np.float64)], axis=1).to_numpy()
+
+        return data.to_numpy()
 
     def reverse_transform(self, data):
         """Restore null values to the data.
@@ -107,18 +141,20 @@ class NullTransformer(BaseTransformer):
         Returns:
             pandas.Series
         """
-        if self.nulls:
-            if self._null_column:
-                isnull = data[:, 1] > 0.5
-                data = pd.Series(data[:, 0])
-            else:
-                isnull = np.where(self._fill_value == data)[0]
-                data = pd.Series(data)
+        if self._null_column:
+            if self.nulls:
+                isna = data[:, 1] > 0.5
 
-            if isnull.any():
-                if self.copy:
-                    data = data.copy()
+            data = data[:, 0]
+            if self.copy:
+                data = data.copy()
 
-                data.iloc[isnull] = np.nan
+        elif self.nulls:
+            isna = self._fill_value == data
+
+        data = pd.Series(data)
+
+        if self.nulls and isna.any():
+            data.loc[isna] = np.nan
 
         return data

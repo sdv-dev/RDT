@@ -1,15 +1,16 @@
 """Functions to profile performance of RDT Transformers."""
 
+# pylint: disable=W0212
+
 import timeit
 import tracemalloc
 from copy import deepcopy
 from multiprocessing import Process, Value
 
-import numpy as np
 import pandas as pd
 
 
-def _profile_time(transformer, method_name, dataset, iterations=100, copy=False):
+def _profile_time(transformer, method_name, dataset, iterations=10, copy=False):
     total_time = 0
     for _ in range(iterations):
         if copy:
@@ -35,7 +36,10 @@ def _set_memory_for_method(method, dataset, peak_memory):
 
 def _profile_memory(method, dataset):
     peak_memory = Value('i', 0)
-    profiling_process = Process(target=_set_memory_for_method, args=(method, dataset, peak_memory))
+    profiling_process = Process(
+        target=_set_memory_for_method,
+        args=(method, dataset, peak_memory)
+    )
     profiling_process.start()
     profiling_process.join()
     return peak_memory.value
@@ -65,26 +69,33 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
             and ``reverse_transform`` for the transformer.
     """
     fit_size = fit_size or transform_size
-    fit_dataset = dataset_generator.generate(fit_size)
-    fit_time = _profile_time(transformer, 'fit', fit_dataset, copy=True)
-    fit_memory = _profile_memory(transformer.fit, fit_dataset)
-    transformer.fit(fit_dataset)
-
+    fit_dataset = pd.Series(dataset_generator.generate(fit_size))
     replace = transform_size > fit_size
-    transform_dataset = np.random.choice(fit_dataset, transform_size, replace=replace)
-    transform_time = _profile_time(transformer, 'transform', transform_dataset)
-    transform_memory = _profile_memory(transformer.transform, transform_dataset)
+    transform_dataset = fit_dataset.sample(transform_size, replace=replace)
 
-    reverse_dataset = transformer.transform(transform_dataset)
-    reverse_time = _profile_time(transformer, 'reverse_transform', reverse_dataset)
-    reverse_memory = _profile_memory(transformer.reverse_transform, reverse_dataset)
+    try:
+        fit_time = _profile_time(transformer, 'fit', fit_dataset, copy=True)
+        fit_memory = _profile_memory(transformer.fit, fit_dataset)
+        transformer.fit(fit_dataset)
 
-    print('Fit Time', fit_time)
-    print('Fit Memory', fit_memory)
-    print('Transform Time', transform_time)
-    print('Transform Memory', transform_memory)
-    print('Reverse Transform Time', reverse_time)
-    print('Reverse Transform Memory', reverse_memory)
+        transform_time = _profile_time(transformer, 'transform', transform_dataset)
+        transform_memory = _profile_memory(transformer.transform, transform_dataset)
+
+        reverse_dataset = transformer.transform(transform_dataset)
+        reverse_time = _profile_time(transformer, 'reverse_transform', reverse_dataset)
+        reverse_memory = _profile_memory(transformer.reverse_transform, reverse_dataset)
+    except TypeError:
+        # temporarily support both old and new style transformers
+        fit_time = _profile_time(transformer, '_fit', fit_dataset, copy=True)
+        fit_memory = _profile_memory(transformer._fit, fit_dataset)
+        transformer._fit(fit_dataset)
+
+        transform_time = _profile_time(transformer, '_transform', transform_dataset)
+        transform_memory = _profile_memory(transformer._transform, transform_dataset)
+
+        reverse_dataset = transformer._transform(transform_dataset)
+        reverse_time = _profile_time(transformer, '_reverse_transform', reverse_dataset)
+        reverse_memory = _profile_memory(transformer._reverse_transform, reverse_dataset)
 
     return pd.Series({
         'Fit Time': fit_time,
