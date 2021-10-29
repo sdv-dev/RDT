@@ -150,7 +150,7 @@ class NumericalTransformer(BaseTransformer):
         are left unmodified.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to transform.
 
         Returns:
@@ -162,7 +162,7 @@ class NumericalTransformer(BaseTransformer):
         """Convert data back into the original format.
 
         Args:
-            data (numpy.ndarray):
+            data (pd.Series or numpy.ndarray):
                 Data to transform.
 
         Returns:
@@ -434,7 +434,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
         """Fit the transformer to the data.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to fit to.
         """
         self._univariate = self._get_univariate()
@@ -454,7 +454,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
         """Transform numerical data.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to transform.
 
         Returns:
@@ -472,7 +472,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
         """Convert data back into the original format.
 
         Args:
-            data (numpy.ndarray):
+            data (pd.Series or numpy.ndarray):
                 Data to transform.
 
         Returns:

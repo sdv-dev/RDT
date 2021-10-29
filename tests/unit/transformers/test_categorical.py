@@ -177,7 +177,7 @@ class TestCategoricalTransformer:
         transformer = CategoricalTransformer()
 
         # Run
-        data = np.array(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
+        data = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
         transformer._fit(data)
 
         # Asserts
@@ -267,7 +267,7 @@ class TestCategoricalTransformer:
     def test__reverse_transform_array(self):
         """Test reverse_transform a numpy.array"""
         # Setup
-        data = np.array(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
+        data = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
         rt_data = np.array([-0.6, 0.5, 0.6, 0.2, 0.1, -0.2])
         transformer = CategoricalTransformer()
 

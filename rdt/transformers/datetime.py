@@ -101,7 +101,7 @@ class DatetimeTransformer(BaseTransformer):
         """Fit the transformer to the data.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series:
                 Data to fit the transformer to.
         """
         transformed = self._transform_helper(data)
@@ -112,7 +112,7 @@ class DatetimeTransformer(BaseTransformer):
         """Transform datetime values to float values.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to transform.
 
         Returns:

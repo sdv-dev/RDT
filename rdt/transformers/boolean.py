@@ -56,12 +56,9 @@ class BooleanTransformer(BaseTransformer):
         """Fit the transformer to the data.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to fit to.
         """
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
         self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
         self.null_transformer.fit(data)
 
@@ -72,17 +69,13 @@ class BooleanTransformer(BaseTransformer):
         representations as float values.
 
         Args:
-            data (pandas.Series or numpy.ndarray):
+            data (pandas.Series):
                 Data to transform.
 
         Returns
             pandas.DataFrame or pandas.Series
         """
-        if isinstance(data, np.ndarray):
-            data = pd.Series(data)
-
         data = pd.to_numeric(data, errors='coerce')
-
         return self.null_transformer.transform(data).astype(float)
 
     def _reverse_transform(self, data):

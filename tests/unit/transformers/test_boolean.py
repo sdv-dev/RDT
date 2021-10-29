@@ -83,7 +83,7 @@ class TestBooleanTransformer(TestCase):
     def test__fit_array(self):
         """Test _fit with numpy.array"""
         # Setup
-        data = np.array([False, True, True, False, True])
+        data = pd.Series([False, True, True, False, True])
 
         # Run
         transformer = BooleanTransformer(nan=0)
@@ -116,7 +116,7 @@ class TestBooleanTransformer(TestCase):
     def test__transform_array(self):
         """Test transform numpy.array"""
         # Setup
-        data = np.array([False, True, None, True, False])
+        data = pd.Series([False, True, None, True, False])
 
         # Run
         transformer = Mock()
