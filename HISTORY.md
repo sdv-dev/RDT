@@ -1,6 +1,6 @@
 # History
 
-## 0.6.0 - 2021-10-26
+## 0.6.0 - 2021-10-29
 
 This release makes major changes to the underlying code for RDT as well as the API for both the `HyperTransformer` and `BaseTransformer`.
 The changes enable the following functionality:
@@ -75,6 +75,8 @@ repository. They can also be run locally via the following functions:
 * Update performance test structure - Issue [#257](https://github.com/sdv-dev/RDT/issues/257) by @katxiao
 * Automated integration test for transformers - Issue [#223](https://github.com/sdv-dev/RDT/issues/223) by @katxiao
 * Move datasets to its own module - Issue [#235](https://github.com/sdv-dev/RDT/issues/235) by @katxiao
+* Fix missing coverage in rdt unit tests - Issue [#219](https://github.com/sdv-dev/RDT/issues/219) by @fealho
+* Add repo-wide automation - Issue [#309](https://github.com/sdv-dev/RDT/issues/309) by @katxiao
 
 ### Other issues closed
 
