@@ -83,6 +83,7 @@ development_requires = [
     'flake8-expression-complexity>=0.0.9,<0.1',
     'pep8-naming>=0.12.1,<0.13',
     'pydocstyle>=6.1.1,<6.2',
+    'flake8-sfs>=0.0.3,<0.1',
 
     # fix style issues
     'autoflake>=1.1,<2',
