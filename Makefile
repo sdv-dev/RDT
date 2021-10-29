@@ -124,6 +124,9 @@ test: test-unit test-integration test-readme ## test everything that needs test 
 test-all: ## test using tox
 	tox -r
 
+.PHONY: test-repo
+test-repo: lint test-unit test-integration test-readme test-performance test-quality ## test everything
+
 .PHONY: coverage
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source rdt -m pytest tests/unit
