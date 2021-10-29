@@ -924,7 +924,9 @@ class TestGaussianCopulaTransformer:
         def custom_import(name, *args):
             if name == 'copulas':
                 raise ImportError('Simulate copulas not being importable.')
+
             return __py_import__(name, *args)
+
         with patch('builtins.__import__', side_effect=custom_import):
             with pytest.raises(ImportError, match=r'pip install rdt\[copulas\]'):
                 GaussianCopulaTransformer._get_distributions()

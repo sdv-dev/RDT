@@ -128,7 +128,19 @@ class TestCategoricalTransformer:
                 0.027777777777777776
             )
         }
+        expected_means = pd.Series({
+            'foo': 0.25,
+            'bar': 0.6666666666666666,
+            'tar': 0.9166666666666666
+        })
+        expected_starts = pd.DataFrame({
+            'category': ['foo', 'bar', 'tar'],
+            'start': [0, 0.5, 0.8333333333333333]
+        }).set_index('start')
+
         assert result[0] == expected_intervals
+        pd.testing.assert_series_equal(result[1], expected_means)
+        pd.testing.assert_frame_equal(result[2], expected_starts)
 
     def test__get_intervals_nans(self):
         """Test the ``_get_intervals`` method when data contains nan's.
@@ -170,7 +182,19 @@ class TestCategoricalTransformer:
                 0.027777777777777776
             )
         }
+        expected_means = pd.Series({
+            'foo': 0.25,
+            np.nan: 0.6666666666666666,
+            'tar': 0.9166666666666666
+        })
+        expected_starts = pd.DataFrame({
+            'category': ['foo', np.nan, 'tar'],
+            'start': [0, 0.5, 0.8333333333333333]
+        }).set_index('start')
+
         assert result[0] == expected_intervals
+        pd.testing.assert_series_equal(result[1], expected_means)
+        pd.testing.assert_frame_equal(result[2], expected_starts)
 
     def test__fit_intervals(self):
         # Setup
@@ -201,15 +225,26 @@ class TestCategoricalTransformer:
                 0.027777777777777776
             )
         }
+        expected_means = pd.Series({
+            'foo': 0.25,
+            'bar': 0.6666666666666666,
+            'tar': 0.9166666666666666
+        })
+        expected_starts = pd.DataFrame({
+            'category': ['foo', 'bar', 'tar'],
+            'start': [0, 0.5, 0.8333333333333333]
+        }).set_index('start')
 
         assert transformer.intervals == expected_intervals
+        pd.testing.assert_series_equal(transformer.means, expected_means)
+        pd.testing.assert_frame_equal(transformer.starts, expected_starts)
 
     def test__get_value_no_fuzzy(self):
         # Setup
         transformer = CategoricalTransformer(fuzzy=False)
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
-            np.nan: (0, 0.5, 0.25, 0.5 / 6),
+            np.nan: (0.5, 1.0, 0.75, 0.5 / 6),
         }
 
         # Run
@@ -218,12 +253,12 @@ class TestCategoricalTransformer:
 
         # Asserts
         assert result_foo == 0.25
-        assert result_nan == 0.25
+        assert result_nan == 0.75
 
-    @patch('scipy.stats.norm.rvs')
-    def test__get_value_fuzzy(self, rvs_mock):
+    @patch('rdt.transformers.categorical.norm')
+    def test__get_value_fuzzy(self, norm_mock):
         # setup
-        rvs_mock.return_value = 0.2745
+        norm_mock.rvs.return_value = 0.2745
 
         transformer = CategoricalTransformer(fuzzy=True)
         transformer.intervals = {
@@ -396,8 +431,8 @@ class TestCategoricalTransformer:
         expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
         assert (transformed == expected).all()
 
-    @patch('scipy.stats.norm.rvs')
-    def test__transform_by_category_fuzzy_true(self, rvs_mock):
+    @patch('rdt.transformers.categorical.norm')
+    def test__transform_by_category_fuzzy_true(self, norm_mock):
         """Test the ``_transform_by_category`` method when ``fuzzy`` is True.
 
         Validate that the data is transformed correctly when ``fuzzy`` is True.
@@ -423,7 +458,7 @@ class TestCategoricalTransformer:
         def rvs_mock_func(loc, scale, **kwargs):
             return loc
 
-        rvs_mock.side_effect = rvs_mock_func
+        norm_mock.rvs.side_effect = rvs_mock_func
 
         data = pd.Series([1, 3, 3, 2, 1])
         transformer = CategoricalTransformer(fuzzy=True)
@@ -440,7 +475,7 @@ class TestCategoricalTransformer:
         # Assert
         expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
         assert (transformed == expected).all()
-        rvs_mock.assert_has_calls([
+        norm_mock.rvs.assert_has_calls([
             call(0.125, 0.041666666666666664, size=0),
             call(0.375, 0.041666666666666664, size=2),
             call(0.625, 0.041666666666666664, size=1),
