@@ -52,12 +52,6 @@ development_requires = [
     'pip>=9.0.1',
     'watchdog>=0.8.3,<0.11',
 
-    # docs
-    'm2r>=0.2.0,<0.3',
-    'Sphinx>=1.7.1,<3',
-    'sphinx_rtd_theme>=0.2.4,<0.5',
-    'autodocsumm>=0.1.10',
-
     # style check
     'pycodestyle<2.8.0,>=2.7.0',
     'pyflakes<2.4.0,>=2.3.0',
