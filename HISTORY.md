@@ -1,6 +1,6 @@
 # History
 
-## 0.6.1 - 2021-11-09
+## 0.6.1 - 2021-11-10
 
 This release adds support for Python 3.9! It also removes unused document files.
 
