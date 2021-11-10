@@ -1,5 +1,14 @@
 # History
 
+## 0.6.1 - 2021-11-10
+
+This release adds support for Python 3.9! It also removes unused document files.
+
+### Internal Improvements
+
+* Add support for Python 3.9 - Issue [#323](https://github.com/sdv-dev/RDT/issues/323) by @amontanez24
+* Remove docs - PR [#322](https://github.com/sdv-dev/RDT/pull/322) by @pvk-developer
+
 ## 0.6.0 - 2021-10-29
 
 This release makes major changes to the underlying code for RDT as well as the API for both the `HyperTransformer` and `BaseTransformer`.
