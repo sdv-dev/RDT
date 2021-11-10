@@ -15,14 +15,15 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    'numpy>=1.18.0,<2',
-    'pandas>=1.1,<1.1.5',
-    'scipy>=1.4.1,<2',
+    "numpy>=1.18.0,<1.20.0;python_version<'3.7'",
+    "numpy>=1.20.0,<2;python_version>='3.7'",
+    'pandas>=1.1.3,<1.1.5',
+    'scipy>=1.5.4,<2',
     'psutil>=5.7,<6',
 ]
 
 copulas_requires = [
-    'copulas>=0.5.0.dev0,<0.6',
+    'copulas>=0.6.0,<0.7',
 ]
 
 setup_requires = [
@@ -35,7 +36,7 @@ tests_require = [
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
     'pytest-subtests>=0.5,<1.0',
-    'scikit-learn>=0.23,<1',
+    'scikit-learn>=0.24,<1',
 ]
 
 addons_require = []
@@ -51,12 +52,6 @@ development_requires = [
     'bumpversion>=0.5.3,<0.6',
     'pip>=9.0.1',
     'watchdog>=0.8.3,<0.11',
-
-    # docs
-    'm2r>=0.2.0,<0.3',
-    'Sphinx>=1.7.1,<3',
-    'sphinx_rtd_theme>=0.2.4,<0.5',
-    'autodocsumm>=0.1.10',
 
     # style check
     'pycodestyle<2.8.0,>=2.7.0',
@@ -114,6 +109,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     description='Reversible Data Transforms',
     extras_require={
@@ -129,11 +125,11 @@ setup(
     long_description_content_type='text/markdown',
     name='rdt',
     packages=find_namespace_packages(include=['rdt', 'rdt.transformers']),
-    python_requires='>=3.6,<3.9',
+    python_requires='>=3.6,<3.10',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.6.0',
+    version='0.6.1.dev1',
     zip_safe=False,
 )
