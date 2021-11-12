@@ -584,7 +584,7 @@ class TestBaseTransformer:
             [7, 1],
             [8, 5],
             [9, 9]
-        ])
+        ], dtype=np.int64)
 
         # Run
         BaseTransformer._set_columns_data(data, columns_data, columns)
