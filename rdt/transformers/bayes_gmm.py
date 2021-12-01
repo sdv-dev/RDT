@@ -19,7 +19,7 @@ ColumnTransformInfo = namedtuple(
 )
 
 
-class BayesGMM(BaseTransformer):
+class BayesGMMCopy(object):
     """Data Transformer.
 
     Model continuous columns with a BayesianGMM and normalized to a scalar [0, 1] and a vector.
@@ -222,7 +222,7 @@ class BayesGMM(BaseTransformer):
         for column_transform_info in self._column_transform_info_list:
             if column_transform_info.column_name == column_name:
                 break
-            if column_transform_info.column_type == "discrete":
+            if column_transform_info.column_type == 'discrete':
                 discrete_counter += 1
 
             column_id += 1
@@ -237,7 +237,7 @@ class BayesGMM(BaseTransformer):
             raise ValueError(f"The value `{value}` doesn't exist in the column `{column_name}`.")
 
         return {
-            "discrete_column_id": discrete_counter,
-            "column_id": column_id,
-            "value_id": np.argmax(one_hot)
+            'discrete_column_id': discrete_counter,
+            'column_id': column_id,
+            'value_id': np.argmax(one_hot)
         }

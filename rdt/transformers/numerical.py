@@ -487,3 +487,64 @@ class GaussianCopulaTransformer(NumericalTransformer):
             data = self._univariate.ppf(scipy.stats.norm.cdf(data))
 
         return super()._reverse_transform(data)
+
+
+class BayesGMMTransformer(NumericalTransformer):
+
+    DETERMINISTIC_TRANSFORM = False
+    DETERMINISTIC_REVERSE = False
+    COMPOSITION_IS_IDENTITY = False
+
+    def __init__(self, dtype=None, nan='mean', null_column=None):
+        super().__init__(dtype=dtype, nan=nan, null_column=null_column)
+
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        
+        output_types = {
+            'value': 'float',
+        }
+        if self.null_transformer and self.null_transformer.creates_null_column():
+            output_types['is_null'] = 'float'
+
+        return self._add_prefix(output_types)
+
+    def _fit(self, data):
+        """Fit the transformer to the data.
+
+        Args:
+            data (pandas.Series):
+                Data to fit to.
+        """
+        from rdt.transformers.bayes_gmm import BayesGMMCopy
+        self._model = BayesGMMCopy()
+        self._model._fit(data, [])
+
+    def _transform(self, data):
+        """Transform numerical data.
+
+        Args:
+            data (pandas.Series):
+                Data to transform.
+
+        Returns:
+            numpy.ndarray
+        """
+        return self._model._transform(data)
+
+    def _reverse_transform(self, data):
+        """Convert data back into the original format.
+
+        Args:
+            data (pd.Series or numpy.ndarray):
+                Data to transform.
+
+        Returns:
+            pandas.Series
+        """
+        return self._model._reverse_transform(data)
