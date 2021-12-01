@@ -76,7 +76,7 @@ class BayesGMM(BaseTransformer):
             output_info=[SpanInfo(num_categories, 'softmax')],
             output_dimensions=num_categories)
 
-    def fit(self, raw_data, discrete_columns=()):
+    def _fit(self, data, discrete_columns=()):
         """Fit GMM for continuous columns and One hot encoder for discrete columns.
 
         This step also counts the #columns in matrix data, and span information.
@@ -85,19 +85,19 @@ class BayesGMM(BaseTransformer):
         self.output_dimensions = 0
         self.dataframe = True
 
-        if not isinstance(raw_data, pd.DataFrame):
+        if not isinstance(data, pd.DataFrame):
             self.dataframe = False
             # work around for RDT issue #328 Fitting with numerical column names fails
             discrete_columns = [str(column) for column in discrete_columns]
-            column_names = [str(num) for num in range(raw_data.shape[1])]
-            raw_data = pd.DataFrame(raw_data, columns=column_names)
+            column_names = [str(num) for num in range(data.shape[1])]
+            data = pd.DataFrame(data, columns=column_names)
 
-        self._column_raw_dtypes = raw_data.infer_objects().dtypes
+        self._column_raw_dtypes = data.infer_objects().dtypes
         self._column_transform_info_list = []
-        for column_name in raw_data.columns:
-            raw_column_data = raw_data[column_name].to_numpy()
+        for column_name in data.columns:
+            raw_column_data = data[column_name].to_numpy()
             if column_name in discrete_columns:
-                column_transform_info = self._fit_discrete(column_name, raw_data[column_name])
+                column_transform_info = self._fit_discrete(column_name, data[column_name])
             else:
                 column_transform_info = self._fit_continuous(column_name, raw_column_data)
 
@@ -136,15 +136,15 @@ class BayesGMM(BaseTransformer):
         data = pd.DataFrame(raw_column_data, columns=[column_transform_info.column_name])
         return [ohe.transform(data).to_numpy()]
 
-    def transform(self, raw_data):
+    def _transform(self, data):
         """Take raw data and output a matrix data."""
-        if not isinstance(raw_data, pd.DataFrame):
-            column_names = [str(num) for num in range(raw_data.shape[1])]
-            raw_data = pd.DataFrame(raw_data, columns=column_names)
+        if not isinstance(data, pd.DataFrame):
+            column_names = [str(num) for num in range(data.shape[1])]
+            data = pd.DataFrame(data, columns=column_names)
 
         column_data_list = []
         for column_transform_info in self._column_transform_info_list:
-            column_data = raw_data[[column_transform_info.column_name]].to_numpy()
+            column_data = data[[column_transform_info.column_name]].to_numpy()
             if column_transform_info.column_type == 'continuous':
                 column_data_list += self._transform_continuous(column_transform_info, column_data)
             else:
@@ -153,7 +153,7 @@ class BayesGMM(BaseTransformer):
 
         return np.concatenate(column_data_list, axis=1).astype(float)
 
-    def _inverse_transform_continuous(self, column_transform_info, column_data, sigmas, st):
+    def _reverse_transform_continuous(self, column_transform_info, column_data, sigmas, st):
         gm = column_transform_info.transform
         valid_component_indicator = column_transform_info.transform_aux
 
@@ -178,12 +178,12 @@ class BayesGMM(BaseTransformer):
 
         return column
 
-    def _inverse_transform_discrete(self, column_transform_info, column_data):
+    def _reverse_transform_discrete(self, column_transform_info, column_data):
         ohe = column_transform_info.transform
         data = pd.DataFrame(column_data, columns=list(ohe.get_output_types()))
         return ohe.reverse_transform(data)[column_transform_info.column_name]
 
-    def inverse_transform(self, data, sigmas=None):
+    def _reverse_transform(self, data, sigmas=None):
         """Take matrix data and output raw data.
 
         Output uses the same type as input to the transform function.
@@ -215,3 +215,29 @@ class BayesGMM(BaseTransformer):
             recovered_data = recovered_data.to_numpy()
 
         return recovered_data
+
+    def convert_column_name_value_to_id(self, column_name, value):
+        discrete_counter = 0
+        column_id = 0
+        for column_transform_info in self._column_transform_info_list:
+            if column_transform_info.column_name == column_name:
+                break
+            if column_transform_info.column_type == "discrete":
+                discrete_counter += 1
+
+            column_id += 1
+
+        else:
+            raise ValueError(f"The column_name `{column_name}` doesn't exist in the data.")
+
+        ohe = column_transform_info.transform
+        data = pd.DataFrame([value], columns=[column_transform_info.column_name])
+        one_hot = ohe.transform(data).values[0]
+        if sum(one_hot) == 0:
+            raise ValueError(f"The value `{value}` doesn't exist in the column `{column_name}`.")
+
+        return {
+            "discrete_column_id": discrete_counter,
+            "column_id": column_id,
+            "value_id": np.argmax(one_hot)
+        }
