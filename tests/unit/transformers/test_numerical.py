@@ -1,12 +1,12 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
+import copulas
 import numpy as np
 import pandas as pd
 import pytest
-
-import copulas
 from copulas import univariate
+
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
     GaussianCopulaTransformer, NumericalBoundedTransformer, NumericalRoundedBoundedTransformer,

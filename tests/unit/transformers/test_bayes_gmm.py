@@ -10,7 +10,7 @@ from rdt.transformers.bayes_gmm import BayesGMM, ColumnTransformInfo, SpanInfo
 class TestBayesGMM(TestCase):
 
     @patch('ctgan.data_transformer.BayesianGaussianMixture')
-    def test___fit_continuous_(self, MockBGM):
+    def test___fit_continuous_(self, mock_bgm):
         """Test '_fit_continuous_' on a simple continuous column.
 
         A 'BayesianGaussianMixture' will be created and fit with the
@@ -34,7 +34,7 @@ class TestBayesGMM(TestCase):
         Side Effects:
             - fit should be called with the data
         """
-        bgm_instance = MockBGM.return_value
+        bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])  # 2 non-zero components
 
         max_clusters = 10
@@ -50,7 +50,7 @@ class TestBayesGMM(TestCase):
         assert info.output_info[1].activation_fn == 'softmax'
 
     @patch('ctgan.data_transformer.OneHotEncodingTransformer')
-    def test___fit_discrete_(self, MockOHE):
+    def test___fit_discrete_(self, mock_ohe):
         """Test '_fit_discrete_' on a simple discrete column.
 
         A 'OneHotEncodingTransformer' will be created and fit with the
@@ -73,7 +73,7 @@ class TestBayesGMM(TestCase):
         Side Effects:
             - fit should be called with the data
         """
-        ohe_instance = MockOHE.return_value
+        ohe_instance = mock_ohe.return_value
         ohe_instance.dummies = ['a', 'b']
         transformer = BayesGMM()
         info = transformer._fit_discrete('column', np.array(['a', 'b'] * 100))
