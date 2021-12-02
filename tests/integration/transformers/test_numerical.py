@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.numerical import GaussianCopulaTransformer, NumericalTransformer
+from rdt.transformers.numerical import (
+    BayesGMMTransformer, GaussianCopulaTransformer, NumericalTransformer)
 
 
 class TestNumericalTransformer:
@@ -135,3 +136,21 @@ class TestGaussianCopulaTransformer:
 
         reverse = ct.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
+
+
+class TestBayesGMMTransformer:
+
+    def test_simple(self):
+        data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['a'])
+
+        bt = BayesGMMTransformer()
+        bt.fit(data, list(data.columns))
+        transformed = bt.transform(data)
+
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (1000, 2)
+        assert all(isinstance(x, float) for x in transformed['a.continuous'])
+        assert all(isinstance(x, int) for x in transformed['a.discrete'])
+
+        reverse = bt.reverse_transform(transformed)
+        np.testing.assert_array_almost_equal(reverse, data, decimal=1)

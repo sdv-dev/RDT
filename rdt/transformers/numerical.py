@@ -490,6 +490,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
 
 class BayesGMMTransformer(NumericalTransformer):
+    """Bayesian GMM transformer."""
 
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = False
@@ -505,9 +506,9 @@ class BayesGMMTransformer(NumericalTransformer):
             dict:
                 Mapping from the transformed column names to supported data types.
         """
-        
         output_types = {
-            'value': 'float',
+            'continuous': 'float',
+            'discrete': 'categorical'
         }
         if self.null_transformer and self.null_transformer.creates_null_column():
             output_types['is_null'] = 'float'
@@ -523,7 +524,8 @@ class BayesGMMTransformer(NumericalTransformer):
         """
         from rdt.transformers.bayes_gmm import BayesGMMCopy
         self._model = BayesGMMCopy()
-        self._model._fit(data, [])
+        data = pd.DataFrame(data)
+        self._model._fit(data)
 
     def _transform(self, data):
         """Transform numerical data.
@@ -535,7 +537,14 @@ class BayesGMMTransformer(NumericalTransformer):
         Returns:
             numpy.ndarray
         """
-        return self._model._transform(data)
+        data = pd.DataFrame(data)
+        result = self._model._transform(data)
+        normalized, one_hot = result[:, 0], result[:, 1:]
+        one_hot_as_label = one_hot.argmax(axis=1)  # something like this?
+        return pd.DataFrame({
+            'continuous': normalized,
+            'discrete': one_hot_as_label
+        })
 
     def _reverse_transform(self, data):
         """Convert data back into the original format.
@@ -547,4 +556,7 @@ class BayesGMMTransformer(NumericalTransformer):
         Returns:
             pandas.Series
         """
+        data = pd.DataFrame(data)
+        one_hot = pd.get_dummies(data['a.discrete'])
+        data = np.concatenate([data['a.continuous'][:, None], one_hot], axis=1)
         return self._model._reverse_transform(data)

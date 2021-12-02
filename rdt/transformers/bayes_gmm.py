@@ -3,10 +3,8 @@ from collections import namedtuple
 
 import numpy as np
 import pandas as pd
-
 from sklearn.mixture import BayesianGaussianMixture
 
-from rdt.transformers.base import BaseTransformer
 from rdt.transformers.categorical import OneHotEncodingTransformer
 
 SpanInfo = namedtuple('SpanInfo', ['dim', 'activation_fn'])
@@ -122,9 +120,8 @@ class BayesGMMCopy(object):
             component_porb_t = component_porb_t / component_porb_t.sum()
             selected_component[i] = np.random.choice(np.arange(num_components), p=component_porb_t)
 
-        selected_normalized_value = normalized_values[
-            np.arange(len(raw_column_data)), selected_component
-        ].reshape([-1, 1])
+        aranged = np.arange(len(raw_column_data))
+        selected_normalized_value = normalized_values[aranged, selected_component].reshape([-1, 1])
         selected_normalized_value = np.clip(selected_normalized_value, -.99, .99)
 
         selected_component_onehot = np.zeros_like(component_probs)
@@ -197,11 +194,12 @@ class BayesGMMCopy(object):
             column_data = data[:, st:st + dim]
 
             if column_transform_info.column_type == 'continuous':
-                recovered_column_data = self._inverse_transform_continuous(
+                recovered_column_data = self._reverse_transform_continuous(
                     column_transform_info, column_data, sigmas, st)
+
             else:
                 assert column_transform_info.column_type == 'discrete'
-                recovered_column_data = self._inverse_transform_discrete(
+                recovered_column_data = self._reverse_transform_discrete(
                     column_transform_info, column_data)
 
             recovered_column_data_list.append(recovered_column_data)
@@ -217,6 +215,7 @@ class BayesGMMCopy(object):
         return recovered_data
 
     def convert_column_name_value_to_id(self, column_name, value):
+        """Convert."""
         discrete_counter = 0
         column_id = 0
         for column_transform_info in self._column_transform_info_list:
@@ -232,7 +231,7 @@ class BayesGMMCopy(object):
 
         ohe = column_transform_info.transform
         data = pd.DataFrame([value], columns=[column_transform_info.column_name])
-        one_hot = ohe.transform(data).values[0]
+        one_hot = ohe.transform(data).to_numpy()[0]
         if sum(one_hot) == 0:
             raise ValueError(f"The value `{value}` doesn't exist in the column `{column_name}`.")
 

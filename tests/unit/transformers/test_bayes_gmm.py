@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.bayes_gmm import ColumnTransformInfo, BayesGMM, SpanInfo
+from rdt.transformers.bayes_gmm import BayesGMM, ColumnTransformInfo, SpanInfo
 
 
 class TestBayesGMM(TestCase):
@@ -231,11 +231,15 @@ class TestBayesGMM(TestCase):
         transformer._transform_continuous.return_value = return_value
 
         transformer._transform_discrete = Mock()
-        transformer._transform_discrete.return_value = [np.array([
-            [0, 1],
-            [0, 1],
-            [1, 0],
-        ])]
+        transformer._transform_discrete.return_value = [
+            np.array(
+                [
+                    [0, 1],
+                    [0, 1],
+                    [1, 0],
+                ]
+            )
+        ]
 
         result = transformer._transform(data)
         transformer._transform_continuous.assert_called_once()
