@@ -163,7 +163,7 @@ def validate_test_names(transformer):
     module = _load_module_from_path(test_file)
 
     test_class = getattr(module, f'Test{transformer.__name__}', None)
-    assert test_class is not None, 'The expected test class was not found.'
+    assert test_class is not None, f'{module} n,t.hueo {transformer.__name__}'
 
     test_functions = inspect.getmembers(test_class, predicate=inspect.isfunction)
     test_functions = [

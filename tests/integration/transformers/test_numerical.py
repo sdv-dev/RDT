@@ -141,16 +141,16 @@ class TestGaussianCopulaTransformer:
 class TestBayesGMMTransformer:
 
     def test_simple(self):
-        data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['a'])
+        data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['col'])
 
-        bt = BayesGMMTransformer()
-        bt.fit(data, list(data.columns))
-        transformed = bt.transform(data)
+        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer.fit(data, list(data.columns))
+        transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (1000, 2)
-        assert all(isinstance(x, float) for x in transformed['a.continuous'])
-        assert all(isinstance(x, int) for x in transformed['a.discrete'])
+        assert all(isinstance(x, float) for x in transformed['col.continuous'])
+        assert all(isinstance(x, int) for x in transformed['col.discrete'])
 
-        reverse = bt.reverse_transform(transformed)
+        reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)

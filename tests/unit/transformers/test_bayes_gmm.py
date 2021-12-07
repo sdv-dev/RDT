@@ -4,20 +4,20 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.bayes_gmm import BayesGMM, ColumnTransformInfo, SpanInfo
+from rdt.transformers.numerical import BayesGMMTransformer, ColumnTransformInfo, SpanInfo
 
 
-class TestBayesGMM(TestCase):
+class TestBayesGMMTransformer(TestCase):
 
-    @patch('ctgan.data_transformer.BayesianGaussianMixture')
-    def test___fit_continuous_(self, mock_bgm):
+    @patch('rdt.transformers.numerical.BayesianGaussianMixture')
+    def test___fit_continuous(self, mock_bgm):
         """Test '_fit_continuous_' on a simple continuous column.
 
         A 'BayesianGaussianMixture' will be created and fit with the
         'raw_column_data'.
 
         Setup:
-            - Create BayesGMM with weight_threshold
+            - Create BayesGMMTransformer with weight_threshold
             - Mock the BayesianGaussianMixture
             - Provide fit method (no-op)
             - Provide weights_ attribute, some above threshold, some below
@@ -38,7 +38,7 @@ class TestBayesGMM(TestCase):
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])  # 2 non-zero components
 
         max_clusters = 10
-        transformer = BayesGMM(max_clusters, weight_threshold=0.005)
+        transformer = BayesGMMTransformer(max_clusters, weight_threshold=0.005)
         info = transformer._fit_continuous('column', np.random.normal((100, 1)))
 
         assert info.column_name == 'column'
@@ -48,41 +48,6 @@ class TestBayesGMM(TestCase):
         assert info.output_info[0].activation_fn == 'tanh'
         assert info.output_info[1].dim == 2
         assert info.output_info[1].activation_fn == 'softmax'
-
-    @patch('ctgan.data_transformer.OneHotEncodingTransformer')
-    def test___fit_discrete_(self, mock_ohe):
-        """Test '_fit_discrete_' on a simple discrete column.
-
-        A 'OneHotEncodingTransformer' will be created and fit with the
-        'raw_column_data'.
-
-        Setup:
-            - Create BayesGMM
-            - Mock the OneHotEncodingTransformer
-            - Provide fit method (no-op)
-
-        Input:
-            - column_name = string
-            - raw_column_data = numpy array of discrete values
-
-        Output:
-            - ColumnTransformInfo
-              - Check column name
-              - Check that output_dims matches expected (number of categories)
-
-        Side Effects:
-            - fit should be called with the data
-        """
-        ohe_instance = mock_ohe.return_value
-        ohe_instance.dummies = ['a', 'b']
-        transformer = BayesGMM()
-        info = transformer._fit_discrete('column', np.array(['a', 'b'] * 100))
-
-        assert info.column_name == 'column'
-        assert info.transform == ohe_instance
-        assert info.output_dimensions == 2
-        assert info.output_info[0].dim == 2
-        assert info.output_info[0].activation_fn == 'softmax'
 
     def test__fit(self):
         """Test '_fit' on a np.ndarray with one continuous and one discrete columns.
@@ -95,7 +60,7 @@ class TestBayesGMM(TestCase):
             'self._column_transform_info_list' appropriately
 
         Setup:
-            - Create BayesGMM
+            - Create BayesGMMTransformer
             - Mock _fit_discrete
             - Mock _fit_continuous
 
@@ -115,10 +80,9 @@ class TestBayesGMM(TestCase):
         """
         data = pd.DataFrame({
             'x': np.random.random(size=100),
-            'y': np.random.choice(['yes', 'no'], size=100)
         })
 
-        transformer = BayesGMM()
+        transformer = BayesGMMTransformer()
         transformer._fit_continuous = Mock()
         transformer._fit_continuous.return_value = ColumnTransformInfo(
             column_name='x', column_type='continuous', transform=None,
@@ -127,19 +91,9 @@ class TestBayesGMM(TestCase):
             output_dimensions=1 + 3
         )
 
-        transformer._fit_discrete = Mock()
-        transformer._fit_discrete.return_value = ColumnTransformInfo(
-            column_name='y', column_type='discrete', transform=None,
-            transform_aux=None,
-            output_info=[SpanInfo(2, 'softmax')],
-            output_dimensions=2
-        )
-
-        transformer._fit(data, discrete_columns=['y'])
-
-        transformer._fit_discrete.assert_called_once()
+        transformer._fit(data)
         transformer._fit_continuous.assert_called_once()
-        assert transformer.output_dimensions == 6
+        assert transformer.output_dimensions == 4
 
     def test__transform_continuous(self):
         """Test '_transform_continuous'.
@@ -201,22 +155,15 @@ class TestBayesGMM(TestCase):
         """
         data = pd.DataFrame({
             'x': np.array([0.1, 0.3, 0.5]),
-            'y': np.array(['yes', 'yes', 'no'])
         })
 
-        transformer = BayesGMM()
+        transformer = BayesGMMTransformer()
         transformer._column_transform_info_list = [
             ColumnTransformInfo(
                 column_name='x', column_type='continuous', transform=None,
                 transform_aux=None,
                 output_info=[SpanInfo(1, 'tanh'), SpanInfo(3, 'softmax')],
                 output_dimensions=1 + 3
-            ),
-            ColumnTransformInfo(
-                column_name='y', column_type='discrete', transform=None,
-                transform_aux=None,
-                output_info=[SpanInfo(2, 'softmax')],
-                output_dimensions=2
             )
         ]
 
@@ -225,36 +172,20 @@ class TestBayesGMM(TestCase):
         selected_component_onehot = np.array([
             [1, 0, 0],
             [1, 0, 0],
-            [1, 0, 0],
+            [0, 1, 0],
         ])
         return_value = (selected_normalized_value, selected_component_onehot)
         transformer._transform_continuous.return_value = return_value
 
-        transformer._transform_discrete = Mock()
-        transformer._transform_discrete.return_value = [
-            np.array(
-                [
-                    [0, 1],
-                    [0, 1],
-                    [1, 0],
-                ]
-            )
-        ]
-
         result = transformer._transform(data)
         transformer._transform_continuous.assert_called_once()
-        transformer._transform_discrete.assert_called_once()
 
-        expected = np.array([
-            [0.1, 1, 0, 0, 0, 1],
-            [0.3, 1, 0, 0, 0, 1],
-            [0.5, 1, 0, 0, 1, 0],
-        ])
+        continuous = np.array([0.1, 0.3, 0.5])
+        discrete = np.array([0, 0, 1])
 
-        assert result.shape == (3, 6)
-        assert (result[:, 0] == expected[:, 0]).all(), 'continuous-cdf'
-        assert (result[:, 1:4] == expected[:, 1:4]).all(), 'continuous-softmax'
-        assert (result[:, 4:6] == expected[:, 4:6]).all(), 'discrete'
+        assert result.shape == (3, 2)
+        assert (result['continuous'].to_numpy() == continuous).all(), 'continuous'
+        assert (result['discrete'].to_numpy() == discrete).all(), 'discrete'
 
     def test__reverse_transform_continuous(self):
         """Test '_inverse_transform_continuous' with sigmas != None.
@@ -308,81 +239,3 @@ class TestBayesGMM(TestCase):
         Side Effects:
             - _transform_discrete and _transform_continuous should each be called once.
         """
-
-    def test_convert_column_name_value_to_id(self):
-        """Test 'convert_column_name_value_to_id' on a simple '_column_transform_info_list'.
-
-        Tests that the appropriate indexes are returned when a table of three columns,
-        discrete, continuous, discrete, is passed as '_column_transform_info_list'.
-
-        Setup:
-            - Mock _column_transform_info_list
-
-        Input:
-            - column_name = the name of a discrete column
-            - value = the categorical value
-
-        Output:
-            - dictionary containing:
-              - 'discrete_column_id' = the index of the target column,
-                when considering only discrete columns
-              - 'column_id' = the index of the target column
-                (e.g. 3 = the third column in the data)
-              - 'value_id' = the index of the indicator value in the one-hot encoding
-        """
-        ohe = Mock()
-        ohe.transform.return_value = pd.DataFrame([
-            [0, 1]  # one hot encoding, second dimension
-        ])
-        transformer = BayesGMM()
-        transformer._column_transform_info_list = [
-            ColumnTransformInfo(
-                column_name='x', column_type='continuous', transform=None,
-                transform_aux=None,
-                output_info=[SpanInfo(1, 'tanh'), SpanInfo(3, 'softmax')],
-                output_dimensions=1 + 3
-            ),
-            ColumnTransformInfo(
-                column_name='y', column_type='discrete', transform=ohe,
-                transform_aux=None,
-                output_info=[SpanInfo(2, 'softmax')],
-                output_dimensions=2
-            )
-        ]
-
-        result = transformer.convert_column_name_value_to_id('y', 'yes')
-        assert result['column_id'] == 1  # this is the 2nd column
-        assert result['discrete_column_id'] == 0  # this is the 1st discrete column
-        assert result['value_id'] == 1  # this is the 2nd dimension in the one hot encoding
-
-    def test_convert_column_name_value_to_id_multiple(self):
-        ohe = Mock()
-        ohe.transform.return_value = pd.DataFrame([
-            [0, 1, 0]  # one hot encoding, second dimension
-        ])
-        transformer = BayesGMM()
-        transformer._column_transform_info_list = [
-            ColumnTransformInfo(
-                column_name='x', column_type='continuous', transform=None,
-                transform_aux=None,
-                output_info=[SpanInfo(1, 'tanh'), SpanInfo(3, 'softmax')],
-                output_dimensions=1 + 3
-            ),
-            ColumnTransformInfo(
-                column_name='y', column_type='discrete', transform=ohe,
-                transform_aux=None,
-                output_info=[SpanInfo(2, 'softmax')],
-                output_dimensions=2
-            ),
-            ColumnTransformInfo(
-                column_name='z', column_type='discrete', transform=ohe,
-                transform_aux=None,
-                output_info=[SpanInfo(2, 'softmax')],
-                output_dimensions=2
-            )
-        ]
-
-        result = transformer.convert_column_name_value_to_id('z', 'yes')
-        assert result['column_id'] == 2  # this is the 3rd column
-        assert result['discrete_column_id'] == 1  # this is the 2nd discrete column
-        assert result['value_id'] == 1  # this is the 1st dimension in the one hot encoding
