@@ -2,6 +2,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from rdt.transformers.datetime import DatetimeRoundedTransformer, DatetimeTransformer
 from rdt.transformers.null import NullTransformer
@@ -139,6 +140,75 @@ class TestDatetimeTransformer:
 
         # Assert
         assert transformer.divider == 1
+
+    def test__convert_to_datetime(self):
+        """Test the ``_convert_to_datetime`` method.
+
+        Test to make sure the transformer converts the data to datetime
+        if it is of type ``object`` and can be converted.
+
+        Input:
+            - a pandas Series of dtype object, with elements that can be
+            converted to datetime.
+
+        Output:
+            - a pandas series of type datetime
+        """
+        # Setup
+        data = pd.Series(['2020-01-01', '2020-02-01', '2020-03-01'])
+        transformer = DatetimeTransformer()
+
+        # Run
+        converted_data = transformer._convert_to_datetime(data)
+
+        # Assert
+        expected_data = pd.Series(pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01']))
+        pd.testing.assert_series_equal(expected_data, converted_data)
+
+    def test__convert_to_datetime_not_convertible_raises_error(self):
+        """Test the ``_convert_to_datetime`` method.
+
+        Test to make sure a ``TypeError`` is raised if the data is of type
+        ``object`` but can't be converted.
+
+        Input:
+            - a pandas Series of dtype object, with elements that can't be
+            converted to datetime.
+
+        Expected behavior:
+            - a ``TypeError`` is raised.
+        """
+        # Setup
+        data = pd.Series(['2020-01-01-can', '2020-02-01-not', '2020-03-01-convert'])
+        transformer = DatetimeTransformer()
+
+        # Run
+        error_message = 'Data must be of dtype datetime, or castable to datetime.'
+        with pytest.raises(TypeError, match=error_message):
+            transformer._convert_to_datetime(data)
+
+    def test__transform_helper_calls_convert_to_datetime(self):
+        """Test the ``_transform_helper`` method.
+
+        Validate the helper transformer produces the correct value with ``strip_constant`` True.
+
+        Input:
+            - a pandas series of datetimes.
+
+        Output:
+            - a pandas series of the transformed datetimes.
+        """
+        # Setup
+        data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
+        transformer = DatetimeTransformer()
+        transformer._convert_to_datetime = Mock()
+        transformer._convert_to_datetime.return_value = data
+
+        # Run
+        transformer._transform_helper(data)
+
+        # Assert
+        transformer._convert_to_datetime.assert_called_once_with(data)
 
     def test__transform_helper_strip_constant_true(self):
         """Test the ``_transform_helper`` method.

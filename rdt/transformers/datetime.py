@@ -84,8 +84,20 @@ class DatetimeTransformer(BaseTransformer):
 
             self.divider = candidate
 
+    @staticmethod
+    def _convert_to_datetime(data):
+        if data.dtype == 'object':
+            try:
+                data = pd.to_datetime(data)
+            except Exception:
+                message = 'Data must be of dtype datetime, or castable to datetime.'
+                raise TypeError(message) from None
+
+        return data
+
     def _transform_helper(self, datetimes):
         """Transform datetime values to integer."""
+        datetimes = self._convert_to_datetime(datetimes)
         nulls = datetimes.isna()
         integers = pd.to_numeric(datetimes, errors='coerce').to_numpy().astype(np.float64)
         integers[nulls] = np.nan
@@ -101,7 +113,7 @@ class DatetimeTransformer(BaseTransformer):
         """Fit the transformer to the data.
 
         Args:
-            data (pandas.Series:
+            data (pandas.Series):
                 Data to fit the transformer to.
         """
         transformed = self._transform_helper(data)
