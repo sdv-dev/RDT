@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.numerical import BayesGMMTransformer, ColumnTransformInfo, SpanInfo
+from rdt.transformers.numerical import BayesGMMTransformer
 
 
 class TestBayesGMMTransformer(TestCase):
