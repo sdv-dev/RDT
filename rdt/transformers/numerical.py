@@ -494,8 +494,8 @@ class BayesGMMTransformer(NumericalTransformer):
     """Bayesian GMM transformer."""
 
     DETERMINISTIC_TRANSFORM = False
-    DETERMINISTIC_REVERSE = False
-    COMPOSITION_IS_IDENTITY = False
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = True
 
     def __init__(self, dtype=None, nan='mean', null_column=None, max_clusters=10,
                  weight_threshold=0.005):
