@@ -20,6 +20,7 @@ install_requires = [
     'pandas>=1.1.3,<2',
     'scipy>=1.5.4,<2',
     'psutil>=5.7,<6',
+    'scikit-learn>=0.24,<1',
 ]
 
 copulas_requires = [
@@ -36,7 +37,6 @@ tests_require = [
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
     'pytest-subtests>=0.5,<1.0',
-    'scikit-learn>=0.24,<1',
 ]
 
 addons_require = []
