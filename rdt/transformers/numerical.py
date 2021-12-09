@@ -615,12 +615,13 @@ class BayesGMMTransformer(NumericalTransformer):
         Returns:
             pandas.Series
         """
-        data = pd.DataFrame(data)
-        one_hot = np.zeros(shape=(data.shape[0], self._number_of_modes))
-        continuous_name, discrete_name = self.output_columns  # pylint: disable=W0632
-        discrete_column = data[discrete_name].tolist()
-        one_hot[np.arange(data.shape[0]), discrete_column] = 1.0
-        data = np.concatenate([data[continuous_name][:, None], one_hot], axis=1)
+        print(data.shape)
+        one_hot = np.zeros(shape=(data.shape[1], self._number_of_modes))
+        discrete_column = data[1].astype(int).tolist()
+        print(discrete_column)
+        print(one_hot)
+        one_hot[np.arange(data.shape[1]), discrete_column] = 1.0
+        data = np.concatenate([data[0][:,None], one_hot], axis=1)
 
         recovered_data = self._reverse_transform_helper(data, sigma)
         recovered_data = pd.Series(recovered_data).astype(self._column_raw_dtypes)
