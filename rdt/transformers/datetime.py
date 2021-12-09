@@ -32,6 +32,9 @@ class DatetimeTransformer(BaseTransformer):
             values by the value of the next smallest time unit. This, a part from reducing the
             orders of magnitued of the transformed values, ensures that reverted values always
             are zero on the lower time units.
+        format (str):
+            The strftime to use for parsing time. For more information, see
+            https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
     """
 
     INPUT_TYPE = 'datetime'
@@ -42,10 +45,11 @@ class DatetimeTransformer(BaseTransformer):
     null_transformer = None
     divider = None
 
-    def __init__(self, nan='mean', null_column=None, strip_constant=False):
+    def __init__(self, nan='mean', null_column=None, strip_constant=False, datetime_format=None):
         self.nan = nan
         self.null_column = null_column
         self.strip_constant = strip_constant
+        self.datetime_format = datetime_format
 
     def is_composition_identity(self):
         """Return whether composition of transform and reverse transform produces the input data.
@@ -84,14 +88,17 @@ class DatetimeTransformer(BaseTransformer):
 
             self.divider = candidate
 
-    @staticmethod
-    def _convert_to_datetime(data):
+    def _convert_to_datetime(self, data):
         if data.dtype == 'object':
             try:
-                data = pd.to_datetime(data)
-            except Exception:
-                message = 'Data must be of dtype datetime, or castable to datetime.'
-                raise TypeError(message) from None
+                data = pd.to_datetime(data, format=self.datetime_format)
+
+            except ValueError as error:
+                if 'Unknown string format:' in str(error):
+                    message = 'Data must be of dtype datetime, or castable to datetime.'
+                    raise TypeError(message) from None
+
+                raise ValueError('Data does not match specified datetime format.') from None
 
         return data
 
