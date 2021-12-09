@@ -493,6 +493,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
 class BayesGMMTransformer(NumericalTransformer):
     """Bayesian GMM transformer."""
 
+    STD_MULTIPLIER = 4
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
@@ -502,7 +503,7 @@ class BayesGMMTransformer(NumericalTransformer):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column)
         self._max_clusters = max_clusters
         self._weight_threshold = weight_threshold
-        self._output_dimensions = None
+        self._number_of_modes = None
         self._column_raw_dtypes = None
         self._bgm_transformer = None
         self._valid_component_indicator = None
@@ -539,34 +540,8 @@ class BayesGMMTransformer(NumericalTransformer):
 
         self._bgm_transformer.fit(data.array.reshape(-1, 1))
         self._valid_component_indicator = self._bgm_transformer.weights_ > self._weight_threshold
-        self._output_dimensions = 1 + self._valid_component_indicator.sum()
-
-        data = pd.DataFrame(data)
+        self._number_of_modes = self._valid_component_indicator.sum()
         self._column_raw_dtypes = data.infer_objects().dtypes
-
-    def _transform_helper(self, data):
-        data = data.reshape((len(data), 1))
-        means = self._bgm_transformer.means_.reshape((1, self._max_clusters))
-        stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self._max_clusters))
-        normalized_values = ((data - means) / (4 * stds))[:, self._valid_component_indicator]
-        component_probs = self._bgm_transformer.predict_proba(data)
-        component_probs = component_probs[:, self._valid_component_indicator]
-
-        num_components = self._valid_component_indicator.sum()
-        selected_component = np.zeros(len(data), dtype='int')
-        for i in range(len(data)):
-            component_porb_t = component_probs[i] + 1e-6
-            component_porb_t = component_porb_t / component_porb_t.sum()
-            selected_component[i] = np.random.choice(np.arange(num_components), p=component_porb_t)
-
-        aranged = np.arange(len(data))
-        selected_normalized_value = normalized_values[aranged, selected_component].reshape([-1, 1])
-        selected_normalized_value = np.clip(selected_normalized_value, -.99, .99)
-        selected_component_onehot = np.zeros_like(component_probs)
-        selected_component_onehot[np.arange(len(data)), selected_component] = 1
-        selected_normalized_value = selected_normalized_value[:, 0]
-
-        return [selected_normalized_value, selected_component_onehot]
 
     def _transform(self, data):
         """Transform numerical data.
@@ -578,23 +553,46 @@ class BayesGMMTransformer(NumericalTransformer):
         Returns:
             numpy.ndarray
         """
-        transformed = self._transform_helper(data.to_numpy())
-        normalized, one_hot = transformed
+        data = data.to_numpy()
+        data = data.reshape((len(data), 1))
+        means = self._bgm_transformer.means_.reshape((1, self._max_clusters))
+        stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self._max_clusters))
+        normalized_values = (data - means) / (self.STD_MULTIPLIER * stds)
+        normalized_values = normalized_values[:, self._valid_component_indicator]
+        component_probs = self._bgm_transformer.predict_proba(data)
+        component_probs = component_probs[:, self._valid_component_indicator]
+
+        selected_component = np.zeros(len(data), dtype='int')
+        for i in range(len(data)):
+            component_prob_t = component_probs[i] + 1e-6
+            component_prob_t = component_prob_t / component_prob_t.sum()
+            selected_component[i] = np.random.choice(
+                np.arange(self._number_of_modes), p=component_prob_t
+            )
+
+        aranged = np.arange(len(data))
+        normalized = normalized_values[aranged, selected_component].reshape([-1, 1])
+        normalized = np.clip(normalized, -.99, .99)
+        normalized = normalized[:, 0]
+
+        one_hot = np.zeros_like(component_probs)
+        one_hot[np.arange(len(data)), selected_component] = 1
         one_hot_as_label = one_hot.argmax(axis=1)
+
         return pd.DataFrame({
             'continuous': normalized,
             'discrete': one_hot_as_label
         })
 
-    def _reverse_transform_continuous(self, data, sigma):
-        selected_normalized_value = data[:, 0]
+    def _reverse_transform_helper(self, data, sigma):
+        normalized = data[:, 0]
         selected_component_probs = data[:, 1:]
 
         if sigma is not None:
-            selected_normalized_value = np.random.normal(selected_normalized_value, sigma)
+            normalized = np.random.normal(normalized, sigma)
 
-        selected_normalized_value = np.clip(selected_normalized_value, -1, 1)
-        component_probs = np.ones((len(data), self._max_clusters)) * -100
+        normalized = np.clip(normalized, -1, 1)
+        component_probs = np.ones((len(data), self._max_clusters)) * -np.inf
         component_probs[:, self._valid_component_indicator] = selected_component_probs
 
         means = self._bgm_transformer.means_.reshape([-1])
@@ -603,7 +601,7 @@ class BayesGMMTransformer(NumericalTransformer):
 
         std_t = stds[selected_component]
         mean_t = means[selected_component]
-        column = selected_normalized_value * 4 * std_t + mean_t
+        column = normalized * self.STD_MULTIPLIER * std_t + mean_t
 
         return column
 
@@ -618,12 +616,13 @@ class BayesGMMTransformer(NumericalTransformer):
             pandas.Series
         """
         data = pd.DataFrame(data)
-        one_hot = np.zeros(shape=(data.shape[0], self._output_dimensions - 1))
-        discrete_column = data['col.discrete'].tolist()
+        one_hot = np.zeros(shape=(data.shape[0], self._number_of_modes))
+        continuous_name, discrete_name = self.output_columns  # pylint: disable=W0632
+        discrete_column = data[discrete_name].tolist()
         one_hot[np.arange(data.shape[0]), discrete_column] = 1.0
-        data = np.concatenate([data['col.continuous'][:, None], one_hot], axis=1)
+        data = np.concatenate([data[continuous_name][:, None], one_hot], axis=1)
 
-        recovered_data = self._reverse_transform_continuous(data, sigma)
-        recovered_data = pd.Series(recovered_data).astype(self._column_raw_dtypes[0])
+        recovered_data = self._reverse_transform_helper(data, sigma)
+        recovered_data = pd.Series(recovered_data).astype(self._column_raw_dtypes)
 
         return recovered_data

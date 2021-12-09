@@ -4,101 +4,32 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.numerical import BayesGMMTransformer, ColumnTransformInfo, SpanInfo
+from rdt.transformers.numerical import BayesGMMTransformer
 
 
 class TestBayesGMMTransformer(TestCase):
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
-    def test___fit_continuous(self, mock_bgm):
-        """Test '_fit_continuous_' on a simple continuous column.
-
-        A 'BayesianGaussianMixture' will be created and fit with the
-        'raw_column_data'.
-
-        Setup:
-            - Create BayesGMMTransformer with weight_threshold
-            - Mock the BayesianGaussianMixture
-            - Provide fit method (no-op)
-            - Provide weights_ attribute, some above threshold, some below
-
-        Input:
-            - column_name = string
-            - raw_column_data = numpy array of continuous values
-
-        Output:
-            - ColumnTransformInfo
-              - Check column name
-              - Check that output_dims matches expected (1 + # weights above threshold)
-
-        Side Effects:
-            - fit should be called with the data
-        """
+    def test__fit(self, mock_bgm):
+        """Test '_fit'."""
+        # Setup
+        data = pd.Series(np.random.random(size=100))
         bgm_instance = mock_bgm.return_value
-        bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])  # 2 non-zero components
+        bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])  # 2 components greater than weight_th
 
-        max_clusters = 10
-        transformer = BayesGMMTransformer(max_clusters, weight_threshold=0.005)
-        info = transformer._fit_continuous('column', np.random.normal((100, 1)))
-
-        assert info.column_name == 'column'
-        assert info.transform == bgm_instance
-        assert info.output_dimensions == 3
-        assert info.output_info[0].dim == 1
-        assert info.output_info[0].activation_fn == 'tanh'
-        assert info.output_info[1].dim == 2
-        assert info.output_info[1].activation_fn == 'softmax'
-
-    def test__fit(self):
-        """Test '_fit' on a np.ndarray with one continuous and one discrete columns.
-
-        The '_fit' method should:
-            - Set 'self.dataframe' to 'False'
-            - Set 'self._column_raw_dtypes' to the appropirate dtypes
-            - Use the appropriate '_fit' type for each column'
-            - Update 'self.output_info_list', 'self.output_dimensions' and
-            'self._column_transform_info_list' appropriately
-
-        Setup:
-            - Create BayesGMMTransformer
-            - Mock _fit_discrete
-            - Mock _fit_continuous
-
-        Input:
-            - raw_data = a table with one continuous and one discrete columns.
-            - discrete_columns = list with the name of the discrete column
-
-        Output:
-            - None
-
-        Side Effects:
-            - _fit_discrete and _fit_continuous should each be called once
-            - Assigns 'self._column_raw_dtypes' the appropriate dtypes
-            - Assigns 'self.output_info_list' the appropriate 'output_info'.
-            - Assigns 'self.output_dimensions' the appropriate 'output_dimensions'.
-            - Assigns 'self._column_transform_info_list' the appropriate 'column_transform_info'.
-        """
-        data = pd.DataFrame({
-            'x': np.random.random(size=100),
-        })
-
-        transformer = BayesGMMTransformer()
-        transformer._fit_continuous = Mock()
-        transformer._fit_continuous.return_value = ColumnTransformInfo(
-            column_name='x', column_type='continuous', transform=None,
-            transform_aux=None,
-            output_info=[SpanInfo(1, 'tanh'), SpanInfo(3, 'softmax')],
-            output_dimensions=1 + 3
-        )
-
+        # Run
+        transformer = BayesGMMTransformer(max_clusters=10, weight_threshold=0.005)
         transformer._fit(data)
-        transformer._fit_continuous.assert_called_once()
-        assert transformer.output_dimensions == 4
+
+        # Asserts
+        assert transformer._valid_component_indicator.sum() == 2
+        assert transformer._number_of_modes == 2
+        assert transformer._column_raw_dtype == float
 
     def test__transform_continuous(self):
         """Test '_transform_continuous'.
 
-        The `transform_continuous` method first computes the probability that the
+        The `transform` method first computes the probability that the
         continuous value came from each component, then samples a component based
         on that probability and finally returns a (value, onehot) tuple, where the
         onehot vector indicates the component that was selected and the value
@@ -134,60 +65,58 @@ class TestBayesGMMTransformer(TestCase):
         """
 
     def test__transform(self):
-        """Test 'transform' on a dataframe with one continuous and one discrete columns.
+        """Test 'transform'."""
+        # Setup
+        transformer = BayesGMMTransformer(max_clusters=3)
+        transformer._bgm_transformer = Mock()
 
-        It should use the appropriate '_transform' type for each column and should return
-        them concanenated appropriately.
-
-        Setup:
-            - Mock _column_transform_info_list
-            - Mock _transform_discrete
-            - Mock _transform_continuous
-
-        Input:
-            - raw_data = a table with one continuous and one discrete columns.
-
-        Output:
-            - numpy array containing the transformed two columns
-
-        Side Effects:
-            - _transform_discrete and _transform_continuous should each be called once.
-        """
-        data = pd.DataFrame({
-            'x': np.array([0.1, 0.3, 0.5]),
-        })
-
-        transformer = BayesGMMTransformer()
-        transformer._column_transform_info_list = [
-            ColumnTransformInfo(
-                column_name='x', column_type='continuous', transform=None,
-                transform_aux=None,
-                output_info=[SpanInfo(1, 'tanh'), SpanInfo(3, 'softmax')],
-                output_dimensions=1 + 3
-            )
-        ]
-
-        transformer._transform_continuous = Mock()
-        selected_normalized_value = np.array([[0.1], [0.3], [0.5]])
-        selected_component_onehot = np.array([
-            [1, 0, 0],
-            [1, 0, 0],
-            [0, 1, 0],
+        means = np.array([
+            [0.90138867],
+            [0.09169366],
+            [0.499]
         ])
-        return_value = (selected_normalized_value, selected_component_onehot)
-        transformer._transform_continuous.return_value = return_value
+        transformer._bgm_transformer.means_ = means
 
+        covariances = np.array([
+            [[0.09024532]],
+            [[0.08587948]],
+            [[0.27487667]]
+        ])
+        transformer._bgm_transformer.covariances_ = covariances
+
+        probabilities = np.array([
+            [0.01519528, 0.98480472, 0.],
+            [0.01659093, 0.98340907, 0.],
+            [0.012744, 0.987256, 0.],
+            [0.012744, 0.987256, 0.],
+            [0.01391614, 0.98608386, 0.],
+            [0.99220664, 0.00779336, 0.],
+            [0.99059634, 0.00940366, 0.],
+            [0.9941256, 0.0058744, 0.],
+            [0.99465502, 0.00534498, 0.],
+            [0.99059634, 0.00940366, 0.]
+        ])
+        transformer._bgm_transformer.predict_proba.return_value = probabilities
+
+        transformer._valid_component_indicator = np.array([True, True, False])
+        transformer._max_clusters = 3
+
+        data = pd.Series(np.array([0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97]))
+
+        # Run
         result = transformer._transform(data)
-        transformer._transform_continuous.assert_called_once()
 
-        continuous = np.array([0.1, 0.3, 0.5])
-        discrete = np.array([0, 0, 1])
+        # Asserts
+        expected_continuous = np.array([
+            -0.06969212, -0.06116121, -0.08675394, -0.08675394, -0.07822303,
+            0.07374234, 0.05709835, 0.09870834, 0.10703034, 0.05709835
+        ])
+        np.testing.assert_allclose(result['continuous'].to_numpy(), expected_continuous, rtol=0.01)
 
-        assert result.shape == (3, 2)
-        assert (result['continuous'].to_numpy() == continuous).all(), 'continuous'
-        assert (result['discrete'].to_numpy() == discrete).all(), 'discrete'
+        expected_discrete = np.array([1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
+        np.testing.assert_allclose(result['discrete'].to_numpy(), expected_discrete)
 
-    def test__reverse_transform_continuous(self):
+    def test__reverse_transform_helper(self):
         """Test '_inverse_transform_continuous' with sigmas != None.
 
         The '_inverse_transform_continuous' method should be able to return np.ndarray

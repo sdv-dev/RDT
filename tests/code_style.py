@@ -191,7 +191,7 @@ def validate_test_names(transformer):
             elif test.startswith(simple_test):
                 valid_test_functions.append(test)
 
-        fail_message = f'No function name was found for the test: {test}'
+        fail_message = f'No function name was found for the test: {test} {transformer_functions}'
         assert len(valid_test_functions) > count, fail_message
 
 
