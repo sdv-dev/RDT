@@ -1291,14 +1291,33 @@ class TestBayesGMMTransformer(TestCase):
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     def test__fit(self, mock_bgm):
-        """Test '_fit'."""
+        """Test '_fit'.
+
+        Validate that the method sets the internal variables to the correct values
+        when given a pandas Series.
+
+        Setup:
+            - patch a `BayesianGaussianMixture` with `weights_` containing two components
+            greater than the `weight_threshold` parameter.
+            - create an instance of the `BayesGMMTransformer`.
+
+        Input:
+            - a pandas Series containing random values.
+
+        Side Effects:
+            - the sum of `_valid_component_indicator` should equal to 2 (the number of `weights_`
+            greater than the threshold).
+            - `_number_of_modes` should equal 2, since it's the same as
+            `_valid_component_indicator.sum()`.
+            - `_column_raw_dtypes` should be set to `float`.
+        """
         # Setup
         data = pd.Series(np.random.random(size=100))
         bgm_instance = mock_bgm.return_value
-        bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])  # 2 components greater than weight_th
+        bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
+        transformer = BayesGMMTransformer(max_clusters=10, weight_threshold=0.005)
 
         # Run
-        transformer = BayesGMMTransformer(max_clusters=10, weight_threshold=0.005)
         transformer._fit(data)
 
         # Asserts
@@ -1306,46 +1325,24 @@ class TestBayesGMMTransformer(TestCase):
         assert transformer._number_of_modes == 2
         assert transformer._column_raw_dtypes == float
 
-    def test__transform_continuous(self):
-        """Test '_transform_continuous'.
+    def test__transform(self):
+        """Test `_transform.
 
-        The `transform` method first computes the probability that the
-        continuous value came from each component, then samples a component based
-        on that probability and finally returns a (value, onehot) tuple, where the
-        onehot vector indicates the component that was selected and the value
-        is a normalized representation of the continuous value based on the mean
-        and std of the selected component.
-
-        This test mocks the gaussian mixture model used to compute the probabilities
-        as well as the sampling method; it returns deterministic values to avoid
-        randomness in the test. Then, it tests to make sure the probabilities
-        are computed correctly and that the normalized value is computed correctly.
+        Validate that the method produces the appropriate output when given a pandas Series.
 
         Setup:
-            - Create column_transform_info with mocked transformer
-            - Mock the BayesianGaussianMixture transformer
-               - specify means, covariances, predict_proba
-               - means = [0, 10]
-               - covariances = [1.0, 11.0]
-            - Mock np.random.choice to choose maximum likelihood
+            - create an instance of the ``BayesGMMTransformer`` where:
+                - `_bgm_transformer` is mocked with the appropriate `means_`, `covariances_`
+                and `predict_proba.return_value`.
+                - `_valid_component_indicator` is set to `np.array([True, True, False])`.
+                - `_number_of_modes` is set to 2.
 
         Input:
-            - column_transform_info
-            - raw_column_data = np.array([0.001, 11.9999, 13.001])
+            - a pandas Series.
 
-        Output:
-            - normalized_value (assert between -1.0, 1.0)
-              - assert approx = [0.0, -1.0, 1.0]
-            - onehot (assert that it's a one-hot encoding)
-              - assert = [[0, 1], [1, 0], [1, 0]]
-
-        Side Effects:
-            - assert predict_proba called
-            - assert np.random.choice with appropriate probabilities
+        Ouput:
+            - a numpy array with the transformed data.
         """
-
-    def test__transform(self):
-        """Test 'transform'."""
         # Setup
         transformer = BayesGMMTransformer(max_clusters=3)
         transformer._bgm_transformer = Mock()
@@ -1397,7 +1394,22 @@ class TestBayesGMMTransformer(TestCase):
         np.testing.assert_allclose(result['discrete'].to_numpy(), expected_discrete)
 
     def test__reverse_transform_helper(self):
-        """Test '_inverse_transform_helper' with `sigma != None`."""
+        """Test `_reverse_transform_helper` with `sigma = None`.
+
+        Validate that the method produces the appropriate output when passed a numpy array.
+
+        Setup:
+            - create an instance of the ``BayesGMMTransformer`` where:
+                - `_bgm_transformer` is mocked with the appropriate `means_` and `covariances_`.
+                - `_valid_component_indicator` is set to `np.array([True, True, False])`.
+                - `_number_of_modes` is set to 2.
+
+        Input:
+            - a numpy array containing the data to be reversed.
+
+        Ouput:
+            - a numpy array with the transformed data.
+        """
         # Setup
         transformer = BayesGMMTransformer(max_clusters=3)
         transformer._bgm_transformer = Mock()
@@ -1418,10 +1430,9 @@ class TestBayesGMMTransformer(TestCase):
 
         transformer._valid_component_indicator = np.array([True, True, False])
         transformer._number_of_modes = 2
-        
+
         data = np.array([
-            [-0.06969212, -0.06116121, -0.08675394, -0.08675394, -0.07822303,
-             0.07374234, 0.05709835, 0.09870834, 0.10703034, 0.05709835],
+            [-0.069, -0.061, -0.086, -0.086, -0.078, 0.073, 0.057, 0.098, 0.107, 0.057],
             [0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
         ]).transpose()
@@ -1436,7 +1447,26 @@ class TestBayesGMMTransformer(TestCase):
         np.testing.assert_allclose(result, expected, atol=0.1)
 
     def test__reverse_transform(self):
-        """Test 'inverse_transform'."""
+        """Test `_reverse_transform`.
+
+        Validate that the method correctly calls `_reverse_transform_helper` and produces the
+        appropriate output when passed a numpy array.
+
+        Setup:
+            - create an instance of the ``BayesGMMTransformer`` where:
+                - `_number_of_modes` is 2.
+                - `output_columns` is a list of two columns.
+            - mock the `_reverse_transform_helper` with the appropriate return value.
+
+        Input:
+            - a numpy array containing the data to be reversed.
+
+        Ouput:
+            - a numpy array with the reverse transformed data.
+
+        Side Effects:
+            - `_reverse_transform_helper` should be called once with the correct data.
+        """
         # Setup
         transformer = BayesGMMTransformer(max_clusters=3)
         transformer._number_of_modes = 2
@@ -1445,10 +1475,9 @@ class TestBayesGMMTransformer(TestCase):
         transformer._reverse_transform_helper = Mock()
         transformer._reverse_transform_helper.return_value = \
             np.array([0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97])
-        
+
         data = np.array([
-            [-0.06969212, -0.06116121, -0.08675394, -0.08675394, -0.07822303,
-             0.07374234, 0.05709835, 0.09870834, 0.10703034, 0.05709835],
+            [-0.069, -0.061, -0.086, -0.086, -0.078, 0.073, 0.057, 0.098, 0.107, 0.057],
             [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
         ])
 
@@ -1457,12 +1486,17 @@ class TestBayesGMMTransformer(TestCase):
 
         # Asserts
         call_data = np.array([
-            [-0.06969212, -0.06116121, -0.08675394, -0.08675394, -0.07822303,
-             0.07374234, 0.05709835, 0.09870834, 0.10703034, 0.05709835],
+            [-0.069, -0.061, -0.086, -0.086, -0.078, 0.073, 0.057, 0.098, 0.107, 0.057],
             [0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
         ]).transpose()
-        #assert transformer._reverse_transform_helper.assert_called_once_with(call_data)
 
-        expected = pd.Series(np.array([0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97]))
+        transformer._reverse_transform_helper.assert_called_once()
+        np.testing.assert_allclose(
+            transformer._reverse_transform_helper.call_args[0][0],
+            call_data
+        )
+
+        expected = pd.Series(
+            np.array([0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97]))
         assert (result == expected).all()
