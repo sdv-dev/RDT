@@ -1309,7 +1309,6 @@ class TestBayesGMMTransformer(TestCase):
             greater than the threshold).
             - `_number_of_modes` should equal 2, since it's the same as
             `_valid_component_indicator.sum()`.
-            - `_column_raw_dtypes` should be set to `float`.
         """
         # Setup
         data = pd.Series(np.random.random(size=100))
@@ -1323,7 +1322,6 @@ class TestBayesGMMTransformer(TestCase):
         # Asserts
         assert transformer._valid_component_indicator.sum() == 2
         assert transformer._number_of_modes == 2
-        assert transformer._column_raw_dtypes == float
 
     def test__transform(self):
         """Test `_transform.
@@ -1344,7 +1342,7 @@ class TestBayesGMMTransformer(TestCase):
             - a numpy array with the transformed data.
         """
         # Setup
-        transformer = BayesGMMTransformer(max_clusters=3)
+        transformer = BayesGMMTransformer(max_clusters=3, nan=None)
         transformer._bgm_transformer = Mock()
 
         means = np.array([
@@ -1388,10 +1386,10 @@ class TestBayesGMMTransformer(TestCase):
             -0.06969212, -0.06116121, -0.08675394, -0.08675394, -0.07822303,
             0.07374234, 0.05709835, 0.09870834, 0.10703034, 0.05709835
         ])
-        np.testing.assert_allclose(result['continuous'].to_numpy(), expected_continuous, atol=0.1)
+        np.testing.assert_allclose(result[:, 0], expected_continuous, atol=0.1)
 
         expected_discrete = np.array([1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
-        np.testing.assert_allclose(result['discrete'].to_numpy(), expected_discrete)
+        np.testing.assert_allclose(result[:, 1].astype('int'), expected_discrete)
 
     def test__reverse_transform_helper(self):
         """Test `_reverse_transform_helper` with `sigma = None`.
@@ -1468,7 +1466,7 @@ class TestBayesGMMTransformer(TestCase):
             - `_reverse_transform_helper` should be called once with the correct data.
         """
         # Setup
-        transformer = BayesGMMTransformer(max_clusters=3)
+        transformer = BayesGMMTransformer(max_clusters=3, nan=None)
         transformer._number_of_modes = 2
         transformer.output_columns = ['col.continuous', 'col.discrete']
 
@@ -1479,7 +1477,7 @@ class TestBayesGMMTransformer(TestCase):
         data = np.array([
             [-0.069, -0.061, -0.086, -0.086, -0.078, 0.073, 0.057, 0.098, 0.107, 0.057],
             [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
-        ])
+        ]).transpose()
 
         # Run
         result = transformer._reverse_transform(data)

@@ -157,7 +157,9 @@ class NumericalTransformer(BaseTransformer):
         Returns:
             numpy.ndarray
         """
-        return self.null_transformer.transform(data)
+        if self.nan is not None:
+            return self.null_transformer.transform(data)
+        return data
 
     def _reverse_transform(self, data):
         """Convert data back into the original format.
@@ -504,7 +506,6 @@ class BayesGMMTransformer(NumericalTransformer):
         self._max_clusters = max_clusters
         self._weight_threshold = weight_threshold
         self._number_of_modes = None
-        self._column_raw_dtypes = None
         self._bgm_transformer = None
         self._valid_component_indicator = None
 
@@ -538,10 +539,14 @@ class BayesGMMTransformer(NumericalTransformer):
             n_init=1
         )
 
-        self._bgm_transformer.fit(data.array.reshape(-1, 1))
+        super()._fit(data)
+        data = super()._transform(data)
+        if data.ndim > 1:
+            data = data[:, 0]
+
+        self._bgm_transformer.fit(data.reshape(-1, 1))
         self._valid_component_indicator = self._bgm_transformer.weights_ > self._weight_threshold
         self._number_of_modes = self._valid_component_indicator.sum()
-        self._column_raw_dtypes = data.infer_objects().dtypes
 
     def _transform(self, data):
         """Transform numerical data.
@@ -553,7 +558,16 @@ class BayesGMMTransformer(NumericalTransformer):
         Returns:
             numpy.ndarray
         """
-        data = data.to_numpy()
+        data = super()._transform(data)
+        if data.ndim > 1:
+            null_column = data[:, 1]
+            data = data[:, 0]
+        else:
+            null_column = None
+
+        if isinstance(data, (pd.Series, pd.DataFrame)):
+            data = data.to_numpy()
+
         data = data.reshape((len(data), 1))
         means = self._bgm_transformer.means_.reshape((1, self._max_clusters))
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self._max_clusters))
@@ -579,10 +593,11 @@ class BayesGMMTransformer(NumericalTransformer):
         one_hot[np.arange(len(data)), selected_component] = 1
         one_hot_as_label = one_hot.argmax(axis=1)
 
-        return pd.DataFrame({
-            'continuous': normalized,
-            'discrete': one_hot_as_label
-        })
+        rows = [normalized, one_hot_as_label]
+        if null_column is not None:
+            rows.append(null_column)
+
+        return np.stack(rows, axis=1)  # noqa: PD013
 
     def _reverse_transform_helper(self, data, sigma):
         normalized = data[:, 0]
@@ -615,12 +630,18 @@ class BayesGMMTransformer(NumericalTransformer):
         Returns:
             pandas.Series
         """
-        one_hot = np.zeros(shape=(data.shape[1], self._number_of_modes))
-        discrete_column = data[1].astype(int).tolist()
-        one_hot[np.arange(data.shape[1]), discrete_column] = 1.0
-        data = np.concatenate([data[0][:, None], one_hot], axis=1)
+        if isinstance(data, pd.DataFrame):
+            data = data.to_numpy()
 
-        recovered_data = self._reverse_transform_helper(data, sigma)
-        recovered_data = pd.Series(recovered_data).astype(self._column_raw_dtypes)
+        one_hot = np.zeros(shape=(data.shape[0], self._number_of_modes))
+        discrete_column = data[:, 1].astype(int).tolist()
+        one_hot[np.arange(data.shape[0]), discrete_column] = 1.0
+        recovered_data = np.concatenate([data[:, :1], one_hot], axis=1)
+        recovered_data = self._reverse_transform_helper(recovered_data, sigma)
 
-        return recovered_data
+        if self.null_transformer and self.null_transformer.creates_null_column():
+            data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
+        else:
+            data = recovered_data
+
+        return pd.Series(super()._reverse_transform(data))

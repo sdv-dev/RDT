@@ -140,7 +140,7 @@ class TestGaussianCopulaTransformer:
 
 class TestBayesGMMTransformer:
 
-    def test_simple(self):
+    def test_dataframe(self):
         data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=123), columns=['col'])
 
         bgmm_transformer = BayesGMMTransformer()
