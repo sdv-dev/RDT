@@ -66,6 +66,8 @@ class HyperTransformer:
         >>> ht = HyperTransformer(default_data_type_transformers=default_data_type_transformers)
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     _DTYPES_TO_DATA_TYPES = {
         'i': 'integer',
         'f': 'float',
@@ -132,6 +134,7 @@ class HyperTransformer:
         self._output_columns = []
         self._input_columns = []
         self._fitted_fields = set()
+        self._fitted = False
 
     @staticmethod
     def _field_in_data(field, data):
@@ -149,6 +152,10 @@ class HyperTransformer:
                 clean_data = data[field].dropna()
                 kind = clean_data.infer_objects().dtype.kind
                 self.field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
+
+    def _unfit(self):
+        self._transformers_sequence = []
+        self._fitted = False
 
     def get_field_data_types(self):
         """Get the ``field_data_types`` dict.
@@ -171,7 +178,7 @@ class HyperTransformer:
                 require ``fit`` to be run again.
         """
         self.field_data_types.update(field_data_types)
-        self._transformers_sequence = []
+        self._unfit()
 
     def get_default_data_type_transformers(self):
         """Get the ``default_data_type_transformer`` dict.
@@ -194,7 +201,7 @@ class HyperTransformer:
                 to be run again.
         """
         self.default_data_type_transformers.update(new_data_type_transformers)
-        self._transformers_sequence = []
+        self._unfit()
 
     def set_first_transformers_for_fields(self, field_transformers):
         """Set the first transformer to use for certain fields.
@@ -208,7 +215,7 @@ class HyperTransformer:
                 require ``fit`` to be run again.
         """
         self.field_transformers.update(field_transformers)
-        self._transformers_sequence = []
+        self._unfit()
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
@@ -295,6 +302,7 @@ class HyperTransformer:
                 data = self._fit_field_transformer(data, field, transformer)
 
         self._validate_all_fields_fitted()
+        self._fitted = True
 
     def transform(self, data):
         """Transform the data.
@@ -309,7 +317,7 @@ class HyperTransformer:
             pandas.DataFrame:
                 Transformed data.
         """
-        if not self._transformers_sequence:
+        if not self._fitted:
             raise NotFittedError
 
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
@@ -347,7 +355,7 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
-        if not self._transformers_sequence:
+        if not self._fitted:
             raise NotFittedError
 
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)

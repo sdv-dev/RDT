@@ -39,7 +39,7 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ht.field_transformers = field_transformers
 
-        # Run / Asser
+        # Run / Assert
         error_msg = (
             r'Multiple transformers specified for the field \(\'integer\',\). '
             'Each field can have at most one transformer defined in field_transformers.'
@@ -62,6 +62,32 @@ class TestHyperTransformer(TestCase):
         assert ht.field_data_types == {}
         multi_column_mock.assert_called_once()
         validation_mock.assert_called_once()
+
+    def test__unfit(self):
+        """Test the ``_unfit`` method.
+
+        The ``_unfit`` method should reset ``instance._transformers_sequence``.
+        It should also set ``_fitted`` to False.
+
+        Setup:
+            - instance._fitted is set to True
+            - instance._transformers_sequence is a list of transformers
+
+        Expected behavior:
+            - instance._fitted is set to False
+            - instance._transformers_sequence is set to []
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht._transformers_sequence = [BooleanTransformer(), NumericalTransformer()]
+        ht._fitted = True
+
+        # Run
+        ht._unfit()
+
+        # Assert
+        assert ht._fitted is False
+        assert ht._transformers_sequence == []
 
     def test__create_multi_column_fields(self):
         """Test the ``_create_multi_column_fields`` method.
@@ -651,6 +677,7 @@ class TestHyperTransformer(TestCase):
         transformed_data = self.get_transformed_data()
         datetime_transformer.transform.return_value = transformed_data
         ht = HyperTransformer()
+        ht._fitted = True
         ht._transformers_sequence = [
             int_transformer,
             int_out_transformer,
@@ -682,7 +709,7 @@ class TestHyperTransformer(TestCase):
         ``_transformers_sequence`` is empty.
 
         Setup:
-            - The ``_transformers_sequence`` will not be set.
+            - The ``_fitted`` attribute will be False.
 
         Input:
             - A DataFrame of multiple types.
@@ -752,6 +779,7 @@ class TestHyperTransformer(TestCase):
         reverse_transformed_data = self.get_transformed_data()
         int_transformer.reverse_transform.return_value = reverse_transformed_data
         ht = HyperTransformer()
+        ht._fitted = True
         ht._transformers_sequence = [
             int_transformer,
             int_out_transformer,
@@ -783,7 +811,7 @@ class TestHyperTransformer(TestCase):
         ``_transformers_sequence`` is empty.
 
         Setup:
-            - The ``_transformers_sequence`` will not be set.
+            - The ``_fitted`` attribute will be False.
 
         Input:
             - A DataFrame of multiple types.
@@ -839,13 +867,14 @@ class TestHyperTransformer(TestCase):
         }
         ht = HyperTransformer(field_data_types={'a': 'float'})
         ht._transformers_sequence = [CategoricalTransformer()]
+        ht._unfit = Mock()
 
         # Run
         ht.update_field_data_types(field_data_types)
 
         # Assert
         assert ht.field_data_types == {'a': 'categorical', 'b': 'integer'}
-        assert ht._transformers_sequence == []
+        ht._unfit.assert_called_once()
 
     def test_get_default_data_type_transformers(self):
         """Test the ``get_default_data_type_transformers`` method.
@@ -887,6 +916,7 @@ class TestHyperTransformer(TestCase):
         }
         ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
         ht._transformers_sequence = [CategoricalTransformer()]
+        ht._unfit = Mock()
 
         # Run
         ht.update_default_data_type_transformers({'boolean': BooleanTransformer})
@@ -897,7 +927,7 @@ class TestHyperTransformer(TestCase):
             'integer': NumericalTransformer,
             'boolean': BooleanTransformer
         }
-        assert ht._transformers_sequence == []
+        ht._unfit.assert_called_once()
 
     def test_set_first_transformers_for_fields(self):
         """Test the ``set_first_transformers_for_fields`` method.
@@ -919,6 +949,7 @@ class TestHyperTransformer(TestCase):
         }
         ht = HyperTransformer(field_transformers=field_transformers)
         ht._transformers_sequence = [CategoricalTransformer()]
+        ht._unfit = Mock()
 
         # Run
         ht.set_first_transformers_for_fields({
@@ -932,4 +963,4 @@ class TestHyperTransformer(TestCase):
             'b': CategoricalTransformer,
             'c': BooleanTransformer
         }
-        assert ht._transformers_sequence == []
+        ht._unfit.assert_called_once()
