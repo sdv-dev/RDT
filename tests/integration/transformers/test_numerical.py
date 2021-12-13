@@ -150,7 +150,7 @@ class TestBayesGMMTransformer:
         assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (123, 2)
         assert all(isinstance(x, float) for x in transformed['col.continuous'])
-        assert all(isinstance(x, int) for x in transformed['col.discrete'])
+        assert all(isinstance(x, float) for x in transformed['col.discrete'])
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)

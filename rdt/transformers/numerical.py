@@ -498,7 +498,7 @@ class BayesGMMTransformer(NumericalTransformer):
     STD_MULTIPLIER = 4
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
+    COMPOSITION_IS_IDENTITY = False
 
     def __init__(self, dtype=None, nan='mean', null_column=None, max_clusters=10,
                  weight_threshold=0.005):
@@ -586,7 +586,7 @@ class BayesGMMTransformer(NumericalTransformer):
 
         aranged = np.arange(len(data))
         normalized = normalized_values[aranged, selected_component].reshape([-1, 1])
-        normalized = np.clip(normalized, -.99, .99)
+        normalized = np.clip(normalized, -.9999, .9999)
         normalized = normalized[:, 0]
 
         one_hot = np.zeros_like(component_probs)
@@ -606,6 +606,7 @@ class BayesGMMTransformer(NumericalTransformer):
         if sigma is not None:
             normalized = np.random.normal(normalized, sigma)
 
+        #print(normalized)
         normalized = np.clip(normalized, -1, 1)
         component_probs = np.ones((len(data), self._max_clusters)) * -np.inf
         component_probs[:, self._valid_component_indicator] = selected_component_probs
@@ -613,6 +614,10 @@ class BayesGMMTransformer(NumericalTransformer):
         means = self._bgm_transformer.means_.reshape([-1])
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
         selected_component = np.argmax(component_probs, axis=1)
+
+        #print(means)
+        #print(stds)
+        #print(component_probs)
 
         std_t = stds[selected_component]
         mean_t = means[selected_component]
