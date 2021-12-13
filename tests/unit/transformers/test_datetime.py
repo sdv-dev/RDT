@@ -152,7 +152,7 @@ class TestDatetimeTransformer:
             converted to datetime.
 
         Output:
-            - a pandas series of type datetime
+            - a pandas series of type datetime.
         """
         # Setup
         data = pd.Series(['2020-01-01', '2020-02-01', '2020-03-01'])
@@ -178,7 +178,7 @@ class TestDatetimeTransformer:
             format.
 
         Output:
-            - a pandas series of type datetime
+            - a pandas series of type datetime.
         """
         # Setup
         data = pd.Series(['01Feb2020', '02Mar2020', '03Jan2010'])
@@ -227,7 +227,7 @@ class TestDatetimeTransformer:
             format.
 
         Output:
-            - a pandas series of type datetime
+            - a pandas series of type datetime.
         """
         # Setup
         data = pd.Series(['01-02-2020', '02-03-2020', '03J-01-2010'])
