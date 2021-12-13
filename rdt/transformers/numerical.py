@@ -159,7 +159,7 @@ class NumericalTransformer(BaseTransformer):
         """
         if self.nan is not None:
             return self.null_transformer.transform(data)
-        return data
+        return data.to_numpy()
 
     def _reverse_transform(self, data):
         """Convert data back into the original format.
@@ -547,7 +547,6 @@ class BayesGMMTransformer(NumericalTransformer):
         self._bgm_transformer.fit(data.reshape(-1, 1))
         self._valid_component_indicator = self._bgm_transformer.weights_ > self._weight_threshold
         self._number_of_modes = self._valid_component_indicator.sum()
-        data = data.reshape((len(data), 1))
 
     def _transform(self, data):
         """Transform numerical data.
@@ -561,13 +560,7 @@ class BayesGMMTransformer(NumericalTransformer):
         """
         data = super()._transform(data)
         if data.ndim > 1:
-            null_column = data[:, 1]
-            data = data[:, 0]
-        else:
-            null_column = None
-
-        if isinstance(data, (pd.Series, pd.DataFrame)):
-            data = data.to_numpy()
+            data, null_column = data[:, 0], data[:, 1]
 
         data = data.reshape((len(data), 1))
         means = self._bgm_transformer.means_.reshape((1, self._max_clusters))
@@ -583,12 +576,13 @@ class BayesGMMTransformer(NumericalTransformer):
             component_prob_t = component_probs[i] + 1e-6
             component_prob_t = component_prob_t / component_prob_t.sum()
             selected_component[i] = np.random.choice(
-                np.arange(self._number_of_modes), p=component_prob_t
+                np.arange(self._number_of_modes),
+                p=component_prob_t
             )
 
         aranged = np.arange(len(data))
         normalized = normalized_values[aranged, selected_component].reshape([-1, 1])
-        normalized = np.clip(normalized, -.9999, .9999)
+        normalized = np.clip(normalized, -.99, .99)
         normalized = normalized[:, 0]
 
         one_hot = np.zeros_like(component_probs)
@@ -596,7 +590,7 @@ class BayesGMMTransformer(NumericalTransformer):
         one_hot_as_label = one_hot.argmax(axis=1)
 
         rows = [normalized, one_hot_as_label]
-        if null_column is not None:
+        if self.null_transformer and self.null_transformer.creates_null_column():
             rows.append(null_column)
 
         return np.stack(rows, axis=1)  # noqa: PD013
@@ -618,15 +612,15 @@ class BayesGMMTransformer(NumericalTransformer):
 
         std_t = stds[selected_component]
         mean_t = means[selected_component]
-        column = normalized * self.STD_MULTIPLIER * std_t + mean_t
+        reversed_data = normalized * self.STD_MULTIPLIER * std_t + mean_t
 
-        return column
+        return reversed_data
 
     def _reverse_transform(self, data, sigma=None):
         """Convert data back into the original format.
 
         Args:
-            data (pd.Series or numpy.ndarray):
+            data (pd.DataFrame or numpy.ndarray):
                 Data to transform.
 
         Returns:
