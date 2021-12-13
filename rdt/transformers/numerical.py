@@ -547,6 +547,7 @@ class BayesGMMTransformer(NumericalTransformer):
         self._bgm_transformer.fit(data.reshape(-1, 1))
         self._valid_component_indicator = self._bgm_transformer.weights_ > self._weight_threshold
         self._number_of_modes = self._valid_component_indicator.sum()
+        data = data.reshape((len(data), 1))
 
     def _transform(self, data):
         """Transform numerical data.
@@ -570,6 +571,7 @@ class BayesGMMTransformer(NumericalTransformer):
 
         data = data.reshape((len(data), 1))
         means = self._bgm_transformer.means_.reshape((1, self._max_clusters))
+
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self._max_clusters))
         normalized_values = (data - means) / (self.STD_MULTIPLIER * stds)
         normalized_values = normalized_values[:, self._valid_component_indicator]
@@ -606,7 +608,6 @@ class BayesGMMTransformer(NumericalTransformer):
         if sigma is not None:
             normalized = np.random.normal(normalized, sigma)
 
-        #print(normalized)
         normalized = np.clip(normalized, -1, 1)
         component_probs = np.ones((len(data), self._max_clusters)) * -np.inf
         component_probs[:, self._valid_component_indicator] = selected_component_probs
@@ -614,10 +615,6 @@ class BayesGMMTransformer(NumericalTransformer):
         means = self._bgm_transformer.means_.reshape([-1])
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
         selected_component = np.argmax(component_probs, axis=1)
-
-        #print(means)
-        #print(stds)
-        #print(component_probs)
 
         std_t = stds[selected_component]
         mean_t = means[selected_component]

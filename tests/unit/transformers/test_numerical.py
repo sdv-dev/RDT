@@ -1323,6 +1323,43 @@ class TestBayesGMMTransformer(TestCase):
         assert transformer._valid_component_indicator.sum() == 2
         assert transformer._number_of_modes == 2
 
+    @patch('rdt.transformers.numerical.BayesianGaussianMixture')
+    def test__fit_nan(self, mock_bgm):
+        """Test ``_fit``.
+
+        Validate that the method sets the internal variables to the correct values
+        when given a pandas Series.
+
+        Setup:
+            - patch a ``BayesianGaussianMixture`` with ``weights_`` containing two components
+            greater than the ``weight_threshold`` parameter.
+            - create an instance of the ``BayesGMMTransformer``.
+
+        Input:
+            - a pandas Series containing random values.
+
+        Side Effects:
+            - the sum of ``_valid_component_indicator`` should equal to 2
+            (the number of ``weights_`` greater than the threshold).
+            - ``_number_of_modes`` should equal 2, since it's the same as
+            ``_valid_component_indicator.sum()``.
+        """
+        # Setup
+        data = pd.Series(np.random.random(size=100))
+        mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
+        data[mask] = np.nan
+        bgm_instance = mock_bgm.return_value
+        bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
+        transformer = BayesGMMTransformer(max_clusters=10, weight_threshold=0.005)
+
+        # Run
+        transformer._fit(data)
+
+        # Asserts
+        assert transformer._valid_component_indicator.sum() == 2
+        assert transformer._number_of_modes == 2
+        assert transformer.null_transformer.creates_null_column()
+
     def test__transform(self):
         """Test ``_transform``.
 
@@ -1389,6 +1426,78 @@ class TestBayesGMMTransformer(TestCase):
         np.testing.assert_allclose(result[:, 0], expected_continuous, atol=0.1)
 
         expected_discrete = np.array([1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
+        np.testing.assert_allclose(result[:, 1].astype('int'), expected_discrete)
+
+    def test__transform_nan(self):
+        """Test ``_transform``.
+
+        Validate that the method produces the appropriate output when given a pandas Series.
+
+        Setup:
+            - create an instance of the ``BayesGMMTransformer`` where:
+                - ``_bgm_transformer`` is mocked with the appropriate ``means_``, ``covariances_``
+                and ``predict_proba.return_value``.
+                - ``_valid_component_indicator`` is set to ``np.array([True, True, False])``.
+                - ``_number_of_modes`` is set to 2.
+
+        Input:
+            - a pandas Series.
+
+        Ouput:
+            - a numpy array with the transformed data.
+        """
+        # Setup
+        transformer = BayesGMMTransformer(nan=0.0, max_clusters=3)
+        transformer._bgm_transformer = Mock()
+
+        means = np.array([
+            [0.03610001],
+            [0.77135278],
+            [0.292]
+        ])
+        transformer._bgm_transformer.means_ = means
+
+        covariances = np.array([
+            [[0.03819894]],
+            [[0.16408241]],
+            [[0.22328444]]
+        ])
+        transformer._bgm_transformer.covariances_ = covariances
+
+        probabilities = np.array([
+            [9.73559141e-01, 2.64408588e-02, 0.0],
+            [9.74533917e-01, 2.54660826e-02, 0.0],
+            [9.75425565e-01, 2.45744346e-02, 0.0],
+            [9.75425565e-01, 2.45744346e-02, 0.0],
+            [9.74533917e-01, 2.54660826e-02, 0.0],
+            [4.93725426e-05, 9.99950627e-01, 0.0],
+            [7.88963658e-05, 9.99921104e-01, 0.0],
+            [9.74533917e-01, 2.54660826e-02, 0.0],
+            [9.74533917e-01, 2.54660826e-02, 0.0],
+            [7.88963658e-05, 9.99921104e-01, 0.0]
+        ])
+        transformer._bgm_transformer.predict_proba.return_value = probabilities
+
+        transformer._valid_component_indicator = np.array([True, True, False])
+        transformer._number_of_modes = 2
+        transformer.null_transformer = NullTransformer(0.0, null_column=True)
+
+        data = pd.Series(
+            np.array([0.01, np.nan, -0.01, -0.01, 0.0, 0.99, 0.97, np.nan, np.nan, 0.97])
+        )
+        transformer.null_transformer.fit(data)
+
+        # Run
+        result = transformer._transform(data)
+
+        # Asserts
+        expected_continuous = np.array([
+            -0.033385, -0.046177, -0.058968, -0.058968, -0.046177,
+            0.134944, 0.1226, -0.046177, -0.046177, 0.1226
+        ])
+        np.testing.assert_allclose(result[:, 0], expected_continuous, atol=0.1)
+
+        expected_discrete = np.array([0, 0, 0, 0, 0, 1, 1, 0, 0, 1])
         np.testing.assert_allclose(result[:, 1].astype('int'), expected_discrete)
 
     def test__reverse_transform_helper(self):
@@ -1472,8 +1581,9 @@ class TestBayesGMMTransformer(TestCase):
         transformer.output_columns = ['col.continuous', 'col.discrete']
 
         transformer._reverse_transform_helper = Mock()
-        transformer._reverse_transform_helper.return_value = \
-            np.array([0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97])
+        transformer._reverse_transform_helper.return_value = np.array(
+            [0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97]
+        )
 
         data = np.array([
             [-0.069, -0.061, -0.086, -0.086, -0.078, 0.073, 0.057, 0.098, 0.107, 0.057],
@@ -1499,3 +1609,71 @@ class TestBayesGMMTransformer(TestCase):
         expected = pd.Series(
             np.array([0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97]))
         assert (result == expected).all()
+
+    def test__reverse_transform_nan(self):
+        """Test ``_reverse_transform``.
+
+        Validate that the method correctly calls ``_reverse_transform_helper`` and produces the
+        appropriate output when passed a numpy array.
+
+        Setup:
+            - create an instance of the ``BayesGMMTransformer`` where:
+                - ``_number_of_modes`` is 2.
+                - ``output_columns`` is a list of two columns.
+            - mock the `_reverse_transform_helper` with the appropriate return value.
+
+        Input:
+            - a numpy array containing the data to be reversed.
+
+        Ouput:
+            - a numpy array with the reverse transformed data.
+
+        Side Effects:
+            - ``_reverse_transform_helper`` should be called once with the correct data.
+        """
+        # Setup
+        transformer = BayesGMMTransformer(max_clusters=3)
+        transformer._number_of_modes = 2
+        transformer.output_columns = ['col.continuous', 'col.discrete']
+        transformer._reverse_transform_helper = Mock()
+        transformer._reverse_transform_helper.return_value = np.array([
+            0.68351419, 0.67292805, 0.66234274, 0.66234274, 0.67292805,
+            0.63579893, 0.62239389, 0.67292805, 0.67292805, 0.62239389
+        ])
+
+        transformer.null_transformer = NullTransformer(None, null_column=True)
+        transformer.null_transformer.fit(pd.Series([0, np.nan]))
+
+        data = np.array([
+            [-0.033, -0.046, -0.058, -0.058, -0.046, 0.134, 0.122, -0.046, -0.046, 0.122],
+            [0, 0, 0, 0, 0, 1, 1, 0, 0, 1],
+            [1, 1, 1, 1, 1, 0, 0, 0, 1, 0]
+        ]).transpose()
+
+        # Run
+        result = transformer._reverse_transform(data)
+
+        # Asserts
+        call_data = np.array([
+            [-0.033385, 1., 0.],
+            [-0.046177, 1., 0.],
+            [-0.058968, 1., 0.],
+            [-0.058968, 1., 0.],
+            [-0.046177, 1., 0.],
+            [0.134944, 0., 1.],
+            [0.1226, 0., 1.],
+            [-0.046177, 1., 0.],
+            [-0.046177, 1., 0.],
+            [0.1226, 0., 1.]
+        ])
+
+        transformer._reverse_transform_helper.assert_called_once()
+        np.testing.assert_allclose(
+            transformer._reverse_transform_helper.call_args[0][0],
+            call_data
+        )
+
+        expected = pd.Series(
+            np.array([np.nan, np.nan, np.nan, np.nan, np.nan, 0.63, 0.62, 0.67, np.nan, 0.62])
+        )
+        np.testing.assert_allclose(expected.to_numpy(), result.to_numpy(), atol=0.1)

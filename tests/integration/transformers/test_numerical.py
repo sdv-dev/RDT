@@ -154,7 +154,7 @@ class TestBayesGMMTransformer:
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
-    
+
     def test_nulls(self):
         data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=123), columns=['col'])
         mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
