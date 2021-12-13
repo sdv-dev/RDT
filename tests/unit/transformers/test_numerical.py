@@ -1379,6 +1379,7 @@ class TestBayesGMMTransformer(TestCase):
             - a numpy array with the transformed data.
         """
         # Setup
+        np.random.seed(10)
         transformer = BayesGMMTransformer(max_clusters=3, nan=None)
         transformer._bgm_transformer = Mock()
 
@@ -1447,6 +1448,7 @@ class TestBayesGMMTransformer(TestCase):
             - a numpy array with the transformed data.
         """
         # Setup
+        np.random.seed(10)
         transformer = BayesGMMTransformer(nan=0.0, max_clusters=3)
         transformer._bgm_transformer = Mock()
 
