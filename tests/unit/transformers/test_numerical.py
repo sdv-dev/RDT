@@ -1546,7 +1546,7 @@ class TestBayesGMMTransformer(TestCase):
         ]).transpose()
 
         # Run
-        result = transformer._reverse_transform_helper(data, sigma=None)
+        result = transformer._reverse_transform_helper(data, sigma=0.0)
 
         # Asserts
         expected = pd.Series(
@@ -1585,10 +1585,10 @@ class TestBayesGMMTransformer(TestCase):
             [0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97]
         )
 
-        data = np.array([
-            [-0.069, -0.061, -0.086, -0.086, -0.078, 0.073, 0.057, 0.098, 0.107, 0.057],
-            [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
-        ]).transpose()
+        data = pd.DataFrame({
+            'col1': [-0.069, -0.061, -0.086, -0.086, -0.078, 0.073, 0.057, 0.098, 0.107, 0.057],
+            'col2': [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
+        })
 
         # Run
         result = transformer._reverse_transform(data)
@@ -1670,10 +1670,49 @@ class TestBayesGMMTransformer(TestCase):
         transformer._reverse_transform_helper.assert_called_once()
         np.testing.assert_allclose(
             transformer._reverse_transform_helper.call_args[0][0],
-            call_data
+            call_data,
+            rtol=0.1
         )
 
         expected = pd.Series(
             np.array([np.nan, np.nan, np.nan, np.nan, np.nan, 0.63, 0.62, 0.67, np.nan, 0.62])
         )
         np.testing.assert_allclose(expected.to_numpy(), result.to_numpy(), atol=0.1)
+
+    def test_get_output_types_null_column_created(self):
+        """Test the ``get_output_types`` method when a null column is created.
+
+        When a null column is created, this method should apply the ``_add_prefix``
+        method to the following dictionary of output types:
+
+        output_types = {
+            'value': 'float',
+            'is_null': 'float'
+        }
+
+        Setup:
+            - initialize a ``BooleanTransformer`` transformer which:
+                - sets ``self.null_transformer`` to a ``NullTransformer`` where
+                ``self._null_column`` is True.
+                - sets ``self.column_prefix`` to a string.
+
+        Output:
+            - the ``output_types`` dictionary, but with ``self.column_prefix``
+            added to the beginning of the keys.
+        """
+        # Setup
+        transformer = BayesGMMTransformer()
+        transformer.null_transformer = NullTransformer(fill_value='fill')
+        transformer.null_transformer._null_column = True
+        transformer.column_prefix = 'abc'
+
+        # Run
+        output = transformer.get_output_types()
+
+        # Assert
+        expected = {
+            'abc.continuous': 'float',
+            'abc.discrete': 'categorical',
+            'abc.is_null': 'float'
+        }
+        assert output == expected

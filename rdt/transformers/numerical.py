@@ -632,7 +632,7 @@ class BayesGMMTransformer(NumericalTransformer):
         Returns:
             pandas.Series
         """
-        if isinstance(data, pd.DataFrame):
+        if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
         one_hot = np.zeros(shape=(data.shape[0], self._number_of_modes))
