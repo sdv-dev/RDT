@@ -501,8 +501,11 @@ class BayesGMMTransformer(NumericalTransformer):
     COMPOSITION_IS_IDENTITY = False
 
     def __init__(self, dtype=None, nan='mean', null_column=None, max_clusters=10,
-                 weight_threshold=0.005):
-        super().__init__(dtype=dtype, nan=nan, null_column=null_column)
+                 weight_threshold=0.005, rounding=None, min_value=None, max_value=None):
+        super().__init__(
+            dtype=dtype, nan=nan, null_column=null_column, rounding=rounding,
+            min_value=min_value, max_value=max_value
+        )
         self._max_clusters = max_clusters
         self._weight_threshold = weight_threshold
         self._number_of_modes = None
@@ -586,7 +589,7 @@ class BayesGMMTransformer(NumericalTransformer):
         normalized = normalized[:, 0]
 
         one_hot = np.zeros_like(component_probs)
-        one_hot[np.arange(len(data)), selected_component] = 1
+        one_hot[aranged, selected_component] = 1
         one_hot_as_label = one_hot.argmax(axis=1)
 
         rows = [normalized, one_hot_as_label]

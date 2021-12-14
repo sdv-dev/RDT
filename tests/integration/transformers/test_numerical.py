@@ -140,15 +140,22 @@ class TestGaussianCopulaTransformer:
 
 class TestBayesGMMTransformer:
 
+    def generate_data(self):
+        data1 = np.random.normal(loc=5, scale=1, size=100)
+        data2 = np.random.normal(loc=-5, scale=1, size=100)
+        data = np.concatenate([data1, data2])
+
+        return pd.DataFrame(data, columns=['col'])
+
     def test_dataframe(self):
-        data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=123), columns=['col'])
+        data = self.generate_data()
 
         bgmm_transformer = BayesGMMTransformer()
         bgmm_transformer.fit(data, list(data.columns))
         transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
-        assert transformed.shape == (123, 2)
+        assert transformed.shape == (200, 2)
         assert all(isinstance(x, float) for x in transformed['col.continuous'])
         assert all(isinstance(x, float) for x in transformed['col.discrete'])
 
@@ -156,7 +163,7 @@ class TestBayesGMMTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_nulls(self):
-        data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=123), columns=['col'])
+        data = self.generate_data()
         mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
         data[mask] = np.nan
 
@@ -165,7 +172,7 @@ class TestBayesGMMTransformer:
         transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
-        assert transformed.shape == (123, 3)
+        assert transformed.shape == (200, 3)
         assert all(isinstance(x, float) for x in transformed['col.continuous'])
         assert all(isinstance(x, float) for x in transformed['col.discrete'])
         assert all(isinstance(x, float) for x in transformed['col.is_null'])
