@@ -493,19 +493,66 @@ class GaussianCopulaTransformer(NumericalTransformer):
 
 
 class BayesGMMTransformer(NumericalTransformer):
-    """Bayesian GMM transformer."""
+    """Transformer for numerical data using a Bayesian Gaussian Mixture Model.
+
+    The transformation consists of computing the probability that a value came from each
+    component, then sampling a component based on that probability and finally returning a
+    pd.DataFrame of a value and a label encoding, where the lable encoding indicates the
+    component that was selected and the value is a normalized representation of the value
+    based on the mean and std of the selected component.
+
+    The reverse transform will simply do the inverse of the steps above.
+
+    Args:
+        dtype (data type):
+            Data type of the data to transform. It will be used when reversing the
+            transformation. If not provided, the dtype of the fit data will be used.
+            Defaults to ``None``.
+        nan (int, str or None):
+            Indicate what to do with the null values. If an integer is given, replace them
+            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
+            them with the corresponding aggregation. If ``None`` is given, do not replace them.
+            Defaults to ``'mean'``.
+        null_column (bool):
+            Whether to create a new column to indicate which values were null or not.
+            If ``None``, only create a new column when the data contains null values.
+            If ``True``, always create the new column whether there are null values or not.
+            If ``False``, do not create the new column.
+            Defaults to ``None``.
+        rounding (int, str or None):
+            Define rounding scheme for data. If set to an int, values will be rounded
+            to that number of decimal places. If ``None``, values will not be rounded.
+            If set to ``'auto'``, the transformer will round to the maximum number of
+            decimal places detected in the fitted data.
+        min_value (int, str or None):
+            Indicate whether or not to set a minimum value for the data. If an integer is given,
+            reverse transformed data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum.
+        max_value (int, str or None):
+            Indicate whether or not to set a maximum value for the data. If an integer is given,
+            reverse transformed data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum.
+        max_clusters (int):
+            The maximum number of mixture components. Depending on the data, the model may select
+            fewer components (based on the ``weight_threshold``).
+            Defaults to 10.
+        weight_threshold (int, float):
+            The minimum value a component weight can take to be considered a valid component.
+            ``weights_`` under this value will be ignored.
+            Defaults to 0.005.
+    """
 
     STD_MULTIPLIER = 4
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = False
 
-    def __init__(self, dtype=None, nan='mean', null_column=None, max_clusters=10,
-                 weight_threshold=0.005, rounding=None, min_value=None, max_value=None):
-        super().__init__(
-            dtype=dtype, nan=nan, null_column=null_column, rounding=rounding,
-            min_value=min_value, max_value=max_value
-        )
+    def __init__(self, dtype=None, nan='mean', null_column=None, rounding=None,
+                 min_value=None, max_value=None, max_clusters=10, weight_threshold=0.005):
+        super().__init__(dtype=dtype, nan=nan, null_column=null_column, rounding=rounding,
+                         min_value=min_value, max_value=max_value)
         self._max_clusters = max_clusters
         self._weight_threshold = weight_threshold
         self._number_of_modes = None
@@ -552,14 +599,14 @@ class BayesGMMTransformer(NumericalTransformer):
         self._number_of_modes = self._valid_component_indicator.sum()
 
     def _transform(self, data):
-        """Transform numerical data.
+        """Transform the numerical data.
 
         Args:
             data (pandas.Series):
                 Data to transform.
 
         Returns:
-            numpy.ndarray
+            numpy.ndarray.
         """
         data = super()._transform(data)
         if data.ndim > 1:
@@ -627,7 +674,7 @@ class BayesGMMTransformer(NumericalTransformer):
                 Data to transform.
 
         Returns:
-            pandas.Series
+            pandas.Series.
         """
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
