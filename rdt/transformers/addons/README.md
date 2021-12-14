@@ -11,7 +11,7 @@
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
 [![Coverage Status](https://codecov.io/gh/sdv-dev/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/RDT)
 
-<img align="center" width=40% src="docs/images/rdt-logo.png">
+<img align="center" width=40% src="https://user-images.githubusercontent.com/41479552/143879690-ff8e2022-7501-4909-b5ac-af23b36635a6.png">
 
 * Website: https://sdv.dev
 * Documentation: https://sdv.dev/SDV
