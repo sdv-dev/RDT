@@ -1,6 +1,7 @@
 """Hyper transformer module."""
 
 import warnings
+from collections import defaultdict
 
 from rdt.errors import NotFittedError
 from rdt.transformers import get_default_transformer, get_transformer_instance
@@ -135,6 +136,7 @@ class HyperTransformer:
         self._input_columns = []
         self._fitted_fields = set()
         self._fitted = False
+        self._transformers_tree = defaultdict(dict)
 
     @staticmethod
     def _field_in_data(field, data):
@@ -256,6 +258,8 @@ class HyperTransformer:
 
         output_types = transformer.get_output_types()
         next_transformers = transformer.get_next_transformers()
+        self._transformers_tree[field]['transformer'] = transformer
+        self._transformers_tree[field]['outputs'] = list(output_types)
         for (output_name, output_type) in output_types.items():
             output_field = self._multi_column_fields.get(output_name, output_name)
             next_transformer = self._get_next_transformer(
