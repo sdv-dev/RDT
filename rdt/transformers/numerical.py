@@ -157,9 +157,7 @@ class NumericalTransformer(BaseTransformer):
         Returns:
             numpy.ndarray
         """
-        if self.nan is not None:
-            return self.null_transformer.transform(data)
-        return data.to_numpy()
+        return self.null_transformer.transform(data)
 
     def _reverse_transform(self, data):
         """Convert data back into the original format.
@@ -542,6 +540,13 @@ class BayesGMMTransformer(NumericalTransformer):
             The minimum value a component weight can take to be considered a valid component.
             ``weights_`` under this value will be ignored.
             Defaults to 0.005.
+
+    Attributes:
+        _bgm_transformer:
+            An instance of sklearn`s ``BayesianGaussianMixture`` class.
+        _valid_component_indicator:
+            An array indicating the valid components. If the weight of a component is greater
+            than the ``weight_threshold``, it's indicated with True, otherwise it's set to False.
     """
 
     STD_MULTIPLIER = 4
@@ -549,15 +554,15 @@ class BayesGMMTransformer(NumericalTransformer):
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = False
 
+    _bgm_transformer = None
+    _valid_component_indicator = None
+
     def __init__(self, dtype=None, nan='mean', null_column=None, rounding=None,
                  min_value=None, max_value=None, max_clusters=10, weight_threshold=0.005):
         super().__init__(dtype=dtype, nan=nan, null_column=null_column, rounding=rounding,
                          min_value=min_value, max_value=max_value)
         self._max_clusters = max_clusters
         self._weight_threshold = weight_threshold
-        self._number_of_modes = None
-        self._bgm_transformer = None
-        self._valid_component_indicator = None
 
     def get_output_types(self):
         """Return the output types supported by the transformer.
@@ -567,8 +572,8 @@ class BayesGMMTransformer(NumericalTransformer):
                 Mapping from the transformed column names to supported data types.
         """
         output_types = {
-            'continuous': 'float',
-            'discrete': 'categorical'
+            'normalized': 'float',
+            'component': 'categorical'
         }
         if self.null_transformer and self.null_transformer.creates_null_column():
             output_types['is_null'] = 'float'
@@ -596,7 +601,6 @@ class BayesGMMTransformer(NumericalTransformer):
 
         self._bgm_transformer.fit(data.reshape(-1, 1))
         self._valid_component_indicator = self._bgm_transformer.weights_ > self._weight_threshold
-        self._number_of_modes = self._valid_component_indicator.sum()
 
     def _transform(self, data):
         """Transform the numerical data.
@@ -626,7 +630,7 @@ class BayesGMMTransformer(NumericalTransformer):
             component_prob_t = component_probs[i] + 1e-6
             component_prob_t = component_prob_t / component_prob_t.sum()
             selected_component[i] = np.random.choice(
-                np.arange(self._number_of_modes),
+                np.arange(self._valid_component_indicator.sum()),
                 p=component_prob_t
             )
 
@@ -634,12 +638,7 @@ class BayesGMMTransformer(NumericalTransformer):
         normalized = normalized_values[aranged, selected_component].reshape([-1, 1])
         normalized = np.clip(normalized, -.99, .99)
         normalized = normalized[:, 0]
-
-        one_hot = np.zeros_like(component_probs)
-        one_hot[aranged, selected_component] = 1
-        one_hot_as_label = one_hot.argmax(axis=1)
-
-        rows = [normalized, one_hot_as_label]
+        rows = [normalized, selected_component]
         if self.null_transformer and self.null_transformer.creates_null_column():
             rows.append(null_column)
 
@@ -647,18 +646,15 @@ class BayesGMMTransformer(NumericalTransformer):
 
     def _reverse_transform_helper(self, data, sigma):
         normalized = data[:, 0]
-        selected_component_probs = data[:, 1:]
 
         if sigma is not None:
             normalized = np.random.normal(normalized, sigma)
 
         normalized = np.clip(normalized, -1, 1)
-        component_probs = np.ones((len(data), self._max_clusters)) * -np.inf
-        component_probs[:, self._valid_component_indicator] = selected_component_probs
 
         means = self._bgm_transformer.means_.reshape([-1])
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
-        selected_component = np.argmax(component_probs, axis=1)
+        selected_component = data[:, 1].astype(int)
 
         std_t = stds[selected_component]
         mean_t = means[selected_component]
@@ -679,15 +675,10 @@ class BayesGMMTransformer(NumericalTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        one_hot = np.zeros(shape=(data.shape[0], self._number_of_modes))
-        discrete_column = data[:, 1].astype(int).tolist()
-        one_hot[np.arange(data.shape[0]), discrete_column] = 1.0
-        recovered_data = np.concatenate([data[:, :1], one_hot], axis=1)
-        recovered_data = self._reverse_transform_helper(recovered_data, sigma)
-
+        recovered_data = self._reverse_transform_helper(data, sigma)
         if self.null_transformer and self.null_transformer.creates_null_column():
             data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
         else:
             data = recovered_data
 
-        return pd.Series(super()._reverse_transform(data))
+        return super()._reverse_transform(data)
