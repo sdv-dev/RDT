@@ -3,6 +3,8 @@
 import warnings
 from collections import defaultdict
 
+import yaml
+
 from rdt.errors import NotFittedError
 from rdt.transformers import get_default_transformer, get_transformer_instance
 
@@ -218,6 +220,98 @@ class HyperTransformer:
         """
         self.field_transformers.update(field_transformers)
         self._unfit()
+
+    def get_transformer(self, field):
+        """Get the transformer instance used for a field.
+
+        Args:
+            field (str or tuple):
+                String representing a column name or a tuple of multiple column names.
+
+        Returns:
+            Transformer:
+                Transformer instance used on the specified field during ``transform``.
+        """
+        if not self._fitted:
+            raise NotFittedError
+
+        return self._transformers_tree[field].get('transformer', None)
+
+    def get_next_transformers(self, field):
+        """Return dict mapping output columns of field to transformers used on them.
+
+        Args:
+            field (str or tuple):
+                String representing a column name or a tuple of multiple column names.
+
+        Returns:
+            dict:
+                Dictionary mapping the output names of the columns created after transforming the
+                specified field, to the transformer instances used on them.
+        """
+        if not self._fitted:
+            raise NotFittedError
+
+        next_transformers = {}
+        for output in self._transformers_tree[field].get('outputs', []):
+            next_transformers[output] = self._transformers_tree[output].get('transformer', None)
+
+        return next_transformers
+
+    def get_final_output_columns(self, field):
+        """Return list of all final output columns related to a field.
+
+        The ``HyperTransformer`` will figure out which transformers to use on a field during
+        ``transform``. If the outputs are not of an acceptable data type, they will also go
+        through transformations. This method finds all the output columns that are of an
+        acceptable final data type that originated from the specified field.
+
+        Args:
+            field (str or tuple):
+                String representing a column name or a tuple of multiple column names.
+
+        Returns:
+            list:
+                List of output column names that were created as a by-product of the specified
+                field.
+        """
+        if not self._fitted:
+            raise NotFittedError
+        final_outputs = []
+        outputs = self._transformers_tree[field].get('outputs', []).copy()
+        while outputs:
+            output = outputs.pop()
+            if output in self._transformers_tree:
+                outputs.append(output)
+            else:
+                final_outputs.append(output)
+
+        return final_outputs
+
+    def get_transformer_tree_yaml(self):
+        """Return yaml representation of transformers tree.
+
+        After running ``fit``, a sequence of transformers is created to run each original column
+        through. The sequence can be thought of as a tree, where each node is a field and the
+        transformer used on it, and each neighbor is an output from that transformer. This method
+        returns a YAML representation of this tree.
+
+        Returns:
+            YAML:
+                YAML object representing the tree of transformers created during ``fit``. It has
+                the following form:
+
+                field1:
+                    transformer: ExampleTransformer instance
+                    outputs: [field1.out1, field1.out2]
+                field1.out1:
+                    transformer: CategoricalTransformer instance
+                    outputs: [field1.out1.value]
+                field1.out2:
+                    transformer: CategoricalTransformer instance
+                    outputs: [field1.out2.value]
+        """
+        return yaml.safe_dump(self._transformers_tree)
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
