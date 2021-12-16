@@ -200,10 +200,10 @@ class TestBayesGMMTransformer:
 
     def test_multiple_components(self):
         data = np.concatenate([
-            np.random.normal(loc=5, scale=2, size=300),
-            np.random.normal(loc=-4, scale=1, size=1000),
-            np.random.normal(loc=-18, scale=0.3, size=1500),
-            np.random.normal(loc=10, scale=0.001, size=500),
+            np.random.normal(loc=5, scale=0.02, size=300),
+            np.random.normal(loc=-4, scale=0.1, size=1000),
+            np.random.normal(loc=-180, scale=3, size=1500),
+            np.random.normal(loc=100, scale=10, size=500),
         ])
         data = pd.DataFrame(data, columns=['col'])
         data = data.sample(frac=1).reset_index(drop=True)
