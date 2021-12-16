@@ -2,6 +2,7 @@
 
 import warnings
 from collections import defaultdict
+from copy import deepcopy
 
 import yaml
 
@@ -237,7 +238,7 @@ class HyperTransformer:
 
         return self._transformers_tree[field].get('transformer', None)
 
-    def get_next_transformers(self, field):
+    def get_output_transformers(self, field):
         """Return dict mapping output columns of field to transformers used on them.
 
         Args:
@@ -279,10 +280,10 @@ class HyperTransformer:
             raise NotFittedError
         final_outputs = []
         outputs = self._transformers_tree[field].get('outputs', []).copy()
-        while outputs:
+        while len(outputs) > 0:
             output = outputs.pop()
             if output in self._transformers_tree:
-                outputs.append(output)
+                outputs.extend(self._transformers_tree[output].get('outputs', []))
             else:
                 final_outputs.append(output)
 
@@ -297,7 +298,7 @@ class HyperTransformer:
         returns a YAML representation of this tree.
 
         Returns:
-            YAML:
+            string:
                 YAML object representing the tree of transformers created during ``fit``. It has
                 the following form:
 
@@ -311,7 +312,12 @@ class HyperTransformer:
                     transformer: CategoricalTransformer instance
                     outputs: [field1.out2.value]
         """
-        return yaml.safe_dump(self._transformers_tree)
+        modified_tree = deepcopy(self._transformers_tree)
+        for field in modified_tree:
+            class_name = modified_tree[field]['transformer'].__class__.__name__
+            modified_tree[field]['transformer'] = class_name
+
+        return yaml.safe_dump(modified_tree)
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
