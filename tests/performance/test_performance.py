@@ -19,7 +19,7 @@ TEST_NAMES = [
     'Reverse Transform Memory',
 ]
 
-DATASET_SIZES = [1000]
+DATASET_SIZES = [1000, 10000, 100000]
 
 
 def get_instance(obj, **kwargs):

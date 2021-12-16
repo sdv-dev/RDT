@@ -493,13 +493,10 @@ class GaussianCopulaTransformer(NumericalTransformer):
 class BayesGMMTransformer(NumericalTransformer):
     """Transformer for numerical data using a Bayesian Gaussian Mixture Model.
 
-    The transformation consists of computing the probability that a value came from each
-    component, then sampling a component based on that probability and finally returning a
-    pd.DataFrame of a value and a label encoding, where the lable encoding indicates the
-    component that was selected and the value is a normalized representation of the value
+    This transformation takes a numerical value and transforms it using a Bayesian GMM
+    model. It generates two outputs, a discrete value which indicates the selected
+    'component' of the GMM and a continuous value which represents the normalized value
     based on the mean and std of the selected component.
-
-    The reverse transform will simply do the inverse of the steps above.
 
     Args:
         dtype (data type):
