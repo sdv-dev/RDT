@@ -21,7 +21,7 @@ install_requires = [
     'scipy>=1.5.4,<2',
     'psutil>=5.7,<6',
     'scikit-learn>=0.24,<1',
-    'pyyaml>=5.4,<6'
+    'pyyaml>=5.4.1,<6'
 ]
 
 copulas_requires = [
