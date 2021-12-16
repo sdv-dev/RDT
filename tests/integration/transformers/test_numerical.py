@@ -199,7 +199,7 @@ class TestBayesGMMTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_multiple_components(self):
-        
+
         data = np.concatenate([
             np.random.normal(loc=5, scale=10, size=1000),
             np.random.normal(loc=-4, scale=1, size=100),
