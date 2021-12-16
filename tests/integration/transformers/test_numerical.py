@@ -183,7 +183,7 @@ class TestBayesGMMTransformer:
     def test_data_different_sizes(self):
         data = np.concatenate([
             np.random.normal(loc=5, scale=1, size=100),
-            np.random.normal(loc=10, scale=1, size=500),
+            np.random.normal(loc=100, scale=1, size=500),
         ])
         data = pd.DataFrame(data, columns=['col'])
 
@@ -199,11 +199,10 @@ class TestBayesGMMTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_multiple_components(self):
-
         data = np.concatenate([
-            np.random.normal(loc=5, scale=10, size=1000),
-            np.random.normal(loc=-4, scale=1, size=100),
-            np.random.normal(loc=-18, scale=0.3, size=50),
+            np.random.normal(loc=5, scale=2, size=300),
+            np.random.normal(loc=-4, scale=1, size=1000),
+            np.random.normal(loc=-18, scale=0.3, size=1500),
             np.random.normal(loc=10, scale=0.001, size=500),
         ])
         data = pd.DataFrame(data, columns=['col'])
