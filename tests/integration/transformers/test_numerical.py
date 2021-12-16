@@ -179,3 +179,42 @@ class TestBayesGMMTransformer:
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+
+    def test_data_different_sizes(self):
+        data = np.concatenate([
+            np.random.normal(loc=5, scale=1, size=100),
+            np.random.normal(loc=10, scale=1, size=500),
+        ])
+        data = pd.DataFrame(data, columns=['col'])
+
+        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer.fit(data, list(data.columns))
+        transformed = bgmm_transformer.transform(data)
+
+        assert isinstance(transformed, pd.DataFrame)
+        assert all(isinstance(x, float) for x in transformed['col.normalized'])
+        assert all(isinstance(x, float) for x in transformed['col.component'])
+
+        reverse = bgmm_transformer.reverse_transform(transformed)
+        np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+
+    def test_multiple_components(self):
+        data = np.concatenate([
+            np.random.normal(loc=5, scale=10, size=1000),
+            np.random.normal(loc=-4, scale=1, size=100),
+            np.random.normal(loc=-18, scale=0.3, size=10),
+            np.random.normal(loc=10, scale=0.001, size=500),
+        ])
+        data = pd.DataFrame(data, columns=['col'])
+        data = data.sample(frac=1).reset_index(drop=True)
+
+        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer.fit(data, list(data.columns))
+        transformed = bgmm_transformer.transform(data)
+
+        assert isinstance(transformed, pd.DataFrame)
+        assert all(isinstance(x, float) for x in transformed['col.normalized'])
+        assert all(isinstance(x, float) for x in transformed['col.component'])
+
+        reverse = bgmm_transformer.reverse_transform(transformed)
+        np.testing.assert_array_almost_equal(reverse, data, decimal=1)

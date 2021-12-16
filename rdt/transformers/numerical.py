@@ -653,8 +653,8 @@ class BayesGMMTransformer(NumericalTransformer):
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
         selected_component = data[:, 1].astype(int)
 
-        std_t = stds[selected_component]
-        mean_t = means[selected_component]
+        std_t = stds[self._valid_component_indicator][selected_component]
+        mean_t = means[self._valid_component_indicator][selected_component]
         reversed_data = normalized * self.STD_MULTIPLIER * std_t + mean_t
 
         return reversed_data
@@ -665,6 +665,8 @@ class BayesGMMTransformer(NumericalTransformer):
         Args:
             data (pd.DataFrame or numpy.ndarray):
                 Data to transform.
+            sigma (float):
+                Add random noise to the normalized value.
 
         Returns:
             pandas.Series.

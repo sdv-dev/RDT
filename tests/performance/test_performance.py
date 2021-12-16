@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from rdt.transformers import get_transformers_by_type
+from rdt.transformers.numerical import BayesGMMTransformer
 from tests.datasets import get_dataset_generators_by_type
 from tests.performance.profiling import profile_transformer
 
@@ -76,6 +77,9 @@ def _get_performance_test_cases():
         dataset_generators_for_type = dataset_generators.get(data_type, [])
 
         for transformer in transformers_for_type:
+            if transformer == BayesGMMTransformer:
+                continue
+
             for dataset_generator in dataset_generators_for_type:
                 all_test_cases.append((transformer, dataset_generator))
 
