@@ -69,6 +69,7 @@ def _get_dataset_sizes(data_type):
 def _get_performance_test_cases():
     """Get all the (transformer, dataset_generator) combinations for testing."""
     all_test_cases = []
+    sandbox = [BayesGMMTransformer]
 
     dataset_generators = get_dataset_generators_by_type()
     transformers = get_transformers_by_type()
@@ -76,7 +77,6 @@ def _get_performance_test_cases():
     for data_type, transformers_for_type in transformers.items():
         dataset_generators_for_type = dataset_generators.get(data_type, [])
 
-        sandbox = [BayesGMMTransformer]
         for transformer in transformers_for_type:
             if transformer in sandbox:
                 continue
