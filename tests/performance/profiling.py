@@ -2,10 +2,10 @@
 
 # pylint: disable=W0212
 
+import multiprocessing as mp
 import timeit
 import tracemalloc
 from copy import deepcopy
-from multiprocessing import Process, Value
 
 import pandas as pd
 
@@ -35,8 +35,9 @@ def _set_memory_for_method(method, dataset, peak_memory):
 
 
 def _profile_memory(method, dataset):
-    peak_memory = Value('i', 0)
-    profiling_process = Process(
+    ctx = mp.get_context('spawn')
+    peak_memory = ctx.Value('i', 0)
+    profiling_process = ctx.Process(
         target=_set_memory_for_method,
         args=(method, dataset, peak_memory)
     )
