@@ -1,7 +1,6 @@
 """Tests for the profiling module."""
 
 from copy import deepcopy
-from multiprocessing import Process
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -11,9 +10,9 @@ from tests.datasets import BaseDatasetGenerator
 from tests.performance.profiling import profile_transformer
 
 
-@patch('tests.performance.profiling.Process', spec_set=Process)
+@patch('tests.performance.profiling.mp')
 @patch('tests.performance.profiling.deepcopy', spec_set=deepcopy)
-def test_profile_transformer(deepcopy_mock, process_mock):
+def test_profile_transformer(deepcopy_mock, multiprocessor_mock):
     """Test the ``profile_transformer`` function.
 
     The function should run the ``fit``, ``transform``
@@ -64,6 +63,7 @@ def test_profile_transformer(deepcopy_mock, process_mock):
 
     assert expected_output_columns == list(profiling_results.index)
 
+    process_mock = multiprocessor_mock.get_context().Process
     fit_call = process_mock.mock_calls[0]
     transform_call = process_mock.mock_calls[3]
     reverse_transform_call = process_mock.mock_calls[6]
