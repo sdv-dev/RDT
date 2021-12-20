@@ -278,6 +278,7 @@ class HyperTransformer:
         """
         if not self._fitted:
             raise NotFittedError
+
         final_outputs = []
         outputs = self._transformers_tree[field].get('outputs', []).copy()
         while len(outputs) > 0:
