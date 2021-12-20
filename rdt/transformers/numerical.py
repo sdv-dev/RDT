@@ -641,14 +641,8 @@ class BayesGMMTransformer(NumericalTransformer):
 
         return np.stack(rows, axis=1)  # noqa: PD013
 
-    def _reverse_transform_helper(self, data, sigma):
-        normalized = data[:, 0]
-
-        if sigma is not None:
-            normalized = np.random.normal(normalized, sigma)
-
-        normalized = np.clip(normalized, -1, 1)
-
+    def _reverse_transform_helper(self, data):
+        normalized = np.clip(data[:, 0], -1, 1)
         means = self._bgm_transformer.means_.reshape([-1])
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
         selected_component = data[:, 1].astype(int)
@@ -659,14 +653,12 @@ class BayesGMMTransformer(NumericalTransformer):
 
         return reversed_data
 
-    def _reverse_transform(self, data, sigma=None):
+    def _reverse_transform(self, data):
         """Convert data back into the original format.
 
         Args:
             data (pd.DataFrame or numpy.ndarray):
                 Data to transform.
-            sigma (float):
-                Add random noise to the normalized value.
 
         Returns:
             pandas.Series.
@@ -674,7 +666,7 @@ class BayesGMMTransformer(NumericalTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        recovered_data = self._reverse_transform_helper(data, sigma)
+        recovered_data = self._reverse_transform_helper(data)
         if self.null_transformer and self.null_transformer.creates_null_column():
             data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
         else:
