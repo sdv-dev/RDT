@@ -57,7 +57,7 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     Args:
         transformer (Transformer):
             Transformer instance.
-        dataset_generator (DatsetGenerator):
+        dataset_generator (DatasetGenerator):
             DatasetGenerator instance.
         transform_size (int):
             Number of rows to generate for ``transform`` and ``reverse_transform``.
