@@ -9,7 +9,7 @@ import pandas as pd
 from rdt import HyperTransformer
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, BaseTransformer, BooleanTransformer, CategoricalTransformer,
-    NumericalTransformer, OneHotEncodingTransformer)
+    DatetimeTransformer, NumericalTransformer, OneHotEncodingTransformer)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -174,6 +174,19 @@ def test_hypertransformer_default_inputs():
     expected_reversed = get_input_data()
     pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
+    assert isinstance(ht._transformers_tree['integer']['transformer'], NumericalTransformer)
+    assert ht._transformers_tree['integer']['outputs'] == ['integer.value']
+    assert isinstance(ht._transformers_tree['float']['transformer'], NumericalTransformer)
+    assert ht._transformers_tree['float']['outputs'] == ['float.value', 'float.is_null']
+    assert isinstance(ht._transformers_tree['categorical']['transformer'], CategoricalTransformer)
+    assert ht._transformers_tree['categorical']['outputs'] == ['categorical.value']
+    assert isinstance(ht._transformers_tree['bool']['transformer'], BooleanTransformer)
+    assert ht._transformers_tree['bool']['outputs'] == ['bool.value', 'bool.is_null']
+    assert isinstance(ht._transformers_tree['datetime']['transformer'], DatetimeTransformer)
+    assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value', 'datetime.is_null']
+    assert isinstance(ht._transformers_tree['names']['transformer'], CategoricalTransformer)
+    assert ht._transformers_tree['names']['outputs'] == ['names.value']
+
 
 def test_hypertransformer_field_transformers():
     """Test the HyperTransformer with ``field_transformers`` provided.
@@ -244,7 +257,7 @@ def test_hypertransformer_field_transformers_multi_column_fields():
 
     Input:
         - A dict mapping each field to a dummy transformer.
-        - A dataframe with a nuerical year, month and day column as well
+        - A dataframe with a numerical year, month and day column as well
         as a string year, month and day column.
 
     Expected behavior:
