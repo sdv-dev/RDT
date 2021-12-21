@@ -1541,10 +1541,9 @@ class TestBayesGMMTransformer(TestCase):
         np.testing.assert_allclose(output[:, 2], expected_null)
 
     def test__reverse_transform_helper(self):
-        """Test ``_reverse_transform_helper`` with ``sigma = 0.0``.
+        """Test ``_reverse_transform_helper``.
 
-        Validate that the method produces the appropriate output when passed a numpy array
-        with ``sigma = 0.0``.
+        Validate that the method produces the appropriate output when passed a numpy array.
 
         Setup:
             - create an instance of the ``BayesGMMTransformer`` where:
@@ -1583,7 +1582,7 @@ class TestBayesGMMTransformer(TestCase):
         ]).transpose()
 
         # Run
-        output = transformer._reverse_transform_helper(data, sigma=0.0)
+        output = transformer._reverse_transform_helper(data)
 
         # Asserts
         expected = pd.Series([0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97])
