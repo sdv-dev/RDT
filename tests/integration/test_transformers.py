@@ -176,6 +176,15 @@ def _test_transformer_with_dataset(transformer_class, input_data, steps):
 
 def _validate_hypertransformer_transformed_data(transformed_data):
     """Check that the transformed data is not null and of type float."""
+    print(transformed_data)
+    print()
+    for col in transformed_data.columns:
+        if pd.isna(transformed_data[col]).any():
+            print("Found NaN in col", col)
+    for row in transformed_data.values:
+        if pd.isna(row).any():
+            print("Found NaN in row", row)
+    raise ValueError("Expected error")
     assert transformed_data.notna().all(axis=None), 'Transformed data has nulls.'
 
     for dtype in transformed_data.dtypes:
