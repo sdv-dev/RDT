@@ -184,7 +184,6 @@ def _validate_hypertransformer_transformed_data(transformed_data):
     for row in transformed_data.values:
         if pd.isna(row).any():
             print("Found NaN in row", row)
-    raise ValueError("Expected error")
     assert transformed_data.notna().all(axis=None), 'Transformed data has nulls.'
 
     for dtype in transformed_data.dtypes:
