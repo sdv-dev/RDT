@@ -4,7 +4,8 @@
 
 This release adds a new `BayesGMMTransformer`. This transformer can be used to convert a numerical column into two
 columns: a discrete column indicating the selected `component` of the GMM for each row, and a continuous column containing
-the normalized value of each row based on the mean and std of the selected `component`.
+the normalized value of each row based on the mean and std of the selected `component`. It is useful when the column being transformed
+came from multiple distributions.
 
 This release also adds multiple new methods to the `HyperTransformer` API. These allow for users to access the specfic
 transformers used on each input field, as well as view the entire tree of transformers that are used when running `transform`.
