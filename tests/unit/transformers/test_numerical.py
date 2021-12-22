@@ -1343,7 +1343,7 @@ class TestBayesGMMTransformer(TestCase):
             - a pandas Series containing random values.
 
         Side Effects:
-            - the sum of ``_valid_component_indicator`` should equal to 2
+            - the sum of ``valid_component_indicator`` should equal to 2
             (the number of ``weights_`` greater than the threshold).
         """
         # Setup
@@ -1357,7 +1357,7 @@ class TestBayesGMMTransformer(TestCase):
 
         # Asserts
         assert transformer._bgm_transformer == bgm_instance
-        assert transformer._valid_component_indicator.sum() == 2
+        assert transformer.valid_component_indicator.sum() == 2
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     def test__fit_nan(self, mock_bgm):
@@ -1375,7 +1375,7 @@ class TestBayesGMMTransformer(TestCase):
             - a pandas Series containing some ``np.nan`` values.
 
         Side Effects:
-            - the sum of ``_valid_component_indicator`` should equal to 2
+            - the sum of ``valid_component_indicator`` should equal to 2
             (the number of ``weights_`` greater than the threshold).
             - set the ``null_transformer`` appropriately.
         """
@@ -1393,7 +1393,7 @@ class TestBayesGMMTransformer(TestCase):
 
         # Asserts
         assert transformer._bgm_transformer == bgm_instance
-        assert transformer._valid_component_indicator.sum() == 2
+        assert transformer.valid_component_indicator.sum() == 2
         assert transformer.null_transformer.creates_null_column()
 
     def test__transform(self):
@@ -1405,7 +1405,7 @@ class TestBayesGMMTransformer(TestCase):
             - create an instance of the ``BayesGMMTransformer`` where:
                 - ``_bgm_transformer`` is mocked with the appropriate ``means_``, ``covariances_``
                 and ``predict_proba.return_value``.
-                - ``_valid_component_indicator`` is set to ``np.array([True, True, False])``.
+                - ``valid_component_indicator`` is set to ``np.array([True, True, False])``.
 
         Input:
             - a pandas Series.
@@ -1446,7 +1446,7 @@ class TestBayesGMMTransformer(TestCase):
         ])
         transformer._bgm_transformer.predict_proba.return_value = probabilities
 
-        transformer._valid_component_indicator = np.array([True, True, False])
+        transformer.valid_component_indicator = np.array([True, True, False])
         transformer.null_transformer = NullTransformer()
         data = pd.Series([0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97])
 
@@ -1475,7 +1475,7 @@ class TestBayesGMMTransformer(TestCase):
             - create an instance of the ``BayesGMMTransformer`` where:
                 - ``_bgm_transformer`` is mocked with the appropriate ``means_``, ``covariances_``
                 and ``predict_proba.return_value``.
-                - ``_valid_component_indicator`` is set to ``np.array([True, True, False])``.
+                - ``valid_component_indicator`` is set to ``np.array([True, True, False])``.
                 - ``null_transformer`` is set to ``NullTransformer(0.0, True)``.
 
         Input:
@@ -1517,7 +1517,7 @@ class TestBayesGMMTransformer(TestCase):
         ])
         transformer._bgm_transformer.predict_proba.return_value = probabilities
 
-        transformer._valid_component_indicator = np.array([True, True, False])
+        transformer.valid_component_indicator = np.array([True, True, False])
         transformer.null_transformer = NullTransformer(0.0, null_column=True)
         data = pd.Series([0.01, np.nan, -0.01, -0.01, 0.0, 0.99, 0.97, np.nan, np.nan, 0.97])
 
@@ -1549,7 +1549,7 @@ class TestBayesGMMTransformer(TestCase):
             - create an instance of the ``BayesGMMTransformer`` where:
                 - ``_bgm_transformer`` is mocked with the appropriate
                 ``means_`` and ``covariances_``.
-                - ``_valid_component_indicator`` is set to ``np.array([True, True, False])``.
+                - ``valid_component_indicator`` is set to ``np.array([True, True, False])``.
 
         Input:
             - a numpy array containing the data to be reversed.
@@ -1575,7 +1575,7 @@ class TestBayesGMMTransformer(TestCase):
         ])
         transformer._bgm_transformer.covariances_ = covariances
 
-        transformer._valid_component_indicator = np.array([True, True, False])
+        transformer.valid_component_indicator = np.array([True, True, False])
         data = np.array([
             [-0.069, -0.061, -0.086, -0.086, -0.078, 0.073, 0.057, 0.098, 0.107, 0.057],
             [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]

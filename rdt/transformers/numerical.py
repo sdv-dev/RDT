@@ -541,7 +541,7 @@ class BayesGMMTransformer(NumericalTransformer):
     Attributes:
         _bgm_transformer:
             An instance of sklearn`s ``BayesianGaussianMixture`` class.
-        _valid_component_indicator:
+        valid_component_indicator:
             An array indicating the valid components. If the weight of a component is greater
             than the ``weight_threshold``, it's indicated with True, otherwise it's set to False.
     """
@@ -552,7 +552,7 @@ class BayesGMMTransformer(NumericalTransformer):
     COMPOSITION_IS_IDENTITY = False
 
     _bgm_transformer = None
-    _valid_component_indicator = None
+    valid_component_indicator = None
 
     def __init__(self, dtype=None, nan='mean', null_column=None, rounding=None,
                  min_value=None, max_value=None, max_clusters=10, weight_threshold=0.005):
@@ -597,7 +597,7 @@ class BayesGMMTransformer(NumericalTransformer):
             data = data[:, 0]
 
         self._bgm_transformer.fit(data.reshape(-1, 1))
-        self._valid_component_indicator = self._bgm_transformer.weights_ > self._weight_threshold
+        self.valid_component_indicator = self._bgm_transformer.weights_ > self._weight_threshold
 
     def _transform(self, data):
         """Transform the numerical data.
@@ -618,16 +618,16 @@ class BayesGMMTransformer(NumericalTransformer):
 
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self._max_clusters))
         normalized_values = (data - means) / (self.STD_MULTIPLIER * stds)
-        normalized_values = normalized_values[:, self._valid_component_indicator]
+        normalized_values = normalized_values[:, self.valid_component_indicator]
         component_probs = self._bgm_transformer.predict_proba(data)
-        component_probs = component_probs[:, self._valid_component_indicator]
+        component_probs = component_probs[:, self.valid_component_indicator]
 
         selected_component = np.zeros(len(data), dtype='int')
         for i in range(len(data)):
             component_prob_t = component_probs[i] + 1e-6
             component_prob_t = component_prob_t / component_prob_t.sum()
             selected_component[i] = np.random.choice(
-                np.arange(self._valid_component_indicator.sum()),
+                np.arange(self.valid_component_indicator.sum()),
                 p=component_prob_t
             )
 
@@ -647,8 +647,8 @@ class BayesGMMTransformer(NumericalTransformer):
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
         selected_component = data[:, 1].astype(int)
 
-        std_t = stds[self._valid_component_indicator][selected_component]
-        mean_t = means[self._valid_component_indicator][selected_component]
+        std_t = stds[self.valid_component_indicator][selected_component]
+        mean_t = means[self.valid_component_indicator][selected_component]
         reversed_data = normalized * self.STD_MULTIPLIER * std_t + mean_t
 
         return reversed_data

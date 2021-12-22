@@ -163,6 +163,7 @@ class TestBayesGMMTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_nulls(self):
+        np.random.seed(10)
         data = self.generate_data()
         mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
         data[mask] = np.nan
@@ -199,6 +200,7 @@ class TestBayesGMMTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_multiple_components(self):
+        np.random.seed(10)
         data = np.concatenate([
             np.random.normal(loc=5, scale=0.02, size=300),
             np.random.normal(loc=-4, scale=0.1, size=1000),
