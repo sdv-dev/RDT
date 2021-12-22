@@ -35,7 +35,7 @@ def _set_memory_for_method(method, dataset, peak_memory):
 
 
 def _profile_memory(method, dataset):
-    ctx = mp.get_context('spawn')
+    ctx = mp.get_context('forkserver')
     peak_memory = ctx.Value('i', 0)
     profiling_process = ctx.Process(
         target=_set_memory_for_method,
