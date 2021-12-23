@@ -162,7 +162,7 @@ class TestBayesGMMTransformer:
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
-    def test_nulls(self):
+    def test_some_nulls(self):
         np.random.seed(10)
         data = self.generate_data()
         mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
@@ -180,6 +180,21 @@ class TestBayesGMMTransformer:
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+
+    def test_all_nulls(self):
+        data = pd.DataFrame([np.nan, None] * 50, columns=['col'])
+        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer.fit(data, list(data.columns))
+        transformed = bgmm_transformer.transform(data)
+
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (100, 3)
+        assert all(x == 0.0 for x in transformed['col.normalized'])
+        assert all(x == 0.0 for x in transformed['col.component'])
+        assert all(x == 1.0 for x in transformed['col.is_null'])
+
+        reverse = bgmm_transformer.reverse_transform(transformed)
+        np.testing.assert_array_almost_equal(reverse, data)
 
     def test_data_different_sizes(self):
         data = np.concatenate([
