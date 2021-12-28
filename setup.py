@@ -17,9 +17,11 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 install_requires = [
     "numpy>=1.18.0,<1.20.0;python_version<'3.7'",
     "numpy>=1.20.0,<2;python_version>='3.7'",
-    'pandas>=1.1.3,<1.1.5',
+    'pandas>=1.1.3,<2',
     'scipy>=1.5.4,<2',
     'psutil>=5.7,<6',
+    'scikit-learn>=0.24,<1',
+    'pyyaml>=5.4.1,<6'
 ]
 
 copulas_requires = [
@@ -36,7 +38,6 @@ tests_require = [
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
     'pytest-subtests>=0.5,<1.0',
-    'scikit-learn>=0.24,<1',
 ]
 
 addons_require = []
@@ -130,6 +131,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.6.1',
+    version='0.6.2.dev1',
     zip_safe=False,
 )

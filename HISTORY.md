@@ -1,5 +1,45 @@
 # History
 
+## 0.6.2 - 2021-12-28
+
+This release adds a new `BayesGMMTransformer`. This transformer can be used to convert a numerical column into two
+columns: a discrete column indicating the selected `component` of the GMM for each row, and a continuous column containing
+the normalized value of each row based on the `mean` and `std` of the selected `component`. It is useful when the column being transformed
+came from multiple distributions.
+
+This release also adds multiple new methods to the `HyperTransformer` API. These allow for users to access the specfic
+transformers used on each input field, as well as view the entire tree of transformers that are used when running `transform`.
+The exact methods are:
+
+* `BaseTransformer.get_input_columns()` - Return list of input columns for a transformer.
+* `BaseTransformer.get_output_columns()` - Return list of output columns for a transformer.
+* `HyperTransformer.get_transformer(field)` - Return the transformer instance used for a field.
+* `HyperTransformer.get_output_transformers(field)` - Return dictionary mapping output columns of a field to the transformers used on them.
+* `HyperTransformer.get_final_output_columns(field)` - Return list of all final output columns related to a field.
+* `HyperTransformer.get_transformer_tree_yaml()` - Return YAML representation of transformers tree.
+
+Additionally, this release fixes a bug where the `HyperTransformer` was incorrectly raising a `NotFittedError`. It also improved the
+`DatetimeTransformer` by autonomously detecting if a column needs to be converted from `dtype` `object` to `dtype` `datetime`.
+
+### New Features
+
+* Cast column to datetime if specified in field transformers - Issue [#321](https://github.com/sdv-dev/RDT/issues/321) by @amontanez24
+* Add a BayesianGMM Transformer - Issue [#183](https://github.com/sdv-dev/RDT/issues/183) by @fealho
+* Add transformer tree structure and traversal methods - Issue [#330](https://github.com/sdv-dev/RDT/issues/330) by @amontanez24
+
+### Bugs fixed
+
+* HyperTransformer raises NotFittedError after fitting - Issue [#332](https://github.com/sdv-dev/RDT/issues/332) by @amontanez24
+
+## 0.6.1 - 2021-11-10
+
+This release adds support for Python 3.9! It also removes unused document files.
+
+### Internal Improvements
+
+* Add support for Python 3.9 - Issue [#323](https://github.com/sdv-dev/RDT/issues/323) by @amontanez24
+* Remove docs - PR [#322](https://github.com/sdv-dev/RDT/pull/322) by @pvk-developer
+
 ## 0.6.0 - 2021-10-29
 
 This release makes major changes to the underlying code for RDT as well as the API for both the `HyperTransformer` and `BaseTransformer`.

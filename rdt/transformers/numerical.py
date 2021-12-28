@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import pandas as pd
 import scipy
+from sklearn.mixture import BayesianGaussianMixture
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
@@ -485,5 +486,190 @@ class GaussianCopulaTransformer(NumericalTransformer):
             data[:, 0] = self._univariate.ppf(scipy.stats.norm.cdf(data[:, 0]))
         else:
             data = self._univariate.ppf(scipy.stats.norm.cdf(data))
+
+        return super()._reverse_transform(data)
+
+
+class BayesGMMTransformer(NumericalTransformer):
+    """Transformer for numerical data using a Bayesian Gaussian Mixture Model.
+
+    This transformation takes a numerical value and transforms it using a Bayesian GMM
+    model. It generates two outputs, a discrete value which indicates the selected
+    'component' of the GMM and a continuous value which represents the normalized value
+    based on the mean and std of the selected component.
+
+    Args:
+        dtype (data type):
+            Data type of the data to transform. It will be used when reversing the
+            transformation. If not provided, the dtype of the fit data will be used.
+            Defaults to ``None``.
+        nan (int, str or None):
+            Indicate what to do with the null values. If an integer is given, replace them
+            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
+            them with the corresponding aggregation. If ``None`` is given, do not replace them.
+            Defaults to ``'mean'``.
+        null_column (bool):
+            Whether to create a new column to indicate which values were null or not.
+            If ``None``, only create a new column when the data contains null values.
+            If ``True``, always create the new column whether there are null values or not.
+            If ``False``, do not create the new column.
+            Defaults to ``None``.
+        rounding (int, str or None):
+            Define rounding scheme for data. If set to an int, values will be rounded
+            to that number of decimal places. If ``None``, values will not be rounded.
+            If set to ``'auto'``, the transformer will round to the maximum number of
+            decimal places detected in the fitted data.
+        min_value (int, str or None):
+            Indicate whether or not to set a minimum value for the data. If an integer is given,
+            reverse transformed data will be greater than or equal to it. If the string ``'auto'``
+            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
+            is given, there won't be a minimum.
+        max_value (int, str or None):
+            Indicate whether or not to set a maximum value for the data. If an integer is given,
+            reverse transformed data will be less than or equal to it. If the string ``'auto'``
+            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
+            is given, there won't be a maximum.
+        max_clusters (int):
+            The maximum number of mixture components. Depending on the data, the model may select
+            fewer components (based on the ``weight_threshold``).
+            Defaults to 10.
+        weight_threshold (int, float):
+            The minimum value a component weight can take to be considered a valid component.
+            ``weights_`` under this value will be ignored.
+            Defaults to 0.005.
+
+    Attributes:
+        _bgm_transformer:
+            An instance of sklearn`s ``BayesianGaussianMixture`` class.
+        valid_component_indicator:
+            An array indicating the valid components. If the weight of a component is greater
+            than the ``weight_threshold``, it's indicated with True, otherwise it's set to False.
+    """
+
+    STD_MULTIPLIER = 4
+    DETERMINISTIC_TRANSFORM = False
+    DETERMINISTIC_REVERSE = True
+    COMPOSITION_IS_IDENTITY = False
+
+    _bgm_transformer = None
+    valid_component_indicator = None
+
+    def __init__(self, dtype=None, nan='mean', null_column=None, rounding=None,
+                 min_value=None, max_value=None, max_clusters=10, weight_threshold=0.005):
+        super().__init__(dtype=dtype, nan=nan, null_column=null_column, rounding=rounding,
+                         min_value=min_value, max_value=max_value)
+        self._max_clusters = max_clusters
+        self._weight_threshold = weight_threshold
+
+    def get_output_types(self):
+        """Return the output types supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported data types.
+        """
+        output_types = {
+            'normalized': 'float',
+            'component': 'categorical'
+        }
+        if self.null_transformer and self.null_transformer.creates_null_column():
+            output_types['is_null'] = 'float'
+
+        return self._add_prefix(output_types)
+
+    def _fit(self, data):
+        """Fit the transformer to the data.
+
+        Args:
+            data (pandas.Series):
+                Data to fit to.
+        """
+        self._bgm_transformer = BayesianGaussianMixture(
+            n_components=self._max_clusters,
+            weight_concentration_prior_type='dirichlet_process',
+            weight_concentration_prior=0.001,
+            n_init=1
+        )
+
+        super()._fit(data)
+        data = super()._transform(data)
+        if data.ndim > 1:
+            data = data[:, 0]
+
+        self._bgm_transformer.fit(data.reshape(-1, 1))
+        self.valid_component_indicator = self._bgm_transformer.weights_ > self._weight_threshold
+
+    def _transform(self, data):
+        """Transform the numerical data.
+
+        Args:
+            data (pandas.Series):
+                Data to transform.
+
+        Returns:
+            numpy.ndarray.
+        """
+        data = super()._transform(data)
+        if data.ndim > 1:
+            data, null_column = data[:, 0], data[:, 1]
+
+        data = data.reshape((len(data), 1))
+        means = self._bgm_transformer.means_.reshape((1, self._max_clusters))
+
+        stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self._max_clusters))
+        normalized_values = (data - means) / (self.STD_MULTIPLIER * stds)
+        normalized_values = normalized_values[:, self.valid_component_indicator]
+        component_probs = self._bgm_transformer.predict_proba(data)
+        component_probs = component_probs[:, self.valid_component_indicator]
+
+        selected_component = np.zeros(len(data), dtype='int')
+        for i in range(len(data)):
+            component_prob_t = component_probs[i] + 1e-6
+            component_prob_t = component_prob_t / component_prob_t.sum()
+            selected_component[i] = np.random.choice(
+                np.arange(self.valid_component_indicator.sum()),
+                p=component_prob_t
+            )
+
+        aranged = np.arange(len(data))
+        normalized = normalized_values[aranged, selected_component].reshape([-1, 1])
+        normalized = np.clip(normalized, -.99, .99)
+        normalized = normalized[:, 0]
+        rows = [normalized, selected_component]
+        if self.null_transformer and self.null_transformer.creates_null_column():
+            rows.append(null_column)
+
+        return np.stack(rows, axis=1)  # noqa: PD013
+
+    def _reverse_transform_helper(self, data):
+        normalized = np.clip(data[:, 0], -1, 1)
+        means = self._bgm_transformer.means_.reshape([-1])
+        stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
+        selected_component = data[:, 1].astype(int)
+
+        std_t = stds[self.valid_component_indicator][selected_component]
+        mean_t = means[self.valid_component_indicator][selected_component]
+        reversed_data = normalized * self.STD_MULTIPLIER * std_t + mean_t
+
+        return reversed_data
+
+    def _reverse_transform(self, data):
+        """Convert data back into the original format.
+
+        Args:
+            data (pd.DataFrame or numpy.ndarray):
+                Data to transform.
+
+        Returns:
+            pandas.Series.
+        """
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
+        recovered_data = self._reverse_transform_helper(data)
+        if self.null_transformer and self.null_transformer.creates_null_column():
+            data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
+        else:
+            data = recovered_data
 
         return super()._reverse_transform(data)

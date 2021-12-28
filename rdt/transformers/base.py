@@ -105,6 +105,24 @@ class BaseTransformer:
         """
         return self._add_prefix(self.NEXT_TRANSFORMERS)
 
+    def get_input_columns(self):
+        """Return list of input column names for transformer.
+
+        Returns:
+            list:
+                Input column names.
+        """
+        return self.columns
+
+    def get_output_columns(self):
+        """Return list of column names created in ``transform``.
+
+        Returns:
+            list:
+                Names of columns created during ``transform``.
+        """
+        return [f'{self.column_prefix}.{output}' for output in self.OUTPUT_TYPES]
+
     def _store_columns(self, columns, data):
         if isinstance(columns, tuple) and columns not in data:
             columns = list(columns)

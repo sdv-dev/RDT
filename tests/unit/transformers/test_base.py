@@ -148,6 +148,60 @@ class TestBaseTransformer:
         }
         assert output == expected
 
+    def test_get_input_columns(self):
+        """Test the ``get_input_columns method.
+
+        The method should return a list of all the input column names.
+
+        Setup:
+            - create a ``Dummy`` class which inherits from the ``BaseTransformer``
+            and sets the ``columns`` attribute.
+
+        Output:
+            - List matching the list created in the setup.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            columns = ['col1, col2, col3']
+
+        dummy_transformer = Dummy()
+
+        # Run
+        output = dummy_transformer.get_input_columns()
+
+        # Assert
+        expected = ['col1, col2, col3']
+        assert output == expected
+
+    def test_get_output_columns(self):
+        """Test the ``get_output_columns`` method.
+
+        The method should return a list of all the column names created during ``transform``.
+
+        Setup:
+            - create a ``Dummy`` class which inherits from the ``BaseTransformer``
+            and sets the ``column_prefix`` and ``OUTPUT_TYPES`` attributes.
+
+        Output:
+            - A list of each output name with the prefix prepended.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            column_prefix = 'column_name'
+            OUTPUT_TYPES = {
+                'out1': 'numerical',
+                'out2': 'categorical'
+            }
+
+        dummy_transformer = Dummy()
+
+        # Run
+        output = dummy_transformer.get_output_columns()
+
+        # Assert
+        expected = ['column_name.out1', 'column_name.out2']
+        assert output == expected
+
     def test_is_transform_deterministic(self):
         """Test the ``is_transform_deterministic`` method.
 
@@ -277,10 +331,9 @@ class TestBaseTransformer:
 
         # Run
         base_transformer._store_columns(columns, data)
-        stored_columns = base_transformer.columns
 
         # Assert
-        assert stored_columns == ['a', 'b']
+        assert base_transformer.columns == ['a', 'b']
 
     def test__store_columns_tuple(self):
         """Test the ``_store_columns`` method when passed a tuple.
@@ -584,7 +637,7 @@ class TestBaseTransformer:
             [7, 1],
             [8, 5],
             [9, 9]
-        ])
+        ], dtype=np.int64)
 
         # Run
         BaseTransformer._set_columns_data(data, columns_data, columns)

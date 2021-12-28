@@ -1,6 +1,10 @@
 """Hyper transformer module."""
 
 import warnings
+from collections import defaultdict
+from copy import deepcopy
+
+import yaml
 
 from rdt.errors import NotFittedError
 from rdt.transformers import get_default_transformer, get_transformer_instance
@@ -65,6 +69,8 @@ class HyperTransformer:
         ... }
         >>> ht = HyperTransformer(default_data_type_transformers=default_data_type_transformers)
     """
+
+    # pylint: disable=too-many-instance-attributes
 
     _DTYPES_TO_DATA_TYPES = {
         'i': 'integer',
@@ -132,6 +138,8 @@ class HyperTransformer:
         self._output_columns = []
         self._input_columns = []
         self._fitted_fields = set()
+        self._fitted = False
+        self._transformers_tree = defaultdict(dict)
 
     @staticmethod
     def _field_in_data(field, data):
@@ -149,6 +157,10 @@ class HyperTransformer:
                 clean_data = data[field].dropna()
                 kind = clean_data.infer_objects().dtype.kind
                 self.field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
+
+    def _unfit(self):
+        self._transformers_sequence = []
+        self._fitted = False
 
     def get_field_data_types(self):
         """Get the ``field_data_types`` dict.
@@ -171,7 +183,7 @@ class HyperTransformer:
                 require ``fit`` to be run again.
         """
         self.field_data_types.update(field_data_types)
-        self._transformers_sequence = []
+        self._unfit()
 
     def get_default_data_type_transformers(self):
         """Get the ``default_data_type_transformer`` dict.
@@ -194,7 +206,7 @@ class HyperTransformer:
                 to be run again.
         """
         self.default_data_type_transformers.update(new_data_type_transformers)
-        self._transformers_sequence = []
+        self._unfit()
 
     def set_first_transformers_for_fields(self, field_transformers):
         """Set the first transformer to use for certain fields.
@@ -208,7 +220,105 @@ class HyperTransformer:
                 require ``fit`` to be run again.
         """
         self.field_transformers.update(field_transformers)
-        self._transformers_sequence = []
+        self._unfit()
+
+    def get_transformer(self, field):
+        """Get the transformer instance used for a field.
+
+        Args:
+            field (str or tuple):
+                String representing a column name or a tuple of multiple column names.
+
+        Returns:
+            Transformer:
+                Transformer instance used on the specified field during ``transform``.
+        """
+        if not self._fitted:
+            raise NotFittedError
+
+        return self._transformers_tree[field].get('transformer', None)
+
+    def get_output_transformers(self, field):
+        """Return dict mapping output columns of field to transformers used on them.
+
+        Args:
+            field (str or tuple):
+                String representing a column name or a tuple of multiple column names.
+
+        Returns:
+            dict:
+                Dictionary mapping the output names of the columns created after transforming the
+                specified field, to the transformer instances used on them.
+        """
+        if not self._fitted:
+            raise NotFittedError
+
+        next_transformers = {}
+        for output in self._transformers_tree[field].get('outputs', []):
+            next_transformers[output] = self._transformers_tree[output].get('transformer', None)
+
+        return next_transformers
+
+    def get_final_output_columns(self, field):
+        """Return list of all final output columns related to a field.
+
+        The ``HyperTransformer`` will figure out which transformers to use on a field during
+        ``transform``. If the outputs are not of an acceptable data type, they will also go
+        through transformations. This method finds all the output columns that are of an
+        acceptable final data type that originated from the specified field.
+
+        Args:
+            field (str or tuple):
+                String representing a column name or a tuple of multiple column names.
+
+        Returns:
+            list:
+                List of output column names that were created as a by-product of the specified
+                field.
+        """
+        if not self._fitted:
+            raise NotFittedError
+
+        final_outputs = []
+        outputs = self._transformers_tree[field].get('outputs', []).copy()
+        while len(outputs) > 0:
+            output = outputs.pop()
+            if output in self._transformers_tree:
+                outputs.extend(self._transformers_tree[output].get('outputs', []))
+            else:
+                final_outputs.append(output)
+
+        return final_outputs
+
+    def get_transformer_tree_yaml(self):
+        """Return yaml representation of transformers tree.
+
+        After running ``fit``, a sequence of transformers is created to run each original column
+        through. The sequence can be thought of as a tree, where each node is a field and the
+        transformer used on it, and each neighbor is an output from that transformer. This method
+        returns a YAML representation of this tree.
+
+        Returns:
+            string:
+                YAML object representing the tree of transformers created during ``fit``. It has
+                the following form:
+
+                field1:
+                    transformer: ExampleTransformer instance
+                    outputs: [field1.out1, field1.out2]
+                field1.out1:
+                    transformer: CategoricalTransformer instance
+                    outputs: [field1.out1.value]
+                field1.out2:
+                    transformer: CategoricalTransformer instance
+                    outputs: [field1.out2.value]
+        """
+        modified_tree = deepcopy(self._transformers_tree)
+        for field in modified_tree:
+            class_name = modified_tree[field]['transformer'].__class__.__name__
+            modified_tree[field]['transformer'] = class_name
+
+        return yaml.safe_dump(modified_tree)
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
@@ -249,6 +359,8 @@ class HyperTransformer:
 
         output_types = transformer.get_output_types()
         next_transformers = transformer.get_next_transformers()
+        self._transformers_tree[field]['transformer'] = transformer
+        self._transformers_tree[field]['outputs'] = list(output_types)
         for (output_name, output_type) in output_types.items():
             output_field = self._multi_column_fields.get(output_name, output_name)
             next_transformer = self._get_next_transformer(
@@ -295,6 +407,7 @@ class HyperTransformer:
                 data = self._fit_field_transformer(data, field, transformer)
 
         self._validate_all_fields_fitted()
+        self._fitted = True
 
     def transform(self, data):
         """Transform the data.
@@ -309,7 +422,7 @@ class HyperTransformer:
             pandas.DataFrame:
                 Transformed data.
         """
-        if not self._transformers_sequence:
+        if not self._fitted:
             raise NotFittedError
 
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
@@ -347,7 +460,7 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
-        if not self._transformers_sequence:
+        if not self._fitted:
             raise NotFittedError
 
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)

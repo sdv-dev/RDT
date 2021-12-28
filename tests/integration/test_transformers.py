@@ -244,7 +244,7 @@ def validate_transformer(transformer, steps=None, subtests=None):
         data = pd.DataFrame({TEST_COL: dg.generate(DATA_SIZE)})
 
         if subtests:
-            with subtests.test(msg='test_transformer_with_dataset', generator=dg):
+            with subtests.test(msg=f'test_transformer_with_dataset_{dg}', generator=dg):
                 _test_transformer_with_dataset(transformer, data, steps)
                 _test_transformer_with_hypertransformer(transformer, data, steps)
         else:
