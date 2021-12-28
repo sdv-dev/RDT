@@ -162,7 +162,8 @@ class TestBayesGMMTransformer:
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
-    def test_nulls(self):
+    def test_some_nulls(self):
+        np.random.seed(10)
         data = self.generate_data()
         mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
         data[mask] = np.nan
@@ -179,6 +180,23 @@ class TestBayesGMMTransformer:
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+
+    def test_all_nulls(self):
+        np.random.seed(10)
+        data = pd.DataFrame([np.nan, None] * 50, columns=['col'])
+        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer.fit(data, list(data.columns))
+        transformed = bgmm_transformer.transform(data)
+
+        expected = pd.DataFrame({
+            'col.normalized': [0.0] * 100,
+            'col.component': [0.0] * 100,
+            'col.is_null': [1.0] * 100
+        })
+        pd.testing.assert_frame_equal(expected, transformed)
+
+        reverse = bgmm_transformer.reverse_transform(transformed)
+        np.testing.assert_array_almost_equal(reverse, data)
 
     def test_data_different_sizes(self):
         data = np.concatenate([
@@ -199,6 +217,7 @@ class TestBayesGMMTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_multiple_components(self):
+        np.random.seed(10)
         data = np.concatenate([
             np.random.normal(loc=5, scale=0.02, size=300),
             np.random.normal(loc=-4, scale=0.1, size=1000),
