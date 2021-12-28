@@ -182,16 +182,18 @@ class TestBayesGMMTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_all_nulls(self):
+        np.random.seed(10)
         data = pd.DataFrame([np.nan, None] * 50, columns=['col'])
         bgmm_transformer = BayesGMMTransformer()
         bgmm_transformer.fit(data, list(data.columns))
         transformed = bgmm_transformer.transform(data)
 
-        assert isinstance(transformed, pd.DataFrame)
-        assert transformed.shape == (100, 3)
-        assert all(x == 0.0 for x in transformed['col.normalized'])
-        assert all(x == 0.0 for x in transformed['col.component'])
-        assert all(x == 1.0 for x in transformed['col.is_null'])
+        expected = pd.DataFrame({
+            'col.normalized': [0.0] * 100,
+            'col.component': [0.0] * 100,
+            'col.is_null': [1.0] * 100
+        })
+        pd.testing.assert_frame_equal(expected, transformed)
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data)
