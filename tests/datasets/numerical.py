@@ -29,15 +29,15 @@ class RandomIntegerGenerator(NumericalGenerator):
         return {
             'fit': {
                 'time': 1e-03,
-                'memory': 200.0
+                'memory': 2500.0
             },
             'transform': {
                 'time': 5e-06,
-                'memory': 100.0
+                'memory': 200.0
             },
             'reverse_transform': {
                 'time': 5e-06,
-                'memory': 100.0,
+                'memory': 200.0,
             }
         }
 
@@ -56,15 +56,15 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
         return {
             'fit': {
                 'time': 1e-03,
-                'memory': 100.0
+                'memory': 2500.0
             },
             'transform': {
                 'time': 4e-06,
-                'memory': 200.0
+                'memory': 400.0
             },
             'reverse_transform': {
                 'time': 2e-06,
-                'memory': 100.0,
+                'memory': 300.0,
             }
         }
 
@@ -85,15 +85,15 @@ class ConstantIntegerGenerator(NumericalGenerator):
         return {
             'fit': {
                 'time': 1e-03,
-                'memory': 200.0
+                'memory': 400.0
             },
             'transform': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 200.0
             },
             'reverse_transform': {
                 'time': 5e-06,
-                'memory': 100.0,
+                'memory': 200.0,
             }
         }
 
@@ -112,15 +112,15 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
         return {
             'fit': {
                 'time': 1e-03,
-                'memory': 100.0
+                'memory': 600.0
             },
             'transform': {
                 'time': 3e-06,
-                'memory': 200.0
+                'memory': 400.0
             },
             'reverse_transform': {
                 'time': 2e-06,
-                'memory': 100.0,
+                'memory': 300.0,
             }
         }
 
@@ -144,15 +144,15 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
         return {
             'fit': {
                 'time': 1e-03,
-                'memory': 200.0
+                'memory': 2500.0
             },
             'transform': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 200.0
             },
             'reverse_transform': {
                 'time': 5e-06,
-                'memory': 100.0,
+                'memory': 1500.0,
             }
         }
 
@@ -176,15 +176,15 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
         return {
             'fit': {
                 'time': 1e-03,
-                'memory': 100.0
+                'memory': 2500.0
             },
             'transform': {
                 'time': 3e-06,
-                'memory': 200.0
+                'memory': 400.0
             },
             'reverse_transform': {
                 'time': 2e-06,
-                'memory': 100.0,
+                'memory': 300.0,
             }
         }
 
@@ -203,15 +203,15 @@ class NormalGenerator(NumericalGenerator):
         return {
             'fit': {
                 'time': 1e-03,
-                'memory': 200.0
+                'memory': 2500.0
             },
             'transform': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 200.0
             },
             'reverse_transform': {
                 'time': 1e-05,
-                'memory': 100.0,
+                'memory': 200.0,
             }
         }
 
@@ -230,15 +230,15 @@ class NormalNaNsGenerator(NumericalGenerator):
         return {
             'fit': {
                 'time': 1e-03,
-                'memory': 100.0
+                'memory': 2500.0
             },
             'transform': {
                 'time': 4e-06,
-                'memory': 200.0
+                'memory': 400.0
             },
             'reverse_transform': {
                 'time': 5e-06,
-                'memory': 100.0,
+                'memory': 300.0,
             }
         }
 
@@ -257,15 +257,15 @@ class BigNormalGenerator(NumericalGenerator):
         return {
             'fit': {
                 'time': 1e-03,
-                'memory': 200.0
+                'memory': 2500.0
             },
             'transform': {
                 'time': 5e-06,
-                'memory': 100.0
+                'memory': 200.0
             },
             'reverse_transform': {
                 'time': 5e-06,
-                'memory': 100.0,
+                'memory': 200.0,
             }
         }
 
@@ -284,14 +284,14 @@ class BigNormalNaNsGenerator(NumericalGenerator):
         return {
             'fit': {
                 'time': 1e-03,
-                'memory': 100.0
+                'memory': 2500.0
             },
             'transform': {
                 'time': 3e-06,
-                'memory': 200.0
+                'memory': 400.0
             },
             'reverse_transform': {
                 'time': 2e-06,
-                'memory': 100.0,
+                'memory': 300.0,
             }
         }
