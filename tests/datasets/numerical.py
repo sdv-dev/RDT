@@ -148,11 +148,11 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
             },
             'transform': {
                 'time': 1e-05,
-                'memory': 200.0
+                'memory': 2000.0
             },
             'reverse_transform': {
                 'time': 5e-06,
-                'memory': 1500.0,
+                'memory': 2000.0,
             }
         }
 
@@ -180,11 +180,11 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
             },
             'transform': {
                 'time': 3e-06,
-                'memory': 400.0
+                'memory': 1000.0
             },
             'reverse_transform': {
                 'time': 2e-06,
-                'memory': 300.0,
+                'memory': 1000.0,
             }
         }
 
