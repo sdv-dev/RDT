@@ -5,9 +5,9 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 
+from rdt.performance.datasets import BaseDatasetGenerator
+from rdt.performance.profiling import profile_transformer
 from rdt.transformers import NumericalTransformer
-from tests.datasets import BaseDatasetGenerator
-from tests.performance.profiling import profile_transformer
 
 
 @patch('tests.performance.profiling.mp')

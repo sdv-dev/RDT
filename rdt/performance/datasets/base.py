@@ -11,7 +11,7 @@ class BaseDatasetGenerator(ABC):
     @staticmethod
     @abstractmethod
     def generate(num_rows):
-        """This method serves as a template for dataset generators.
+        """Return array of data. This method serves as a template for dataset generators.
 
         Args:
             num_rows (int):

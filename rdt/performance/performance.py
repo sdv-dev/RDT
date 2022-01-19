@@ -5,7 +5,6 @@ import pandas as pd
 
 from rdt.performance.profiling import profile_transformer
 
-
 DATASET_SIZES = [1000, 10000, 100000]
 
 

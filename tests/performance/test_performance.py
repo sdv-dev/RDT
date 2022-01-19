@@ -4,12 +4,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers import get_transformers_by_type
 from rdt.performance.datasets import get_dataset_generators_by_type
 from rdt.performance.performance import evaluate_transformer_performance
 from rdt.performance.profiling import profile_transformer
+from rdt.transformers import get_transformers_by_type
 from rdt.transformers.numerical import BayesGMMTransformer
-
 
 SANDBOX_TRANSFORMERS = [BayesGMMTransformer]
 
