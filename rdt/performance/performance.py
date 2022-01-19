@@ -3,7 +3,9 @@
 import numpy as np
 import pandas as pd
 
+from rdt.performance.datasets import get_dataset_generators_by_type
 from rdt.performance.profiling import profile_transformer
+from rdt.transformers import BaseTransformer
 
 DATASET_SIZES = [1000, 10000, 100000]
 
@@ -31,7 +33,7 @@ def _get_dataset_sizes(data_type):
     return sizes
 
 
-def evaluate_transformer_performance(transformer, dataset_generator):
+def evaluate_transformer_performance(transformer, dataset_generator, verbose=False):
     """Evaluate the given transformer's performance against the given dataset generator.
 
     Args:
@@ -39,6 +41,10 @@ def evaluate_transformer_performance(transformer, dataset_generator):
             The transformer to evaluate.
         dataset_generator (rdt.tests.datasets.BaseDatasetGenerator):
             The dataset generator to performance test against.
+        verbose (bool):
+            Whether or not to add extra columns about the dataset and transformer,
+            and return data for all dataset sizes. If false, it will only return
+            the max performance values of all the dataset sizes used.
 
     Returns:
         pandas.DataFrame:
@@ -57,6 +63,47 @@ def evaluate_transformer_performance(transformer, dataset_generator):
             transform_size=transform_size,
         )
         size = np.array([fit_size, transform_size, transform_size] * 2)
-        out.append(performance / size)
+        performance = performance / size
+        if verbose:
+            performance['Number of fit rows'] = fit_size
+            performance['Number of transform rows'] = transform_size
+            performance['Dataset'] = dataset_generator.__name__
+            performance['Transformer'] = f'{transformer.__module__ }.{transformer.__name__}'
 
-    return pd.DataFrame(out).max(axis=0)
+        out.append(performance)
+
+    summary = pd.DataFrame(out)
+    if verbose:
+        return summary
+
+    return summary.max(axis=0)
+
+
+def evaluate_transformers(transformers=None):
+    """Evaluate the performance for each transformer against all applicable datasets.
+
+    Args:
+        transformers (list<rdt.transformers.BaseTransformer>):
+            List of transformer classes to evaluate.
+
+    Returns:
+        pandas.DataFrame:
+            A table containing the times and memory usages for ``fit``, ``transform`` and
+            ``reverse_transform`` for each transformer provided against every dataset generator
+            that applies to it. The table also contains the latest commit number.
+    """
+    summary = pd.DataFrame()
+
+    dataset_generators = get_dataset_generators_by_type()
+    transformers = transformers or BaseTransformer.get_subclasses()
+
+    for transformer in transformers:
+        dataset_generators_for_type = dataset_generators.get(transformer.get_input_type(), [])
+
+        for dataset_generator in dataset_generators_for_type:
+            performance = evaluate_transformer_performance(
+                transformer, dataset_generator, verbose=True)
+
+            summary = pd.concat([summary, performance], ignore_index=True)
+
+    return summary
