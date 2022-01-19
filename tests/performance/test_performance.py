@@ -1,75 +1,22 @@
 """Test whether the performance of the Transformers is the expected one."""
 
-import importlib
-
 import numpy as np
 import pandas as pd
 import pytest
 
 from rdt.transformers import get_transformers_by_type
+from rdt.performance.datasets import get_dataset_generators_by_type
+from rdt.performance.performance import evaluate_transformer_performance
+from rdt.performance.profiling import profile_transformer
 from rdt.transformers.numerical import BayesGMMTransformer
-from tests.datasets import get_dataset_generators_by_type
-from tests.performance.profiling import profile_transformer
-
-TEST_NAMES = [
-    'Fit Time',
-    'Transform Time',
-    'Reverse Transform Time',
-    'Fit Memory',
-    'Transform Memory',
-    'Reverse Transform Memory',
-]
-
-DATASET_SIZES = [1000, 10000, 100000]
 
 
-def get_instance(obj, **kwargs):
-    """Create new instance of the ``obj`` argument.
-
-    Args:
-        obj (str):
-            Full name of class to import.
-    """
-    instance = None
-    if isinstance(obj, str):
-        package, name = obj.rsplit('.', 1)
-        instance = getattr(importlib.import_module(package), name)(**kwargs)
-
-    return instance
-
-
-def get_fqn(obj):
-    """Get the fully qualified name of the given object."""
-    return f'{obj.__module__}.{obj.__name__}'
-
-
-def _get_dataset_sizes(data_type):
-    """Get a list of (fit_size, transform_size) for each dataset generator.
-
-    Based on the data type of the dataset generator, return the list of
-    sizes to run performance tests on. Each element in this list is a tuple
-    of (fit_size, transform_size).
-
-    Args:
-        input_type (str):
-            The type of data that the generator returns.
-
-    Returns:
-        sizes (list[tuple]):
-            A list of (fit_size, transform_size) configs to run tests on.
-    """
-    sizes = [(s, s) for s in DATASET_SIZES]
-
-    if data_type == 'categorical':
-        sizes = [(s, max(s, 1000)) for s in DATASET_SIZES if s <= 10000]
-
-    return sizes
+SANDBOX_TRANSFORMERS = [BayesGMMTransformer]
 
 
 def _get_performance_test_cases():
     """Get all the (transformer, dataset_generator) combinations for testing."""
     all_test_cases = []
-    sandbox = [BayesGMMTransformer]
 
     dataset_generators = get_dataset_generators_by_type()
     transformers = get_transformers_by_type()
@@ -78,7 +25,7 @@ def _get_performance_test_cases():
         dataset_generators_for_type = dataset_generators.get(data_type, [])
 
         for transformer in transformers_for_type:
-            if transformer in sandbox:
+            if transformer in SANDBOX_TRANSFORMERS:
                 continue
 
             for dataset_generator in dataset_generators_for_type:
@@ -88,37 +35,6 @@ def _get_performance_test_cases():
 
 
 test_cases = _get_performance_test_cases()
-
-
-def evaluate_transformer_performance(transformer, dataset_generator):
-    """Evaluate the given transformer's performance against the given dataset generator.
-
-    Args:
-        transformer (rdt.transformers.BaseTransformer):
-            The transformer to evaluate.
-        dataset_generator (rdt.tests.datasets.BaseDatasetGenerator):
-            The dataset generator to performance test against.
-
-    Returns:
-        pandas.DataFrame:
-            The performance test results.
-    """
-    transformer_instance = transformer()
-
-    sizes = _get_dataset_sizes(dataset_generator.DATA_TYPE)
-
-    out = []
-    for fit_size, transform_size in sizes:
-        performance = profile_transformer(
-            transformer=transformer_instance,
-            dataset_generator=dataset_generator,
-            fit_size=fit_size,
-            transform_size=transform_size,
-        )
-        size = np.array([fit_size, transform_size, transform_size] * 2)
-        out.append(performance / size)
-
-    return pd.DataFrame(out).max(axis=0)
 
 
 def validate_performance(performance, dataset_generator, should_assert=False):

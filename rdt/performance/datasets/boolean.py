@@ -4,7 +4,7 @@ from abc import ABC
 
 import numpy as np
 
-from tests.datasets.base import BaseDatasetGenerator
+from rdt.performance.datasets.base import BaseDatasetGenerator
 
 MAX_PERCENT_NULL = 50  # cap the percentage of null values at 50%
 MIN_PERCENT = 20  # the minimum percentage of true or false is 20%

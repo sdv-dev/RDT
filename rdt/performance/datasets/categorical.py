@@ -4,9 +4,9 @@ from abc import ABC
 
 import numpy as np
 
-from tests.datasets.base import BaseDatasetGenerator
-from tests.datasets.datetime import RandomGapDatetimeGenerator
-from tests.datasets.utils import add_nans
+from rdt.performance.datasets.base import BaseDatasetGenerator
+from rdt.performance.datasets.datetime import RandomGapDatetimeGenerator
+from rdt.performance.datasets.utils import add_nans
 
 
 class CategoricalGenerator(BaseDatasetGenerator, ABC):
