@@ -4,8 +4,8 @@ from abc import ABC
 
 import numpy as np
 
-from tests.datasets.base import BaseDatasetGenerator
-from tests.datasets.utils import add_nans
+from rdt.performance.datasets.base import BaseDatasetGenerator
+from rdt.performance.datasets.utils import add_nans
 
 
 class NumericalGenerator(BaseDatasetGenerator, ABC):

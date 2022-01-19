@@ -3,7 +3,7 @@ import datetime as dt
 import numpy as np
 import pandas as pd
 
-from tests.datasets import datetime
+from rdt.performance.datasets import datetime
 
 
 class TestRandomGapDatetimeGenerator:

@@ -2,8 +2,8 @@
 
 from collections import defaultdict
 
-from tests.datasets import boolean, categorical, datetime, numerical
-from tests.datasets.base import BaseDatasetGenerator
+from rdt.performance.datasets import boolean, categorical, datetime, numerical
+from rdt.performance.datasets.base import BaseDatasetGenerator
 
 __all__ = [
     'boolean',
