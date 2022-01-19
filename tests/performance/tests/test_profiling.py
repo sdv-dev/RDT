@@ -10,8 +10,8 @@ from rdt.performance.profiling import profile_transformer
 from rdt.transformers import NumericalTransformer
 
 
-@patch('tests.performance.profiling.mp')
-@patch('tests.performance.profiling.deepcopy', spec_set=deepcopy)
+@patch('rdt.performance.profiling.mp')
+@patch('rdt.performance.profiling.deepcopy', spec_set=deepcopy)
 def test_profile_transformer(deepcopy_mock, multiprocessor_mock):
     """Test the ``profile_transformer`` function.
 
