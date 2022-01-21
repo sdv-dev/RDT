@@ -65,11 +65,11 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
         size = np.array([fit_size, transform_size, transform_size] * 2)
         performance = performance / size
         if verbose:
+            performance = performance.rename(lambda x: x + ' (s)' if 'Time' in x else x + ' (B)')
             performance['Number of fit rows'] = fit_size
             performance['Number of transform rows'] = transform_size
             performance['Dataset'] = dataset_generator.__name__
             performance['Transformer'] = f'{transformer.__module__ }.{transformer.__name__}'
-            performance = performance.rename(lambda x: x + ' (s)' if 'Time' in x else x + ' (B)')
 
         out.append(performance)
 
@@ -106,5 +106,6 @@ def evaluate_transformers(transformers=None):
                 transformer, dataset_generator, verbose=True)
 
             summary = pd.concat([summary, performance], ignore_index=True)
+            breakpoint()
 
     return summary
