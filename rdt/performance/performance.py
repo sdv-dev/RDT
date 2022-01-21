@@ -106,6 +106,5 @@ def evaluate_transformers(transformers=None):
                 transformer, dataset_generator, verbose=True)
 
             summary = pd.concat([summary, performance], ignore_index=True)
-            breakpoint()
 
     return summary
