@@ -475,7 +475,7 @@ def validate_transformer_performance(transformer):
     final_results['Units'] = np.where(
         final_results.index.str.contains('Time'),
         's / row',
-        'Mb / row',
+        'B / row',
     )
     final_results['Acceptable'] = np.where(final_results['Acceptable'], 'Yes', 'No')
     final_results['Compared to Average'] = final_results['Value'].div(average).replace(
