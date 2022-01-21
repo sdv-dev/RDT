@@ -69,6 +69,7 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
             performance['Number of transform rows'] = transform_size
             performance['Dataset'] = dataset_generator.__name__
             performance['Transformer'] = f'{transformer.__module__ }.{transformer.__name__}'
+            performance = performance.rename(lambda x: x + ' (s)' if 'Time' in x else x + ' (B)')
 
         out.append(performance)
 
@@ -90,7 +91,7 @@ def evaluate_transformers(transformers=None):
         pandas.DataFrame:
             A table containing the times and memory usages for ``fit``, ``transform`` and
             ``reverse_transform`` for each transformer provided against every dataset generator
-            that applies to it. The table also contains the latest commit number.
+            that applies to it.
     """
     summary = pd.DataFrame()
 
