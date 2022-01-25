@@ -156,7 +156,7 @@ class TestCategoricalTransformer:
             categorical value (start, end).
         """
         # Setup
-        data = pd.Series(['foo', np.nan, None, 'foo', 'foo', 'tar'])
+        data = pd.Series(['foo', np.nan, np.nan, 'foo', 'foo', 'tar'])
 
         # Run
         result = CategoricalTransformer._get_intervals(data)
