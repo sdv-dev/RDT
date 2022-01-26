@@ -89,6 +89,7 @@ class CategoricalTransformer(BaseTransformer):
             dict:
                 intervals for each categorical value (start, end).
         """
+        data = data.fillna(np.nan)
         frequencies = data.value_counts(dropna=False)
 
         start = 0
