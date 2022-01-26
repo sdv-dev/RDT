@@ -125,7 +125,10 @@ setup(
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
     name='rdt',
-    packages=find_namespace_packages(include=['rdt', 'rdt.transformers', 'rdt.performance']),
+    packages=find_namespace_packages(
+        include=['rdt', 'rdt.*'],
+        exclude=['rdt.transformers.addons.*']
+    ),
     python_requires='>=3.6,<3.10',
     setup_requires=setup_requires,
     test_suite='tests',
