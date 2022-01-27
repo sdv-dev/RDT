@@ -20,7 +20,7 @@ install_requires = [
     'pandas>=1.1.3,<2',
     'scipy>=1.5.4,<2',
     'psutil>=5.7,<6',
-    'scikit-learn>=0.24,<1',
+    'scikit-learn>=0.24,<2',
     'pyyaml>=5.4.1,<6'
 ]
 
