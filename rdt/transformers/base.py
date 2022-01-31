@@ -234,7 +234,7 @@ class BaseTransformer:
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            columns (str):
+            column (str):
                 A column name.
 
         Returns:
