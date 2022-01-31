@@ -20,10 +20,11 @@ class TestBooleanTransformer:
         """
         # Setup
         data = pd.DataFrame([True, False, None, False], columns=['bool'])
+        column = 'bool'
         transformer = BooleanTransformer()
 
         # Run
-        transformer.fit(data, data.columns.to_list())
+        transformer.fit(data, column)
         transformed = transformer.transform(data)
         reverse = transformer.reverse_transform(transformed)
 
@@ -44,10 +45,11 @@ class TestBooleanTransformer:
         """
         # Setup
         data = pd.DataFrame([None, None, None, None], columns=['bool'])
+        column = 'bool'
         transformer = BooleanTransformer()
 
         # Run
-        transformer.fit(data, data.columns.to_list())
+        transformer.fit(data, column)
         transformed = transformer.transform(data)
         reverse = transformer.reverse_transform(transformed)
 
@@ -70,10 +72,11 @@ class TestBooleanTransformer:
         """
         # Setup
         data = pd.DataFrame([True, False, None, False], columns=['bool'])
+        column = 'bool'
         transformer = BooleanTransformer()
 
         # Run
-        transformer.fit(data, data.columns.to_list())
+        transformer.fit(data, column)
         transformed = transformer.transform(data)
         unchanged_transformed = transformed.copy()
         reverse = transformer.reverse_transform(transformed)
