@@ -9,9 +9,10 @@ class TestNumericalTransformer:
 
     def test_null_column(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
+        column = 'a'
 
         nt = NumericalTransformer()
-        nt.fit(data, list(data.columns))
+        nt.fit(data, column)
         transformed = nt.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -24,9 +25,10 @@ class TestNumericalTransformer:
 
     def test_not_null_column(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
+        column = 'a'
 
         nt = NumericalTransformer(null_column=False)
-        nt.fit(data, list(data.columns))
+        nt.fit(data, column)
         transformed = nt.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -38,9 +40,10 @@ class TestNumericalTransformer:
 
     def test_int(self):
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
+        column = 'a'
 
         nt = NumericalTransformer(dtype=int)
-        nt.fit(data, list(data.columns))
+        nt.fit(data, column)
         transformed = nt.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -51,9 +54,10 @@ class TestNumericalTransformer:
 
     def test_int_nan(self):
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
+        column = 'a'
 
         nt = NumericalTransformer(dtype=int)
-        nt.fit(data, list(data.columns))
+        nt.fit(data, column)
         transformed = nt.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -67,9 +71,10 @@ class TestGaussianCopulaTransformer:
 
     def test_stats(self):
         data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['a'])
+        column = 'a'
 
         ct = GaussianCopulaTransformer()
-        ct.fit(data, list(data.columns))
+        ct.fit(data, column)
         transformed = ct.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -84,9 +89,10 @@ class TestGaussianCopulaTransformer:
 
     def test_null_column(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
+        column = 'a'
 
         ct = GaussianCopulaTransformer()
-        ct.fit(data, list(data.columns))
+        ct.fit(data, column)
         transformed = ct.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -99,9 +105,10 @@ class TestGaussianCopulaTransformer:
 
     def test_not_null_column(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
+        column = 'a'
 
         ct = GaussianCopulaTransformer(null_column=False)
-        ct.fit(data, list(data.columns))
+        ct.fit(data, column)
         transformed = ct.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -113,9 +120,10 @@ class TestGaussianCopulaTransformer:
 
     def test_int(self):
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
+        column = 'a'
 
         ct = GaussianCopulaTransformer(dtype=int)
-        ct.fit(data, list(data.columns))
+        ct.fit(data, column)
         transformed = ct.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -126,9 +134,10 @@ class TestGaussianCopulaTransformer:
 
     def test_int_nan(self):
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
+        column = 'a'
 
         ct = GaussianCopulaTransformer(dtype=int)
-        ct.fit(data, list(data.columns))
+        ct.fit(data, column)
         transformed = ct.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -149,9 +158,10 @@ class TestBayesGMMTransformer:
 
     def test_dataframe(self):
         data = self.generate_data()
+        column = 'col'
 
         bgmm_transformer = BayesGMMTransformer()
-        bgmm_transformer.fit(data, list(data.columns))
+        bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -167,9 +177,10 @@ class TestBayesGMMTransformer:
         data = self.generate_data()
         mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
         data[mask] = np.nan
+        column = 'col'
 
         bgmm_transformer = BayesGMMTransformer()
-        bgmm_transformer.fit(data, list(data.columns))
+        bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -184,8 +195,10 @@ class TestBayesGMMTransformer:
     def test_all_nulls(self):
         np.random.seed(10)
         data = pd.DataFrame([np.nan, None] * 50, columns=['col'])
+        column = 'col'
+
         bgmm_transformer = BayesGMMTransformer()
-        bgmm_transformer.fit(data, list(data.columns))
+        bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
         expected = pd.DataFrame({
@@ -204,9 +217,10 @@ class TestBayesGMMTransformer:
             np.random.normal(loc=100, scale=1, size=500),
         ])
         data = pd.DataFrame(data, columns=['col'])
+        column = 'col'
 
         bgmm_transformer = BayesGMMTransformer()
-        bgmm_transformer.fit(data, list(data.columns))
+        bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -226,9 +240,10 @@ class TestBayesGMMTransformer:
         ])
         data = pd.DataFrame(data, columns=['col'])
         data = data.sample(frac=1).reset_index(drop=True)
+        column = 'col'
 
         bgmm_transformer = BayesGMMTransformer()
-        bgmm_transformer.fit(data, list(data.columns))
+        bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
