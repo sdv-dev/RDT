@@ -87,7 +87,7 @@ def get_transformer_regression_scores(data, data_type, dataset_name, transformer
     for column in columns_to_predict:
         target = data[column].to_frame()
         numerical_transformer = NumericalTransformer(null_column=False)
-        target = numerical_transformer.fit_transform(target, list(target.columns))
+        target = numerical_transformer.fit_transform(target, column)
         target = format_array(target)
         for transformer in transformers:
             ht = HyperTransformer(default_data_type_transformers={data_type: transformer})
