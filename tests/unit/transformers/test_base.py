@@ -768,7 +768,7 @@ class TestBaseTransformer:
 
         Input:
             - a dataframe.
-            - a list of column names from the dataframe.
+            - a column name.
 
         Side effects:
             - ``self.columns`` should be set to the passed columns of the data.
@@ -783,7 +783,7 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         })
-        columns = ['a', 'b']
+        column = 'a'
 
         class Dummy(BaseTransformer):
             OUTPUT_TYPES = {
@@ -797,17 +797,14 @@ class TestBaseTransformer:
         dummy_transformer = Dummy()
 
         # Run
-        dummy_transformer.fit(data, columns)
+        dummy_transformer.fit(data, column)
 
         # Assert
-        expected_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6]
-        })
-        assert dummy_transformer.columns == ['a', 'b']
-        pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_data)
-        assert dummy_transformer.column_prefix == 'a#b'
-        assert dummy_transformer.output_columns == ['a#b.value', 'a#b.is_null']
+        expected_data = pd.Series([1, 2, 3], name='a')
+        assert dummy_transformer.columns == ['a']
+        pd.testing.assert_series_equal(dummy_transformer._passed_data, expected_data)
+        assert dummy_transformer.column_prefix == 'a'
+        assert dummy_transformer.output_columns == ['a.value', 'a.is_null']
 
     def test__transform_raises_error(self):
         """Test ``_transform`` raises ``NotImplementedError``."""
@@ -999,13 +996,13 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         })
-        columns = ['a', 'b', 'c']
+        column = 'a'
 
         # Run
-        output = BaseTransformer.fit_transform(self, data, columns)
+        output = BaseTransformer.fit_transform(self, data, column)
 
         # Assert
-        self.fit.assert_called_once_with(data, columns)
+        self.fit.assert_called_once_with(data, column)
         self.transform.assert_called_once_with(data)
         assert output == self.transform.return_value
 
