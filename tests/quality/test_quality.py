@@ -230,10 +230,10 @@ def test_quality(subtests):
     all_regression_scores = get_regression_scores(test_cases, transformers_by_type)
     results = get_results_table(all_regression_scores)
 
-    pd.set_option("display.max_rows", None, "display.max_columns", None)
     for transformer, frame in results.groupby('transformer_name'):
-        relative_scores = frame['score_relative_to_average']
-        print(frame)
-        print(relative_scores)
-        assert all((relative_scores > TEST_THRESHOLD) | (frame['score'] > TEST_THRESHOLD))
+        with subtests.test(
+                msg=f'Testing transformer {transformer}',
+                transformer=transformer):
+            relative_scores = frame['score_relative_to_average']
+            assert all((relative_scores > TEST_THRESHOLD) | (frame['score'] > TEST_THRESHOLD))
     raise
