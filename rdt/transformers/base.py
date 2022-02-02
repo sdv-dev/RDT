@@ -171,16 +171,16 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def fit(self, data, columns):
-        """Fit the transformer to the `columns` of the `data`.
+    def fit(self, data, column):
+        """Fit the transformer to a `column` of the `data`.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            columns (list):
-                Column names. Must be present in the data.
+            column (str):
+                Column name. Must be present in the data.
         """
-        self._store_columns(columns, data)
+        self._store_columns(column, data)
 
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
@@ -228,22 +228,20 @@ class BaseTransformer:
 
         return data
 
-    def fit_transform(self, data, columns):
-        """Fit the transformer to the `columns` of the `data` and then transform them.
+    def fit_transform(self, data, column):
+        """Fit the transformer to a `column` of the `data` and then transform it.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            columns (list or tuple or str):
-                List or tuple of column names from the data to transform.
-                If only one column is provided, it can be passed as a string instead.
-                If none are passed, fits on the entire dataset.
+            column (str):
+                A column name.
 
         Returns:
             pd.DataFrame:
                 The entire table, containing the transformed data.
         """
-        self.fit(data, columns)
+        self.fit(data, column)
         return self.transform(data)
 
     def _reverse_transform(self, columns_data):
