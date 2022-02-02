@@ -122,7 +122,7 @@ Before being able to transform the data, we need the transformer to learn from i
 We will do this by calling its `fit` method passing the column that we want to transform.
 
 ```python3
-transformer.fit(data, columns=['3_datetime'])
+transformer.fit(data, columns=['last_login'])
 ```
 
 ### 4. Transform the data
