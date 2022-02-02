@@ -36,7 +36,7 @@ def get_demo(num_rows=5):
     # Hard code first five rows
     login_dates = ['2021-06-26', '2021-02-10', 'NAT', '2020-09-26', '2020-12-22']
     last_login = [np.datetime64(i) for i in login_dates]
-    email_optin = pd.Series([False, False, False, True, np.nan], dtype='boolean')
+    email_optin = pd.Series([False, False, False, True, np.nan], dtype='object')
     credit_card = ['VISA', 'VISA', 'AMEX', np.nan, 'DISCOVER']
     age = [29, 18, 21, 45, 32]
     dollars_spent = [99.99, np.nan, 2.50, 25.00, 19.99]
@@ -62,9 +62,7 @@ def get_demo(num_rows=5):
     ])
     login_dates[np.random.random(size=num_rows) > 0.8] = np.datetime64('NaT')
 
-    email_optin = np.random.choice([True, False, np.nan], size=num_rows)
-    email_optin = pd.Series(email_optin, dtype='boolean')
-
+    email_optin = pd.Series([True, False, np.nan], dtype='object').sample(num_rows, replace=True)
     credit_card = np.random.choice(['VISA', 'AMEX', np.nan, 'DISCOVER'], size=num_rows)
     age = np.random.randint(18, 100, size=num_rows)
 

@@ -100,7 +100,7 @@ This will return a `pandas.DataFrame` with 5 rows and 5 columns, one of each dat
 1 2021-02-10       False        VISA   18            NaN
 2        NaT       False        AMEX   21           2.50
 3 2020-09-26        True         NaN   45          25.00
-4 2020-12-22        <NA>    DISCOVER   32          19.99
+4 2020-12-22         NaN    DISCOVER   32          19.99
 ```
 
 Notice that RDT may introduce some null values randomly.
@@ -144,7 +144,7 @@ which values were null in the original data.
 1       False        VISA   18            NaN      1.612915e+18                 0.0
 2       False        AMEX   21           2.50      1.611814e+18                 1.0
 3        True         NaN   45          25.00      1.601078e+18                 0.0
-4        <NA>    DISCOVER   32          19.99      1.608595e+18                 0.0
+4         NaN    DISCOVER   32          19.99      1.608595e+18                 0.0
 ```
 
 ### 5. Revert the column transformation
@@ -165,7 +165,7 @@ like the original ones, except for the order of the columns.
 1       False        VISA   18            NaN 2021-02-10
 2       False        AMEX   21           2.50        NaT
 3        True         NaN   45          25.00 2020-09-26
-4        <NA>    DISCOVER   32          19.99 2020-12-22
+4         NaN    DISCOVER   32          19.99 2020-12-22
 ```
 
 ## Transforming a table
@@ -207,11 +207,11 @@ The output will be another `pandas.DataFrame` with the numerical representation 
 
 ```
    last_login.value  last_login.is_null  email_optin.value  email_optin.is_null  credit_card.value  age.value  dollars_spent.value  dollars_spent.is_null
-0      1.624666e+18                 0.0                0.0                  0.0           0.243642         29                99.99                    0.0
-1      1.612915e+18                 0.0                0.0                  0.0           0.245197         18                36.87                    1.0
-2      1.611814e+18                 1.0                0.0                  0.0           0.472779         21                 2.50                    0.0
-3      1.601078e+18                 0.0                1.0                  0.0           0.692732         45                25.00                    0.0
-4      1.608595e+18                 0.0               -1.0                  1.0           0.910021         32                19.99                    0.0
+0      1.624666e+18                 0.0                0.0                  0.0           0.203204         29                99.99                    0.0
+1      1.612915e+18                 0.0                0.0                  0.0           0.117002         18                36.87                    1.0
+2      1.611814e+18                 1.0                0.0                  0.0           0.502184         21                 2.50                    0.0
+3      1.601078e+18                 0.0                1.0                  0.0           0.734610         45                25.00                    0.0
+4      1.608595e+18                 0.0               -1.0                  1.0           0.883881         32                19.99                    0.0
 ```
 
 ### 4. Revert the table transformation
