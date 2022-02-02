@@ -6,8 +6,7 @@ import pandas as pd
 import pytest
 
 from rdt.transformers.categorical import (
-    CategoricalFuzzyTransformer, CategoricalTransformer, LabelEncodingTransformer,
-    OneHotEncodingTransformer)
+    CategoricalTransformer, LabelEncodingTransformer, OneHotEncodingTransformer)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
@@ -1582,14 +1581,3 @@ class TestLabelEncodingTransformer:
 
         # Assert
         pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
-
-
-class TestCategoricalFuzzyTransformer:
-
-    def test___init__(self):
-        """Test that the ``__init__`` method uses ``fuzzy==True`` by default."""
-        # Setup
-        transformer = CategoricalFuzzyTransformer()
-
-        # Assert
-        assert transformer.fuzzy

@@ -9,8 +9,7 @@ from copulas import univariate
 
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
-    BayesGMMTransformer, GaussianCopulaTransformer, NumericalBoundedTransformer,
-    NumericalRoundedBoundedTransformer, NumericalRoundedTransformer, NumericalTransformer)
+    BayesGMMTransformer, GaussianCopulaTransformer, NumericalTransformer)
 
 
 class TestNumericalTransformer(TestCase):
@@ -836,54 +835,6 @@ class TestNumericalTransformer(TestCase):
         null_transformer_calls = transformer.null_transformer.reverse_transform.mock_calls
         np.testing.assert_array_equal(null_transformer_calls[0][1][0], clipped_data)
         np.testing.assert_array_equal(result, expected_data)
-
-
-class TestNumericalBoundedTransformer(TestCase):
-
-    def test___init__(self):
-        """super() arguments are properly passed and set as attributes."""
-        # Run
-        nt = NumericalBoundedTransformer(dtype='int', null_column=False)
-
-        # Assert
-        assert nt.dtype == 'int'
-        assert nt.nan == 'mean'
-        assert nt.null_column is False
-        assert nt.min_value == 'auto'
-        assert nt.max_value == 'auto'
-        assert nt.rounding is None
-
-
-class TestNumericalRoundedTransformer(TestCase):
-
-    def test___init__(self):
-        """super() arguments are properly passed and set as attributes."""
-        # Run
-        nt = NumericalRoundedTransformer(dtype='int', null_column=False)
-
-        # Assert
-        assert nt.dtype == 'int'
-        assert nt.nan == 'mean'
-        assert nt.null_column is False
-        assert nt.min_value is None
-        assert nt.max_value is None
-        assert nt.rounding == 'auto'
-
-
-class TestNumericalRoundedBoundedTransformer(TestCase):
-
-    def test___init__(self):
-        """super() arguments are properly passed and set as attributes."""
-        # Run
-        nt = NumericalRoundedBoundedTransformer(dtype='int', null_column=False)
-
-        # Assert
-        assert nt.dtype == 'int'
-        assert nt.nan == 'mean'
-        assert nt.null_column is False
-        assert nt.min_value == 'auto'
-        assert nt.max_value == 'auto'
-        assert nt.rounding == 'auto'
 
 
 class TestGaussianCopulaTransformer:
