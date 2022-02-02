@@ -7,6 +7,7 @@ __author__ = """MIT Data To AI Lab"""
 __email__ = 'dailabmit@gmail.com'
 __version__ = '0.6.3.dev3'
 
+from unicodedata import decimal
 import numpy as np
 import pandas as pd
 
@@ -19,7 +20,7 @@ __all__ = [
 ]
 
 
-def get_demo(dtypes=('int', 'float', 'str', 'datetime'), nans=0.2, size=10):
+def get_demo(num_rows=5, nans=0.2):
     """Generate random demo data with multiple data types.
 
     Args:
@@ -33,26 +34,44 @@ def get_demo(dtypes=('int', 'float', 'str', 'datetime'), nans=0.2, size=10):
     Returns:
         pd.DataFrame
     """
-    if np.isscalar(nans):
-        nans = [nans] * len(dtypes)
+    # Hard code first five rows
+    login_dates = ['2021-06-26', '2021-02-10', 'NAT', '2020-09-26', '2020-12-22']
+    last_login = [np.datetime64(i) for i in login_dates]
+    email_optin = [False, False, False, True, np.nan]
+    credit_card = ['VISA', 'VISA', 'AMEX', np.nan, 'DISCOVER']
+    age = [29, 18, 21, 45, 32]
+    dollars_spent = [99.99, np.nan, 2.50, 25.00, 19.99]
 
-    columns = {}
-    for count, (dtype, nan) in enumerate(zip(dtypes, nans)):
-        if dtype == 'int':
-            column = np.random.randint(100, size=size)
-        elif dtype == 'float':
-            column = np.random.random(size) * 100
-        elif dtype == 'str':
-            column = np.random.choice(['a', 'b', 'c', 'd'], size=size)
-        elif dtype == 'datetime':
-            deltas = np.random.randint(1000000, size=10)
-            datetimes = np.array([np.datetime64('2019-10-13T18:34')] * size)
-            column = datetimes + deltas
+    data = pd.DataFrame({
+        'last_login': last_login,
+        'email_optin': email_optin,
+        'credit_card': credit_card,
+        'age': age,
+        'dollars_spent': dollars_spent
+    })
 
-        column = pd.Series(column)
-        nan_index = np.random.choice(range(size), size=int(size * nan), replace=False)
-        column.iloc[nan_index] = np.nan
+    # Randomly generate the remaining rows
+    if num_rows > 5:
+        np.random.seed(42)
+        num_rows -= 5
 
-        columns[f'{count}_{dtype}'] = column
+        login_dates = np.array([
+            np.datetime64('2000-01-01') + np.timedelta64(np.random.randint(0, 10000), 'D')
+            for _ in range(num_rows)
+        ])
+        login_dates[np.random.random(size=num_rows) > 0.8] = np.datetime64('NaT')
 
-    return pd.DataFrame(columns)
+        email_optin = np.random.choice([True, False], size=num_rows)
+        credit_card = np.random.choice(['VISA', 'AMEX', np.nan, 'DISCOVER'], size=num_rows)
+        age = np.random.randint(18, 100, size=num_rows)
+
+        dollars_spent = np.around(np.random.uniform(0, 100, size=num_rows), decimals=2)
+        dollars_spent[np.random.random(size=num_rows) > 0.8] = np.nan
+
+        return data.append(pd.DataFrame({
+            'last_login': login_dates,
+            'email_optin': email_optin,
+            'credit_card': credit_card,
+            'age': age,
+            'dollars_spent': dollars_spent
+        }), ignore_index=True)

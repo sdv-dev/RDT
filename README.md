@@ -92,24 +92,18 @@ from rdt import get_demo
 data = get_demo()
 ```
 
-This will return a `pandas.DataFrame` with 10 rows and 4 columns, one of each data type supported:
+This will return a `pandas.DataFrame` with 5 rows and 5 columns, one of each data type supported:
 
 ```
-   0_int    1_float 2_str          3_datetime
-0   38.0  46.872441     b 2021-02-10 21:50:00
-1   77.0  13.150228   NaN 2021-07-19 21:14:00
-2   21.0        NaN     b                 NaT
-3   10.0  37.128869     c 2019-10-15 21:39:00
-4   91.0  41.341214     a 2020-10-31 11:57:00
-5   67.0  92.237335     a                 NaT
-6    NaN  51.598682   NaN 2020-04-01 01:56:00
-7    NaN  42.204396     c 2020-03-12 22:12:00
-8   68.0        NaN     c 2021-02-25 16:04:00
-9    7.0  31.542918     a 2020-07-12 03:12:00
+  last_login email_optin credit_card  age  dollars_spent
+0 2021-06-26       False        VISA   29          99.99
+1 2021-02-10       False        VISA   18            NaN
+2        NaT       False        AMEX   21           2.50
+3 2020-09-26        True         NaN   45          25.00
+4 2020-12-22         NaN    DISCOVER   32          19.99
 ```
 
-Notice how the data is random, so your output might look a bit different. Also notice how
-RDT introduced some null values randomly.
+Notice that RDT may introduce some null values randomly.
 
 ### 2. Load the transformer
 
