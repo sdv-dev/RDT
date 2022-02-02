@@ -236,4 +236,3 @@ def test_quality(subtests):
                 transformer=transformer):
             relative_scores = frame['score_relative_to_average']
             assert all((relative_scores > TEST_THRESHOLD) | (frame['score'] > TEST_THRESHOLD))
-    raise
