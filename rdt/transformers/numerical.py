@@ -512,10 +512,8 @@ class BayesGMMTransformer(NumericalTransformer):
 
         data = data.reshape((len(data), 1))
         means = self._bgm_transformer.means_.reshape((1, self._max_clusters))
-        print('means: ', means)
 
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self._max_clusters))
-        print('std: ', stds)
         normalized_values = (data - means) / (self.STD_MULTIPLIER * stds)
         normalized_values = normalized_values[:, self.valid_component_indicator]
         component_probs = self._bgm_transformer.predict_proba(data)
@@ -538,8 +536,6 @@ class BayesGMMTransformer(NumericalTransformer):
         if self.null_transformer and self.null_transformer.creates_null_column():
             rows.append(null_column)
 
-        print('normalized: ', normalized[:10])
-        print('component: ', selected_component[:10])
         return np.stack(rows, axis=1)  # noqa: PD013
 
     def _reverse_transform_helper(self, data):
