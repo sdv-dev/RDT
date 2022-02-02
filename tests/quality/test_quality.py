@@ -11,7 +11,7 @@ from rdt.transformers import NumericalTransformer, get_transformers_by_type
 from tests.quality.utils import download_single_table
 
 R2_THRESHOLD = 0.2
-TEST_THRESHOLD = 0.35
+TEST_THRESHOLD = 0.3
 MAX_SIZE = 5000000
 TYPES_TO_SKIP = {'numerical', 'float', 'integer', 'id', None}
 
