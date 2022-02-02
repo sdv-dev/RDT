@@ -3,9 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from rdt.performance.datasets import get_dataset_generators_by_type
 from rdt.performance.profiling import profile_transformer
-from rdt.transformers import BaseTransformer
 
 DATASET_SIZES = [1000, 10000, 100000]
 
@@ -78,33 +76,3 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
         return summary
 
     return summary.max(axis=0)
-
-
-def evaluate_transformers(transformers=None):
-    """Evaluate the performance for each transformer against all applicable datasets.
-
-    Args:
-        transformers (list<rdt.transformers.BaseTransformer>):
-            List of transformer classes to evaluate.
-
-    Returns:
-        pandas.DataFrame:
-            A table containing the times and memory usages for ``fit``, ``transform`` and
-            ``reverse_transform`` for each transformer provided against every dataset generator
-            that applies to it.
-    """
-    summary = pd.DataFrame()
-
-    dataset_generators = get_dataset_generators_by_type()
-    transformers = transformers or BaseTransformer.get_subclasses()
-
-    for transformer in transformers:
-        dataset_generators_for_type = dataset_generators.get(transformer.get_input_type(), [])
-
-        for dataset_generator in dataset_generators_for_type:
-            performance = evaluate_transformer_performance(
-                transformer, dataset_generator, verbose=True)
-
-            summary = pd.concat([summary, performance], ignore_index=True)
-
-    return summary
