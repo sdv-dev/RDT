@@ -1554,7 +1554,7 @@ class TestLabelEncoder:
         transformer.categories_to_values = {1: 0, 2: 1, 3: 2}
 
         # Run
-        warning_msg = ('Warning: The data contains new categories \{4\} that were not seen '
+        warning_msg = ('Warning: The data contains new categories \\{4\\} that were not seen '
                        'in the original data. Assigning them NaN values. If you want to model '
                        'new categories, please fit the transformer again with the new data.')
         with pytest.warns(UserWarning, match=warning_msg):
