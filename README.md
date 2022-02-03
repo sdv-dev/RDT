@@ -92,24 +92,18 @@ from rdt import get_demo
 data = get_demo()
 ```
 
-This will return a `pandas.DataFrame` with 10 rows and 4 columns, one of each data type supported:
+This will return a `pandas.DataFrame` with 5 rows and 5 columns, one of each data type supported:
 
 ```
-   0_int    1_float 2_str          3_datetime
-0   38.0  46.872441     b 2021-02-10 21:50:00
-1   77.0  13.150228   NaN 2021-07-19 21:14:00
-2   21.0        NaN     b                 NaT
-3   10.0  37.128869     c 2019-10-15 21:39:00
-4   91.0  41.341214     a 2020-10-31 11:57:00
-5   67.0  92.237335     a                 NaT
-6    NaN  51.598682   NaN 2020-04-01 01:56:00
-7    NaN  42.204396     c 2020-03-12 22:12:00
-8   68.0        NaN     c 2021-02-25 16:04:00
-9    7.0  31.542918     a 2020-07-12 03:12:00
+  last_login email_optin credit_card  age  dollars_spent
+0 2021-06-26       False        VISA   29          99.99
+1 2021-02-10       False        VISA   18            NaN
+2        NaT       False        AMEX   21           2.50
+3 2020-09-26        True         NaN   45          25.00
+4 2020-12-22         NaN    DISCOVER   32          19.99
 ```
 
-Notice how the data is random, so your output might look a bit different. Also notice how
-RDT introduced some null values randomly.
+Notice that RDT may introduce some null values randomly.
 
 ### 2. Load the transformer
 
@@ -128,7 +122,7 @@ Before being able to transform the data, we need the transformer to learn from i
 We will do this by calling its `fit` method passing the column that we want to transform.
 
 ```python3
-transformer.fit(data, column='3_datetime')
+transformer.fit(data, column='last_login')
 ```
 
 ### 4. Transform the data
@@ -140,21 +134,17 @@ to get the transformed version of the data.
 transformed = transformer.transform(data)
 ```
 
-The output will be a `numpy.ndarray` with two columns, one with the datetimes transformed
-to integer timestamps, and another one indicating with 1s which values were null in the
-original data.
+The output will be a `pandas.DataFrame` with two added columns, `last_login.value` containing 
+the datetimes transformed to integer timestamps, and `last_login.is_null` indicating with 1s
+which values were null in the original data.
 
 ```
-array([[1.61299380e+18, 0.00000000e+00],
-       [1.62672924e+18, 0.00000000e+00],
-       [1.59919923e+18, 1.00000000e+00],
-       [1.57117554e+18, 0.00000000e+00],
-       [1.60414542e+18, 0.00000000e+00],
-       [1.59919923e+18, 1.00000000e+00],
-       [1.58570616e+18, 0.00000000e+00],
-       [1.58405112e+18, 0.00000000e+00],
-       [1.61426904e+18, 0.00000000e+00],
-       [1.59452352e+18, 0.00000000e+00]])
+  email_optin credit_card  age  dollars_spent  last_login.value  last_login.is_null
+0       False        VISA   29          99.99      1.624666e+18                 0.0
+1       False        VISA   18            NaN      1.612915e+18                 0.0
+2       False        AMEX   21           2.50      1.611814e+18                 1.0
+3        True         NaN   45          25.00      1.601078e+18                 0.0
+4         NaN    DISCOVER   32          19.99      1.608595e+18                 0.0
 ```
 
 ### 5. Revert the column transformation
@@ -166,21 +156,16 @@ the `reverse_transform` method of the transformer:
 reversed_data = transformer.reverse_transform(transformed)
 ```
 
-The output will be a `pandas.Series` containing the reverted values, which should be exactly
-like the original ones.
+The output will be a `pandas.DataFrame` containing the reverted values, which should be exactly
+like the original ones, except for the order of the columns.
 
 ```
-0   2021-02-10 21:50:00
-1   2021-07-19 21:14:00
-2                   NaT
-3   2019-10-15 21:39:00
-4   2020-10-31 11:57:00
-5                   NaT
-6   2020-04-01 01:56:00
-7   2020-03-12 22:12:00
-8   2021-02-25 16:04:00
-9   2020-07-12 03:12:00
-dtype: datetime64[ns]
+  email_optin credit_card  age  dollars_spent last_login
+0       False        VISA   29          99.99 2021-06-26
+1       False        VISA   18            NaN 2021-02-10
+2       False        AMEX   21           2.50        NaT
+3        True         NaN   45          25.00 2020-09-26
+4         NaN    DISCOVER   32          19.99 2020-12-22
 ```
 
 ## Transforming a table
@@ -218,21 +203,15 @@ to get the transformed version of the data.
 transformed = ht.transform(data)
 ```
 
-The output, will now be another `pandas.DataFrame` with the numerical representation of our
-data.
+The output will be another `pandas.DataFrame` with the numerical representation of our data.
 
 ```
-    0_int  0_int#1    1_float  1_float#1  2_str    3_datetime  3_datetime#1
-0  38.000      0.0  46.872441        0.0   0.70  1.612994e+18           0.0
-1  77.000      0.0  13.150228        0.0   0.90  1.626729e+18           0.0
-2  21.000      0.0  44.509511        1.0   0.70  1.599199e+18           1.0
-3  10.000      0.0  37.128869        0.0   0.15  1.571176e+18           0.0
-4  91.000      0.0  41.341214        0.0   0.45  1.604145e+18           0.0
-5  67.000      0.0  92.237335        0.0   0.45  1.599199e+18           1.0
-6  47.375      1.0  51.598682        0.0   0.90  1.585706e+18           0.0
-7  47.375      1.0  42.204396        0.0   0.15  1.584051e+18           0.0
-8  68.000      0.0  44.509511        1.0   0.15  1.614269e+18           0.0
-9   7.000      0.0  31.542918        0.0   0.45  1.594524e+18           0.0
+   last_login.value  last_login.is_null  email_optin.value  email_optin.is_null  credit_card.value  age.value  dollars_spent.value  dollars_spent.is_null
+0      1.624666e+18                 0.0                0.0                  0.0           0.203204         29                99.99                    0.0
+1      1.612915e+18                 0.0                0.0                  0.0           0.117002         18                36.87                    1.0
+2      1.611814e+18                 1.0                0.0                  0.0           0.502184         21                 2.50                    0.0
+3      1.601078e+18                 0.0                1.0                  0.0           0.734610         45                25.00                    0.0
+4      1.608595e+18                 0.0               -1.0                  1.0           0.883881         32                19.99                    0.0
 ```
 
 ### 4. Revert the table transformation
@@ -248,17 +227,12 @@ reversed_data = ht.reverse_transform(transformed)
 Which should output, again, a table that looks exactly like the original one.
 
 ```
-   0_int    1_float 2_str          3_datetime
-0   38.0  46.872441     b 2021-02-10 21:50:00
-1   77.0  13.150228   NaN 2021-07-19 21:14:00
-2   21.0        NaN     b                 NaT
-3   10.0  37.128869     c 2019-10-15 21:39:00
-4   91.0  41.341214     a 2020-10-31 11:57:00
-5   67.0  92.237335     a                 NaT
-6    NaN  51.598682   NaN 2020-04-01 01:56:00
-7    NaN  42.204396     c 2020-03-12 22:12:00
-8   68.0        NaN     c 2021-02-25 16:04:00
-9    7.0  31.542918     a 2020-07-12 03:12:00
+  last_login email_optin credit_card  age  dollars_spent
+0 2021-06-26       False        VISA   29          99.99
+1 2021-02-10       False        VISA   18            NaN
+2        NaT       False        AMEX   21           2.50
+3 2020-09-26        True         NaN   45          25.00
+4 2020-12-22        <NA>    DISCOVER   32          19.99
 ```
 
 ---
