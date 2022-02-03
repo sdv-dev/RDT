@@ -464,7 +464,7 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pd.Series.
         """
-        unseen_categories = set(data) - set(self.categories_to_values.keys())
+        unseen_categories = set(pd.unique(data)) - set(self.categories_to_values.keys())
         if unseen_categories:
             warn(
                 f'Warning: The data contains new categories {unseen_categories} that were not '
