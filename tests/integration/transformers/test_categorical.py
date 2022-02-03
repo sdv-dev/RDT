@@ -5,8 +5,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 
-from rdt.transformers import (
-    CategoricalTransformer, LabelEncodingTransformer, OneHotEncodingTransformer)
+from rdt.transformers import CategoricalTransformer, LabelEncoder, OneHotEncodingTransformer
 
 
 def test_categorical_numerical_nans():
@@ -249,12 +248,12 @@ def test_one_hot_numerical_nans():
 
 
 def test_label_numerical_2d_array():
-    """Ensure LabelEncodingTransformer works on numerical + nan only columns."""
+    """Ensure LabelEncoder works on numerical + nan only columns."""
 
     data = pd.DataFrame(['a', 'b', 'c', 'd'], columns=['column_name'])
     column = 'column_name'
 
-    transformer = LabelEncodingTransformer()
+    transformer = LabelEncoder()
     transformer.fit(data, column)
     transformed = pd.DataFrame([0, 1, 2, 3], columns=['column_name.value'])
     reverse = transformer.reverse_transform(transformed)
@@ -263,12 +262,12 @@ def test_label_numerical_2d_array():
 
 
 def test_label_numerical_nans():
-    """Ensure LabelEncodingTransformer works on numerical + nan only columns."""
+    """Ensure LabelEncoder works on numerical + nan only columns."""
 
     data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
     column = 'column_name'
 
-    transformer = LabelEncodingTransformer()
+    transformer = LabelEncoder()
     transformer.fit(data, column)
     transformed = transformer.transform(data)
     reverse = transformer.reverse_transform(transformed)

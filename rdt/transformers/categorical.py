@@ -1,5 +1,7 @@
 """Transformers for categorical data."""
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
 import psutil
@@ -410,7 +412,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         return pd.Series(indices).map(self.dummies.__getitem__)
 
 
-class LabelEncodingTransformer(BaseTransformer):
+class LabelEncoder(BaseTransformer):
     """LabelEncoding for categorical data.
 
     This transformer generates a unique integer representation for each category
@@ -460,8 +462,14 @@ class LabelEncodingTransformer(BaseTransformer):
                 Data to transform.
 
         Returns:
-            numpy.ndarray:
+            pd.Series.
         """
+        unseen_categories = set(data) - set(self.categories_to_values.keys())
+        if unseen_categories:
+            warn(f'Warning: The data contains new categories {unseen_categories} that were not '
+                 'seen in the original data. Assigning them NaN values. If you want to model '
+                 'new categories, please fit the transformer again with the new data.')
+
         return pd.Series(data).map(self.categories_to_values)
 
     def _reverse_transform(self, data):
