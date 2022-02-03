@@ -466,9 +466,11 @@ class LabelEncoder(BaseTransformer):
         """
         unseen_categories = set(data) - set(self.categories_to_values.keys())
         if unseen_categories:
-            warn(f'Warning: The data contains new categories {unseen_categories} that were not '
-                 'seen in the original data. Assigning them NaN values. If you want to model '
-                 'new categories, please fit the transformer again with the new data.')
+            warn(
+                f'Warning: The data contains new categories {unseen_categories} that were not '
+                'seen in the original data. Assigning them NaN values. If you want to model '
+                'new categories, please fit the transformer again with the new data.'
+            )
 
         return pd.Series(data).map(self.categories_to_values)
 
