@@ -2,10 +2,10 @@
 
 # pylint: disable=W0212
 
+import multiprocessing as mp
 import timeit
 import tracemalloc
 from copy import deepcopy
-from multiprocessing import Process, Value
 
 import pandas as pd
 
@@ -32,11 +32,13 @@ def _set_memory_for_method(method, dataset, peak_memory):
     method(dataset)
     peak_memory.value = tracemalloc.get_traced_memory()[1]
     tracemalloc.stop()
+    tracemalloc.clear_traces()
 
 
 def _profile_memory(method, dataset):
-    peak_memory = Value('i', 0)
-    profiling_process = Process(
+    ctx = mp.get_context('spawn')
+    peak_memory = ctx.Value('i', 0)
+    profiling_process = ctx.Process(
         target=_set_memory_for_method,
         args=(method, dataset, peak_memory)
     )
@@ -56,7 +58,7 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     Args:
         transformer (Transformer):
             Transformer instance.
-        dataset_generator (DatsetGenerator):
+        dataset_generator (DatasetGenerator):
             DatasetGenerator instance.
         transform_size (int):
             Number of rows to generate for ``transform`` and ``reverse_transform``.

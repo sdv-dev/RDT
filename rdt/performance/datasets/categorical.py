@@ -4,9 +4,9 @@ from abc import ABC
 
 import numpy as np
 
-from tests.datasets.base import BaseDatasetGenerator
-from tests.datasets.datetime import RandomGapDatetimeGenerator
-from tests.datasets.utils import add_nans
+from rdt.performance.datasets.base import BaseDatasetGenerator
+from rdt.performance.datasets.datetime import RandomGapDatetimeGenerator
+from rdt.performance.datasets.utils import add_nans
 
 
 class CategoricalGenerator(BaseDatasetGenerator, ABC):
@@ -30,7 +30,7 @@ class RandomIntegerGenerator(CategoricalGenerator):
         return {
             'fit': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 400.0
             },
             'transform': {
                 'time': 3e-06,
@@ -57,7 +57,7 @@ class RandomIntegerNaNsGenerator(CategoricalGenerator):
         return {
             'fit': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 400.0
             },
             'transform': {
                 'time': 5e-06,
@@ -112,7 +112,7 @@ class RandomStringNaNsGenerator(CategoricalGenerator):
         return {
             'fit': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 400.0
             },
             'transform': {
                 'time': 1e-05,
@@ -153,7 +153,7 @@ class RandomMixedGenerator(CategoricalGenerator):
         return {
             'fit': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 400.0
             },
             'transform': {
                 'time': 1e-05,
@@ -191,7 +191,7 @@ class RandomMixedNaNsGenerator(CategoricalGenerator):
         return {
             'fit': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 400.0
             },
             'transform': {
                 'time': 1e-05,
@@ -219,7 +219,7 @@ class SingleIntegerGenerator(CategoricalGenerator):
         return {
             'fit': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 400.0
             },
             'transform': {
                 'time': 3e-06,
@@ -246,7 +246,7 @@ class SingleIntegerNaNsGenerator(CategoricalGenerator):
         return {
             'fit': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 400.0
             },
             'transform': {
                 'time': 3e-06,
@@ -274,7 +274,7 @@ class SingleStringGenerator(CategoricalGenerator):
         return {
             'fit': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 400.0
             },
             'transform': {
                 'time': 4e-06,
@@ -301,7 +301,7 @@ class SingleStringNaNsGenerator(CategoricalGenerator):
         return {
             'fit': {
                 'time': 1e-05,
-                'memory': 100.0
+                'memory': 400.0
             },
             'transform': {
                 'time': 3e-06,

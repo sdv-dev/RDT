@@ -20,7 +20,7 @@ install_requires = [
     'pandas>=1.1.3,<2',
     'scipy>=1.5.4,<2',
     'psutil>=5.7,<6',
-    'scikit-learn>=0.24,<1',
+    'scikit-learn>=0.24,<2',
     'pyyaml>=5.4.1,<6'
 ]
 
@@ -125,12 +125,15 @@ setup(
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
     name='rdt',
-    packages=find_namespace_packages(include=['rdt', 'rdt.transformers']),
+    packages=find_namespace_packages(
+        include=['rdt', 'rdt.*'],
+        exclude=['rdt.transformers.addons.*']
+    ),
     python_requires='>=3.6,<3.10',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.6.2',
+    version='0.6.3.dev4',
     zip_safe=False,
 )

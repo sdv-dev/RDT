@@ -738,6 +738,21 @@ class TestBaseTransformer:
         assert dummy_transformer.column_prefix == 'a#b#'
         assert dummy_transformer.output_columns == ['a#b#.value', 'a#b#.is_null']
 
+    def test__fit_raises_error(self):
+        """Test ``_fit`` raises ``NotImplementedError``."""
+
+        # Setup
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9]
+        })
+        transformer = BaseTransformer()
+
+        # Run / Assert
+        with pytest.raises(NotImplementedError):
+            transformer._fit(data)
+
     def test_fit(self):
         """Test the ``fit`` method.
 
@@ -793,6 +808,21 @@ class TestBaseTransformer:
         pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_data)
         assert dummy_transformer.column_prefix == 'a#b'
         assert dummy_transformer.output_columns == ['a#b.value', 'a#b.is_null']
+
+    def test__transform_raises_error(self):
+        """Test ``_transform`` raises ``NotImplementedError``."""
+
+        # Setup
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9]
+        })
+        transformer = BaseTransformer()
+
+        # Run / Assert
+        with pytest.raises(NotImplementedError):
+            transformer._transform(data)
 
     def test_transform_incorrect_columns(self):
         """Test the ``transform`` method when the columns are not in the data.
@@ -978,6 +1008,21 @@ class TestBaseTransformer:
         self.fit.assert_called_once_with(data, columns)
         self.transform.assert_called_once_with(data)
         assert output == self.transform.return_value
+
+    def test__reverse_transform_raises_error(self):
+        """Test ``_reverse_transform`` raises ``NotImplementedError``."""
+
+        # Setup
+        data = pd.DataFrame({
+            'a.value': [1, 2, 3],
+            'b.value': [4, 5, 6],
+            'c.value': [7, 8, 9]
+        })
+        transformer = BaseTransformer()
+
+        # Run / Assert
+        with pytest.raises(NotImplementedError):
+            transformer._reverse_transform(data)
 
     def test_reverse_transform_incorrect_columns(self):
         """Test the ``reverse_transform`` method when the columns are not in the data.

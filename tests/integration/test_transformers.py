@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
+from rdt.performance.datasets import BaseDatasetGenerator
 from rdt.transformers import BaseTransformer
-from tests.datasets import BaseDatasetGenerator
 
 DATA_SIZE = 1000
 TEST_COL = 'test_col'
