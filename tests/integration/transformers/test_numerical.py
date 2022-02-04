@@ -197,7 +197,7 @@ class TestBayesGMMTransformer:
         data = pd.DataFrame([np.nan, None] * 50, columns=['col'])
         column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer = BayesGMMTransformer(missing_value_replacement=0)
         bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 

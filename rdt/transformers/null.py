@@ -63,14 +63,8 @@ class NullTransformer():
         """
         missing_value_replacement = self.missing_value_replacement
 
-        if missing_value_replacement in (None, 'mean', 'mode') and null_values.all():
-            return 0
-
         if missing_value_replacement is None:
-            if pd.api.types.is_numeric_dtype(data):
-                missing_value_replacement = 'mean'
-            else:
-                missing_value_replacement = 'mode'
+            return np.nan
 
         if missing_value_replacement == 'mean':
             return data.mean()
