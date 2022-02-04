@@ -1,5 +1,24 @@
 # History
 
+## 0.6.3 - 2022-2-4
+
+This release adds a new module to the `RDT` library called `performance`. This module can be used to evaluate the speed and peak memory usage
+of any transformer in RDT. This release also increases the maximum acceptable version of scikit-learn to make it more compatible with other libraries
+in the `SDV` ecosystem. On top of that, it fixes a bug related to a new version of `pandas`.
+
+### New Features
+
+* Move profiling functions into RDT library - Issue [#353](https://github.com/sdv-dev/RDT/issues/353) by @amontanez24
+
+### Housekeeping
+
+* Increase scikit-learn dependency range - Issue [#351](https://github.com/sdv-dev/RDT/issues/351) by @amontanez24
+* pandas 1.4.0 release causes a small error - Issue [#358](https://github.com/sdv-dev/RDT/issues/358) by @fealho
+
+### Bugs
+
+* Performance tests get stuck on Unix if multiprocessing is involved - Issue [#337](https://github.com/sdv-dev/RDT/issues/337) by @amontanez24
+
 ## 0.6.2 - 2021-12-28
 
 This release adds a new `BayesGMMTransformer`. This transformer can be used to convert a numerical column into two
