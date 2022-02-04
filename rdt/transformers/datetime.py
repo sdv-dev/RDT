@@ -15,12 +15,12 @@ class DatetimeTransformer(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        nan (int, str or None):
+        missing_value_replacement (int, str or None):
             Indicate what to do with the null values. If an integer is given, replace them
             with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
             them with the corresponding aggregation. If ``None`` is given, do not replace them.
             Defaults to ``'mean'``.
-        null_column (bool):
+        model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not.
             If ``None``, only create a new column when the data contains null values.
             If ``True``, always create the new column whether there are null values or not.
@@ -45,9 +45,10 @@ class DatetimeTransformer(BaseTransformer):
     null_transformer = None
     divider = None
 
-    def __init__(self, nan='mean', null_column=None, strip_constant=False, datetime_format=None):
-        self.nan = nan
-        self.null_column = null_column
+    def __init__(self, missing_value_replacement='mean', model_missing_values=True,
+                 strip_constant=False, datetime_format=None):
+        self.missing_value_replacement = missing_value_replacement
+        self.model_missing_values = model_missing_values
         self.strip_constant = strip_constant
         self.datetime_format = datetime_format
 
@@ -58,7 +59,7 @@ class DatetimeTransformer(BaseTransformer):
             bool:
                 Whether or not transforming and then reverse transforming returns the input data.
         """
-        if self.null_transformer and not self.null_transformer.creates_null_column():
+        if self.null_transformer and not self.null_transformer.creates_model_missing_values():
             return False
 
         return self.COMPOSITION_IS_IDENTITY
@@ -73,7 +74,7 @@ class DatetimeTransformer(BaseTransformer):
         output_types = {
             'value': 'float',
         }
-        if self.null_transformer and self.null_transformer.creates_null_column():
+        if self.null_transformer and self.null_transformer.creates_model_missing_values():
             output_types['is_null'] = 'float'
 
         return self._add_prefix(output_types)
@@ -124,8 +125,11 @@ class DatetimeTransformer(BaseTransformer):
                 Data to fit the transformer to.
         """
         transformed = self._transform_helper(data)
-        self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
-        self.null_transformer.fit(transformed)
+        self.null_transformer = NullTransformer(
+            self.missing_value_replacement,
+            self.model_missing_values
+        )
+        self.null_transformer.fit(transformed, self.get_input_column())
 
     def _transform(self, data):
         """Transform datetime values to float values.
@@ -153,7 +157,7 @@ class DatetimeTransformer(BaseTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        if self.nan is not None:
+        if self.missing_value_replacement is not None:
             data = self.null_transformer.reverse_transform(data)
 
         if isinstance(data, np.ndarray) and (data.ndim == 2):
@@ -180,12 +184,12 @@ class DatetimeRoundedTransformer(DatetimeTransformer):
     This class behaves exactly as the ``DatetimeTransformer`` with ``strip_constant=True``.
 
     Args:
-        nan (int, str or None):
+        missing_value_replacement (int, str or None):
             Indicate what to do with the null values. If an integer is given, replace them
             with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
             them with the corresponding aggregation. If ``None`` is given, do not replace them.
             Defaults to ``'mean'``.
-        null_column (bool):
+        model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not.
             If ``None``, only create a new column when the data contains null values.
             If ``True``, always create the new column whether there are null values or not.
@@ -193,5 +197,6 @@ class DatetimeRoundedTransformer(DatetimeTransformer):
             Defaults to ``None``.
     """
 
-    def __init__(self, nan='mean', null_column=None):
-        super().__init__(nan=nan, null_column=null_column, strip_constant=True)
+    def __init__(self, missing_value_replacement='mean', model_missing_values=True):
+        super().__init__(missing_value_replacement=missing_value_replacement,
+                         model_missing_values=model_missing_values, strip_constant=True)

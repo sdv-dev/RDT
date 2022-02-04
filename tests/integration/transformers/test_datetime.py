@@ -7,6 +7,7 @@ from rdt.transformers.datetime import DatetimeTransformer
 def test_no_strip():
     dtt = DatetimeTransformer(strip_constant=False)
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
+    dtt.columns = 'column'
 
     # Run
     dtt._fit(data.copy())
@@ -26,6 +27,7 @@ def test_no_strip():
 def test_strip():
     dtt = DatetimeTransformer(strip_constant=True)
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
+    dtt.columns = 'column'
 
     # Run
     dtt._fit(data.copy())

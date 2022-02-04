@@ -7,7 +7,7 @@ from rdt.transformers.numerical import (
 
 class TestNumericalTransformer:
 
-    def test_null_column(self):
+    def test_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
@@ -23,11 +23,11 @@ class TestNumericalTransformer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
-    def test_not_null_column(self):
+    def test_not_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        nt = NumericalTransformer(null_column=False)
+        nt = NumericalTransformer(model_missing_values=False)
         nt.fit(data, column)
         transformed = nt.transform(data)
 
@@ -87,7 +87,7 @@ class TestGaussianCopulaTransformer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
-    def test_null_column(self):
+    def test_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
@@ -103,11 +103,11 @@ class TestGaussianCopulaTransformer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
-    def test_not_null_column(self):
+    def test_not_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianCopulaTransformer(null_column=False)
+        ct = GaussianCopulaTransformer(model_missing_values=False)
         ct.fit(data, column)
         transformed = ct.transform(data)
 
