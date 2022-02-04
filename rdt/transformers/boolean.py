@@ -33,7 +33,7 @@ class BooleanTransformer(BaseTransformer):
 
     null_transformer = None
 
-    def __init__(self, missing_value_replacement=-1, model_missing_values=True):
+    def __init__(self, missing_value_replacement=None, model_missing_values=False):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
 

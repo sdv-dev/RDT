@@ -67,7 +67,7 @@ class NumericalTransformer(BaseTransformer):
     _min_value = None
     _max_value = None
 
-    def __init__(self, dtype=None, missing_value_replacement='mean', model_missing_values=True,
+    def __init__(self, dtype=None, missing_value_replacement=None, model_missing_values=False,
                  rounding=None, min_value=None, max_value=None):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
@@ -258,8 +258,8 @@ class GaussianCopulaTransformer(NumericalTransformer):
     _univariate = None
     COMPOSITION_IS_IDENTITY = False
 
-    def __init__(self, dtype=None, missing_value_replacement='mean',
-                 model_missing_values=True, distribution='parametric'):
+    def __init__(self, dtype=None, missing_value_replacement=None,
+                 model_missing_values=False, distribution='parametric'):
         super().__init__(
             dtype=dtype,
             missing_value_replacement=missing_value_replacement,
@@ -459,7 +459,7 @@ class BayesGMMTransformer(NumericalTransformer):
     _bgm_transformer = None
     valid_component_indicator = None
 
-    def __init__(self, dtype=None, missing_value_replacement='mean', model_missing_values=True,
+    def __init__(self, dtype=None, missing_value_replacement=None, model_missing_values=False,
                  rounding=None, min_value=None, max_value=None, max_clusters=10,
                  weight_threshold=0.005):
         super().__init__(

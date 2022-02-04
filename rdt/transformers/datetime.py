@@ -45,7 +45,7 @@ class DatetimeTransformer(BaseTransformer):
     null_transformer = None
     divider = None
 
-    def __init__(self, missing_value_replacement='mean', model_missing_values=True,
+    def __init__(self, missing_value_replacement=None, model_missing_values=False,
                  strip_constant=False, datetime_format=None):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
@@ -197,6 +197,6 @@ class DatetimeRoundedTransformer(DatetimeTransformer):
             Defaults to ``None``.
     """
 
-    def __init__(self, missing_value_replacement='mean', model_missing_values=True):
+    def __init__(self, missing_value_replacement=None, model_missing_values=False):
         super().__init__(missing_value_replacement=missing_value_replacement,
                          model_missing_values=model_missing_values, strip_constant=True)
