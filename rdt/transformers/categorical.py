@@ -1,6 +1,5 @@
 """Transformers for categorical data."""
 
-from random import randint
 from warnings import warn
 
 import numpy as np
@@ -483,8 +482,9 @@ class LabelEncoder(BaseTransformer):
                 'new categories, please fit the transformer again with the new data.'
             )
 
-            for cat in unseen_categories:
-                self.categories_to_values[cat] = randint(0, len(self.values_to_categories) - 1)
+            for unseen_category in unseen_categories:
+                self.categories_to_values[unseen_category] = \
+                    np.random.randint(0, len(self.values_to_categories) - 1)
 
         return pd.Series(data).map(self.categories_to_values)
 
