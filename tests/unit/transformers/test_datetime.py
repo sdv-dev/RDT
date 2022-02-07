@@ -19,20 +19,20 @@ class TestDatetimeTransformer:
             - initialize a ``DatetimeTransformer`` with values for each parameter.
 
         Side effect:
-            - the ``nan`` attribute has been assigned as ``'mode'``.
-            - the ``null_column`` attribute has been assigned as True.
+            - the ``missing_value_replacement`` attribute has been assigned as ``'mode'``.
+            - the ``model_missing_values`` attribute has been assigned as True.
             - the ``strip_constant`` attribute has been assigned as True.
         """
         # Setup
         transformer = DatetimeTransformer(
-            nan='mode',
-            null_column=True,
+            missing_value_replacement='mode',
+            model_missing_values=True,
             strip_constant=True
         )
 
         # Asserts
-        assert transformer.nan == 'mode'
-        assert transformer.null_column is True
+        assert transformer.missing_value_replacement == 'mode'
+        assert transformer.model_missing_values is True
         assert transformer.strip_constant is True
 
     def test_is_composition_identity_null_transformer_true(self):
@@ -50,7 +50,7 @@ class TestDatetimeTransformer:
         """
         # Setup
         transformer = DatetimeTransformer()
-        transformer.null_transformer = NullTransformer(fill_value='fill')
+        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
 
         # Run
         output = transformer.is_composition_identity()
@@ -95,7 +95,7 @@ class TestDatetimeTransformer:
         Setup:
             - initialize a ``DatetimeTransformer`` transformer which:
                 - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self._null_column`` is True.
+                ``self._model_missing_values`` is True.
                 - sets ``self.column_prefix`` to a column name.
 
         Output:
@@ -104,8 +104,8 @@ class TestDatetimeTransformer:
         """
         # Setup
         transformer = DatetimeTransformer()
-        transformer.null_transformer = NullTransformer(fill_value='fill')
-        transformer.null_transformer._null_column = True
+        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
+        transformer.null_transformer._model_missing_values = True
         transformer.column_prefix = 'a#b'
 
         # Run
@@ -329,16 +329,17 @@ class TestDatetimeTransformer:
         # Setup
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
         transformer = DatetimeTransformer()
+        transformer.columns = ['column']
 
         # Run
         transformer._fit(data)
 
         # Assert
-        null_transformer_mock.assert_called_once_with('mean', None, copy=True)
+        null_transformer_mock.assert_called_once_with(None, False)
         assert null_transformer_mock.return_value.fit.call_count == 1
         np.testing.assert_allclose(
-            null_transformer_mock.return_value.fit.call_args_list[0][0],
-            np.array([[1.577837e+18, 1.580515e+18, 1.583021e+18]]), rtol=1e-5
+            null_transformer_mock.return_value.fit.call_args_list[0][0][0],
+            np.array([1.577837e+18, 1.580515e+18, 1.583021e+18]), rtol=1e-5
         )
 
     def test__transform(self):
@@ -376,7 +377,8 @@ class TestDatetimeTransformer:
 
     def test__reverse_transform_all_none(self):
         dt = pd.to_datetime(['2020-01-01'])
-        dtt = DatetimeTransformer(strip_constant=True)
+        dtt = DatetimeTransformer(missing_value_replacement='mean', strip_constant=True)
+        dtt.columns = ['column']
         dtt._fit(dt)
 
         output = dtt._reverse_transform(pd.Series([None]))
@@ -397,7 +399,8 @@ class TestDatetimeTransformer:
         """
         # Setup
         dt = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
-        dtt = DatetimeTransformer(nan=None, strip_constant=True)
+        dtt = DatetimeTransformer(missing_value_replacement=None, strip_constant=True)
+        dtt.columns = ['column']
         dtt._fit(dt)
         transformed = np.array([[18262.], [18293.], [18322.]])
 
