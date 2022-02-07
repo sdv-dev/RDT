@@ -77,7 +77,7 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     transformer.columns = ['column']
 
     try:
-        fit_time = _profile_time(transformer, 'fit', fit_dataset)
+        fit_time = _profile_time(transformer, 'fit', fit_dataset, copy=True)
         fit_memory = _profile_memory(transformer.fit, fit_dataset)
         transformer.fit(fit_dataset)
 
@@ -89,7 +89,7 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
         reverse_memory = _profile_memory(transformer.reverse_transform, reverse_dataset)
     except TypeError:
         # temporarily support both old and new style transformers
-        fit_time = _profile_time(transformer, '_fit', fit_dataset)
+        fit_time = _profile_time(transformer, '_fit', fit_dataset, copy=True)
         fit_memory = _profile_memory(transformer._fit, fit_dataset)
         transformer._fit(fit_dataset)
 

@@ -86,7 +86,6 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
         pandas.DataFrame:
             The performance test results.
     """
-
     transformer_args = TRANSFORMER_ARGS.get(transformer.__name__, {})
     transformer_instance = transformer(**transformer_args)
 
