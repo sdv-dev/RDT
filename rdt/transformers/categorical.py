@@ -468,7 +468,11 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pd.Series.
         """
-        unseen_categories = set(pd.unique(data)) - set(self.categories_to_values.keys())
+        # Find the data categories that were not seen during fitting. Convert all nan's
+        # to np.nan to avoid having nan values with different ids.
+        unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
+        categories = {np.nan if pd.isna(x) else x for x in self.categories_to_values.keys()}
+        unseen_categories = unique_data - categories
         if unseen_categories:
             if len(self.categories_to_values) == 0:
                 raise ValueError('No categories have been fitted.')
