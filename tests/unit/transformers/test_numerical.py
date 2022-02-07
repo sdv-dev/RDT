@@ -1139,6 +1139,41 @@ class TestGaussianCopulaTransformer:
             np.array([0.0, 0.5, 1.0])
         )
 
+    def test__fit_model_missing_values(self):
+        """Test the ``_fit`` method.
+
+        Validate that ``_fit`` calls ``_get_univariate``.
+
+        Setup:
+            - create an instance of the ``GaussianCopulaTransformer``.
+            - mock the  ``_get_univariate`` method.
+
+        Input:
+            - a pandas series of float values.
+
+        Side effect:
+            - call the `_get_univariate`` method.
+        """
+        # Setup
+        data = pd.Series([0.0, np.nan, 1.0])
+        ct = GaussianCopulaTransformer(
+            missing_value_replacement='mean',
+            model_missing_values=True
+        )
+        ct._get_univariate = Mock()
+        ct.columns = ['column']
+
+        # Run
+        ct._fit(data)
+
+        # Assert
+        ct._get_univariate.return_value.fit.assert_called_once()
+        call_value = ct._get_univariate.return_value.fit.call_args_list[0]
+        np.testing.assert_array_equal(
+            call_value[0][0],
+            np.array([0.0, 0.5, 1.0])
+        )
+
     def test__copula_transform(self):
         """Test the ``_copula_transform`` method.
 
