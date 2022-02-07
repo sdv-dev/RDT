@@ -17,7 +17,7 @@ class TestBooleanTransformer(TestCase):
 
         # Asserts
         error_message = 'Unexpected missing_value_replacement'
-        assert transformer.missing_value_replacement == None, error_message
+        assert transformer.missing_value_replacement is None, error_message
         assert not transformer.model_missing_values, 'model_missing_values is False by default'
 
     def test_get_output_types_model_missing_values_created(self):
@@ -68,7 +68,8 @@ class TestBooleanTransformer(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer.null_transformer.missing_value_replacement is None, 'Unexpected fill value'
+        error_msg = 'Unexpected fill value'
+        assert transformer.null_transformer.missing_value_replacement is None, error_msg
 
     def test__fit_missing_value_replacement_not_ignore(self):
         """Test _fit missing_value_replacement not equal to ignore"""
@@ -181,7 +182,10 @@ class TestBooleanTransformer(TestCase):
 
         np.testing.assert_equal(result, expect)
 
-        error_msg = 'NullTransformer.reverse_transform should not be called when missing_value_replacement is ignore'
+        error_msg = (
+            'NullTransformer.reverse_transform should not be called when '
+            'missing_value_replacement is ignore'
+        )
         reverse_transform_call_count = transformer.null_transformer.reverse_transform.call_count
         assert reverse_transform_call_count == expect_call_count, error_msg
 

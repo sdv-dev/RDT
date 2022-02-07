@@ -16,7 +16,11 @@ class TestNumericalTransformer(TestCase):
 
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
-        nt = NumericalTransformer(dtype='int', missing_value_replacement='mode', model_missing_values=False)
+        nt = NumericalTransformer(
+            dtype='int',
+            missing_value_replacement='mode',
+            model_missing_values=False
+        )
 
         assert nt.dtype == 'int'
         assert nt.missing_value_replacement == 'mode'
@@ -129,7 +133,8 @@ class TestNumericalTransformer(TestCase):
         should be returned.
 
         Input:
-        - An array that contains floats with a maximum of 3 decimals and a missing_value_replacement.
+        - An array that contains floats with a maximum of 3 decimals and a
+          missing_value_replacement.
         Output:
         - 3
         """
@@ -885,7 +890,10 @@ class TestNumericalTransformer(TestCase):
         expected_data = np.array([-300, -300, np.nan, -250, 0, np.nan, 400, 400])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, missing_value_replacement='missing_value_replacement')
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement'
+        )
         transformer._max_value = 400
         transformer._min_value = -300
         transformer.null_transformer = Mock()
@@ -902,7 +910,11 @@ class TestGaussianCopulaTransformer:
 
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
-        ct = GaussianCopulaTransformer(dtype='int', missing_value_replacement='mode', model_missing_values=False)
+        ct = GaussianCopulaTransformer(
+            dtype='int',
+            missing_value_replacement='mode',
+            model_missing_values=False
+        )
 
         assert ct.dtype == 'int'
         assert ct.missing_value_replacement == 'mode'
@@ -1158,7 +1170,8 @@ class TestGaussianCopulaTransformer:
     def test__transform(self):
         """Test the ``_transform`` method.
 
-        Validate that ``_transform`` produces the correct values when ``model_missing_values`` is True.
+        Validate that ``_transform`` produces the correct values when ``model_missing_values``
+        is True.
 
         Setup:
             - create an instance of the ``GaussianCopulaTransformer``, where:
@@ -1193,7 +1206,8 @@ class TestGaussianCopulaTransformer:
     def test__transform_model_missing_values_none(self):
         """Test the ``_transform`` method.
 
-        Validate that ``_transform`` produces the correct values when ``model_missing_values`` is None.
+        Validate that ``_transform`` produces the correct values when ``model_missing_values``
+        is None.
 
         Setup:
             - create an instance of the ``GaussianCopulaTransformer``, where:
@@ -1671,8 +1685,8 @@ class TestBayesGMMTransformer(TestCase):
             - create an instance of the ``BayesGMMTransformer`` where the ``output_columns``
             is a list of two columns.
             - mock the `_reverse_transform_helper` with the appropriate return value.
-            - set ``null_transformer`` to ``NullTransformer`` with ``model_missing_values`` as True,
-            then fit it to a pandas Series.
+            - set ``null_transformer`` to ``NullTransformer`` with ``model_missing_values`` as
+              True, then fit it to a pandas Series.
 
         Input:
             - a numpy ndarray containing transformed ``np.nan`` values.

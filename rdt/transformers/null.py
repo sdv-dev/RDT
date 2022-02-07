@@ -13,6 +13,7 @@ IRREVERSIBLE_WARNING = (
 
 LOGGER = logging.getLogger(__name__)
 
+
 class NullTransformer():
     """Transformer for data that contains Null values.
 
@@ -37,6 +38,7 @@ class NullTransformer():
     def __init__(self, missing_value_replacement=None, model_missing_values=False):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
+        self._model_missing_values = model_missing_values
 
     def creates_model_missing_values(self):
         """Indicate whether this transformer creates a null column on transform.
@@ -47,15 +49,12 @@ class NullTransformer():
         """
         return bool(self._model_missing_values)
 
-    def _get_missing_value_replacement(self, data, null_values):
+    def _get_missing_value_replacement(self, data):
         """Get the fill value to use for the given data.
 
         Args:
             data (pd.Series):
                 The data that is being transformed.
-            null_values (np.array):
-                Array of boolean values that indicate which values in the
-                input data are nulls.
 
         Return:
             object:
@@ -86,9 +85,7 @@ class NullTransformer():
         null_values = data.isna().to_numpy()
         self.nulls = null_values.any()
 
-        self._missing_value_replacement = self._get_missing_value_replacement(data, null_values)
-        self._model_missing_values = self.model_missing_values
-
+        self._missing_value_replacement = self._get_missing_value_replacement(data)
         if not self.nulls and self._model_missing_values:
             self._model_missing_values = False
             guidance_message = (
