@@ -1539,8 +1539,8 @@ class TestLabelEncoder:
         integer value.
 
         Setup:
-            - create an instance of the ``LabelEncoder``, where
-            ``categories_to_values`` is set to a dictionary.
+            - create an instance of the ``LabelEncoder``, where ``categories_to_values``
+            and ``values_to_categories`` are set to dictionaries.
 
         Input:
             - a pandas series.
