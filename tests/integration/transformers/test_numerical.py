@@ -59,24 +59,6 @@ class TestNumericalTransformer:
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
         column = 'a'
 
-        nt = NumericalTransformer(
-            missing_value_replacement='mean',
-            model_missing_values=True,
-            dtype=int,
-        )
-        nt.fit(data, column)
-        transformed = nt.transform(data)
-
-        assert isinstance(transformed, pd.DataFrame)
-        assert transformed.shape == (6, 2)
-
-        reverse = nt.reverse_transform(transformed)
-        np.testing.assert_array_almost_equal(reverse, data, decimal=2)
-
-    def test_int_nan_not_model_missing_values(self):
-        data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
-        column = 'a'
-
         nt = NumericalTransformer(dtype=int)
         nt.fit(data, column)
         transformed = nt.transform(data)
