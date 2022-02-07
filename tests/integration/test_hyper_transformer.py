@@ -9,7 +9,7 @@ import pandas as pd
 from rdt import HyperTransformer
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, BaseTransformer, BooleanTransformer, CategoricalTransformer,
-    DatetimeTransformer, NumericalTransformer, OneHotEncodingTransformer)
+    DatetimeTransformer, NumericalTransformer, OneHotEncoder)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -305,7 +305,7 @@ def test_single_category():
     """Test that categorical variables with a single value are supported."""
     # Setup
     ht = HyperTransformer(field_transformers={
-        'a': OneHotEncodingTransformer()
+        'a': OneHotEncoder()
     })
     data = pd.DataFrame({
         'a': ['a', 'a', 'a']

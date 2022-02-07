@@ -258,7 +258,7 @@ class CategoricalTransformer(BaseTransformer):
         return self._reverse_transform_by_row(data)
 
 
-class OneHotEncodingTransformer(BaseTransformer):
+class OneHotEncoder(BaseTransformer):
     """OneHotEncoding for categorical data.
 
     This transformer replaces a single vector with N unique categories in it
@@ -266,12 +266,6 @@ class OneHotEncodingTransformer(BaseTransformer):
     is found and 0s on the rest.
 
     Null values are considered just another category.
-
-    Args:
-        error_on_unknown (bool):
-            If a value that was not seen during the fit stage is passed to
-            transform, then an error will be raised if this is True.
-            Defaults to ``True``.
     """
 
     INPUT_TYPE = 'categorical'
@@ -284,9 +278,6 @@ class OneHotEncodingTransformer(BaseTransformer):
     _dummy_encoded = False
     _indexer = None
     _uniques = None
-
-    def __init__(self, error_on_unknown=True):
-        self.error_on_unknown = error_on_unknown
 
     @staticmethod
     def _prepare_data(data):
@@ -378,18 +369,18 @@ class OneHotEncodingTransformer(BaseTransformer):
                 Data to transform.
 
         Returns:
-            numpy.ndarray:
+            numpy.ndarray.
         """
         data = self._prepare_data(data)
-        array = self._transform_helper(data)
+        unseen_categories = set(pd.unique(data)) - set(self.dummies)
+        if unseen_categories:
+            warn(
+                f'Warning: The data contains new categories {unseen_categories} that were not '
+                'seen in the original data. Creating a vector of all 0s. If you want to model '
+                'new categories, please fit the transformer again with the new data.'
+            )
 
-        if self.error_on_unknown:
-            unknown = array.sum(axis=1) == 0
-            if unknown.any():
-                raise ValueError(f'Attempted to transform {list(data[unknown])} ',
-                                 'that were not seen during fit stage.')
-
-        return array
+        return self._transform_helper(data)
 
     def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
@@ -399,7 +390,7 @@ class OneHotEncodingTransformer(BaseTransformer):
                 Data to revert.
 
         Returns:
-            pandas.Series
+            pandas.Series.
         """
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
