@@ -1387,7 +1387,7 @@ class TestOneHotEncoder:
 
         # Run
         warning_msg = (
-            "Warning: The data contains new categories \\{nan\\} that were not seen "
+            'Warning: The data contains new categories \\{nan\\} that were not seen '
             'in the original data. Creating a vector of all 0s. If you want to model '
             'new categories, please fit the transformer again with the new data.'
         )
