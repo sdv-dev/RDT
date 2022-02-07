@@ -167,6 +167,9 @@ class DatetimeTransformer(BaseTransformer):
         if self.strip_constant:
             data = data * self.divider
 
+        if not isinstance(data, pd.Series):
+            data = pd.Series(data)
+
         return pd.to_datetime(data)
 
 
