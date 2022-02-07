@@ -1,5 +1,6 @@
 """Transformers for categorical data."""
 
+from random import randint
 from warnings import warn
 
 import numpy as np
@@ -457,6 +458,9 @@ class LabelEncoder(BaseTransformer):
     def _transform(self, data):
         """Replace each category with its corresponding integer value.
 
+        If a category has not been seen before, a random value is assigned.
+        If no categories have been fitted (and `data` is not empty), raise a `ValueError`.
+
         Args:
             data (pandas.Series):
                 Data to transform.
@@ -466,11 +470,17 @@ class LabelEncoder(BaseTransformer):
         """
         unseen_categories = set(pd.unique(data)) - set(self.categories_to_values.keys())
         if unseen_categories:
+            if len(self.categories_to_values) == 0:
+                raise ValueError('No categories have been fitted.')
+
             warn(
                 f'Warning: The data contains new categories {unseen_categories} that were not '
-                'seen in the original data. Assigning them NaN values. If you want to model '
+                'seen in the original data. Assigning them random values. If you want to model '
                 'new categories, please fit the transformer again with the new data.'
             )
+
+            for cat in unseen_categories:
+                self.categories_to_values[cat] = randint(0, len(self.values_to_categories) - 1)
 
         return pd.Series(data).map(self.categories_to_values)
 

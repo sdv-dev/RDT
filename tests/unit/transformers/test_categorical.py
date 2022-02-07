@@ -1552,18 +1552,45 @@ class TestLabelEncoder:
         data = pd.Series([1, 2, 3, 4])
         transformer = LabelEncoder()
         transformer.categories_to_values = {1: 0, 2: 1, 3: 2}
+        transformer.values_to_categories = {0: 1, 1: 2, 2: 3}
 
         # Run
         warning_msg = (
             'Warning: The data contains new categories \\{4\\} that were not seen '
-            'in the original data. Assigning them NaN values. If you want to model '
+            'in the original data. Assigning them random values. If you want to model '
             'new categories, please fit the transformer again with the new data.'
         )
         with pytest.warns(UserWarning, match=warning_msg):
             transformed = transformer._transform(data)
 
         # Assert
-        pd.testing.assert_series_equal(transformed, pd.Series([0, 1, 2, np.nan]))
+        expected = pd.Series([0, 1, 2])
+        pd.testing.assert_series_equal(transformed[:-1], expected)
+
+        assert 0 <= transformed[3] <= 2
+
+    def test__transform_not_categories_fitted(self):
+        """Test the ``_transform`` method without fitting any categories.
+
+        Setup:
+            - create an instance of the ``LabelEncoder``, where
+            ``categories_to_values`` is empty.
+
+        Input:
+            - a pandas series.
+
+        Raises:
+            `ValueError`.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 4])
+        transformer = LabelEncoder()
+        transformer.categories_to_values = {}
+
+        # Run / Assert
+        error_msg = 'No categories have been fitted.'
+        with pytest.raises(ValueError, match=error_msg):
+            transformer._transform(data)
 
     def test__reverse_transform_clips_values(self):
         """Test the ``_reverse_transform`` method with values not in map.
