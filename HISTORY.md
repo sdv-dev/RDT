@@ -58,7 +58,7 @@ To take advantage of this functionality, the following API changes were made:
 
 * The `HyperTransformer` has new initialization parameters that allow users to specify data types for any field in their data as well as
 specify which transformer to use for a field or data type. The parameters are:
-    * `field_transformers` - A dictionary allowing users to specify which transformer to use for a field or derived field. Derived fields
+     * `field_transformers` - A dictionary allowing users to specify which transformer to use for a field or derived field. Derived fields
     are fields created by running `transform` on the input data.
     * `field_data_types` - A dictionary allowing users to specify the data type of a field.
     * `default_data_type_transformers` - A dictionary allowing users to specify the default transformer to use for a data type.
