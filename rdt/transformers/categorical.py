@@ -372,7 +372,8 @@ class OneHotEncoder(BaseTransformer):
             numpy.ndarray.
         """
         data = self._prepare_data(data)
-        unseen_categories = set(pd.unique(data)) - set(self.dummies)
+        unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
+        unseen_categories = unique_data - set(self.dummies)
         if unseen_categories:
             warn(
                 f'Warning: The data contains new categories {unseen_categories} that were not '

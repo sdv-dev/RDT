@@ -1382,25 +1382,25 @@ class TestOneHotEncoder:
         """
         # Setup
         ohe = OneHotEncoder()
-        fit_data = pd.Series(['a', 'b', 'c', 'd'])
+        fit_data = pd.Series([1, 2, 3, np.nan])
         ohe._fit(fit_data)
 
         # Run
         warning_msg = (
-            'Warning: The data contains new categories \\{nan\\} that were not seen '
+            "Warning: The data contains new categories \\{4.0\\} that were not seen "
             'in the original data. Creating a vector of all 0s. If you want to model '
             'new categories, please fit the transformer again with the new data.'
         )
         with pytest.warns(UserWarning, match=warning_msg):
-            transform_data = pd.Series(['a', 'b', np.nan, 'c'])
+            transform_data = pd.Series([1, 2, np.nan, 4])
             out = ohe._transform(transform_data)
 
         # Assert
         expected = np.array([
             [1, 0, 0, 0],
             [0, 1, 0, 0],
-            [0, 0, 0, 0],
-            [0, 0, 1, 0]
+            [0, 0, 0, 1],
+            [0, 0, 0, 0]
         ])
         np.testing.assert_array_equal(out, expected)
 
