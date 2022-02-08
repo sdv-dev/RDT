@@ -5,16 +5,16 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 
-from rdt.transformers import CategoricalTransformer, LabelEncoder, OneHotEncoder
+from rdt.transformers import FrequencyEncoder, LabelEncoder, OneHotEncoder
 
 
 def test_categorical_numerical_nans():
-    """Ensure CategoricalTransformer works on numerical + nan only columns."""
+    """Ensure FrequencyEncoder works on numerical + nan only columns."""
 
     data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
     column = 'column_name'
 
-    transformer = CategoricalTransformer()
+    transformer = FrequencyEncoder()
     transformer.fit(data, column)
     transformed = transformer.transform(data)
     reverse = transformer.reverse_transform(transformed)
@@ -22,13 +22,13 @@ def test_categorical_numerical_nans():
     pd.testing.assert_frame_equal(reverse, data)
 
 
-def test_categoricaltransformer_pickle_nans():
-    """Ensure that CategoricalTransformer can be pickled and loaded with nan value."""
+def test_FrequencyEncoder_pickle_nans():
+    """Ensure that FrequencyEncoder can be pickled and loaded with nan value."""
     # setup
     data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
     column = 'column_name'
 
-    transformer = CategoricalTransformer()
+    transformer = FrequencyEncoder()
     transformer.fit(data, column)
     transformed = transformer.transform(data)
 
@@ -46,10 +46,10 @@ def test_categoricaltransformer_pickle_nans():
     pd.testing.assert_frame_equal(pickle_transformed, transformed)
 
 
-def test_categoricaltransformer_strings():
-    """Test the CategoricalTransformer on string data.
+def test_FrequencyEncoder_strings():
+    """Test the FrequencyEncoder on string data.
 
-    Ensure that the CategoricalTransformer can fit, transform, and reverse
+    Ensure that the FrequencyEncoder can fit, transform, and reverse
     transform on string data. Expect that the reverse transformed data
     is the same as the input.
 
@@ -61,7 +61,7 @@ def test_categoricaltransformer_strings():
     # setup
     data = pd.DataFrame(['a', 'b', 'a', 'c'], columns=['column_name'])
     column = 'column_name'
-    transformer = CategoricalTransformer()
+    transformer = FrequencyEncoder()
 
     # run
     transformer.fit(data, column)
@@ -71,10 +71,10 @@ def test_categoricaltransformer_strings():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-def test_categoricaltransformer_strings_2_categories():
-    """Test the CategoricalTransformer on string data.
+def test_FrequencyEncoder_strings_2_categories():
+    """Test the FrequencyEncoder on string data.
 
-    Ensure that the CategoricalTransformer can fit, transform, and reverse
+    Ensure that the FrequencyEncoder can fit, transform, and reverse
     transform on string data, when there are 2 categories of strings with
     the same value counts. Expect that the reverse transformed data is the
     same as the input.
@@ -87,7 +87,7 @@ def test_categoricaltransformer_strings_2_categories():
     # setup
     data = pd.DataFrame(['a', 'b', 'a', 'b'], columns=['column_name'])
     column = 'column_name'
-    transformer = CategoricalTransformer()
+    transformer = FrequencyEncoder()
 
     transformer.fit(data, column)
     reverse = transformer.reverse_transform(transformer.transform(data))
@@ -96,10 +96,10 @@ def test_categoricaltransformer_strings_2_categories():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-def test_categoricaltransformer_integers():
-    """Test the CategoricalTransformer on integer data.
+def test_FrequencyEncoder_integers():
+    """Test the FrequencyEncoder on integer data.
 
-    Ensure that the CategoricalTransformer can fit, transform, and reverse
+    Ensure that the FrequencyEncoder can fit, transform, and reverse
     transform on integer data. Expect that the reverse transformed data is the
     same as the input.
 
@@ -111,7 +111,7 @@ def test_categoricaltransformer_integers():
     # setup
     data = pd.DataFrame([1, 2, 3, 2], columns=['column_name'])
     column = 'column_name'
-    transformer = CategoricalTransformer()
+    transformer = FrequencyEncoder()
 
     # run
     transformer.fit(data, column)
@@ -121,10 +121,10 @@ def test_categoricaltransformer_integers():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-def test_categoricaltransformer_bool():
-    """Test the CategoricalTransformer on boolean data.
+def test_FrequencyEncoder_bool():
+    """Test the FrequencyEncoder on boolean data.
 
-    Ensure that the CategoricalTransformer can fit, transform, and reverse
+    Ensure that the FrequencyEncoder can fit, transform, and reverse
     transform on boolean data. Expect that the reverse transformed data is the
     same as the input.
 
@@ -136,7 +136,7 @@ def test_categoricaltransformer_bool():
     # setup
     data = pd.DataFrame([True, False, True, False], columns=['column_name'])
     column = 'column_name'
-    transformer = CategoricalTransformer()
+    transformer = FrequencyEncoder()
 
     # run
     transformer.fit(data, column)
@@ -146,10 +146,10 @@ def test_categoricaltransformer_bool():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-def test_categoricaltransformer_mixed():
-    """Test the CategoricalTransformer on mixed type data.
+def test_FrequencyEncoder_mixed():
+    """Test the FrequencyEncoder on mixed type data.
 
-    Ensure that the CategoricalTransformer can fit, transform, and reverse
+    Ensure that the FrequencyEncoder can fit, transform, and reverse
     transform on mixed type data. Expect that the reverse transformed data is
     the same as the input.
 
@@ -161,7 +161,7 @@ def test_categoricaltransformer_mixed():
     # setup
     data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
     column = 'column_name'
-    transformer = CategoricalTransformer()
+    transformer = FrequencyEncoder()
 
     # run
     transformer.fit(data, column)
@@ -172,10 +172,10 @@ def test_categoricaltransformer_mixed():
 
 
 @patch('psutil.virtual_memory')
-def test_categoricaltransformer_mixed_low_virtual_memory(psutil_mock):
-    """Test the CategoricalTransformer on mixed type data with low virtual memory.
+def test_FrequencyEncoder_mixed_low_virtual_memory(psutil_mock):
+    """Test the FrequencyEncoder on mixed type data with low virtual memory.
 
-    Ensure that the CategoricalTransformer can fit, transform, and reverse
+    Ensure that the FrequencyEncoder can fit, transform, and reverse
     transform on mixed type data, when there is low virtual memory. Expect that the
     reverse transformed data is the same as the input.
 
@@ -187,7 +187,7 @@ def test_categoricaltransformer_mixed_low_virtual_memory(psutil_mock):
     # setup
     data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
     column = 'column_name'
-    transformer = CategoricalTransformer()
+    transformer = FrequencyEncoder()
 
     virtual_memory = Mock()
     virtual_memory.available = 1
@@ -202,10 +202,10 @@ def test_categoricaltransformer_mixed_low_virtual_memory(psutil_mock):
 
 
 @patch('psutil.virtual_memory')
-def test_categoricaltransformer_mixed_more_rows(psutil_mock):
-    """Test the CategoricalTransformer on mixed type data with low virtual memory.
+def test_FrequencyEncoder_mixed_more_rows(psutil_mock):
+    """Test the FrequencyEncoder on mixed type data with low virtual memory.
 
-    Ensure that the CategoricalTransformer can fit, transform, and reverse
+    Ensure that the FrequencyEncoder can fit, transform, and reverse
     transform on mixed type data, when there is low virtual memory and a larger
     number of rows. Expect that the reverse transformed data is the same as the input.
 
@@ -218,7 +218,7 @@ def test_categoricaltransformer_mixed_more_rows(psutil_mock):
     data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
     column = 'column_name'
     transform_data = pd.DataFrame(['a', 1, None, 'a', True, 1], columns=['column_name'])
-    transformer = CategoricalTransformer()
+    transformer = FrequencyEncoder()
 
     virtual_memory = Mock()
     virtual_memory.available = 1

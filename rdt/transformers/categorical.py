@@ -10,7 +10,7 @@ from scipy.stats import norm
 from rdt.transformers.base import BaseTransformer
 
 
-class CategoricalTransformer(BaseTransformer):
+class FrequencyEncoder(BaseTransformer):
     """Transformer for categorical data.
 
     This transformer computes a float representative for each one of the categories

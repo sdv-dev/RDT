@@ -307,10 +307,10 @@ class HyperTransformer:
                     transformer: ExampleTransformer instance
                     outputs: [field1.out1, field1.out2]
                 field1.out1:
-                    transformer: CategoricalTransformer instance
+                    transformer: FrequencyEncoder instance
                     outputs: [field1.out1.value]
                 field1.out2:
-                    transformer: CategoricalTransformer instance
+                    transformer: FrequencyEncoder instance
                     outputs: [field1.out2.value]
         """
         modified_tree = deepcopy(self._transformers_tree)

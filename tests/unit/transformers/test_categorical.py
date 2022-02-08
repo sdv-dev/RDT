@@ -5,12 +5,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.categorical import CategoricalTransformer, LabelEncoder, OneHotEncoder
+from rdt.transformers.categorical import FrequencyEncoder, LabelEncoder, OneHotEncoder
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
 
-class TestCategoricalTransformer:
+class TestFrequencyEncoder:
 
     def test___setstate__(self):
         """Test the ``__set_state__`` method.
@@ -18,13 +18,13 @@ class TestCategoricalTransformer:
         Validate that the ``__dict__`` attribute is correctly udpdated when
 
         Setup:
-            - create an instance of a ``CategoricalTransformer``.
+            - create an instance of a ``FrequencyEncoder``.
 
         Side effect:
             - it updates the ``__dict__`` attribute of the object.
         """
         # Setup
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
 
         # Run
         transformer.__setstate__({
@@ -39,7 +39,7 @@ class TestCategoricalTransformer:
     def test___init__(self):
         """Passed arguments must be stored as attributes."""
         # Run
-        transformer = CategoricalTransformer(
+        transformer = FrequencyEncoder(
             fuzzy='fuzzy_value',
             clip='clip_value',
         )
@@ -54,13 +54,13 @@ class TestCategoricalTransformer:
         Validate that this method returs the opposite boolean value of the ``fuzzy`` parameter.
 
         Setup:
-            - initialize a ``CategoricalTransformer`` with ``fuzzy = True``.
+            - initialize a ``FrequencyEncoder`` with ``fuzzy = True``.
 
         Output:
             - the boolean value which is the opposite of ``fuzzy``.
         """
         # Setup
-        transformer = CategoricalTransformer(fuzzy=True)
+        transformer = FrequencyEncoder(fuzzy=True)
 
         # Run
         output = transformer.is_transform_deterministic()
@@ -75,13 +75,13 @@ class TestCategoricalTransformer:
         returns the opposite boolean value of the ``fuzzy`` parameter.
 
         Setup:
-            - initialize a ``CategoricalTransformer`` with ``fuzzy = True``.
+            - initialize a ``FrequencyEncoder`` with ``fuzzy = True``.
 
         Output:
             - the boolean value which is the opposite of ``fuzzy``.
         """
         # Setup
-        transformer = CategoricalTransformer(fuzzy=True)
+        transformer = FrequencyEncoder(fuzzy=True)
 
         # Run
         output = transformer.is_composition_identity()
@@ -103,7 +103,7 @@ class TestCategoricalTransformer:
         """
         # Run
         data = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
-        result = CategoricalTransformer._get_intervals(data)
+        result = FrequencyEncoder._get_intervals(data)
 
         # Asserts
         expected_intervals = {
@@ -157,7 +157,7 @@ class TestCategoricalTransformer:
         data = pd.Series(['foo', np.nan, None, 'foo', 'foo', 'tar'])
 
         # Run
-        result = CategoricalTransformer._get_intervals(data)
+        result = FrequencyEncoder._get_intervals(data)
 
         # Assert
         expected_intervals = {
@@ -196,7 +196,7 @@ class TestCategoricalTransformer:
 
     def test__fit_intervals(self):
         # Setup
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
 
         # Run
         data = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
@@ -239,7 +239,7 @@ class TestCategoricalTransformer:
 
     def test__get_value_no_fuzzy(self):
         # Setup
-        transformer = CategoricalTransformer(fuzzy=False)
+        transformer = FrequencyEncoder(fuzzy=False)
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
             np.nan: (0.5, 1.0, 0.75, 0.5 / 6),
@@ -258,7 +258,7 @@ class TestCategoricalTransformer:
         # setup
         norm_mock.rvs.return_value = 0.2745
 
-        transformer = CategoricalTransformer(fuzzy=True)
+        transformer = FrequencyEncoder(fuzzy=True)
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
@@ -272,7 +272,7 @@ class TestCategoricalTransformer:
     def test__normalize_no_clip(self):
         """Test normalize data"""
         # Setup
-        transformer = CategoricalTransformer(clip=False)
+        transformer = FrequencyEncoder(clip=False)
 
         # Run
         data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
@@ -286,7 +286,7 @@ class TestCategoricalTransformer:
     def test__normalize_clip(self):
         """Test normalize data with clip=True"""
         # Setup
-        transformer = CategoricalTransformer(clip=True)
+        transformer = FrequencyEncoder(clip=True)
 
         # Run
         data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
@@ -302,7 +302,7 @@ class TestCategoricalTransformer:
         # Setup
         data = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
         rt_data = np.array([-0.6, 0.5, 0.6, 0.2, 0.1, -0.2])
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
 
         # Run
         transformer._fit(data)
@@ -360,7 +360,7 @@ class TestCategoricalTransformer:
         categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
 
         # Run
-        transformed = CategoricalTransformer._transform(categorical_transformer_mock, data)
+        transformed = FrequencyEncoder._transform(categorical_transformer_mock, data)
 
         # Asserts
         categorical_transformer_mock._transform_by_category.assert_called_once_with(data)
@@ -382,7 +382,7 @@ class TestCategoricalTransformer:
         """
         # Setup
         data = pd.Series([1, 3, 3, 2, 1])
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
         transformer.intervals = {
             4: (0, 0.25, 0.125, 0.041666666666666664),
             3: (0.25, 0.5, 0.375, 0.041666666666666664),
@@ -414,7 +414,7 @@ class TestCategoricalTransformer:
         """
         # Setup
         data = pd.Series([np.nan, 3, 3, 2, np.nan])
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
         transformer.intervals = {
             4: (0, 0.25, 0.125, 0.041666666666666664),
             3: (0.25, 0.5, 0.375, 0.041666666666666664),
@@ -459,7 +459,7 @@ class TestCategoricalTransformer:
         norm_mock.rvs.side_effect = rvs_mock_func
 
         data = pd.Series([1, 3, 3, 2, 1])
-        transformer = CategoricalTransformer(fuzzy=True)
+        transformer = FrequencyEncoder(fuzzy=True)
         transformer.intervals = {
             4: (0, 0.25, 0.125, 0.041666666666666664),
             3: (0.25, 0.5, 0.375, 0.041666666666666664),
@@ -502,7 +502,7 @@ class TestCategoricalTransformer:
         categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
 
         # Run
-        transformed = CategoricalTransformer._transform(categorical_transformer_mock, data)
+        transformed = FrequencyEncoder._transform(categorical_transformer_mock, data)
 
         # Asserts
         categorical_transformer_mock._transform_by_row.assert_called_once_with(data)
@@ -522,7 +522,7 @@ class TestCategoricalTransformer:
         """
         # Setup
         data = pd.Series([1, 2, 3, 4])
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
         transformer.intervals = {
             4: (0, 0.25, 0.125, 0.041666666666666664),
             3: (0.25, 0.5, 0.375, 0.041666666666666664),
@@ -566,7 +566,7 @@ class TestCategoricalTransformer:
         psutil_mock.return_value = virtual_memory
 
         # Run
-        reverse = CategoricalTransformer._reverse_transform(categorical_transformer_mock, data)
+        reverse = FrequencyEncoder._reverse_transform(categorical_transformer_mock, data)
 
         # Asserts
         categorical_transformer_mock._reverse_transform_by_matrix.assert_called_once_with(data)
@@ -590,7 +590,7 @@ class TestCategoricalTransformer:
         data = pd.Series([1, 2, 3, 4])
         transformed = pd.Series([0.875, 0.625, 0.375, 0.125])
 
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
         transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1])
         transformer.dtype = data.dtype
 
@@ -633,7 +633,7 @@ class TestCategoricalTransformer:
         psutil_mock.return_value = virtual_memory
 
         # Run
-        reverse = CategoricalTransformer._reverse_transform(
+        reverse = FrequencyEncoder._reverse_transform(
             categorical_transformer_mock, transform_data)
 
         # Asserts
@@ -659,7 +659,7 @@ class TestCategoricalTransformer:
         data = pd.Series([1, 3, 3, 2, 1])
         transformed = pd.Series([0.875, 0.375, 0.375, 0.625, 0.875])
 
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
         transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1])
         transformer.intervals = {
             4: (0, 0.25, 0.125, 0.041666666666666664),
@@ -681,7 +681,7 @@ class TestCategoricalTransformer:
         """Test the ``_get_category_from_start`` method.
 
         Setup:
-            - instantiate a ``CategoricalTransformer``, and set the attribute ``starts``
+            - instantiate a ``FrequencyEncoder``, and set the attribute ``starts``
             to a pandas dataframe with ``set_index`` as ``'start'``.
 
         Input:
@@ -691,7 +691,7 @@ class TestCategoricalTransformer:
             - a category from the data.
         """
         # Setup
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
         transformer.starts = pd.DataFrame({
             'start': [0.0, 0.5, 0.7],
             'category': ['a', 'b', 'c']
@@ -735,7 +735,7 @@ class TestCategoricalTransformer:
         psutil_mock.return_value = virtual_memory
 
         # Run
-        reverse = CategoricalTransformer._reverse_transform(categorical_transformer_mock, data)
+        reverse = FrequencyEncoder._reverse_transform(categorical_transformer_mock, data)
 
         # Asserts
         categorical_transformer_mock._reverse_transform_by_row.assert_called_once_with(data)
@@ -760,7 +760,7 @@ class TestCategoricalTransformer:
         data = pd.Series([1, 2, 3, 4])
         transformed = pd.Series([0.875, 0.625, 0.375, 0.125])
 
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
         transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1])
         transformer.starts = pd.DataFrame(
             [4, 3, 2, 1], index=[0., 0.25, 0.5, 0.75], columns=['category'])
