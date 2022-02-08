@@ -20,14 +20,14 @@ class TestNullTransformer:
 
         Expected Side Effects:
             - The `missing_value_replacement` attribute should be `None`.
-            - The `model_missing_values` attribute should be `None`.
+            - The `_model_missing_values` attribute should be `None`.
         """
         # Run
         transformer = NullTransformer()
 
         # Assert
         assert transformer.missing_value_replacement is None
-        assert not transformer.model_missing_values
+        assert not transformer._model_missing_values
 
     def test___init__not_default(self):
         """Test the initialization passing values different than defaults.
@@ -46,7 +46,7 @@ class TestNullTransformer:
 
         # Assert
         assert transformer.missing_value_replacement == 'a_missing_value_replacement'
-        assert not transformer.model_missing_values
+        assert not transformer._model_missing_values
 
     def test_models_missing_values(self):
         """Test the models_missing_values method.

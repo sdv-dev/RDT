@@ -20,24 +20,20 @@ class NullTransformer():
     Args:
         missing_value_replacement (object or None):
             Value to replace nulls, or strategy to compute the value, which can
-            be ``mean`` or ``mode``. If ``None`` is given, the ``mean`` or ``mode``
-            strategy will be applied depending on whether the input data is numerical
-            or not. Defaults to `None`.
+            be ``mean`` or ``mode``. If ``None`` is given the missing values will not be
+            replaced. Defaults to `None`.
         model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not.
-            If ``None``, only create a new column when the data contains null values.
-            If ``True``, always create the new column whether there are null values or not.
-            If ``False``, do not create the new column.
-            Defaults to ``None``.
+            If ``True``, create the new column it there are null values.
+            If ``False``, do not create the new column. Defaults to ``False``.
     """
 
     nulls = None
     _model_missing_values = None
-    _missing_value_replacement = None
+    _missing_value_replacement = False
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False):
         self.missing_value_replacement = missing_value_replacement
-        self.model_missing_values = model_missing_values
         self._model_missing_values = model_missing_values
 
     def models_missing_values(self):
