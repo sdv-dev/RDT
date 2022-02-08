@@ -27,12 +27,9 @@ class FrequencyEncoder(BaseTransformer):
     Null values are considered just another category.
 
     Args:
-        fuzzy (bool):
+        add_noise (bool):
             Whether to generate gaussian noise around the class representative of each interval
             or just use the mean for all the replaced values. Defaults to ``False``.
-        clip (bool):
-            If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
-            Defaults to ``False``.
     """
 
     INPUT_TYPE = 'categorical'
@@ -57,9 +54,8 @@ class FrequencyEncoder(BaseTransformer):
 
         self.__dict__ = state
 
-    def __init__(self, fuzzy=False, clip=False):
-        self.fuzzy = fuzzy
-        self.clip = clip
+    def __init__(self, add_noise=False):
+        self.add_noise = add_noise
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -68,7 +64,7 @@ class FrequencyEncoder(BaseTransformer):
             bool:
                 Whether or not the transform is deterministic.
         """
-        return not self.fuzzy
+        return not self.add_noise
 
     def is_composition_identity(self):
         """Return whether composition of transform and reverse transform produces the input data.
@@ -77,7 +73,7 @@ class FrequencyEncoder(BaseTransformer):
             bool:
                 Whether or not transforming and then reverse transforming returns the input data.
         """
-        return self.COMPOSITION_IS_IDENTITY and not self.fuzzy
+        return self.COMPOSITION_IS_IDENTITY and not self.add_noise
 
     @staticmethod
     def _get_intervals(data):
@@ -147,7 +143,7 @@ class FrequencyEncoder(BaseTransformer):
             else:
                 mask = (data.to_numpy() == category)
 
-            if self.fuzzy:
+            if self.add_noise:
                 result[mask] = norm.rvs(mean, std, size=mask.sum())
             else:
                 result[mask] = mean
@@ -161,7 +157,7 @@ class FrequencyEncoder(BaseTransformer):
 
         mean, std = self.intervals[category][2:]
 
-        if self.fuzzy:
+        if self.add_noise:
             return norm.rvs(mean, std)
 
         return mean
@@ -186,16 +182,6 @@ class FrequencyEncoder(BaseTransformer):
             return self._transform_by_category(data)
 
         return self._transform_by_row(data)
-
-    def _normalize(self, data):
-        """Normalize data to the range [0, 1].
-
-        This is done by either clipping or computing the values modulo 1.
-        """
-        if self.clip:
-            return data.clip(0, 1)
-
-        return data % 1
 
     def _reverse_transform_by_matrix(self, data):
         """Reverse transform the data with matrix operations."""
@@ -240,8 +226,7 @@ class FrequencyEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
-        data = self._normalize(data)
-
+        data = data.clip(0, 1)
         num_rows = len(data)
         num_categories = len(self.means)
 

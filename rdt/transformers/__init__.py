@@ -54,7 +54,7 @@ DEFAULT_TRANSFORMERS = {
     'numerical': NumericalTransformer,
     'integer': NumericalTransformer(dtype=np.int64),
     'float': NumericalTransformer(dtype=np.float64),
-    'categorical': FrequencyEncoder(fuzzy=True),
+    'categorical': FrequencyEncoder(add_noise=True),
     'boolean': BooleanTransformer,
     'datetime': UnixTimestampEncoder,
 }

@@ -250,7 +250,7 @@ class TestHyperTransformer(TestCase):
             - The default transformer.
         """
         # Setup
-        transformer = FrequencyEncoder(fuzzy=True)
+        transformer = FrequencyEncoder(add_noise=True)
         mock.return_value = transformer
         ht = HyperTransformer(
             default_data_type_transformers={'categorical': OneHotEncoder()}
@@ -261,7 +261,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         assert isinstance(next_transformer, FrequencyEncoder)
-        assert next_transformer.fuzzy is True
+        assert next_transformer.add_noise is True
 
     def test__populate_field_data_types(self):
         """Test the ``_populate_field_data_types`` method.

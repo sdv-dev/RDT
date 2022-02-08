@@ -39,28 +39,24 @@ class TestFrequencyEncoder:
     def test___init__(self):
         """Passed arguments must be stored as attributes."""
         # Run
-        transformer = FrequencyEncoder(
-            fuzzy='fuzzy_value',
-            clip='clip_value',
-        )
+        transformer = FrequencyEncoder(add_noise='add_noise_value')
 
         # Asserts
-        assert transformer.fuzzy == 'fuzzy_value'
-        assert transformer.clip == 'clip_value'
+        assert transformer.add_noise == 'add_noise_value'
 
     def test_is_transform_deterministic(self):
         """Test the ``is_transform_deterministic`` method.
 
-        Validate that this method returs the opposite boolean value of the ``fuzzy`` parameter.
+        Validate the method returns the opposite boolean value of the ``add_noise`` parameter.
 
         Setup:
-            - initialize a ``FrequencyEncoder`` with ``fuzzy = True``.
+            - initialize a ``FrequencyEncoder`` with ``add_noise = True``.
 
         Output:
-            - the boolean value which is the opposite of ``fuzzy``.
+            - the boolean value which is the opposite of ``add_noise``.
         """
         # Setup
-        transformer = FrequencyEncoder(fuzzy=True)
+        transformer = FrequencyEncoder(add_noise=True)
 
         # Run
         output = transformer.is_transform_deterministic()
@@ -72,16 +68,16 @@ class TestFrequencyEncoder:
         """Test the ``is_composition_identity`` method.
 
         Since ``COMPOSITION_IS_IDENTITY`` is True, just validates that the method
-        returns the opposite boolean value of the ``fuzzy`` parameter.
+        returns the opposite boolean value of the ``add_noise`` parameter.
 
         Setup:
-            - initialize a ``FrequencyEncoder`` with ``fuzzy = True``.
+            - initialize a ``FrequencyEncoder`` with ``add_noise = True``.
 
         Output:
-            - the boolean value which is the opposite of ``fuzzy``.
+            - the boolean value which is the opposite of ``add_noise``.
         """
         # Setup
-        transformer = FrequencyEncoder(fuzzy=True)
+        transformer = FrequencyEncoder(add_noise=True)
 
         # Run
         output = transformer.is_composition_identity()
@@ -237,9 +233,9 @@ class TestFrequencyEncoder:
         pd.testing.assert_series_equal(transformer.means, expected_means)
         pd.testing.assert_frame_equal(transformer.starts, expected_starts)
 
-    def test__get_value_no_fuzzy(self):
+    def test__get_value_no_add_noise(self):
         # Setup
-        transformer = FrequencyEncoder(fuzzy=False)
+        transformer = FrequencyEncoder(add_noise=False)
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
             np.nan: (0.5, 1.0, 0.75, 0.5 / 6),
@@ -254,11 +250,11 @@ class TestFrequencyEncoder:
         assert result_nan == 0.75
 
     @patch('rdt.transformers.categorical.norm')
-    def test__get_value_fuzzy(self, norm_mock):
+    def test__get_value_add_noise(self, norm_mock):
         # setup
         norm_mock.rvs.return_value = 0.2745
 
-        transformer = FrequencyEncoder(fuzzy=True)
+        transformer = FrequencyEncoder(add_noise=True)
         transformer.intervals = {
             'foo': (0, 0.5, 0.25, 0.5 / 6),
         }
@@ -268,34 +264,6 @@ class TestFrequencyEncoder:
 
         # Asserts
         assert result == 0.2745
-
-    def test__normalize_no_clip(self):
-        """Test normalize data"""
-        # Setup
-        transformer = FrequencyEncoder(clip=False)
-
-        # Run
-        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
-        result = transformer._normalize(data)
-
-        # Asserts
-        expect = pd.Series([0.57, 0.1234, 0.5, 0.69], dtype=float)
-
-        pd.testing.assert_series_equal(result, expect)
-
-    def test__normalize_clip(self):
-        """Test normalize data with clip=True"""
-        # Setup
-        transformer = FrequencyEncoder(clip=True)
-
-        # Run
-        data = pd.Series([-0.43, 0.1234, 1.5, -1.31])
-        result = transformer._normalize(data)
-
-        # Asserts
-        expect = pd.Series([0.0, 0.1234, 1.0, 0.0], dtype=float)
-
-        pd.testing.assert_series_equal(result, expect)
 
     def test__reverse_transform_array(self):
         """Test reverse_transform a numpy.array"""
@@ -332,7 +300,7 @@ class TestFrequencyEncoder:
 
         assert transformer.intervals == expected_intervals
 
-        expect = pd.Series(data)
+        expect = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'foo'])
         pd.testing.assert_series_equal(result, expect)
 
     def test__transform_by_category_called(self):
@@ -430,13 +398,13 @@ class TestFrequencyEncoder:
         assert (transformed == expected).all()
 
     @patch('rdt.transformers.categorical.norm')
-    def test__transform_by_category_fuzzy_true(self, norm_mock):
-        """Test the ``_transform_by_category`` method when ``fuzzy`` is True.
+    def test__transform_by_category_add_noise_true(self, norm_mock):
+        """Test the ``_transform_by_category`` method when ``add_noise`` is True.
 
-        Validate that the data is transformed correctly when ``fuzzy`` is True.
+        Validate that the data is transformed correctly when ``add_noise`` is True.
 
         Setup:
-            - the categorical transformer is instantiated with ``fuzzy`` as True,
+            - the categorical transformer is instantiated with ``add_noise`` as True,
             and the appropriate ``intervals`` attribute is set.
             - the ``intervals`` attribute is set to a a dictionary of intervals corresponding
             to the elements of the passed data.
@@ -459,7 +427,7 @@ class TestFrequencyEncoder:
         norm_mock.rvs.side_effect = rvs_mock_func
 
         data = pd.Series([1, 3, 3, 2, 1])
-        transformer = FrequencyEncoder(fuzzy=True)
+        transformer = FrequencyEncoder(add_noise=True)
         transformer.intervals = {
             4: (0, 0.25, 0.125, 0.041666666666666664),
             3: (0.25, 0.5, 0.375, 0.041666666666666664),
@@ -559,7 +527,6 @@ class TestFrequencyEncoder:
 
         categorical_transformer_mock = Mock()
         categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
-        categorical_transformer_mock._normalize.return_value = data
 
         virtual_memory = Mock()
         virtual_memory.available = 4 * 4 * 8 * 3 + 1
@@ -569,7 +536,8 @@ class TestFrequencyEncoder:
         reverse = FrequencyEncoder._reverse_transform(categorical_transformer_mock, data)
 
         # Asserts
-        categorical_transformer_mock._reverse_transform_by_matrix.assert_called_once_with(data)
+        reverse_arg = categorical_transformer_mock._reverse_transform_by_matrix.call_args[0][0]
+        np.testing.assert_array_equal(reverse_arg, data.clip(0, 1))
         assert reverse == categorical_transformer_mock._reverse_transform_by_matrix.return_value
 
     @patch('psutil.virtual_memory')
@@ -626,7 +594,6 @@ class TestFrequencyEncoder:
 
         categorical_transformer_mock = Mock()
         categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
-        categorical_transformer_mock._normalize.return_value = transform_data
 
         virtual_memory = Mock()
         virtual_memory.available = 1
@@ -637,8 +604,8 @@ class TestFrequencyEncoder:
             categorical_transformer_mock, transform_data)
 
         # Asserts
-        categorical_transformer_mock._reverse_transform_by_category.assert_called_once_with(
-            transform_data)
+        reverse_arg = categorical_transformer_mock._reverse_transform_by_category.call_args[0][0]
+        np.testing.assert_array_equal(reverse_arg, transform_data.clip(0, 1))
         assert reverse == categorical_transformer_mock._reverse_transform_by_category.return_value
 
     @patch('psutil.virtual_memory')
@@ -738,7 +705,8 @@ class TestFrequencyEncoder:
         reverse = FrequencyEncoder._reverse_transform(categorical_transformer_mock, data)
 
         # Asserts
-        categorical_transformer_mock._reverse_transform_by_row.assert_called_once_with(data)
+        reverse_arg = categorical_transformer_mock._reverse_transform_by_row.call_args[0][0]
+        np.testing.assert_array_equal(reverse_arg, data.clip(0, 1))
         assert reverse == categorical_transformer_mock._reverse_transform_by_row.return_value
 
     @patch('psutil.virtual_memory')
