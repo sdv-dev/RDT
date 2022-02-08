@@ -482,21 +482,14 @@ class LabelEncoder(BaseTransformer):
                 'new categories, please fit the transformer again with the new data.'
             )
 
-        if np.nan in categories:
-            nan_value = None
-            for key, value in self.categories_to_values.items():
-                if pd.isna(key):
-                    nan_value = value
-                    break
+        mapped_data = pd.Series(data).map(self.categories_to_values)
 
-        def map_function(category):
-            if pd.isna(category) and np.nan not in unseen_categories:
-                return nan_value
-            return self.categories_to_values.get(
-                category, np.random.randint(0, len(self.values_to_categories))
-            )
+        def map_function(value):
+            if pd.isna(value):
+                return np.random.randint(0, len(self.values_to_categories))
+            return value
 
-        return pd.Series(data).map(map_function)
+        return mapped_data.apply(map_function).astype('int64')
 
     def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.

@@ -1567,9 +1567,42 @@ class TestLabelEncoder:
         expected = pd.Series([0, 1, 2])
         pd.testing.assert_series_equal(transformed[:-1], expected)
 
-        assert 0 <= transformed[3] <= 2
+        assert [0 <= transformed[3] <= 2]
 
-    def test__transform_not_categories_fitted(self):
+    def test__transform_unseen_categories(self):
+        """Test the ``_transform`` method with multiple unseen categories.
+
+        Validate that each category of the passed data is replaced with its corresponding
+        integer value.
+
+        Setup:
+            - create an instance of the ``LabelEncoder``, where ``categories_to_values``
+            and ``values_to_categories`` are set to dictionaries.
+
+        Input:
+            - a pandas series.
+
+        Output:
+            - a numpy array containing the transformed data.
+        """
+        # Setup
+        fit_data = pd.Series(['a', 2, True])
+        transformer = LabelEncoder()
+        transformer.categories_to_values = {'a': 0, 2: 1, True: 2}
+        transformer.values_to_categories = {0: 'a', 1: 2, 2: True}
+
+        # Run
+        with pytest.warns(UserWarning):
+            transform_data = pd.Series(['a', 2, True, np.nan, np.nan, np.nan, 'b', False, 3])
+            transformed = transformer._transform(transform_data)
+
+        # Assert
+        expected = pd.Series([0, 1, 2])
+        pd.testing.assert_series_equal(transformed[:3], expected)
+
+        assert all([0 <= value < len(fit_data) for value in transformed[3:]])
+
+    def test__transform_no_categories_fitted(self):
         """Test the ``_transform`` method without fitting any categories.
 
         Setup:
