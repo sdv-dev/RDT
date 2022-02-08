@@ -47,7 +47,7 @@ class BooleanTransformer(BaseTransformer):
         output_types = {
             'value': 'float',
         }
-        if self.null_transformer and self.null_transformer.creates_model_missing_values():
+        if self.null_transformer and self.null_transformer.models_missing_values():
             output_types['is_null'] = 'float'
 
         return self._add_prefix(output_types)
@@ -63,7 +63,7 @@ class BooleanTransformer(BaseTransformer):
             self.missing_value_replacement,
             self.model_missing_values
         )
-        self.null_transformer.fit(data, self.get_input_column())
+        self.null_transformer.fit(data)
 
     def _transform(self, data):
         """Transform boolean to float.

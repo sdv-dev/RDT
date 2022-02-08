@@ -86,7 +86,7 @@ class NumericalTransformer(BaseTransformer):
         output_types = {
             'value': 'float',
         }
-        if self.null_transformer and self.null_transformer.creates_model_missing_values():
+        if self.null_transformer and self.null_transformer.models_missing_values():
             output_types['is_null'] = 'float'
 
         return self._add_prefix(output_types)
@@ -98,7 +98,7 @@ class NumericalTransformer(BaseTransformer):
             bool:
                 Whether or not transforming and then reverse transforming returns the input data.
         """
-        if self.null_transformer and not self.null_transformer.creates_model_missing_values():
+        if self.null_transformer and not self.null_transformer.models_missing_values():
             return False
 
         return self.COMPOSITION_IS_IDENTITY
@@ -145,7 +145,7 @@ class NumericalTransformer(BaseTransformer):
             self.missing_value_replacement,
             self.model_missing_values
         )
-        self.null_transformer.fit(data, self.get_input_column())
+        self.null_transformer.fit(data)
 
     def _transform(self, data):
         """Transform numerical data.
@@ -484,7 +484,7 @@ class BayesGMMTransformer(NumericalTransformer):
             'normalized': 'float',
             'component': 'categorical'
         }
-        if self.null_transformer and self.null_transformer.creates_model_missing_values():
+        if self.null_transformer and self.null_transformer.models_missing_values():
             output_types['is_null'] = 'float'
 
         return self._add_prefix(output_types)
@@ -548,7 +548,7 @@ class BayesGMMTransformer(NumericalTransformer):
         normalized = np.clip(normalized, -.99, .99)
         normalized = normalized[:, 0]
         rows = [normalized, selected_component]
-        if self.null_transformer and self.null_transformer.creates_model_missing_values():
+        if self.null_transformer and self.null_transformer.models_missing_values():
             rows.append(model_missing_values)
 
         return np.stack(rows, axis=1)  # noqa: PD013
@@ -579,7 +579,7 @@ class BayesGMMTransformer(NumericalTransformer):
             data = data.to_numpy()
 
         recovered_data = self._reverse_transform_helper(data)
-        if self.null_transformer and self.null_transformer.creates_model_missing_values():
+        if self.null_transformer and self.null_transformer.models_missing_values():
             data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
         else:
             data = recovered_data

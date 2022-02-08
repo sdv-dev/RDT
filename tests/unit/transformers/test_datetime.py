@@ -329,7 +329,6 @@ class TestDatetimeTransformer:
         # Setup
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
         transformer = DatetimeTransformer()
-        transformer.columns = ['column']
 
         # Run
         transformer._fit(data)
@@ -378,7 +377,6 @@ class TestDatetimeTransformer:
     def test__reverse_transform_all_none(self):
         dt = pd.to_datetime(['2020-01-01'])
         dtt = DatetimeTransformer(missing_value_replacement='mean', strip_constant=True)
-        dtt.columns = ['column']
         dtt._fit(dt)
 
         output = dtt._reverse_transform(pd.Series([None]))
@@ -400,7 +398,6 @@ class TestDatetimeTransformer:
         # Setup
         dt = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
         dtt = DatetimeTransformer(missing_value_replacement=None, strip_constant=True)
-        dtt.columns = ['column']
         dtt._fit(dt)
         transformed = np.array([[18262.], [18293.], [18322.]])
 

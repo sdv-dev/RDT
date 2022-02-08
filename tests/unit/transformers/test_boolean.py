@@ -64,7 +64,6 @@ class TestBooleanTransformer(TestCase):
 
         # Run
         transformer = BooleanTransformer(missing_value_replacement=None)
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -78,7 +77,6 @@ class TestBooleanTransformer(TestCase):
 
         # Run
         transformer = BooleanTransformer(missing_value_replacement=0)
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -91,7 +89,6 @@ class TestBooleanTransformer(TestCase):
 
         # Run
         transformer = BooleanTransformer(missing_value_replacement=0)
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -146,7 +143,6 @@ class TestBooleanTransformer(TestCase):
 
         # Run
         transformer = Mock()
-        transformer.columns = ['column']
         transformer.missing_value_replacement = None
 
         result = BooleanTransformer._reverse_transform(transformer, data)

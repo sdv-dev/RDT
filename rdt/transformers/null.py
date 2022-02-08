@@ -40,7 +40,7 @@ class NullTransformer():
         self.model_missing_values = model_missing_values
         self._model_missing_values = model_missing_values
 
-    def creates_model_missing_values(self):
+    def models_missing_values(self):
         """Indicate whether this transformer creates a null column on transform.
 
         Returns:
@@ -73,7 +73,7 @@ class NullTransformer():
 
         return missing_value_replacement
 
-    def fit(self, data, column):
+    def fit(self, data):
         """Fit the transformer to the data.
 
         Evaluate if the transformer has to create the null column or not.
@@ -89,7 +89,7 @@ class NullTransformer():
         if not self.nulls and self._model_missing_values:
             self._model_missing_values = False
             guidance_message = (
-                f'Guidance: There are no missing values in column {column}. '
+                f'Guidance: There are no missing values in column {data.name}. '
                 'Extra column not created.'
             )
             LOGGER.info(guidance_message)

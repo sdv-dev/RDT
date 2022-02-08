@@ -59,7 +59,7 @@ class DatetimeTransformer(BaseTransformer):
             bool:
                 Whether or not transforming and then reverse transforming returns the input data.
         """
-        if self.null_transformer and not self.null_transformer.creates_model_missing_values():
+        if self.null_transformer and not self.null_transformer.models_missing_values():
             return False
 
         return self.COMPOSITION_IS_IDENTITY
@@ -74,7 +74,7 @@ class DatetimeTransformer(BaseTransformer):
         output_types = {
             'value': 'float',
         }
-        if self.null_transformer and self.null_transformer.creates_model_missing_values():
+        if self.null_transformer and self.null_transformer.models_missing_values():
             output_types['is_null'] = 'float'
 
         return self._add_prefix(output_types)
@@ -129,7 +129,7 @@ class DatetimeTransformer(BaseTransformer):
             self.missing_value_replacement,
             self.model_missing_values
         )
-        self.null_transformer.fit(transformed, self.get_input_column())
+        self.null_transformer.fit(transformed)
 
     def _transform(self, data):
         """Transform datetime values to float values.

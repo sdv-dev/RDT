@@ -221,7 +221,6 @@ class TestNumericalTransformer(TestCase):
             dtype=float,
             missing_value_replacement='missing_value_replacement'
         )
-        transformer.columns = ['column']
 
         # Run
         transformer._fit(data)
@@ -253,7 +252,6 @@ class TestNumericalTransformer(TestCase):
             missing_value_replacement='missing_value_replacement',
             rounding=None
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -282,7 +280,6 @@ class TestNumericalTransformer(TestCase):
             missing_value_replacement='missing_value_replacement',
             rounding=expected_digits
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -310,7 +307,6 @@ class TestNumericalTransformer(TestCase):
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -340,7 +336,6 @@ class TestNumericalTransformer(TestCase):
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -371,7 +366,6 @@ class TestNumericalTransformer(TestCase):
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -400,7 +394,6 @@ class TestNumericalTransformer(TestCase):
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -427,7 +420,6 @@ class TestNumericalTransformer(TestCase):
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -455,7 +447,6 @@ class TestNumericalTransformer(TestCase):
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -483,7 +474,6 @@ class TestNumericalTransformer(TestCase):
             min_value=None,
             max_value=None
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -511,7 +501,6 @@ class TestNumericalTransformer(TestCase):
             min_value=1,
             max_value=10
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -540,7 +529,6 @@ class TestNumericalTransformer(TestCase):
             min_value='auto',
             max_value='auto'
         )
-        transformer.columns = ['column']
         transformer._fit(data)
 
         # Asserts
@@ -1126,7 +1114,6 @@ class TestGaussianCopulaTransformer:
         data = pd.Series([0.0, np.nan, 1.0])
         ct = GaussianCopulaTransformer(missing_value_replacement='mean')
         ct._get_univariate = Mock()
-        ct.columns = ['column']
 
         # Run
         ct._fit(data)
@@ -1161,7 +1148,6 @@ class TestGaussianCopulaTransformer:
             model_missing_values=True
         )
         ct._get_univariate = Mock()
-        ct.columns = ['column']
 
         # Run
         ct._fit(data)
@@ -1226,7 +1212,7 @@ class TestGaussianCopulaTransformer:
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
         ct.null_transformer = NullTransformer(None, model_missing_values=True)
-        ct.null_transformer.fit(data, 'column')
+        ct.null_transformer.fit(data)
 
         # Run
         transformed_data = ct._transform(data)
@@ -1262,12 +1248,11 @@ class TestGaussianCopulaTransformer:
         ])
         ct = GaussianCopulaTransformer()
         ct._univariate = Mock()
-        ct.columns = ['column']
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
         ct.null_transformer = NullTransformer('mean', model_missing_values=None)
 
         # Run
-        ct.null_transformer.fit(data, 'column')
+        ct.null_transformer.fit(data)
         transformed_data = ct._transform(data)
 
         # Assert
@@ -1309,7 +1294,7 @@ class TestGaussianCopulaTransformer:
         )
 
         # Run
-        ct.null_transformer.fit(expected, 'column')
+        ct.null_transformer.fit(expected)
         transformed_data = ct._reverse_transform(data)
 
         # Assert
@@ -1346,7 +1331,7 @@ class TestGaussianCopulaTransformer:
         ct.null_transformer = NullTransformer(None, model_missing_values=None)
 
         # Run
-        ct.null_transformer.fit(expected, 'column')
+        ct.null_transformer.fit(expected)
         transformed_data = ct._reverse_transform(data)
 
         # Assert
@@ -1417,7 +1402,6 @@ class TestBayesGMMTransformer(TestCase):
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
         transformer = BayesGMMTransformer(max_clusters=10, weight_threshold=0.005)
         data = pd.Series(np.random.random(size=100))
-        transformer.columns = ['column']
 
         # Run
         transformer._fit(data)
@@ -1454,7 +1438,6 @@ class TestBayesGMMTransformer(TestCase):
             weight_threshold=0.005,
             model_missing_values=True
         )
-        transformer.columns = ['column']
 
         data = pd.Series(np.random.random(size=100))
         mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
@@ -1466,7 +1449,7 @@ class TestBayesGMMTransformer(TestCase):
         # Asserts
         assert transformer._bgm_transformer == bgm_instance
         assert transformer.valid_component_indicator.sum() == 2
-        assert transformer.null_transformer.creates_model_missing_values()
+        assert transformer.null_transformer.models_missing_values()
 
     def test__transform(self):
         """Test ``_transform``.
@@ -1594,7 +1577,7 @@ class TestBayesGMMTransformer(TestCase):
         data = pd.Series([0.01, np.nan, -0.01, -0.01, 0.0, 0.99, 0.97, np.nan, np.nan, 0.97])
 
         # Run
-        transformer.null_transformer.fit(data, 'column')
+        transformer.null_transformer.fit(data)
         output = transformer._transform(data)
 
         # Asserts
@@ -1746,7 +1729,7 @@ class TestBayesGMMTransformer(TestCase):
         ])
 
         transformer.null_transformer = NullTransformer('mean', model_missing_values=True)
-        transformer.null_transformer.fit(pd.Series([0, np.nan]), 'column')
+        transformer.null_transformer.fit(pd.Series([0, np.nan]))
 
         data = np.array([
             [-0.033, -0.046, -0.058, -0.058, -0.046, 0.134, 0.122, -0.046, -0.046, 0.122],

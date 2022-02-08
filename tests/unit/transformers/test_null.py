@@ -48,8 +48,8 @@ class TestNullTransformer:
         assert transformer.missing_value_replacement == 'a_missing_value_replacement'
         assert not transformer.model_missing_values
 
-    def test_creates_model_missing_values(self):
-        """Test the creates_model_missing_values method.
+    def test_models_missing_values(self):
+        """Test the models_missing_values method.
 
         If the `model_missing_values` attributes evalutes to True, the
         `create_model_missing_values` method should return the same value.
@@ -65,10 +65,10 @@ class TestNullTransformer:
         transformer._model_missing_values = True
 
         # Run
-        creates_model_missing_values = transformer.creates_model_missing_values()
+        models_missing_values = transformer.models_missing_values()
 
         # Assert
-        assert creates_model_missing_values
+        assert models_missing_values
 
     def test__get_missing_value_replacement_scalar(self):
         """Test _get_missing_value_replacement when a scalar value is passed.
@@ -255,7 +255,7 @@ class TestNullTransformer:
 
         # Run
         data = pd.Series([1, 2, np.nan])
-        transformer.fit(data, 'column')
+        transformer.fit(data)
 
         # Assert
         assert transformer.nulls
@@ -286,7 +286,7 @@ class TestNullTransformer:
 
         # Run
         data = pd.Series(['a', 'b', 'b'])
-        transformer.fit(data, 'column')
+        transformer.fit(data)
 
         # Assert
         assert not transformer.nulls
@@ -337,10 +337,10 @@ class TestNullTransformer:
         no_nulls_int = pd.Series([1, 2, 3, 4])
 
         # Run
-        model_missing_values_false_nulls.fit(nulls_str, 'column')
-        model_missing_values_false_no_nulls.fit(no_nulls_str, 'column')
-        model_missing_values_true_nulls.fit(nulls_int, 'column')
-        model_missing_values_true_no_nulls.fit(no_nulls_int, 'column')
+        model_missing_values_false_nulls.fit(nulls_str)
+        model_missing_values_false_no_nulls.fit(no_nulls_str)
+        model_missing_values_true_nulls.fit(nulls_int)
+        model_missing_values_true_no_nulls.fit(no_nulls_int)
 
         # Assert
         assert not model_missing_values_false_nulls._model_missing_values
