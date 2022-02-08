@@ -22,7 +22,7 @@ def test_categorical_numerical_nans():
     pd.testing.assert_frame_equal(reverse, data)
 
 
-def test_FrequencyEncoder_pickle_nans():
+def test_frequency_encoder_pickle_nans():
     """Ensure that FrequencyEncoder can be pickled and loaded with nan value."""
     # setup
     data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
@@ -46,7 +46,7 @@ def test_FrequencyEncoder_pickle_nans():
     pd.testing.assert_frame_equal(pickle_transformed, transformed)
 
 
-def test_FrequencyEncoder_strings():
+def test_frequency_encoder_strings():
     """Test the FrequencyEncoder on string data.
 
     Ensure that the FrequencyEncoder can fit, transform, and reverse
@@ -71,7 +71,7 @@ def test_FrequencyEncoder_strings():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-def test_FrequencyEncoder_strings_2_categories():
+def test_frequency_encoder_strings_2_categories():
     """Test the FrequencyEncoder on string data.
 
     Ensure that the FrequencyEncoder can fit, transform, and reverse
@@ -96,7 +96,7 @@ def test_FrequencyEncoder_strings_2_categories():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-def test_FrequencyEncoder_integers():
+def test_frequency_encoder_integers():
     """Test the FrequencyEncoder on integer data.
 
     Ensure that the FrequencyEncoder can fit, transform, and reverse
@@ -121,7 +121,7 @@ def test_FrequencyEncoder_integers():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-def test_FrequencyEncoder_bool():
+def test_frequency_encoder_bool():
     """Test the FrequencyEncoder on boolean data.
 
     Ensure that the FrequencyEncoder can fit, transform, and reverse
@@ -146,7 +146,7 @@ def test_FrequencyEncoder_bool():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-def test_FrequencyEncoder_mixed():
+def test_frequency_encoder_mixed():
     """Test the FrequencyEncoder on mixed type data.
 
     Ensure that the FrequencyEncoder can fit, transform, and reverse
@@ -172,7 +172,7 @@ def test_FrequencyEncoder_mixed():
 
 
 @patch('psutil.virtual_memory')
-def test_FrequencyEncoder_mixed_low_virtual_memory(psutil_mock):
+def test_frequency_encoder_mixed_low_virtual_memory(psutil_mock):
     """Test the FrequencyEncoder on mixed type data with low virtual memory.
 
     Ensure that the FrequencyEncoder can fit, transform, and reverse
@@ -202,7 +202,7 @@ def test_FrequencyEncoder_mixed_low_virtual_memory(psutil_mock):
 
 
 @patch('psutil.virtual_memory')
-def test_FrequencyEncoder_mixed_more_rows(psutil_mock):
+def test_frequency_encoder_mixed_more_rows(psutil_mock):
     """Test the FrequencyEncoder on mixed type data with low virtual memory.
 
     Ensure that the FrequencyEncoder can fit, transform, and reverse
