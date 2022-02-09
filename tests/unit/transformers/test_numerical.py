@@ -134,7 +134,7 @@ class TestNumericalTransformer(TestCase):
 
         Input:
         - An array that contains floats with a maximum of 3 decimals and a
-          missing_value_replacement.
+          NaN.
         Output:
         - 3
         """
