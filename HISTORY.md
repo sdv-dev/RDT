@@ -19,7 +19,7 @@ The exact methods are:
 * `HyperTransformer.get_transformer_tree_yaml()` - Return YAML representation of transformers tree.
 
 Additionally, this release fixes a bug where the `HyperTransformer` was incorrectly raising a `NotFittedError`. It also improved the
-`DatetimeTransformer` by autonomously detecting if a column needs to be converted from `dtype` `object` to `dtype` `datetime`.
+`UnixTimestampEncoder` by autonomously detecting if a column needs to be converted from `dtype` `object` to `dtype` `datetime`.
 
 ### New Features
 
@@ -148,7 +148,7 @@ This release fixes a couple of bugs introduced by the previous release regarding
 ## 0.5.1 - 2021-08-11
 
 This release improves the overall performance of the library, both in terms of memory and time consumption.
-More specifically, it makes the following modules more efficient: `NullTransformer`, `DatetimeTransformer`,
+More specifically, it makes the following modules more efficient: `NullTransformer`, `UnixTimestampEncoder`,
 `LabelEncodingTransformer`, `NumericalTransformer`, `CategoricalTransformer`, `BooleanTransformer` and `OneHotEncodingTransformer`.
 
 It also adds performance-based testing and a script for profiling the performance.
@@ -157,7 +157,7 @@ It also adds performance-based testing and a script for profiling the performanc
 
 * Add performance-based testing - Issue [#194](https://github.com/sdv-dev/RDT/issues/194) by @amontanez24
 * Audit the NullTransformer - Issue [#192](https://github.com/sdv-dev/RDT/issues/192) by @amontanez24
-* Audit DatetimeTransformer - Issue [#189](https://github.com/sdv-dev/RDT/issues/189) by @sarahmish
+* Audit UnixTimestampEncoder - Issue [#189](https://github.com/sdv-dev/RDT/issues/189) by @sarahmish
 * Audit the LabelEncodingTransformer - Issue [#184](https://github.com/sdv-dev/RDT/issues/184) by @amontanez24
 * Audit the NumericalTransformer - Issue [#181](https://github.com/sdv-dev/RDT/issues/181) by @fealho
 * Audit CategoricalTransformer - Issue [#180](https://github.com/sdv-dev/RDT/issues/180) by @katxiao
@@ -268,7 +268,7 @@ which were previously supported.
 ## 0.2.7 - 2020-10-16
 
 In this release we drop the support for the now officially dead Python 3.5
-and introduce a new feature in the DatetimeTransformer which reduces the dimensionality
+and introduce a new feature in the UnixTimestampEncoder which reduces the dimensionality
 of the generated numerical values while also ensuring that the reverted datetimes
 maintain the same level as time unit precision as the original ones.
 

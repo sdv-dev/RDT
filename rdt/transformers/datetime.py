@@ -6,7 +6,7 @@ from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
 
-class DatetimeTransformer(BaseTransformer):
+class UnixTimestampEncoder(BaseTransformer):
     """Transformer for datetime data.
 
     This transformer replaces datetime values with an integer timestamp
@@ -25,13 +25,7 @@ class DatetimeTransformer(BaseTransformer):
             will be created only if there are null values. If ``True``, create the new column if
             there are null values. If ``False``, do not create the new column even if there
             are null values. Defaults to ``False``.
-        strip_constant (bool):
-            Whether to optimize the output values by finding the smallest time unit that
-            is not zero on the training datetimes and dividing the generated numerical
-            values by the value of the next smallest time unit. This, a part from reducing the
-            orders of magnitued of the transformed values, ensures that reverted values always
-            are zero on the lower time units.
-        format (str):
+        datetime_format (str):
             The strftime to use for parsing time. For more information, see
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
     """
@@ -45,10 +39,9 @@ class DatetimeTransformer(BaseTransformer):
     divider = None
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
-                 strip_constant=False, datetime_format=None):
+                 datetime_format=None):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
-        self.strip_constant = strip_constant
         self.datetime_format = datetime_format
 
     def is_composition_identity(self):
@@ -110,11 +103,21 @@ class DatetimeTransformer(BaseTransformer):
         integers[nulls] = np.nan
         transformed = pd.Series(integers)
 
-        if self.strip_constant:
-            self._find_divider(transformed)
-            transformed = transformed // self.divider
-
         return transformed
+
+    def _reverse_transform_helper(self, data):
+        """Transform integer values back into datetimes."""
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
+        if self.nan is not None:
+            data = self.null_transformer.reverse_transform(data)
+
+        if isinstance(data, np.ndarray) and (data.ndim == 2):
+            data = data[:, 0]
+
+        data = np.round(data.astype(np.float64))
+        return data
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -153,24 +156,13 @@ class DatetimeTransformer(BaseTransformer):
         Returns:
             pandas.Series
         """
-        if not isinstance(data, np.ndarray):
-            data = data.to_numpy()
+        data = self._reverse_transform_helper(data)
 
-        if self.missing_value_replacement is not None:
-            data = self.null_transformer.reverse_transform(data)
-
-        if isinstance(data, np.ndarray) and (data.ndim == 2):
-            data = data[:, 0]
-
-        data = np.round(data.astype(np.float64))
-        if self.strip_constant:
-            data = data * self.divider
-
-        return pd.to_datetime(data)
+        return pd.to_datetime(data, format=self.datetime_format)
 
 
-class DatetimeRoundedTransformer(DatetimeTransformer):
-    """Transformer for datetime data.
+class OptimizedTimestampEncoder(UnixTimestampEncoder):
+    """Optimized transformer for datetime data.
 
     This transformer replaces datetime values with an integer timestamp transformed to float.
     It optimizes the output values by finding the smallest time unit that is not zero on
@@ -180,7 +172,7 @@ class DatetimeRoundedTransformer(DatetimeTransformer):
 
     Null values are replaced using a ``NullTransformer``.
 
-    This class behaves exactly as the ``DatetimeTransformer`` with ``strip_constant=True``.
+    This class behaves exactly as the ``UnixTimestampEncoder`` except with the optimization.
 
     Args:
         missing_value_replacement (object or None):
@@ -193,8 +185,43 @@ class DatetimeRoundedTransformer(DatetimeTransformer):
             will be created only if there are null values. If ``True``, create the new column if
             there are null values. If ``False``, do not create the new column even if there
             are null values. Defaults to ``False``.
+        datetime_format (str):
+            The strftime to use for parsing time. For more information, see
+            https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
     """
 
-    def __init__(self, missing_value_replacement=None, model_missing_values=False):
+    def __init__(self, missing_value_replacement=None, model_missing_values=False,
+                 datetime_format=None):
         super().__init__(missing_value_replacement=missing_value_replacement,
-                         model_missing_values=model_missing_values, strip_constant=True)
+                         model_missing_values=model_missing_values,
+                         datetime_format=datetime_format)
+
+    def _transform(self, data):
+        """Transform datetime values to float values.
+
+        Args:
+            data (pandas.Series):
+                Data to transform.
+
+        Returns:
+            numpy.ndarray
+        """
+        transformed = self._transform_helper(data)
+        self._find_divider(transformed)
+        transformed = transformed // self.divider
+        return self.null_transformer.transform(transformed)
+
+    def _reverse_transform(self, data):
+        """Convert float values back to datetimes.
+
+        Args:
+            data (pandas.Series or numpy.ndarray):
+                Data to transform.
+
+        Returns:
+            pandas.Series
+        """
+        data = self._reverse_transform_helper(data)
+        data = data * self.divider
+
+        return pd.to_datetime(data, format=self.datetime_format)

@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.datetime import DatetimeTransformer
+from rdt.transformers.datetime import UnixTimestampEncoder
 
 
 def test_no_strip():
-    dtt = DatetimeTransformer(missing_value_replacement='mean', strip_constant=False)
+    dtt = UnixTimestampEncoder(missing_value_replacement='mean')
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
     dtt.columns = 'column'
 
@@ -25,7 +25,7 @@ def test_no_strip():
 
 
 def test_strip():
-    dtt = DatetimeTransformer(missing_value_replacement='mean', strip_constant=True)
+    dtt = UnixTimestampEncoder(missing_value_replacement='mean', strip_constant=True)
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
     dtt.columns = 'column'
 
