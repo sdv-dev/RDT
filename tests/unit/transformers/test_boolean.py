@@ -80,7 +80,8 @@ class TestBooleanTransformer(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer.null_transformer._missing_value_replacement == 0, 'Unexpected fill value'
+        error_msg = 'Unexpected fill value'
+        assert transformer.null_transformer._missing_value_replacement == 0, error_msg
 
     def test__fit_array(self):
         """Test _fit with numpy.array"""
@@ -92,7 +93,8 @@ class TestBooleanTransformer(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer.null_transformer._missing_value_replacement == 0, 'Unexpected fill value'
+        error_msg = 'Unexpected fill value'
+        assert transformer.null_transformer._missing_value_replacement == 0, error_msg
 
     def test__transform_series(self):
         """Test transform pandas.Series"""
