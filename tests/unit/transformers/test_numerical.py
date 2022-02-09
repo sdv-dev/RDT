@@ -183,12 +183,12 @@ class TestNumericalTransformer(TestCase):
         assert output == -1
 
     def test__learn_rounding_digits_all_missing_value_replacements(self):
-        """Test the _learn_rounding_digits method with data that is all missing_value_replacements.
+        """Test the _learn_rounding_digits method with data that is all NaNs.
 
-        If the data is all missing_value_replacements, expect that the output is None.
+        If the data is all NaNs, expect that the output is None.
 
         Input:
-        - An array of missing_value_replacements.
+        - An array of NaN.
         Output:
         - None
         """
@@ -649,7 +649,7 @@ class TestNumericalTransformer(TestCase):
         - 2d Array of multiple float values with decimals and a column setting at least 1 null.
         Output:
         - First column of the input array rounded, replacing the indicated value with a
-          ``missing_value_replacement``, and kept as float values.
+          ``NaN``, and kept as float values.
         """
         # Setup
         data = np.array([
