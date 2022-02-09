@@ -21,9 +21,10 @@ class DatetimeTransformer(BaseTransformer):
             them with the corresponding aggregation. If ``None`` is given, do not replace them.
             Defaults to ``None``.
         model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``True``, create the new column if there are null values.
-            If ``False``, do not create the new column. Defaults to ``False``.
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
         strip_constant (bool):
             Whether to optimize the output values by finding the smallest time unit that
             is not zero on the training datetimes and dividing the generated numerical
@@ -182,17 +183,16 @@ class DatetimeRoundedTransformer(DatetimeTransformer):
     This class behaves exactly as the ``DatetimeTransformer`` with ``strip_constant=True``.
 
     Args:
-        missing_value_replacement (int, str or None):
-            Indicate what to do with the null values. If an integer is given, replace them
+        missing_value_replacement (object or None):
+            Indicate what to do with the null values. If an object is given, replace them
             with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
             them with the corresponding aggregation. If ``None`` is given, do not replace them.
-            Defaults to ``'mean'``.
-        model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``None``, only create a new column when the data contains null values.
-            If ``True``, always create the new column whether there are null values or not.
-            If ``False``, do not create the new column.
             Defaults to ``None``.
+        model_missing_values (bool):
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
     """
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False):

@@ -24,17 +24,18 @@ class NullTransformer():
             replace them with the corresponding aggregation (``'mean'`` only works for numerical
             values). If ``None`` is given, do not replace them. Defaults to ``None``.
         model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``True``, create the new column if there are null values.
-            If ``False``, do not create the new column. Defaults to ``False``.
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
     """
 
     nulls = None
     _model_missing_values = None
-    _missing_value_replacement = False
+    _missing_value_replacement = None
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False):
-        self.missing_value_replacement = missing_value_replacement
+        self._missing_value_replacement = missing_value_replacement
         self._model_missing_values = model_missing_values
 
     def models_missing_values(self):
@@ -44,7 +45,7 @@ class NullTransformer():
             bool:
                 Whether a null column is created on transform.
         """
-        return bool(self._model_missing_values)
+        return self._model_missing_values
 
     def _get_missing_value_replacement(self, data):
         """Get the fill value to use for the given data.
@@ -57,18 +58,16 @@ class NullTransformer():
             object:
                 The fill value that needs to be used.
         """
-        missing_value_replacement = self.missing_value_replacement
+        if self._missing_value_replacement is None:
+            return None
 
-        if missing_value_replacement is None:
-            return np.nan
-
-        if missing_value_replacement == 'mean':
+        if self._missing_value_replacement == 'mean':
             return data.mean()
 
-        if missing_value_replacement == 'mode':
+        if self._missing_value_replacement == 'mode':
             return data.mode(dropna=True)[0]
 
-        return missing_value_replacement
+        return self._missing_value_replacement
 
     def fit(self, data):
         """Fit the transformer to the data.
@@ -104,7 +103,7 @@ class NullTransformer():
             numpy.ndarray
         """
         isna = data.isna()
-        if isna.any():
+        if isna.any() and self._missing_value_replacement is not None:
             if (not self._model_missing_values and
                     self._missing_value_replacement in data.to_numpy()):
                 warnings.warn(IRREVERSIBLE_WARNING)

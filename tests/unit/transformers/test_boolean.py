@@ -20,7 +20,7 @@ class TestBooleanTransformer(TestCase):
         assert transformer.missing_value_replacement is None, error_message
         assert not transformer.model_missing_values, 'model_missing_values is False by default'
 
-    def test_get_output_types_model_missing_values_created(self):
+    def test_get_output_types_model_missing_values_column_created(self):
         """Test the ``get_output_types`` method when a null column is created.
 
         When a null column is created, this method should apply the ``_add_prefix``
@@ -68,7 +68,7 @@ class TestBooleanTransformer(TestCase):
 
         # Asserts
         error_msg = 'Unexpected fill value'
-        assert transformer.null_transformer.missing_value_replacement is None, error_msg
+        assert transformer.null_transformer._missing_value_replacement is None, error_msg
 
     def test__fit_missing_value_replacement_not_ignore(self):
         """Test _fit missing_value_replacement not equal to ignore"""
@@ -80,7 +80,7 @@ class TestBooleanTransformer(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer.null_transformer.missing_value_replacement == 0, 'Unexpected fill value'
+        assert transformer.null_transformer._missing_value_replacement == 0, 'Unexpected fill value'
 
     def test__fit_array(self):
         """Test _fit with numpy.array"""
@@ -92,7 +92,7 @@ class TestBooleanTransformer(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer.null_transformer.missing_value_replacement == 0, 'Unexpected fill value'
+        assert transformer.null_transformer._missing_value_replacement == 0, 'Unexpected fill value'
 
     def test__transform_series(self):
         """Test transform pandas.Series"""

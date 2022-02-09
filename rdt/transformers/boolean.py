@@ -22,9 +22,10 @@ class BooleanTransformer(BaseTransformer):
             them with the corresponding aggregation. If ``None`` is given, do not replace them.
             Defaults to ``None``.
         model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``True``, create the new column if there are null values.
-            If ``False``, do not create the new column. Defaults to ``False``.
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
     """
 
     INPUT_TYPE = 'boolean'

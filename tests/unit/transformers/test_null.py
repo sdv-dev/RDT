@@ -26,7 +26,7 @@ class TestNullTransformer:
         transformer = NullTransformer()
 
         # Assert
-        assert transformer.missing_value_replacement is None
+        assert transformer._missing_value_replacement is None
         assert not transformer._model_missing_values
 
     def test___init__not_default(self):
@@ -45,7 +45,7 @@ class TestNullTransformer:
         transformer = NullTransformer('a_missing_value_replacement', False)
 
         # Assert
-        assert transformer.missing_value_replacement == 'a_missing_value_replacement'
+        assert transformer._missing_value_replacement == 'a_missing_value_replacement'
         assert not transformer._model_missing_values
 
     def test_models_missing_values(self):
@@ -291,7 +291,7 @@ class TestNullTransformer:
         # Assert
         assert not transformer.nulls
         assert not transformer._model_missing_values
-        assert transformer._missing_value_replacement is np.nan
+        assert transformer._missing_value_replacement is None
 
     def test_fit_model_missing_values_not_none(self):
         """Test fit when null column is set to True/False.

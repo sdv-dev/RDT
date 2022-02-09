@@ -227,7 +227,7 @@ class TestNumericalTransformer(TestCase):
 
         # Asserts
         expected = 'missing_value_replacement'
-        assert transformer.null_transformer.missing_value_replacement == expected
+        assert transformer.null_transformer._missing_value_replacement == expected
         expect_dtype = float
         assert transformer._dtype == expect_dtype
 
@@ -1340,7 +1340,7 @@ class TestGaussianCopulaTransformer:
 
 class TestBayesGMMTransformer(TestCase):
 
-    def test_get_output_types_model_missing_values_created(self):
+    def test_get_output_types_model_missing_values_column_created(self):
         """Test the ``get_output_types`` method when a null column is created.
 
         When a null column is created, this method should apply the ``_add_prefix``
