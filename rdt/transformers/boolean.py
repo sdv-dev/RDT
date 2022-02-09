@@ -18,8 +18,8 @@ class BooleanTransformer(BaseTransformer):
     Args:
         missing_value_replacement (object or None):
             Indicate what to do with the null values. If an object is given, replace them
-            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
-            them with the corresponding aggregation. If ``None`` is given, do not replace them.
+            with the given value. If the string ``'mode'`` is given, replace them with the
+            most common value. If ``None`` is given, do not replace them.
             Defaults to ``None``.
         model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not. The column

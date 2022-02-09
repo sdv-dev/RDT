@@ -19,8 +19,8 @@ class TestNullTransformer:
             - nothing
 
         Expected Side Effects:
-            - The `missing_value_replacement` attribute should be `None`.
-            - The `_model_missing_values` attribute should be `None`.
+            - The `_missing_value_replacement` attribute should be `None`.
+            - The `_model_missing_values` attribute should be `False`.
         """
         # Run
         transformer = NullTransformer()
@@ -265,9 +265,9 @@ class TestNullTransformer:
     def test_fit_model_missing_values_none_and_no_nulls(self):
         """Test fit when null column is none and there are NO nulls.
 
-        If there are no nulls in the data and model_missing_values was given as None,
-        then the _model_missing_values attribute should be set to False.
-        Also validate that the null attribute and the _missing_value_replacement attributes
+        If there are no nulls in the data and model_missing_values was given as ``False``,
+        then the _model_missing_values attribute should be set to ``False``.
+        Also validate that the null attribute and the ``_missing_value_replacement`` attributes
         are set accordingly.
 
         Setup:

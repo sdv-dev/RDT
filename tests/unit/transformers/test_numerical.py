@@ -153,7 +153,7 @@ class TestNumericalTransformer(TestCase):
 
         Input:
         - An array that contains floats that are multiples of powers of 10, 100 and 1000
-          and a missing_value_replacement.
+          and a NaN.
         Output:
         - -1
         """
@@ -172,7 +172,7 @@ class TestNumericalTransformer(TestCase):
 
         Input:
         - An array that contains integers that are multiples of powers of 10, 100 and 1000
-          and a missing_value_replacement.
+          and a NaN.
         Output:
         - -1
         """
@@ -649,7 +649,7 @@ class TestNumericalTransformer(TestCase):
         - 2d Array of multiple float values with decimals and a column setting at least 1 null.
         Output:
         - First column of the input array rounded, replacing the indicated value with a
-          missing_value_replacement, and kept as float values.
+          ``missing_value_replacement``, and kept as float values.
         """
         # Setup
         data = np.array([
@@ -1228,7 +1228,7 @@ class TestGaussianCopulaTransformer:
         """Test the ``_transform`` method.
 
         Validate that ``_transform`` produces the correct values when ``model_missing_values``
-        is None.
+        is ``False``.
 
         Setup:
             - create an instance of the ``GaussianCopulaTransformer``, where:
@@ -1249,7 +1249,7 @@ class TestGaussianCopulaTransformer:
         ct = GaussianCopulaTransformer()
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
-        ct.null_transformer = NullTransformer('mean', model_missing_values=None)
+        ct.null_transformer = NullTransformer('mean', model_missing_values=False)
 
         # Run
         ct.null_transformer.fit(data)
@@ -1328,7 +1328,7 @@ class TestGaussianCopulaTransformer:
         ct = GaussianCopulaTransformer()
         ct._univariate = Mock()
         ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
-        ct.null_transformer = NullTransformer(None, model_missing_values=None)
+        ct.null_transformer = NullTransformer(None, model_missing_values=False)
 
         # Run
         ct.null_transformer.fit(expected)
