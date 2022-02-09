@@ -10,6 +10,26 @@ from scipy.stats import norm
 from rdt.transformers.base import BaseTransformer
 
 
+def select_unique_categories(data):
+    """Create set of data categories.
+
+    First selects all unique categories which are not nan, then appends np.nan if needed.
+
+    Args:
+        data (pd.Series):
+            Data to be converted.
+
+    Returns:
+        Set of values present in data.
+    """
+    null = pd.isna(data)
+    unique_data = list(pd.unique(data[~null]))
+    if null.any():
+        unique_data.append(np.nan)
+
+    return set(unique_data)
+
+
 class CategoricalTransformer(BaseTransformer):
     """Transformer for categorical data.
 
@@ -469,8 +489,8 @@ class LabelEncoder(BaseTransformer):
         """
         # Find the data categories that were not seen during fitting. Convert all nan's
         # to np.nan to avoid having nan values with different ids.
-        unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
-        categories = {np.nan if pd.isna(x) else x for x in self.categories_to_values.keys()}
+        unique_data = select_unique_categories(pd.unique(data))
+        categories = select_unique_categories(pd.Series(self.categories_to_values.keys()))
         unseen_categories = unique_data - categories
         if unseen_categories:
             if len(self.categories_to_values) == 0:
