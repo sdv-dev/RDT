@@ -1,18 +1,18 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.datetime import UnixTimestampEncoder
+from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
 
 
-def test_no_strip():
-    dtt = UnixTimestampEncoder(missing_value_replacement='mean')
+def test_unixtimestampencoder():
+    ute = UnixTimestampEncoder(missing_value_replacement='mean')
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
     dtt.columns = 'column'
 
     # Run
-    dtt._fit(data.copy())
-    transformed = dtt._transform(data.copy())
-    reverted = dtt._reverse_transform(transformed)
+    ute._fit(data.copy())
+    transformed = ute._transform(data.copy())
+    reverted = ute._reverse_transform(transformed)
 
     # Asserts
     expect_trans = np.array([
@@ -24,15 +24,15 @@ def test_no_strip():
     pd.testing.assert_series_equal(reverted, data)
 
 
-def test_strip():
-    dtt = UnixTimestampEncoder(missing_value_replacement='mean', strip_constant=True)
+def test_optimizedtimestampencoder():
+    ote = OptimizedTimestampEncoder(missing_value_replacement='mean')
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
-    dtt.columns = 'column'
+    ote.columns = 'column'
 
     # Run
-    dtt._fit(data.copy())
-    transformed = dtt._transform(data.copy())
-    reverted = dtt._reverse_transform(transformed)
+    ote._fit(data.copy())
+    transformed = ote._transform(data.copy())
+    reverted = ote._reverse_transform(transformed)
 
     # Asserts
     expect_trans = np.array([

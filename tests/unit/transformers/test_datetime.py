@@ -21,19 +21,19 @@ class TestUnixTimestampEncoder:
         Side effect:
             - the ``missing_value_replacement`` attribute has been assigned as ``'mode'``.
             - the ``model_missing_values`` attribute has been assigned as True.
-            - the ``strip_constant`` attribute has been assigned as True.
+            - the ``datetime_format`` attribute has been assigned.
         """
         # Setup
         transformer = UnixTimestampEncoder(
             missing_value_replacement='mode',
             model_missing_values=True,
-            strip_constant=True
+            datetime_format='%M-%d-%Y'
         )
 
         # Asserts
         assert transformer.missing_value_replacement == 'mode'
         assert transformer.model_missing_values is True
-        assert transformer.strip_constant is True
+        assert transformer.datetime_format == '%M-%d-%Y'
 
     def test_is_composition_identity_null_transformer_true(self):
         """Test the ``is_composition_identity`` method with a ``null_transformer``.
@@ -117,29 +117,6 @@ class TestUnixTimestampEncoder:
             'a#b.is_null': 'float'
         }
         assert output == expected
-
-    def test__find_divider(self):
-        """Test the ``_find_divider`` method.
-
-        Find the greatest common denominator out of these values: [10] * 9 + [60, 60, 24],
-        where each consecutive value in the list is multiplied by the previous one
-        (so 10, 100, 1000, etc).
-
-        Input:
-            - a numpy array.
-
-        Side effect:
-            - sets ``self.divider`` to the correct divider.
-        """
-        # Setup
-        data = np.array([100, 7919])
-        transformer = UnixTimestampEncoder()
-
-        # Run
-        transformer._find_divider(data)
-
-        # Assert
-        assert transformer.divider == 1
 
     def test__convert_to_datetime(self):
         """Test the ``_convert_to_datetime`` method.
@@ -262,10 +239,10 @@ class TestUnixTimestampEncoder:
         # Assert
         transformer._convert_to_datetime.assert_called_once_with(data)
 
-    def test__transform_helper_strip_constant_true(self):
+    def test__transform_helper(self):
         """Test the ``_transform_helper`` method.
 
-        Validate the helper transformer produces the correct value with ``strip_constant`` True.
+        Validate the helper transformer produces the correct values.
 
         Input:
             - a pandas series of datetimes.
@@ -275,30 +252,7 @@ class TestUnixTimestampEncoder:
         """
         # Setup
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
-        transformer = UnixTimestampEncoder(strip_constant=True)
-
-        # Run
-        transformed = transformer._transform_helper(data)
-
-        # Assert
-        np.testing.assert_allclose(transformed, np.array([
-            18262., 18293., 18322.,
-        ]))
-
-    def test__transform_helper_strip_constant_false(self):
-        """Test the ``_transform_helper`` method.
-
-        Validate the helper transformer produces the correct value with ``strip_constant`` False.
-
-        Input:
-            - a pandas series of datetimes.
-
-        Output:
-            - a pandas series of the transformed datetimes.
-        """
-        # Setup
-        data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
-        transformer = UnixTimestampEncoder(strip_constant=False)
+        transformer = UnixTimestampEncoder()
 
         # Run
         transformed = transformer._transform_helper(data)
@@ -376,7 +330,7 @@ class TestUnixTimestampEncoder:
 
     def test__reverse_transform_all_none(self):
         dt = pd.to_datetime(['2020-01-01'])
-        dtt = UnixTimestampEncoder(missing_value_replacement='mean', strip_constant=True)
+        dtt = UnixTimestampEncoder(missing_value_replacement='mean')
         dtt._fit(dt)
 
         output = dtt._reverse_transform(pd.Series([None]))
@@ -397,9 +351,9 @@ class TestUnixTimestampEncoder:
         """
         # Setup
         dt = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
-        dtt = UnixTimestampEncoder(missing_value_replacement=None, strip_constant=True)
+        dtt = UnixTimestampEncoder(missing_value_replacement=None)
         dtt._fit(dt)
-        transformed = np.array([[18262.], [18293.], [18322.]])
+        transformed = np.array([[1.5778368e+18], [1.5805152e+18], [1.5830208e+18]])
 
         # Run
         output = dtt._reverse_transform(transformed)
@@ -411,9 +365,51 @@ class TestUnixTimestampEncoder:
 
 class TestOptimizedTimestampEncoder:
 
-    def test___init___strip_is_true(self):
-        """Test that by default the ``strip_constant`` is set to True."""
-        dtrt = OptimizedTimestampEncoder()
+    def test__find_divider(self):
+        """Test the ``_find_divider`` method.
 
-        # assert
-        assert dtrt.strip_constant
+        Find the greatest common denominator out of these values: [10] * 9 + [60, 60, 24],
+        where each consecutive value in the list is multiplied by the previous one
+        (so 10, 100, 1000, etc).
+
+        Input:
+            - a numpy array.
+
+        Side effect:
+            - sets ``self.divider`` to the correct divider.
+        """
+        # Setup
+        data = np.array([100, 7919])
+        transformer = OptimizedTimestampEncoder()
+
+        # Run
+        transformer._find_divider(data)
+
+        # Assert
+        assert transformer.divider == 1
+
+    def test__transform(self):
+        """Test the ``_transform_helper`` method.
+
+        Validate the helper transformer produces the values stripped to the smallest
+        non-zero time unit.
+
+        Input:
+            - a pandas series of datetimes.
+
+        Output:
+            - a pandas series of the transformed datetimes.
+        """
+        # Setup
+        data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
+        transformer = OptimizedTimestampEncoder()
+        transformer.null_transformer = Mock()
+        transformer.null_transformer.transform.side_effect = lambda x: x
+
+        # Run
+        transformed = transformer._transform(data)
+
+        # Assert
+        np.testing.assert_allclose(transformed, np.array([
+            18262., 18293., 18322.,
+        ]))

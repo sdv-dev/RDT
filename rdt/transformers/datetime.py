@@ -71,16 +71,6 @@ class UnixTimestampEncoder(BaseTransformer):
 
         return self._add_prefix(output_types)
 
-    def _find_divider(self, transformed):
-        self.divider = 1
-        multipliers = [10] * 9 + [60, 60, 24]
-        for multiplier in multipliers:
-            candidate = self.divider * multiplier
-            if (transformed % candidate).any():
-                break
-
-            self.divider = candidate
-
     def _convert_to_datetime(self, data):
         if data.dtype == 'object':
             try:
@@ -195,6 +185,16 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
         super().__init__(missing_value_replacement=missing_value_replacement,
                          model_missing_values=model_missing_values,
                          datetime_format=datetime_format)
+
+    def _find_divider(self, transformed):
+        self.divider = 1
+        multipliers = [10] * 9 + [60, 60, 24]
+        for multiplier in multipliers:
+            candidate = self.divider * multiplier
+            if (transformed % candidate).any():
+                break
+
+            self.divider = candidate
 
     def _transform(self, data):
         """Transform datetime values to float values.
