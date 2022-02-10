@@ -13,6 +13,41 @@ TEST_COL = 'test_col'
 
 PRIMARY_DATA_TYPES = ['boolean', 'categorical', 'datetime', 'numerical']
 
+# Additional arguments for transformers
+TRANSFORMER_ARGS = {
+    'BooleanTransformer': {
+        'missing_value_replacement': -1,
+        'model_missing_values': True
+    },
+    'DatetimeTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'DatetimeRoundedTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'NumericalTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'NumericalRoundedBoundedTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'NumericalBoundedTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'GaussianCopulaTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'BayesGMMTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+}
 
 # Mapping of rdt data type to dtype
 DATA_TYPE_TO_DTYPES = {
@@ -146,7 +181,9 @@ def _test_transformer_with_dataset(transformer_class, input_data, steps):
         steps (list):
             List of steps that the validation has completed.
     """
-    transformer = transformer_class()
+
+    transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
+    transformer = transformer_class(**transformer_args)
     # Fit
     transformer.fit(input_data, [TEST_COL])
 
@@ -204,9 +241,16 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
         steps (list):
             List of steps that the validation has completed.
     """
-    hypertransformer = HyperTransformer(field_transformers={
-        TEST_COL: transformer_class.__name__,
-    })
+    transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
+    if transformer_args:
+        hypertransformer = HyperTransformer(field_transformers={
+            TEST_COL: transformer_class(**transformer_args),
+        })
+    else:
+        hypertransformer = HyperTransformer(field_transformers={
+            TEST_COL: transformer_class.__name__,
+        })
+
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)

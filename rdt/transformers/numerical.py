@@ -27,17 +27,16 @@ class NumericalTransformer(BaseTransformer):
             Data type of the data to transform. It will be used when reversing the
             transformation. If not provided, the dtype of the fit data will be used.
             Defaults to ``None``.
-        nan (int, str or None):
-            Indicate what to do with the null values. If an integer is given, replace them
-            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
-            them with the corresponding aggregation. If ``None`` is given, do not replace them.
-            Defaults to ``'mean'``.
-        null_column (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``None``, only create a new column when the data contains null values.
-            If ``True``, always create the new column whether there are null values or not.
-            If ``False``, do not create the new column.
-            Defaults to ``None``.
+        missing_value_replacement (object or None):
+            Indicate what to do with the null values. If an integer or float is given,
+            replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
+            given, replace them with the corresponding aggregation. If ``None`` is given,
+            do not replace them. Defaults to ``None``.
+        model_missing_values (bool):
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
         rounding (int, str or None):
             Define rounding scheme for data. If set to an int, values will be rounded
             to that number of decimal places. If ``None``, values will not be rounded.
@@ -61,16 +60,16 @@ class NumericalTransformer(BaseTransformer):
     COMPOSITION_IS_IDENTITY = True
 
     null_transformer = None
-    nan = None
+    missing_value_replacement = None
     _dtype = None
     _rounding_digits = None
     _min_value = None
     _max_value = None
 
-    def __init__(self, dtype=None, nan='mean', null_column=None, rounding=None,
-                 min_value=None, max_value=None):
-        self.nan = nan
-        self.null_column = null_column
+    def __init__(self, dtype=None, missing_value_replacement=None, model_missing_values=False,
+                 rounding=None, min_value=None, max_value=None):
+        self.missing_value_replacement = missing_value_replacement
+        self.model_missing_values = model_missing_values
         self.dtype = dtype
         self.rounding = rounding
         self.min_value = min_value
@@ -86,7 +85,7 @@ class NumericalTransformer(BaseTransformer):
         output_types = {
             'value': 'float',
         }
-        if self.null_transformer and self.null_transformer.creates_null_column():
+        if self.null_transformer and self.null_transformer.models_missing_values():
             output_types['is_null'] = 'float'
 
         return self._add_prefix(output_types)
@@ -98,7 +97,7 @@ class NumericalTransformer(BaseTransformer):
             bool:
                 Whether or not transforming and then reverse transforming returns the input data.
         """
-        if self.null_transformer and not self.null_transformer.creates_null_column():
+        if self.null_transformer and not self.null_transformer.models_missing_values():
             return False
 
         return self.COMPOSITION_IS_IDENTITY
@@ -141,7 +140,10 @@ class NumericalTransformer(BaseTransformer):
         elif isinstance(self.rounding, int):
             self._rounding_digits = self.rounding
 
-        self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
+        self.null_transformer = NullTransformer(
+            self.missing_value_replacement,
+            self.model_missing_values
+        )
         self.null_transformer.fit(data)
 
     def _transform(self, data):
@@ -178,7 +180,7 @@ class NumericalTransformer(BaseTransformer):
             else:
                 data = data.clip(self._min_value, self._max_value)
 
-        if self.nan is not None:
+        if self.missing_value_replacement is not None:
             data = self.null_transformer.reverse_transform(data)
 
         is_integer = np.dtype(self._dtype).kind == 'i'
@@ -213,17 +215,16 @@ class GaussianCopulaTransformer(NumericalTransformer):
             Data type of the data to transform. It will be used when reversing the
             transformation. If not provided, the dtype of the fit data will be used.
             Defaults to ``None``.
-        nan (int, str or None):
-            Indicate what to do with the null values. If an integer is given, replace them
-            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
-            them with the corresponding aggregation. If ``None`` is given, do not replace them.
-            Defaults to ``'mean'``.
-        null_column (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``None``, only create a new column when the data contains null values.
-            If ``True``, always create the new column whether there are null values or not.
-            If ``False``, do not create the new column.
-            Defaults to ``None``.
+        missing_value_replacement (object or None):
+            Indicate what to do with the null values. If an integer or float is given,
+            replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
+            given, replace them with the corresponding aggregation. If ``None`` is given,
+            do not replace them. Defaults to ``None``.
+        model_missing_values (bool):
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
         distribution (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use. Defaults to ``parametric``. To choose from:
 
@@ -255,8 +256,13 @@ class GaussianCopulaTransformer(NumericalTransformer):
     _univariate = None
     COMPOSITION_IS_IDENTITY = False
 
-    def __init__(self, dtype=None, nan='mean', null_column=None, distribution='parametric'):
-        super().__init__(dtype=dtype, nan=nan, null_column=null_column)
+    def __init__(self, dtype=None, missing_value_replacement=None,
+                 model_missing_values=False, distribution='parametric'):
+        super().__init__(
+            dtype=dtype,
+            missing_value_replacement=missing_value_replacement,
+            model_missing_values=model_missing_values
+        )
         self._distributions = self._get_distributions()
 
         if isinstance(distribution, str):
@@ -400,17 +406,16 @@ class BayesGMMTransformer(NumericalTransformer):
             Data type of the data to transform. It will be used when reversing the
             transformation. If not provided, the dtype of the fit data will be used.
             Defaults to ``None``.
-        nan (int, str or None):
-            Indicate what to do with the null values. If an integer is given, replace them
-            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
-            them with the corresponding aggregation. If ``None`` is given, do not replace them.
-            Defaults to ``'mean'``.
-        null_column (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``None``, only create a new column when the data contains null values.
-            If ``True``, always create the new column whether there are null values or not.
-            If ``False``, do not create the new column.
-            Defaults to ``None``.
+        missing_value_replacement (object or None):
+            Indicate what to do with the null values. If an integer or float is given,
+            replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
+            given, replace them with the corresponding aggregation. If ``None`` is given,
+            do not replace them. Defaults to ``None``.
+        model_missing_values (bool):
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
         rounding (int, str or None):
             Define rounding scheme for data. If set to an int, values will be rounded
             to that number of decimal places. If ``None``, values will not be rounded.
@@ -451,10 +456,17 @@ class BayesGMMTransformer(NumericalTransformer):
     _bgm_transformer = None
     valid_component_indicator = None
 
-    def __init__(self, dtype=None, nan='mean', null_column=None, rounding=None,
-                 min_value=None, max_value=None, max_clusters=10, weight_threshold=0.005):
-        super().__init__(dtype=dtype, nan=nan, null_column=null_column, rounding=rounding,
-                         min_value=min_value, max_value=max_value)
+    def __init__(self, dtype=None, missing_value_replacement=None, model_missing_values=False,
+                 rounding=None, min_value=None, max_value=None, max_clusters=10,
+                 weight_threshold=0.005):
+        super().__init__(
+            dtype=dtype,
+            missing_value_replacement=missing_value_replacement,
+            model_missing_values=model_missing_values,
+            rounding=rounding,
+            min_value=min_value,
+            max_value=max_value
+        )
         self._max_clusters = max_clusters
         self._weight_threshold = weight_threshold
 
@@ -469,7 +481,7 @@ class BayesGMMTransformer(NumericalTransformer):
             'normalized': 'float',
             'component': 'categorical'
         }
-        if self.null_transformer and self.null_transformer.creates_null_column():
+        if self.null_transformer and self.null_transformer.models_missing_values():
             output_types['is_null'] = 'float'
 
         return self._add_prefix(output_types)
@@ -508,7 +520,7 @@ class BayesGMMTransformer(NumericalTransformer):
         """
         data = super()._transform(data)
         if data.ndim > 1:
-            data, null_column = data[:, 0], data[:, 1]
+            data, model_missing_values = data[:, 0], data[:, 1]
 
         data = data.reshape((len(data), 1))
         means = self._bgm_transformer.means_.reshape((1, self._max_clusters))
@@ -533,8 +545,8 @@ class BayesGMMTransformer(NumericalTransformer):
         normalized = np.clip(normalized, -.99, .99)
         normalized = normalized[:, 0]
         rows = [normalized, selected_component]
-        if self.null_transformer and self.null_transformer.creates_null_column():
-            rows.append(null_column)
+        if self.null_transformer and self.null_transformer.models_missing_values():
+            rows.append(model_missing_values)
 
         return np.stack(rows, axis=1)  # noqa: PD013
 
@@ -564,7 +576,7 @@ class BayesGMMTransformer(NumericalTransformer):
             data = data.to_numpy()
 
         recovered_data = self._reverse_transform_helper(data)
-        if self.null_transformer and self.null_transformer.creates_null_column():
+        if self.null_transformer and self.null_transformer.models_missing_values():
             data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
         else:
             data = recovered_data

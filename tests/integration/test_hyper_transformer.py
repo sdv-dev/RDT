@@ -75,7 +75,7 @@ def get_input_data():
 
 def get_transformed_data():
     datetimes = [
-        1.263069e+18,
+        np.nan,
         1.264982e+18,
         1.262304e+18,
         1.262304e+18,
@@ -86,13 +86,10 @@ def get_transformed_data():
     ]
     return pd.DataFrame({
         'integer.value': [1, 2, 1, 3, 1, 4, 2, 3],
-        'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
-        'float.is_null': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+        'float.value': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
         'categorical.value': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
-        'bool.value': [0.0, -1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0],
-        'bool.is_null': [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        'bool.value': [0.0, np.nan, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0],
         'datetime.value': datetimes,
-        'datetime.is_null': [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         'names.value': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
     }, index=TEST_DATA_INDEX)
 
@@ -139,13 +136,13 @@ def test_hypertransformer_default_inputs():
     assert isinstance(ht._transformers_tree['integer']['transformer'], NumericalTransformer)
     assert ht._transformers_tree['integer']['outputs'] == ['integer.value']
     assert isinstance(ht._transformers_tree['float']['transformer'], NumericalTransformer)
-    assert ht._transformers_tree['float']['outputs'] == ['float.value', 'float.is_null']
+    assert ht._transformers_tree['float']['outputs'] == ['float.value']
     assert isinstance(ht._transformers_tree['categorical']['transformer'], CategoricalTransformer)
     assert ht._transformers_tree['categorical']['outputs'] == ['categorical.value']
     assert isinstance(ht._transformers_tree['bool']['transformer'], BooleanTransformer)
-    assert ht._transformers_tree['bool']['outputs'] == ['bool.value', 'bool.is_null']
+    assert ht._transformers_tree['bool']['outputs'] == ['bool.value']
     assert isinstance(ht._transformers_tree['datetime']['transformer'], DatetimeTransformer)
-    assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value', 'datetime.is_null']
+    assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value']
     assert isinstance(ht._transformers_tree['names']['transformer'], CategoricalTransformer)
     assert ht._transformers_tree['names']['outputs'] == ['names.value']
 
@@ -190,7 +187,6 @@ def test_hypertransformer_field_transformers():
 
     # Assert
     expected_transformed = get_transformed_data()
-    del expected_transformed['datetime.is_null']
     rename = {'datetime.value': 'datetime.value.value'}
     expected_transformed = expected_transformed.rename(columns=rename)
     transformed_datetimes = [0.9375, 0.75, 0.3125, 0.3125, 0.3125, 0.75, 0.3125, 0.3125]

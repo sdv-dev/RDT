@@ -16,15 +16,16 @@ class BooleanTransformer(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        nan (int or None):
-            Replace null values with the given value. If ``None``, do not replace them.
-            Defaults to ``-1``.
-        null_column (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``None``, only create a new column when the fit data contains null values.
-            If ``True``, always create the new column whether there are null values or not.
-            If ``False``, do not create the new column.
+        missing_value_replacement (object or None):
+            Indicate what to do with the null values. If an object is given, replace them
+            with the given value. If the string ``'mode'`` is given, replace them with the
+            most common value. If ``None`` is given, do not replace them.
             Defaults to ``None``.
+        model_missing_values (bool):
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
     """
 
     INPUT_TYPE = 'boolean'
@@ -33,9 +34,9 @@ class BooleanTransformer(BaseTransformer):
 
     null_transformer = None
 
-    def __init__(self, nan=-1, null_column=None):
-        self.nan = nan
-        self.null_column = null_column
+    def __init__(self, missing_value_replacement=None, model_missing_values=False):
+        self.missing_value_replacement = missing_value_replacement
+        self.model_missing_values = model_missing_values
 
     def get_output_types(self):
         """Return the output types returned by this transformer.
@@ -47,7 +48,7 @@ class BooleanTransformer(BaseTransformer):
         output_types = {
             'value': 'float',
         }
-        if self.null_transformer and self.null_transformer.creates_null_column():
+        if self.null_transformer and self.null_transformer.models_missing_values():
             output_types['is_null'] = 'float'
 
         return self._add_prefix(output_types)
@@ -59,7 +60,10 @@ class BooleanTransformer(BaseTransformer):
             data (pandas.Series):
                 Data to fit to.
         """
-        self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
+        self.null_transformer = NullTransformer(
+            self.missing_value_replacement,
+            self.model_missing_values
+        )
         self.null_transformer.fit(data)
 
     def _transform(self, data):
@@ -92,7 +96,7 @@ class BooleanTransformer(BaseTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        if self.nan is not None:
+        if self.missing_value_replacement is not None:
             data = self.null_transformer.reverse_transform(data)
 
         if isinstance(data, np.ndarray):

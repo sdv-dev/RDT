@@ -1,85 +1,73 @@
 """Transformer for data that contains Null values."""
 
+import logging
 import warnings
 
 import numpy as np
 import pandas as pd
 
 IRREVERSIBLE_WARNING = (
-    'Replacing nulls with existing value without `null_column`, which is not reversible. '
-    'Use `null_column=True` to ensure that the transformation is reversible.'
+    'Replacing nulls with existing value without `model_missing_values`, which is not reversible. '
+    'Use `model_missing_values=True` to ensure that the transformation is reversible.'
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 class NullTransformer():
     """Transformer for data that contains Null values.
 
     Args:
-        fill_value (object or None):
-            Value to replace nulls, or strategy to compute the value, which can
-            be ``mean`` or ``mode``. If ``None`` is given, the ``mean`` or ``mode``
-            strategy will be applied depending on whether the input data is numerical
-            or not. Defaults to `None`.
-        null_column (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``None``, only create a new column when the data contains null values.
-            If ``True``, always create the new column whether there are null values or not.
-            If ``False``, do not create the new column.
-            Defaults to ``None``.
-        copy (bool):
-            Whether to create a copy of the input data or modify it destructively.
+        missing_value_replacement (object or None):
+            Indicate what to do with the null values. If an integer, float or string is given,
+            replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are given,
+            replace them with the corresponding aggregation (``'mean'`` only works for numerical
+            values). If ``None`` is given, do not replace them. Defaults to ``None``.
+        model_missing_values (bool):
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
     """
 
     nulls = None
-    _null_column = None
-    _fill_value = None
+    _model_missing_values = None
+    _missing_value_replacement = None
 
-    def __init__(self, fill_value=None, null_column=None, copy=False):
-        self.fill_value = fill_value
-        self.null_column = null_column
-        self.copy = copy
+    def __init__(self, missing_value_replacement=None, model_missing_values=False):
+        self._missing_value_replacement = missing_value_replacement
+        self._model_missing_values = model_missing_values
 
-    def creates_null_column(self):
+    def models_missing_values(self):
         """Indicate whether this transformer creates a null column on transform.
 
         Returns:
             bool:
                 Whether a null column is created on transform.
         """
-        return bool(self._null_column)
+        return self._model_missing_values
 
-    def _get_fill_value(self, data, null_values):
+    def _get_missing_value_replacement(self, data):
         """Get the fill value to use for the given data.
 
         Args:
             data (pd.Series):
                 The data that is being transformed.
-            null_values (np.array):
-                Array of boolean values that indicate which values in the
-                input data are nulls.
 
         Return:
             object:
                 The fill value that needs to be used.
         """
-        fill_value = self.fill_value
+        if self._missing_value_replacement is None:
+            return None
 
-        if fill_value in (None, 'mean', 'mode') and null_values.all():
-            return 0
-
-        if fill_value is None:
-            if pd.api.types.is_numeric_dtype(data):
-                fill_value = 'mean'
-            else:
-                fill_value = 'mode'
-
-        if fill_value == 'mean':
+        if self._missing_value_replacement == 'mean':
             return data.mean()
 
-        if fill_value == 'mode':
+        if self._missing_value_replacement == 'mode':
             return data.mode(dropna=True)[0]
 
-        return fill_value
+        return self._missing_value_replacement
 
     def fit(self, data):
         """Fit the transformer to the data.
@@ -93,15 +81,17 @@ class NullTransformer():
         null_values = data.isna().to_numpy()
         self.nulls = null_values.any()
 
-        self._fill_value = self._get_fill_value(data, null_values)
-
-        if self.null_column is None:
-            self._null_column = self.nulls
-        else:
-            self._null_column = self.null_column
+        self._missing_value_replacement = self._get_missing_value_replacement(data)
+        if not self.nulls and self._model_missing_values:
+            self._model_missing_values = False
+            guidance_message = (
+                f'Guidance: There are no missing values in column {data.name}. '
+                'Extra column not created.'
+            )
+            LOGGER.info(guidance_message)
 
     def transform(self, data):
-        """Replace null values with the indicated fill_value.
+        """Replace null values with the indicated missing_value_replacement.
 
         If required, create the null indicator column.
 
@@ -113,16 +103,14 @@ class NullTransformer():
             numpy.ndarray
         """
         isna = data.isna()
-        if isna.any():
-            if not self._null_column and self._fill_value in data.to_numpy():
+        if isna.any() and self._missing_value_replacement is not None:
+            if (not self._model_missing_values and
+                    self._missing_value_replacement in data.to_numpy()):
                 warnings.warn(IRREVERSIBLE_WARNING)
 
-            if not self.copy:
-                data[isna] = self._fill_value
-            else:
-                data = data.fillna(self._fill_value)
+            data = data.fillna(self._missing_value_replacement)
 
-        if self._null_column:
+        if self._model_missing_values:
             return pd.concat([data, isna.astype(np.float64)], axis=1).to_numpy()
 
         return data.to_numpy()
@@ -131,7 +119,7 @@ class NullTransformer():
         """Restore null values to the data.
 
         If a null indicator column was created during fit, use it as a reference.
-        Otherwise, replace all instances of ``fill_value`` that can be found in
+        Otherwise, replace all instances of ``missing_value_replacement`` that can be found in
         data.
 
         Args:
@@ -141,16 +129,14 @@ class NullTransformer():
         Returns:
             pandas.Series
         """
-        if self._null_column:
+        if self._model_missing_values:
             if self.nulls:
                 isna = data[:, 1] > 0.5
 
-            data = data[:, 0]
-            if self.copy:
-                data = data.copy()
+            data = data[:, 0].copy()
 
         elif self.nulls:
-            isna = self._fill_value == data
+            isna = self._missing_value_replacement == data
 
         data = pd.Series(data)
 
