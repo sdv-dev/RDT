@@ -10,7 +10,7 @@ from rdt import HyperTransformer
 from rdt.errors import NotFittedError
 from rdt.transformers import (
     BooleanTransformer, CategoricalTransformer, DatetimeTransformer, GaussianCopulaTransformer,
-    NumericalTransformer, OneHotEncodingTransformer)
+    NumericalTransformer, OneHotEncoder)
 
 
 class TestHyperTransformer(TestCase):
@@ -222,7 +222,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformer = CategoricalTransformer()
         ht = HyperTransformer(
-            default_data_type_transformers={'categorical': OneHotEncodingTransformer()}
+            default_data_type_transformers={'categorical': OneHotEncoder()}
         )
         next_transformers = {'a.out': transformer}
 
@@ -256,7 +256,7 @@ class TestHyperTransformer(TestCase):
         transformer = CategoricalTransformer(fuzzy=True)
         mock.return_value = transformer
         ht = HyperTransformer(
-            default_data_type_transformers={'categorical': OneHotEncodingTransformer()}
+            default_data_type_transformers={'categorical': OneHotEncoder()}
         )
 
         # Run

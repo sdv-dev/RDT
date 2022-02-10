@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.categorical import (
-    CategoricalTransformer, LabelEncoder, OneHotEncodingTransformer)
+from rdt.transformers.categorical import CategoricalTransformer, LabelEncoder, OneHotEncoder
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
@@ -784,50 +783,33 @@ class TestCategoricalTransformer:
         pd.testing.assert_series_equal(data, reverse)
 
 
-class TestOneHotEncodingTransformer:
-
-    def test___init__(self):
-        """Test the ``__init__`` method.
-
-        Validate that the passed arguments are stored as attributes.
-
-        Input:
-            - a string passed to the ``error_on_unknown`` parameter.
-
-        Side effect:
-            - the ``error_on_unknown`` attribute is set to the passed string.
-        """
-        # Run
-        transformer = OneHotEncodingTransformer(error_on_unknown='error_value')
-
-        # Asserts
-        assert transformer.error_on_unknown == 'error_value'
+class TestOneHotEncoder:
 
     def test__prepare_data_empty_lists(self):
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = [[], [], []]
 
         # Assert
         with pytest.raises(ValueError, match='Unexpected format.'):
-            ohet._prepare_data(data)
+            ohe._prepare_data(data)
 
     def test__prepare_data_nested_lists(self):
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = [[[]]]
 
         # Assert
         with pytest.raises(ValueError, match='Unexpected format.'):
-            ohet._prepare_data(data)
+            ohe._prepare_data(data)
 
     def test__prepare_data_list_of_lists(self):
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
 
         # Run
         data = [['a'], ['b'], ['c']]
-        out = ohet._prepare_data(data)
+        out = ohe._prepare_data(data)
 
         # Assert
         expected = np.array(['a', 'b', 'c'])
@@ -835,11 +817,11 @@ class TestOneHotEncodingTransformer:
 
     def test__prepare_data_pandas_series(self):
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
 
         # Run
         data = pd.Series(['a', 'b', 'c'])
-        out = ohet._prepare_data(data)
+        out = ohe._prepare_data(data)
 
         # Assert
         expected = pd.Series(['a', 'b', 'c'])
@@ -860,7 +842,7 @@ class TestOneHotEncodingTransformer:
         The number of items in the dictionary is defined by the ``dummies`` attribute.
 
         Setup:
-            - initialize a ``OneHotEncodingTransformer`` and set:
+            - initialize a ``OneHotEncoder`` and set:
                 - the ``dummies`` attribute to a list.
                 - the ``column_prefix`` attribute to a string.
 
@@ -869,7 +851,7 @@ class TestOneHotEncodingTransformer:
             added to the beginning of the keys of the ``output_types`` dictionary.
         """
         # Setup
-        transformer = OneHotEncodingTransformer()
+        transformer = OneHotEncoder()
         transformer.column_prefix = 'abc'
         transformer.dummies = [1, 2]
 
@@ -894,14 +876,14 @@ class TestOneHotEncodingTransformer:
         """
 
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
 
         # Run
         data = pd.Series(['a', 2, 'c'])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Assert
-        np.testing.assert_array_equal(ohet.dummies, ['a', 2, 'c'])
+        np.testing.assert_array_equal(ohe.dummies, ['a', 2, 'c'])
 
     def test__fit_dummies_nans(self):
         """Test the ``_fit`` method without nans.
@@ -913,14 +895,14 @@ class TestOneHotEncodingTransformer:
         """
 
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
 
         # Run
         data = pd.Series(['a', 2, 'c', None])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Assert
-        np.testing.assert_array_equal(ohet.dummies, ['a', 2, 'c', np.nan])
+        np.testing.assert_array_equal(ohe.dummies, ['a', 2, 'c', np.nan])
 
     def test__fit_no_nans(self):
         """Test the ``_fit`` method without nans.
@@ -934,17 +916,17 @@ class TestOneHotEncodingTransformer:
         """
 
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
 
         # Run
         data = pd.Series(['a', 'b', 'c'])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Assert
-        np.testing.assert_array_equal(ohet.dummies, ['a', 'b', 'c'])
-        np.testing.assert_array_equal(ohet._uniques, ['a', 'b', 'c'])
-        assert ohet._dummy_encoded
-        assert not ohet._dummy_na
+        np.testing.assert_array_equal(ohe.dummies, ['a', 'b', 'c'])
+        np.testing.assert_array_equal(ohe._uniques, ['a', 'b', 'c'])
+        assert ohe._dummy_encoded
+        assert not ohe._dummy_na
 
     def test__fit_no_nans_numeric(self):
         """Test the ``_fit`` method without nans.
@@ -958,17 +940,17 @@ class TestOneHotEncodingTransformer:
         """
 
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
 
         # Run
         data = pd.Series([1, 2, 3])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Assert
-        np.testing.assert_array_equal(ohet.dummies, [1, 2, 3])
-        np.testing.assert_array_equal(ohet._uniques, [1, 2, 3])
-        assert not ohet._dummy_encoded
-        assert not ohet._dummy_na
+        np.testing.assert_array_equal(ohe.dummies, [1, 2, 3])
+        np.testing.assert_array_equal(ohe._uniques, [1, 2, 3])
+        assert not ohe._dummy_encoded
+        assert not ohe._dummy_na
 
     def test__fit_nans(self):
         """Test the ``_fit`` method with nans.
@@ -982,17 +964,17 @@ class TestOneHotEncodingTransformer:
         """
 
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
 
         # Run
         data = pd.Series(['a', 'b', None])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Assert
-        np.testing.assert_array_equal(ohet.dummies, ['a', 'b', np.nan])
-        np.testing.assert_array_equal(ohet._uniques, ['a', 'b'])
-        assert ohet._dummy_encoded
-        assert ohet._dummy_na
+        np.testing.assert_array_equal(ohe.dummies, ['a', 'b', np.nan])
+        np.testing.assert_array_equal(ohe._uniques, ['a', 'b'])
+        assert ohe._dummy_encoded
+        assert ohe._dummy_na
 
     def test__fit_nans_numeric(self):
         """Test the ``_fit`` method with nans.
@@ -1006,28 +988,28 @@ class TestOneHotEncodingTransformer:
         """
 
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
 
         # Run
         data = pd.Series([1, 2, np.nan])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Assert
-        np.testing.assert_array_equal(ohet.dummies, [1, 2, np.nan])
-        np.testing.assert_array_equal(ohet._uniques, [1, 2])
-        assert not ohet._dummy_encoded
-        assert ohet._dummy_na
+        np.testing.assert_array_equal(ohe.dummies, [1, 2, np.nan])
+        np.testing.assert_array_equal(ohe._uniques, [1, 2])
+        assert not ohe._dummy_encoded
+        assert ohe._dummy_na
 
     def test__fit_single(self):
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
 
         # Run
         data = pd.Series(['a', 'a', 'a'])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Assert
-        np.testing.assert_array_equal(ohet.dummies, ['a'])
+        np.testing.assert_array_equal(ohe.dummies, ['a'])
 
     def test__transform_no_nan(self):
         """Test the ``_transform`` method without nans.
@@ -1041,13 +1023,13 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'b', 'c'])
-        ohet._uniques = ['a', 'b', 'c']
-        ohet._num_dummies = 3
+        ohe._uniques = ['a', 'b', 'c']
+        ohe._num_dummies = 3
 
         # Run
-        out = ohet._transform_helper(data)
+        out = ohe._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -1070,15 +1052,15 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'b', 'c'])
-        ohet._uniques = ['a', 'b', 'c']
-        ohet._indexer = [0, 1, 2]
-        ohet._num_dummies = 3
-        ohet._dummy_encoded = True
+        ohe._uniques = ['a', 'b', 'c']
+        ohe._indexer = [0, 1, 2]
+        ohe._num_dummies = 3
+        ohe._dummy_encoded = True
 
         # Run
-        out = ohet._transform_helper(data)
+        out = ohe._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -1101,14 +1083,14 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series([np.nan, None, 'a', 'b'])
-        ohet._uniques = ['a', 'b']
-        ohet._dummy_na = True
-        ohet._num_dummies = 2
+        ohe._uniques = ['a', 'b']
+        ohe._dummy_na = True
+        ohe._num_dummies = 2
 
         # Run
-        out = ohet._transform_helper(data)
+        out = ohe._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -1133,16 +1115,16 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series([np.nan, None, 'a', 'b'])
-        ohet._uniques = ['a', 'b']
-        ohet._indexer = [0, 1]
-        ohet._dummy_na = True
-        ohet._num_dummies = 2
-        ohet._dummy_encoded = True
+        ohe._uniques = ['a', 'b']
+        ohe._indexer = [0, 1]
+        ohe._dummy_na = True
+        ohe._num_dummies = 2
+        ohe._dummy_encoded = True
 
         # Run
-        out = ohet._transform_helper(data)
+        out = ohe._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -1166,13 +1148,13 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'a', 'a'])
-        ohet._uniques = ['a']
-        ohet._num_dummies = 1
+        ohe._uniques = ['a']
+        ohe._num_dummies = 1
 
         # Run
-        out = ohet._transform_helper(data)
+        out = ohe._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -1196,15 +1178,15 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'a', 'a'])
-        ohet._uniques = ['a']
-        ohet._indexer = [0]
-        ohet._num_dummies = 1
-        ohet._dummy_encoded = True
+        ohe._uniques = ['a']
+        ohe._indexer = [0]
+        ohe._num_dummies = 1
+        ohe._dummy_encoded = True
 
         # Run
-        out = ohet._transform_helper(data)
+        out = ohe._transform_helper(data)
 
         # Assert
         expected = np.array([
@@ -1227,13 +1209,13 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         pd.Series(['a'])
-        ohet._uniques = ['a']
-        ohet._num_dummies = 1
+        ohe._uniques = ['a']
+        ohe._num_dummies = 1
 
         # Run
-        out = ohet._transform_helper(pd.Series(['b', 'b', 'b']))
+        out = ohe._transform_helper(pd.Series(['b', 'b', 'b']))
 
         # Assert
         expected = np.array([
@@ -1257,15 +1239,15 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         pd.Series(['a'])
-        ohet._uniques = ['a']
-        ohet._indexer = [0]
-        ohet._num_dummies = 1
-        ohet.dummy_encoded = True
+        ohe._uniques = ['a']
+        ohe._indexer = [0]
+        ohe._num_dummies = 1
+        ohe.dummy_encoded = True
 
         # Run
-        out = ohet._transform_helper(pd.Series(['b', 'b', 'b']))
+        out = ohe._transform_helper(pd.Series(['b', 'b', 'b']))
 
         # Assert
         expected = np.array([
@@ -1288,14 +1270,14 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         pd.Series(['a'])
-        ohet._uniques = ['a']
-        ohet._dummy_na = True
-        ohet._num_dummies = 1
+        ohe._uniques = ['a']
+        ohe._dummy_na = True
+        ohe._num_dummies = 1
 
         # Run
-        out = ohet._transform_helper(pd.Series(['b', 'b', np.nan]))
+        out = ohe._transform_helper(pd.Series(['b', 'b', np.nan]))
 
         # Assert
         expected = np.array([
@@ -1317,12 +1299,12 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'b', 'c'])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Run
-        out = ohet._transform(data)
+        out = ohe._transform(data)
 
         # Assert
         expected = np.array([
@@ -1344,12 +1326,12 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'b', None])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Run
-        out = ohet._transform(data)
+        out = ohe._transform(data)
 
         # Assert
         expected = np.array([
@@ -1371,12 +1353,12 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'a', 'a'])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Run
-        out = ohet._transform(data)
+        out = ohe._transform(data)
 
         # Assert
         expected = np.array([
@@ -1389,21 +1371,37 @@ class TestOneHotEncodingTransformer:
     def test__transform_unknown(self):
         """Test the ``transform`` with unknown data.
 
-        In this test ``transform`` should raise an error
-        due to the attempt of transforming data with previously
-        unseen categories.
+        In this test ``transform`` should raise a warning due to the attempt
+        of transforming data with previously unseen categories.
 
         Input:
         - Series with unknown categorical values
+        Output:
+        - one-hot encoding of the input, with the unseen category encoded as 0s
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
-        data = pd.Series(['a'])
-        ohet._fit(data)
+        ohe = OneHotEncoder()
+        fit_data = pd.Series([1, 2, 3, np.nan])
+        ohe._fit(fit_data)
+
+        # Run
+        warning_msg = (
+            'Warning: The data contains new categories \\{4.0\\} that were not seen '
+            'in the original data. Creating a vector of all 0s. If you want to model '
+            'new categories, please fit the transformer again with the new data.'
+        )
+        with pytest.warns(UserWarning, match=warning_msg):
+            transform_data = pd.Series([1, 2, np.nan, 4])
+            out = ohe._transform(transform_data)
 
         # Assert
-        with np.testing.assert_raises(ValueError):
-            ohet._transform(['b'])
+        expected = np.array([
+            [1, 0, 0, 0],
+            [0, 1, 0, 0],
+            [0, 0, 0, 1],
+            [0, 0, 0, 0]
+        ])
+        np.testing.assert_array_equal(out, expected)
 
     def test__transform_numeric(self):
         """Test the ``transform`` on numeric input.
@@ -1417,9 +1415,9 @@ class TestOneHotEncodingTransformer:
         - one-hot encoding of the input
         """
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series([1, 2])
-        ohet._fit(data)
+        ohe._fit(data)
 
         expected = np.array([
             [1, 0],
@@ -1427,17 +1425,17 @@ class TestOneHotEncodingTransformer:
         ])
 
         # Run
-        out = ohet._transform(data)
+        out = ohe._transform(data)
 
         # Assert
-        assert not ohet._dummy_encoded
+        assert not ohe._dummy_encoded
         np.testing.assert_array_equal(out, expected)
 
     def test__reverse_transform_no_nans(self):
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'b', 'c'])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Run
         transformed = np.array([
@@ -1445,7 +1443,7 @@ class TestOneHotEncodingTransformer:
             [0, 1, 0],
             [0, 0, 1]
         ])
-        out = ohet._reverse_transform(transformed)
+        out = ohe._reverse_transform(transformed)
 
         # Assert
         expected = pd.Series(['a', 'b', 'c'])
@@ -1453,9 +1451,9 @@ class TestOneHotEncodingTransformer:
 
     def test__reverse_transform_nans(self):
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'b', None])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Run
         transformed = np.array([
@@ -1463,7 +1461,7 @@ class TestOneHotEncodingTransformer:
             [0, 1, 0],
             [0, 0, 1]
         ])
-        out = ohet._reverse_transform(transformed)
+        out = ohe._reverse_transform(transformed)
 
         # Assert
         expected = pd.Series(['a', 'b', None])
@@ -1471,9 +1469,9 @@ class TestOneHotEncodingTransformer:
 
     def test__reverse_transform_single(self):
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'a', 'a'])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Run
         transformed = np.array([
@@ -1481,7 +1479,7 @@ class TestOneHotEncodingTransformer:
             [1],
             [1]
         ])
-        out = ohet._reverse_transform(transformed)
+        out = ohe._reverse_transform(transformed)
 
         # Assert
         expected = pd.Series(['a', 'a', 'a'])
@@ -1489,13 +1487,13 @@ class TestOneHotEncodingTransformer:
 
     def test__reverse_transform_1d(self):
         # Setup
-        ohet = OneHotEncodingTransformer()
+        ohe = OneHotEncoder()
         data = pd.Series(['a', 'a', 'a'])
-        ohet._fit(data)
+        ohe._fit(data)
 
         # Run
         transformed = pd.Series([1, 1, 1])
-        out = ohet._reverse_transform(transformed)
+        out = ohe._reverse_transform(transformed)
 
         # Assert
         expected = pd.Series(['a', 'a', 'a'])
