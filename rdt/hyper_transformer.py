@@ -64,7 +64,7 @@ class HyperTransformer:
 
         Create a ``HyperTransformer`` passing a dict mapping data types to transformers.
         >>> default_data_type_transformers = {
-        ...     'categorical': LabelEncodingTransformer(),
+        ...     'categorical': LabelEncoder(),
         ...     'numerical': NumericalTransformer()
         ... }
         >>> ht = HyperTransformer(default_data_type_transformers=default_data_type_transformers)
