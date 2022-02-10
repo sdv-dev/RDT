@@ -180,7 +180,7 @@ class CategoricalTransformer(BaseTransformer):
                 Data to transform.
 
         Returns:
-            numpy.ndarray:
+            numpy.ndarray
         """
         if len(self.means) < len(data):
             return self._transform_by_category(data)
@@ -369,7 +369,7 @@ class OneHotEncoder(BaseTransformer):
                 Data to transform.
 
         Returns:
-            numpy.ndarray.
+            numpy.ndarray
         """
         data = self._prepare_data(data)
         unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
@@ -391,7 +391,7 @@ class OneHotEncoder(BaseTransformer):
                 Data to revert.
 
         Returns:
-            pandas.Series.
+            pandas.Series
         """
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
