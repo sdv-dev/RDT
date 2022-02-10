@@ -466,10 +466,6 @@ class LabelEncoder(BaseTransformer):
 
         Returns:
             pd.Series
-
-        Raises:
-            `NotFittedError`:
-                When no categories have been fitted and `data` is not empty.
         """
         mapped = data.fillna(np.nan).map(self.categories_to_values)
         is_null = mapped.isna()
