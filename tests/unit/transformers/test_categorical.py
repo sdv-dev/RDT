@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from rdt.transformers.categorical import (
-    CategoricalTransformer, LabelEncodingTransformer, OneHotEncodingTransformer)
+    CategoricalTransformer, LabelEncoder, OneHotEncodingTransformer)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
@@ -1502,7 +1502,7 @@ class TestOneHotEncodingTransformer:
         pd.testing.assert_series_equal(out, expected)
 
 
-class TestLabelEncodingTransformer:
+class TestLabelEncoder:
 
     def test__fit(self):
         """Test the ``_fit`` method.
@@ -1512,7 +1512,7 @@ class TestLabelEncodingTransformer:
         ``values_to_categories`` attribute .
 
         Setup:
-            - create an instance of the ``LabelEncodingTransformer``.
+            - create an instance of the ``LabelEncoder``.
 
         Input:
             - a pandas series.
@@ -1523,7 +1523,7 @@ class TestLabelEncodingTransformer:
         """
         # Setup
         data = pd.Series([1, 2, 3, 2, 1])
-        transformer = LabelEncodingTransformer()
+        transformer = LabelEncoder()
 
         # Run
         transformer._fit(data)
@@ -1539,8 +1539,8 @@ class TestLabelEncodingTransformer:
         integer value.
 
         Setup:
-            - create an instance of the ``LabelEncodingTransformer``, where
-            ``categories_to_values`` is set to a dictionary.
+            - create an instance of the ``LabelEncoder``, where ``categories_to_values``
+            and ``values_to_categories`` are set to dictionaries.
 
         Input:
             - a pandas series.
@@ -1549,15 +1549,58 @@ class TestLabelEncodingTransformer:
             - a numpy array containing the transformed data.
         """
         # Setup
-        data = pd.Series([1, 2, 3])
-        transformer = LabelEncodingTransformer()
+        data = pd.Series([1, 2, 3, 4])
+        transformer = LabelEncoder()
         transformer.categories_to_values = {1: 0, 2: 1, 3: 2}
+        transformer.values_to_categories = {0: 1, 1: 2, 2: 3}
 
         # Run
-        transformed = transformer._transform(data)
+        warning_msg = (
+            'Warning: The data contains new categories \\{4\\} that were not seen '
+            'in the original data. Assigning them random values. If you want to model '
+            'new categories, please fit the transformer again with the new data.'
+        )
+        with pytest.warns(UserWarning, match=warning_msg):
+            transformed = transformer._transform(data)
 
         # Assert
-        pd.testing.assert_series_equal(transformed, pd.Series([0, 1, 2]))
+        expected = pd.Series([0, 1, 2])
+        pd.testing.assert_series_equal(transformed[:-1], expected)
+
+        assert [0 <= transformed[3] <= 2]
+
+    def test__transform_unseen_categories(self):
+        """Test the ``_transform`` method with multiple unseen categories.
+
+        Validate that each category of the passed data is replaced with its corresponding
+        integer value.
+
+        Setup:
+            - create an instance of the ``LabelEncoder``, where ``categories_to_values``
+            and ``values_to_categories`` are set to dictionaries.
+
+        Input:
+            - a pandas series.
+
+        Output:
+            - a numpy array containing the transformed data.
+        """
+        # Setup
+        fit_data = pd.Series(['a', 2, True])
+        transformer = LabelEncoder()
+        transformer.categories_to_values = {'a': 0, 2: 1, True: 2}
+        transformer.values_to_categories = {0: 'a', 1: 2, 2: True}
+
+        # Run
+        with pytest.warns(UserWarning):
+            transform_data = pd.Series(['a', 2, True, np.nan, np.nan, np.nan, 'b', False, 3])
+            transformed = transformer._transform(transform_data)
+
+        # Assert
+        expected = pd.Series([0, 1, 2])
+        pd.testing.assert_series_equal(transformed[:3], expected)
+
+        assert all([0 <= value < len(fit_data) for value in transformed[3:]])
 
     def test__reverse_transform_clips_values(self):
         """Test the ``_reverse_transform`` method with values not in map.
@@ -1572,7 +1615,7 @@ class TestLabelEncodingTransformer:
         - categories corresponding to closest key in the dict
         """
         # Setup
-        transformer = LabelEncodingTransformer()
+        transformer = LabelEncoder()
         transformer.values_to_categories = {0: 'a', 1: 'b', 2: 'c'}
         data = pd.Series([0, 1, 10])
 

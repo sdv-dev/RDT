@@ -1,5 +1,7 @@
 """Transformers for categorical data."""
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import psutil
@@ -410,7 +412,7 @@ class OneHotEncodingTransformer(BaseTransformer):
         return pd.Series(indices).map(self.dummies.__getitem__)
 
 
-class LabelEncodingTransformer(BaseTransformer):
+class LabelEncoder(BaseTransformer):
     """LabelEncoding for categorical data.
 
     This transformer generates a unique integer representation for each category
@@ -446,7 +448,8 @@ class LabelEncodingTransformer(BaseTransformer):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
-        self.values_to_categories = dict(enumerate(pd.unique(data)))
+        unique_data = pd.unique(data.fillna(np.nan))
+        self.values_to_categories = dict(enumerate(unique_data))
         self.categories_to_values = {
             category: value
             for value, category in self.values_to_categories.items()
@@ -455,14 +458,31 @@ class LabelEncodingTransformer(BaseTransformer):
     def _transform(self, data):
         """Replace each category with its corresponding integer value.
 
+        If a category has not been seen before, a random value is assigned.
+
         Args:
             data (pandas.Series):
                 Data to transform.
 
         Returns:
-            numpy.ndarray:
+            pd.Series
         """
-        return pd.Series(data).map(self.categories_to_values)
+        mapped = data.fillna(np.nan).map(self.categories_to_values)
+        is_null = mapped.isna()
+        if is_null.any():
+            unseen_categories = set(data[is_null])
+            warnings.warn(
+                f'Warning: The data contains new categories {unseen_categories} that were not '
+                'seen in the original data. Assigning them random values. If you want to model '
+                'new categories, please fit the transformer again with the new data.'
+            )
+
+        mapped[is_null] = np.random.randint(
+            len(self.categories_to_values),
+            size=is_null.sum()
+        )
+
+        return mapped.astype('int64')
 
     def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.

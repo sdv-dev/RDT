@@ -17,7 +17,7 @@ from rdt.transformers import get_transformer_class, get_transformers_by_type
 from tests.code_style import (
     get_test_location, validate_test_location, validate_test_names, validate_transformer_addon,
     validate_transformer_importable_from_parent_module, validate_transformer_module,
-    validate_transformer_name, validate_transformer_subclass)
+    validate_transformer_subclass)
 from tests.integration.test_transformers import validate_transformer
 from tests.performance import validate_performance
 from tests.quality.test_quality import (
@@ -208,13 +208,6 @@ def _validate_third_party_checks(transformer_path):
 
 def _validate_custom_checks(transformer):
     results = [
-        _custom_validation(
-            validate_transformer_name,
-            'Transformer Name',
-            'Transformer name ends with ``Transformer``.',
-            'Transformer name must end with ``Transformer``.',
-            transformer
-        ),
         _custom_validation(
             validate_transformer_subclass,
             'Transformer is subclass',
