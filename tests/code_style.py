@@ -13,12 +13,6 @@ from rdt.transformers import TRANSFORMERS, get_transformer_class
 from rdt.transformers.base import BaseTransformer
 
 
-def validate_transformer_name(transformer):
-    """Test whether or not the ``Transformer`` ends with the ``Transformer`` nomenclature."""
-    fail_message = 'Transformer name must end with ``Transformer``.'
-    assert transformer.__name__.endswith('Transformer'), fail_message
-
-
 def validate_transformer_subclass(transformer):
     """Test whether or not the ``Transformer`` is a subclass of ``BaseTransformer``."""
     fail_message = 'Transformer must be a subclass of ``BaseTransformer``.'
@@ -201,7 +195,6 @@ def test_transformer_code_style(transformer):
     if not inspect.isclass(transformer):
         transformer = get_transformer_class(transformer)
 
-    validate_transformer_name(transformer)
     validate_transformer_subclass(transformer)
     validate_transformer_module(transformer)
     validate_test_location(transformer)
