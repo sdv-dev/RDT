@@ -13,7 +13,7 @@ from rdt.transformers.base import BaseTransformer
 def _select_unique_categories(data):
     """Create set of data categories.
 
-    First selects all unique categories which are not nan, then appends np.nan if needed.
+    First selects all categories which are not nan, then appends np.nan if needed.
 
     Args:
         data (pd.Series):
@@ -23,11 +23,11 @@ def _select_unique_categories(data):
         Set of values present in data.
     """
     null = pd.isna(data)
-    unique_data = list(data[~null])
+    data = list(data[~null])
     if null.any():
-        unique_data.append(np.nan)
+        data.append(np.nan)
 
-    return set(unique_data)
+    return set(data)
 
 
 class CategoricalTransformer(BaseTransformer):
