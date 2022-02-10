@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from rdt.errors import NotFittedError
 from rdt.transformers.categorical import (
     CategoricalTransformer, LabelEncoder, OneHotEncodingTransformer)
 
@@ -1622,7 +1623,7 @@ class TestLabelEncoder:
 
         # Run / Assert
         error_msg = 'No categories have been fitted.'
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(NotFittedError, match=error_msg):
             transformer._transform(data)
 
     def test__reverse_transform_clips_values(self):

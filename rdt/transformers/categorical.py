@@ -1,33 +1,14 @@
 """Transformers for categorical data."""
 
-from warnings import warn
+import warnings
 
 import numpy as np
 import pandas as pd
 import psutil
 from scipy.stats import norm
 
+from rdt.errors import NotFittedError
 from rdt.transformers.base import BaseTransformer
-
-
-def _select_unique_categories(data):
-    """Create set of data categories.
-
-    First selects all categories which are not nan, then appends np.nan if needed.
-
-    Args:
-        data (pd.Series):
-            Data to be converted.
-
-    Returns:
-        Set of values present in data.
-    """
-    null = pd.isna(data)
-    data = list(data[~null])
-    if null.any():
-        data.append(np.nan)
-
-    return set(data)
 
 
 class CategoricalTransformer(BaseTransformer):
@@ -468,7 +449,8 @@ class LabelEncoder(BaseTransformer):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
-        self.values_to_categories = dict(enumerate(pd.unique(data)))
+        unique_data = pd.unique(data.fillna(np.nan))
+        self.values_to_categories = dict(enumerate(unique_data))
         self.categories_to_values = {
             category: value
             for value, category in self.values_to_categories.items()
@@ -478,7 +460,6 @@ class LabelEncoder(BaseTransformer):
         """Replace each category with its corresponding integer value.
 
         If a category has not been seen before, a random value is assigned.
-        If no categories have been fitted (and `data` is not empty), raise a `ValueError`.
 
         Args:
             data (pandas.Series):
@@ -486,30 +467,31 @@ class LabelEncoder(BaseTransformer):
 
         Returns:
             pd.Series.
+
+        Raises:
+            `NotFittedError` when no categories have been fitted and `data` is not empty.
         """
         # Find the data categories that were not seen during fitting. Convert all nan's
         # to np.nan to avoid having nan values with different ids.
-        unique_data = _select_unique_categories(pd.unique(data))
-        categories = _select_unique_categories(pd.Series(self.categories_to_values.keys()))
-        unseen_categories = unique_data - categories
-        if unseen_categories:
+        mapped = data.fillna(np.nan).map(self.categories_to_values)
+        is_null = mapped.isna()
+        if is_null.any():
             if len(self.categories_to_values) == 0:
-                raise ValueError('No categories have been fitted.')
+                raise NotFittedError('No categories have been fitted.')
 
-            warn(
+            unseen_categories = set(data[is_null])
+            warnings.warn(
                 f'Warning: The data contains new categories {unseen_categories} that were not '
                 'seen in the original data. Assigning them random values. If you want to model '
                 'new categories, please fit the transformer again with the new data.'
             )
 
-        mapped_data = pd.Series(data).map(self.categories_to_values)
+        mapped[is_null] = np.random.randint(
+            len(self.categories_to_values),
+            size=is_null.sum()
+        )
 
-        def map_function(value):
-            if pd.isna(value):
-                return np.random.randint(0, len(self.values_to_categories))
-            return value
-
-        return mapped_data.apply(map_function).astype('int64')
+        return mapped.astype('int64')
 
     def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
