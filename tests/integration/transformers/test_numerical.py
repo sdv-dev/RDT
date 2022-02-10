@@ -7,11 +7,14 @@ from rdt.transformers.numerical import (
 
 class TestNumericalTransformer:
 
-    def test_null_column(self):
+    def test_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        nt = NumericalTransformer()
+        nt = NumericalTransformer(
+            missing_value_replacement='mean',
+            model_missing_values=True,
+        )
         nt.fit(data, column)
         transformed = nt.transform(data)
 
@@ -23,11 +26,11 @@ class TestNumericalTransformer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
-    def test_not_null_column(self):
+    def test_not_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        nt = NumericalTransformer(null_column=False)
+        nt = NumericalTransformer(model_missing_values=False)
         nt.fit(data, column)
         transformed = nt.transform(data)
 
@@ -52,7 +55,7 @@ class TestNumericalTransformer:
         reverse = nt.reverse_transform(transformed)
         assert list(reverse['a']) == [1, 2, 1, 2, 1]
 
-    def test_int_nan(self):
+    def test_int_nan_not_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
         column = 'a'
 
@@ -61,7 +64,7 @@ class TestNumericalTransformer:
         transformed = nt.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
-        assert transformed.shape == (6, 2)
+        assert transformed.shape == (6, 1)
 
         reverse = nt.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
@@ -87,11 +90,14 @@ class TestGaussianCopulaTransformer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
-    def test_null_column(self):
+    def test_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianCopulaTransformer()
+        ct = GaussianCopulaTransformer(
+            missing_value_replacement='mean',
+            model_missing_values=True
+        )
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -103,11 +109,14 @@ class TestGaussianCopulaTransformer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
-    def test_not_null_column(self):
+    def test_not_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianCopulaTransformer(null_column=False)
+        ct = GaussianCopulaTransformer(
+            missing_value_replacement='mean',
+            model_missing_values=False
+        )
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -136,7 +145,10 @@ class TestGaussianCopulaTransformer:
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
         column = 'a'
 
-        ct = GaussianCopulaTransformer(dtype=int)
+        ct = GaussianCopulaTransformer(
+            missing_value_replacement='mean',
+            model_missing_values=True
+        )
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -179,7 +191,10 @@ class TestBayesGMMTransformer:
         data[mask] = np.nan
         column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer = BayesGMMTransformer(
+            missing_value_replacement='mean',
+            model_missing_values=True
+        )
         bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
@@ -197,7 +212,10 @@ class TestBayesGMMTransformer:
         data = pd.DataFrame([np.nan, None] * 50, columns=['col'])
         column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer = BayesGMMTransformer(
+            missing_value_replacement=0,
+            model_missing_values=True
+        )
         bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 

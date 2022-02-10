@@ -44,12 +44,12 @@ def test_get_transformer_class_transformer_path():
 
 
 def test_get_transformer_instance_instance():
-    transformer = BooleanTransformer(nan=None)
+    transformer = BooleanTransformer(missing_value_replacement=None)
 
     returned = get_transformer_instance(transformer)
 
     assert isinstance(returned, BooleanTransformer)
-    assert returned.nan is None
+    assert returned.missing_value_replacement is None
 
 
 def test_get_transformer_instance_str():

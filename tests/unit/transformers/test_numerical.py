@@ -16,11 +16,15 @@ class TestNumericalTransformer(TestCase):
 
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
-        nt = NumericalTransformer(dtype='int', nan='mode', null_column=False)
+        nt = NumericalTransformer(
+            dtype='int',
+            missing_value_replacement='mode',
+            model_missing_values=False
+        )
 
         assert nt.dtype == 'int'
-        assert nt.nan == 'mode'
-        assert nt.null_column is False
+        assert nt.missing_value_replacement == 'mode'
+        assert nt.model_missing_values is False
 
     def test_get_output_types(self):
         """Test the ``get_output_types`` method when a null column is created.
@@ -36,7 +40,7 @@ class TestNumericalTransformer(TestCase):
         Setup:
             - initialize a ``NumericalTransformer`` transformer which:
                 - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self.null_column`` is True.
+                ``self.model_missing_values`` is True.
                 - sets ``self.column_prefix`` to a string.
 
         Output:
@@ -45,8 +49,8 @@ class TestNumericalTransformer(TestCase):
         """
         # Setup
         transformer = NumericalTransformer()
-        transformer.null_transformer = NullTransformer(fill_value='fill')
-        transformer.null_transformer._null_column = True
+        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
+        transformer.null_transformer._model_missing_values = True
         transformer.column_prefix = 'a#b'
 
         # Run
@@ -68,14 +72,14 @@ class TestNumericalTransformer(TestCase):
         Setup:
             - initialize a ``NumericalTransformer`` transformer which sets
             ``self.null_transformer`` to a ``NullTransformer`` where
-            ``self.null_column`` is False.
+            ``self.model_missing_values`` is False.
 
         Output:
             - False
         """
         # Setup
         transformer = NumericalTransformer()
-        transformer.null_transformer = NullTransformer(fill_value='fill')
+        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
 
         # Run
         output = transformer.is_composition_identity()
@@ -129,7 +133,8 @@ class TestNumericalTransformer(TestCase):
         should be returned.
 
         Input:
-        - An array that contains floats with a maximum of 3 decimals and a NaN.
+        - An array that contains floats with a maximum of 3 decimals and a
+          NaN.
         Output:
         - 3
         """
@@ -177,13 +182,13 @@ class TestNumericalTransformer(TestCase):
 
         assert output == -1
 
-    def test__learn_rounding_digits_all_nans(self):
+    def test__learn_rounding_digits_all_missing_value_replacements(self):
         """Test the _learn_rounding_digits method with data that is all NaNs.
 
         If the data is all NaNs, expect that the output is None.
 
         Input:
-        - An array of NaNs.
+        - An array of NaN.
         Output:
         - None
         """
@@ -196,29 +201,33 @@ class TestNumericalTransformer(TestCase):
     def test__fit(self):
         """Test the ``_fit`` method with numpy.array.
 
-        Validate that the ``_dtype`` and ``.null_transformer.fill_value`` attributes
+        Validate that the ``_dtype`` and ``.null_transformer.missing_value_replacement`` attributes
         are set correctly.
 
         Setup:
-            - initialize a ``NumericalTransformer`` with the ``nan` parameter set to ``'nan'``.
+            - initialize a ``NumericalTransformer`` with the ``missing_value_replacement``
+              parameter set to ``'missing_value_replacement'``.
 
         Input:
             - a pandas dataframe containing a None.
 
         Side effect:
-            - it sets the ``null_transformer.fill_value``.
+            - it sets the ``null_transformer.missing_value_replacement``.
             - it sets the ``_dtype``.
         """
         # Setup
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
-        transformer = NumericalTransformer(dtype=float, nan='nan')
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement'
+        )
 
         # Run
         transformer._fit(data)
 
         # Asserts
-        expect_fill_value = 'nan'
-        assert transformer.null_transformer.fill_value == expect_fill_value
+        expected = 'missing_value_replacement'
+        assert transformer.null_transformer._missing_value_replacement == expected
         expect_dtype = float
         assert transformer._dtype == expect_dtype
 
@@ -238,7 +247,11 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan', rounding=None)
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            rounding=None
+        )
         transformer._fit(data)
 
         # Asserts
@@ -262,7 +275,11 @@ class TestNumericalTransformer(TestCase):
         expected_digits = 3
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan', rounding=expected_digits)
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            rounding=expected_digits
+        )
         transformer._fit(data)
 
         # Asserts
@@ -285,7 +302,11 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1, 2.1, 3.12, 4.123, 5.1234, 6.123, 7.12, 8.1, 9], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            rounding='auto'
+        )
         transformer._fit(data)
 
         # Asserts
@@ -310,7 +331,11 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame(big_numbers, columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            rounding='auto'
+        )
         transformer._fit(data)
 
         # Asserts
@@ -336,7 +361,11 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([0.000000000000001], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            rounding='auto'
+        )
         transformer._fit(data)
 
         # Asserts
@@ -360,7 +389,11 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([15000, 4000, 60000, np.inf], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            rounding='auto'
+        )
         transformer._fit(data)
 
         # Asserts
@@ -382,7 +415,11 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([0, 0, 0], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            rounding='auto'
+        )
         transformer._fit(data)
 
         # Asserts
@@ -405,7 +442,11 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([-500, -220, -10], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan', rounding='auto')
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            rounding='auto'
+        )
         transformer._fit(data)
 
         # Asserts
@@ -427,8 +468,12 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan',
-                                           min_value=None, max_value=None)
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            min_value=None,
+            max_value=None
+        )
         transformer._fit(data)
 
         # Asserts
@@ -450,8 +495,12 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan',
-                                           min_value=1, max_value=10)
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            min_value=1,
+            max_value=10
+        )
         transformer._fit(data)
 
         # Asserts
@@ -474,8 +523,12 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([-100, -5000, 0, None, 100, 4000], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan',
-                                           min_value='auto', max_value='auto')
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement',
+            min_value='auto',
+            max_value='auto'
+        )
         transformer._fit(data)
 
         # Asserts
@@ -522,7 +575,7 @@ class TestNumericalTransformer(TestCase):
         data = np.random.random(10)
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan=None)
+        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
         transformer._rounding_digits = None
         result = transformer._reverse_transform(data)
 
@@ -543,7 +596,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([0., 1.2, 3.45, 6.789])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.int64, nan=None)
+        transformer = NumericalTransformer(dtype=np.int64, missing_value_replacement=None)
         transformer._rounding_digits = None
         transformer._dtype = np.int64
         result = transformer._reverse_transform(data)
@@ -560,7 +613,8 @@ class TestNumericalTransformer(TestCase):
         Input:
         - 2d Array of multiple float values with decimals and a column setting at least 1 null.
         Output:
-        - First column of the input array as entered, replacing the indicated value with a Nan.
+        - First column of the input array as entered, replacing the indicated value with a
+          missing_value_replacement.
         """
         # Setup
         data = [
@@ -573,7 +627,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame(data, columns=['a', 'b'])
 
         # Run
-        transformer = NumericalTransformer()
+        transformer = NumericalTransformer(missing_value_replacement='mean')
         null_transformer = Mock()
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
@@ -594,8 +648,8 @@ class TestNumericalTransformer(TestCase):
         Input:
         - 2d Array of multiple float values with decimals and a column setting at least 1 null.
         Output:
-        - First column of the input array rounded, replacing the indicated value with a Nan,
-          and kept as float values.
+        - First column of the input array rounded, replacing the indicated value with a
+          ``NaN``, and kept as float values.
         """
         # Setup
         data = np.array([
@@ -606,7 +660,7 @@ class TestNumericalTransformer(TestCase):
         ])
 
         # Run
-        transformer = NumericalTransformer()
+        transformer = NumericalTransformer(missing_value_replacement='mean')
         null_transformer = Mock()
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
@@ -634,7 +688,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([1.1111, 2.2222, 3.3333, 4.44444, 5.555555])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan=None)
+        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
         transformer._rounding_digits = 2
         result = transformer._reverse_transform(data)
 
@@ -659,7 +713,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([2000.0, 120.0, 3100.0, 40100.0])
 
         # Run
-        transformer = NumericalTransformer(dtype=int, nan=None)
+        transformer = NumericalTransformer(dtype=int, missing_value_replacement=None)
         transformer._dtype = int
         transformer._rounding_digits = -3
         result = transformer._reverse_transform(data)
@@ -686,7 +740,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([2000.0, 120.0, 3100.0, 40100.0])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan=None)
+        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
         transformer._rounding_digits = -3
         result = transformer._reverse_transform(data)
 
@@ -711,7 +765,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([2000.554, 120.2, 3101, 4010])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan=None)
+        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
         transformer._rounding_digits = 0
         result = transformer._reverse_transform(data)
 
@@ -734,7 +788,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 400, np.inf])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan=None)
+        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
         transformer._min_value = -300
         result = transformer._reverse_transform(data)
 
@@ -757,7 +811,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan=None)
+        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
         transformer._max_value = 400
         result = transformer._reverse_transform(data)
 
@@ -780,7 +834,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan=None)
+        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
         transformer._max_value = 400
         transformer._min_value = -300
         result = transformer._reverse_transform(data)
@@ -824,7 +878,10 @@ class TestNumericalTransformer(TestCase):
         expected_data = np.array([-300, -300, np.nan, -250, 0, np.nan, 400, 400])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, nan='nan')
+        transformer = NumericalTransformer(
+            dtype=float,
+            missing_value_replacement='missing_value_replacement'
+        )
         transformer._max_value = 400
         transformer._min_value = -300
         transformer.null_transformer = Mock()
@@ -841,11 +898,15 @@ class TestGaussianCopulaTransformer:
 
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
-        ct = GaussianCopulaTransformer(dtype='int', nan='mode', null_column=False)
+        ct = GaussianCopulaTransformer(
+            dtype='int',
+            missing_value_replacement='mode',
+            model_missing_values=False
+        )
 
         assert ct.dtype == 'int'
-        assert ct.nan == 'mode'
-        assert ct.null_column is False
+        assert ct.missing_value_replacement == 'mode'
+        assert ct.model_missing_values is False
 
     def test___init__str_distr(self):
         """If distribution is an str, it is resolved using the _DISTRIBUTIONS dict."""
@@ -1051,7 +1112,41 @@ class TestGaussianCopulaTransformer:
         """
         # Setup
         data = pd.Series([0.0, np.nan, 1.0])
-        ct = GaussianCopulaTransformer()
+        ct = GaussianCopulaTransformer(missing_value_replacement='mean')
+        ct._get_univariate = Mock()
+
+        # Run
+        ct._fit(data)
+
+        # Assert
+        ct._get_univariate.return_value.fit.assert_called_once()
+        call_value = ct._get_univariate.return_value.fit.call_args_list[0]
+        np.testing.assert_array_equal(
+            call_value[0][0],
+            np.array([0.0, 0.5, 1.0])
+        )
+
+    def test__fit_model_missing_values(self):
+        """Test the ``_fit`` method.
+
+        Validate that ``_fit`` calls ``_get_univariate``.
+
+        Setup:
+            - create an instance of the ``GaussianCopulaTransformer``.
+            - mock the  ``_get_univariate`` method.
+
+        Input:
+            - a pandas series of float values.
+
+        Side effect:
+            - call the `_get_univariate`` method.
+        """
+        # Setup
+        data = pd.Series([0.0, np.nan, 1.0])
+        ct = GaussianCopulaTransformer(
+            missing_value_replacement='mean',
+            model_missing_values=True
+        )
         ct._get_univariate = Mock()
 
         # Run
@@ -1096,7 +1191,8 @@ class TestGaussianCopulaTransformer:
     def test__transform(self):
         """Test the ``_transform`` method.
 
-        Validate that ``_transform`` produces the correct values when ``null_column`` is True.
+        Validate that ``_transform`` produces the correct values when ``model_missing_values``
+        is True.
 
         Setup:
             - create an instance of the ``GaussianCopulaTransformer``, where:
@@ -1115,7 +1211,7 @@ class TestGaussianCopulaTransformer:
         ct = GaussianCopulaTransformer()
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
-        ct.null_transformer = NullTransformer(None, null_column=True)
+        ct.null_transformer = NullTransformer(None, model_missing_values=True)
         ct.null_transformer.fit(data)
 
         # Run
@@ -1128,10 +1224,11 @@ class TestGaussianCopulaTransformer:
         ]).T
         np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
 
-    def test__transform_null_column_none(self):
+    def test__transform_model_missing_values_none(self):
         """Test the ``_transform`` method.
 
-        Validate that ``_transform`` produces the correct values when ``null_column`` is None.
+        Validate that ``_transform`` produces the correct values when ``model_missing_values``
+        is ``False``.
 
         Setup:
             - create an instance of the ``GaussianCopulaTransformer``, where:
@@ -1152,7 +1249,7 @@ class TestGaussianCopulaTransformer:
         ct = GaussianCopulaTransformer()
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
-        ct.null_transformer = NullTransformer(None, null_column=None)
+        ct.null_transformer = NullTransformer('mean', model_missing_values=False)
 
         # Run
         ct.null_transformer.fit(data)
@@ -1166,7 +1263,7 @@ class TestGaussianCopulaTransformer:
         """Test the ``_reverse_transform`` method.
 
         Validate that ``_reverse_transform`` produces the correct values when
-        ``null_column`` is True.
+        ``model_missing_values`` is True.
 
         Setup:
             - create an instance of the ``GaussianCopulaTransformer``, where:
@@ -1188,10 +1285,13 @@ class TestGaussianCopulaTransformer:
         expected = pd.Series([
             0.0, 1.0, 2.0, np.nan
         ])
-        ct = GaussianCopulaTransformer()
+        ct = GaussianCopulaTransformer(missing_value_replacement='mean')
         ct._univariate = Mock()
         ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
-        ct.null_transformer = NullTransformer(None, null_column=True)
+        ct.null_transformer = NullTransformer(
+            missing_value_replacement='mean',
+            model_missing_values=True
+        )
 
         # Run
         ct.null_transformer.fit(expected)
@@ -1200,11 +1300,11 @@ class TestGaussianCopulaTransformer:
         # Assert
         np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
 
-    def test__reverse_transform_null_column_none(self):
+    def test__reverse_transform_model_missing_values_none(self):
         """Test the ``_reverse_transform`` method.
 
         Validate that ``_reverse_transform`` produces the correct values when
-        ``null_column`` is None.
+        ``model_missing_values`` is None.
 
         Setup:
             - create an instance of the ``GaussianCopulaTransformer``, where:
@@ -1228,7 +1328,7 @@ class TestGaussianCopulaTransformer:
         ct = GaussianCopulaTransformer()
         ct._univariate = Mock()
         ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
-        ct.null_transformer = NullTransformer(None, null_column=None)
+        ct.null_transformer = NullTransformer(None, model_missing_values=False)
 
         # Run
         ct.null_transformer.fit(expected)
@@ -1240,7 +1340,7 @@ class TestGaussianCopulaTransformer:
 
 class TestBayesGMMTransformer(TestCase):
 
-    def test_get_output_types_null_column_created(self):
+    def test_get_output_types_model_missing_values_column_created(self):
         """Test the ``get_output_types`` method when a null column is created.
 
         When a null column is created, this method should apply the ``_add_prefix``
@@ -1254,7 +1354,7 @@ class TestBayesGMMTransformer(TestCase):
         Setup:
             - initialize a ``NumericalTransformer`` transformer which:
                 - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self._null_column`` is True.
+                ``self._model_missing_values`` is True.
                 - sets ``self.column_prefix`` to a string.
 
         Output:
@@ -1263,8 +1363,8 @@ class TestBayesGMMTransformer(TestCase):
         """
         # Setup
         transformer = BayesGMMTransformer()
-        transformer.null_transformer = NullTransformer(fill_value='fill')
-        transformer.null_transformer._null_column = True
+        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
+        transformer.null_transformer._model_missing_values = True
         transformer.column_prefix = 'abc'
 
         # Run
@@ -1311,7 +1411,7 @@ class TestBayesGMMTransformer(TestCase):
         assert transformer.valid_component_indicator.sum() == 2
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
-    def test__fit_nan(self, mock_bgm):
+    def test__fit_missing_value_replacement(self, mock_bgm):
         """Test ``_fit`` with ``np.nan`` values.
 
         Validate that the method sets the internal variables to the correct values
@@ -1333,7 +1433,11 @@ class TestBayesGMMTransformer(TestCase):
         # Setup
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
-        transformer = BayesGMMTransformer(max_clusters=10, weight_threshold=0.005)
+        transformer = BayesGMMTransformer(
+            max_clusters=10,
+            weight_threshold=0.005,
+            model_missing_values=True
+        )
 
         data = pd.Series(np.random.random(size=100))
         mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
@@ -1345,7 +1449,7 @@ class TestBayesGMMTransformer(TestCase):
         # Asserts
         assert transformer._bgm_transformer == bgm_instance
         assert transformer.valid_component_indicator.sum() == 2
-        assert transformer.null_transformer.creates_null_column()
+        assert transformer.null_transformer.models_missing_values()
 
     def test__transform(self):
         """Test ``_transform``.
@@ -1366,7 +1470,7 @@ class TestBayesGMMTransformer(TestCase):
         """
         # Setup
         np.random.seed(10)
-        transformer = BayesGMMTransformer(max_clusters=3, nan=None)
+        transformer = BayesGMMTransformer(max_clusters=3, missing_value_replacement=None)
         transformer._bgm_transformer = Mock()
 
         means = np.array([
@@ -1416,7 +1520,7 @@ class TestBayesGMMTransformer(TestCase):
         expected_component = np.array([1., 1., 1., 1., 1., 0., 0., 0., 0., 0.])
         np.testing.assert_allclose(output[:, 1], expected_component)
 
-    def test__transform_nan(self):
+    def test__transform_missing_value_replacement(self):
         """Test ``_transform`` with ``np.nan`` values.
 
         Validate that the method produces the appropriate output when given a pandas Series
@@ -1437,7 +1541,7 @@ class TestBayesGMMTransformer(TestCase):
         """
         # Setup
         np.random.seed(10)
-        transformer = BayesGMMTransformer(nan=0.0, max_clusters=3)
+        transformer = BayesGMMTransformer(missing_value_replacement=0.0, max_clusters=3)
         transformer._bgm_transformer = Mock()
 
         means = np.array([
@@ -1469,7 +1573,7 @@ class TestBayesGMMTransformer(TestCase):
         transformer._bgm_transformer.predict_proba.return_value = probabilities
 
         transformer.valid_component_indicator = np.array([True, True, False])
-        transformer.null_transformer = NullTransformer(0.0, null_column=True)
+        transformer.null_transformer = NullTransformer(0.0, model_missing_values=True)
         data = pd.Series([0.01, np.nan, -0.01, -0.01, 0.0, 0.99, 0.97, np.nan, np.nan, 0.97])
 
         # Run
@@ -1560,7 +1664,7 @@ class TestBayesGMMTransformer(TestCase):
             - ``_reverse_transform_helper`` should be called once with the correct data.
         """
         # Setup
-        transformer = BayesGMMTransformer(max_clusters=3, nan=None)
+        transformer = BayesGMMTransformer(max_clusters=3, missing_value_replacement=None)
         transformer.output_columns = ['col.normalized', 'col.component']
         transformer._reverse_transform_helper = Mock()
         transformer._reverse_transform_helper.return_value = np.array(
@@ -1589,7 +1693,7 @@ class TestBayesGMMTransformer(TestCase):
             call_data
         )
 
-    def test__reverse_transform_nan(self):
+    def test__reverse_transform_missing_value_replacement(self):
         """Test ``_reverse_transform`` with ``np.nan`` values.
 
         Validate that the method correctly calls ``_reverse_transform_helper`` and produces the
@@ -1599,8 +1703,8 @@ class TestBayesGMMTransformer(TestCase):
             - create an instance of the ``BayesGMMTransformer`` where the ``output_columns``
             is a list of two columns.
             - mock the `_reverse_transform_helper` with the appropriate return value.
-            - set ``null_transformer`` to ``NullTransformer`` with ``null_column`` as True,
-            then fit it to a pandas Series.
+            - set ``null_transformer`` to ``NullTransformer`` with ``model_missing_values`` as
+              True, then fit it to a pandas Series.
 
         Input:
             - a numpy ndarray containing transformed ``np.nan`` values.
@@ -1612,7 +1716,11 @@ class TestBayesGMMTransformer(TestCase):
             - ``_reverse_transform_helper`` should be called once with the correct data.
         """
         # Setup
-        transformer = BayesGMMTransformer(max_clusters=3)
+        transformer = BayesGMMTransformer(
+            missing_value_replacement='mean',
+            model_missing_values=True,
+            max_clusters=3
+        )
         transformer.output_columns = ['col.normalized', 'col.component']
         transformer._reverse_transform_helper = Mock()
         transformer._reverse_transform_helper.return_value = np.array([
@@ -1620,7 +1728,7 @@ class TestBayesGMMTransformer(TestCase):
             0.63579893, 0.62239389, 0.67292805, 0.67292805, 0.62239389
         ])
 
-        transformer.null_transformer = NullTransformer(None, null_column=True)
+        transformer.null_transformer = NullTransformer('mean', model_missing_values=True)
         transformer.null_transformer.fit(pd.Series([0, np.nan]))
 
         data = np.array([

@@ -9,6 +9,42 @@ from rdt.transformers import BaseTransformer
 
 DATASET_SIZES = [1000, 10000, 100000]
 
+# Additional arguments for transformers
+TRANSFORMER_ARGS = {
+    'BooleanTransformer': {
+        'missing_value_replacement': -1,
+        'model_missing_values': True
+    },
+    'DatetimeTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'DatetimeRoundedTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'NumericalTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'NumericalRoundedBoundedTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'NumericalBoundedTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'GaussianCopulaTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'BayesGMMTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+}
+
 
 def _get_dataset_sizes(data_type):
     """Get a list of (fit_size, transform_size) for each dataset generator.
@@ -50,7 +86,8 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
         pandas.DataFrame:
             The performance test results.
     """
-    transformer_instance = transformer()
+    transformer_args = TRANSFORMER_ARGS.get(transformer.__name__, {})
+    transformer_instance = transformer(**transformer_args)
 
     sizes = _get_dataset_sizes(dataset_generator.DATA_TYPE)
 

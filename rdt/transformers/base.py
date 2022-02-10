@@ -105,14 +105,14 @@ class BaseTransformer:
         """
         return self._add_prefix(self.NEXT_TRANSFORMERS)
 
-    def get_input_columns(self):
-        """Return list of input column names for transformer.
+    def get_input_column(self):
+        """Return input column name for transformer.
 
         Returns:
-            list:
-                Input column names.
+            str:
+                Input column name.
         """
-        return self.columns
+        return self.columns[0]
 
     def get_output_columns(self):
         """Return list of column names created in ``transform``.

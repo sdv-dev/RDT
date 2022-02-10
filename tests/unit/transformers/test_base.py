@@ -162,15 +162,15 @@ class TestBaseTransformer:
         """
         # Setup
         class Dummy(BaseTransformer):
-            columns = ['col1, col2, col3']
+            columns = ['col1', 'col2', 'col3']
 
         dummy_transformer = Dummy()
 
         # Run
-        output = dummy_transformer.get_input_columns()
+        output = dummy_transformer.get_input_column()
 
         # Assert
-        expected = ['col1, col2, col3']
+        expected = 'col1'
         assert output == expected
 
     def test_get_output_columns(self):
