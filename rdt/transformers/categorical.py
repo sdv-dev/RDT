@@ -375,7 +375,7 @@ class OneHotEncoder(BaseTransformer):
         unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
         unseen_categories = unique_data - set(self.dummies)
         if unseen_categories:
-            warn(
+            warnings.warn(
                 f'Warning: The data contains new categories {unseen_categories} that were not '
                 'seen in the original data. Creating a vector of all 0s. If you want to model '
                 'new categories, please fit the transformer again with the new data.'

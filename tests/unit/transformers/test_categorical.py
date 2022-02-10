@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.categorical import (
-    CategoricalTransformer, LabelEncoder, OneHotEncoder)
+from rdt.transformers.categorical import CategoricalTransformer, LabelEncoder, OneHotEncoder
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
