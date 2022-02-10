@@ -7,7 +7,6 @@ from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEn
 def test_unixtimestampencoder():
     ute = UnixTimestampEncoder(missing_value_replacement='mean')
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
-    dtt.columns = 'column'
 
     # Run
     ute._fit(data.copy())

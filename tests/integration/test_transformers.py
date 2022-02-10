@@ -19,11 +19,11 @@ TRANSFORMER_ARGS = {
         'missing_value_replacement': -1,
         'model_missing_values': True
     },
-    'DatetimeTransformer': {
+    'UnixTimestampEncoder': {
         'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
-    'DatetimeRoundedTransformer': {
+    'OptimizedTimestampEncoder': {
         'missing_value_replacement': 'mean',
         'model_missing_values': True
     },

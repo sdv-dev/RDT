@@ -99,7 +99,7 @@ class UnixTimestampEncoder(BaseTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        if self.nan is not None:
+        if self.missing_value_replacement is not None:
             data = self.null_transformer.reverse_transform(data)
 
         if isinstance(data, np.ndarray) and (data.ndim == 2):

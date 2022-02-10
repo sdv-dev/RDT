@@ -295,6 +295,22 @@ class TestUnixTimestampEncoder:
             np.array([1.577837e+18, 1.580515e+18, 1.583021e+18]), rtol=1e-5
         )
 
+    def test__fit_calls_transform_helper(self):
+        """Test the ``_fit`` method.
+
+        The ``_fit`` method should call the ``_transform_helper`` method.
+        """
+        # Setup
+        data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
+        transformer = UnixTimestampEncoder()
+        transformer._transform_helper = Mock()
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        transformer._transform_helper.assert_called_once()
+
     def test__transform(self):
         """Test the ``_transform`` method for numpy arrays.
 
@@ -387,23 +403,6 @@ class TestOptimizedTimestampEncoder:
 
         # Assert
         assert transformer.divider == 1
-
-    def test__fit(self):
-        """Test the ``_fit`` method.
-
-        The ``_fit`` method should call the ``_transform_helper`` method.
-        """
-        # Setup
-        data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
-        transformer = OptimizedTimestampEncoder()
-        transformer._transform_helper = Mock()
-        transformer._divide = Mock()
-
-        # Run
-        transformer._fit(data)
-
-        # Assert
-        transformer._transform_helper.assert_called_once()
 
     def test__transform_helper(self):
         """Test the ``_transform_helper`` method.
