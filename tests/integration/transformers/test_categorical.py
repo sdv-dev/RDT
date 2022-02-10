@@ -270,7 +270,6 @@ def test_label_numerical_nans():
     transformer = LabelEncoder()
     transformer.fit(data, column)
     transformed = transformer.transform(data)
-    print(transformed)
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
