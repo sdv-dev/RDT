@@ -7,7 +7,6 @@ import pandas as pd
 import psutil
 from scipy.stats import norm
 
-from rdt.errors import NotFittedError
 from rdt.transformers.base import BaseTransformer
 
 
@@ -466,19 +465,15 @@ class LabelEncoder(BaseTransformer):
                 Data to transform.
 
         Returns:
-            pd.Series.
+            pd.Series
 
         Raises:
-            `NotFittedError` when no categories have been fitted and `data` is not empty.
+            `NotFittedError`:
+                When no categories have been fitted and `data` is not empty.
         """
-        # Find the data categories that were not seen during fitting. Convert all nan's
-        # to np.nan to avoid having nan values with different ids.
         mapped = data.fillna(np.nan).map(self.categories_to_values)
         is_null = mapped.isna()
         if is_null.any():
-            if len(self.categories_to_values) == 0:
-                raise NotFittedError('No categories have been fitted.')
-
             unseen_categories = set(data[is_null])
             warnings.warn(
                 f'Warning: The data contains new categories {unseen_categories} that were not '

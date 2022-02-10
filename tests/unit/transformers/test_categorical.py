@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.errors import NotFittedError
 from rdt.transformers.categorical import (
     CategoricalTransformer, LabelEncoder, OneHotEncodingTransformer)
 
@@ -1602,29 +1601,6 @@ class TestLabelEncoder:
         pd.testing.assert_series_equal(transformed[:3], expected)
 
         assert all([0 <= value < len(fit_data) for value in transformed[3:]])
-
-    def test__transform_no_categories_fitted(self):
-        """Test the ``_transform`` method without fitting any categories.
-
-        Setup:
-            - create an instance of the ``LabelEncoder``, where
-            ``categories_to_values`` is empty.
-
-        Input:
-            - a pandas series.
-
-        Raises:
-            `ValueError`.
-        """
-        # Setup
-        data = pd.Series([1, 2, 3, 4])
-        transformer = LabelEncoder()
-        transformer.categories_to_values = {}
-
-        # Run / Assert
-        error_msg = 'No categories have been fitted.'
-        with pytest.raises(NotFittedError, match=error_msg):
-            transformer._transform(data)
 
     def test__reverse_transform_clips_values(self):
         """Test the ``_reverse_transform`` method with values not in map.
