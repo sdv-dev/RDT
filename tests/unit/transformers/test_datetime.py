@@ -388,10 +388,27 @@ class TestOptimizedTimestampEncoder:
         # Assert
         assert transformer.divider == 1
 
-    def test__transform(self):
+    def test__fit(self):
+        """Test the ``_fit`` method.
+
+        The ``_fit`` method should call the ``_transform_helper`` method.
+        """
+        # Setup
+        data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
+        transformer = OptimizedTimestampEncoder()
+        transformer._transform_helper = Mock()
+        transformer._divide = Mock()
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        transformer._transform_helper.assert_called_once()
+
+    def test__transform_helper(self):
         """Test the ``_transform_helper`` method.
 
-        Validate the helper transformer produces the values stripped to the smallest
+        Validate the helper method produces the values stripped to the smallest
         non-zero time unit.
 
         Input:
@@ -403,13 +420,37 @@ class TestOptimizedTimestampEncoder:
         # Setup
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
         transformer = OptimizedTimestampEncoder()
-        transformer.null_transformer = Mock()
-        transformer.null_transformer.transform.side_effect = lambda x: x
 
         # Run
-        transformed = transformer._transform(data)
+        transformed = transformer._transform_helper(data)
 
         # Assert
         np.testing.assert_allclose(transformed, np.array([
             18262., 18293., 18322.,
         ]))
+
+    def test__reverse_transform_helper(self):
+        """Test the ``_reverse_transform_helper`` method.
+
+        Validate the helper produces the values multiplied by the
+        smallest non-zero time unit.
+
+        Input:
+            - a pandas series of timestamps.
+
+        Output:
+            - a numpy array of the values multiplied by ``self.divider``.
+        """
+        # Setup
+        data = pd.Series([18262., 18293., 18322.])
+        transformer = OptimizedTimestampEncoder()
+        transformer.divider = 1000
+        transformer.null_transformer = Mock()
+        transformer.null_transformer.reverse_transform.side_effect = lambda x: x
+
+        # Run
+        multiplied = transformer._reverse_transform_helper(data)
+
+        # Assert
+        expected = np.array([18262000, 18293000, 18322000])
+        np.testing.assert_allclose(multiplied, expected)

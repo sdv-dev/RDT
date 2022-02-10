@@ -36,7 +36,6 @@ class UnixTimestampEncoder(BaseTransformer):
     COMPOSITION_IS_IDENTITY = True
 
     null_transformer = None
-    divider = None
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
                  datetime_format=None):
@@ -180,6 +179,8 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
     """
 
+    divider = None
+
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
                  datetime_format=None):
         super().__init__(missing_value_replacement=missing_value_replacement,
@@ -196,32 +197,13 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
 
             self.divider = candidate
 
-    def _transform(self, data):
-        """Transform datetime values to float values.
+    def _transform_helper(self, data):
+        """Transform datetime values to integer."""
+        data = super()._transform_helper(data)
+        self._find_divider(data)
+        return data // self.divider
 
-        Args:
-            data (pandas.Series):
-                Data to transform.
-
-        Returns:
-            numpy.ndarray
-        """
-        transformed = self._transform_helper(data)
-        self._find_divider(transformed)
-        transformed = transformed // self.divider
-        return self.null_transformer.transform(transformed)
-
-    def _reverse_transform(self, data):
-        """Convert float values back to datetimes.
-
-        Args:
-            data (pandas.Series or numpy.ndarray):
-                Data to transform.
-
-        Returns:
-            pandas.Series
-        """
-        data = self._reverse_transform_helper(data)
-        data = data * self.divider
-
-        return pd.to_datetime(data, format=self.datetime_format)
+    def _reverse_transform_helper(self, data):
+        """Transform integer values back into datetimes."""
+        data = super()._reverse_transform_helper(data)
+        return data * self.divider
