@@ -8,7 +8,7 @@ import pytest
 from rdt import HyperTransformer
 from rdt.errors import NotFittedError
 from rdt.transformers import (
-    BooleanTransformer, FloatFormatter, FrequencyEncoder, GaussianCopulaTransformer, OneHotEncoder,
+    BooleanTransformer, FloatFormatter, FrequencyEncoder, GaussianNormalizer, OneHotEncoder,
     UnixTimestampEncoder)
 
 
@@ -154,7 +154,7 @@ class TestHyperTransformer(TestCase):
         transformer = FloatFormatter()
         ht = HyperTransformer(
             field_transformers={'a.out': transformer},
-            default_data_type_transformers={'numerical': GaussianCopulaTransformer()}
+            default_data_type_transformers={'numerical': GaussianNormalizer()}
         )
 
         # Run
@@ -185,7 +185,7 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer(
-            default_data_type_transformers={'numerical': GaussianCopulaTransformer()}
+            default_data_type_transformers={'numerical': GaussianNormalizer()}
         )
 
         # Run

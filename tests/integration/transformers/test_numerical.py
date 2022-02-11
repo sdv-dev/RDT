@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers.numerical import (
-    BayesGMMTransformer, FloatFormatter, GaussianCopulaTransformer)
+    ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer)
 
 
 class TestFloatFormatter:
@@ -70,13 +70,13 @@ class TestFloatFormatter:
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
 
-class TestGaussianCopulaTransformer:
+class TestGaussianNormalizer:
 
     def test_stats(self):
         data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['a'])
         column = 'a'
 
-        ct = GaussianCopulaTransformer()
+        ct = GaussianNormalizer()
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -94,7 +94,7 @@ class TestGaussianCopulaTransformer:
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianCopulaTransformer(
+        ct = GaussianNormalizer(
             missing_value_replacement='mean',
             model_missing_values=True
         )
@@ -113,7 +113,7 @@ class TestGaussianCopulaTransformer:
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianCopulaTransformer(
+        ct = GaussianNormalizer(
             missing_value_replacement='mean',
             model_missing_values=False
         )
@@ -131,7 +131,7 @@ class TestGaussianCopulaTransformer:
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianCopulaTransformer(dtype=int)
+        ct = GaussianNormalizer(dtype=int)
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -145,7 +145,7 @@ class TestGaussianCopulaTransformer:
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
         column = 'a'
 
-        ct = GaussianCopulaTransformer(
+        ct = GaussianNormalizer(
             missing_value_replacement='mean',
             model_missing_values=True
         )
@@ -159,7 +159,7 @@ class TestGaussianCopulaTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
 
-class TestBayesGMMTransformer:
+class TestClusterBasedNormalizer:
 
     def generate_data(self):
         data1 = np.random.normal(loc=5, scale=1, size=100)
@@ -172,7 +172,7 @@ class TestBayesGMMTransformer:
         data = self.generate_data()
         column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer = ClusterBasedNormalizer()
         bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
@@ -191,7 +191,7 @@ class TestBayesGMMTransformer:
         data[mask] = np.nan
         column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer(
+        bgmm_transformer = ClusterBasedNormalizer(
             missing_value_replacement='mean',
             model_missing_values=True
         )
@@ -212,7 +212,7 @@ class TestBayesGMMTransformer:
         data = pd.DataFrame([np.nan, None] * 50, columns=['col'])
         column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer(
+        bgmm_transformer = ClusterBasedNormalizer(
             missing_value_replacement=0,
             model_missing_values=True
         )
@@ -237,7 +237,7 @@ class TestBayesGMMTransformer:
         data = pd.DataFrame(data, columns=['col'])
         column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer = ClusterBasedNormalizer()
         bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
@@ -260,7 +260,7 @@ class TestBayesGMMTransformer:
         data = data.sample(frac=1).reset_index(drop=True)
         column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer()
+        bgmm_transformer = ClusterBasedNormalizer()
         bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 

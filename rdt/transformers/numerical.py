@@ -172,7 +172,7 @@ class FloatFormatter(BaseTransformer):
         return data.astype(self._dtype)
 
 
-class GaussianCopulaTransformer(FloatFormatter):
+class GaussianNormalizer(FloatFormatter):
     r"""Transformer for numerical data based on copulas transformation.
 
     Transformation consists on bringing the input data to a standard normal space
@@ -200,6 +200,12 @@ class GaussianCopulaTransformer(FloatFormatter):
             will be created only if there are null values. If ``True``, create the new column if
             there are null values. If ``False``, do not create the new column even if there
             are null values. Defaults to ``False``.
+        learn_rounding_scheme (bool):
+            Whether or not to learn what place to round to based on the data seen during ``fit``.
+            If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
+        enforce_min_max_values (bool):
+            Whether or not to clip the data returned by ``reverse_transform`` to the min and
+            max values seen during ``fit``.
         distribution (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use. Defaults to ``parametric``. To choose from:
 
@@ -231,11 +237,14 @@ class GaussianCopulaTransformer(FloatFormatter):
     _univariate = None
     COMPOSITION_IS_IDENTITY = False
 
-    def __init__(self, missing_value_replacement=None,
-                 model_missing_values=False, distribution='parametric'):
+    def __init__(self, missing_value_replacement=None, model_missing_values=False,
+                 learn_rounding_scheme=False, enforce_min_max_values=False, 
+                 distribution='parametric'):
         super().__init__(
             missing_value_replacement=missing_value_replacement,
-            model_missing_values=model_missing_values
+            model_missing_values=model_missing_values,
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values
         )
         self._distributions = self._get_distributions()
 
@@ -367,7 +376,7 @@ class GaussianCopulaTransformer(FloatFormatter):
         return super()._reverse_transform(data)
 
 
-class BayesGMMTransformer(FloatFormatter):
+class ClusterBasedNormalizer(FloatFormatter):
     """Transformer for numerical data using a Bayesian Gaussian Mixture Model.
 
     This transformation takes a numerical value and transforms it using a Bayesian GMM

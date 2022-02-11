@@ -9,7 +9,7 @@ from copulas import univariate
 
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
-    BayesGMMTransformer, FloatFormatter, GaussianCopulaTransformer)
+    ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer)
 
 
 class TestFloatFormatter(TestCase):
@@ -894,11 +894,11 @@ class TestFloatFormatter(TestCase):
         np.testing.assert_array_equal(result, expected_data)
 
 
-class TestGaussianCopulaTransformer:
+class TestGaussianNormalizer:
 
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
-        ct = GaussianCopulaTransformer(
+        ct = GaussianNormalizer(
             dtype='int',
             missing_value_replacement='mode',
             model_missing_values=False
@@ -910,14 +910,14 @@ class TestGaussianCopulaTransformer:
 
     def test___init__str_distr(self):
         """If distribution is an str, it is resolved using the _DISTRIBUTIONS dict."""
-        ct = GaussianCopulaTransformer(distribution='univariate')
+        ct = GaussianNormalizer(distribution='univariate')
 
         assert ct._distribution is copulas.univariate.Univariate
 
     def test___init__non_distr(self):
         """If distribution is not an str, it is store as given."""
         univariate = copulas.univariate.Univariate()
-        ct = GaussianCopulaTransformer(distribution=univariate)
+        ct = GaussianNormalizer(distribution=univariate)
 
         assert ct._distribution is univariate
 
@@ -941,7 +941,7 @@ class TestGaussianCopulaTransformer:
 
         with patch('builtins.__import__', side_effect=custom_import):
             with pytest.raises(ImportError, match=r'pip install rdt\[copulas\]'):
-                GaussianCopulaTransformer._get_distributions()
+                GaussianNormalizer._get_distributions()
 
     def test__get_distributions(self):
         """Test the ``_get_distributions`` method.
@@ -949,10 +949,10 @@ class TestGaussianCopulaTransformer:
         Validate that this method returns the correct dictionary of distributions.
 
         Setup:
-            - instantiate a ``GaussianCopulaTransformer``.
+            - instantiate a ``GaussianNormalizer``.
         """
         # Setup
-        transformer = GaussianCopulaTransformer()
+        transformer = GaussianNormalizer()
 
         # Run
         distributions = transformer._get_distributions()
@@ -1006,7 +1006,7 @@ class TestGaussianCopulaTransformer:
         Validate that a deepcopy of the distribution stored in ``self._distribution`` is returned.
 
         Setup:
-            - create an instance of a ``GaussianCopulaTransformer`` with ``distribution`` set
+            - create an instance of a ``GaussianNormalizer`` with ``distribution`` set
             to ``univariate.Univariate``.
 
         Output:
@@ -1014,7 +1014,7 @@ class TestGaussianCopulaTransformer:
         """
         # Setup
         distribution = copulas.univariate.Univariate()
-        ct = GaussianCopulaTransformer(distribution=distribution)
+        ct = GaussianNormalizer(distribution=distribution)
 
         # Run
         univariate = ct._get_univariate()
@@ -1031,7 +1031,7 @@ class TestGaussianCopulaTransformer:
         with the passed arguments.
 
         Setup:
-            - create an instance of a ``GaussianCopulaTransformer`` and set
+            - create an instance of a ``GaussianNormalizer`` and set
             ``distribution`` to a tuple.
 
         Output:
@@ -1042,7 +1042,7 @@ class TestGaussianCopulaTransformer:
             copulas.univariate.Univariate,
             {'candidates': 'a_candidates_list'}
         )
-        ct = GaussianCopulaTransformer(distribution=distribution)
+        ct = GaussianNormalizer(distribution=distribution)
 
         # Run
         univariate = ct._get_univariate()
@@ -1058,7 +1058,7 @@ class TestGaussianCopulaTransformer:
         without passing arguments.
 
         Setup:
-            - create an instance of a ``GaussianCopulaTransformer`` and set ``distribution``
+            - create an instance of a ``GaussianNormalizer`` and set ``distribution``
             to ``univariate.Univariate``.
 
         Output:
@@ -1066,7 +1066,7 @@ class TestGaussianCopulaTransformer:
         """
         # Setup
         distribution = copulas.univariate.Univariate
-        ct = GaussianCopulaTransformer(distribution=distribution)
+        ct = GaussianNormalizer(distribution=distribution)
 
         # Run
         univariate = ct._get_univariate()
@@ -1081,7 +1081,7 @@ class TestGaussianCopulaTransformer:
         ``distribution``.
 
         Setup:
-            - create an instance of a ``GaussianCopulaTransformer`` and set ``self._distribution``
+            - create an instance of a ``GaussianNormalizer`` and set ``self._distribution``
             improperly.
 
         Raise:
@@ -1089,7 +1089,7 @@ class TestGaussianCopulaTransformer:
         """
         # Setup
         distribution = 123
-        ct = GaussianCopulaTransformer(distribution=distribution)
+        ct = GaussianNormalizer(distribution=distribution)
 
         # Run / Assert
         with pytest.raises(TypeError):
@@ -1101,7 +1101,7 @@ class TestGaussianCopulaTransformer:
         Validate that ``_fit`` calls ``_get_univariate``.
 
         Setup:
-            - create an instance of the ``GaussianCopulaTransformer``.
+            - create an instance of the ``GaussianNormalizer``.
             - mock the  ``_get_univariate`` method.
 
         Input:
@@ -1112,7 +1112,7 @@ class TestGaussianCopulaTransformer:
         """
         # Setup
         data = pd.Series([0.0, np.nan, 1.0])
-        ct = GaussianCopulaTransformer(missing_value_replacement='mean')
+        ct = GaussianNormalizer(missing_value_replacement='mean')
         ct._get_univariate = Mock()
 
         # Run
@@ -1132,7 +1132,7 @@ class TestGaussianCopulaTransformer:
         Validate that ``_fit`` calls ``_get_univariate``.
 
         Setup:
-            - create an instance of the ``GaussianCopulaTransformer``.
+            - create an instance of the ``GaussianNormalizer``.
             - mock the  ``_get_univariate`` method.
 
         Input:
@@ -1143,7 +1143,7 @@ class TestGaussianCopulaTransformer:
         """
         # Setup
         data = pd.Series([0.0, np.nan, 1.0])
-        ct = GaussianCopulaTransformer(
+        ct = GaussianNormalizer(
             missing_value_replacement='mean',
             model_missing_values=True
         )
@@ -1166,7 +1166,7 @@ class TestGaussianCopulaTransformer:
         Validate that ``_copula_transform`` calls ``_get_univariate``.
 
         Setup:
-            - create an instance of the ``GaussianCopulaTransformer``.
+            - create an instance of the ``GaussianNormalizer``.
             - mock  ``_univariate``.
 
         Input:
@@ -1176,7 +1176,7 @@ class TestGaussianCopulaTransformer:
             - a numpy array of the transformed data.
         """
         # Setup
-        ct = GaussianCopulaTransformer()
+        ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75])
         data = pd.Series([0.0, 1.0, 2.0])
@@ -1195,7 +1195,7 @@ class TestGaussianCopulaTransformer:
         is True.
 
         Setup:
-            - create an instance of the ``GaussianCopulaTransformer``, where:
+            - create an instance of the ``GaussianNormalizer``, where:
                 - ``self._univariate`` is a mock.
                 - ``self.null_transformer``  is a ``NullTransformer``.
                 - fit the ``self.null_transformer``.
@@ -1208,7 +1208,7 @@ class TestGaussianCopulaTransformer:
         """
         # Setup
         data = pd.Series([0.0, 1.0, 2.0, np.nan])
-        ct = GaussianCopulaTransformer()
+        ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
         ct.null_transformer = NullTransformer(None, model_missing_values=True)
@@ -1231,7 +1231,7 @@ class TestGaussianCopulaTransformer:
         is ``False``.
 
         Setup:
-            - create an instance of the ``GaussianCopulaTransformer``, where:
+            - create an instance of the ``GaussianNormalizer``, where:
                 - ``self._univariate`` is a mock.
                 - ``self.null_transformer``  is a ``NullTransformer``.
                 - fit the ``self.null_transformer``.
@@ -1246,7 +1246,7 @@ class TestGaussianCopulaTransformer:
         data = pd.Series([
             0.0, 1.0, 2.0, 1.0
         ])
-        ct = GaussianCopulaTransformer()
+        ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
         ct.null_transformer = NullTransformer('mean', model_missing_values=False)
@@ -1266,7 +1266,7 @@ class TestGaussianCopulaTransformer:
         ``model_missing_values`` is True.
 
         Setup:
-            - create an instance of the ``GaussianCopulaTransformer``, where:
+            - create an instance of the ``GaussianNormalizer``, where:
                 - ``self._univariate`` is a mock.
                 - ``self.null_transformer``  is a ``NullTransformer``.
                 - fit the ``self.null_transformer``.
@@ -1285,7 +1285,7 @@ class TestGaussianCopulaTransformer:
         expected = pd.Series([
             0.0, 1.0, 2.0, np.nan
         ])
-        ct = GaussianCopulaTransformer(missing_value_replacement='mean')
+        ct = GaussianNormalizer(missing_value_replacement='mean')
         ct._univariate = Mock()
         ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
         ct.null_transformer = NullTransformer(
@@ -1307,7 +1307,7 @@ class TestGaussianCopulaTransformer:
         ``model_missing_values`` is None.
 
         Setup:
-            - create an instance of the ``GaussianCopulaTransformer``, where:
+            - create an instance of the ``GaussianNormalizer``, where:
                 - ``self._univariate`` is a mock.
                 - ``self.null_transformer``  is a ``NullTransformer``.
                 - fit the ``self.null_transformer``.
@@ -1325,7 +1325,7 @@ class TestGaussianCopulaTransformer:
         expected = pd.Series([
             0.0, 1.0, 2.0, 1.0
         ])
-        ct = GaussianCopulaTransformer()
+        ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
         ct.null_transformer = NullTransformer(None, model_missing_values=False)
@@ -1338,7 +1338,7 @@ class TestGaussianCopulaTransformer:
         np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
 
 
-class TestBayesGMMTransformer(TestCase):
+class TestClusterBasedNormalizer(TestCase):
 
     def test_get_output_types_model_missing_values_column_created(self):
         """Test the ``get_output_types`` method when a null column is created.
@@ -1362,7 +1362,7 @@ class TestBayesGMMTransformer(TestCase):
             added to the beginning of the keys.
         """
         # Setup
-        transformer = BayesGMMTransformer()
+        transformer = ClusterBasedNormalizer()
         transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
         transformer.null_transformer._model_missing_values = True
         transformer.column_prefix = 'abc'
@@ -1388,7 +1388,7 @@ class TestBayesGMMTransformer(TestCase):
         Setup:
             - patch a ``BayesianGaussianMixture`` with ``weights_`` containing two components
             greater than the ``weight_threshold`` parameter.
-            - create an instance of the ``BayesGMMTransformer``.
+            - create an instance of the ``ClusterBasedNormalizer``.
 
         Input:
             - a pandas Series containing random values.
@@ -1400,7 +1400,7 @@ class TestBayesGMMTransformer(TestCase):
         # Setup
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
-        transformer = BayesGMMTransformer(max_clusters=10, weight_threshold=0.005)
+        transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
         data = pd.Series(np.random.random(size=100))
 
         # Run
@@ -1420,7 +1420,7 @@ class TestBayesGMMTransformer(TestCase):
         Setup:
             - patch a ``BayesianGaussianMixture`` with ``weights_`` containing two components
             greater than the ``weight_threshold`` parameter.
-            - create an instance of the ``BayesGMMTransformer``.
+            - create an instance of the ``ClusterBasedNormalizer``.
 
         Input:
             - a pandas Series containing some ``np.nan`` values.
@@ -1433,7 +1433,7 @@ class TestBayesGMMTransformer(TestCase):
         # Setup
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
-        transformer = BayesGMMTransformer(
+        transformer = ClusterBasedNormalizer(
             max_clusters=10,
             weight_threshold=0.005,
             model_missing_values=True
@@ -1457,7 +1457,7 @@ class TestBayesGMMTransformer(TestCase):
         Validate that the method produces the appropriate output when given a pandas Series.
 
         Setup:
-            - create an instance of the ``BayesGMMTransformer`` where:
+            - create an instance of the ``ClusterBasedNormalizer`` where:
                 - ``_bgm_transformer`` is mocked with the appropriate ``means_``, ``covariances_``
                 and ``predict_proba.return_value``.
                 - ``valid_component_indicator`` is set to ``np.array([True, True, False])``.
@@ -1470,7 +1470,7 @@ class TestBayesGMMTransformer(TestCase):
         """
         # Setup
         np.random.seed(10)
-        transformer = BayesGMMTransformer(max_clusters=3, missing_value_replacement=None)
+        transformer = ClusterBasedNormalizer(max_clusters=3, missing_value_replacement=None)
         transformer._bgm_transformer = Mock()
 
         means = np.array([
@@ -1527,7 +1527,7 @@ class TestBayesGMMTransformer(TestCase):
         containing ``np.nan`` values.
 
         Setup:
-            - create an instance of the ``BayesGMMTransformer`` where:
+            - create an instance of the ``ClusterBasedNormalizer`` where:
                 - ``_bgm_transformer`` is mocked with the appropriate ``means_``, ``covariances_``
                 and ``predict_proba.return_value``.
                 - ``valid_component_indicator`` is set to ``np.array([True, True, False])``.
@@ -1541,7 +1541,7 @@ class TestBayesGMMTransformer(TestCase):
         """
         # Setup
         np.random.seed(10)
-        transformer = BayesGMMTransformer(missing_value_replacement=0.0, max_clusters=3)
+        transformer = ClusterBasedNormalizer(missing_value_replacement=0.0, max_clusters=3)
         transformer._bgm_transformer = Mock()
 
         means = np.array([
@@ -1601,7 +1601,7 @@ class TestBayesGMMTransformer(TestCase):
         Validate that the method produces the appropriate output when passed a numpy array.
 
         Setup:
-            - create an instance of the ``BayesGMMTransformer`` where:
+            - create an instance of the ``ClusterBasedNormalizer`` where:
                 - ``_bgm_transformer`` is mocked with the appropriate
                 ``means_`` and ``covariances_``.
                 - ``valid_component_indicator`` is set to ``np.array([True, True, False])``.
@@ -1613,7 +1613,7 @@ class TestBayesGMMTransformer(TestCase):
             - a numpy array with the transformed data.
         """
         # Setup
-        transformer = BayesGMMTransformer(max_clusters=3)
+        transformer = ClusterBasedNormalizer(max_clusters=3)
         transformer._bgm_transformer = Mock()
 
         means = np.array([
@@ -1650,7 +1650,7 @@ class TestBayesGMMTransformer(TestCase):
         appropriate output when passed pandas dataframe.
 
         Setup:
-            - create an instance of the ``BayesGMMTransformer`` where the ``output_columns``
+            - create an instance of the ``ClusterBasedNormalizer`` where the ``output_columns``
             is a list of two columns.
             - mock the `_reverse_transform_helper` with the appropriate return value.
 
@@ -1664,7 +1664,7 @@ class TestBayesGMMTransformer(TestCase):
             - ``_reverse_transform_helper`` should be called once with the correct data.
         """
         # Setup
-        transformer = BayesGMMTransformer(max_clusters=3, missing_value_replacement=None)
+        transformer = ClusterBasedNormalizer(max_clusters=3, missing_value_replacement=None)
         transformer.output_columns = ['col.normalized', 'col.component']
         transformer._reverse_transform_helper = Mock()
         transformer._reverse_transform_helper.return_value = np.array(
@@ -1700,7 +1700,7 @@ class TestBayesGMMTransformer(TestCase):
         appropriate output when passed a numpy array containing ``np.nan`` values.
 
         Setup:
-            - create an instance of the ``BayesGMMTransformer`` where the ``output_columns``
+            - create an instance of the ``ClusterBasedNormalizer`` where the ``output_columns``
             is a list of two columns.
             - mock the `_reverse_transform_helper` with the appropriate return value.
             - set ``null_transformer`` to ``NullTransformer`` with ``model_missing_values`` as
@@ -1716,7 +1716,7 @@ class TestBayesGMMTransformer(TestCase):
             - ``_reverse_transform_helper`` should be called once with the correct data.
         """
         # Setup
-        transformer = BayesGMMTransformer(
+        transformer = ClusterBasedNormalizer(
             missing_value_replacement='mean',
             model_missing_values=True,
             max_clusters=3
