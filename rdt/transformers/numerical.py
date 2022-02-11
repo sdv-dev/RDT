@@ -33,21 +33,12 @@ class FloatFormatter(BaseTransformer):
             will be created only if there are null values. If ``True``, create the new column if
             there are null values. If ``False``, do not create the new column even if there
             are null values. Defaults to ``False``.
-        rounding (int, str or None):
-            Define rounding scheme for data. If set to an int, values will be rounded
-            to that number of decimal places. If ``None``, values will not be rounded.
-            If set to ``'auto'``, the transformer will round to the maximum number of
-            decimal places detected in the fitted data.
-        min_value (int, str or None):
-            Indicate whether or not to set a minimum value for the data. If an integer is given,
-            reverse transformed data will be greater than or equal to it. If the string ``'auto'``
-            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
-            is given, there won't be a minimum.
-        max_value (int, str or None):
-            Indicate whether or not to set a maximum value for the data. If an integer is given,
-            reverse transformed data will be less than or equal to it. If the string ``'auto'``
-            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
-            is given, there won't be a maximum.
+        learn_rounding_scheme (bool):
+            Whether or not to learn what place to round to based on the data seen during ``fit``.
+            If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
+        enforce_min_max_values (bool):
+            Whether or not to clip the data returned by ``reverse_transform`` to the min and
+            max values seen during ``fit``.
     """
 
     INPUT_TYPE = 'numerical'
@@ -63,12 +54,11 @@ class FloatFormatter(BaseTransformer):
     _max_value = None
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
-                 rounding=None, min_value=None, max_value=None):
+                 learn_rounding_scheme=False, enforce_min_max_values=False):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
-        self.rounding = rounding
-        self.min_value = min_value
-        self.max_value = max_value
+        self.learn_rounding_scheme = learn_rounding_scheme
+        self.enforce_min_max_values = enforce_min_max_values
 
     def get_output_types(self):
         """Return the output types supported by the transformer.
@@ -127,13 +117,10 @@ class FloatFormatter(BaseTransformer):
                 Data to fit.
         """
         self._dtype = data.dtype
-        self._min_value = data.min() if self.min_value == 'auto' else self.min_value
-        self._max_value = data.max() if self.max_value == 'auto' else self.max_value
-
-        if self.rounding == 'auto':
+        self._min_value = data.min()
+        self._max_value = data.max()
+        if self.learn_rounding_scheme:
             self._rounding_digits = self._learn_rounding_digits(data)
-        elif isinstance(self.rounding, int):
-            self._rounding_digits = self.rounding
 
         self.null_transformer = NullTransformer(
             self.missing_value_replacement,
@@ -169,17 +156,14 @@ class FloatFormatter(BaseTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        if self._min_value is not None or self._max_value is not None:
-            if len(data.shape) > 1:
-                data[:, 0] = data[:, 0].clip(self._min_value, self._max_value)
-            else:
-                data = data.clip(self._min_value, self._max_value)
-
         if self.missing_value_replacement is not None:
             data = self.null_transformer.reverse_transform(data)
 
+        if self.enforce_min_max_values:
+            data = data.clip(self._min_value, self._max_value)
+
         is_integer = np.dtype(self._dtype).kind == 'i'
-        if self._rounding_digits is not None or is_integer:
+        if self.learn_rounding_scheme or is_integer:
             data = data.round(self._rounding_digits or 0)
 
         if pd.isna(data).any() and is_integer:
@@ -402,21 +386,12 @@ class BayesGMMTransformer(FloatFormatter):
             will be created only if there are null values. If ``True``, create the new column if
             there are null values. If ``False``, do not create the new column even if there
             are null values. Defaults to ``False``.
-        rounding (int, str or None):
-            Define rounding scheme for data. If set to an int, values will be rounded
-            to that number of decimal places. If ``None``, values will not be rounded.
-            If set to ``'auto'``, the transformer will round to the maximum number of
-            decimal places detected in the fitted data.
-        min_value (int, str or None):
-            Indicate whether or not to set a minimum value for the data. If an integer is given,
-            reverse transformed data will be greater than or equal to it. If the string ``'auto'``
-            is given, the minimum will be the minimum value seen in the fitted data. If ``None``
-            is given, there won't be a minimum.
-        max_value (int, str or None):
-            Indicate whether or not to set a maximum value for the data. If an integer is given,
-            reverse transformed data will be less than or equal to it. If the string ``'auto'``
-            is given, the maximum will be the maximum value seen in the fitted data. If ``None``
-            is given, there won't be a maximum.
+        learn_rounding_scheme (bool):
+            Whether or not to learn what place to round to based on the data seen during ``fit``.
+            If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
+        enforce_min_max_values (bool):
+            Whether or not to clip the data returned by ``reverse_transform`` to the min and
+            max values seen during ``fit``.
         max_clusters (int):
             The maximum number of mixture components. Depending on the data, the model may select
             fewer components (based on the ``weight_threshold``).
@@ -443,14 +418,13 @@ class BayesGMMTransformer(FloatFormatter):
     valid_component_indicator = None
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
-                 rounding=None, min_value=None, max_value=None, max_clusters=10,
+                 learn_rounding_scheme=None, enforce_min_max_values=False, max_clusters=10,
                  weight_threshold=0.005):
         super().__init__(
             missing_value_replacement=missing_value_replacement,
             model_missing_values=model_missing_values,
-            rounding=rounding,
-            min_value=min_value,
-            max_value=max_value
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values
         )
         self._max_clusters = max_clusters
         self._weight_threshold = weight_threshold

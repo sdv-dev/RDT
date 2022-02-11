@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers.numerical import (
-    BayesGMMTransformer, GaussianCopulaTransformer, FloatFormatter)
+    BayesGMMTransformer, FloatFormatter, GaussianCopulaTransformer)
 
 
 class TestFloatFormatter:

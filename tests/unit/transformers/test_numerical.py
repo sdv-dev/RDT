@@ -9,7 +9,7 @@ from copulas import univariate
 
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
-    BayesGMMTransformer, GaussianCopulaTransformer, FloatFormatter)
+    BayesGMMTransformer, FloatFormatter, GaussianCopulaTransformer)
 
 
 class TestFloatFormatter(TestCase):

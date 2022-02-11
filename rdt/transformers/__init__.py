@@ -8,8 +8,6 @@ from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 
-import numpy as np
-
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
 from rdt.transformers.categorical import FrequencyEncoder
@@ -52,8 +50,8 @@ __all__.extend(TRANSFORMERS.keys())
 
 DEFAULT_TRANSFORMERS = {
     'numerical': FloatFormatter,
-    'integer': FloatFormatter(dtype=np.int64),
-    'float': FloatFormatter(dtype=np.float64),
+    'integer': FloatFormatter,
+    'float': FloatFormatter,
     'categorical': FrequencyEncoder(add_noise=True),
     'boolean': BooleanTransformer,
     'datetime': UnixTimestampEncoder,
