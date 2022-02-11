@@ -13,7 +13,7 @@ import numpy as np
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
 from rdt.transformers.categorical import CategoricalTransformer
-from rdt.transformers.datetime import DatetimeTransformer
+from rdt.transformers.datetime import UnixTimestampEncoder
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import NumericalTransformer
 
@@ -56,7 +56,7 @@ DEFAULT_TRANSFORMERS = {
     'float': NumericalTransformer(dtype=np.float64),
     'categorical': CategoricalTransformer(fuzzy=True),
     'boolean': BooleanTransformer,
-    'datetime': DatetimeTransformer,
+    'datetime': UnixTimestampEncoder,
 }
 
 
