@@ -107,12 +107,12 @@ Notice that RDT may introduce some null values randomly.
 
 ### 2. Load the transformer
 
-In this example we will use the datetime column, so let's load a `DatetimeTransformer`.
+In this example we will use the datetime column, so let's load a `UnixTimestampEncoder`.
 
 ```python3
-from rdt.transformers import DatetimeTransformer
+from rdt.transformers import UnixTimestampEncoder
 
-transformer = DatetimeTransformer()
+transformer = UnixTimestampEncoder()
 ```
 
 ### 3. Fit the Transformer

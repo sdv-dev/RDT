@@ -9,7 +9,7 @@ import pandas as pd
 from rdt import HyperTransformer
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, BaseTransformer, BooleanTransformer, CategoricalTransformer,
-    DatetimeTransformer, NumericalTransformer, OneHotEncoder)
+    NumericalTransformer, OneHotEncoder, UnixTimestampEncoder)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -141,7 +141,7 @@ def test_hypertransformer_default_inputs():
     assert ht._transformers_tree['categorical']['outputs'] == ['categorical.value']
     assert isinstance(ht._transformers_tree['bool']['transformer'], BooleanTransformer)
     assert ht._transformers_tree['bool']['outputs'] == ['bool.value']
-    assert isinstance(ht._transformers_tree['datetime']['transformer'], DatetimeTransformer)
+    assert isinstance(ht._transformers_tree['datetime']['transformer'], UnixTimestampEncoder)
     assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value']
     assert isinstance(ht._transformers_tree['names']['transformer'], CategoricalTransformer)
     assert ht._transformers_tree['names']['outputs'] == ['names.value']
