@@ -8,8 +8,8 @@ import pytest
 from rdt import HyperTransformer
 from rdt.errors import NotFittedError
 from rdt.transformers import (
-    BooleanTransformer, CategoricalTransformer, DatetimeTransformer, GaussianCopulaTransformer,
-    NumericalTransformer, OneHotEncoder)
+    BooleanTransformer, CategoricalTransformer, GaussianCopulaTransformer, NumericalTransformer,
+    OneHotEncoder, UnixTimestampEncoder)
 
 
 class TestHyperTransformer(TestCase):
@@ -108,8 +108,8 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ht.field_transformers = {
             'a': BooleanTransformer,
-            'b': DatetimeTransformer,
-            ('c', 'd'): DatetimeTransformer,
+            'b': UnixTimestampEncoder,
+            ('c', 'd'): UnixTimestampEncoder,
             'e': NumericalTransformer
         }
         ht.field_data_types = {
