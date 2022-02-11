@@ -401,8 +401,8 @@ of the transformer.
 
    In [1]: from tests.contributing import validate_transformer_performance
 
-   In [2]: results = validate_transformer_performance('rdt.transformers.DatetimeTransformer') # Replace DatetimeTransformer with your transformer
-   Validating Performance for transformer DatetimeTransformer
+   In [2]: results = validate_transformer_performance('rdt.transformers.UnixTimestampEncoder') # Replace UnixTimestampEncoder with your transformer
+   Validating Performance for transformer UnixTimestampEncoder
 
    SUCCESS: The Performance Tests were successful.
 
