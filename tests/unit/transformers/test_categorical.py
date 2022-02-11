@@ -302,6 +302,38 @@ class TestFrequencyEncoder:
 
         expect = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'foo'])
         pd.testing.assert_series_equal(result, expect)
+    
+    def test__transform_user_warning(self):
+        """Test the ``_transform_by_category`` method with data containing nans.
+
+        Validate that the data is transformed correctly when it contains nan's.
+
+        Setup:
+            - the categorical transformer is instantiated, and the appropriate ``intervals``
+            attribute is set.
+
+        Input:
+            - a pandas series containing nan's.
+
+        Output:
+            - a numpy array containing the transformed data.
+        """
+        # Setup
+        data = pd.Series([np.nan, 3, 3, 2, np.nan])
+        transformer = FrequencyEncoder()
+        transformer.intervals = {
+            4: (0, 0.25, 0.125, 0.041666666666666664),
+            3: (0.25, 0.5, 0.375, 0.041666666666666664),
+            2: (0.5, 0.75, 0.625, 0.041666666666666664),
+            np.nan: (0.75, 1.0, 0.875, 0.041666666666666664),
+        }
+
+        # Run
+        transformed = transformer._transform_by_category(data)
+
+        # Asserts
+        expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
+        assert (transformed == expected).all()
 
     def test__transform_by_category_called(self):
         """Test that the `_transform_by_category` method is called.
@@ -396,6 +428,64 @@ class TestFrequencyEncoder:
         # Asserts
         expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
         assert (transformed == expected).all()
+
+    def test_bla(self):
+        # Setup
+        data = pd.Series([np.nan, 3, 3, 2, np.nan])
+        transformer = FrequencyEncoder()
+        transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, np.nan])
+        transformer.intervals = {
+            4: (0, 0.25, 0.125, 0.041666666666666664),
+            3: (0.25, 0.5, 0.375, 0.041666666666666664),
+            2: (0.5, 0.75, 0.625, 0.041666666666666664),
+            np.nan: (0.75, 1.0, 0.875, 0.041666666666666664),
+        }
+
+        # Run
+        transformed = transformer._transform(pd.Series([np.nan, 3, 10]))
+
+        # Asserts
+        expected = np.array([0.875, 0.375])
+        assert (transformed[:2] == expected).all()
+
+    def test_bla2(self):
+        # Setup
+        data = pd.Series([np.nan, 3, 3, 2, np.nan])
+        transformer = FrequencyEncoder()
+        transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, np.nan])
+        transformer.intervals = {
+            4: (0, 0.25, 0.125, 0.041666666666666664),
+            3: (0.25, 0.5, 0.375, 0.041666666666666664),
+            2: (0.5, 0.75, 0.625, 0.041666666666666664),
+            np.nan: (0.75, 1.0, 0.875, 0.041666666666666664),
+        }
+
+        # Run
+        transformed = transformer._transform(pd.Series([3, 5, 10]))
+
+        # Asserts
+        expected = np.array([0.375])
+        assert (transformed[:1] == expected).all()
+
+    def test_bla3(self):
+        # Setup
+        data = pd.Series([3, 3, 2])
+        transformer = FrequencyEncoder()
+        transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1])
+        transformer.intervals = {
+            4: (0, 0.25, 0.125, 0.041666666666666664),
+            3: (0.25, 0.5, 0.375, 0.041666666666666664),
+            2: (0.5, 0.75, 0.625, 0.041666666666666664),
+            1: (0.75, 1.0, 0.875, 0.041666666666666664),
+        }
+
+        # Run
+        transformed = transformer._transform(pd.Series([3, 5, np.nan]))
+
+        # Asserts
+        expected = np.array([0.375])
+        assert (transformed[:1] == expected).all()
+
 
     @patch('rdt.transformers.categorical.norm')
     def test__transform_by_category_add_noise_true(self, norm_mock):
