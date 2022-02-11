@@ -2,16 +2,16 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers.numerical import (
-    BayesGMMTransformer, GaussianCopulaTransformer, NumericalTransformer)
+    BayesGMMTransformer, GaussianCopulaTransformer, FloatFormatter)
 
 
-class TestNumericalTransformer:
+class TestFloatFormatter:
 
     def test_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        nt = NumericalTransformer(
+        nt = FloatFormatter(
             missing_value_replacement='mean',
             model_missing_values=True,
         )
@@ -30,7 +30,7 @@ class TestNumericalTransformer:
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        nt = NumericalTransformer(model_missing_values=False)
+        nt = FloatFormatter(model_missing_values=False)
         nt.fit(data, column)
         transformed = nt.transform(data)
 
@@ -45,7 +45,7 @@ class TestNumericalTransformer:
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
         column = 'a'
 
-        nt = NumericalTransformer(dtype=int)
+        nt = FloatFormatter(dtype=int)
         nt.fit(data, column)
         transformed = nt.transform(data)
 
@@ -59,7 +59,7 @@ class TestNumericalTransformer:
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
         column = 'a'
 
-        nt = NumericalTransformer(dtype=int)
+        nt = FloatFormatter(dtype=int)
         nt.fit(data, column)
         transformed = nt.transform(data)
 

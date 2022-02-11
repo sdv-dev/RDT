@@ -23,7 +23,7 @@ TRANSFORMER_ARGS = {
         'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
-    'NumericalTransformer': {
+    'FloatFormatter': {
         'missing_value_replacement': 'mean',
         'model_missing_values': True
     },

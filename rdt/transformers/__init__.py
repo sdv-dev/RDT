@@ -15,7 +15,7 @@ from rdt.transformers.boolean import BooleanTransformer
 from rdt.transformers.categorical import FrequencyEncoder
 from rdt.transformers.datetime import UnixTimestampEncoder
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.numerical import NumericalTransformer
+from rdt.transformers.numerical import FloatFormatter
 
 __all__ = [
     'BaseTransformer',
@@ -51,9 +51,9 @@ globals().update(TRANSFORMERS)
 __all__.extend(TRANSFORMERS.keys())
 
 DEFAULT_TRANSFORMERS = {
-    'numerical': NumericalTransformer,
-    'integer': NumericalTransformer(dtype=np.int64),
-    'float': NumericalTransformer(dtype=np.float64),
+    'numerical': FloatFormatter,
+    'integer': FloatFormatter(dtype=np.int64),
+    'float': FloatFormatter(dtype=np.float64),
     'categorical': FrequencyEncoder(add_noise=True),
     'boolean': BooleanTransformer,
     'datetime': UnixTimestampEncoder,

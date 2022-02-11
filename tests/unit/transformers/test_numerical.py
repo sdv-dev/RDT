@@ -9,14 +9,14 @@ from copulas import univariate
 
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
-    BayesGMMTransformer, GaussianCopulaTransformer, NumericalTransformer)
+    BayesGMMTransformer, GaussianCopulaTransformer, FloatFormatter)
 
 
-class TestNumericalTransformer(TestCase):
+class TestFloatFormatter(TestCase):
 
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
-        nt = NumericalTransformer(
+        nt = FloatFormatter(
             dtype='int',
             missing_value_replacement='mode',
             model_missing_values=False
@@ -38,7 +38,7 @@ class TestNumericalTransformer(TestCase):
         }
 
         Setup:
-            - initialize a ``NumericalTransformer`` transformer which:
+            - initialize a ``FloatFormatter`` transformer which:
                 - sets ``self.null_transformer`` to a ``NullTransformer`` where
                 ``self.model_missing_values`` is True.
                 - sets ``self.column_prefix`` to a string.
@@ -48,7 +48,7 @@ class TestNumericalTransformer(TestCase):
             added to the beginning of the keys.
         """
         # Setup
-        transformer = NumericalTransformer()
+        transformer = FloatFormatter()
         transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
         transformer.null_transformer._model_missing_values = True
         transformer.column_prefix = 'a#b'
@@ -70,7 +70,7 @@ class TestNumericalTransformer(TestCase):
         this method should simply return False.
 
         Setup:
-            - initialize a ``NumericalTransformer`` transformer which sets
+            - initialize a ``FloatFormatter`` transformer which sets
             ``self.null_transformer`` to a ``NullTransformer`` where
             ``self.model_missing_values`` is False.
 
@@ -78,7 +78,7 @@ class TestNumericalTransformer(TestCase):
             - False
         """
         # Setup
-        transformer = NumericalTransformer()
+        transformer = FloatFormatter()
         transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
 
         # Run
@@ -94,14 +94,14 @@ class TestNumericalTransformer(TestCase):
         the value stored in the ``COMPOSITION_IS_IDENTITY`` attribute.
 
         Setup:
-            - initialize a ``NumericalTransformer`` transformer which sets
+            - initialize a ``FloatFormatter`` transformer which sets
             ``self.null_transformer`` to None.
 
         Output:
             - the value stored in ``self.COMPOSITION_IS_IDENTITY``.
         """
         # Setup
-        transformer = NumericalTransformer()
+        transformer = FloatFormatter()
         transformer.null_transformer = None
 
         # Run
@@ -122,7 +122,7 @@ class TestNumericalTransformer(TestCase):
         """
         data = np.random.random(size=10).round(20)
 
-        output = NumericalTransformer._learn_rounding_digits(data)
+        output = FloatFormatter._learn_rounding_digits(data)
 
         assert output is None
 
@@ -140,7 +140,7 @@ class TestNumericalTransformer(TestCase):
         """
         data = np.array([10, 0., 0.1, 0.12, 0.123, np.nan])
 
-        output = NumericalTransformer._learn_rounding_digits(data)
+        output = FloatFormatter._learn_rounding_digits(data)
 
         assert output == 3
 
@@ -159,7 +159,7 @@ class TestNumericalTransformer(TestCase):
         """
         data = np.array([1230., 12300., 123000., np.nan])
 
-        output = NumericalTransformer._learn_rounding_digits(data)
+        output = FloatFormatter._learn_rounding_digits(data)
 
         assert output == -1
 
@@ -178,7 +178,7 @@ class TestNumericalTransformer(TestCase):
         """
         data = np.array([1230, 12300, 123000, np.nan])
 
-        output = NumericalTransformer._learn_rounding_digits(data)
+        output = FloatFormatter._learn_rounding_digits(data)
 
         assert output == -1
 
@@ -194,7 +194,7 @@ class TestNumericalTransformer(TestCase):
         """
         data = np.array([np.nan, np.nan, np.nan, np.nan])
 
-        output = NumericalTransformer._learn_rounding_digits(data)
+        output = FloatFormatter._learn_rounding_digits(data)
 
         assert output is None
 
@@ -205,7 +205,7 @@ class TestNumericalTransformer(TestCase):
         are set correctly.
 
         Setup:
-            - initialize a ``NumericalTransformer`` with the ``missing_value_replacement``
+            - initialize a ``FloatFormatter`` with the ``missing_value_replacement``
               parameter set to ``'missing_value_replacement'``.
 
         Input:
@@ -217,7 +217,7 @@ class TestNumericalTransformer(TestCase):
         """
         # Setup
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement'
         )
@@ -247,7 +247,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             rounding=None
@@ -275,7 +275,7 @@ class TestNumericalTransformer(TestCase):
         expected_digits = 3
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             rounding=expected_digits
@@ -302,7 +302,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1, 2.1, 3.12, 4.123, 5.1234, 6.123, 7.12, 8.1, 9], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
@@ -331,7 +331,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame(big_numbers, columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
@@ -361,7 +361,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([0.000000000000001], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
@@ -389,7 +389,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([15000, 4000, 60000, np.inf], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
@@ -415,7 +415,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([0, 0, 0], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
@@ -442,7 +442,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([-500, -220, -10], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             rounding='auto'
@@ -468,7 +468,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             min_value=None,
@@ -495,7 +495,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([1.5, None, 2.5], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             min_value=1,
@@ -523,7 +523,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame([-100, -5000, 0, None, 100, 4000], columns=['a'])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement',
             min_value='auto',
@@ -541,7 +541,7 @@ class TestNumericalTransformer(TestCase):
         Validate that this method calls the ``self.null_transformer.transform`` method once.
 
         Setup:
-            - create an instance of a ``NumericalTransformer`` and set ``self.null_transformer``
+            - create an instance of a ``FloatFormatter`` and set ``self.null_transformer``
             to a ``NullTransformer``.
 
         Input:
@@ -552,7 +552,7 @@ class TestNumericalTransformer(TestCase):
         """
         # Setup
         data = pd.Series([1, 2, 3])
-        transformer = NumericalTransformer()
+        transformer = FloatFormatter()
         transformer.null_transformer = Mock()
 
         # Run
@@ -575,7 +575,7 @@ class TestNumericalTransformer(TestCase):
         data = np.random.random(10)
 
         # Run
-        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
+        transformer = FloatFormatter(dtype=float, missing_value_replacement=None)
         transformer._rounding_digits = None
         result = transformer._reverse_transform(data)
 
@@ -596,7 +596,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([0., 1.2, 3.45, 6.789])
 
         # Run
-        transformer = NumericalTransformer(dtype=np.int64, missing_value_replacement=None)
+        transformer = FloatFormatter(dtype=np.int64, missing_value_replacement=None)
         transformer._rounding_digits = None
         transformer._dtype = np.int64
         result = transformer._reverse_transform(data)
@@ -627,7 +627,7 @@ class TestNumericalTransformer(TestCase):
         data = pd.DataFrame(data, columns=['a', 'b'])
 
         # Run
-        transformer = NumericalTransformer(missing_value_replacement='mean')
+        transformer = FloatFormatter(missing_value_replacement='mean')
         null_transformer = Mock()
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
@@ -660,7 +660,7 @@ class TestNumericalTransformer(TestCase):
         ])
 
         # Run
-        transformer = NumericalTransformer(missing_value_replacement='mean')
+        transformer = FloatFormatter(missing_value_replacement='mean')
         null_transformer = Mock()
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
@@ -688,7 +688,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([1.1111, 2.2222, 3.3333, 4.44444, 5.555555])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
+        transformer = FloatFormatter(dtype=float, missing_value_replacement=None)
         transformer._rounding_digits = 2
         result = transformer._reverse_transform(data)
 
@@ -713,7 +713,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([2000.0, 120.0, 3100.0, 40100.0])
 
         # Run
-        transformer = NumericalTransformer(dtype=int, missing_value_replacement=None)
+        transformer = FloatFormatter(dtype=int, missing_value_replacement=None)
         transformer._dtype = int
         transformer._rounding_digits = -3
         result = transformer._reverse_transform(data)
@@ -740,7 +740,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([2000.0, 120.0, 3100.0, 40100.0])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
+        transformer = FloatFormatter(dtype=float, missing_value_replacement=None)
         transformer._rounding_digits = -3
         result = transformer._reverse_transform(data)
 
@@ -765,7 +765,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([2000.554, 120.2, 3101, 4010])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
+        transformer = FloatFormatter(dtype=float, missing_value_replacement=None)
         transformer._rounding_digits = 0
         result = transformer._reverse_transform(data)
 
@@ -788,7 +788,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 400, np.inf])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
+        transformer = FloatFormatter(dtype=float, missing_value_replacement=None)
         transformer._min_value = -300
         result = transformer._reverse_transform(data)
 
@@ -811,7 +811,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
+        transformer = FloatFormatter(dtype=float, missing_value_replacement=None)
         transformer._max_value = 400
         result = transformer._reverse_transform(data)
 
@@ -834,7 +834,7 @@ class TestNumericalTransformer(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
 
         # Run
-        transformer = NumericalTransformer(dtype=float, missing_value_replacement=None)
+        transformer = FloatFormatter(dtype=float, missing_value_replacement=None)
         transformer._max_value = 400
         transformer._min_value = -300
         result = transformer._reverse_transform(data)
@@ -878,7 +878,7 @@ class TestNumericalTransformer(TestCase):
         expected_data = np.array([-300, -300, np.nan, -250, 0, np.nan, 400, 400])
 
         # Run
-        transformer = NumericalTransformer(
+        transformer = FloatFormatter(
             dtype=float,
             missing_value_replacement='missing_value_replacement'
         )
@@ -1352,7 +1352,7 @@ class TestBayesGMMTransformer(TestCase):
         }
 
         Setup:
-            - initialize a ``NumericalTransformer`` transformer which:
+            - initialize a ``FloatFormatter`` transformer which:
                 - sets ``self.null_transformer`` to a ``NullTransformer`` where
                 ``self._model_missing_values`` is True.
                 - sets ``self.column_prefix`` to a string.

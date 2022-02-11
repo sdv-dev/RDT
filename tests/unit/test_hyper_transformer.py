@@ -8,8 +8,8 @@ import pytest
 from rdt import HyperTransformer
 from rdt.errors import NotFittedError
 from rdt.transformers import (
-    BooleanTransformer, FrequencyEncoder, GaussianCopulaTransformer, NumericalTransformer,
-    OneHotEncoder, UnixTimestampEncoder)
+    BooleanTransformer, FloatFormatter, FrequencyEncoder, GaussianCopulaTransformer, OneHotEncoder,
+    UnixTimestampEncoder)
 
 
 class TestHyperTransformer(TestCase):
@@ -79,7 +79,7 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
-        ht._transformers_sequence = [BooleanTransformer(), NumericalTransformer()]
+        ht._transformers_sequence = [BooleanTransformer(), FloatFormatter()]
         ht._fitted = True
 
         # Run
@@ -110,7 +110,7 @@ class TestHyperTransformer(TestCase):
             'a': BooleanTransformer,
             'b': UnixTimestampEncoder,
             ('c', 'd'): UnixTimestampEncoder,
-            'e': NumericalTransformer
+            'e': FloatFormatter
         }
         ht.field_data_types = {
             'f': 'categorical',
@@ -151,7 +151,7 @@ class TestHyperTransformer(TestCase):
             - The transformer defined in field_transformers.
         """
         # Setup
-        transformer = NumericalTransformer()
+        transformer = FloatFormatter()
         ht = HyperTransformer(
             field_transformers={'a.out': transformer},
             default_data_type_transformers={'numerical': GaussianCopulaTransformer()}
@@ -891,7 +891,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         data_type_transformers = {
             'categorical': FrequencyEncoder,
-            'integer': NumericalTransformer
+            'integer': FloatFormatter
         }
         ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
 
@@ -899,7 +899,7 @@ class TestHyperTransformer(TestCase):
         out = ht.get_default_data_type_transformers()
 
         # Assert
-        assert out == {'categorical': FrequencyEncoder, 'integer': NumericalTransformer}
+        assert out == {'categorical': FrequencyEncoder, 'integer': FloatFormatter}
 
     def test_update_default_data_type_transformers(self):
         """Test the ``update_default_data_type_transformers`` method.
@@ -916,7 +916,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         data_type_transformers = {
             'categorical': FrequencyEncoder,
-            'integer': NumericalTransformer
+            'integer': FloatFormatter
         }
         ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
         ht._transformers_sequence = [FrequencyEncoder()]
@@ -928,7 +928,7 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert ht.default_data_type_transformers == {
             'categorical': FrequencyEncoder,
-            'integer': NumericalTransformer,
+            'integer': FloatFormatter,
             'boolean': BooleanTransformer
         }
         ht._unfit.assert_called_once()
@@ -949,7 +949,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         field_transformers = {
             'a': FrequencyEncoder,
-            'b': NumericalTransformer
+            'b': FloatFormatter
         }
         ht = HyperTransformer(field_transformers=field_transformers)
         ht._transformers_sequence = [FrequencyEncoder()]
@@ -1165,11 +1165,11 @@ class TestHyperTransformer(TestCase):
                 'outputs': ['field1.out1', 'field1.out2']
             },
             'field1.out1': {
-                'transformer': NumericalTransformer(),
+                'transformer': FloatFormatter(),
                 'outputs': ['field1.out1.value']
             },
             'field1.out2': {
-                'transformer': NumericalTransformer(),
+                'transformer': FloatFormatter(),
                 'outputs': ['field1.out2.value']
             },
             'field2': {'transformer': FrequencyEncoder(), 'outputs': ['field2.value']}
@@ -1183,7 +1183,7 @@ class TestHyperTransformer(TestCase):
         assert tree_yaml == (
             'field1:\n  outputs:\n  - field1.out1\n  - field1.out2\n  '
             'transformer: FrequencyEncoder\nfield1.out1:\n  outputs:\n  - '
-            'field1.out1.value\n  transformer: NumericalTransformer\nfield1.out2:\n  '
-            'outputs:\n  - field1.out2.value\n  transformer: NumericalTransformer\nfield2:\n  '
+            'field1.out1.value\n  transformer: FloatFormatter\nfield1.out2:\n  '
+            'outputs:\n  - field1.out2.value\n  transformer: FloatFormatter\nfield2:\n  '
             'outputs:\n  - field2.value\n  transformer: FrequencyEncoder\n'
         )

@@ -14,7 +14,7 @@ EPSILON = np.finfo(np.float32).eps
 MAX_DECIMALS = sys.float_info.dig - 1
 
 
-class NumericalTransformer(BaseTransformer):
+class FloatFormatter(BaseTransformer):
     """Transformer for numerical data.
 
     This transformer replaces integer values with their float equivalent.
@@ -23,10 +23,6 @@ class NumericalTransformer(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        dtype (data type):
-            Data type of the data to transform. It will be used when reversing the
-            transformation. If not provided, the dtype of the fit data will be used.
-            Defaults to ``None``.
         missing_value_replacement (object or None):
             Indicate what to do with the null values. If an integer or float is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
@@ -66,11 +62,10 @@ class NumericalTransformer(BaseTransformer):
     _min_value = None
     _max_value = None
 
-    def __init__(self, dtype=None, missing_value_replacement=None, model_missing_values=False,
+    def __init__(self, missing_value_replacement=None, model_missing_values=False,
                  rounding=None, min_value=None, max_value=None):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
-        self.dtype = dtype
         self.rounding = rounding
         self.min_value = min_value
         self.max_value = max_value
@@ -131,7 +126,7 @@ class NumericalTransformer(BaseTransformer):
             data (pandas.DataFrame or pandas.Series):
                 Data to fit.
         """
-        self._dtype = self.dtype or data.dtype
+        self._dtype = data.dtype
         self._min_value = data.min() if self.min_value == 'auto' else self.min_value
         self._max_value = data.max() if self.max_value == 'auto' else self.max_value
 
@@ -193,7 +188,7 @@ class NumericalTransformer(BaseTransformer):
         return data.astype(self._dtype)
 
 
-class GaussianCopulaTransformer(NumericalTransformer):
+class GaussianCopulaTransformer(FloatFormatter):
     r"""Transformer for numerical data based on copulas transformation.
 
     Transformation consists on bringing the input data to a standard normal space
@@ -211,10 +206,6 @@ class GaussianCopulaTransformer(NumericalTransformer):
     to :math:`u` and then to :math:`x`.
 
     Args:
-        dtype (data type):
-            Data type of the data to transform. It will be used when reversing the
-            transformation. If not provided, the dtype of the fit data will be used.
-            Defaults to ``None``.
         missing_value_replacement (object or None):
             Indicate what to do with the null values. If an integer or float is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
@@ -256,10 +247,9 @@ class GaussianCopulaTransformer(NumericalTransformer):
     _univariate = None
     COMPOSITION_IS_IDENTITY = False
 
-    def __init__(self, dtype=None, missing_value_replacement=None,
+    def __init__(self, missing_value_replacement=None,
                  model_missing_values=False, distribution='parametric'):
         super().__init__(
-            dtype=dtype,
             missing_value_replacement=missing_value_replacement,
             model_missing_values=model_missing_values
         )
@@ -393,7 +383,7 @@ class GaussianCopulaTransformer(NumericalTransformer):
         return super()._reverse_transform(data)
 
 
-class BayesGMMTransformer(NumericalTransformer):
+class BayesGMMTransformer(FloatFormatter):
     """Transformer for numerical data using a Bayesian Gaussian Mixture Model.
 
     This transformation takes a numerical value and transforms it using a Bayesian GMM
@@ -402,10 +392,6 @@ class BayesGMMTransformer(NumericalTransformer):
     based on the mean and std of the selected component.
 
     Args:
-        dtype (data type):
-            Data type of the data to transform. It will be used when reversing the
-            transformation. If not provided, the dtype of the fit data will be used.
-            Defaults to ``None``.
         missing_value_replacement (object or None):
             Indicate what to do with the null values. If an integer or float is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
@@ -456,11 +442,10 @@ class BayesGMMTransformer(NumericalTransformer):
     _bgm_transformer = None
     valid_component_indicator = None
 
-    def __init__(self, dtype=None, missing_value_replacement=None, model_missing_values=False,
+    def __init__(self, missing_value_replacement=None, model_missing_values=False,
                  rounding=None, min_value=None, max_value=None, max_clusters=10,
                  weight_threshold=0.005):
         super().__init__(
-            dtype=dtype,
             missing_value_replacement=missing_value_replacement,
             model_missing_values=model_missing_values,
             rounding=rounding,
