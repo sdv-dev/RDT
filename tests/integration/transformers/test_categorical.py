@@ -8,7 +8,7 @@ import pandas as pd
 from rdt.transformers import FrequencyEncoder, LabelEncoder, OneHotEncoder
 
 
-def test_categorical_numerical_nans():
+def test_frequency_encoder_numerical_nans():
     """Ensure FrequencyEncoder works on numerical + nan only columns."""
 
     data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
@@ -20,6 +20,37 @@ def test_categorical_numerical_nans():
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
+
+
+def test_frequency_encoder_unseen_transform_data():
+    """Ensure FrequencyEncoder works when data to transform wasn't seen during fit."""
+
+    fit_data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
+    transform_data = pd.DataFrame([1, 2, np.nan, 3], columns=['column_name'])
+    column = 'column_name'
+
+    transformer = FrequencyEncoder()
+    transformer.fit(fit_data, column)
+    transformed = transformer.transform(transform_data)
+    reverse = transformer.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(reverse[:3], transform_data[:3])
+    assert reverse.iloc[3][0] in {1, 2} or pd.isna(reverse.iloc[3])[0]
+
+
+def test_frequency_encoder_unseen_transform_nan():
+    """Ensure FrequencyEncoder works when np.nan to transform wasn't seen during fit."""
+
+    fit_data = pd.DataFrame([1.0, 2.0, 3.0], columns=['column_name'])
+    transform_data = pd.DataFrame([1, 2, 3, np.nan], columns=['column_name'])
+    column = 'column_name'
+
+    transformer = FrequencyEncoder()
+    transformer.fit(fit_data, column)
+    transformed = transformer.transform(transform_data)
+    reverse = transformer.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(reverse[:3], transform_data[:3])
+    assert reverse.iloc[3][0] in {1, 2, 3}
 
 
 def test_frequency_encoder_pickle_nans():

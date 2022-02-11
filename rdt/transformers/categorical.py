@@ -124,7 +124,6 @@ class FrequencyEncoder(BaseTransformer):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
-        data = data.fillna(np.nan)
         self.dtype = data.dtype
         self.intervals, self.means, self.starts = self._get_intervals(data)
 
@@ -166,18 +165,6 @@ class FrequencyEncoder(BaseTransformer):
     def _transform(self, data):
         """Transform the categorical values to float representatives.
 
-        fit_data = pd.Series(self.means.index)
-        mapped = data.fillna(np.nan).map(lambda x: x if np.isin(x, fit_data) else np.nan)
-        is_null = mapped.isna()
-        if is_null.any():
-            unseen_categories = set(data[is_null])
-            warnings.warn(
-                f'Warning: The data contains new categories {unseen_categories} that were not '
-                'seen in the original data. Assigning them random values. If you want to model '
-                'new categories, please fit the transformer again with the new data.'
-            )
-        data[is_null] = np.random.choice(fit_data, size=is_null.sum())
-
         Args:
             data (pandas.Series):
                 Data to transform.
@@ -185,25 +172,24 @@ class FrequencyEncoder(BaseTransformer):
         Returns:
             numpy.ndarray
         """
-        fit_categories = {np.nan if pd.isna(x) else x for x in self.means.index}
-        categories = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
-        unseen_categories = categories - fit_categories
-        has_null = pd.isna(list(unseen_categories)).any()
-        if unseen_categories:
-            unseen_idx = data.isin(unseen_categories)
-            print(unseen_idx)
-            data[unseen_idx] = np.random.choice(list(fit_categories), size=np.sum(unseen_idx))
-            if has_null:
-                null_idx = pd.isna(data)
-                print(null_idx)
-                data[null_idx] = np.random.choice(list(fit_categories), size=np.sum(null_idx))
+        fit_categories = pd.Series(self.intervals.keys())
+        has_nan = pd.isna(fit_categories).any()
 
+        def find_unseen_data(value):
+            if np.isin(value, fit_categories) or (pd.isna(value) and has_nan):
+                return False
+            return True
+
+        unseen_data = data.apply(find_unseen_data)
+        if unseen_data.any():
+            unseen_categories = set(data[unseen_data])
             warnings.warn(
                 f'Warning: The data contains new categories {unseen_categories} that were not '
                 'seen in the original data. Assigning them random values. If you want to model '
                 'new categories, please fit the transformer again with the new data.'
             )
 
+        data[unseen_data] = np.random.choice(fit_categories, size=np.sum(unseen_data))
         if len(self.means) < len(data):
             return self._transform_by_category(data)
 
