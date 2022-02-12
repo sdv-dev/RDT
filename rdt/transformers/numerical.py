@@ -117,8 +117,10 @@ class FloatFormatter(BaseTransformer):
                 Data to fit.
         """
         self._dtype = data.dtype
-        self._min_value = data.min()
-        self._max_value = data.max()
+        if self.enforce_min_max_values:
+            self._min_value = data.min()
+            self._max_value = data.max()
+
         if self.learn_rounding_scheme:
             self._rounding_digits = self._learn_rounding_digits(data)
 
@@ -238,7 +240,7 @@ class GaussianNormalizer(FloatFormatter):
     COMPOSITION_IS_IDENTITY = False
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
-                 learn_rounding_scheme=False, enforce_min_max_values=False, 
+                 learn_rounding_scheme=False, enforce_min_max_values=False,
                  distribution='parametric'):
         super().__init__(
             missing_value_replacement=missing_value_replacement,
