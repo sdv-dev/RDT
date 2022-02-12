@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.numerical import (
-    ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer)
+from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
 
 
 class TestFloatFormatter:
@@ -45,7 +44,7 @@ class TestFloatFormatter:
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
         column = 'a'
 
-        nt = FloatFormatter(dtype=int)
+        nt = FloatFormatter()
         nt.fit(data, column)
         transformed = nt.transform(data)
 
@@ -59,7 +58,7 @@ class TestFloatFormatter:
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
         column = 'a'
 
-        nt = FloatFormatter(dtype=int)
+        nt = FloatFormatter()
         nt.fit(data, column)
         transformed = nt.transform(data)
 
@@ -131,7 +130,7 @@ class TestGaussianNormalizer:
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianNormalizer(dtype=int)
+        ct = GaussianNormalizer()
         ct.fit(data, column)
         transformed = ct.transform(data)
 

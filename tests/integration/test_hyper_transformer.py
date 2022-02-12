@@ -207,8 +207,8 @@ def test_hypertransformer_field_transformers():
     """
     # Setup
     field_transformers = {
-        'integer': FloatFormatter(dtype=np.int64),
-        'float': FloatFormatter(dtype=float),
+        'integer': FloatFormatter,
+        'float': FloatFormatter,
         'categorical': FrequencyEncoder,
         'bool': BooleanTransformer,
         'datetime': DummyTransformerNotMLReady,

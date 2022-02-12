@@ -8,8 +8,7 @@ import pytest
 from copulas import univariate
 
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.numerical import (
-    ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer)
+from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
 
 
 class TestFloatFormatter(TestCase):
