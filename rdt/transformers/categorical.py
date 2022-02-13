@@ -174,22 +174,16 @@ class FrequencyEncoder(BaseTransformer):
         """
         fit_categories = pd.Series(self.intervals.keys())
         has_nan = pd.isna(fit_categories).any()
-
-        def find_unseen_data(value):
-            if np.isin(value, fit_categories) or (pd.isna(value) and has_nan):
-                return False
-            return True
-
-        unseen_data = data.apply(find_unseen_data)
-        if unseen_data.any():
-            unseen_categories = set(data[unseen_data])
+        unseen_indexes = ~(data.isin(fit_categories) | (pd.isna(data) & has_nan))
+        if unseen_indexes.any():
+            unseen_categories = set(data[unseen_indexes])
             warnings.warn(
                 f'Warning: The data contains new categories {unseen_categories} that were not '
                 'seen in the original data. Assigning them random values. If you want to model '
                 'new categories, please fit the transformer again with the new data.'
             )
 
-        data[unseen_data] = np.random.choice(fit_categories, size=np.sum(unseen_data))
+        data[unseen_indexes] = np.random.choice(fit_categories, size=unseen_indexes.size)
         if len(self.means) < len(data):
             return self._transform_by_category(data)
 
