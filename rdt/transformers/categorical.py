@@ -10,7 +10,7 @@ from scipy.stats import norm
 from rdt.transformers.base import BaseTransformer
 
 
-class CategoricalTransformer(BaseTransformer):
+class FrequencyEncoder(BaseTransformer):
     """Transformer for categorical data.
 
     This transformer computes a float representative for each one of the categories
@@ -27,12 +27,9 @@ class CategoricalTransformer(BaseTransformer):
     Null values are considered just another category.
 
     Args:
-        fuzzy (bool):
+        add_noise (bool):
             Whether to generate gaussian noise around the class representative of each interval
             or just use the mean for all the replaced values. Defaults to ``False``.
-        clip (bool):
-            If ``True``, clip the values to [0, 1]. Otherwise normalize them using modulo 1.
-            Defaults to ``False``.
     """
 
     INPUT_TYPE = 'categorical'
@@ -57,9 +54,8 @@ class CategoricalTransformer(BaseTransformer):
 
         self.__dict__ = state
 
-    def __init__(self, fuzzy=False, clip=False):
-        self.fuzzy = fuzzy
-        self.clip = clip
+    def __init__(self, add_noise=False):
+        self.add_noise = add_noise
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -68,7 +64,7 @@ class CategoricalTransformer(BaseTransformer):
             bool:
                 Whether or not the transform is deterministic.
         """
-        return not self.fuzzy
+        return not self.add_noise
 
     def is_composition_identity(self):
         """Return whether composition of transform and reverse transform produces the input data.
@@ -77,7 +73,7 @@ class CategoricalTransformer(BaseTransformer):
             bool:
                 Whether or not transforming and then reverse transforming returns the input data.
         """
-        return self.COMPOSITION_IS_IDENTITY and not self.fuzzy
+        return self.COMPOSITION_IS_IDENTITY and not self.add_noise
 
     @staticmethod
     def _get_intervals(data):
@@ -122,18 +118,14 @@ class CategoricalTransformer(BaseTransformer):
     def _fit(self, data):
         """Fit the transformer to the data.
 
-        Create the mapping dict to save the label encoding.
-        Finally, compute the intervals for each categorical value.
+        Compute the intervals for each categorical value.
 
         Args:
             data (pandas.Series):
                 Data to fit the transformer to.
         """
-        self.mapping = {}
         self.dtype = data.dtype
-
         self.intervals, self.means, self.starts = self._get_intervals(data)
-        self._get_category_from_index = list(self.means.index).__getitem__
 
     def _transform_by_category(self, data):
         """Transform the data by iterating over the different categories."""
@@ -147,7 +139,7 @@ class CategoricalTransformer(BaseTransformer):
             else:
                 mask = (data.to_numpy() == category)
 
-            if self.fuzzy:
+            if self.add_noise:
                 result[mask] = norm.rvs(mean, std, size=mask.sum())
             else:
                 result[mask] = mean
@@ -161,7 +153,7 @@ class CategoricalTransformer(BaseTransformer):
 
         mean, std = self.intervals[category][2:]
 
-        if self.fuzzy:
+        if self.add_noise:
             return norm.rvs(mean, std)
 
         return mean
@@ -171,9 +163,7 @@ class CategoricalTransformer(BaseTransformer):
         return data.fillna(np.nan).apply(self._get_value).to_numpy()
 
     def _transform(self, data):
-        """Transform categorical values to float values.
-
-        Replace the categories with their float representative value.
+        """Transform the categorical values to float representatives.
 
         Args:
             data (pandas.Series):
@@ -182,20 +172,24 @@ class CategoricalTransformer(BaseTransformer):
         Returns:
             numpy.ndarray
         """
+        fit_categories = pd.Series(self.intervals.keys())
+        has_nan = pd.isna(fit_categories).any()
+        unseen_indexes = ~(data.isin(fit_categories) | (pd.isna(data) & has_nan))
+        if unseen_indexes.any():
+            # Select only the first 5 unseen categories to avoid flooding the console.
+            unseen_categories = set(data[unseen_indexes][:5])
+            warnings.warn(
+                f'The data contains {unseen_indexes.sum()} new categories that were not '
+                f'seen in the original data (examples: {unseen_categories}). Assigning '
+                'them random values. If you want to model new categories, '
+                'please fit the transformer again with the new data.'
+            )
+
+        data[unseen_indexes] = np.random.choice(fit_categories, size=unseen_indexes.size)
         if len(self.means) < len(data):
             return self._transform_by_category(data)
 
         return self._transform_by_row(data)
-
-    def _normalize(self, data):
-        """Normalize data to the range [0, 1].
-
-        This is done by either clipping or computing the values modulo 1.
-        """
-        if self.clip:
-            return data.clip(0, 1)
-
-        return data % 1
 
     def _reverse_transform_by_matrix(self, data):
         """Reverse transform the data with matrix operations."""
@@ -240,8 +234,7 @@ class CategoricalTransformer(BaseTransformer):
         Returns:
             pandas.Series
         """
-        data = self._normalize(data)
-
+        data = data.clip(0, 1)
         num_rows = len(data)
         num_categories = len(self.means)
 
@@ -375,10 +368,13 @@ class OneHotEncoder(BaseTransformer):
         unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
         unseen_categories = unique_data - set(self.dummies)
         if unseen_categories:
+            # Select only the first 5 unseen categories to avoid flooding the console.
+            examples_unseen_categories = set(list(unseen_categories)[:5])
             warnings.warn(
-                f'Warning: The data contains new categories {unseen_categories} that were not '
-                'seen in the original data. Creating a vector of all 0s. If you want to model '
-                'new categories, please fit the transformer again with the new data.'
+                f'The data contains {len(unseen_categories)} new categories that were not '
+                f'seen in the original data (examples: {examples_unseen_categories}). Creating '
+                'a vector of all 0s. If you want to model new categories, '
+                'please fit the transformer again with the new data.'
             )
 
         return self._transform_helper(data)
@@ -462,11 +458,13 @@ class LabelEncoder(BaseTransformer):
         mapped = data.fillna(np.nan).map(self.categories_to_values)
         is_null = mapped.isna()
         if is_null.any():
-            unseen_categories = set(data[is_null])
+            # Select only the first 5 unseen categories to avoid flooding the console.
+            unseen_categories = set(data[is_null][:5])
             warnings.warn(
-                f'Warning: The data contains new categories {unseen_categories} that were not '
-                'seen in the original data. Assigning them random values. If you want to model '
-                'new categories, please fit the transformer again with the new data.'
+                f'The data contains {is_null.sum()} new categories that were not '
+                f'seen in the original data (examples: {unseen_categories}). Assigning '
+                'them random values. If you want to model new categories, '
+                'please fit the transformer again with the new data.'
             )
 
         mapped[is_null] = np.random.randint(
