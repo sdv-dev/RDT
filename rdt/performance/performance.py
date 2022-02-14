@@ -23,7 +23,7 @@ TRANSFORMER_ARGS = {
         'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
-    'NumericalTransformer': {
+    'FloatFormatter': {
         'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
@@ -35,11 +35,11 @@ TRANSFORMER_ARGS = {
         'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
-    'GaussianCopulaTransformer': {
+    'GaussianNormalizer': {
         'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
-    'BayesGMMTransformer': {
+    'ClusterBasedNormalizer': {
         'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
