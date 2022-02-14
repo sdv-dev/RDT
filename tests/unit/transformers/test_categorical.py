@@ -233,7 +233,7 @@ class TestFrequencyEncoder:
         pd.testing.assert_series_equal(transformer.means, expected_means)
         pd.testing.assert_frame_equal(transformer.starts, expected_starts)
 
-    def test__get_value_no_add_noise(self):
+    def test__get_value_add_noise_false(self):
         # Setup
         transformer = FrequencyEncoder(add_noise=False)
         transformer.intervals = {
@@ -250,7 +250,7 @@ class TestFrequencyEncoder:
         assert result_nan == 0.75
 
     @patch('rdt.transformers.categorical.norm')
-    def test__get_value_add_noise(self, norm_mock):
+    def test__get_value_add_noise_true(self, norm_mock):
         # setup
         norm_mock.rvs.return_value = 0.2745
 
@@ -333,10 +333,11 @@ class TestFrequencyEncoder:
         }
 
         # Run
-        warning_msg = (
-            'Warning: The data contains new categories \\{nan\\} that were not seen '
-            'in the original data. Assigning them random values. If you want to model '
-            'new categories, please fit the transformer again with the new data.'
+        warning_msg = re.escape(
+            'The data contains 1 new categories that were not '
+            'seen in the original data (examples: {nan}). Assigning '
+            'them random values. If you want to model new categories, '
+            'please fit the transformer again with the new data.'
         )
         with pytest.warns(UserWarning, match=warning_msg):
             transformed = transformer._transform(data)
@@ -1397,10 +1398,11 @@ class TestOneHotEncoder:
         ohe._fit(fit_data)
 
         # Run
-        warning_msg = (
-            'Warning: The data contains new categories \\{4.0\\} that were not seen '
-            'in the original data. Creating a vector of all 0s. If you want to model '
-            'new categories, please fit the transformer again with the new data.'
+        warning_msg = re.escape(
+            'The data contains 1 new categories that were not '
+            'seen in the original data (examples: {4.0}). Creating '
+            'a vector of all 0s. If you want to model new categories, '
+            'please fit the transformer again with the new data.'
         )
         with pytest.warns(UserWarning, match=warning_msg):
             transform_data = pd.Series([1, 2, np.nan, 4])
@@ -1565,10 +1567,11 @@ class TestLabelEncoder:
         transformer.values_to_categories = {0: 1, 1: 2, 2: 3}
 
         # Run
-        warning_msg = (
-            'Warning: The data contains new categories \\{4\\} that were not seen '
-            'in the original data. Assigning them random values. If you want to model '
-            'new categories, please fit the transformer again with the new data.'
+        warning_msg = re.escape(
+            'The data contains 1 new categories that were not '
+            'seen in the original data (examples: {4}). Assigning '
+            'them random values. If you want to model new categories, '
+            'please fit the transformer again with the new data.'
         )
         with pytest.warns(UserWarning, match=warning_msg):
             transformed = transformer._transform(data)

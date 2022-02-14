@@ -176,11 +176,13 @@ class FrequencyEncoder(BaseTransformer):
         has_nan = pd.isna(fit_categories).any()
         unseen_indexes = ~(data.isin(fit_categories) | (pd.isna(data) & has_nan))
         if unseen_indexes.any():
-            unseen_categories = set(data[unseen_indexes])
+            # Select only the first 5 unseen categories to avoid flooding the console.
+            unseen_categories = set(data[unseen_indexes][:5])
             warnings.warn(
-                f'Warning: The data contains new categories {unseen_categories} that were not '
-                'seen in the original data. Assigning them random values. If you want to model '
-                'new categories, please fit the transformer again with the new data.'
+                f'The data contains {unseen_indexes.sum()} new categories that were not '
+                f'seen in the original data (examples: {unseen_categories}). Assigning '
+                'them random values. If you want to model new categories, '
+                'please fit the transformer again with the new data.'
             )
 
         data[unseen_indexes] = np.random.choice(fit_categories, size=unseen_indexes.size)
@@ -366,10 +368,13 @@ class OneHotEncoder(BaseTransformer):
         unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
         unseen_categories = unique_data - set(self.dummies)
         if unseen_categories:
+            # Select only the first 5 unseen categories to avoid flooding the console.
+            examples_unseen_categories = set(list(unseen_categories)[:5])
             warnings.warn(
-                f'Warning: The data contains new categories {unseen_categories} that were not '
-                'seen in the original data. Creating a vector of all 0s. If you want to model '
-                'new categories, please fit the transformer again with the new data.'
+                f'The data contains {len(unseen_categories)} new categories that were not '
+                f'seen in the original data (examples: {examples_unseen_categories}). Creating '
+                'a vector of all 0s. If you want to model new categories, '
+                'please fit the transformer again with the new data.'
             )
 
         return self._transform_helper(data)
@@ -453,11 +458,13 @@ class LabelEncoder(BaseTransformer):
         mapped = data.fillna(np.nan).map(self.categories_to_values)
         is_null = mapped.isna()
         if is_null.any():
-            unseen_categories = set(data[is_null])
+            # Select only the first 5 unseen categories to avoid flooding the console.
+            unseen_categories = set(data[is_null][:5])
             warnings.warn(
-                f'Warning: The data contains new categories {unseen_categories} that were not '
-                'seen in the original data. Assigning them random values. If you want to model '
-                'new categories, please fit the transformer again with the new data.'
+                f'The data contains {is_null.sum()} new categories that were not '
+                f'seen in the original data (examples: {unseen_categories}). Assigning '
+                'them random values. If you want to model new categories, '
+                'please fit the transformer again with the new data.'
             )
 
         mapped[is_null] = np.random.randint(
