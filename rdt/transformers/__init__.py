@@ -8,14 +8,12 @@ from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 
-import numpy as np
-
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BooleanTransformer
 from rdt.transformers.categorical import FrequencyEncoder
 from rdt.transformers.datetime import UnixTimestampEncoder
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.numerical import NumericalTransformer
+from rdt.transformers.numerical import FloatFormatter
 
 __all__ = [
     'BaseTransformer',
@@ -51,9 +49,9 @@ globals().update(TRANSFORMERS)
 __all__.extend(TRANSFORMERS.keys())
 
 DEFAULT_TRANSFORMERS = {
-    'numerical': NumericalTransformer,
-    'integer': NumericalTransformer(dtype=np.int64),
-    'float': NumericalTransformer(dtype=np.float64),
+    'numerical': FloatFormatter,
+    'integer': FloatFormatter,
+    'float': FloatFormatter,
     'categorical': FrequencyEncoder(add_noise=True),
     'boolean': BooleanTransformer,
     'datetime': UnixTimestampEncoder,
