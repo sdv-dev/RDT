@@ -8,8 +8,8 @@ import pandas as pd
 
 from rdt import HyperTransformer
 from rdt.transformers import (
-    DEFAULT_TRANSFORMERS, BaseTransformer, BooleanTransformer, FrequencyEncoder,
-    NumericalTransformer, OneHotEncoder, UnixTimestampEncoder)
+    DEFAULT_TRANSFORMERS, BaseTransformer, BooleanTransformer, FloatFormatter, FrequencyEncoder,
+    OneHotEncoder, UnixTimestampEncoder)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -171,9 +171,9 @@ def test_hypertransformer_default_inputs():
     expected_reversed = get_input_data()
     pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
-    assert isinstance(ht._transformers_tree['integer']['transformer'], NumericalTransformer)
+    assert isinstance(ht._transformers_tree['integer']['transformer'], FloatFormatter)
     assert ht._transformers_tree['integer']['outputs'] == ['integer.value']
-    assert isinstance(ht._transformers_tree['float']['transformer'], NumericalTransformer)
+    assert isinstance(ht._transformers_tree['float']['transformer'], FloatFormatter)
     assert ht._transformers_tree['float']['outputs'] == ['float.value']
     assert isinstance(ht._transformers_tree['categorical']['transformer'], FrequencyEncoder)
     assert ht._transformers_tree['categorical']['outputs'] == ['categorical.value']
@@ -207,8 +207,8 @@ def test_hypertransformer_field_transformers():
     """
     # Setup
     field_transformers = {
-        'integer': NumericalTransformer(dtype=np.int64),
-        'float': NumericalTransformer(dtype=float),
+        'integer': FloatFormatter,
+        'float': FloatFormatter,
         'categorical': FrequencyEncoder,
         'bool': BooleanTransformer,
         'datetime': DummyTransformerNotMLReady,

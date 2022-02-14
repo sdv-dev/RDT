@@ -7,7 +7,7 @@ import numpy as np
 
 from rdt.performance.datasets import BaseDatasetGenerator
 from rdt.performance.profiling import profile_transformer
-from rdt.transformers import NumericalTransformer
+from rdt.transformers import FloatFormatter
 
 
 @patch('rdt.performance.profiling.mp')
@@ -34,7 +34,7 @@ def test_profile_transformer(deepcopy_mock, multiprocessor_mock):
     - DataFrame with times and memories
     """
     # Setup
-    transformer_mock = Mock(spec_set=NumericalTransformer)
+    transformer_mock = Mock(spec_set=FloatFormatter)
     dataset_gen_mock = Mock(spec_set=BaseDatasetGenerator)
     transformer_mock.return_value.transform.return_value = np.zeros(100)
     dataset_gen_mock.generate.return_value = np.ones(100)
