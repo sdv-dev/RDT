@@ -8,7 +8,7 @@ import pandas as pd
 
 from rdt import HyperTransformer
 from rdt.transformers import (
-    DEFAULT_TRANSFORMERS, BaseTransformer, BooleanTransformer, CategoricalTransformer,
+    DEFAULT_TRANSFORMERS, BaseTransformer, BooleanTransformer, FrequencyEncoder,
     NumericalTransformer, OneHotEncoder, UnixTimestampEncoder)
 
 
@@ -133,7 +133,7 @@ def get_transformed_data():
 
 
 DETERMINISTIC_DEFAULT_TRANSFORMERS = deepcopy(DEFAULT_TRANSFORMERS)
-DETERMINISTIC_DEFAULT_TRANSFORMERS['categorical'] = CategoricalTransformer
+DETERMINISTIC_DEFAULT_TRANSFORMERS['categorical'] = FrequencyEncoder
 
 
 @patch('rdt.transformers.DEFAULT_TRANSFORMERS', DETERMINISTIC_DEFAULT_TRANSFORMERS)
@@ -145,7 +145,7 @@ def test_hypertransformer_default_inputs():
     transformers to use for each field.
 
     Setup:
-        - Patch the DEFAULT_TRANSFORMERS to use the `CategoricalTransformer`
+        - Patch the DEFAULT_TRANSFORMERS to use the `FrequencyEncoder`
         for categorical data types, so that the output is predictable.
 
     Input:
@@ -175,13 +175,13 @@ def test_hypertransformer_default_inputs():
     assert ht._transformers_tree['integer']['outputs'] == ['integer.value']
     assert isinstance(ht._transformers_tree['float']['transformer'], NumericalTransformer)
     assert ht._transformers_tree['float']['outputs'] == ['float.value']
-    assert isinstance(ht._transformers_tree['categorical']['transformer'], CategoricalTransformer)
+    assert isinstance(ht._transformers_tree['categorical']['transformer'], FrequencyEncoder)
     assert ht._transformers_tree['categorical']['outputs'] == ['categorical.value']
     assert isinstance(ht._transformers_tree['bool']['transformer'], BooleanTransformer)
     assert ht._transformers_tree['bool']['outputs'] == ['bool.value']
     assert isinstance(ht._transformers_tree['datetime']['transformer'], UnixTimestampEncoder)
     assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value']
-    assert isinstance(ht._transformers_tree['names']['transformer'], CategoricalTransformer)
+    assert isinstance(ht._transformers_tree['names']['transformer'], FrequencyEncoder)
     assert ht._transformers_tree['names']['outputs'] == ['names.value']
 
 
@@ -209,11 +209,11 @@ def test_hypertransformer_field_transformers():
     field_transformers = {
         'integer': NumericalTransformer(dtype=np.int64),
         'float': NumericalTransformer(dtype=float),
-        'categorical': CategoricalTransformer,
+        'categorical': FrequencyEncoder,
         'bool': BooleanTransformer,
         'datetime': DummyTransformerNotMLReady,
-        'datetime.value': CategoricalTransformer,
-        'names': CategoricalTransformer
+        'datetime.value': FrequencyEncoder,
+        'names': FrequencyEncoder
     }
     data = get_input_data()
 
@@ -358,7 +358,7 @@ def test_with_unfitted_columns():
     """HyperTransform should be able to transform even if there are unseen columns in data."""
     # Setup
     data = get_input_data()
-    ht = HyperTransformer(default_data_type_transformers={'categorical': CategoricalTransformer})
+    ht = HyperTransformer(default_data_type_transformers={'categorical': FrequencyEncoder})
     ht.fit(data)
 
     # Run

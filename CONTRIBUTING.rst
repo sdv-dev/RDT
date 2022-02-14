@@ -463,8 +463,8 @@ on each dataset, how that score compares to average and whether or not it is acc
 
    In [1]: from tests.contributing import validate_transformer_quality
 
-   In [2]: results = validate_transformer_quality('rdt.transformers.CategoricalTransformer') # Replace CategoricalTransformer with your transformer
-   Validating Quality Tests for transformer CategoricalTransformer
+   In [2]: results = validate_transformer_quality('rdt.transformers.FrequencyEncoder') # Replace FrequencyEncoder with your transformer
+   Validating Quality Tests for transformer FrequencyEncoder
 
    SUCCESS: The quality tests were successful.
 

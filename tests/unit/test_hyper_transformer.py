@@ -8,7 +8,7 @@ import pytest
 from rdt import HyperTransformer
 from rdt.errors import NotFittedError
 from rdt.transformers import (
-    BooleanTransformer, CategoricalTransformer, GaussianCopulaTransformer, NumericalTransformer,
+    BooleanTransformer, FrequencyEncoder, GaussianCopulaTransformer, NumericalTransformer,
     OneHotEncoder, UnixTimestampEncoder)
 
 
@@ -217,7 +217,7 @@ class TestHyperTransformer(TestCase):
             - The transformer defined in next_transformers.
         """
         # Setup
-        transformer = CategoricalTransformer()
+        transformer = FrequencyEncoder()
         ht = HyperTransformer(
             default_data_type_transformers={'categorical': OneHotEncoder()}
         )
@@ -250,7 +250,7 @@ class TestHyperTransformer(TestCase):
             - The default transformer.
         """
         # Setup
-        transformer = CategoricalTransformer(fuzzy=True)
+        transformer = FrequencyEncoder(add_noise=True)
         mock.return_value = transformer
         ht = HyperTransformer(
             default_data_type_transformers={'categorical': OneHotEncoder()}
@@ -260,8 +260,8 @@ class TestHyperTransformer(TestCase):
         next_transformer = ht._get_next_transformer('a.out', 'categorical', None)
 
         # Assert
-        assert isinstance(next_transformer, CategoricalTransformer)
-        assert next_transformer.fuzzy is True
+        assert isinstance(next_transformer, FrequencyEncoder)
+        assert next_transformer.add_noise is True
 
     def test__populate_field_data_types(self):
         """Test the ``_populate_field_data_types`` method.
@@ -870,7 +870,7 @@ class TestHyperTransformer(TestCase):
             'b': 'integer'
         }
         ht = HyperTransformer(field_data_types={'a': 'float'})
-        ht._transformers_sequence = [CategoricalTransformer()]
+        ht._transformers_sequence = [FrequencyEncoder()]
         ht._unfit = Mock()
 
         # Run
@@ -890,7 +890,7 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         data_type_transformers = {
-            'categorical': CategoricalTransformer,
+            'categorical': FrequencyEncoder,
             'integer': NumericalTransformer
         }
         ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
@@ -899,7 +899,7 @@ class TestHyperTransformer(TestCase):
         out = ht.get_default_data_type_transformers()
 
         # Assert
-        assert out == {'categorical': CategoricalTransformer, 'integer': NumericalTransformer}
+        assert out == {'categorical': FrequencyEncoder, 'integer': NumericalTransformer}
 
     def test_update_default_data_type_transformers(self):
         """Test the ``update_default_data_type_transformers`` method.
@@ -915,11 +915,11 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         data_type_transformers = {
-            'categorical': CategoricalTransformer,
+            'categorical': FrequencyEncoder,
             'integer': NumericalTransformer
         }
         ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
-        ht._transformers_sequence = [CategoricalTransformer()]
+        ht._transformers_sequence = [FrequencyEncoder()]
         ht._unfit = Mock()
 
         # Run
@@ -927,7 +927,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         assert ht.default_data_type_transformers == {
-            'categorical': CategoricalTransformer,
+            'categorical': FrequencyEncoder,
             'integer': NumericalTransformer,
             'boolean': BooleanTransformer
         }
@@ -948,23 +948,23 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         field_transformers = {
-            'a': CategoricalTransformer,
+            'a': FrequencyEncoder,
             'b': NumericalTransformer
         }
         ht = HyperTransformer(field_transformers=field_transformers)
-        ht._transformers_sequence = [CategoricalTransformer()]
+        ht._transformers_sequence = [FrequencyEncoder()]
         ht._unfit = Mock()
 
         # Run
         ht.set_first_transformers_for_fields({
             'c': BooleanTransformer,
-            'b': CategoricalTransformer
+            'b': FrequencyEncoder
         })
 
         # Assert
         assert ht.field_transformers == {
-            'a': CategoricalTransformer,
-            'b': CategoricalTransformer,
+            'a': FrequencyEncoder,
+            'b': FrequencyEncoder,
             'c': BooleanTransformer
         }
         ht._unfit.assert_called_once()
@@ -1161,7 +1161,7 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ht._transformers_tree = {
             'field1': {
-                'transformer': CategoricalTransformer(),
+                'transformer': FrequencyEncoder(),
                 'outputs': ['field1.out1', 'field1.out2']
             },
             'field1.out1': {
@@ -1172,7 +1172,7 @@ class TestHyperTransformer(TestCase):
                 'transformer': NumericalTransformer(),
                 'outputs': ['field1.out2.value']
             },
-            'field2': {'transformer': CategoricalTransformer(), 'outputs': ['field2.value']}
+            'field2': {'transformer': FrequencyEncoder(), 'outputs': ['field2.value']}
         }
         ht._fitted = True
 
@@ -1182,8 +1182,8 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert tree_yaml == (
             'field1:\n  outputs:\n  - field1.out1\n  - field1.out2\n  '
-            'transformer: CategoricalTransformer\nfield1.out1:\n  outputs:\n  - '
+            'transformer: FrequencyEncoder\nfield1.out1:\n  outputs:\n  - '
             'field1.out1.value\n  transformer: NumericalTransformer\nfield1.out2:\n  '
             'outputs:\n  - field1.out2.value\n  transformer: NumericalTransformer\nfield2:\n  '
-            'outputs:\n  - field2.value\n  transformer: CategoricalTransformer\n'
+            'outputs:\n  - field2.value\n  transformer: FrequencyEncoder\n'
         )
