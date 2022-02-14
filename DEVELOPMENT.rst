@@ -169,11 +169,11 @@ Since the ``country_code`` may or may not be present, we can overwrite the
 
     def get_next_transformers(self):
         next_transformers = {
-            'country_code': 'CategoricalTransformer',
-            'area_code': 'CategoricalTransformer'
+            'country_code': 'FrequencyEncoder',
+            'area_code': 'FrequencyEncoder'
         }
         if self.has_country_code:
-            next_transformers['country_code'] = 'CategoricalTransformer'
+            next_transformers['country_code'] = 'FrequencyEncoder'
         
         return self._add_prefix(next_transformers)
 
@@ -230,11 +230,11 @@ handles that for us. Let's view the complete class below.
 
         def get_next_transformers(self):
             next_transformers = {
-                'country_code': 'CategoricalTransformer',
-                'area_code': 'CategoricalTransformer'
+                'country_code': 'FrequencyEncoder',
+                'area_code': 'FrequencyEncoder'
             }
             if self.has_country_code:
-                next_transformers['country_code'] = 'CategoricalTransformer'
+                next_transformers['country_code'] = 'FrequencyEncoder'
 
             return self._add_prefix(next_transformers)
         
