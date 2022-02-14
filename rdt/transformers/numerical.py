@@ -36,9 +36,10 @@ class FloatFormatter(BaseTransformer):
         learn_rounding_scheme (bool):
             Whether or not to learn what place to round to based on the data seen during ``fit``.
             If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
+            Defaults to ``False``.
         enforce_min_max_values (bool):
             Whether or not to clip the data returned by ``reverse_transform`` to the min and
-            max values seen during ``fit``.
+            max values seen during ``fit``. Defaults to ``False``.
     """
 
     INPUT_TYPE = 'numerical'
@@ -113,7 +114,7 @@ class FloatFormatter(BaseTransformer):
         """Fit the transformer to the data.
 
         Args:
-            data (pandas.DataFrame or pandas.Series):
+            data (pandas.Series):
                 Data to fit.
         """
         self._dtype = data.dtype
@@ -205,9 +206,10 @@ class GaussianNormalizer(FloatFormatter):
         learn_rounding_scheme (bool):
             Whether or not to learn what place to round to based on the data seen during ``fit``.
             If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
+            Defaults to ``False``.
         enforce_min_max_values (bool):
             Whether or not to clip the data returned by ``reverse_transform`` to the min and
-            max values seen during ``fit``.
+            max values seen during ``fit``. Defaults to ``False``.
         distribution (copulas.univariate.Univariate or str):
             Copulas univariate distribution to use. Defaults to ``parametric``. To choose from:
 
@@ -400,9 +402,10 @@ class ClusterBasedNormalizer(FloatFormatter):
         learn_rounding_scheme (bool):
             Whether or not to learn what place to round to based on the data seen during ``fit``.
             If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
+            Defaults to ``False``.
         enforce_min_max_values (bool):
             Whether or not to clip the data returned by ``reverse_transform`` to the min and
-            max values seen during ``fit``.
+            max values seen during ``fit``. Defaults to ``False``.
         max_clusters (int):
             The maximum number of mixture components. Depending on the data, the model may select
             fewer components (based on the ``weight_threshold``).
@@ -429,7 +432,7 @@ class ClusterBasedNormalizer(FloatFormatter):
     valid_component_indicator = None
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
-                 learn_rounding_scheme=None, enforce_min_max_values=False, max_clusters=10,
+                 learn_rounding_scheme=False, enforce_min_max_values=False, max_clusters=10,
                  weight_threshold=0.005):
         super().__init__(
             missing_value_replacement=missing_value_replacement,

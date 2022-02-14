@@ -496,16 +496,18 @@ class TestFloatFormatter(TestCase):
 
         # Run
         transformer = FloatFormatter(missing_value_replacement=None)
+        transformer.learn_rounding_scheme = False
         transformer._rounding_digits = None
         result = transformer._reverse_transform(data)
 
         # Assert
         np.testing.assert_array_equal(result, data)
 
-    def test__reverse_transform_rounding_none_integer(self):
-        """Test ``_reverse_transform`` in integers when ``_rounding_digits`` is ``None``.
+    def test__reverse_transform_rounding_none_dtype_int(self):
+        """Test ``_reverse_transform`` with ``_dtype`` as ``np.int64`` and no rounding.
 
-        The data should be rounded to 0 decimals and returned as integer values.
+        The data should be rounded to 0 decimals and returned as integer values if the ``_dtype``
+        is ``np.int64`` even if ``_rounding_digits`` is ``None``.
 
         Input:
         - Array of multiple float values with decimals.
@@ -551,6 +553,7 @@ class TestFloatFormatter(TestCase):
         null_transformer = Mock()
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
+        transformer.learn_rounding_scheme = False
         transformer._rounding_digits = None
         transformer._dtype = float
         result = transformer._reverse_transform(data)
@@ -584,6 +587,7 @@ class TestFloatFormatter(TestCase):
         null_transformer = Mock()
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
+        transformer.learn_rounding_digits = False
         transformer._rounding_digits = None
         transformer._dtype = int
         result = transformer._reverse_transform(data)
@@ -592,7 +596,7 @@ class TestFloatFormatter(TestCase):
         expected = np.array([0., 1., np.nan, 7.])
         np.testing.assert_array_equal(result, expected)
 
-    def test__reverse_transform_rounding_positive(self):
+    def test__reverse_transform_rounding_small_numbers(self):
         """Test ``_reverse_transform`` when ``_rounding_digits`` is positive.
 
         The data should round to the maximum number of decimal places
@@ -617,7 +621,7 @@ class TestFloatFormatter(TestCase):
         expected_data = np.array([1.11, 2.22, 3.33, 4.44, 5.56])
         np.testing.assert_array_equal(result, expected_data)
 
-    def test__reverse_transform_rounding_negative_type_int(self):
+    def test__reverse_transform_rounding_big_numbers_type_int(self):
         """Test ``_reverse_transform`` when ``_rounding_digits`` is negative.
 
         The data should round to the number set in the ``_rounding_digits``
@@ -672,7 +676,7 @@ class TestFloatFormatter(TestCase):
         np.testing.assert_array_equal(result, expected_data)
         assert result.dtype == float
 
-    def test__reverse_transform_rounding_zero(self):
+    def test__reverse_transform_rounding_zero_decimal_places(self):
         """Test ``_reverse_transform`` when ``_rounding_digits`` is 0.
 
         The data should round to the number set in the ``_rounding_digits``
@@ -682,7 +686,7 @@ class TestFloatFormatter(TestCase):
         - Array with with larger numbers
 
         Output:
-        - Same array rounded to the provided number of 0s
+        - Same array rounded to the 0s place
         """
         # Setup
         data = np.array([2000.554, 120.2, 3101, 4010])
