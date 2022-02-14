@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_score
 
 from rdt import HyperTransformer
-from rdt.transformers import NumericalTransformer, get_transformers_by_type
+from rdt.transformers import FloatFormatter, get_transformers_by_type
 from tests.quality.utils import download_single_table
 
 R2_THRESHOLD = 0.2
@@ -86,7 +86,7 @@ def get_transformer_regression_scores(data, data_type, dataset_name, transformer
 
     for column in columns_to_predict:
         target = data[column].to_frame()
-        numerical_transformer = NumericalTransformer(model_missing_values=False)
+        numerical_transformer = FloatFormatter(model_missing_values=False)
         target = numerical_transformer.fit_transform(target, column)
         target = format_array(target)
         for transformer in transformers:
