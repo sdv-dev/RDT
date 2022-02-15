@@ -137,7 +137,7 @@ and includes a few housekeeping improvements.
 ## 0.5.2 - 2021-08-16
 
 This release fixes a couple of bugs introduced by the previous release regarding the
-`OneHotEncodingTransformer` and the `BooleanTransformer`.
+`OneHotEncodingTransformer` and the `BinaryEncoder`.
 
 ### Issues closed
 

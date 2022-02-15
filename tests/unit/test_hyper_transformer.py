@@ -8,7 +8,7 @@ import pytest
 from rdt import HyperTransformer
 from rdt.errors import NotFittedError
 from rdt.transformers import (
-    BooleanTransformer, FloatFormatter, FrequencyEncoder, GaussianNormalizer, OneHotEncoder,
+    BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer, OneHotEncoder,
     UnixTimestampEncoder)
 
 
@@ -79,7 +79,7 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
-        ht._transformers_sequence = [BooleanTransformer(), FloatFormatter()]
+        ht._transformers_sequence = [BinaryEncoder(), FloatFormatter()]
         ht._fitted = True
 
         # Run
@@ -107,7 +107,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         ht = HyperTransformer()
         ht.field_transformers = {
-            'a': BooleanTransformer,
+            'a': BinaryEncoder,
             'b': UnixTimestampEncoder,
             ('c', 'd'): UnixTimestampEncoder,
             'e': FloatFormatter
@@ -923,13 +923,13 @@ class TestHyperTransformer(TestCase):
         ht._unfit = Mock()
 
         # Run
-        ht.update_default_data_type_transformers({'boolean': BooleanTransformer})
+        ht.update_default_data_type_transformers({'boolean': BinaryEncoder})
 
         # Assert
         assert ht.default_data_type_transformers == {
             'categorical': FrequencyEncoder,
             'integer': FloatFormatter,
-            'boolean': BooleanTransformer
+            'boolean': BinaryEncoder
         }
         ht._unfit.assert_called_once()
 
@@ -957,7 +957,7 @@ class TestHyperTransformer(TestCase):
 
         # Run
         ht.set_first_transformers_for_fields({
-            'c': BooleanTransformer,
+            'c': BinaryEncoder,
             'b': FrequencyEncoder
         })
 
@@ -965,7 +965,7 @@ class TestHyperTransformer(TestCase):
         assert ht.field_transformers == {
             'a': FrequencyEncoder,
             'b': FrequencyEncoder,
-            'c': BooleanTransformer
+            'c': BinaryEncoder
         }
         ht._unfit.assert_called_once()
 

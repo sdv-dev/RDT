@@ -1,15 +1,15 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers import BooleanTransformer
+from rdt.transformers import BinaryEncoder
 
 
-class TestBooleanTransformer:
+class TestBinaryEncoder:
 
     def test_boolean_some_nans(self):
-        """Test BooleanTransformer on input with some nan values.
+        """Test BinaryEncoder on input with some nan values.
 
-        Ensure that the BooleanTransformer can fit, transform, and reverse
+        Ensure that the BinaryEncoder can fit, transform, and reverse
         transform on boolean data with Nones. Expect that the reverse
         transformed data is the same as the input.
 
@@ -21,7 +21,7 @@ class TestBooleanTransformer:
         # Setup
         data = pd.DataFrame([True, False, None, False], columns=['bool'])
         column = 'bool'
-        transformer = BooleanTransformer()
+        transformer = BinaryEncoder()
 
         # Run
         transformer.fit(data, column)
@@ -32,9 +32,9 @@ class TestBooleanTransformer:
         pd.testing.assert_frame_equal(reverse, data)
 
     def test_boolean_all_nans(self):
-        """Test BooleanTransformer on input with all nan values.
+        """Test BinaryEncoder on input with all nan values.
 
-        Ensure that the BooleanTransformer can fit, transform, and reverse
+        Ensure that the BinaryEncoder can fit, transform, and reverse
         transform on boolean data with all Nones. Expect that the reverse
         transformed data is the same as the input.
 
@@ -46,7 +46,7 @@ class TestBooleanTransformer:
         # Setup
         data = pd.DataFrame([None, None, None, None], columns=['bool'])
         column = 'bool'
-        transformer = BooleanTransformer()
+        transformer = BinaryEncoder()
 
         # Run
         transformer.fit(data, column)
@@ -57,9 +57,9 @@ class TestBooleanTransformer:
         pd.testing.assert_frame_equal(reverse, data)
 
     def test_boolean_input_unchanged(self):
-        """Test BooleanTransformer on input with some nan values.
+        """Test BinaryEncoder on input with some nan values.
 
-        Ensure that the BooleanTransformer can fit, transform, and reverse
+        Ensure that the BinaryEncoder can fit, transform, and reverse
         transform on boolean data with all Nones. Expect that the intermediate
         transformed data is unchanged.
 
@@ -73,7 +73,7 @@ class TestBooleanTransformer:
         # Setup
         data = pd.DataFrame([True, False, None, False], columns=['bool'])
         column = 'bool'
-        transformer = BooleanTransformer()
+        transformer = BinaryEncoder()
 
         # Run
         transformer.fit(data, column)
