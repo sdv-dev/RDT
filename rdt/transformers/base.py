@@ -121,7 +121,7 @@ class BaseTransformer:
             list:
                 Names of columns created during ``transform``.
         """
-        return [f'{self.column_prefix}.{output}' for output in self.OUTPUT_TYPES]
+        return list(self.get_output_types())
 
     def _store_columns(self, columns, data):
         if isinstance(columns, tuple) and columns not in data:
