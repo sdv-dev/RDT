@@ -4,16 +4,16 @@ from unittest.mock import Mock
 import numpy as np
 import pandas as pd
 
-from rdt.transformers import BooleanTransformer
+from rdt.transformers import BinaryEncoder
 from rdt.transformers.null import NullTransformer
 
 
-class TestBooleanTransformer(TestCase):
+class TestBinaryEncoder(TestCase):
 
     def test___init__(self):
         """Test default instance"""
         # Run
-        transformer = BooleanTransformer()
+        transformer = BinaryEncoder()
 
         # Asserts
         error_message = 'Unexpected missing_value_replacement'
@@ -32,7 +32,7 @@ class TestBooleanTransformer(TestCase):
         }
 
         Setup:
-            - initialize a ``BooleanTransformer`` transformer which:
+            - initialize a ``BinaryEncoder`` transformer which:
                 - sets ``self.null_transformer`` to a ``NullTransformer`` where
                 ``self._model_missing_values`` is True.
                 - sets ``self.column_prefix`` to a string.
@@ -42,7 +42,7 @@ class TestBooleanTransformer(TestCase):
             added to the beginning of the keys.
         """
         # Setup
-        transformer = BooleanTransformer()
+        transformer = BinaryEncoder()
         transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
         transformer.null_transformer._model_missing_values = True
         transformer.column_prefix = 'abc'
@@ -63,7 +63,7 @@ class TestBooleanTransformer(TestCase):
         data = pd.Series([False, True, True, False, True])
 
         # Run
-        transformer = BooleanTransformer(missing_value_replacement=None)
+        transformer = BinaryEncoder(missing_value_replacement=None)
         transformer._fit(data)
 
         # Asserts
@@ -76,7 +76,7 @@ class TestBooleanTransformer(TestCase):
         data = pd.Series([False, True, True, False, True])
 
         # Run
-        transformer = BooleanTransformer(missing_value_replacement=0)
+        transformer = BinaryEncoder(missing_value_replacement=0)
         transformer._fit(data)
 
         # Asserts
@@ -89,7 +89,7 @@ class TestBooleanTransformer(TestCase):
         data = pd.Series([False, True, True, False, True])
 
         # Run
-        transformer = BooleanTransformer(missing_value_replacement=0)
+        transformer = BinaryEncoder(missing_value_replacement=0)
         transformer._fit(data)
 
         # Asserts
@@ -104,7 +104,7 @@ class TestBooleanTransformer(TestCase):
         # Run
         transformer = Mock()
 
-        BooleanTransformer._transform(transformer, data)
+        BinaryEncoder._transform(transformer, data)
 
         # Asserts
         expect_call_count = 1
@@ -125,7 +125,7 @@ class TestBooleanTransformer(TestCase):
         # Run
         transformer = Mock()
 
-        BooleanTransformer._transform(transformer, data)
+        BinaryEncoder._transform(transformer, data)
 
         # Asserts
         expect_call_count = 1
@@ -147,7 +147,7 @@ class TestBooleanTransformer(TestCase):
         transformer = Mock()
         transformer.missing_value_replacement = None
 
-        result = BooleanTransformer._reverse_transform(transformer, data)
+        result = BinaryEncoder._reverse_transform(transformer, data)
 
         # Asserts
         expect = np.array([False, True, False, True, False])
@@ -172,7 +172,7 @@ class TestBooleanTransformer(TestCase):
         transformer.missing_value_replacement = 0
         transformer.null_transformer.reverse_transform.return_value = transformed_data
 
-        result = BooleanTransformer._reverse_transform(transformer, data)
+        result = BinaryEncoder._reverse_transform(transformer, data)
 
         # Asserts
         expect = np.array([False, True, False, True, False])
@@ -196,7 +196,7 @@ class TestBooleanTransformer(TestCase):
         transformer = Mock()
         transformer.missing_value_replacement = None
 
-        result = BooleanTransformer._reverse_transform(transformer, data)
+        result = BinaryEncoder._reverse_transform(transformer, data)
 
         # Asserts
         expected = np.array([True, False, True])
@@ -213,7 +213,7 @@ class TestBooleanTransformer(TestCase):
         transformer = Mock()
         transformer.missing_value_replacement = None
 
-        result = BooleanTransformer._reverse_transform(transformer, data)
+        result = BinaryEncoder._reverse_transform(transformer, data)
 
         # Asserts
         expected = np.array([True, False, True])
@@ -238,7 +238,7 @@ class TestBooleanTransformer(TestCase):
         transformer.missing_value_replacement = None
 
         # Run
-        result = BooleanTransformer._reverse_transform(transformer, data)
+        result = BinaryEncoder._reverse_transform(transformer, data)
 
         # Asserts
         expected = np.array([True, False, True])
@@ -264,7 +264,7 @@ class TestBooleanTransformer(TestCase):
         transformer.missing_value_replacement = None
 
         # Run
-        result = BooleanTransformer._reverse_transform(transformer, data)
+        result = BinaryEncoder._reverse_transform(transformer, data)
 
         # Asserts
         expected = np.array([True, False, True])
