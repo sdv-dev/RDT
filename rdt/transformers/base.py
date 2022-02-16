@@ -67,7 +67,7 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to the produced data types.
         """
-        return self._add_prefix(self.OUTPUT_TYPES) if self.OUTPUT_TYPES else dict()
+        return self._add_prefix(self.OUTPUT_TYPES) if self.OUTPUT_TYPES else {}
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.

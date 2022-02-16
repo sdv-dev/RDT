@@ -148,6 +148,21 @@ class TestBaseTransformer:
         }
         assert output == expected
 
+    def test_get_output_types_none(self):
+        """Test the ``get_output_types`` method.
+
+        Validate that a dict is returned even if ``OUTPUT_TYPES`` attribute is None.
+
+        Output:
+            - An empty ``dict``.
+        """
+        # Run
+        output = BaseTransformer().get_output_types()
+
+        # Assert
+        expected = {}
+        assert output == expected
+
     def test_get_input_columns(self):
         """Test the ``get_input_columns method.
 
