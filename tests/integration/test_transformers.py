@@ -15,7 +15,7 @@ PRIMARY_DATA_TYPES = ['boolean', 'categorical', 'datetime', 'numerical']
 
 # Additional arguments for transformers
 TRANSFORMER_ARGS = {
-    'BooleanTransformer': {
+    'BinaryEncoder': {
         'missing_value_replacement': -1,
         'model_missing_values': True
     },

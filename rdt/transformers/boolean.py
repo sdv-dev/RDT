@@ -7,7 +7,7 @@ from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
 
-class BooleanTransformer(BaseTransformer):
+class BinaryEncoder(BaseTransformer):
     """Transformer for boolean data.
 
     This transformer replaces boolean values with their integer representation

@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.boolean import BooleanTransformer
+from rdt.transformers.boolean import BinaryEncoder
 from rdt.transformers.categorical import FrequencyEncoder
 from rdt.transformers.datetime import UnixTimestampEncoder
 from rdt.transformers.null import NullTransformer
@@ -53,7 +53,7 @@ DEFAULT_TRANSFORMERS = {
     'integer': FloatFormatter,
     'float': FloatFormatter,
     'categorical': FrequencyEncoder(add_noise=True),
-    'boolean': BooleanTransformer,
+    'boolean': BinaryEncoder,
     'datetime': UnixTimestampEncoder,
 }
 
