@@ -67,7 +67,7 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to the produced data types.
         """
-        return self._add_prefix(self.OUTPUT_TYPES)
+        return self._add_prefix(self.OUTPUT_TYPES) if self.OUTPUT_TYPES else dict()
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -147,9 +147,9 @@ class BaseTransformer:
         if isinstance(columns_data, (pd.DataFrame, pd.Series)):
             columns_data.index = data.index
 
-        if len(columns_data.shape) == 1:
+        if columns_data is not None and len(columns_data.shape) == 1:
             data[columns[0]] = columns_data
-        else:
+        elif columns_data is not None:
             data[columns] = columns_data
 
     def _build_output_columns(self, data):
