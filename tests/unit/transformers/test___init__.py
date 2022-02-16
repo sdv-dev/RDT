@@ -1,4 +1,4 @@
-from rdt.transformers import BooleanTransformer, get_transformer_class, get_transformer_instance
+from rdt.transformers import BinaryEncoder, get_transformer_class, get_transformer_instance
 
 
 def test_get_transformer_class_transformer_name():
@@ -13,13 +13,13 @@ def test_get_transformer_class_transformer_name():
         - the class corresponding to the transformer name.
     """
     # Setup
-    transformer_name = 'BooleanTransformer'
+    transformer_name = 'BinaryEncoder'
 
     # Run
     returned = get_transformer_class(transformer_name)
 
     # Assert
-    assert returned == BooleanTransformer
+    assert returned == BinaryEncoder
 
 
 def test_get_transformer_class_transformer_path():
@@ -34,35 +34,35 @@ def test_get_transformer_class_transformer_path():
         - the class corresponding to the transformer path.
     """
     # Setup
-    transformer_path = 'rdt.transformers.BooleanTransformer'
+    transformer_path = 'rdt.transformers.BinaryEncoder'
 
     # Run
     returned = get_transformer_class(transformer_path)
 
     # Assert
-    assert returned == BooleanTransformer
+    assert returned == BinaryEncoder
 
 
 def test_get_transformer_instance_instance():
-    transformer = BooleanTransformer(missing_value_replacement=None)
+    transformer = BinaryEncoder(missing_value_replacement=None)
 
     returned = get_transformer_instance(transformer)
 
-    assert isinstance(returned, BooleanTransformer)
+    assert isinstance(returned, BinaryEncoder)
     assert returned.missing_value_replacement is None
 
 
 def test_get_transformer_instance_str():
-    transformer = 'BooleanTransformer'
+    transformer = 'BinaryEncoder'
 
     returned = get_transformer_instance(transformer)
 
-    assert isinstance(returned, BooleanTransformer)
+    assert isinstance(returned, BinaryEncoder)
 
 
 def test_get_transformer_instance_class():
-    transformer = BooleanTransformer
+    transformer = BinaryEncoder
 
     returned = get_transformer_instance(transformer)
 
-    assert isinstance(returned, BooleanTransformer)
+    assert isinstance(returned, BinaryEncoder)

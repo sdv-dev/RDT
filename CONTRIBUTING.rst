@@ -203,7 +203,7 @@ check and whether or not it passed.
 
    In [1]: from tests.contributing import validate_transformer_code_style
 
-   In [2]: valid = validate_transformer_code_style('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+   In [2]: valid = validate_transformer_code_style('rdt.transformers.BinaryEncoder') # Replace BinaryEncoder with your transformer
    Validating source file C:\Datacebo\RDT\rdt\transformers\boolean.py
 
    SUCCESS: The code style is correct.
@@ -245,24 +245,24 @@ prints a table summarizing the test coverage and provides a link to the full cov
 
    In [1]: from tests.contributing import validate_transformer_unit_tests
 
-   In [2]: test_coverage = validate_transformer_unit_tests('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+   In [2]: test_coverage = validate_transformer_unit_tests('rdt.transformers.BinaryEncoder') # Replace BinaryEncoder with your transformer
    Validating source file C:\Datacebo\RDT\rdt\transformers\boolean.py
 
    ================================================= test session starts =================================================
    collected 12 items
 
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test___init__ PASSED                            [  8%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__fit_array PASSED                          [ 16%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__fit_nan_ignore PASSED                     [ 25%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__fit_nan_not_ignore PASSED                 [ 33%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_2d_ndarray PASSED       [ 41%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_float_values PASSED     [ 50%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_float_values_out_of_range PASSED [ 58%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_nan_ignore PASSED       [ 66%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_nan_not_ignore PASSED   [ 75%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_not_null_values PASSED  [ 83%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__transform_array PASSED                    [ 91%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__transform_series PASSED                   [100%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test___init__ PASSED                            [  8%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__fit_array PASSED                          [ 16%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__fit_nan_ignore PASSED                     [ 25%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__fit_nan_not_ignore PASSED                 [ 33%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_2d_ndarray PASSED       [ 41%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_float_values PASSED     [ 50%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_float_values_out_of_range PASSED [ 58%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_nan_ignore PASSED       [ 66%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_nan_not_ignore PASSED   [ 75%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_not_null_values PASSED  [ 83%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__transform_array PASSED                    [ 91%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__transform_series PASSED                   [100%]
 
    ============================================ 12 passed, 1 warning in 0.08s ============================================
 
@@ -318,8 +318,8 @@ checks. It also prints a table describing each check and whether or not it passe
 
    In [1]: from tests.contributing import validate_transformer_integration
 
-   In [2]: valid = validate_transformer_integration('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
-   Validating Integration Tests for transformer BooleanTransformer
+   In [2]: valid = validate_transformer_integration('rdt.transformers.BinaryEncoder') # Replace BinaryEncoder with your transformer
+   Validating Integration Tests for transformer BinaryEncoder
 
    SUCCESS: The integration tests were successful.
 
@@ -488,7 +488,7 @@ above. It also prints a table summarizing the results of all these checks.
 
    In [1]: from tests.contributing import validate_pull_request
 
-   In [2]: valid = validate_pull_request('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+   In [2]: valid = validate_pull_request('rdt.transformers.BinaryEncoder') # Replace BinaryEncoder with your transformer
    ...................
 
    Check              Correct    Details
