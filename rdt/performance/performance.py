@@ -11,7 +11,7 @@ DATASET_SIZES = [1000, 10000, 100000]
 
 # Additional arguments for transformers
 TRANSFORMER_ARGS = {
-    'BooleanTransformer': {
+    'BinaryEncoder': {
         'missing_value_replacement': -1,
         'model_missing_values': True
     },

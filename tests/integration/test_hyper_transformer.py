@@ -8,7 +8,7 @@ import pandas as pd
 
 from rdt import HyperTransformer
 from rdt.transformers import (
-    DEFAULT_TRANSFORMERS, BaseTransformer, BooleanTransformer, FloatFormatter, FrequencyEncoder,
+    DEFAULT_TRANSFORMERS, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
     OneHotEncoder, UnixTimestampEncoder)
 
 
@@ -177,7 +177,7 @@ def test_hypertransformer_default_inputs():
     assert ht._transformers_tree['float']['outputs'] == ['float.value']
     assert isinstance(ht._transformers_tree['categorical']['transformer'], FrequencyEncoder)
     assert ht._transformers_tree['categorical']['outputs'] == ['categorical.value']
-    assert isinstance(ht._transformers_tree['bool']['transformer'], BooleanTransformer)
+    assert isinstance(ht._transformers_tree['bool']['transformer'], BinaryEncoder)
     assert ht._transformers_tree['bool']['outputs'] == ['bool.value']
     assert isinstance(ht._transformers_tree['datetime']['transformer'], UnixTimestampEncoder)
     assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value']
@@ -210,7 +210,7 @@ def test_hypertransformer_field_transformers():
         'integer': FloatFormatter,
         'float': FloatFormatter,
         'categorical': FrequencyEncoder,
-        'bool': BooleanTransformer,
+        'bool': BinaryEncoder,
         'datetime': DummyTransformerNotMLReady,
         'datetime.value': FrequencyEncoder,
         'names': FrequencyEncoder
