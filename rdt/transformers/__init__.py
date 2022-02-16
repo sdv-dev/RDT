@@ -40,12 +40,10 @@ def _import_addons():
 
 _import_addons()
 
-TRANSFORMERS = {
-    transformer.__name__: transformer
-    for transformer in BaseTransformer.get_subclasses()
-}
+TRANSFORMERS = defaultdict(list)
+for transformer in BaseTransformer.get_subclasses():
+    TRANSFORMERS[__name__].append(transformer)
 
-globals().update(TRANSFORMERS)
 __all__.extend(TRANSFORMERS.keys())
 
 DEFAULT_TRANSFORMERS = {
@@ -62,7 +60,7 @@ def get_transformer_class(transformer):
     """Return a ``transformer`` class from a ``str``.
 
     Args:
-        transforemr (str):
+        transformer (str):
             Python path or transformer's name.
 
     Returns:
@@ -70,10 +68,16 @@ def get_transformer_class(transformer):
             BaseTransformer subclass class object.
     """
     if len(transformer.split('.')) == 1:
-        return TRANSFORMERS[transformer]
+        if len(TRANSFORMERS[transformer]) == 1:
+            return TRANSFORMERS[transformer][0]
+        if len(TRANSFORMERS[transformer]) > 1:
+            raise ValueError(
+                f'There are multiple transformers named {transformer}. Please '
+                f'specify which one you want: {TRANSFORMERS[transformer]}.'
+            )
 
     package, name = transformer.rsplit('.', 1)
-    return TRANSFORMERS.get(name, getattr(importlib.import_module(package), name))
+    return getattr(importlib.import_module(package), name)
 
 
 def get_transformer_instance(transformer):
@@ -83,9 +87,8 @@ def get_transformer_instance(transformer):
     name, a transformer instance or a transformer type.
 
     Args:
-        transformer (dict or BaseTransformer):
-            ``dict`` with the transformer specification or instance of a BaseTransformer
-            subclass.
+        transformer (str or BaseTransformer):
+            string with the transformer name or instance of a BaseTransformer subclass.
 
     Returns:
         BaseTransformer:
@@ -95,7 +98,7 @@ def get_transformer_instance(transformer):
         return deepcopy(transformer)
 
     if isinstance(transformer, str):
-        transformer = TRANSFORMERS[transformer]
+        transformer = get_transformer_class(transformer)
 
     return transformer()
 
