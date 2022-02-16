@@ -650,6 +650,36 @@ class TestBaseTransformer:
         }, index=[2, 0, 1])
         pd.testing.assert_frame_equal(data, expected)
 
+    def test__set_columns_data_none(self):
+        """Test the ``_set_columns_data`` method.
+
+        The method should not change the ``data``.
+
+        Input:
+            - data will be a DataFrame with a non-sequential index.
+            - columns_data will be a ``None``.
+
+        Expected behavior:
+            - Data should not be changed.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        }, index=[2, 0, 1])
+        columns = ['c']
+        columns_data = None
+
+        # Run
+        BaseTransformer._set_columns_data(data, columns_data, columns)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+        }, index=[2, 0, 1])
+        pd.testing.assert_frame_equal(data, expected)
+
     def test__build_output_columns(self):
         """Test the ``_build_output_columns`` method.
 
