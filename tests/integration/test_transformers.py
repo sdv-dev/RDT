@@ -1,3 +1,4 @@
+import inspect
 from collections import defaultdict
 
 import numpy as np
@@ -226,6 +227,12 @@ def _validate_hypertransformer_reverse_transformed_data(transformer, reversed_da
     assert reversed_data.dtype.kind in DATA_TYPE_TO_DTYPES[expected_data_type], message
 
 
+def _transformer_name(transformer):
+    if inspect.isclass(transformer):
+        return transformer.__module__ + '.' + transformer.__name__
+    raise ValueError("IDK how to handle this")
+
+
 def _test_transformer_with_hypertransformer(transformer_class, input_data, steps):
     """Test the given transformer in the hypertransformer.
 
@@ -248,7 +255,7 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
         })
     else:
         hypertransformer = HyperTransformer(field_transformers={
-            TEST_COL: transformer_class.__name__,
+            TEST_COL: _transformer_name(transformer_class),
         })
 
     hypertransformer.fit(input_data)

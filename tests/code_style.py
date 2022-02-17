@@ -189,16 +189,15 @@ def validate_test_names(transformer):
         assert len(valid_test_functions) > count, fail_message
 
 
-@pytest.mark.parametrize('transformers', TRANSFORMERS.values(), ids=TRANSFORMERS.keys())  # noqa
-def test_transformer_code_style(transformers):
+@pytest.mark.parametrize('transformer', TRANSFORMERS.values(), ids=TRANSFORMERS.keys())  # noqa
+def test_transformer_code_style(transformer):
     """Validate a transformer."""
-    for transformer in transformers:
-        if not inspect.isclass(transformer):
-            transformer = get_transformer_class(transformer)
+    if not inspect.isclass(transformer):
+        transformer = get_transformer_class(transformer)
 
-        validate_transformer_subclass(transformer)
-        validate_transformer_module(transformer)
-        validate_test_location(transformer)
-        validate_test_names(transformer)
-        validate_transformer_addon(transformer)
-        validate_transformer_importable_from_parent_module(transformer)
+    validate_transformer_subclass(transformer)
+    validate_transformer_module(transformer)
+    validate_test_location(transformer)
+    validate_test_names(transformer)
+    validate_transformer_addon(transformer)
+    validate_transformer_importable_from_parent_module(transformer)

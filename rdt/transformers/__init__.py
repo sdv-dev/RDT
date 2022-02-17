@@ -1,6 +1,7 @@
 """Transformers module."""
 
 import importlib
+import inspect
 import json
 import sys
 from collections import defaultdict
@@ -10,14 +11,24 @@ from pathlib import Path
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
-from rdt.transformers.categorical import FrequencyEncoder
-from rdt.transformers.datetime import UnixTimestampEncoder
+from rdt.transformers.categorical import FrequencyEncoder, LabelEncoder, OneHotEncoder
+from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.numerical import FloatFormatter
+from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
+
+# from rdt.transformers.addons.identity.identity import IdentityTransformer
+
 
 __all__ = [
     'BaseTransformer',
     'NullTransformer',
+    'LabelEncoder',
+    'GaussianNormalizer',
+    # 'IdentityTransformer',
+    'OptimizedTimestampEncoder',
+    'ClusterBasedNormalizer',
+    'FrequencyEncoder',
+    'OneHotEncoder',
     'get_transformer_class',
     'get_transformer_instance',
     'get_transformers_by_type',
@@ -35,16 +46,33 @@ def _import_addons():
             for transformer in transformers:
                 module = transformer.rsplit('.', 1)[0]
                 if module not in sys.modules:
-                    importlib.import_module(module)
+                    module = importlib.import_module(module)
+                    for name, obj in inspect.getmembers(module):
+                        # Inject the addon transformer into this scope
+                        if inspect.isclass(obj) and issubclass(
+                                obj, BaseTransformer) and obj is not BaseTransformer:
+                            globals()[name] = obj
+                            __all__.append(name)
 
 
 _import_addons()
 
-TRANSFORMERS = defaultdict(list)
-for transformer in BaseTransformer.get_subclasses():
-    TRANSFORMERS[__name__].append(transformer)
 
-__all__.extend(TRANSFORMERS.keys())
+def _transformer_name(transformer):
+    if inspect.isclass(transformer):
+        return transformer.__module__ + '.' + transformer.__name__
+    raise ValueError("IDK how to handle this")
+
+
+TRANSFORMERS = {
+    _transformer_name(transformer): transformer
+    for transformer in BaseTransformer.get_subclasses()
+}
+
+__all__.extend({
+    transformer.__name__
+    for transformer in BaseTransformer.get_subclasses()
+})
 
 DEFAULT_TRANSFORMERS = {
     'numerical': FloatFormatter,
@@ -61,20 +89,14 @@ def get_transformer_class(transformer):
 
     Args:
         transformer (str):
-            Python path or transformer's name.
+            Python path.
 
     Returns:
         BaseTransformer:
             BaseTransformer subclass class object.
     """
-    if len(transformer.split('.')) == 1:
-        if len(TRANSFORMERS[transformer]) == 1:
-            return TRANSFORMERS[transformer][0]
-        if len(TRANSFORMERS[transformer]) > 1:
-            raise ValueError(
-                f'There are multiple transformers named {transformer}. Please '
-                f'specify which one you want: {TRANSFORMERS[transformer]}.'
-            )
+    if transformer in TRANSFORMERS:
+        return TRANSFORMERS[transformer]
 
     package, name = transformer.rsplit('.', 1)
     return getattr(importlib.import_module(package), name)
@@ -83,12 +105,12 @@ def get_transformer_class(transformer):
 def get_transformer_instance(transformer):
     """Load a new instance of a ``Transformer``.
 
-    The ``transformer`` is expected to be a ``string`` containing  the transformer ``class``
-    name, a transformer instance or a transformer type.
+    The ``transformer`` is expected to be the transformers path as a ``string``,
+    a transformer instance or a transformer type.
 
     Args:
         transformer (str or BaseTransformer):
-            string with the transformer name or instance of a BaseTransformer subclass.
+            String with the transformer path or instance of a BaseTransformer subclass.
 
     Returns:
         BaseTransformer:
@@ -97,10 +119,10 @@ def get_transformer_instance(transformer):
     if isinstance(transformer, BaseTransformer):
         return deepcopy(transformer)
 
-    if isinstance(transformer, str):
-        transformer = get_transformer_class(transformer)
+    if inspect.isclass(transformer) and issubclass(transformer, BaseTransformer):
+        return transformer()
 
-    return transformer()
+    return get_transformer_class(transformer)()
 
 
 @lru_cache()

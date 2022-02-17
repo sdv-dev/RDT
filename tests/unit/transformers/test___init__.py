@@ -1,27 +1,6 @@
 from rdt.transformers import BinaryEncoder, get_transformer_class, get_transformer_instance
 
 
-def test_get_transformer_class_transformer_name():
-    """Test the ``get_transformer_class`` method.
-
-    Validate the method returns the correct class when passed the class name.
-
-    Input:
-        - a string describing the transformer name.
-
-    Output:
-        - the class corresponding to the transformer name.
-    """
-    # Setup
-    transformer_name = 'BinaryEncoder'
-
-    # Run
-    returned = get_transformer_class(transformer_name)
-
-    # Assert
-    assert returned == BinaryEncoder
-
-
 def test_get_transformer_class_transformer_path():
     """Test the ``get_transformer_class`` method.
 
@@ -53,7 +32,7 @@ def test_get_transformer_instance_instance():
 
 
 def test_get_transformer_instance_str():
-    transformer = 'BinaryEncoder'
+    transformer = 'rdt.transformers.BinaryEncoder'
 
     returned = get_transformer_instance(transformer)
 
