@@ -144,12 +144,15 @@ class BaseTransformer:
 
     @staticmethod
     def _set_columns_data(data, columns_data, columns):
+        if columns_data is None:
+            return
+
         if isinstance(columns_data, (pd.DataFrame, pd.Series)):
             columns_data.index = data.index
 
-        if columns_data is not None and len(columns_data.shape) == 1:
+        if len(columns_data.shape) == 1:
             data[columns[0]] = columns_data
-        elif columns_data is not None:
+        else:
             data[columns] = columns_data
 
     def _build_output_columns(self, data):
