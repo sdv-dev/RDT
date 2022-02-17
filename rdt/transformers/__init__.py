@@ -16,19 +16,16 @@ from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEn
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
 
-# from rdt.transformers.addons.identity.identity import IdentityTransformer
-
-
 __all__ = [
     'BaseTransformer',
     'NullTransformer',
     'LabelEncoder',
     'GaussianNormalizer',
-    # 'IdentityTransformer',
     'OptimizedTimestampEncoder',
     'ClusterBasedNormalizer',
     'FrequencyEncoder',
     'OneHotEncoder',
+    'get_transformer_name',
     'get_transformer_class',
     'get_transformer_instance',
     'get_transformers_by_type',
@@ -58,14 +55,28 @@ def _import_addons():
 _import_addons()
 
 
-def _transformer_name(transformer):
+def get_transformer_name(transformer):
+    """Return the path name of the transformer.
+
+    Args:
+        transformer:
+            A transformer class.
+
+    Raises:
+        ValueError:
+            Crashes when the transformer is not passed as a class.
+
+    Returns:
+        string:
+            The path of the transformer.
+    """
     if inspect.isclass(transformer):
         return transformer.__module__ + '.' + transformer.__name__
-    raise ValueError("IDK how to handle this")
+    raise ValueError(f'The transformer {transformer} must be passed as a class.')
 
 
 TRANSFORMERS = {
-    _transformer_name(transformer): transformer
+    get_transformer_name(transformer): transformer
     for transformer in BaseTransformer.get_subclasses()
 }
 
