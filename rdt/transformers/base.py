@@ -52,7 +52,7 @@ class BaseTransformer:
 
     def _add_prefix(self, dictionary):
         if not dictionary:
-            return None
+            return {}
 
         output = {}
         for output_columns, output_type in dictionary.items():
@@ -67,7 +67,7 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to the produced data types.
         """
-        return self._add_prefix(self.OUTPUT_TYPES) if self.OUTPUT_TYPES else {}
+        return self._add_prefix(self.OUTPUT_TYPES)
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
