@@ -18,13 +18,16 @@ from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, G
 
 __all__ = [
     'BaseTransformer',
-    'NullTransformer',
-    'LabelEncoder',
-    'GaussianNormalizer',
-    'OptimizedTimestampEncoder',
+    'BinaryEncoder',
     'ClusterBasedNormalizer',
+    'FloatFormatter',
     'FrequencyEncoder',
+    'GaussianNormalizer',
+    'LabelEncoder',
+    'NullTransformer',
     'OneHotEncoder',
+    'OptimizedTimestampEncoder',
+    'UnixTimestampEncoder',
     'get_transformer_name',
     'get_transformer_class',
     'get_transformer_instance',
@@ -56,7 +59,7 @@ _import_addons()
 
 
 def get_transformer_name(transformer):
-    """Return the path name of the transformer.
+    """Return the fully qualified path of the transformer.
 
     Args:
         transformer:
@@ -72,6 +75,7 @@ def get_transformer_name(transformer):
     """
     if inspect.isclass(transformer):
         return transformer.__module__ + '.' + transformer.__name__
+
     raise ValueError(f'The transformer {transformer} must be passed as a class.')
 
 

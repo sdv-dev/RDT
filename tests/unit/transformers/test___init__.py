@@ -57,7 +57,7 @@ def test_get_transformer_class_transformer_path():
         - the class corresponding to the transformer path.
     """
     # Setup
-    transformer_path = 'rdt.transformers.BinaryEncoder'
+    transformer_path = 'rdt.transformers.boolean.BinaryEncoder'
 
     # Run
     returned = get_transformer_class(transformer_path)
