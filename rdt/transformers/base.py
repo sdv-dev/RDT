@@ -52,7 +52,7 @@ class BaseTransformer:
 
     def _add_prefix(self, dictionary):
         if not dictionary:
-            return None
+            return {}
 
         output = {}
         for output_columns, output_type in dictionary.items():
@@ -121,7 +121,7 @@ class BaseTransformer:
             list:
                 Names of columns created during ``transform``.
         """
-        return [f'{self.column_prefix}.{output}' for output in self.OUTPUT_TYPES]
+        return list(self.get_output_types())
 
     def _store_columns(self, columns, data):
         if isinstance(columns, tuple) and columns not in data:
@@ -144,6 +144,9 @@ class BaseTransformer:
 
     @staticmethod
     def _set_columns_data(data, columns_data, columns):
+        if columns_data is None:
+            return
+
         if isinstance(columns_data, (pd.DataFrame, pd.Series)):
             columns_data.index = data.index
 
