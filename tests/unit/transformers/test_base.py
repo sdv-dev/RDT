@@ -78,7 +78,7 @@ class TestBaseTransformer:
         output = base_transformer._add_prefix(dictionary)
 
         # Assert
-        assert output is None
+        assert output == {}
 
     def test__add_prefix_dictionary(self):
         """Test the ``_add_prefix`` method when passed a dictionary.
