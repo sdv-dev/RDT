@@ -84,10 +84,6 @@ TRANSFORMERS = {
     for transformer in BaseTransformer.get_subclasses()
 }
 
-__all__.extend({
-    transformer.__name__
-    for transformer in BaseTransformer.get_subclasses()
-})
 
 DEFAULT_TRANSFORMERS = {
     'numerical': FloatFormatter,
