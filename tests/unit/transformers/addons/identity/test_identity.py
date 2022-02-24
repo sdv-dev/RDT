@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import numpy as np
 
-from rdt.transformers import IdentityTransformer
+from rdt.transformers.addons.identity.identity import IdentityTransformer
 
 
 class TestIdentityTransformer(TestCase):
