@@ -160,6 +160,7 @@ class HyperTransformer:
 
     def _unfit(self):
         self._transformers_sequence = []
+        self._fitted_fields.clear()
         self._fitted = False
 
     def get_field_data_types(self):
@@ -318,7 +319,7 @@ class HyperTransformer:
             class_name = modified_tree[field]['transformer'].__class__.__name__
             modified_tree[field]['transformer'] = class_name
 
-        return yaml.safe_dump(modified_tree)
+        return yaml.safe_dump(dict(modified_tree))
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None

@@ -1,3 +1,4 @@
+from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
@@ -80,6 +81,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         ht = HyperTransformer()
         ht._transformers_sequence = [BooleanTransformer(), NumericalTransformer()]
+        ht._fitted_fields = {'field1', 'field2'}
         ht._fitted = True
 
         # Run
@@ -88,6 +90,7 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert ht._fitted is False
         assert ht._transformers_sequence == []
+        assert ht._fitted_fields == set()
 
     def test__create_multi_column_fields(self):
         """Test the ``_create_multi_column_fields`` method.
@@ -1159,7 +1162,7 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
-        ht._transformers_tree = {
+        ht._transformers_tree = defaultdict(dict, {
             'field1': {
                 'transformer': CategoricalTransformer(),
                 'outputs': ['field1.out1', 'field1.out2']
@@ -1173,7 +1176,7 @@ class TestHyperTransformer(TestCase):
                 'outputs': ['field1.out2.value']
             },
             'field2': {'transformer': CategoricalTransformer(), 'outputs': ['field2.value']}
-        }
+        })
         ht._fitted = True
 
         # Run
