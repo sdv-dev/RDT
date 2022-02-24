@@ -370,6 +370,10 @@ class HyperTransformer:
                 if self._field_in_data(output_field, data):
                     self._fit_field_transformer(data, output_field, next_transformer)
 
+                else:
+                    if output_name not in self._output_columns:
+                        self._output_columns.append(output_name)
+
         return data
 
     def _validate_all_fields_fitted(self):
@@ -405,34 +409,6 @@ class HyperTransformer:
         self._validate_all_fields_fitted()
         self._fitted = True
 
-        def _get_inputs_outputs(field):
-            # get the mapping from input fields to output fields?
-            if field not in self._transformers_tree:
-                for k in self._transformers_tree.keys():
-                    if isinstance(k, tuple) and k[0] == field:
-                        outputs = self._transformers_tree[k]['outputs']
-                        return k, outputs
-            else:
-                outputs = self._transformers_tree[field]['outputs'][:]
-                return (field,), outputs[:]
-            return [], []
-
-        intermediate_outputs = []
-        for field in self._input_columns:
-            _, outputs = _get_inputs_outputs(field)
-            queue = outputs[:]
-            while queue:
-                output = queue.pop(0)
-                inputs, child_outputs = _get_inputs_outputs(output)
-                intermediate_outputs.extend(inputs)
-                if child_outputs:
-                    queue.extend(child_outputs)
-                    outputs.extend(child_outputs)
-            for x in outputs:
-                if x not in self._output_columns and x not in intermediate_outputs:
-                    self._output_columns.append(x)
-
-
     def transform(self, data):
         """Transform the data.
 
@@ -457,7 +433,6 @@ class HyperTransformer:
             data = transformer.transform(data, drop=False)
 
         transformed_columns = self._subset(self._output_columns, data.columns)
-        print(self._output_columns)
         return data.reindex(columns=unknown_columns + transformed_columns)
 
     def fit_transform(self, data):
