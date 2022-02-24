@@ -370,10 +370,6 @@ class HyperTransformer:
                 if self._field_in_data(output_field, data):
                     self._fit_field_transformer(data, output_field, next_transformer)
 
-            else:
-                if output_name not in self._output_columns:
-                    self._output_columns.append(output_name)
-
         return data
 
     def _validate_all_fields_fitted(self):
@@ -409,6 +405,9 @@ class HyperTransformer:
         self._validate_all_fields_fitted()
         self._fitted = True
 
+        for field in self.field_data_types:
+            self._output_columns.extend(self._transformers_tree[field]['outputs'])
+
     def transform(self, data):
         """Transform the data.
 
@@ -433,7 +432,7 @@ class HyperTransformer:
             data = transformer.transform(data, drop=False)
 
         transformed_columns = self._subset(self._output_columns, data.columns)
-        return data.reindex(columns=unknown_columns + transformed_columns)
+        return data.reindex(columns=transformed_columns + unknown_columns)
 
     def fit_transform(self, data):
         """Fit the transformers to the data and then transform it.
@@ -469,4 +468,4 @@ class HyperTransformer:
 
         reversed_columns = self._subset(self._input_columns, data.columns)
 
-        return data.reindex(columns=unknown_columns + reversed_columns)
+        return data.reindex(columns=reversed_columns + unknown_columns)
