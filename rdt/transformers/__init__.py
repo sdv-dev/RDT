@@ -46,13 +46,7 @@ def _import_addons():
             for transformer in transformers:
                 module = transformer.rsplit('.', 1)[0]
                 if module not in sys.modules:
-                    module = importlib.import_module(module)
-                    for name, obj in inspect.getmembers(module):
-                        # Inject the addon transformer into this scope
-                        if inspect.isclass(obj) and issubclass(
-                                obj, BaseTransformer) and obj is not BaseTransformer:
-                            globals()[name] = obj
-                            __all__.append(name)
+                    importlib.import_module(module)
 
 
 _import_addons()
