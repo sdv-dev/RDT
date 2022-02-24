@@ -6,7 +6,7 @@ import pytest
 
 from rdt import HyperTransformer
 from rdt.performance.datasets import BaseDatasetGenerator
-from rdt.transformers import BaseTransformer
+from rdt.transformers import BaseTransformer, get_transformer_name
 
 DATA_SIZE = 1000
 TEST_COL = 'test_col'
@@ -248,7 +248,7 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
         })
     else:
         hypertransformer = HyperTransformer(field_transformers={
-            TEST_COL: transformer_class.__name__,
+            TEST_COL: get_transformer_name(transformer_class),
         })
 
     hypertransformer.fit(input_data)
