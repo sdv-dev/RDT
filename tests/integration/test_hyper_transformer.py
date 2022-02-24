@@ -233,6 +233,8 @@ def test_hypertransformer_field_transformers():
     expected_transformed = expected_transformed.rename(columns=rename)
     transformed_datetimes = [0.9375, 0.75, 0.3125, 0.3125, 0.3125, 0.75, 0.3125, 0.3125]
     expected_transformed['datetime.value.value'] = transformed_datetimes
+    print(transformed.columns)
+    print(expected_transformed.columns)
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
     expected_reversed = get_input_data()
@@ -369,6 +371,7 @@ def test_with_unfitted_columns():
     new_data = get_input_data()
     new_column = pd.Series([4, 5, 6, 7, 8, 9])
     new_data['z'] = new_column
+    print('columns: ', new_data.columns)
     transformed = ht.transform(new_data)
     reverse = ht.reverse_transform(transformed)
 
