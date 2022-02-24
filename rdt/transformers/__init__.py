@@ -1,6 +1,7 @@
 """Transformers module."""
 
 import importlib
+import inspect
 import json
 import sys
 from collections import defaultdict
@@ -10,14 +11,24 @@ from pathlib import Path
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
-from rdt.transformers.categorical import FrequencyEncoder
-from rdt.transformers.datetime import UnixTimestampEncoder
+from rdt.transformers.categorical import FrequencyEncoder, LabelEncoder, OneHotEncoder
+from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.numerical import FloatFormatter
+from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
 
 __all__ = [
     'BaseTransformer',
+    'BinaryEncoder',
+    'ClusterBasedNormalizer',
+    'FloatFormatter',
+    'FrequencyEncoder',
+    'GaussianNormalizer',
+    'LabelEncoder',
     'NullTransformer',
+    'OneHotEncoder',
+    'OptimizedTimestampEncoder',
+    'UnixTimestampEncoder',
+    'get_transformer_name',
     'get_transformer_class',
     'get_transformer_instance',
     'get_transformers_by_type',
@@ -40,13 +51,33 @@ def _import_addons():
 
 _import_addons()
 
+
+def get_transformer_name(transformer):
+    """Return the fully qualified path of the transformer.
+
+    Args:
+        transformer:
+            A transformer class.
+
+    Raises:
+        ValueError:
+            Crashes when the transformer is not passed as a class.
+
+    Returns:
+        string:
+            The path of the transformer.
+    """
+    if inspect.isclass(transformer):
+        return transformer.__module__ + '.' + transformer.__name__
+
+    raise ValueError(f'The transformer {transformer} must be passed as a class.')
+
+
 TRANSFORMERS = {
-    transformer.__name__: transformer
+    get_transformer_name(transformer): transformer
     for transformer in BaseTransformer.get_subclasses()
 }
 
-globals().update(TRANSFORMERS)
-__all__.extend(TRANSFORMERS.keys())
 
 DEFAULT_TRANSFORMERS = {
     'numerical': FloatFormatter,
@@ -62,30 +93,29 @@ def get_transformer_class(transformer):
     """Return a ``transformer`` class from a ``str``.
 
     Args:
-        transforemr (str):
-            Python path or transformer's name.
+        transformer (str):
+            Python path.
 
     Returns:
         BaseTransformer:
             BaseTransformer subclass class object.
     """
-    if len(transformer.split('.')) == 1:
+    if transformer in TRANSFORMERS:
         return TRANSFORMERS[transformer]
 
     package, name = transformer.rsplit('.', 1)
-    return TRANSFORMERS.get(name, getattr(importlib.import_module(package), name))
+    return getattr(importlib.import_module(package), name)
 
 
 def get_transformer_instance(transformer):
     """Load a new instance of a ``Transformer``.
 
-    The ``transformer`` is expected to be a ``string`` containing  the transformer ``class``
-    name, a transformer instance or a transformer type.
+    The ``transformer`` is expected to be the transformers path as a ``string``,
+    a transformer instance or a transformer type.
 
     Args:
-        transformer (dict or BaseTransformer):
-            ``dict`` with the transformer specification or instance of a BaseTransformer
-            subclass.
+        transformer (str or BaseTransformer):
+            String with the transformer path or instance of a BaseTransformer subclass.
 
     Returns:
         BaseTransformer:
@@ -94,10 +124,10 @@ def get_transformer_instance(transformer):
     if isinstance(transformer, BaseTransformer):
         return deepcopy(transformer)
 
-    if isinstance(transformer, str):
-        transformer = TRANSFORMERS[transformer]
+    if inspect.isclass(transformer) and issubclass(transformer, BaseTransformer):
+        return transformer()
 
-    return transformer()
+    return get_transformer_class(transformer)()
 
 
 @lru_cache()
