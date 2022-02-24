@@ -393,7 +393,7 @@ class HyperTransformer:
 
             return best_i
 
-        self._output_columns = list(sorted(self._output_columns, key=_sort_key))
+        self._output_columns = sorted(self._output_columns, key=_sort_key)
 
     def fit(self, data):
         """Fit the transformers to the data.
