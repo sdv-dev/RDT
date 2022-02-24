@@ -383,6 +383,11 @@ class HyperTransformer:
                           + f'found in the data: {non_fitted_fields}')
 
     def _sort_output_columns(self):
+        """Sort ``_output_columns`` according to the ``_input_columns``.
+
+        This method sorts ``_output_columns`` such that the generated output columns
+        have the same order as the original ``_input_columns``.
+        """
         def _sort_key(output_column):
             best_i, match_len = float('inf'), 0
             for i, input_column in enumerate(self._input_columns):

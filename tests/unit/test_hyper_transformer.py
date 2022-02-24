@@ -547,6 +547,33 @@ class TestHyperTransformer(TestCase):
         # Assert
         warnings_mock.warn.assert_called_once()
 
+    def test__sort_output_columns(self):
+        """Test the ``_sort_output_columns`` method.
+
+        Assert the method correctly sorts the ``_output_columns`` attribute
+        according to ``_input_columns``.
+
+        Setup:
+            - A mock for a transformer.
+            - Initialize the ``HyperTransformer`` with some ``field_transformers``.
+            - A list of columns names for ``_input_columns``.
+            - An out of order list of columns names for ``_output_columns``.
+
+        Expected behavior:
+            - ``_output_columns`` should be sorted according to the ``_input_columns``.
+        """
+        # Setup
+        transformer = Mock()
+        ht = HyperTransformer(field_transformers={'a': transformer})
+        ht._input_columns = ['a.a.a', 'a', 'a.a']
+        ht._output_columns = ['a.value', 'a.is_null', 'a.a.value', 'a.a.a.is_null']
+
+        # Run
+        ht._sort_output_columns()
+
+        # Assert
+        assert ht._output_columns == ['a.a.a.is_null', 'a.value', 'a.is_null', 'a.a.value']
+
     def get_data(self):
         return pd.DataFrame({
             'integer': [1, 2, 1, 3],
