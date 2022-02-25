@@ -564,7 +564,34 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         transformer = Mock()
-        ht = HyperTransformer(field_transformers={'a': transformer})
+        ht = HyperTransformer(field_transformers={'b': transformer})
+        ht._input_columns = ['a', 'b', 'c']
+        ht._output_columns = ['b.value', 'b.is_null', 'c.value', 'a.is_null']
+
+        # Run
+        ht._sort_output_columns()
+
+        # Assert
+        assert ht._output_columns == ['a.is_null', 'b.value', 'b.is_null', 'c.value']
+
+    def test__sort_output_columns_similar_column_names(self):
+        """Test the ``_sort_output_columns``.
+
+        Assert the method correctly sorts the ``_output_columns`` attribute according to
+        ``_input_columns`` when the input column names are prefix of each other.
+
+        Setup:
+            - A mock for a transformer.
+            - Initialize the ``HyperTransformer`` with some ``field_transformers``.
+            - A list of columns names for ``_input_columns`` which are prefix of each other.
+            - An out of order list of columns names for ``_output_columns``.
+
+        Expected behavior:
+            - ``_output_columns`` should be sorted according to the ``_input_columns``.
+        """
+        # Setup
+        transformer = Mock()
+        ht = HyperTransformer(field_transformers={'a': transformer, 'a.a': transformer})
         ht._input_columns = ['a.a.a', 'a', 'a.a']
         ht._output_columns = ['a.value', 'a.is_null', 'a.a.value', 'a.a.a.is_null']
 
@@ -665,6 +692,7 @@ class TestHyperTransformer(TestCase):
         ht._field_in_set = Mock()
         ht._field_in_set.side_effect = [True, True, False, False, False]
         ht._validate_all_fields_fitted = Mock()
+        ht._sort_output_columns = Mock()
 
         # Run
         ht.fit(data)
@@ -678,6 +706,7 @@ class TestHyperTransformer(TestCase):
             call(data, 'datetime', datetime_transformer)
         ])
         ht._validate_all_fields_fitted.assert_called_once()
+        ht._sort_output_columns.assert_called_once()
 
     def test_transform(self):
         """Test the ``transform`` method.
