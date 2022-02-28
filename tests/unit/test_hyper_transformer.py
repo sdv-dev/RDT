@@ -22,7 +22,7 @@ class TestHyperTransformer(TestCase):
         Input:
             - a field name.
             - a set of field names.
-        
+
         Expected behavior:
             - the passed field name should be added to the set of field names.
         """
@@ -45,7 +45,7 @@ class TestHyperTransformer(TestCase):
         Input:
             - a tuple of field names.
             - a set of field names.
-        
+
         Expected behavior:
             - the passed field names should be added to the set of field names.
         """
@@ -525,7 +525,7 @@ class TestHyperTransformer(TestCase):
         Setup:
             - Initialize the ``HyperTransformer`` with:
                 - A mock for the ``get_final_output_columns`` method, with ``side_effect``
-                set to the lists of generated output columns for each input column.  
+                set to the lists of generated output columns for each input column.
                 - A list of columns names for ``_input_columns``.
 
         Expected behavior:
