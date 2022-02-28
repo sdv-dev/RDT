@@ -14,6 +14,52 @@ from rdt.transformers import (
 
 class TestHyperTransformer(TestCase):
 
+    def test__add_field_to_set_string(self):
+        """Test the ``_add_field_to_set`` method.
+
+        Test that ``field`` is added to the ``field_set``.
+
+        Input:
+            - a field name.
+            - a set of field names.
+        
+        Expected behavior:
+            - the passed field name should be added to the set of field names.
+        """
+        # Setup
+        ht = HyperTransformer()
+        field = 'abc'
+        field_set = {'def', 'ghi'}
+
+        # Run
+        ht._add_field_to_set(field, field_set)
+
+        # Assert
+        assert field_set == {'abc', 'def', 'ghi'}
+
+    def test__add_field_to_set_tuple(self):
+        """Test the ``_add_field_to_set`` method when given a tuple.
+
+        Test that each ``field`` name is added to the ``field_set``.
+
+        Input:
+            - a tuple of field names.
+            - a set of field names.
+        
+        Expected behavior:
+            - the passed field names should be added to the set of field names.
+        """
+        # Setup
+        ht = HyperTransformer()
+        field = ('abc', 'jkl')
+        field_set = {'def', 'ghi'}
+
+        # Run
+        ht._add_field_to_set(field, field_set)
+
+        # Assert
+        assert field_set == {'abc', 'def', 'ghi', 'jkl'}
+
     def test__validate_field_transformers(self):
         """Test the ``_validate_field_transformers`` method.
 
@@ -319,7 +365,6 @@ class TestHyperTransformer(TestCase):
         Output:
             - A DataFrame with columns that result from transforming the
             outputs of the original transformer.
-            - ``_output_columns`` should add the appropriate column names.
         """
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -479,8 +524,9 @@ class TestHyperTransformer(TestCase):
 
         Setup:
             - Initialize the ``HyperTransformer`` with:
+                - A mock for the ``get_final_output_columns`` method, with ``side_effect``
+                set to the lists of generated output columns for each input column.  
                 - A list of columns names for ``_input_columns``.
-                - A mock for the ``get_final_output_columns`` method.
 
         Expected behavior:
             - ``_output_columns`` should be sorted according to the ``_input_columns``.
@@ -489,7 +535,8 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ht.get_final_output_columns = Mock()
         ht.get_final_output_columns.side_effect = [
-            ['a.is_null'], ['b.value', 'b.is_null'], ['c.value']]
+            ['a.is_null'], ['b.value', 'b.is_null'], ['c.value']
+        ]
         ht._input_columns = ['a', 'b', 'c']
 
         # Run
