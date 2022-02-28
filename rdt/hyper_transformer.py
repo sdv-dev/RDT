@@ -288,7 +288,7 @@ class HyperTransformer:
             else:
                 final_outputs.append(output)
 
-        return final_outputs
+        return sorted(final_outputs, reverse=True)
 
     def get_transformer_tree_yaml(self):
         """Return yaml representation of transformers tree.
@@ -370,10 +370,6 @@ class HyperTransformer:
                 if self._field_in_data(output_field, data):
                     self._fit_field_transformer(data, output_field, next_transformer)
 
-            else:
-                if output_name not in self._output_columns:
-                    self._output_columns.append(output_name)
-
         return data
 
     def _validate_all_fields_fitted(self):
@@ -381,24 +377,6 @@ class HyperTransformer:
         if non_fitted_fields:
             warnings.warn('The following fields were specified in the input arguments but not'
                           + f'found in the data: {non_fitted_fields}')
-
-    def _sort_output_columns(self):
-        """Sort ``_output_columns`` according to the ``_input_columns``.
-
-        This method sorts ``_output_columns`` such that the generated output columns
-        have the same order as the original ``_input_columns``.
-        """
-        def _sort_key(output_column):
-            best_i, match_len = float('inf'), 0
-            for i, input_column in enumerate(self._input_columns):
-                if output_column.startswith(input_column):
-                    if match_len < len(input_column):
-                        best_i = i
-                        match_len = len(input_column)
-
-            return best_i
-
-        self._output_columns = sorted(self._output_columns, key=_sort_key)
 
     def fit(self, data):
         """Fit the transformers to the data.
@@ -425,8 +403,11 @@ class HyperTransformer:
                 data = self._fit_field_transformer(data, field, transformer)
 
         self._validate_all_fields_fitted()
-        self._sort_output_columns()
         self._fitted = True
+
+        for input_column in self._input_columns:
+            output_columns = self.get_final_output_columns(input_column)
+            self._output_columns.extend(output_columns)
 
     def transform(self, data):
         """Transform the data.
