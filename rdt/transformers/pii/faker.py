@@ -55,11 +55,12 @@ class PIIFaker(BaseTransformer):
         provider = getattr(faker.providers, provider_name)
         getattr(provider, function_name)
 
-    def __init__(self, provider_name=None, function_name='lexify', function_kwargs={},
+    def __init__(self, provider_name=None, function_name='lexify', function_kwargs=None,
                  locales=None, missing_value_replacement=None, model_missing_values=False):
+        self.data_length = None
         self.provider_name = provider_name if provider_name else 'BaseProvider'
         self.function_name = function_name
-        self.function_kwargs = deepcopy(function_kwargs)
+        self.function_kwargs = deepcopy(function_kwargs) if function_kwargs else {}
         self.check_provider_function(self.provider_name, self.function_name)
 
         self.missing_value_replacement = missing_value_replacement
@@ -93,6 +94,8 @@ class PIIFaker(BaseTransformer):
     def _transform(self, columns_data):
         if self.null_transformer and self.null_transformer.models_missing_values():
             return self.null_transformer.transform(columns_data)[:, 1].astype(float)
+
+        return None
 
     def _reverse_transform(self, columns_data):
         reverse_transformed = np.array([
