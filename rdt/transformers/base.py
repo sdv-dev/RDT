@@ -165,6 +165,23 @@ class BaseTransformer:
             self.column_prefix += '#'
             self.output_columns = list(self.get_output_types().keys())
 
+    def __str__(self):
+        """Print full initialization of transformer.
+
+        Returns:
+            str:
+                The name of the transformer followed by any non-default parameters.
+        """
+        class_name = self.__class__.__name__
+        args = []
+        default = self.__class__()
+        for arg, value in self.__dict__.items():
+            if default.__dict__[arg] != value:
+                args.append(f'{arg}: {value}')
+
+        args_string = ', '.join(args)
+        return f'{class_name}({args_string})'
+
     def _fit(self, columns_data):
         """Fit the transformer to the data.
 
