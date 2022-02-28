@@ -20,15 +20,13 @@ __all__ = [
 
 
 def get_demo(num_rows=5):
-    """Generate random demo data with multiple data types.
+    """Generate demo data with multiple data types.
+
+    The first five rows are hard coded. The rest is randomly generated.
 
     Args:
-        dtypes (tuple or list):
-            Data types to include in the generated demo data. Defaults to all.
-        nans (float):
-            Proportion of null values to generate. Defaults to 0.2.
-        size (int):
-            Number of data rows to generate.
+        num_rows (int):
+            Number of data rows to generate. Defaults to 5.
 
     Returns:
         pd.DataFrame
