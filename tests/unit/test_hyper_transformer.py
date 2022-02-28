@@ -363,7 +363,6 @@ class TestHyperTransformer(TestCase):
             'a.out1': ['2', '4', '6'],
             'a.out2': [1, 2, 3]
         })
-        assert ht._output_columns == ['a.out1.value', 'a.out2']
         pd.testing.assert_frame_equal(out, expected)
         transformer1.fit.assert_called_once()
         transformer1.transform.assert_called_once_with(data)
@@ -440,81 +439,6 @@ class TestHyperTransformer(TestCase):
         transformer2.fit.assert_not_called()
         assert ht._transformers_sequence == [transformer1]
 
-    @patch('rdt.hyper_transformer.get_transformer_instance')
-    def test__fit_field_transformer_multi_column_field_ready(self, get_transformer_instance_mock):
-        """Test the ``_fit_field_transformer`` method.
-
-        This tests that the ``_fit_field_transformer`` behaves as expected.
-        If the column is part of a multi-column field, and the other columns
-        are present in the data, then it should fit the next transformer.
-        It should also transform the data.
-
-        Setup:
-            - A mock for ``get_transformer_instance``.
-            - A mock for the transformer returned by ``get_transformer_instance``.
-            The ``get_output_types`` method will return one output that is part of
-            a multi-column field.
-            - A mock for ``_multi_column_fields`` to return the multi-column field.
-
-        Input:
-            - A DataFrame with the other columns in the multi-column field.
-            - A column name to fit the transformer to.
-            - A transformer.
-
-        Output:
-            - A DataFrame with columns that result from transforming the
-            outputs of the original transformer.
-            - ``_output_columns`` should add the column name of the output of
-            the transformer used on the multi-column field.
-        """
-        # Setup
-        data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b.out1': ['4', '5', '6']
-        })
-        transformed_data1 = pd.DataFrame({
-            'a.out1': ['1', '2', '3'],
-            'b.out1': ['4', '5', '6']
-        })
-        transformer1 = Mock()
-        transformer2 = Mock()
-        transformer1.get_output_types.return_value = {
-            'a.out1': 'categorical'
-        }
-        transformer1.get_next_transformers.return_value = None
-        transformer1.transform.return_value = transformed_data1
-        transformer2.get_output_types.return_value = {
-            'a.out1#b.out1': 'numerical'
-        }
-        get_transformer_instance_mock.side_effect = [
-            transformer1,
-            transformer2
-        ]
-        ht = HyperTransformer()
-        ht._get_next_transformer = Mock()
-        ht._get_next_transformer.side_effect = [
-            transformer2,
-            None
-        ]
-        ht._multi_column_fields = Mock()
-        ht._multi_column_fields.get.return_value = ('a.out1', 'b.out1')
-
-        # Run
-        out = ht._fit_field_transformer(data, 'a', transformer1)
-
-        # Assert
-        expected = pd.DataFrame({
-            'a.out1': ['1', '2', '3'],
-            'b.out1': ['4', '5', '6']
-        })
-        assert ht._output_columns == ['a.out1#b.out1']
-        pd.testing.assert_frame_equal(out, expected)
-        transformer1.fit.assert_called_once()
-        transformer1.transform.assert_called_once_with(data)
-        transformer2.fit.assert_called_once()
-        transformer2.transform.assert_called_once()
-        assert ht._transformers_sequence == [transformer1, transformer2]
-
     @patch('rdt.hyper_transformer.warnings')
     def test__validate_all_fields_fitted(self, warnings_mock):
         """Test the ``_validate_all_fields_fitted`` method.
@@ -554,52 +478,25 @@ class TestHyperTransformer(TestCase):
         according to ``_input_columns``.
 
         Setup:
-            - A mock for a transformer.
-            - Initialize the ``HyperTransformer`` with some ``field_transformers``.
-            - A list of columns names for ``_input_columns``.
-            - An out of order list of columns names for ``_output_columns``.
+            - Initialize the ``HyperTransformer`` with:
+                - A list of columns names for ``_input_columns``.
+                - A mock for the ``get_final_output_columns`` method.
 
         Expected behavior:
             - ``_output_columns`` should be sorted according to the ``_input_columns``.
         """
         # Setup
-        transformer = Mock()
-        ht = HyperTransformer(field_transformers={'b': transformer})
+        ht = HyperTransformer()
+        ht.get_final_output_columns = Mock()
+        ht.get_final_output_columns.side_effect = [
+            ['a.is_null'], ['b.value', 'b.is_null'], ['c.value']]
         ht._input_columns = ['a', 'b', 'c']
-        ht._output_columns = ['b.value', 'b.is_null', 'c.value', 'a.is_null']
 
         # Run
         ht._sort_output_columns()
 
         # Assert
         assert ht._output_columns == ['a.is_null', 'b.value', 'b.is_null', 'c.value']
-
-    def test__sort_output_columns_similar_column_names(self):
-        """Test the ``_sort_output_columns``.
-
-        Assert the method correctly sorts the ``_output_columns`` attribute according to
-        ``_input_columns`` when the input column names are prefix of each other.
-
-        Setup:
-            - A mock for a transformer.
-            - Initialize the ``HyperTransformer`` with some ``field_transformers``.
-            - A list of columns names for ``_input_columns`` which are prefix of each other.
-            - An out of order list of columns names for ``_output_columns``.
-
-        Expected behavior:
-            - ``_output_columns`` should be sorted according to the ``_input_columns``.
-        """
-        # Setup
-        transformer = Mock()
-        ht = HyperTransformer(field_transformers={'a': transformer, 'a.a': transformer})
-        ht._input_columns = ['a.a.a', 'a', 'a.a']
-        ht._output_columns = ['a.value', 'a.is_null', 'a.a.value', 'a.a.a.is_null']
-
-        # Run
-        ht._sort_output_columns()
-
-        # Assert
-        assert ht._output_columns == ['a.a.a.is_null', 'a.value', 'a.is_null', 'a.a.value']
 
     def get_data(self):
         return pd.DataFrame({

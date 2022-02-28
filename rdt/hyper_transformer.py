@@ -378,6 +378,12 @@ class HyperTransformer:
             warnings.warn('The following fields were specified in the input arguments but not'
                           + f'found in the data: {non_fitted_fields}')
 
+    def _sort_output_columns(self):
+        """Sort ``_output_columns`` to follow the same order as the ``_input_columns``."""
+        for input_column in self._input_columns:
+            output_columns = self.get_final_output_columns(input_column)
+            self._output_columns.extend(output_columns)
+
     def fit(self, data):
         """Fit the transformers to the data.
 
@@ -404,10 +410,7 @@ class HyperTransformer:
 
         self._validate_all_fields_fitted()
         self._fitted = True
-
-        for input_column in self._input_columns:
-            output_columns = self.get_final_output_columns(input_column)
-            self._output_columns.extend(output_columns)
+        self._sort_output_columns()
 
     def transform(self, data):
         """Transform the data.
