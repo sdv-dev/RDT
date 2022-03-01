@@ -52,8 +52,13 @@ class PIIFaker(BaseTransformer):
         Raises:
             ``AttributeError`` if the provider or the function is not found.
         """
-        provider = getattr(faker.providers, provider_name)
-        getattr(provider, function_name)
+        module = getattr(faker.providers, provider_name)
+        if provider_name == 'BaseProvider':
+            getattr(module, function_name)
+
+        else:
+            provider = getattr(module, 'Provider')
+            getattr(provider, function_name)
 
     def __init__(self, provider_name=None, function_name='lexify', function_kwargs=None,
                  locales=None, missing_value_replacement=None, model_missing_values=False):

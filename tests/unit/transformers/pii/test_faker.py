@@ -15,7 +15,26 @@ class TestPIIFaker:
 
     @patch('rdt.transformers.pii.faker.faker')
     @patch('rdt.transformers.pii.faker.getattr')
-    def test_check_provider_function(self, mock_getattr, mock_faker):
+    def test_check_provider_function_baseprovider(self, mock_getattr, mock_faker):
+        """Test that ``getattr`` is being called with ``BaseProvider`` and ``function_name``.
+
+        Mock:
+            - Mock the ``getattr`` from Python to ensure that is being called with the input.
+            - Mock faker and ensure that ``getattr`` is being called with ``faker.providers``.
+        """
+        # Setup
+        mock_getattr.side_effect = ['module', 'provider', None]
+
+        # Run
+        PIIFaker.check_provider_function('BaseProvider', 'function_name')
+
+        # Assert
+        assert mock_getattr.call_args_list[0] == call(mock_faker.providers, 'BaseProvider')
+        assert mock_getattr.call_args_list[1] == call('module', 'function_name')
+
+    @patch('rdt.transformers.pii.faker.faker')
+    @patch('rdt.transformers.pii.faker.getattr')
+    def test_check_provider_function_other_providers(self, mock_getattr, mock_faker):
         """Test that ``getattr`` is being called with ``provider_name`` and ``function_name``.
 
         Mock:
@@ -23,14 +42,15 @@ class TestPIIFaker:
             - Mock faker and ensure that ``getattr`` is being called with ``faker.providers``.
         """
         # Setup
-        mock_getattr.side_effect = ['provider_class', None]
+        mock_getattr.side_effect = ['module', 'provider_class', None]
 
         # Run
         PIIFaker.check_provider_function('provider_name', 'function_name')
 
         # Assert
         assert mock_getattr.call_args_list[0] == call(mock_faker.providers, 'provider_name')
-        assert mock_getattr.call_args_list[1] == call('provider_class', 'function_name')
+        assert mock_getattr.call_args_list[1] == call('module', 'Provider')
+        assert mock_getattr.call_args_list[2] == call('provider_class', 'function_name')
 
     def test_check_provider_function_raise_attribute_error(self):
         """Test that ``check_provider_function`` raises an ``AttributeError``.
