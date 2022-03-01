@@ -91,7 +91,7 @@ class NullTransformer():
             LOGGER.info(guidance_message)
 
     def transform(self, data):
-        """Replace null values with the indicated missing_value_replacement.
+        """Replace null values with the indicated ``missing_value_replacement``.
 
         If required, create the null indicator column.
 
