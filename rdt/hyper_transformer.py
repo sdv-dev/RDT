@@ -47,7 +47,7 @@ class HyperTransformer:
 
         >>> field_data_types = {
         ...     'a': 'categorical',
-        ...     'b': 'numerical
+        ...     'b': 'numerical'
         ... }
         >>> ht = HyperTransformer(field_data_types=field_data_types)
 
@@ -58,7 +58,6 @@ class HyperTransformer:
         >>> field_transformers = {
         ...     'email': EmailTransformer(),
         ...     'email.domain': EmailDomainTransformer(),
-        ...     ('year', 'month', 'day'): UnixTimestampEncoder()
         ... }
         >>> ht = HyperTransformer(field_transformers=field_transformers)
 

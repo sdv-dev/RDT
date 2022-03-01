@@ -113,7 +113,7 @@ def get_input_data():
 
 def get_transformed_data():
     datetimes = [
-        np.nan,
+        1.263069e+18,
         1.264982e+18,
         1.262304e+18,
         1.262304e+18,
@@ -124,12 +124,35 @@ def get_transformed_data():
     ]
     return pd.DataFrame({
         'integer.value': [1, 2, 1, 3, 1, 4, 2, 3],
-        'float.value': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
+        'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
         'categorical.value': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
-        'bool.value': [0.0, np.nan, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0],
+        'bool.value': [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0],
         'datetime.value': datetimes,
         'names.value': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
     }, index=TEST_DATA_INDEX)
+
+
+def get_reversed_data():
+    datetimes = pd.to_datetime([
+        np.nan,
+        '2010-02-01',
+        '2010-01-01',
+        '2010-01-01',
+        '2010-01-01',
+        '2010-02-01',
+        '2010-01-01',
+        '2010-01-01',
+    ])
+    data = pd.DataFrame({
+        'integer': [1, 2, 1, 3, 1, 4, 2, 3],
+        'float': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
+        'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
+        'bool': [np.nan, np.nan, np.nan, True, np.nan, True, True, np.nan],
+        'datetime': datetimes,
+        'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
+    }, index=TEST_DATA_INDEX)
+
+    return data
 
 
 DETERMINISTIC_DEFAULT_TRANSFORMERS = deepcopy(DEFAULT_TRANSFORMERS)
@@ -145,7 +168,7 @@ def test_hypertransformer_default_inputs():
     transformers to use for each field.
 
     Setup:
-        - Patch the DEFAULT_TRANSFORMERS to use the `FrequencyEncoder`
+        - Patch the ``DEFAULT_TRANSFORMERS`` to use the ``FrequencyEncoder``
         for categorical data types, so that the output is predictable.
 
     Input:
@@ -168,7 +191,7 @@ def test_hypertransformer_default_inputs():
     expected_transformed = get_transformed_data()
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
-    expected_reversed = get_input_data()
+    expected_reversed = get_reversed_data()
     pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
     assert isinstance(ht._transformers_tree['integer']['transformer'], FloatFormatter)
@@ -188,7 +211,7 @@ def test_hypertransformer_default_inputs():
 def test_hypertransformer_field_transformers():
     """Test the HyperTransformer with ``field_transformers`` provided.
 
-    This tests that this transformers specified in the ``field_transformers``
+    This tests that the transformers specified in the ``field_transformers``
     argument are used. Any output of a transformer that is not ML ready (not
     in the ``_transform_output_types`` list) should be recursively transformed
     till it is.
@@ -207,10 +230,10 @@ def test_hypertransformer_field_transformers():
     """
     # Setup
     field_transformers = {
-        'integer': FloatFormatter,
-        'float': FloatFormatter,
+        'integer': FloatFormatter(missing_value_replacement='mean'),
+        'float': FloatFormatter(missing_value_replacement='mean'),
         'categorical': FrequencyEncoder,
-        'bool': BinaryEncoder,
+        'bool': BinaryEncoder(missing_value_replacement='mode'),
         'datetime': DummyTransformerNotMLReady,
         'datetime.value': FrequencyEncoder,
         'names': FrequencyEncoder
@@ -231,7 +254,7 @@ def test_hypertransformer_field_transformers():
     expected_transformed['datetime.value.value'] = transformed_datetimes
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
-    expected_reversed = get_input_data()
+    expected_reversed = get_reversed_data()
     pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
 
@@ -369,7 +392,7 @@ def test_with_unfitted_columns():
     reverse = ht.reverse_transform(transformed)
 
     # Assert
-    expected_reversed = get_input_data()
+    expected_reversed = get_reversed_data()
     expected_reversed['z'] = new_column
     expected_reversed = expected_reversed.reindex(
         columns=['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'])
