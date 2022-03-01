@@ -115,6 +115,66 @@ class TestBaseTransformer:
         }
         assert output == expected
 
+    def test___str___no_parameters(self):
+        """Test that the ``__str__`` method returns the class name.
+
+        The ``__str__`` method should return the class name followed by paranthesis.
+        """
+        # Setup
+        transformer = BaseTransformer()
+
+        # Run
+        text = str(transformer)
+
+        # Assert
+        assert text == 'BaseTransformer()'
+
+    def test___str___with_parameters(self):
+        """Test that the ``__str__`` method returns the class name and parameters.
+
+        The ``__str__`` method should return the class name followed by all non-default
+        parameters wrapped in paranthesis.
+
+        Setup:
+            - Create a dummy class which inherits from the ``BaseTransformer`` where:
+                - The class has two parameters in its ``__init__`` method with default values.
+                - The class instance only sets one of them.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            def __init__(self, param1=None, param2=None):
+                self.param1 = param1
+                self.param2 = param2
+
+        transformer = Dummy(param2=True)
+
+        # Run
+        text = str(transformer)
+
+        # Assert
+        assert text == 'Dummy(param2=True)'
+
+    def test__repr__(self):
+        """Test the ``__repr__`` method.
+
+        The ``__repr__`` method should just call ``instance.__str__``.
+
+        Setup:
+            - Add a mock for ``instance.__str__``.
+
+        Expected behavior:
+            - The mock should be called once.
+        """
+        # Setup
+        transformer = BaseTransformer()
+        transformer.__str__ = Mock()
+
+        # Run
+        transformer.__repr__()
+
+        # Assert
+        transformer.__str__.assert_called_once()
+
     def test_get_output_types(self):
         """Test the ``get_output_types`` method.
 
