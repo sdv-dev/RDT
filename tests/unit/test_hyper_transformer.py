@@ -237,7 +237,7 @@ class TestHyperTransformer(TestCase):
 
         This tests that if the transformer is not defined in the
         ``instance.field_transformers`` dict or ``next_transformers``
-        and its output typeis not in ``instance._transform_output_types``
+        and its output type is not in ``instance._transform_output_types``
         then the default_transformer is used.
 
         Setup:
@@ -260,10 +260,11 @@ class TestHyperTransformer(TestCase):
 
         # Run
         next_transformer = ht._get_next_transformer('a.out', 'categorical', None)
+        print(next_transformer)
 
         # Assert
         assert isinstance(next_transformer, FrequencyEncoder)
-        assert next_transformer.add_noise is True
+        assert next_transformer.add_noise is False
 
     def test__populate_field_data_types(self):
         """Test the ``_populate_field_data_types`` method.
