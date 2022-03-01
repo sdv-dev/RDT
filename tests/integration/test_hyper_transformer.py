@@ -145,7 +145,7 @@ def get_reversed_data():
     ])
     data = pd.DataFrame({
         'integer': [1, 2, 1, 3, 1, 4, 2, 3],
-        'float': [0.1, np.nan, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
+        'float': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
         'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
         'bool': [np.nan, np.nan, np.nan, True, np.nan, True, True, np.nan],
         'datetime': datetimes,

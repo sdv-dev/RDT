@@ -104,13 +104,9 @@ class NullTransformer():
         """
         isna = data.isna()
         if isna.any() and self._missing_value_replacement is not None:
-            if not self._model_missing_values:
-                if isinstance(self._missing_value_replacement, float):
-                    if np.isclose(self._missing_value_replacement, data.to_numpy()).any():
-                        warnings.warn(IRREVERSIBLE_WARNING)
-                else:
-                    if self._missing_value_replacement in data.to_numpy():
-                        warnings.warn(IRREVERSIBLE_WARNING)
+            if (not self._model_missing_values and
+                    self._missing_value_replacement in data.to_numpy()):
+                warnings.warn(IRREVERSIBLE_WARNING)
 
             data = data.fillna(self._missing_value_replacement)
 
@@ -140,10 +136,7 @@ class NullTransformer():
             data = data[:, 0].copy()
 
         elif self.nulls:
-            if isinstance(self._missing_value_replacement, float):
-                isna = np.isclose(self._missing_value_replacement, data)
-            else:
-                isna = self._missing_value_replacement == data
+            isna = self._missing_value_replacement == data
 
         data = pd.Series(data)
 
