@@ -80,12 +80,12 @@ TRANSFORMERS = {
 
 
 DEFAULT_TRANSFORMERS = {
-    'numerical': FloatFormatter,
-    'integer': FloatFormatter,
-    'float': FloatFormatter,
-    'categorical': FrequencyEncoder(add_noise=True),
-    'boolean': BinaryEncoder,
-    'datetime': UnixTimestampEncoder,
+    'numerical': FloatFormatter(missing_value_replacement='mean'),
+    'integer': FloatFormatter(missing_value_replacement='mean'),
+    'float': FloatFormatter(missing_value_replacement='mean'),
+    'categorical': FrequencyEncoder(),
+    'boolean': BinaryEncoder(missing_value_replacement='mode'),
+    'datetime': UnixTimestampEncoder(missing_value_replacement='mean'),
 }
 
 
