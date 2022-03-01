@@ -260,7 +260,6 @@ class TestHyperTransformer(TestCase):
 
         # Run
         next_transformer = ht._get_next_transformer('a.out', 'categorical', None)
-        print(next_transformer)
 
         # Assert
         assert isinstance(next_transformer, FrequencyEncoder)
