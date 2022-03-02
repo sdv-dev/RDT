@@ -352,6 +352,7 @@ class HyperTransformer:
         print('Detected config:')
         print(config)
         print()
+        print()
         print(
             "Info: Use 'update_sdtypes' and 'update_transformers' to override the sdtypes "
             "and transformers. Use 'get_sdtypes' and 'get_transformers' to verify the updates."
