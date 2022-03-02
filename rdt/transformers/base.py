@@ -177,6 +177,8 @@ class BaseTransformer:
         default = self.__class__()
         for arg, value in self.__dict__.items():
             if default.__dict__[arg] != value:
+                if isinstance(value, str):
+                    value = f"'{value}'"
                 args.append(f'{arg}={value}')
 
         args_string = ', '.join(args)

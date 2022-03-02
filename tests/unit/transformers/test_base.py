@@ -142,17 +142,18 @@ class TestBaseTransformer:
         """
         # Setup
         class Dummy(BaseTransformer):
-            def __init__(self, param1=None, param2=None):
+            def __init__(self, param1=None, param2=None, param3=None):
                 self.param1 = param1
                 self.param2 = param2
+                self.param3 = param3
 
-        transformer = Dummy(param2=True)
+        transformer = Dummy(param2='value', param3=True)
 
         # Run
         text = str(transformer)
 
         # Assert
-        assert text == 'Dummy(param2=True)'
+        assert text == "Dummy(param2='value', param3=True)"
 
     def test__repr__(self):
         """Test the ``__repr__`` method.
@@ -168,9 +169,10 @@ class TestBaseTransformer:
         # Setup
         transformer = BaseTransformer()
         transformer.__str__ = Mock()
+        transformer.__str__.return_value = ''
 
         # Run
-        transformer.__repr__()
+        repr(transformer)
 
         # Assert
         transformer.__str__.assert_called_once()
