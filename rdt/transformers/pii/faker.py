@@ -106,9 +106,31 @@ class PIIFaker(BaseTransformer):
         reverse_transformed = np.array([
             self._function(**self.function_kwargs)
             for _ in range(self.data_length)
-        ])
+        ], dtype=object)
 
         if self.null_transformer.models_missing_values():
             reverse_transformed = np.column_stack((reverse_transformed, columns_data))
 
         return self.null_transformer.reverse_transform(reverse_transformed)
+
+    def __repr__(self):
+        """Represent the class instance only with the modified default arguments."""
+        printable = [
+            'provider_name',
+            'function_name',
+            'function_kwargs',
+            'locales',
+            'missing_value_replacement',
+            'model_missing_values',
+        ]
+        instance_args = {
+            key: f"'{value}'" if isinstance(value, str) else value
+            for key, value in self.__dict__.items()
+            if key in printable and value
+        }
+
+        if self.provider_name == 'BaseProvider':
+            instance_args.pop('provider_name')
+
+        instance_args = ', '.join(f'{key}={value}' for key, value in instance_args.items())
+        return f'PIIFaker({instance_args})'

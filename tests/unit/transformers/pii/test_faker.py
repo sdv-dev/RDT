@@ -401,3 +401,39 @@ class TestPIIFaker:
 
         expected_function_calls = [call(type='a'), call(type='a'), call(type='a')]
         assert function.call_args_list == expected_function_calls
+
+    def test___repr__default(self):
+        """Test the ``__repr__`` method.
+
+        With the default parameters should return only the ``function_name='lexify'`` as an
+        starting argument for the ``PIIFaker``.
+        """
+        # Setup
+        instance = PIIFaker()
+
+        # Run
+        res = repr(instance)
+
+        # Assert
+        expected_res = "PIIFaker(function_name='lexify')"
+        assert res == expected_res
+
+    def test___repr__custom_provider(self):
+        """Test the ``__repr__`` method.
+
+        With the custom args the ``repr`` of the class should return all the non default
+        arguments.
+        """
+        # Setup
+        instance = PIIFaker('credit_card', 'credit_card_full', model_missing_values=True)
+
+        # Run
+        res = repr(instance)
+
+        # Assert
+        expected_res = (
+            "PIIFaker(provider_name='credit_card', function_name='credit_card_full', "
+            "model_missing_values=True)"
+        )
+
+        assert res == expected_res
