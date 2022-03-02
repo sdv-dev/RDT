@@ -4,6 +4,7 @@ import warnings
 from collections import defaultdict
 from copy import deepcopy
 
+import pandas as pd
 import yaml
 
 from rdt.errors import NotFittedError
@@ -145,17 +146,23 @@ class HyperTransformer:
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
-    def _populate_field_data_types(self, data):
+    def _field_data_types(self, data):
         # get set of provided fields including multi-column fields
         provided_fields = set()
         for field in self.field_data_types.keys():
             self._add_field_to_set(field, provided_fields)
 
+        fields_to_dtype = self.field_data_types.copy()
         for field in data:
             if field not in provided_fields:
                 clean_data = data[field].dropna()
                 kind = clean_data.infer_objects().dtype.kind
-                self.field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
+                fields_to_dtype[field] = self._DTYPES_TO_DATA_TYPES[kind]
+
+        return fields_to_dtype
+
+    def _populate_field_data_types(self, data):
+        self.field_data_types = self._field_data_types(data)
 
     def _unfit(self):
         self._transformers_sequence = []
@@ -319,6 +326,36 @@ class HyperTransformer:
             modified_tree[field]['transformer'] = class_name
 
         return yaml.safe_dump(dict(modified_tree))
+
+    def auto_detect_config(self, data):
+        """Print the detected configuration of the data.
+
+        Args:
+            data (pd.DataFrame):
+                Data which will have its configuration detected.
+        """
+        sdtype = self._field_data_types(data)
+        field_transformers = self.field_transformers.copy()
+        for (field, data_type) in sdtype.items():
+            if not self._field_in_set(field, set(self.field_transformers.keys())):
+                if data_type in self.default_data_type_transformers:
+                    field_transformers[field] = self.default_data_type_transformers[data_type]
+                else:
+                    field_transformers[field] = get_default_transformer(data_type)
+
+        config = pd.DataFrame({
+            'column_name': data.columns,
+            'sdtype': sdtype.values(),
+            'transformer': field_transformers.values()
+        })
+
+        print('Detected config:')
+        print(config)
+        print()
+        print(
+            "Info: Use 'update_sdtypes' and 'update_transformers' to override the sdtypes "
+            "and transformers. Use 'get_sdtypes' and 'get_transformers' to verify the updates."
+        )
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
