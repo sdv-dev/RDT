@@ -326,6 +326,11 @@ class HyperTransformer:
             modified_tree[field]['transformer'] = class_name
 
         return yaml.safe_dump(dict(modified_tree))
+    
+    def _get_transformer_for_dtype(self, data_type):
+        if data_type in self.default_data_type_transformers:
+            return self.default_data_type_transformers[data_type]
+        return get_default_transformer(data_type)
 
     def auto_detect_config(self, data):
         """Print the detected configuration of the data.
@@ -334,24 +339,20 @@ class HyperTransformer:
             data (pd.DataFrame):
                 Data which will have its configuration detected.
         """
-        sdtype = self._field_data_types(data)
+        sdtypes = self._field_data_types(data)
         field_transformers = self.field_transformers.copy()
-        for (field, data_type) in sdtype.items():
-            if not self._field_in_set(field, set(self.field_transformers.keys())):
-                if data_type in self.default_data_type_transformers:
-                    field_transformers[field] = self.default_data_type_transformers[data_type]
-                else:
-                    field_transformers[field] = get_default_transformer(data_type)
+        for (field, data_type) in sdtypes.items():
+            if not self._field_in_set(field, set(field_transformers.keys())):
+                field_transformers[field] = self._get_transformer_for_dtype(data_type)
 
         config = pd.DataFrame({
             'column_name': data.columns,
-            'sdtype': sdtype.values(),
+            'sdtype': sdtypes.values(),
             'transformer': field_transformers.values()
         })
 
         print('Detected config:')
         print(config)
-        print()
         print()
         print(
             "Info: Use 'update_sdtypes' and 'update_transformers' to override the sdtypes "
@@ -439,11 +440,7 @@ class HyperTransformer:
 
         for (field, data_type) in self.field_data_types.items():
             if not self._field_in_set(field, self._fitted_fields):
-                if data_type in self.default_data_type_transformers:
-                    transformer = self.default_data_type_transformers[data_type]
-                else:
-                    transformer = get_default_transformer(data_type)
-
+                transformer = self._get_transformer_for_dtype(data_type)
                 data = self._fit_field_transformer(data, field, transformer)
 
         self._validate_all_fields_fitted()
