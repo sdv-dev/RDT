@@ -433,7 +433,7 @@ class TestPIIFaker:
         # Assert
         expected_res = (
             "PIIFaker(provider_name='credit_card', function_name='credit_card_full', "
-            "model_missing_values=True)"
+            'model_missing_values=True)'
         )
 
         assert res == expected_res
