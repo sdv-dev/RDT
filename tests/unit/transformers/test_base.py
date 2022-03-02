@@ -115,6 +115,72 @@ class TestBaseTransformer:
         }
         assert output == expected
 
+    def test___repr___no_parameters(self):
+        """Test that the ``__str__`` method returns the class name.
+
+        The ``__repr__`` method should return the class name followed by paranthesis.
+        """
+        # Setup
+        transformer = BaseTransformer()
+
+        # Run
+        text = repr(transformer)
+
+        # Assert
+        assert text == 'BaseTransformer()'
+
+    def test___repr___with_parameters(self):
+        """Test that the ``__repr__`` method returns the class name and parameters.
+
+        The ``_repr__`` method should return the class name followed by all non-default
+        parameters wrapped in paranthesis.
+
+        Setup:
+            - Create a dummy class which inherits from the ``BaseTransformer`` where:
+                - The class has two parameters in its ``__init__`` method with default values.
+                - The class instance only sets one of them.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            def __init__(self, param1=None, param2=None, param3=None):
+                self.param1 = param1
+                self.param2 = param2
+                self.param3 = param3
+
+        transformer = Dummy(param2='value', param3=True)
+
+        # Run
+        text = repr(transformer)
+
+        # Assert
+        assert text == "Dummy(param2='value', param3=True)"
+
+    def test__str__(self):
+        """Test the ``__str__`` method.
+
+        The ``_str__`` method should return the class name followed by all non-default
+        parameters wrapped in paranthesis.
+
+        Setup:
+            - Create a dummy class which inherits from the ``BaseTransformer`` where:
+                - The class has two parameters in its ``__init__`` method with default values.
+                - The class instance only sets one of them.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            def __init__(self, param1=None, param2=None, param3=None):
+                self.param1 = param1
+                self.param2 = param2
+                self.param3 = param3
+
+        transformer = Dummy(param2='value', param3=True)
+
+        # Run
+        text = str(transformer)
+
+        # Assert
+        assert text == "Dummy(param2='value', param3=True)"
+
     def test_get_output_types(self):
         """Test the ``get_output_types`` method.
 
