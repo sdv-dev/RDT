@@ -25,7 +25,6 @@ def get_dataset_generators_by_type():
     """
     dataset_generators = defaultdict(list)
     for dataset_generator in BaseDatasetGenerator.get_subclasses():
-        if dataset_generator.DATA_TYPE == 'pii':
-            dataset_generators[dataset_generator.DATA_TYPE].append(dataset_generator)
+        dataset_generators[dataset_generator.DATA_TYPE].append(dataset_generator)
 
     return dataset_generators
