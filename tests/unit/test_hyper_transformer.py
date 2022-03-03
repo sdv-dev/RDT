@@ -366,10 +366,11 @@ class TestHyperTransformer(TestCase):
         })
 
         # Run
-        f = io.StringIO()
-        with contextlib.redirect_stdout(f):
+        f_out = io.StringIO()
+        with contextlib.redirect_stdout(f_out):
             ht.detect_initial_config(data)
-        output = f.getvalue()
+
+        output = f_out.getvalue()
 
         # Assert
         assert ht.field_data_types == {
@@ -382,7 +383,7 @@ class TestHyperTransformer(TestCase):
         ht.field_transformers = {k: repr(v) for (k, v) in ht.field_transformers.items()}
         assert ht.field_transformers == {
             'col1': "FloatFormatter(missing_value_replacement='mean')",
-            'col2': "FrequencyEncoder()",
+            'col2': 'FrequencyEncoder()',
             'col3': "BinaryEncoder(missing_value_replacement='mode')",
             'col4': "UnixTimestampEncoder(missing_value_replacement='mean')",
             'col5': "FloatFormatter(missing_value_replacement='mean')"
