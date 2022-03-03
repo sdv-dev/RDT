@@ -7,14 +7,14 @@ import pandas as pd
 import pytest
 
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.pii.faker import PIIFaker
+from rdt.transformers.pii.anonymizer import PIIAnonymizer
 
 
-class TestPIIFaker:
-    """Test class for ``PIIFaker``."""
+class TestPIIAnonymizer:
+    """Test class for ``PIIAnonymizer``."""
 
-    @patch('rdt.transformers.pii.faker.faker')
-    @patch('rdt.transformers.pii.faker.getattr')
+    @patch('rdt.transformers.pii.anonymizer.faker')
+    @patch('rdt.transformers.pii.anonymizer.getattr')
     def test_check_provider_function_baseprovider(self, mock_getattr, mock_faker):
         """Test that ``getattr`` is being called with ``BaseProvider`` and ``function_name``.
 
@@ -26,14 +26,14 @@ class TestPIIFaker:
         mock_getattr.side_effect = ['module', 'provider', None]
 
         # Run
-        PIIFaker.check_provider_function('BaseProvider', 'function_name')
+        PIIAnonymizer.check_provider_function('BaseProvider', 'function_name')
 
         # Assert
         assert mock_getattr.call_args_list[0] == call(mock_faker.providers, 'BaseProvider')
         assert mock_getattr.call_args_list[1] == call('module', 'function_name')
 
-    @patch('rdt.transformers.pii.faker.faker')
-    @patch('rdt.transformers.pii.faker.getattr')
+    @patch('rdt.transformers.pii.anonymizer.faker')
+    @patch('rdt.transformers.pii.anonymizer.getattr')
     def test_check_provider_function_other_providers(self, mock_getattr, mock_faker):
         """Test that ``getattr`` is being called with ``provider_name`` and ``function_name``.
 
@@ -45,7 +45,7 @@ class TestPIIFaker:
         mock_getattr.side_effect = ['module', 'provider_class', None]
 
         # Run
-        PIIFaker.check_provider_function('provider_name', 'function_name')
+        PIIAnonymizer.check_provider_function('provider_name', 'function_name')
 
         # Assert
         assert mock_getattr.call_args_list[0] == call(mock_faker.providers, 'provider_name')
@@ -64,13 +64,13 @@ class TestPIIFaker:
 
         # Run
         with pytest.raises(AttributeError, match=expected_provider_message):
-            PIIFaker.check_provider_function('TestProvider', 'TestFunction')
+            PIIAnonymizer.check_provider_function('TestProvider', 'TestFunction')
 
         with pytest.raises(AttributeError, match=expected_function_message):
-            PIIFaker.check_provider_function('BaseProvider', 'TestFunction')
+            PIIAnonymizer.check_provider_function('BaseProvider', 'TestFunction')
 
-    @patch('rdt.transformers.pii.faker.faker')
-    @patch('rdt.transformers.pii.faker.PIIFaker.check_provider_function')
+    @patch('rdt.transformers.pii.anonymizer.faker')
+    @patch('rdt.transformers.pii.anonymizer.PIIAnonymizer.check_provider_function')
     def test___init__default(self, mock_check_provider_function, mock_faker):
         """Test the default instantiation of the transformer.
 
@@ -95,7 +95,7 @@ class TestPIIFaker:
             - the ``instance._function`` is ``instance.faker.lexify``.
         """
         # Run
-        instance = PIIFaker()
+        instance = PIIAnonymizer()
 
         # Assert
         mock_check_provider_function.assert_called_once_with('BaseProvider', 'lexify')
@@ -108,8 +108,8 @@ class TestPIIFaker:
         assert mock_faker.Faker.called_once_with(None)
         assert instance._function == mock_faker.Faker.return_value.lexify
 
-    @patch('rdt.transformers.pii.faker.faker')
-    @patch('rdt.transformers.pii.faker.PIIFaker.check_provider_function')
+    @patch('rdt.transformers.pii.anonymizer.faker')
+    @patch('rdt.transformers.pii.anonymizer.PIIAnonymizer.check_provider_function')
     def test___init__custom(self, mock_check_provider_function, mock_faker):
         """Test the instantiation of the transformer with custom parameters.
 
@@ -135,7 +135,7 @@ class TestPIIFaker:
             - the ``instance._function`` is ``instance.faker.credit_card_full``.
         """
         # Run
-        instance = PIIFaker(
+        instance = PIIAnonymizer(
             provider_name='CreditCard',
             function_name='credit_card_full',
             function_kwargs={
@@ -159,13 +159,13 @@ class TestPIIFaker:
         """Test the ``get_output_types``.
 
         Setup:
-            - initialize a ``PIIFaker`` transformer which:
+            - initialize a ``PIIAnonymizer`` transformer which:
 
         Output:
             - the ``output_types`` returns an empty dictionary.
         """
         # Setup
-        transformer = PIIFaker()
+        transformer = PIIAnonymizer()
         transformer.column_prefix = 'a#b'
 
         # Run
@@ -179,7 +179,7 @@ class TestPIIFaker:
         """Test the ``get_output_types`` method when a null column is created.
 
         Setup:
-            - initialize a ``PIIFaker`` transformer which:
+            - initialize a ``PIIAnonymizer`` transformer which:
                 - sets ``self.null_transformer`` to a ``NullTransformer`` where
                 ``self.model_missing_values`` is True.
                 - sets ``self.column_prefix`` to a string.
@@ -189,7 +189,7 @@ class TestPIIFaker:
               added to the beginning of the keys.
         """
         # Setup
-        transformer = PIIFaker()
+        transformer = PIIAnonymizer()
         transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
         transformer.null_transformer._model_missing_values = True
         transformer.column_prefix = 'a#b'
@@ -203,7 +203,7 @@ class TestPIIFaker:
         }
         assert output == expected
 
-    @patch('rdt.transformers.pii.faker.NullTransformer')
+    @patch('rdt.transformers.pii.anonymizer.NullTransformer')
     def test__fit(self, mock_null_transformer):
         """Test the ``_fit`` method.
 
@@ -211,7 +211,7 @@ class TestPIIFaker:
         and learn the length of it.
 
         Setup:
-            - Initialize a ``PIIFaker`` transformer.
+            - Initialize a ``PIIAnonymizer`` transformer.
             - Mock the ``NullTransformer``.
 
         Input:
@@ -224,7 +224,7 @@ class TestPIIFaker:
             - ``instance.data_length`` equals to the length of the input data.
         """
         # Setup
-        transformer = PIIFaker()
+        transformer = PIIAnonymizer()
 
         columns_data = pd.Series(['1', '2', '3'])
 
@@ -243,7 +243,7 @@ class TestPIIFaker:
         does not model the missing values.
 
         Setup:
-            - Initialize a ``PIIFaker`` transformer.
+            - Initialize a ``PIIAnonymizer`` transformer.
 
         Input:
             - ``pd.Series`` with three values.
@@ -253,7 +253,7 @@ class TestPIIFaker:
         """
         # Setup
         columns_data = pd.Series([1, 2, 3])
-        instance = PIIFaker()
+        instance = PIIAnonymizer()
 
         # Run
         result = instance._transform(columns_data)
@@ -268,7 +268,7 @@ class TestPIIFaker:
         transform the data.
 
         Setup:
-            - Initialize a ``PIIFaker`` transformer.
+            - Initialize a ``PIIAnonymizer`` transformer.
             - Mock the ``null_transformer`` of the instance.
             - Mock the return value of the ``null_transformer.transform``.
 
@@ -281,7 +281,7 @@ class TestPIIFaker:
         """
         # Setup
         columns_data = pd.Series([1, 2, 3])
-        instance = PIIFaker()
+        instance = PIIAnonymizer()
         instance.null_transformer = Mock()
 
         instance.null_transformer.transform.return_value = np.array([
@@ -304,7 +304,7 @@ class TestPIIFaker:
         the ``instance.function_kwargs`` the ``instance.data_length`` amount of times.
 
         Setup:
-            - Initialize a ``PIIFaker`` transformer.
+            - Initialize a ``PIIAnonymizer`` transformer.
             - Mock the ``null_transformer`` of the instance.
             - Mock the return value of the ``null_transformer.reverse_transform``.
 
@@ -316,7 +316,7 @@ class TestPIIFaker:
         """
         # Setup
         columns_data = pd.Series([1, 2, 3])
-        instance = PIIFaker()
+        instance = PIIAnonymizer()
         instance.null_transformer = Mock()
         instance.null_transformer.models_missing_values.return_value = False
         instance.data_length = 3
@@ -347,7 +347,7 @@ class TestPIIFaker:
         to generate values within the range of the ``instance.data_length``.
 
         Setup:
-            - Mock the instance of ``PIIFaker``.
+            - Mock the instance of ``PIIAnonymizer``.
             - Mock the ``instance.null_transformer.reverse_transform`` return value.
 
         Input:
@@ -381,7 +381,7 @@ class TestPIIFaker:
         }
 
         # Run
-        output = PIIFaker._reverse_transform(instance, columns_data)
+        output = PIIAnonymizer._reverse_transform(instance, columns_data)
 
         # Assert
         expected_output = pd.Series([
@@ -406,16 +406,16 @@ class TestPIIFaker:
         """Test the ``__repr__`` method.
 
         With the default parameters should return only the ``function_name='lexify'`` as an
-        starting argument for the ``PIIFaker``.
+        starting argument for the ``PIIAnonymizer``.
         """
         # Setup
-        instance = PIIFaker()
+        instance = PIIAnonymizer()
 
         # Run
         res = repr(instance)
 
         # Assert
-        expected_res = "PIIFaker(function_name='lexify')"
+        expected_res = "PIIAnonymizer(function_name='lexify')"
         assert res == expected_res
 
     def test___repr__custom_provider(self):
@@ -425,14 +425,14 @@ class TestPIIFaker:
         arguments.
         """
         # Setup
-        instance = PIIFaker('credit_card', 'credit_card_full', model_missing_values=True)
+        instance = PIIAnonymizer('credit_card', 'credit_card_full', model_missing_values=True)
 
         # Run
         res = repr(instance)
 
         # Assert
         expected_res = (
-            "PIIFaker(provider_name='credit_card', function_name='credit_card_full', "
+            "PIIAnonymizer(provider_name='credit_card', function_name='credit_card_full', "
             'model_missing_values=True)'
         )
 

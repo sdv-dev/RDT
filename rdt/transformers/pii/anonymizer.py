@@ -1,4 +1,4 @@
-"""Personal Identifiable Information Transformer using Faker."""
+"""Personal Identifiable Information Anonymizer."""
 
 from copy import deepcopy
 
@@ -9,8 +9,8 @@ from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
 
-class PIIFaker(BaseTransformer):
-    """Personal Identifiable Information Transformer using Faker.
+class PIIAnonymizer(BaseTransformer):
+    """Personal Identifiable Information Anonymizer using Faker.
 
     This transformer will drop a column and regenerate it with the previously specified
     ``Faker`` provider and ``function``. The transformer will also be able to handle nulls
@@ -133,4 +133,4 @@ class PIIFaker(BaseTransformer):
             instance_args.pop('provider_name')
 
         instance_args = ', '.join(f'{key}={value}' for key, value in instance_args.items())
-        return f'PIIFaker({instance_args})'
+        return f'PIIAnonymizer({instance_args})'
