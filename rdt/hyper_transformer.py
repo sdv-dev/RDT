@@ -6,6 +6,7 @@ from copy import deepcopy
 
 import pandas as pd
 import yaml
+import json
 
 from rdt.errors import NotFittedError
 from rdt.transformers import get_default_transformer, get_transformer_instance
@@ -325,7 +326,13 @@ class HyperTransformer:
         return yaml.safe_dump(dict(modified_tree))
 
     def detect_initial_config(self, data):
-        """Print the detected configuration of the data.
+        """Print the configuration of the data.
+
+        This method detects the ``sdtype`` and transformer of each field in the data
+        and then prints them as a json object.
+
+        NOTE: This method resets the state of the ``HyperTransformer``. Previously set
+        ``sdtypes`` or transformers will be lost.
 
         Args:
             data (pd.DataFrame):
@@ -341,19 +348,16 @@ class HyperTransformer:
             field_sdtype = self.field_data_types[field]
             self.field_transformers[field] = get_default_transformer(field_sdtype)
 
-        config = pd.DataFrame({
-            'column_name': data.columns,
-            'sdtype': self.field_data_types.values(),
-            'transformer': self.field_transformers.values()
-        })
+        print('Detecting a new config from the data ... SUCCESS')
+        print('Setting the new config ... SUCCESS')
 
-        print('Detected config:')
-        print(config)
-        print()
-        print(
-            "Info: Use 'update_sdtypes' and 'update_transformers' to override the sdtypes "
-            "and transformers. Use 'get_sdtypes' and 'get_transformers' to verify the updates."
-        )
+        config = {
+            'sdtypes': self.field_data_types,
+            'transformers': {k: repr(v) for k, v in self.field_transformers.items()}
+        }
+
+        print('Config:')
+        print(json.dumps(config, indent=4))
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
