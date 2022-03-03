@@ -1,12 +1,11 @@
 """Hyper transformer module."""
 
+import json
 import warnings
 from collections import defaultdict
 from copy import deepcopy
 
-import pandas as pd
 import yaml
-import json
 
 from rdt.errors import NotFittedError
 from rdt.transformers import get_default_transformer, get_transformer_instance
@@ -147,7 +146,7 @@ class HyperTransformer:
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
-    def _set_field_data_types(self, data, field):
+    def _set_field_data_type(self, data, field):
         clean_data = data[field].dropna()
         kind = clean_data.infer_objects().dtype.kind
         self.field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
@@ -160,7 +159,7 @@ class HyperTransformer:
 
         for field in data:
             if field not in provided_fields:
-                self._set_field_data_types(data, field)
+                self._set_field_data_type(data, field)
 
     def _unfit(self):
         self._transformers_sequence = []
@@ -344,7 +343,7 @@ class HyperTransformer:
 
         # Set the sdtypes and transformers of all fields to their defaults
         for field in data:
-            self._set_field_data_types(data, field)
+            self._set_field_data_type(data, field)
             field_sdtype = self.field_data_types[field]
             self.field_transformers[field] = get_default_transformer(field_sdtype)
 
