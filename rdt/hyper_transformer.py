@@ -146,23 +146,20 @@ class HyperTransformer:
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
-    def _field_data_types(self, data):
+    def _set_field_data_types(self, data, field):
+        clean_data = data[field].dropna()
+        kind = clean_data.infer_objects().dtype.kind
+        self.field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
+
+    def _populate_field_data_types(self, data):
         # get set of provided fields including multi-column fields
         provided_fields = set()
         for field in self.field_data_types.keys():
             self._add_field_to_set(field, provided_fields)
 
-        fields_to_dtype = self.field_data_types.copy()
         for field in data:
             if field not in provided_fields:
-                clean_data = data[field].dropna()
-                kind = clean_data.infer_objects().dtype.kind
-                fields_to_dtype[field] = self._DTYPES_TO_DATA_TYPES[kind]
-
-        return fields_to_dtype
-
-    def _populate_field_data_types(self, data):
-        self.field_data_types = self._field_data_types(data)
+                self._set_field_data_types(data, field)
 
     def _unfit(self):
         self._transformers_sequence = []
@@ -326,29 +323,28 @@ class HyperTransformer:
             modified_tree[field]['transformer'] = class_name
 
         return yaml.safe_dump(dict(modified_tree))
-    
-    def _get_transformer_for_dtype(self, data_type):
-        if data_type in self.default_data_type_transformers:
-            return self.default_data_type_transformers[data_type]
-        return get_default_transformer(data_type)
 
-    def auto_detect_config(self, data):
+    def detect_initial_config(self, data):
         """Print the detected configuration of the data.
 
         Args:
             data (pd.DataFrame):
                 Data which will have its configuration detected.
         """
-        sdtypes = self._field_data_types(data)
-        field_transformers = self.field_transformers.copy()
-        for (field, data_type) in sdtypes.items():
-            if not self._field_in_set(field, set(field_transformers.keys())):
-                field_transformers[field] = self._get_transformer_for_dtype(data_type)
+        # Reset the state of the HyperTransformer
+        self.field_data_types = {}
+        self.field_transformers = {}
+
+        # Set the sdtypes and transformers of all fields to their defaults
+        for field in data:
+            self._set_field_data_types(data, field)
+            field_sdtype = self.field_data_types[field]
+            self.field_transformers[field] = get_default_transformer(field_sdtype)
 
         config = pd.DataFrame({
             'column_name': data.columns,
-            'sdtype': sdtypes.values(),
-            'transformer': field_transformers.values()
+            'sdtype': self.field_data_types.values(),
+            'transformer': self.field_transformers.values()
         })
 
         print('Detected config:')
@@ -440,7 +436,11 @@ class HyperTransformer:
 
         for (field, data_type) in self.field_data_types.items():
             if not self._field_in_set(field, self._fitted_fields):
-                transformer = self._get_transformer_for_dtype(data_type)
+                if data_type in self.default_data_type_transformers:
+                    transformer = self.default_data_type_transformers[data_type]
+                else:
+                    transformer = get_default_transformer(data_type)
+
                 data = self._fit_field_transformer(data, field, transformer)
 
         self._validate_all_fields_fitted()
