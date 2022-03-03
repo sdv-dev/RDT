@@ -347,16 +347,16 @@ class HyperTransformer:
             field_sdtype = self.field_data_types[field]
             self.field_transformers[field] = get_default_transformer(field_sdtype)
 
-        print('Detecting a new config from the data ... SUCCESS')  # pylint: disable=T001
-        print('Setting the new config ... SUCCESS')  # pylint: disable=T001
+        print('Detecting a new config from the data ... SUCCESS')  # noqa: T001
+        print('Setting the new config ... SUCCESS')  # noqa: T001
 
         config = {
             'sdtypes': self.field_data_types,
             'transformers': {k: repr(v) for k, v in self.field_transformers.items()}
         }
 
-        print('Config:')  # pylint: disable=T001
-        print(json.dumps(config, indent=4))  # pylint: disable=T001
+        print('Config:')  # noqa: T001
+        print(json.dumps(config, indent=4))  # noqa: T001
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None
