@@ -15,6 +15,7 @@ from rdt.transformers.categorical import FrequencyEncoder, LabelEncoder, OneHotE
 from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
+from rdt.transformers.pii.anonymizer import PIIAnonymizer
 
 __all__ = [
     'BaseTransformer',
@@ -28,6 +29,7 @@ __all__ = [
     'OneHotEncoder',
     'OptimizedTimestampEncoder',
     'UnixTimestampEncoder',
+    'PIIAnonymizer',
     'get_transformer_name',
     'get_transformer_class',
     'get_transformer_instance',

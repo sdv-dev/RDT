@@ -39,6 +39,8 @@ class PIIAnonymizer(BaseTransformer):
             are null values. Defaults to ``False``.
     """
 
+    DETERMINISTIC_TRANSFORM = False
+    DETERMINISTIC_REVERSE = False
     INPUT_TYPE = 'pii'
     null_transformer = None
 

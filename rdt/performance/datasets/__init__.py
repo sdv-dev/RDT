@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from rdt.performance.datasets import boolean, categorical, datetime, numerical
+from rdt.performance.datasets import boolean, categorical, datetime, numerical, pii
 from rdt.performance.datasets.base import BaseDatasetGenerator
 
 __all__ = [
@@ -11,6 +11,7 @@ __all__ = [
     'datetime',
     'numerical',
     'BaseDatasetGenerator',
+    'pii',
 ]
 
 
@@ -24,6 +25,7 @@ def get_dataset_generators_by_type():
     """
     dataset_generators = defaultdict(list)
     for dataset_generator in BaseDatasetGenerator.get_subclasses():
-        dataset_generators[dataset_generator.DATA_TYPE].append(dataset_generator)
+        if dataset_generator.DATA_TYPE == 'pii':
+            dataset_generators[dataset_generator.DATA_TYPE].append(dataset_generator)
 
     return dataset_generators

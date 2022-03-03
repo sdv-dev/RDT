@@ -57,6 +57,7 @@ DATA_TYPE_TO_DTYPES = {
     'numerical': ['f', 'i'],
     'integer': ['i'],
     'float': ['f', 'i'],
+    'pii': ['O', 'i', 'f'],
 }
 
 

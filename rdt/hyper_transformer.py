@@ -77,6 +77,7 @@ class HyperTransformer:
         'O': 'categorical',
         'b': 'boolean',
         'M': 'datetime',
+        'p': 'pii',
     }
     _DEFAULT_OUTPUT_TYPES = [
         'numerical',
