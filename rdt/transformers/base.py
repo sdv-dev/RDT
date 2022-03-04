@@ -1,5 +1,6 @@
 """BaseTransformer module."""
 import abc
+import inspect
 
 import pandas as pd
 
@@ -173,15 +174,22 @@ class BaseTransformer:
                 The name of the transformer followed by any non-default parameters.
         """
         class_name = self.__class__.__name__
-        args = []
-        default = self.__class__()
-        for arg, value in self.__dict__.items():
-            if default.__dict__[arg] != value:
-                if isinstance(value, str):
-                    value = f"'{value}'"
-                args.append(f'{arg}={value}')
+        custom_args = []
+        args = inspect.getfullargspec(self.__init__)
+        keys = args.args[1:]
+        defaults = args.defaults or []
+        defaults = dict(zip(keys, defaults))
+        instanced = {key: getattr(self, key) for key in keys}
 
-        args_string = ', '.join(args)
+        if defaults == instanced:
+            return f'{class_name}()'
+
+        for arg, value in instanced.items():
+            if defaults[arg] != value:
+                value = f"'{value}'" if isinstance(value, str) else value
+                custom_args.append(f'{arg}={value}')
+
+        args_string = ', '.join(custom_args)
         return f'{class_name}({args_string})'
 
     def _fit(self, columns_data):
