@@ -355,7 +355,7 @@ Creating Dataset Generators
 ***************************
 
 In order to test performance, we have a class that is responsible for generating data to test
-the transformer methods against. Each subclass implements two static method, ``generate`` 
+the transformer methods against. Each subclass implements two static methods, ``generate`` 
 and ``get_performance_thresholds``.
 
 1. ``generate`` takes in the number of rows to generate, and outputs the expected number

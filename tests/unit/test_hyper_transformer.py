@@ -107,8 +107,8 @@ class TestHyperTransformer(TestCase):
         # Asserts
         assert ht.copy is True
         assert ht.field_transformers == {}
-        assert ht.default_data_type_transformers == {}
-        assert ht.field_data_types == {}
+        assert ht.default_sdtype_transformers == {}
+        assert ht.field_sdtypes == {}
         multi_column_mock.assert_called_once()
         validation_mock.assert_called_once()
 
@@ -143,12 +143,12 @@ class TestHyperTransformer(TestCase):
         """Test the ``_create_multi_column_fields`` method.
 
         This tests that the method goes through both the ``field_transformers``
-        dict and ``field_data_types`` dict to find multi_column fields and map
+        dict and ``field_sdtypes`` dict to find multi_column fields and map
         each column to its corresponding tuple.
 
         Setup:
             - instance.field_transformers will be populated with multi-column fields
-            - instance.field_data_types will be populated with multi-column fields
+            - instance.field_sdtypes will be populated with multi-column fields
 
         Output:
             - A dict mapping each column name that is part of a multi-column
@@ -162,7 +162,7 @@ class TestHyperTransformer(TestCase):
             ('c', 'd'): UnixTimestampEncoder,
             'e': FloatFormatter
         }
-        ht.field_data_types = {
+        ht.field_sdtypes = {
             'f': 'categorical',
             ('g', 'h'): 'datetime'
         }
@@ -189,7 +189,7 @@ class TestHyperTransformer(TestCase):
         Setup:
             - field_transformers is given a transformer for the
             output field.
-            - default_data_type_transformers will be given a different transformer
+            - default_sdtype_transformers will be given a different transformer
             for the output type of the output field.
 
         Input:
@@ -204,7 +204,7 @@ class TestHyperTransformer(TestCase):
         transformer = FloatFormatter()
         ht = HyperTransformer(
             field_transformers={'a.out': transformer},
-            default_data_type_transformers={'numerical': GaussianNormalizer()}
+            default_sdtype_transformers={'numerical': GaussianNormalizer()}
         )
 
         # Run
@@ -222,7 +222,7 @@ class TestHyperTransformer(TestCase):
         is returned.
 
         Setup:
-            - default_data_type_transformers will be given a transformer
+            - default_sdtype_transformers will be given a transformer
             for the output type of the output field.
 
         Input:
@@ -235,7 +235,7 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer(
-            default_data_type_transformers={'numerical': GaussianNormalizer()}
+            default_sdtype_transformers={'numerical': GaussianNormalizer()}
         )
 
         # Run
@@ -254,7 +254,7 @@ class TestHyperTransformer(TestCase):
         field, then it is used.
 
         Setup:
-            - default_data_type_transformers will be given a transformer
+            - default_sdtype_transformers will be given a transformer
             for the output type of the output field.
 
         Input:
@@ -269,7 +269,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformer = FrequencyEncoder()
         ht = HyperTransformer(
-            default_data_type_transformers={'categorical': OneHotEncoder()}
+            default_sdtype_transformers={'categorical': OneHotEncoder()}
         )
         next_transformers = {'a.out': transformer}
 
@@ -303,7 +303,7 @@ class TestHyperTransformer(TestCase):
         transformer = FrequencyEncoder(add_noise=True)
         mock.return_value = transformer
         ht = HyperTransformer(
-            default_data_type_transformers={'categorical': OneHotEncoder()}
+            default_sdtype_transformers={'categorical': OneHotEncoder()}
         )
 
         # Run
@@ -313,15 +313,15 @@ class TestHyperTransformer(TestCase):
         assert isinstance(next_transformer, FrequencyEncoder)
         assert next_transformer.add_noise is False
 
-    def test__populate_field_data_types(self):
-        """Test the ``_populate_field_data_types`` method.
+    def test__populate_field_sdtypes(self):
+        """Test the ``_populate_field_sdtypes`` method.
 
         This tests that if any field types are missing in the
-        provided field_data_types dict, that the rest of the values
+        provided field_sdtypes dict, that the rest of the values
         are filled in using the data types for the dtype.
 
         Setup:
-            - field_data_types will only define a few of the fields.
+            - field_sdtypes will only define a few of the fields.
 
         Input:
             - A DataFrame of various types.
@@ -331,7 +331,7 @@ class TestHyperTransformer(TestCase):
             the data.
         """
         # Setup
-        ht = HyperTransformer(field_data_types={'a': 'numerical', 'b': 'categorical'})
+        ht = HyperTransformer(field_sdtypes={'a': 'numerical', 'b': 'categorical'})
         data = pd.DataFrame({
             'a': [np.nan, 1, 2, 3],
             'b': [np.nan, 'category1', 'category2', 'category3'],
@@ -340,11 +340,11 @@ class TestHyperTransformer(TestCase):
         })
 
         # Run
-        ht._populate_field_data_types(data)
+        ht._populate_field_sdtypes(data)
 
         # Assert
         expected = {'a': 'numerical', 'b': 'categorical', 'c': 'boolean', 'd': 'float'}
-        assert ht.field_data_types == expected
+        assert ht.field_sdtypes == expected
 
     def test_detect_initial_config(self):
         """Test the ``detect_initial_config`` method.
@@ -839,9 +839,9 @@ class TestHyperTransformer(TestCase):
         """Test the ``fit`` method.
 
         Tests that the ``fit`` method loops through the fields in ``field_transformers``
-        and ``field_data_types`` that are in the data. It should try to find a transformer
-        in ``default_data_type_transformers`` and then use the default if it doesn't find one
-        when looping through ``field_data_types``. It should then call ``_fit_field_transformer``
+        and ``field_sdtypes`` that are in the data. It should try to find a transformer
+        in ``default_sdtype_transformers`` and then use the default if it doesn't find one
+        when looping through ``field_sdtypes``. It should then call ``_fit_field_transformer``
         with the correct arguments.
 
         Setup:
@@ -870,14 +870,14 @@ class TestHyperTransformer(TestCase):
             'float': float_transformer,
             'integer.out': int_out_transformer
         }
-        default_data_type_transformers = {
+        default_sdtype_transformers = {
             'boolean': bool_transformer,
             'categorical': categorical_transformer
         }
         get_default_transformer_mock.return_value = datetime_transformer
         ht = HyperTransformer(
             field_transformers=field_transformers,
-            default_data_type_transformers=default_data_type_transformers
+            default_sdtype_transformers=default_sdtype_transformers
         )
         ht._fit_field_transformer = Mock()
         ht._fit_field_transformer.return_value = data
@@ -1079,81 +1079,107 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(NotFittedError):
             ht.reverse_transform(data)
 
+<<<<<<< HEAD
     def test_update_field_data_types(self):
         """Test the ``update_field_data_types`` method.
+=======
+    def test_get_field_sdtypes(self):
+        """Test the ``get_field_sdtypes`` method.
 
-        This method should update the ``field_data_types`` attribute.
+        This method should return the ``field_sdtypes`` attribute.
+
+        Output:
+            - Dict mapping fields to data types.
+        """
+        # Setup
+        field_sdtypes = {
+            'a': 'categorical',
+            'b': 'integer'
+        }
+        ht = HyperTransformer(field_sdtypes=field_sdtypes)
+
+        # Run
+        out = ht.get_field_sdtypes()
+
+        # Assert
+        assert out == {'a': 'categorical', 'b': 'integer'}
+
+    def test_update_field_sdtypes(self):
+        """Test the ``update_field_sdtypes`` method.
+>>>>>>> 14e371d (Some updates)
+
+        This method should update the ``field_sdtypes`` attribute.
 
         Setup:
-            - Initialize ``HyperTransformer`` with ``field_data_types`` having
+            - Initialize ``HyperTransformer`` with ``field_sdtypes`` having
             one entry.
 
         Input:
             - Dict mapping fields to data types.
         """
         # Setup
-        field_data_types = {
+        field_sdtypes = {
             'a': 'categorical',
             'b': 'integer'
         }
-        ht = HyperTransformer(field_data_types={'a': 'float'})
+        ht = HyperTransformer(field_sdtypes={'a': 'float'})
         ht._transformers_sequence = [FrequencyEncoder()]
         ht._unfit = Mock()
 
         # Run
-        ht.update_field_data_types(field_data_types)
+        ht.update_field_sdtypes(field_sdtypes)
 
         # Assert
-        assert ht.field_data_types == {'a': 'categorical', 'b': 'integer'}
+        assert ht.field_sdtypes == {'a': 'categorical', 'b': 'integer'}
         ht._unfit.assert_called_once()
 
-    def test_get_default_data_type_transformers(self):
-        """Test the ``get_default_data_type_transformers`` method.
+    def test_get_default_sdtype_transformers(self):
+        """Test the ``get_default_sdtype_transformers`` method.
 
-        This method should return the ``default_data_type_transformers`` attribute.
+        This method should return the ``default_sdtype_transformers`` attribute.
 
         Output:
             - Dict mapping data types to transformers.
         """
         # Setup
-        data_type_transformers = {
+        sdtype_transformers = {
             'categorical': FrequencyEncoder,
             'integer': FloatFormatter
         }
-        ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
+        ht = HyperTransformer(default_sdtype_transformers=sdtype_transformers)
 
         # Run
-        out = ht.get_default_data_type_transformers()
+        out = ht.get_default_sdtype_transformers()
 
         # Assert
         assert out == {'categorical': FrequencyEncoder, 'integer': FloatFormatter}
 
-    def test_update_default_data_type_transformers(self):
-        """Test the ``update_default_data_type_transformers`` method.
+    def test_update_default_sdtype_transformers(self):
+        """Test the ``update_default_sdtype_transformers`` method.
 
-        This method should update the ``default_data_type_transformers`` attribute.
+        This method should update the ``default_sdtype_transformers`` attribute.
 
         Setup:
-            - Initialize ``HyperTransformer`` with ``default_data_type_transformers``
+            - Initialize ``HyperTransformer`` with ``default_sdtype_transformers``
             dict that only has some types set.
 
         Input:
             - Dict mapping new data types to transformers.
         """
         # Setup
-        data_type_transformers = {
+        sdtype_transformers = {
             'categorical': FrequencyEncoder,
             'integer': FloatFormatter
         }
-        ht = HyperTransformer(default_data_type_transformers=data_type_transformers)
+        ht = HyperTransformer(default_sdtype_transformers=sdtype_transformers)
         ht._transformers_sequence = [FrequencyEncoder()]
         ht._unfit = Mock()
 
         # Run
-        ht.update_default_data_type_transformers({'boolean': BinaryEncoder})
+        ht.update_default_sdtype_transformers({'boolean': BinaryEncoder})
 
         # Assert
-        assert ht.default_data_type_transformers == {
+        assert ht.default_sdtype_transformers == {
             'categorical': FrequencyEncoder,
             'integer': FloatFormatter,
             'boolean': BinaryEncoder

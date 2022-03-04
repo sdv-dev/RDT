@@ -280,7 +280,7 @@ def test_with_unfitted_columns():
     """HyperTransform should be able to transform even if there are unseen columns in data."""
     # Setup
     data = get_input_data()
-    ht = HyperTransformer(default_data_type_transformers={'categorical': FrequencyEncoder})
+    ht = HyperTransformer(default_sdtype_transformers={'categorical': FrequencyEncoder})
     ht.fit(data)
 
     # Run

@@ -141,13 +141,13 @@ def get_transformers_by_type():
             Mapping of data types to a list of existing transformers that take that
             type as an input.
     """
-    data_type_transformers = defaultdict(list)
+    sdtype_transformers = defaultdict(list)
     transformer_classes = BaseTransformer.get_subclasses()
     for transformer in transformer_classes:
         input_type = transformer.get_input_type()
-        data_type_transformers[input_type].append(transformer)
+        sdtype_transformers[input_type].append(transformer)
 
-    return data_type_transformers
+    return sdtype_transformers
 
 
 @lru_cache()
