@@ -162,7 +162,8 @@ class HyperTransformer:
         self._fitted_fields.clear()
         self._fitted = False
 
-    def _validate_config(self, config):
+    @staticmethod
+    def _validate_config(config):
         sdtypes = config.get('sdtypes', {})
         transformers = config.get('transformers', {})
         for column, transformer in transformers.items():
@@ -170,8 +171,8 @@ class HyperTransformer:
             sdtype = sdtypes.get(column)
             if transformer.get_input_type() != sdtypes.get(column):
                 warnings.warn(f'You are assigning a {input_type} transformer to a {sdtype} column'
-                             + '(\'{column}\'). If the transformer doesn\'t match the sdtype,'
-                             + ' it may lead to errors.')
+                              + "('{column}'). If the transformer doesn't match the sdtype,"
+                              + ' it may lead to errors.')
 
     def get_config(self):
         """Get the current ``HyperTransformer`` configuration.
