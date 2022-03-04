@@ -162,6 +162,44 @@ class HyperTransformer:
         self._fitted_fields.clear()
         self._fitted = False
 
+    def _validate_config(self, config):
+        sdtypes = config.get('sdtypes', {})
+        transformers = config.get('transformers', {})
+        for column, transformer in transformers.items():
+            input_type = transformer.get_input_type()
+            sdtype = sdtypes.get(column)
+            if transformer.get_input_type() != sdtypes.get(column):
+                warnings.warn(f'You are assigning a {input_type} transformer to a {sdtype} column'
+                             + '(\'{column}\'). If the transformer doesn\'t match the sdtype,'
+                             + ' it may lead to errors.')
+
+    def get_config(self):
+        """Get the current ``HyperTransformer`` configuration.
+
+        Returns:
+            dict:
+                A dictionary containing the following two dictionaries:
+                - sdtypes: A dictionary mapping column names to their ``sdtypes``.
+                - transformers: A dictionary mapping column names to their transformer instances.
+        """
+        return {
+            'sdtype': self.field_data_types,
+            'transformers': self.field_transformers
+        }
+
+    def set_config(self, config):
+        """Set the ``HyperTransformer`` configuration.
+
+        Args:
+            config (dict):
+                A dictionary containing the following two dictionaries:
+                - sdtypes: A dictionary mapping column names to their ``sdtypes``.
+                - transformers: A dictionary mapping column names to their transformer instances.
+        """
+        self._validate_config(config)
+        self.field_data_types = config['sdtypes']
+        self.field_transformers = config['transformers']
+
     def get_field_data_types(self):
         """Get the ``field_data_types`` dict.
 
