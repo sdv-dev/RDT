@@ -36,7 +36,7 @@ class RandomStringGenerator(PIIGenerator):
                 'memory': 500.0
             },
             'reverse_transform': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 1000.0,
             }
         }
@@ -63,7 +63,7 @@ class RandomStringNaNsGenerator(PIIGenerator):
                 'memory': 1000.0
             },
             'reverse_transform': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 1000.0,
             }
         }
