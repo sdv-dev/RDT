@@ -41,16 +41,16 @@ def get_regression_score(features, target):
     return np.mean(scores)
 
 
-def find_columns(data, data_type, metadata=None):
+def find_columns(data, sdtype, metadata=None):
     if metadata:
         return {
             column
             for column in metadata['fields']
-            if metadata['fields'][column]['type'] == data_type
+            if metadata['fields'][column]['type'] == sdtype
         }
 
     columns = set()
-    dtypes = TYPE_TO_DTYPE.get(data_type, data_type)
+    dtypes = TYPE_TO_DTYPE.get(sdtype, sdtype)
     for dtype in dtypes:
         selected = data.select_dtypes(dtype)
         columns.update(set(selected.columns))
@@ -58,14 +58,14 @@ def find_columns(data, data_type, metadata=None):
     return columns
 
 
-def get_transformer_regression_scores(data, data_type, dataset_name, transformers, metadata=None):
+def get_transformer_regression_scores(data, sdtype, dataset_name, transformers, metadata=None):
     """Returns regression scores for a list of transformers.
 
     Args:
         data (pandas.DataFrame):
             The dataset containing columns to predict and train with.
-        data_type (string):
-            The data type of the transformer.
+        sdtype (string):
+            The sdtype of the transformer.
         dataset_name (string):
             The name of the dataset.
         transformers (list):
@@ -77,10 +77,10 @@ def get_transformer_regression_scores(data, data_type, dataset_name, transformer
         pandas.DataFrame containing the score for each column predicted
         in the dataset. To get the scores, a regression model is trained.
         The features used are the output of transforming all the columns
-        of the data type using a transformer in the transformers list.
+        of the sdtype using a transformer in the transformers list.
     """
     columns_to_predict = find_columns(data, 'numerical')
-    columns_to_transform = find_columns(data, data_type, metadata)
+    columns_to_transform = find_columns(data, sdtype, metadata)
     scores = pd.DataFrame()
     features = data[columns_to_transform]
 
@@ -90,7 +90,7 @@ def get_transformer_regression_scores(data, data_type, dataset_name, transformer
         target = numerical_transformer.fit_transform(target, column)
         target = format_array(target)
         for transformer in transformers:
-            ht = HyperTransformer(default_sdtype_transformers={data_type: transformer})
+            ht = HyperTransformer(default_sdtype_transformers={sdtype: transformer})
             ht.fit(features)
             transformed_features = ht.transform(features).to_numpy()
             score = get_regression_score(transformed_features, target)
@@ -105,14 +105,14 @@ def get_transformer_regression_scores(data, data_type, dataset_name, transformer
     return scores
 
 
-def get_test_cases(data_types):
+def get_test_cases(sdtypes):
     test_cases = []
     path = os.path.join(os.path.dirname(__file__), 'dataset_info.csv')
     datasets = pd.read_csv(path)
     for _, row in datasets.iterrows():
         if row['table_size'] < MAX_SIZE and row['modality'] == 'single-table':
             table_types = eval(row['table_types'])
-            table_types_to_test = data_types.intersection(table_types)
+            table_types_to_test = sdtypes.intersection(table_types)
             if len(table_types_to_test) > 0:
                 test_cases.append((row['name'], row['table_name'], table_types_to_test))
 
@@ -137,13 +137,13 @@ def get_regression_scores(test_cases, transformers_by_type):
         coefficient of determination for the transformer predicting the column.
     """
     all_scores = defaultdict(pd.DataFrame)
-    for dataset_name, table_name, data_types in test_cases:
+    for dataset_name, table_name, sdtypes in test_cases:
         (data, metadata) = download_single_table(dataset_name, table_name)
-        for data_type in data_types:
-            transformers = transformers_by_type[data_type]
+        for sdtype in sdtypes:
+            transformers = transformers_by_type[sdtype]
             regression_scores = get_transformer_regression_scores(
-                data, data_type, dataset_name, transformers, metadata)
-            all_scores[data_type] = all_scores[data_type].append(
+                data, sdtype, dataset_name, transformers, metadata)
+            all_scores[sdtype] = all_scores[sdtype].append(
                 regression_scores, ignore_index=True)
 
     return all_scores
@@ -221,12 +221,12 @@ def test_quality(subtests):
         threshold, or the comparitive score is higher than the threshold.
     """
     transformers_by_type = get_transformers_by_type()
-    data_types_to_test = {
-        data_type
-        for data_type in transformers_by_type.keys()
-        if data_type not in TYPES_TO_SKIP
+    sdtypes_to_test = {
+        sdtype
+        for sdtype in transformers_by_type.keys()
+        if sdtype not in TYPES_TO_SKIP
     }
-    test_cases = get_test_cases(data_types_to_test)
+    test_cases = get_test_cases(sdtypes_to_test)
     all_regression_scores = get_regression_scores(test_cases, transformers_by_type)
     results = get_results_table(all_regression_scores)
 

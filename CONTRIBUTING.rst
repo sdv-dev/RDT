@@ -446,7 +446,7 @@ steps:
    ``get_transformer_regression_scores`` in the ``test_quality`` package::
 
     from tests.quality.test_quality import get_transformer_regression_scores
-    get_transformer_regression_scores(data, data_type, dataset_name, [transformer])
+    get_transformer_regression_scores(data, sdtype, dataset_name, [transformer])
 
 3. If the scores are higher than the ``TEST_THRESHOLD`` in the ``test_quality`` package, contact
    one of the `RDT core contributors`_ on GitHub and ask them to add the dataset. Once this is

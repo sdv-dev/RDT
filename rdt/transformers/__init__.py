@@ -160,15 +160,15 @@ def get_default_transformers():
     """
     transformers_by_type = get_transformers_by_type()
     defaults = deepcopy(DEFAULT_TRANSFORMERS)
-    for (data_type, transformers) in transformers_by_type.items():
-        if data_type not in defaults:
-            defaults[data_type] = transformers[0]
+    for (sdtype, transformers) in transformers_by_type.items():
+        if sdtype not in defaults:
+            defaults[sdtype] = transformers[0]
 
     return defaults
 
 
 @lru_cache()
-def get_default_transformer(data_type):
+def get_default_transformer(sdtype):
     """Get default transformer for a data type.
 
     Returns:
@@ -176,4 +176,4 @@ def get_default_transformer(data_type):
             Default transformer for data type.
     """
     default_transformers = get_default_transformers()
-    return default_transformers[data_type]
+    return default_transformers[sdtype]

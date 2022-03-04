@@ -47,7 +47,7 @@ TRANSFORMER_ARGS = {
 }
 
 
-def _get_dataset_sizes(data_type):
+def _get_dataset_sizes(sdtype):
     """Get a list of (fit_size, transform_size) for each dataset generator.
 
     Based on the data type of the dataset generator, return the list of
@@ -64,7 +64,7 @@ def _get_dataset_sizes(data_type):
     """
     sizes = [(s, s) for s in DATASET_SIZES]
 
-    if data_type == 'categorical':
+    if sdtype == 'categorical':
         sizes = [(s, max(s, 1000)) for s in DATASET_SIZES if s <= 10000]
 
     return sizes
