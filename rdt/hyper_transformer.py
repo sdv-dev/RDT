@@ -330,8 +330,8 @@ class HyperTransformer:
         This method detects the ``sdtype`` and transformer of each field in the data
         and then prints them as a json object.
 
-        NOTE: This method resets the state of the ``HyperTransformer``. Previously set
-        ``sdtypes`` or transformers will be lost.
+        NOTE: This method partially resets the state of the ``HyperTransformer``.
+        Previously set ``sdtypes`` or transformers will be lost.
 
         Args:
             data (pd.DataFrame):
