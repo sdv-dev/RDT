@@ -9,7 +9,7 @@ import pandas as pd
 from rdt import HyperTransformer
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
-    OneHotEncoder, UnixTimestampEncoder, get_default_transformers)
+    OneHotEncoder, UnixTimestampEncoder, get_default_transformer, get_default_transformers)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -170,6 +170,7 @@ def test_hypertransformer_default_inputs():
     assert ht._transformers_tree['names']['outputs'] == ['names.value']
 
     get_default_transformers.cache_clear()
+    get_default_transformer.cache_clear()
 
 
 def test_hypertransformer_field_transformers():
@@ -296,9 +297,10 @@ def test_with_unfitted_columns():
         columns=['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'])
     pd.testing.assert_frame_equal(expected_reversed, reverse)
 
+
 def test_detect_initial_config_doesnt_affect_fit():
     """HyperTransformer should fit the same way regardless of ``detect_initial_config``.
-    
+
     Calling the ``detect_initial_config`` method should not affect the results of ``fit``,
     ``transform`` or ``reverse_transform``.
     """
@@ -319,6 +321,7 @@ def test_detect_initial_config_doesnt_affect_fit():
     # Assert
     pd.testing.assert_frame_equal(transformed1, transformed2)
     pd.testing.assert_frame_equal(reversed1, reversed2)
+
 
 def test_detect_initial_config():
     """HyperTransformer should reset its state when ``detect_initial_config`` runs."""
