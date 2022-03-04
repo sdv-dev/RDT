@@ -325,7 +325,7 @@ def test_detect_initial_config_doesnt_affect_fit():
 
 def test_detect_initial_config():
     """HyperTransformer should reset its state when ``detect_initial_config`` runs.
-    
+
     The ``field_data_types`` and ``field_transformers`` attributes should reset when
     running the ``detect_initial_config`` method.
     """
