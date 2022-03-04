@@ -50,7 +50,7 @@ TRANSFORMER_ARGS = {
 }
 
 # Mapping of rdt sdtype to dtype
-SDTYPE_TO_DTYPE = {
+SDTYPE_TO_DTYPES = {
     'boolean': ['b', 'O'],
     'categorical': ['O', 'i', 'f'],
     'datetime': ['M'],
@@ -131,7 +131,7 @@ def _validate_transformed_data(transformer, transformed_data):
         message = f'Column {column} is expected but not found in transformed data.'
         assert column in transformed_data, message
         message = f'Column {column} is not the expected sdtype {expected_sdtype}'
-        assert transformed_dtypes[column].kind in SDTYPE_TO_DTYPE[expected_sdtype], message
+        assert transformed_dtypes[column].kind in SDTYPE_TO_DTYPES[expected_sdtype], message
 
 
 def _validate_reverse_transformed_data(transformer, reversed_data, input_dtype):
@@ -141,7 +141,7 @@ def _validate_reverse_transformed_data(transformer, reversed_data, input_dtype):
     """
     expected_sdtype = transformer.get_input_type()
     message = f'Reverse transformed data is not the expected sdtype {expected_sdtype}'
-    assert reversed_data.dtypes[TEST_COL].kind in SDTYPE_TO_DTYPE[expected_sdtype], message
+    assert reversed_data.dtypes[TEST_COL].kind in SDTYPE_TO_DTYPES[expected_sdtype], message
 
 
 def _validate_composition(transformer, reversed_data, input_data):
@@ -217,14 +217,14 @@ def _validate_hypertransformer_transformed_data(transformed_data):
     assert transformed_data.notna().all(axis=None), 'Transformed data has nulls.'
 
     for dtype in transformed_data.dtypes:
-        assert dtype.kind in SDTYPE_TO_DTYPE['numerical'], 'Transformed data is not numerical.'
+        assert dtype.kind in SDTYPE_TO_DTYPES['numerical'], 'Transformed data is not numerical.'
 
 
 def _validate_hypertransformer_reverse_transformed_data(transformer, reversed_data):
     """Check that the reverse transformed data has the same dtype as the input."""
     expected_sdtype = transformer().get_input_type()
     message = f'Reversed transformed data is not the expected sdtype {expected_sdtype}'
-    assert reversed_data.dtype.kind in SDTYPE_TO_DTYPE[expected_sdtype], message
+    assert reversed_data.dtype.kind in SDTYPE_TO_DTYPES[expected_sdtype], message
 
 
 def _test_transformer_with_hypertransformer(transformer_class, input_data, steps):
