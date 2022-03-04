@@ -1,5 +1,6 @@
 """Personal Identifiable Information Anonymizer."""
 
+import inspect
 from copy import deepcopy
 
 import faker
@@ -90,49 +91,77 @@ class PIIAnonymizer(BaseTransformer):
 
         return self._add_prefix(output_types)
 
-    def _fit(self, columns_data):
+    def _fit(self, data):
+        """Fit the transformer to the data.
+
+        Args:
+            data (pandas.Series):
+                Data to fit to.
+        """
         self.null_transformer = NullTransformer(
             self.missing_value_replacement,
             self.model_missing_values
         )
-        self.null_transformer.fit(columns_data)
-        self.data_length = len(columns_data)
+        self.null_transformer.fit(data)
+        self.data_length = len(data)
 
-    def _transform(self, columns_data):
+    def _transform(self, data):
+        """Drop the column and return ``null`` column if ``models_missing_values``.
+
+        Args:
+            data (pandas.Series):
+                Data to transform.
+
+        Returns:
+            (numpy.ndarray or None):
+                If ``self.model_missing_values`` is ``True`` then will return a ``numpy.ndarray``
+                indicating which values should be ``nan``, else will return ``None``. In both
+                scenarios the original column is being dropped.
+        """
         if self.null_transformer and self.null_transformer.models_missing_values():
-            return self.null_transformer.transform(columns_data)[:, 1].astype(float)
+            return self.null_transformer.transform(data)[:, 1].astype(float)
 
         return None
 
-    def _reverse_transform(self, columns_data):
+    def _reverse_transform(self, data):
+        """Generate new anonymized data using a ``faker.provider.function``.
+
+        Args:
+            data (pd.Series or numpy.ndarray):
+                Data to transform.
+
+        Returns:
+            pandas.Series
+        """
         reverse_transformed = np.array([
             self._function(**self.function_kwargs)
             for _ in range(self.data_length)
         ], dtype=object)
 
         if self.null_transformer.models_missing_values():
-            reverse_transformed = np.column_stack((reverse_transformed, columns_data))
+            reverse_transformed = np.column_stack((reverse_transformed, data))
 
         return self.null_transformer.reverse_transform(reverse_transformed)
 
     def __repr__(self):
-        """Represent the class instance only with the modified default arguments."""
-        printable = [
-            'provider_name',
-            'function_name',
-            'function_kwargs',
-            'locales',
-            'missing_value_replacement',
-            'model_missing_values',
-        ]
-        instance_args = {
-            key: f"'{value}'" if isinstance(value, str) else value
-            for key, value in self.__dict__.items()
-            if key in printable and value
-        }
+        """Represent initialization of transformer as text.
 
-        if self.provider_name == 'BaseProvider':
-            instance_args.pop('provider_name')
+        Returns:
+            str:
+                The name of the transformer followed by any non-default parameters.
+        """
+        class_name = self.__class__.__name__
+        custom_args = []
+        args = inspect.getfullargspec(self.__init__)
+        keys = args.args[1:]
+        defaults = dict(zip(keys, args.defaults))
+        instanced = {key: getattr(self, key) for key in keys}
 
-        instance_args = ', '.join(f'{key}={value}' for key, value in instance_args.items())
-        return f'PIIAnonymizer({instance_args})'
+        defaults['function_name'] = None
+        for arg, value in instanced.items():
+            if value and defaults[arg] != value and value != 'BaseProvider':
+                value = f"'{value}'" if isinstance(value, str) else value
+                custom_args.append(f'{arg}={value}')
+
+        args_string = ', '.join(custom_args)
+        return f'{class_name}({args_string})'

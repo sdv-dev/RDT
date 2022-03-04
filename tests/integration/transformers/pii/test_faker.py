@@ -5,7 +5,7 @@ import pandas as pd
 from rdt.transformers.pii import PIIAnonymizer
 
 
-def test_piifaker():
+def test_piianonymizer():
     """End to end test with the default settings of the ``PIIAnonymizer``."""
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
@@ -24,7 +24,7 @@ def test_piifaker():
     assert len(reverse_transform['username']) == 5
 
 
-def test_piifaker_custom_provider():
+def test_piianonymizer_custom_provider():
     """End to end test with a custom provider and function for the ``PIIAnonymizer``."""
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
@@ -51,7 +51,7 @@ def test_piifaker_custom_provider():
     assert len(reverse_transform['cc']) == 5
 
 
-def test_piifaker_with_nans():
+def test_piianonymizer_with_nans():
     """End to end test with the default settings of the ``PIIAnonymizer`` with ``nan`` values."""
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
@@ -72,7 +72,7 @@ def test_piifaker_with_nans():
     assert reverse_transform['username'].isna().sum() == 1
 
 
-def test_piifaker_custom_provider_with_nans():
+def test_piianonymizer_custom_provider_with_nans():
     """End to end test with a custom provider for the ``PIIAnonymizer`` with `` nans``."""
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
