@@ -346,6 +346,7 @@ class HyperTransformer:
             self._set_field_data_type(data, field)
             field_sdtype = self.field_data_types[field]
             self.field_transformers[field] = get_default_transformer(field_sdtype)
+            print(field, get_default_transformer(field_sdtype))
 
         print('Detecting a new config from the data ... SUCCESS')  # noqa: T001
         print('Setting the new config ... SUCCESS')  # noqa: T001
