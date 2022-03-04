@@ -150,7 +150,7 @@ def get_transformers_by_type():
     return data_type_transformers
 
 
-# @lru_cache()
+@lru_cache()
 def get_default_transformers():
     """Build a ``dict`` mapping data types to a default transformer for that type.
 
@@ -164,10 +164,10 @@ def get_default_transformers():
         if data_type not in defaults:
             defaults[data_type] = transformers[0]
 
-    return defaults.copy()
+    return defaults
 
 
-# @lru_cache()
+@lru_cache()
 def get_default_transformer(data_type):
     """Get default transformer for a data type.
 
