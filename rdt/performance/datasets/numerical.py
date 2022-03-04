@@ -11,7 +11,7 @@ from rdt.performance.datasets.utils import add_nans
 class NumericalGenerator(BaseDatasetGenerator, ABC):
     """Base class for generators that create numerical data."""
 
-    DATA_TYPE = 'numerical'
+    SDTYPE = 'numerical'
 
 
 class RandomIntegerGenerator(NumericalGenerator):

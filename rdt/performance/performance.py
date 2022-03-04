@@ -90,7 +90,7 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
     transformer_args = TRANSFORMER_ARGS.get(transformer.__name__, {})
     transformer_instance = transformer(**transformer_args)
 
-    sizes = _get_dataset_sizes(dataset_generator.DATA_TYPE)
+    sizes = _get_dataset_sizes(dataset_generator.SDTYPE)
 
     out = []
     for fit_size, transform_size in sizes:

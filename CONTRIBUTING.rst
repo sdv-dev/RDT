@@ -366,7 +366,7 @@ and ``get_performance_thresholds``.
 You should make a generator for every type of column that you believe would be useful to test
 against. For some examples, you can look in the `dataset generator folder`_.
 
-The generators each have a ``DATA_TYPE`` class variable. This should match the sdtype that your
+The generators each have a ``SDTYPE`` class variable. This should match the sdtype that your
 ``transformer`` accepts as input.
 
 More details can be found in the `Development Guide`_.

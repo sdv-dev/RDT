@@ -321,12 +321,12 @@ BaseDatasetGenerator
 All dataset generators inherit from the ``BaseDatasetGenerator`` class. It has the following
 class attribute:
 
-* ``DATA_TYPE`` (str) - The sdtype for the class to generate.
+* ``SDTYPE`` (str) - The sdtype for the class to generate.
 
 They must implement the following methods.
 
 * ``generate(num_rows)`` - Takes in an int representing the number of rows to generate. Returns a
-  ``numpy.ndarray`` of size ``num_rows`` where each value is of the class' ``DATA_TYPE``.
+  ``numpy.ndarray`` of size ``num_rows`` where each value is of the class' ``SDTYPE``.
 
 * ``get_performance_thresholds()`` - Returns a dict mapping each of the main methods for a
   transformer (``fit``, ``transform``, ``reverse_transform``) to the expected time and memory it
@@ -336,14 +336,14 @@ Implementing a DatasetGenerator
 """""""""""""""""""""""""""""""
 
 To create a new ``DatasetGenerator``, the methods described above need to be implemented. The
-class should be placed in a new file in the following location ``tests/datasets/{DATA_TYPE}.py``.
+class should be placed in a new file in the following location ``tests/datasets/{SDTYPE}.py``.
 Each generator must inherit from the base class as well as ``abc.ABC``.
 
 Example DatasetGenerator
 ************************
 
 Let's create a ``DatasetGenerator`` for the ``phone_number`` sdtype that we introduced earlier.
-We can start by implementing the ``generate`` method and setting the ``DATA_TYPE``.
+We can start by implementing the ``generate`` method and setting the ``SDTYPE``.
 
 .. code-block:: Python
 
@@ -354,7 +354,7 @@ We can start by implementing the ``generate`` method and setting the ``DATA_TYPE
     from tests.datasets.base import BaseDatasetGenerator
 
     class USPhoneNumberGenerator(BaseDatasetGenerator, ABC):
-        DATA_TYPE = 'phone_number'
+        SDTYPE = 'phone_number'
         
         @staticmethod
         def generate(num_rows):

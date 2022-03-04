@@ -100,7 +100,7 @@ def _build_generator_map():
     generators = defaultdict(list)
 
     for generator in BaseDatasetGenerator.get_subclasses():
-        generators[generator.DATA_TYPE].append(generator)
+        generators[generator.SDTYPE].append(generator)
 
     return generators
 

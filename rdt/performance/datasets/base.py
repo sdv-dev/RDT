@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 class BaseDatasetGenerator(ABC):
     """Parent class for all the Dataset Generators."""
 
-    DATA_TYPE = None
+    SDTYPE = None
 
     @staticmethod
     @abstractmethod
