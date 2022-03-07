@@ -381,6 +381,7 @@ class HyperTransformer:
 
     def _sort_output_columns(self):
         """Sort ``_output_columns`` to follow the same order as the ``_input_columns``."""
+        self._output_columns = []
         for input_column in self._input_columns:
             output_columns = self.get_final_output_columns(input_column)
             self._output_columns.extend(output_columns)
