@@ -1,5 +1,25 @@
 # History
 
+## 0.6.4 - 2022-3-7
+
+This release fixes multiple bugs concerning the `HyperTransformer`. One is that the `get_transformer_tree_yaml` method no longer crashes on
+every call. Another is that calling the `update_field_data_types` and `update_default_data_type_transformers` after fitting no longer breaks the `transform`
+method. 
+
+The `HyperTransformer` now sorts its outputs for both `transform` and `reverse_transform` based on the order of the input's columns. It is also now possible
+to create transformers that simply drops columns during `transform` and don't return any new columns.
+
+### New Features
+
+* Support dropping a column trough a transformer - Issue [#393](https://github.com/sdv-dev/RDT/issues/393) by @pvk-developer
+* HyperTransformer should sort columns after transform and reverse_transform - Issue [#405](https://github.com/sdv-dev/RDT/issues/405) by @fealho
+
+### Bugs
+
+* get_transformer_tree_yaml fails - Issue [#389](https://github.com/sdv-dev/RDT/issues/389) by @amontanez24
+* HyperTransformer _unfit method not working correctly - Issue [#390](https://github.com/sdv-dev/RDT/issues/390) by @amontanez24
+* Blank dataframe after updating the data types - Issue [#401](https://github.com/sdv-dev/RDT/issues/401) by @amontanez24
+
 ## 0.6.3 - 2022-2-4
 
 This release adds a new module to the `RDT` library called `performance`. This module can be used to evaluate the speed and peak memory usage
