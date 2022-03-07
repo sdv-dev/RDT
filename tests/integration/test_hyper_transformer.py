@@ -47,44 +47,6 @@ class DummyTransformerNotMLReady(BaseTransformer):
         return data.astype('datetime64')
 
 
-class DummyTransformerMultiColumn(BaseTransformer):
-
-    INPUT_TYPE = 'datetime'
-    OUTPUT_TYPES = {
-        'value': 'float',
-    }
-
-    def _fit(self, data):
-        pass
-
-    def _transform(self, data):
-        # Convert multiple columns into a single datetime
-        data.columns = [c.replace('_str.value', '') for c in data.columns]
-        data = pd.to_datetime(data)
-
-        float_data = data.to_numpy().astype(np.float64)
-        data_is_nan = data.isna().to_numpy().astype(np.float64)
-
-        output = dict(zip(
-            self.output_columns,
-            [float_data, data_is_nan]
-        ))
-
-        output = pd.DataFrame(output).fillna(-1)
-
-        return output
-
-    def _reverse_transform(self, data):
-        datetimes = data.round().astype('datetime64[ns]')
-        out = pd.DataFrame({
-            'year': datetimes.dt.year,
-            'month': datetimes.dt.month,
-            'day': datetimes.dt.day,
-        })
-
-        return out
-
-
 TEST_DATA_INDEX = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
 
 
@@ -236,72 +198,6 @@ def test_hypertransformer_field_transformers():
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
     expected_reversed = get_input_data()
-    pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
-
-
-def test_hypertransformer_field_transformers_multi_column_fields():
-    """Test the HyperTransformer with ``field_transformers`` provided.
-
-    This test will make sure that fields made up of multiple columns are
-    properly handled if they are specified in the ``field_transformers``
-    argument. If the field has one column that is derived from another
-    transformer, then the other transformer should be transformed and
-    the multi-column field should be handled when all its columns are
-    present.
-
-    Setup:
-        - A dummy transformer that takes in a column for day, year and
-        month and creates one numeric value from it.
-        - A dummy transformer that takes a string value and parses the
-        float from it.
-
-    Input:
-        - A dict mapping each field to a dummy transformer.
-        - A dataframe with a numerical year, month and day column as well
-        as a string year, month and day column.
-
-    Expected behavior:
-        - The transformed data should contain all the ML ready data.
-        - The reverse transformed data should be the same as the input.
-    """
-    # Setup
-    data = pd.DataFrame({
-        'year': [2001, 2002, 2003],
-        'month': [1, 2, 3],
-        'day': [1, 2, 3],
-        'year_str': ['2001', '2002', '2003'],
-        'month_str': ['1', '2', '3'],
-        'day_str': ['1', '2', '3'],
-    })
-    field_transformers = {
-        ('year', 'month', 'day'): DummyTransformerMultiColumn,
-        'year_str': DummyTransformerNumerical,
-        'day_str': DummyTransformerNumerical,
-        'month_str': DummyTransformerNumerical,
-        ('year_str.value', 'month_str.value', 'day_str.value'): DummyTransformerMultiColumn
-    }
-    expected_transformed = pd.DataFrame({
-        'year#month#day.value': [
-            9.783072e+17,
-            1.012608e+18,
-            1.046650e+18
-        ],
-        'year_str.value#month_str.value#day_str.value.value': [
-            9.783072e+17,
-            1.012608e+18,
-            1.046650e+18
-        ]
-    })
-    expected_reversed = data.copy()
-
-    # Run
-    ht = HyperTransformer(field_transformers=field_transformers)
-    ht.fit(data)
-    transformed = ht.transform(data)
-    reverse_transformed = ht.reverse_transform(transformed)
-
-    # Assert
-    pd.testing.assert_frame_equal(transformed, expected_transformed)
     pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
 
 

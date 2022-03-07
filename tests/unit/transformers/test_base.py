@@ -78,7 +78,7 @@ class TestBaseTransformer:
         output = base_transformer._add_prefix(dictionary)
 
         # Assert
-        assert output is None
+        assert output == {}
 
     def test__add_prefix_dictionary(self):
         """Test the ``_add_prefix`` method when passed a dictionary.
@@ -146,6 +146,21 @@ class TestBaseTransformer:
         expected = {
             'column_name.value': 'numerical'
         }
+        assert output == expected
+
+    def test_get_output_types_none(self):
+        """Test the ``get_output_types`` method.
+
+        Validate that a dict is returned even if ``OUTPUT_TYPES`` attribute is None.
+
+        Output:
+            - An empty ``dict``.
+        """
+        # Run
+        output = BaseTransformer().get_output_types()
+
+        # Assert
+        expected = {}
         assert output == expected
 
     def test_get_input_columns(self):
@@ -647,6 +662,36 @@ class TestBaseTransformer:
             'a': [1, 2, 3],
             'b': [7, 8, 9],
             'c': [1, 5, 9]
+        }, index=[2, 0, 1])
+        pd.testing.assert_frame_equal(data, expected)
+
+    def test__set_columns_data_none(self):
+        """Test the ``_set_columns_data`` method.
+
+        The method should not change the ``data``.
+
+        Input:
+            - data will be a DataFrame with a non-sequential index.
+            - columns_data will be a ``None``.
+
+        Expected behavior:
+            - Data should not be changed.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        }, index=[2, 0, 1])
+        columns = ['c']
+        columns_data = None
+
+        # Run
+        BaseTransformer._set_columns_data(data, columns_data, columns)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
         }, index=[2, 0, 1])
         pd.testing.assert_frame_equal(data, expected)
 
