@@ -296,3 +296,27 @@ def test_with_unfitted_columns():
     expected_reversed = expected_reversed.reindex(
         columns=['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'])
     pd.testing.assert_frame_equal(expected_reversed, reverse)
+
+
+def test_multiple_fits():
+    """HyperTransformer should be able to be used multiple times.
+
+    Fitting, transforming and reverse transforming should produce the same results when
+    called on the same data multiple times.
+    """
+    # Setup
+    data = get_input_data()
+    ht = HyperTransformer()
+
+    # Run
+    ht.fit(data)
+    transformed1 = ht.transform(data)
+    reversed1 = ht.reverse_transform(transformed1)
+
+    ht.fit(data)
+    transformed2 = ht.transform(data)
+    reversed2 = ht.reverse_transform(transformed1)
+
+    # Assert
+    pd.testing.assert_frame_equal(transformed1, transformed2)
+    pd.testing.assert_frame_equal(reversed1, reversed2)
