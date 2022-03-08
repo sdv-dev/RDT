@@ -127,7 +127,7 @@ class HyperTransformer:
     def __init__(self, copy=True, field_sdtypes=None, default_sdtype_transformers=None,
                  field_transformers=None, transform_output_sdtypes=None):
         self.copy = copy
-        self.populated_field_sdtypes = {}
+        self.fitted_field_data_types = {}
         self.field_data_types = field_data_types or {}
         self.default_data_type_transformers = default_data_type_transformers or {}
         self.field_transformers = field_transformers or {}
@@ -454,7 +454,7 @@ class HyperTransformer:
             self._output_columns.extend(output_columns)
 
     def _reset_attributes(self):
-        self.populated_field_data_types = {}
+        self.fitted_field_data_types = {}
         self._transformers_sequence = []
         self._output_columns = []
         self._fitted_fields = set()
@@ -475,9 +475,10 @@ class HyperTransformer:
         # Loop through field_transformers that are first level
         for field in self.field_transformers:
             if self._field_in_data(field, data):
-                data = self._fit_field_transformer(data, field, self.field_transformers[field].copy())
+                data = self._fit_field_transformer(data, field, self.field_transformers[field])
 
-        for (field, data_type) in {**self.field_data_types, **self.populated_field_data_types}.items():
+        for (field, data_type) in {**self.field_data_types,
+                                   **self.fitted_field_data_types}.items():
             if not self._field_in_set(field, self._fitted_fields):
                 if sdtype in self.default_sdtype_transformers:
                     transformer = self.default_sdtype_transformers[sdtype]

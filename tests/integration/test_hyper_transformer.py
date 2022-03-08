@@ -320,3 +320,47 @@ def test_multiple_fits():
     # Assert
     pd.testing.assert_frame_equal(transformed1, transformed2)
     pd.testing.assert_frame_equal(reversed1, reversed2)
+
+
+def test_multiple_fits_different_data():
+    """HyperTransformer should be able to be used multiple times regardless of the data.
+
+    Fitting, transforming and reverse transforming should work when called on different data.
+    """
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2, 3], 'col2': [1.0, 0.0, 0.0]})
+    new_data = pd.DataFrame({'col2': [1, 2, 3], 'col1': [1.0, 0.0, 0.0]})
+    ht = HyperTransformer()
+
+    # Run
+    ht.fit(data)
+    ht.fit(new_data)
+    transformed = ht.transform(new_data)
+    reversed = ht.reverse_transform(transformed)
+
+    # Assert
+    expected_transformed = pd.DataFrame({'col2.value': [1, 2, 3], 'col1.value': [1.0, 0.0, 0.0]})
+    pd.testing.assert_frame_equal(transformed, expected_transformed)
+    pd.testing.assert_frame_equal(reversed, new_data)
+
+
+def test_multiple_fits_different_columns():
+    """HyperTransformer should be able to be used multiple times regardless of the data.
+
+    Fitting, transforming and reverse transforming should work when called on different data.
+    """
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2, 3], 'col2': [1.0, 0.0, 0.0]})
+    new_data = pd.DataFrame({'col3': [1, 2, 3], 'col4': [1.0, 0.0, 0.0]})
+    ht = HyperTransformer()
+
+    # Run
+    ht.fit(data)
+    ht.fit(new_data)
+    transformed = ht.transform(new_data)
+    reversed = ht.reverse_transform(transformed)
+
+    # Assert
+    expected_transformed = pd.DataFrame({'col3.value': [1, 2, 3], 'col4.value': [1.0, 0.0, 0.0]})
+    pd.testing.assert_frame_equal(transformed, expected_transformed)
+    pd.testing.assert_frame_equal(reversed, new_data)
