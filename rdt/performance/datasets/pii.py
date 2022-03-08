@@ -11,7 +11,7 @@ from rdt.performance.datasets.utils import add_nans
 class PIIGenerator(BaseDatasetGenerator, ABC):
     """Base class for generators that generate PII data."""
 
-    DATA_TYPE = 'pii'
+    SDTYPE = 'pii'
 
 
 class RandomStringGenerator(PIIGenerator):

@@ -146,12 +146,12 @@ class HyperTransformer:
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
-    def _set_field_data_type(self, data, field):
+    def _set_field_sdtype(self, data, field):
         clean_data = data[field].dropna()
         kind = clean_data.infer_objects().dtype.kind
-        self.field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
+        self.field_sdtypes[field] = self._DTYPES_TO_SDTYPES[kind]
 
-    def _populate_field_data_types(self, data):
+    def _populate_field_sdtypes(self, data):
         # get set of provided fields including multi-column fields
         provided_fields = set()
         for field in self.field_sdtypes.keys():
@@ -159,7 +159,7 @@ class HyperTransformer:
 
         for field in data:
             if field not in provided_fields:
-                self._set_field_data_type(data, field)
+                self._set_field_sdtype(data, field)
 
     def _unfit(self):
         self._transformers_sequence = []
@@ -372,20 +372,20 @@ class HyperTransformer:
                 Data which will have its configuration detected.
         """
         # Reset the state of the HyperTransformer
-        self.field_data_types = {}
+        self.field_sdtypes = {}
         self.field_transformers = {}
 
         # Set the sdtypes and transformers of all fields to their defaults
         for field in data:
-            self._set_field_data_type(data, field)
-            field_sdtype = self.field_data_types[field]
+            self._set_field_sdtype(data, field)
+            field_sdtype = self.field_sdtypes[field]
             self.field_transformers[field] = get_default_transformer(field_sdtype)
 
         print('Detecting a new config from the data ... SUCCESS')  # noqa: T001
         print('Setting the new config ... SUCCESS')  # noqa: T001
 
         config = {
-            'sdtypes': self.field_data_types,
+            'sdtypes': self.field_sdtypes,
             'transformers': {k: repr(v) for k, v in self.field_transformers.items()}
         }
 

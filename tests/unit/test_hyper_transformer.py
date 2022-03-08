@@ -349,7 +349,7 @@ class TestHyperTransformer(TestCase):
     def test_detect_initial_config(self):
         """Test the ``detect_initial_config`` method.
 
-        This tests that ``field_data_types`` and ``field_transformers`` are correctly set,
+        This tests that ``field_sdtypes`` and ``field_transformers`` are correctly set,
         and that the appropriate configuration is printed.
 
         Input:
@@ -373,7 +373,7 @@ class TestHyperTransformer(TestCase):
         output = f_out.getvalue()
 
         # Assert
-        assert ht.field_data_types == {
+        assert ht.field_sdtypes == {
             'col1': 'float',
             'col2': 'categorical',
             'col3': 'boolean',
