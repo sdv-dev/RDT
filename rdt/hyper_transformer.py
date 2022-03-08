@@ -163,9 +163,12 @@ class HyperTransformer:
                 self._set_field_sdtype(data, field)
 
     def _unfit(self):
+        self.fitted_field_data_types = {}
         self._transformers_sequence = []
+        self._output_columns = []
         self._fitted_fields.clear()
         self._fitted = False
+        self._transformers_tree = defaultdict(dict)
 
     @staticmethod
     def _validate_config(config):
@@ -453,14 +456,6 @@ class HyperTransformer:
             output_columns = self.get_final_output_columns(input_column)
             self._output_columns.extend(output_columns)
 
-    def _reset_attributes(self):
-        self.fitted_field_data_types = {}
-        self._transformers_sequence = []
-        self._output_columns = []
-        self._fitted_fields = set()
-        self._fitted = False
-        self._transformers_tree = defaultdict(dict)
-
     def fit(self, data):
         """Fit the transformers to the data.
 
@@ -468,7 +463,7 @@ class HyperTransformer:
             data (pandas.DataFrame):
                 Data to fit the transformers to.
         """
-        self._reset_attributes()
+        self._unfit()
         self._input_columns = list(data.columns)
         self._populate_field_sdtypes(data)
 
@@ -477,8 +472,8 @@ class HyperTransformer:
             if self._field_in_data(field, data):
                 data = self._fit_field_transformer(data, field, self.field_transformers[field])
 
-        for (field, data_type) in {**self.field_data_types,
-                                   **self.fitted_field_data_types}.items():
+        field_data_types = {**self.field_data_types, **self.fitted_field_data_types}
+        for (field, data_type) in field_data_types.items():
             if not self._field_in_set(field, self._fitted_fields):
                 if sdtype in self.default_sdtype_transformers:
                     transformer = self.default_sdtype_transformers[sdtype]
