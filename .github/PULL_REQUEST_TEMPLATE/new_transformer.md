@@ -1,6 +1,6 @@
 ### New Transformer Description
 
-__Data Type__: (replace this with the sdtype that your new transformer handles)
+__sdtype__: (replace this with the sdtype that your new transformer handles)
 
 (replace this text with your description)
 

@@ -172,10 +172,10 @@ On top of adding the new class, unit tests must be written to cover all of the m
 class uses. In some cases, integration tests may also be required. More details on this can be
 found below.
 
-If the transformer add a previously unsupported `Data Type` to RDT, then more steps will need
+If the transformer adds a previously unsupported `sdtype` to RDT, then more steps will need
 to be taken for the quality and performance tests. A new `DatasetGenerator` class may need to
-be created for the `Data Type`. You may also need to find a real world dataset containing this
-`Data Type` and request for it to be added. More details for these steps can be found below in
+be created for the `sdtype`. You may also need to find a real world dataset containing this
+`sdtype` and request for it to be added. More details for these steps can be found below in
 the `Transformer Performance`_ and `Transformer Quality`_ sections respectively.
 
 Transformer Validations

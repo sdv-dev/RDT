@@ -83,7 +83,7 @@ class PIIAnonymizer(BaseTransformer):
 
         Returns:
             dict:
-                Mapping from the transformed column names to supported data types.
+                Mapping from the transformed column names to supported sdtypes.
         """
         output_types = {}
         if self.null_transformer and self.null_transformer.models_missing_values():
