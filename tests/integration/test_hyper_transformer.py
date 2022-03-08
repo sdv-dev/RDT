@@ -336,12 +336,12 @@ def test_multiple_fits_different_data():
     ht.fit(data)
     ht.fit(new_data)
     transformed = ht.transform(new_data)
-    reversed = ht.reverse_transform(transformed)
+    reverse = ht.reverse_transform(transformed)
 
     # Assert
     expected_transformed = pd.DataFrame({'col2.value': [1, 2, 3], 'col1.value': [1.0, 0.0, 0.0]})
     pd.testing.assert_frame_equal(transformed, expected_transformed)
-    pd.testing.assert_frame_equal(reversed, new_data)
+    pd.testing.assert_frame_equal(reverse, new_data)
 
 
 def test_multiple_fits_different_columns():
@@ -358,9 +358,9 @@ def test_multiple_fits_different_columns():
     ht.fit(data)
     ht.fit(new_data)
     transformed = ht.transform(new_data)
-    reversed = ht.reverse_transform(transformed)
+    reverse = ht.reverse_transform(transformed)
 
     # Assert
     expected_transformed = pd.DataFrame({'col3.value': [1, 2, 3], 'col4.value': [1.0, 0.0, 0.0]})
     pd.testing.assert_frame_equal(transformed, expected_transformed)
-    pd.testing.assert_frame_equal(reversed, new_data)
+    pd.testing.assert_frame_equal(reverse, new_data)
