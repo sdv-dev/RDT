@@ -1159,6 +1159,169 @@ class TestHyperTransformer(TestCase):
             'boolean': BinaryEncoder
         }
 
+    @patch('rdt.hyper_transformer.print')
+    def test_update_transformers_fitted(self, mock_print):
+        """Test update transformers.
+
+        Ensure that the function updates properly the ``self.field_transformers`` and prints the
+        expected messages to guide the end-user.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``_fitted`` as ``True``.
+            - Set some ``field_transformers``.
+            - Dictionary with a ``column_name`` and ``object()``.
+
+        Mock:
+            - Patch the ``print`` function in order to ensure that expected message is being
+              printed to the end user.
+            - Transformer, mock for the transformer.
+
+        Side Effects:
+            - ``self.field_transformers`` has been updated.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = True
+        instance.field_transformers = {'a': object()}
+        mock_transformer = Mock()
+        column_name_transformer = {
+            'my_column': mock_transformer
+        }
+
+        # Run
+        instance.update_transformers(column_name_transformer)
+
+        # Assert
+        expected_message = (
+            "Warning: For this change to take effect, please refit your data using 'fit' "
+            "or 'fit_transform'."
+        )
+
+        mock_print.assert_called_once_with(expected_message)
+        assert instance.field_transformers['my_column'] == mock_transformer
+
+    @patch('rdt.hyper_transformer.print')
+    def test_update_transformers_not_fitted(self, mock_print):
+        """Test update transformers.
+
+        Ensure that the function updates properly the ``self.field_transformers`` and prints the
+        expected messages to guide the end-user.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``_fitted`` as ``False``.
+            - Set some ``field_transformers``.
+            - Dictionary with a ``column_name`` and ``object()``.
+
+        Mock:
+            - Patch the ``print`` function in order to ensure that expected message is being
+              printed to the end user.
+            - Transformer, mock for the transformer.
+
+        Side Effects:
+            - ``self.field_transformers`` has been updated.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = False
+        instance.field_transformers = {'a': object()}
+        mock_transformer = Mock()
+        column_name_transformer = {
+            'my_column': mock_transformer
+        }
+
+        # Run
+        instance.update_transformers(column_name_transformer)
+
+        # Assert
+        mock_print.assert_not_called()
+        assert instance.field_transformers['my_column'] == mock_transformer
+
+    @patch('rdt.hyper_transformer.print')
+    def test_update_transformers_no_field_transformers(self, mock_print):
+        """Test update transformers.
+
+        Ensure that the function updates properly the ``self.field_transformers`` and prints the
+        expected messages to guide the end-user.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``_fitted`` as ``False``.
+            - Dictionary with a ``column_name`` and a ``Mock`` transformer.
+
+        Mock:
+            - Patch the ``print`` function in order to ensure that expected message is being
+              printed to the end user.
+            - Transformer, mock for the replacement transformer.
+
+        Side Effects:
+            - ``self.field_transformers`` has been updated.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = False
+        mock_transformer = Mock()
+        column_name_transformer = {
+            'my_column': mock_transformer
+        }
+
+        # Run
+        instance.update_transformers(column_name_transformer)
+
+        # Assert
+        expected_message = (
+            'Tip: Use the `detect_initial_config` method to pre-populate all the sdtypes '
+            'and transformers from your dataset.'
+        )
+        mock_print.assert_called_once_with(expected_message)
+        assert instance.field_transformers['my_column'] == mock_transformer
+
+    @patch('rdt.hyper_transformer.print')
+    def test_update_transformers_field_transformer_exists(self, mock_print):
+        """Test update transformers.
+
+        Ensure that the function updates properly the ``self.field_transformers`` and prints the
+        expected messages to guide the end-user.
+
+        Setup:
+            - Initialize ``HyperTransformer``.
+            - Set ``field_transformers`` to contain a column and a mock transformer to be
+              updated by ``update_transformer``.
+            - Dictionary with a ``column_name`` and a ``Mock`` transformer.
+
+        Mock:
+            - Patch the ``print`` function in order to ensure that expected message is being
+              printed to the end user.
+            - Transformer, mock for the replacement transformer.
+
+        Side Effects:
+            - ``self.field_transformers`` has been updated.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = False
+        mock_numerical = Mock()
+        mock_numerical.get_input_type.return_value = 'numerical'
+        instance.field_transformers = {'my_column': mock_numerical}
+        mock_transformer = Mock()
+        mock_transformer.get_input_type.return_value = 'datetime'
+        column_name_transformer = {
+            'my_column': mock_transformer
+        }
+
+        # Run
+        instance.update_transformers(column_name_transformer)
+
+        # Assert
+        expected_calls = [
+            call((
+                'Warning: You are assigning a datetime transformer to a numerical column '
+                '(my_column).'
+            )),
+            call("If the transformer doesn't match the sdtype, it may lead to errors.")
+        ]
+
+        assert mock_print.call_args_list == expected_calls
+        assert instance.field_transformers['my_column'] == mock_transformer
+
     def test_set_first_transformers_for_fields(self):
         """Test the ``set_first_transformers_for_fields`` method.
 
