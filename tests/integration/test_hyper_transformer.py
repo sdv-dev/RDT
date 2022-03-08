@@ -315,7 +315,7 @@ def test_multiple_fits():
 
     ht.fit(data)
     transformed2 = ht.transform(data)
-    reversed2 = ht.reverse_transform(transformed1)
+    reversed2 = ht.reverse_transform(transformed2)
 
     # Assert
     pd.testing.assert_frame_equal(transformed1, transformed2)
