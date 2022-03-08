@@ -171,7 +171,7 @@ class HyperTransformer:
             sdtype = sdtypes.get(column)
             if transformer.get_input_type() != sdtypes.get(column):
                 warnings.warn(f'You are assigning a {input_type} transformer to a {sdtype} column'
-                              + "('{column}'). If the transformer doesn't match the sdtype,"
+                              + f" ('{column}'). If the transformer doesn't match the sdtype,"
                               + ' it may lead to errors.')
 
     def get_config(self):
@@ -184,7 +184,7 @@ class HyperTransformer:
                 - transformers: A dictionary mapping column names to their transformer instances.
         """
         return {
-            'sdtype': self.field_data_types,
+            'sdtypes': self.field_data_types,
             'transformers': self.field_transformers
         }
 
