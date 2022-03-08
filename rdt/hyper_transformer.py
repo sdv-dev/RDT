@@ -1,5 +1,6 @@
 """Hyper transformer module."""
 
+import json
 import warnings
 from collections import defaultdict
 from copy import deepcopy
@@ -145,6 +146,11 @@ class HyperTransformer:
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
+    def _set_field_data_type(self, data, field):
+        clean_data = data[field].dropna()
+        kind = clean_data.infer_objects().dtype.kind
+        self.field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
+
     def _populate_field_data_types(self, data):
         # get set of provided fields including multi-column fields
         provided_fields = set()
@@ -153,9 +159,7 @@ class HyperTransformer:
 
         for field in data:
             if field not in provided_fields:
-                clean_data = data[field].dropna()
-                kind = clean_data.infer_objects().dtype.kind
-                self.field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
+                self._set_field_data_type(data, field)
 
     def _unfit(self):
         self._transformers_sequence = []
@@ -319,6 +323,40 @@ class HyperTransformer:
             modified_tree[field]['transformer'] = class_name
 
         return yaml.safe_dump(dict(modified_tree))
+
+    def detect_initial_config(self, data):
+        """Print the configuration of the data.
+
+        This method detects the ``sdtype`` and transformer of each field in the data
+        and then prints them as a json object.
+
+        NOTE: This method partially resets the state of the ``HyperTransformer``.
+        Previously set ``sdtypes`` or transformers will be lost.
+
+        Args:
+            data (pd.DataFrame):
+                Data which will have its configuration detected.
+        """
+        # Reset the state of the HyperTransformer
+        self.field_data_types = {}
+        self.field_transformers = {}
+
+        # Set the sdtypes and transformers of all fields to their defaults
+        for field in data:
+            self._set_field_data_type(data, field)
+            field_sdtype = self.field_data_types[field]
+            self.field_transformers[field] = get_default_transformer(field_sdtype)
+
+        print('Detecting a new config from the data ... SUCCESS')  # noqa: T001
+        print('Setting the new config ... SUCCESS')  # noqa: T001
+
+        config = {
+            'sdtypes': self.field_data_types,
+            'transformers': {k: repr(v) for k, v in self.field_transformers.items()}
+        }
+
+        print('Config:')  # noqa: T001
+        print(json.dumps(config, indent=4))  # noqa: T001
 
     def _get_next_transformer(self, output_field, output_type, next_transformers):
         next_transformer = None

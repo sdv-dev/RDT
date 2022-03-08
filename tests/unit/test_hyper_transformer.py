@@ -1,3 +1,5 @@
+import contextlib
+import io
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
@@ -343,6 +345,72 @@ class TestHyperTransformer(TestCase):
         # Assert
         expected = {'a': 'numerical', 'b': 'categorical', 'c': 'boolean', 'd': 'float'}
         assert ht.field_data_types == expected
+
+    def test_detect_initial_config(self):
+        """Test the ``detect_initial_config`` method.
+
+        This tests that ``field_data_types`` and ``field_transformers`` are correctly set,
+        and that the appropriate configuration is printed.
+
+        Input:
+            - A DataFrame.
+        """
+        # Setup
+        ht = HyperTransformer()
+        data = pd.DataFrame({
+            'col1': [1, 2, np.nan],
+            'col2': ['a', 'b', 'c'],
+            'col3': [True, False, True],
+            'col4': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01']),
+            'col5': [1, 2, 3]
+        })
+
+        # Run
+        f_out = io.StringIO()
+        with contextlib.redirect_stdout(f_out):
+            ht.detect_initial_config(data)
+
+        output = f_out.getvalue()
+
+        # Assert
+        assert ht.field_data_types == {
+            'col1': 'float',
+            'col2': 'categorical',
+            'col3': 'boolean',
+            'col4': 'datetime',
+            'col5': 'integer'
+        }
+        ht.field_transformers = {k: repr(v) for (k, v) in ht.field_transformers.items()}
+        assert ht.field_transformers == {
+            'col1': "FloatFormatter(missing_value_replacement='mean')",
+            'col2': 'FrequencyEncoder()',
+            'col3': "BinaryEncoder(missing_value_replacement='mode')",
+            'col4': "UnixTimestampEncoder(missing_value_replacement='mean')",
+            'col5': "FloatFormatter(missing_value_replacement='mean')"
+        }
+        expected_output = '\n'.join((
+            'Detecting a new config from the data ... SUCCESS',
+            'Setting the new config ... SUCCESS',
+            'Config:',
+            '{',
+            '    "sdtypes": {',
+            '        "col1": "float",',
+            '        "col2": "categorical",',
+            '        "col3": "boolean",',
+            '        "col4": "datetime",',
+            '        "col5": "integer"',
+            '    },',
+            '    "transformers": {',
+            '        "col1": "FloatFormatter(missing_value_replacement=\'mean\')",',
+            '        "col2": "FrequencyEncoder()",',
+            '        "col3": "BinaryEncoder(missing_value_replacement=\'mode\')",',
+            '        "col4": "UnixTimestampEncoder(missing_value_replacement=\'mean\')",',
+            '        "col5": "FloatFormatter(missing_value_replacement=\'mean\')"',
+            '    }',
+            '}',
+            ''
+        ))
+        assert output == expected_output
 
     @patch('rdt.hyper_transformer.get_transformer_instance')
     def test__fit_field_transformer(self, get_transformer_instance_mock):

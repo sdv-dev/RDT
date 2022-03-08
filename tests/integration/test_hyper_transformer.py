@@ -9,7 +9,7 @@ import pandas as pd
 from rdt import HyperTransformer
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
-    OneHotEncoder, UnixTimestampEncoder)
+    OneHotEncoder, UnixTimestampEncoder, get_default_transformer, get_default_transformers)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -168,6 +168,9 @@ def test_hypertransformer_default_inputs():
     assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value']
     assert isinstance(ht._transformers_tree['names']['transformer'], FrequencyEncoder)
     assert ht._transformers_tree['names']['outputs'] == ['names.value']
+
+    get_default_transformers.cache_clear()
+    get_default_transformer.cache_clear()
 
 
 def test_hypertransformer_field_transformers():
