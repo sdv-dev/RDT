@@ -127,8 +127,9 @@ class HyperTransformer:
     def __init__(self, copy=True, field_sdtypes=None, default_sdtype_transformers=None,
                  field_transformers=None, transform_output_sdtypes=None):
         self.copy = copy
-        self.field_sdtypes = field_sdtypes or {}
-        self.default_sdtype_transformers = default_sdtype_transformers or {}
+        self.populated_field_sdtypes = {}
+        self.field_data_types = field_data_types or {}
+        self.default_data_type_transformers = default_data_type_transformers or {}
         self.field_transformers = field_transformers or {}
         self._specified_fields = set()
         self._validate_field_transformers()
@@ -452,6 +453,14 @@ class HyperTransformer:
             output_columns = self.get_final_output_columns(input_column)
             self._output_columns.extend(output_columns)
 
+    def _reset_attributes(self):
+        self.populated_field_data_types = {}
+        self._transformers_sequence = []
+        self._output_columns = []
+        self._fitted_fields = set()
+        self._fitted = False
+        self._transformers_tree = defaultdict(dict)
+
     def fit(self, data):
         """Fit the transformers to the data.
 
@@ -459,15 +468,16 @@ class HyperTransformer:
             data (pandas.DataFrame):
                 Data to fit the transformers to.
         """
+        self._reset_attributes()
         self._input_columns = list(data.columns)
         self._populate_field_sdtypes(data)
 
         # Loop through field_transformers that are first level
         for field in self.field_transformers:
             if self._field_in_data(field, data):
-                data = self._fit_field_transformer(data, field, self.field_transformers[field])
+                data = self._fit_field_transformer(data, field, self.field_transformers[field].copy())
 
-        for (field, sdtype) in self.field_sdtypes.items():
+        for (field, data_type) in {**self.field_data_types, **self.populated_field_data_types}.items():
             if not self._field_in_set(field, self._fitted_fields):
                 if sdtype in self.default_sdtype_transformers:
                     transformer = self.default_sdtype_transformers[sdtype]
