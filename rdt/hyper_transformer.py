@@ -33,7 +33,7 @@ class HyperTransformer:
             sdtypes and the values are Transformers or Transformer instances.
         copy (bool):
             Whether to make a copy of the input data or not. Defaults to ``True``.
-        transform_output_types (list or None):
+        transform_output_sdtypes (list or None):
             List of acceptable sdtypes for the output of the ``transform`` method.
             If ``None``, only ``numerical`` types will be considered acceptable.
 
@@ -79,7 +79,7 @@ class HyperTransformer:
         'b': 'boolean',
         'M': 'datetime',
     }
-    _DEFAULT_OUTPUT_TYPES = [
+    _DEFAULT_OUTPUT_SDTYPES = [
         'numerical',
         'float',
         'integer'
@@ -125,14 +125,14 @@ class HyperTransformer:
             self._add_field_to_set(field, self._specified_fields)
 
     def __init__(self, copy=True, field_sdtypes=None, default_sdtype_transformers=None,
-                 field_transformers=None, transform_output_types=None):
+                 field_transformers=None, transform_output_sdtypes=None):
         self.copy = copy
         self.field_sdtypes = field_sdtypes or {}
         self.default_sdtype_transformers = default_sdtype_transformers or {}
         self.field_transformers = field_transformers or {}
         self._specified_fields = set()
         self._validate_field_transformers()
-        self.transform_output_types = transform_output_types or self._DEFAULT_OUTPUT_TYPES
+        self.transform_output_sdtypes = transform_output_sdtypes or self._DEFAULT_OUTPUT_SDTYPES
         self._multi_column_fields = self._create_multi_column_fields()
         self._transformers_sequence = []
         self._output_columns = []
@@ -392,16 +392,16 @@ class HyperTransformer:
         print('Config:')  # noqa: T001
         print(json.dumps(config, indent=4))  # noqa: T001
 
-    def _get_next_transformer(self, output_field, output_type, next_transformers):
+    def _get_next_transformer(self, output_field, output_sdtype, next_transformers):
         next_transformer = None
         if output_field in self.field_transformers:
             next_transformer = self.field_transformers[output_field]
 
-        elif output_type not in self.transform_output_types:
+        elif output_sdtype not in self.transform_output_sdtypes:
             if next_transformers is not None and output_field in next_transformers:
                 next_transformer = next_transformers[output_field]
             else:
-                next_transformer = get_default_transformer(output_type)
+                next_transformer = get_default_transformer(output_sdtype)
 
         return next_transformer
 
@@ -429,14 +429,14 @@ class HyperTransformer:
         self._transformers_sequence.append(transformer)
         data = transformer.transform(data)
 
-        output_types = transformer.get_output_types()
+        output_sdtypes = transformer.get_output_sdtypes()
         next_transformers = transformer.get_next_transformers()
         self._transformers_tree[field]['transformer'] = transformer
-        self._transformers_tree[field]['outputs'] = list(output_types)
-        for (output_name, output_type) in output_types.items():
+        self._transformers_tree[field]['outputs'] = list(output_sdtypes)
+        for (output_name, output_sdtype) in output_sdtypes.items():
             output_field = self._multi_column_fields.get(output_name, output_name)
             next_transformer = self._get_next_transformer(
-                output_field, output_type, next_transformers)
+                output_field, output_sdtype, next_transformers)
 
             if next_transformer:
                 if self._field_in_data(output_field, data):

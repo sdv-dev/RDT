@@ -30,8 +30,8 @@ def test_dummy_transformer_series_output():
     # Setup
     class DummyTransformer(BaseTransformer):
 
-        INPUT_TYPE = 'boolean'
-        OUTPUT_TYPES = {
+        INPUT_SDTYPE = 'boolean'
+        OUTPUT_SDTYPES = {
             'value': 'float'
         }
 
@@ -88,8 +88,8 @@ def test_dummy_transformer_dataframe_output():
     # Setup
     class DummyTransformer(BaseTransformer):
 
-        INPUT_TYPE = 'boolean'
-        OUTPUT_TYPES = {
+        INPUT_SDTYPE = 'boolean'
+        OUTPUT_SDTYPES = {
             'value': 'float',
             'null': 'float'
         }

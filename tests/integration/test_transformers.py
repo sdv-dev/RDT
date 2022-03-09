@@ -124,7 +124,7 @@ def _validate_dataset_generators(dataset_generators):
 
 def _validate_transformed_data(transformer, transformed_data):
     """Check that the transformed data is the expected dtype."""
-    expected_sdtypes = transformer.get_output_types()
+    expected_sdtypes = transformer.get_output_sdtypes()
     transformed_dtypes = transformed_data.dtypes
 
     for column, expected_sdtype in expected_sdtypes.items():
@@ -139,7 +139,7 @@ def _validate_reverse_transformed_data(transformer, reversed_data, input_dtype):
 
     Expect that the dtype is equal to the dtype of the input data.
     """
-    expected_sdtype = transformer.get_input_type()
+    expected_sdtype = transformer.get_input_sdtype()
     message = f'Reverse transformed data is not the expected sdtype {expected_sdtype}'
     assert reversed_data.dtypes[TEST_COL].kind in SDTYPE_TO_DTYPES[expected_sdtype], message
 
@@ -222,7 +222,7 @@ def _validate_hypertransformer_transformed_data(transformed_data):
 
 def _validate_hypertransformer_reverse_transformed_data(transformer, reversed_data):
     """Check that the reverse transformed data has the same dtype as the input."""
-    expected_sdtype = transformer().get_input_type()
+    expected_sdtype = transformer().get_input_sdtype()
     message = f'Reversed transformed data is not the expected sdtype {expected_sdtype}'
     assert reversed_data.dtype.kind in SDTYPE_TO_DTYPES[expected_sdtype], message
 
@@ -280,7 +280,7 @@ def validate_transformer(transformer, steps=None, subtests=None):
         subtests:
             Whether or not to test with subtests.
     """
-    input_sdtype = transformer.get_input_type()
+    input_sdtype = transformer.get_input_sdtype()
 
     dataset_generators = _find_dataset_generators(input_sdtype, generators)
     _validate_helper(_validate_dataset_generators, [dataset_generators], steps)

@@ -162,9 +162,11 @@ There are only three required methods for a transformer:
    the Transformer instance.
 
 Each transformer class should be placed inside the ``rdt/transformers`` folder, in a module
-file named after the sdtype that the transformer operates on. For example, if you are
-writing a transformer that works with ``categorical`` data, your transformer should be placed
-inside the ``rdt/transformers/categorical.py`` module.
+file named after the data type that the transformer operates on. The data
+types used by RDT are called ``sdtypes``, and you can think of them as representing the **semantic**
+or **statistical** meaning of a datatype. For example, if you are writing a transformer that works
+with ``categorical`` data, your transformer should be placed inside the
+``rdt/transformers/categorical.py`` module.
 
 For more detailed guide on writing transformers, refer to the `Development Guide`_.
 
@@ -326,7 +328,7 @@ checks. It also prints a table describing each check and whether or not it passe
    Check                                   Correct    Details
    --------------------------------------  ---------  -----------------------------------------------------------------------------------------------------------------------
    Dataset Generators                      Yes        At least one Dataset Generator exists for the Transformer sdtype.
-   Output Types                            Yes        The Transformer can transform data and produce output(s) of the indicated sdtype(s).
+   Output Sdtype s                            Yes        The Transformer can transform data and produce output(s) of the indicated sdtype(s).
    Reverse Transform                       Yes        The Transformer can reverse transform the data it produces, going back to the original sdtype.
    Hypertransformer can transform          Yes        The HyperTransformer is able to use the Transformer and produce float values.
    Hypertransformer can reverse transform  Yes        The HyperTransformer is able to reverse the data that it has previously transformed and restore the original sdtype.
@@ -344,7 +346,7 @@ In order to do so, we run performance tests on each transformer, based on the in
 specified by the transformer.
 
 We generate test data using Dataset Generators. Each transformer should have at least one
-Dataset Generator that produces data of the transformer's input type.
+Dataset Generator that produces data of the transformer's input sdtype.
 If there are any specific dataset characteristics that you think may affect your transformer
 performance (e.g. constant data, mostly null data), consider adding a Dataset Generator
 for that scenario as well.
@@ -435,7 +437,7 @@ results to that of other transformers of the same sdtype.
 Adding a Dataset
 ****************
 
-If the transformer you are creating adds a new sdtype, then a dataset with that type may need to
+If the transformer you are creating adds a new sdtype, then a dataset with that sdtype may need to
 be added for the quality tests. This only needs to be done if the transformer being added is 
 expected to preserve or expose relationships in the data. This can be done using the following
 steps:

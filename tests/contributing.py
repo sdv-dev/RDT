@@ -30,7 +30,7 @@ CHECK_DETAILS = {
         'At least one Dataset Generator exists for the Transformer sdtype.',
     ),
     '_validate_transformed_data': (
-        'Output Types',
+        'Output Sdtype s',
         'The Transformer can transform data and produce output(s) of the indicated sdtype(s).',
     ),
     '_validate_reverse_transformed_data': (
@@ -359,10 +359,10 @@ def validate_transformer_quality(transformer):
 
     This function creates a DataFrame containing the results
     from running the quality tests for this transformer against
-    all the datasets with columns of its input type. It does the
+    all the datasets with columns of its input sdtype. It does the
     following steps:
     1. A DataFrame containing the regression scores obtained from running the
-    transformers of the input type against the datasets in the test cases is
+    transformers of the input sdtype against the datasets in the test cases is
     created. Each row in the DataFrame has the transformer name, dataset name,
     column name and score. The scores are computed as follows:
         - For every transformer of the sdtype, transform all the
@@ -386,8 +386,8 @@ def validate_transformer_quality(transformer):
 
     print(f'Validating Quality Tests for transformer {transformer.__name__}\n')
 
-    input_type = transformer.get_input_type()
-    test_cases = get_test_cases({input_type})
+    input_sdtype = transformer.get_input_sdtype()
+    test_cases = get_test_cases({input_sdtype})
     regression_scores = get_regression_scores(test_cases, get_transformers_by_type())
     results = get_results_table(regression_scores)
 
@@ -432,7 +432,7 @@ def validate_transformer_performance(transformer):
 
     print(f'Validating Performance for transformer {transformer.__name__}\n')
 
-    sdtype = transformer.get_input_type()
+    sdtype = transformer.get_input_sdtype()
     transformers = get_transformers_by_type().get(sdtype, [])
     dataset_generators = get_dataset_generators_by_type().get(sdtype, [])
 

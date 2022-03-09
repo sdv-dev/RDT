@@ -15,10 +15,12 @@ RDT Technical Overview
 ----------------------
 
 The goal of RDT is to be able to transform data that is not machine learning ready into data that
-is. By machine learning ready, we mean that the data should consist of sdtypes that most machine
-learning models can process. Usually this means outputting numeric data with no nulls. On top of this,
-RDT also enforces that those transformations can be reversed, so that data of the original form can
-be obtained again. RDT accomplishes this with the use of two main classes:
+is. By machine learning ready, we mean that the data should consist of data types that most machine
+learning models can process. Usually this means outputting numeric data with no nulls. The data
+types used by RDT are called ``sdtypes``. You can think of them as representing the **semantic**
+or **statistical** meaning of a datatype. On top of this, RDT also enforces that those transformations
+can be reversed, so that data of the original form can be obtained again. RDT accomplishes this
+with the use of two main classes:
 
 * ``BaseTransformer``
 * ``HyperTransformer``
@@ -30,8 +32,8 @@ Every Transformer in RDT inherits from the ``BaseTransformer``. The goal of this
 its subclasses is to take data of a certain sdtype, and convert it into machine learning ready
 data. To enable transformers to do this, the ``BaseTransformer`` has the following attributes:
 
-* ``INPUT_TYPE`` (str) - The input type for the transformer.
-* ``OUTPUT_TYPES`` (dict) - Dictionary mapping transformed column names to their sdtypes.
+* ``INPUT_SDTYPE`` (str) - The input sdtype for the transformer.
+* ``OUTPUT_SDTYPES`` (dict) - Dictionary mapping transformed column names to their sdtypes.
 * ``DETERMINISTIC_TRANSFORM`` (bool) - Whether or not calling ``transform`` yields a deterministic
   output.
 * ``DETERMINISTIC_REVERSE`` (bool) - Whether or not calling ``reverse_transform`` yields a
@@ -52,8 +54,8 @@ data. To enable transformers to do this, the ``BaseTransformer`` has the followi
 It also has the following default methods, which the ``Transformer`` subclasses may overwrite when
 necessary:
 
-* ``get_output_types()`` - Returns the name of the columns that the transform method creates. By
-  default this will be the ``OUTPUT_TYPES`` dictionary with the column names prepended with the
+* ``get_output_sdtypes()`` - Returns the name of the columns that the transform method creates. By
+  default this will be the ``OUTPUT_SDTYPES`` dictionary with the column names prepended with the
   ``column_prefix`` with a dot (`.`) as the separator.
 * ``is_transform_deterministic()`` - Returns a boolean indicating whether the output of the
   ``transform`` method is deterministic. By default this is the value of the
@@ -135,7 +137,7 @@ Let's start by setting the necessary attributes and writing the ``__init__`` met
 
     class USPhoneNumberTransformer(BaseTransformer):
 
-        INPUT_TYPE = 'phone_number'
+        INPUT_SDTYPE = 'phone_number'
         DETERMINISTIC_TRANSFORM = True
         DETERMINISTIC_REVERSE = True
         COMPOSITION_IS_IDENTITY = True
@@ -152,20 +154,20 @@ Now we can write the ``_fit`` method.
         self.has_country_code = len(number) == 11
 
 Since the ``country_code`` may or may not be present, we can overwrite the
-``get_next_transformers`` and ``get_output_types`` methods accordingly.
+``get_next_transformers`` and ``get_output_sdtypes`` methods accordingly.
 
 .. code-block:: Python
 
-    def get_output_types(self):
-        output_types = {
+    def get_output_sdtypes(self):
+        output_sdtypes = {
             'area_code': 'categorical',
             'exchange': 'integer',
             'line': 'integer'
         }
         if self.has_country_code:
-            output_types['country_code'] = 'categorical'
+            output_sdtypes['country_code'] = 'categorical'
 
-        return self._add_prefix(output_types)
+        return self._add_prefix(output_sdtypes)
 
     def get_next_transformers(self):
         next_transformers = {
@@ -205,7 +207,7 @@ handles that for us. Let's view the complete class below.
 .. code-block:: Python
     class USPhoneNumberTransformer(BaseTransformer):
 
-        INPUT_TYPE = 'phone_number'
+        INPUT_SDTYPE = 'phone_number'
         DETERMINISTIC_TRANSFORM = True
         DETERMINISTIC_REVERSE = True
         COMPOSITION_IS_IDENTITY = True
@@ -217,16 +219,16 @@ handles that for us. Let's view the complete class below.
             number = ''.join(columns_data.loc[0].split('-'))
             self.has_country_code = len(number) == 11
 
-        def get_output_types(self):
-            output_types = {
+        def get_output_sdtypes(self):
+            output_sdtypes = {
                 'area_code': 'categorical',
                 'exchange': 'integer',
                 'line': 'integer'
             }
             if self.has_country_code:
-                output_types['country_code'] = 'categorical'
+                output_sdtypes['country_code'] = 'categorical'
 
-            return self._add_prefix(output_types)
+            return self._add_prefix(output_sdtypes)
 
         def get_next_transformers(self):
             next_transformers = {

@@ -14,8 +14,8 @@ from rdt.transformers import (
 
 class DummyTransformerNumerical(BaseTransformer):
 
-    INPUT_TYPE = 'categorical'
-    OUTPUT_TYPES = {
+    INPUT_SDTYPE = 'categorical'
+    OUTPUT_SDTYPES = {
         'value': 'float'
     }
 
@@ -31,8 +31,8 @@ class DummyTransformerNumerical(BaseTransformer):
 
 class DummyTransformerNotMLReady(BaseTransformer):
 
-    INPUT_TYPE = 'datetime'
-    OUTPUT_TYPES = {
+    INPUT_SDTYPE = 'datetime'
+    OUTPUT_SDTYPES = {
         'value': 'categorical',
     }
 
@@ -178,7 +178,7 @@ def test_hypertransformer_field_transformers():
 
     This tests that the transformers specified in the ``field_transformers``
     argument are used. Any output of a transformer that is not ML ready (not
-    in the ``_transform_output_types`` list) should be recursively transformed
+    in the ``_transform_output_sdtypes`` list) should be recursively transformed
     till it is.
 
     Setup:

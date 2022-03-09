@@ -13,8 +13,8 @@ class BaseTransformer:
     and ``fit_transform`` method is already implemented.
     """
 
-    INPUT_TYPE = None
-    OUTPUT_TYPES = None
+    INPUT_SDTYPE = None
+    OUTPUT_SDTYPES = None
     DETERMINISTIC_TRANSFORM = None
     DETERMINISTIC_REVERSE = None
     COMPOSITION_IS_IDENTITY = None
@@ -42,33 +42,33 @@ class BaseTransformer:
         return subclasses
 
     @classmethod
-    def get_input_type(cls):
-        """Return the input type supported by the transformer.
+    def get_input_sdtype(cls):
+        """Return the input sdtype supported by the transformer.
 
         Returns:
             string:
-                Accepted input type of the transformer.
+                Accepted input sdtype of the transformer.
         """
-        return cls.INPUT_TYPE
+        return cls.INPUT_SDTYPE
 
     def _add_prefix(self, dictionary):
         if not dictionary:
             return {}
 
         output = {}
-        for output_columns, output_type in dictionary.items():
-            output[f'{self.column_prefix}.{output_columns}'] = output_type
+        for output_columns, output_sdtype in dictionary.items():
+            output[f'{self.column_prefix}.{output_columns}'] = output_sdtype
 
         return output
 
-    def get_output_types(self):
-        """Return the output types produced by this transformer.
+    def get_output_sdtypes(self):
+        """Return the output sdtypes produced by this transformer.
 
         Returns:
             dict:
                 Mapping from the transformed column names to the produced sdtypes.
         """
-        return self._add_prefix(self.OUTPUT_TYPES)
+        return self._add_prefix(self.OUTPUT_SDTYPES)
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -122,7 +122,7 @@ class BaseTransformer:
             list:
                 Names of columns created during ``transform``.
         """
-        return list(self.get_output_types())
+        return list(self.get_output_sdtypes())
 
     def _store_columns(self, columns, data):
         if isinstance(columns, tuple) and columns not in data:
@@ -158,13 +158,13 @@ class BaseTransformer:
 
     def _build_output_columns(self, data):
         self.column_prefix = '#'.join(self.columns)
-        self.output_columns = list(self.get_output_types().keys())
+        self.output_columns = list(self.get_output_sdtypes().keys())
 
         # make sure none of the generated `output_columns` exists in the data
         data_columns = set(data.columns)
         while data_columns & set(self.output_columns):
             self.column_prefix += '#'
-            self.output_columns = list(self.get_output_types().keys())
+            self.output_columns = list(self.get_output_sdtypes().keys())
 
     def __repr__(self):
         """Represent initialization of transformer as text.

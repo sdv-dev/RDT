@@ -55,7 +55,7 @@ def _get_dataset_sizes(sdtype):
     of (fit_size, transform_size).
 
     Args:
-        input_type (str):
+        sdtype (str):
             The type of data that the generator returns.
 
     Returns:

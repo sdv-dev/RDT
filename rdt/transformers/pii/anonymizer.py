@@ -42,7 +42,7 @@ class PIIAnonymizer(BaseTransformer):
 
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = False
-    INPUT_TYPE = 'pii'
+    INPUT_SDTYPE = 'pii'
     null_transformer = None
 
     @staticmethod
@@ -78,18 +78,18 @@ class PIIAnonymizer(BaseTransformer):
         self.faker = faker.Faker(locales)
         self._function = getattr(self.faker, function_name)
 
-    def get_output_types(self):
-        """Return the output types supported by the transformer.
+    def get_output_sdtypes(self):
+        """Return the output sdtypes supported by the transformer.
 
         Returns:
             dict:
                 Mapping from the transformed column names to supported sdtypes.
         """
-        output_types = {}
+        output_sdtypes = {}
         if self.null_transformer and self.null_transformer.models_missing_values():
-            output_types['is_null'] = 'float'
+            output_sdtypes['is_null'] = 'float'
 
-        return self._add_prefix(output_types)
+        return self._add_prefix(output_sdtypes)
 
     def _fit(self, data):
         """Fit the transformer to the data.

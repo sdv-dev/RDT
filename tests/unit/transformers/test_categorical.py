@@ -840,11 +840,11 @@ class TestOneHotEncoder:
         expected = pd.Series(['a', 'b', 'c'])
         np.testing.assert_array_equal(out, expected)
 
-    def test_get_output_types(self):
-        """Test the ``get_output_types`` method.
+    def test_get_output_sdtypes(self):
+        """Test the ``get_output_sdtypes`` method.
 
-        Validate that the ``_add_prefix`` method is properly applied to the ``output_types``
-        dictionary. For this class, the ``output_types`` dictionary is described as:
+        Validate that the ``_add_prefix`` method is properly applied to the ``output_sdtypes``
+        dictionary. For this class, the ``output_sdtypes`` dictionary is described as:
 
         {
             'value1': 'float',
@@ -860,8 +860,8 @@ class TestOneHotEncoder:
                 - the ``column_prefix`` attribute to a string.
 
         Output:
-            - the ``output_types`` dictionary, but with ``self.column_prefix``
-            added to the beginning of the keys of the ``output_types`` dictionary.
+            - the ``output_sdtypes`` dictionary, but with ``self.column_prefix``
+            added to the beginning of the keys of the ``output_sdtypes`` dictionary.
         """
         # Setup
         transformer = OneHotEncoder()
@@ -869,7 +869,7 @@ class TestOneHotEncoder:
         transformer.dummies = [1, 2]
 
         # Run
-        output = transformer.get_output_types()
+        output = transformer.get_output_sdtypes()
 
         # Assert
         expected = {

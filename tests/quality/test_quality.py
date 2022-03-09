@@ -129,7 +129,7 @@ def get_regression_scores(test_cases, transformers_by_type):
             dataset, and the sdtypes to test against for that table.
         transformers_by_type (dict):
             Dict mapping sdtype to list of transformers that have that
-            type as their input type.
+            type as their input sdtype.
 
     Returns:
         DataFrame where each row has a dataset name, transformer name,
@@ -202,7 +202,7 @@ def test_quality(subtests):
         and a set of sdtypes to test for the dataset.
         2. A dictionary is created mapping sdtypes to a DataFrame
         containing the regression scores obtained from running the
-        transformers of that type against the datasets in the test cases.
+        transformers of that sdtype against the datasets in the test cases.
         Each row in the DataFrame has the transformer name, dataset name,
         column name and score. The scores are computed as follows:
             - For every transformer of the sdtype, transform all the

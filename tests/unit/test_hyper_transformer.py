@@ -184,17 +184,17 @@ class TestHyperTransformer(TestCase):
 
         This tests that if the transformer is defined in the
         ``instance.field_transformers`` dict, then it is returned
-        even if the output type is final.
+        even if the output sdtype is final.
 
         Setup:
             - field_transformers is given a transformer for the
             output field.
             - default_sdtype_transformers will be given a different transformer
-            for the output type of the output field.
+            for the output sdtype of the output field.
 
         Input:
             - An output field name in field_transformers.
-            - Output type is numerical.
+            - Output sdtype  is numerical.
             - next_transformers is None.
 
         Output:
@@ -213,21 +213,21 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert next_transformer == transformer
 
-    def test__get_next_transformer_final_output_type(self):
+    def test__get_next_transformer_final_output_sdtype(self):
         """Test the ``_get_next_transformer method.
 
         This tests that if the transformer is not defined in the
-        ``instance.field_transformers`` dict and its output type
-        is in ``instance._transform_output_types``, then ``None``
+        ``instance.field_transformers`` dict and its output sdtype
+        is in ``instance._transform_output_sdtypes``, then ``None``
         is returned.
 
         Setup:
             - default_sdtype_transformers will be given a transformer
-            for the output type of the output field.
+            for the output sdtype of the output field.
 
         Input:
             - An output field name in field_transformers.
-            - Output type is numerical.
+            - Output sdtype  is numerical.
             - next_transformers is None.
 
         Output:
@@ -248,18 +248,18 @@ class TestHyperTransformer(TestCase):
         """Test the ``_get_next_transformer method.
 
         This tests that if the transformer is not defined in the
-        ``instance.field_transformers`` dict and its output type
-        is not in ``instance._transform_output_types`` and the
+        ``instance.field_transformers`` dict and its output sdtype
+        is not in ``instance._transform_output_sdtypes`` and the
         ``next_transformers`` dict has a transformer for the output
         field, then it is used.
 
         Setup:
             - default_sdtype_transformers will be given a transformer
-            for the output type of the output field.
+            for the output sdtype of the output field.
 
         Input:
             - An output field name in field_transformers.
-            - Output type is categorical.
+            - Output sdtype  is categorical.
             - next_transformers is has a transformer defined
             for the output field.
 
@@ -285,7 +285,7 @@ class TestHyperTransformer(TestCase):
 
         This tests that if the transformer is not defined in the
         ``instance.field_transformers`` dict or ``next_transformers``
-        and its output type is not in ``instance._transform_output_types``
+        and its output sdtype is not in ``instance._transform_output_sdtypes``
         then the default_transformer is used.
 
         Setup:
@@ -293,7 +293,7 @@ class TestHyperTransformer(TestCase):
 
         Input:
             - An output field name in field_transformers.
-            - Output type is categorical.
+            - Output sdtype  is categorical.
             - next_transformers is None.
 
         Output:
@@ -424,7 +424,7 @@ class TestHyperTransformer(TestCase):
         Setup:
             - A mock for ``get_transformer_instance``.
             - A mock for the transformer returned by ``get_transformer_instance``.
-            The ``get_output_types`` method will return two outputs, one that
+            The ``get_output_sdtypes`` method will return two outputs, one that
             is ML ready and one that isn't.
 
         Input:
@@ -444,7 +444,7 @@ class TestHyperTransformer(TestCase):
         })
         transformer1 = Mock()
         transformer2 = Mock()
-        transformer1.get_output_types.return_value = {
+        transformer1.get_output_sdtypes.return_value = {
             'a.out1': 'categorical',
             'a.out2': 'numerical'
         }
@@ -452,7 +452,7 @@ class TestHyperTransformer(TestCase):
             'a.out1': transformer2
         }
         transformer1.transform.return_value = transformed_data1
-        transformer2.get_output_types.return_value = {
+        transformer2.get_output_sdtypes.return_value = {
             'a.out1.value': 'numerical'
         }
         transformer2.get_next_transformers.return_value = None
@@ -503,7 +503,7 @@ class TestHyperTransformer(TestCase):
         Setup:
             - A mock for ``get_transformer_instance``.
             - A mock for the transformer returned by ``get_transformer_instance``.
-            The ``get_output_types`` method will return one output that is part of
+            The ``get_output_sdtypes`` method will return one output that is part of
             a multi-column field.
             - A mock for ``_multi_column_fields`` to return the multi-column field.
 
@@ -527,7 +527,7 @@ class TestHyperTransformer(TestCase):
         })
         transformer1 = Mock()
         transformer2 = Mock()
-        transformer1.get_output_types.return_value = {
+        transformer1.get_output_sdtypes.return_value = {
             'a.out1': 'categorical'
         }
         transformer1.get_next_transformers.return_value = None

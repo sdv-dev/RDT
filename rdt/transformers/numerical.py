@@ -42,7 +42,7 @@ class FloatFormatter(BaseTransformer):
             max values seen during ``fit``. Defaults to ``False``.
     """
 
-    INPUT_TYPE = 'numerical'
+    INPUT_SDTYPE = 'numerical'
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
@@ -61,20 +61,20 @@ class FloatFormatter(BaseTransformer):
         self.learn_rounding_scheme = learn_rounding_scheme
         self.enforce_min_max_values = enforce_min_max_values
 
-    def get_output_types(self):
-        """Return the output types supported by the transformer.
+    def get_output_sdtypes(self):
+        """Return the output sdtypes supported by the transformer.
 
         Returns:
             dict:
                 Mapping from the transformed column names to supported sdtypes.
         """
-        output_types = {
+        output_sdtypes = {
             'value': 'float',
         }
         if self.null_transformer and self.null_transformer.models_missing_values():
-            output_types['is_null'] = 'float'
+            output_sdtypes['is_null'] = 'float'
 
-        return self._add_prefix(output_types)
+        return self._add_prefix(output_sdtypes)
 
     def is_composition_identity(self):
         """Return whether composition of transform and reverse transform produces the input data.
@@ -443,21 +443,21 @@ class ClusterBasedNormalizer(FloatFormatter):
         self._max_clusters = max_clusters
         self._weight_threshold = weight_threshold
 
-    def get_output_types(self):
-        """Return the output types supported by the transformer.
+    def get_output_sdtypes(self):
+        """Return the output sdtypes supported by the transformer.
 
         Returns:
             dict:
                 Mapping from the transformed column names to supported sdtypes.
         """
-        output_types = {
+        output_sdtypes = {
             'normalized': 'float',
             'component': 'categorical'
         }
         if self.null_transformer and self.null_transformer.models_missing_values():
-            output_types['is_null'] = 'float'
+            output_sdtypes['is_null'] = 'float'
 
-        return self._add_prefix(output_types)
+        return self._add_prefix(output_sdtypes)
 
     def _fit(self, data):
         """Fit the transformer to the data.
