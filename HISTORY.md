@@ -4,7 +4,7 @@
 
 This release fixes multiple bugs concerning the `HyperTransformer`. One is that the `get_transformer_tree_yaml` method no longer crashes on
 every call. Another is that calling the `update_field_data_types` and `update_default_data_type_transformers` after fitting no longer breaks the `transform`
-method.
+method. 
 
 The `HyperTransformer` now sorts its outputs for both `transform` and `reverse_transform` based on the order of the input's columns. It is also now possible
 to create transformers that simply drops columns during `transform` and don't return any new columns.
