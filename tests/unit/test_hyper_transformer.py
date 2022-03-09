@@ -1159,6 +1159,116 @@ class TestHyperTransformer(TestCase):
             'boolean': BinaryEncoder
         }
 
+    @patch('rdt.hyper_transformer.print')
+    def test_update_transformers_by_sdtype_no_field_data_types(self, mock_print):
+        """Test that ``update_transformers_by_sdtype`` prints an error message.
+
+        Ensure that no changes have been made and an error message has been printed.
+
+        Setup:
+            - HyperTransformer instance.
+
+        Mock:
+            - Print function.
+
+        Side Effects:
+            - HyperTransformer's field_transformers have not been upated.
+            - Print has been called once with the expected error message.
+        """
+        # Setup
+        ht = HyperTransformer()
+
+        # Run
+        ht.update_transformers_by_sdtype('categorical', object())
+
+        # Assert
+        expected_msg = (
+            'Error: Nothing to update. Use the `detect_initial_config` method to'
+            'pre-populate all the sdtypes and transformers from your dataset.'
+        )
+        mock_print.assert_called_once_with(expected_msg)
+        assert ht.field_transformers == {}
+
+    @patch('rdt.hyper_transformer.print')
+    def test_update_transformers_by_sdtype_field_data_types_not_fitted(self, mock_print):
+        """Test that ``update_transformers_by_sdtype`` doesn't print anything.
+
+        Ensure that the ``field_transformers`` that have the input ``sdtype`` have been updated.
+
+        Setup:
+            - HyperTransformer instance with ``field_transformers`` and ``field-data_types``.
+
+        Mock:
+            - Print function.
+
+        Side Effects:
+            - HyperTransformer's ``field_transformers`` are upated with the input data.
+            - Print not called.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            'categorical_column': 'rdt.transformers.BaseTransformer',
+            'numerical_column': 'rdt.transformers.FloatFormatter',
+        }
+        ht.field_data_types = {
+            'categorical_column': 'categorical',
+            'numerical_column': 'numerical',
+
+        }
+        transformer = object()
+
+        # Run
+        ht.update_transformers_by_sdtype('categorical', transformer)
+
+        # Assert
+        mock_print.assert_not_called()
+        expected_field_transformers = {
+            'categorical_column': transformer,
+            'numerical_column': 'rdt.transformers.FloatFormatter',
+        }
+        assert ht.field_transformers == expected_field_transformers
+
+    @patch('rdt.hyper_transformer.warnings')
+    @patch('rdt.hyper_transformer.print')
+    def test_update_transformers_by_sdtype_field_data_types_fitted(self, mock_print,
+                                                                   mock_warnings):
+        """Test that ``update_transformers_by_sdtype`` doesn't print anything.
+
+        Ensure that the ``field_transformers`` that have the input ``sdtype`` have been updated and
+        a warning message has been printed.
+
+        Setup:
+            - HyperTransformer instance with ``field_transformers`` and ``field-data_types``.
+
+        Mock:
+            - Print function.
+            - Warnings from the HyperTransformer.
+
+        Side Effects:
+            - HyperTransformer's ``field_transformers`` are upated with the input data.
+            - Print not called.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht._fitted = True
+        ht.field_transformers = {'categorical_column': 'rdt.transformers.BaseTransformer'}
+        ht.field_data_types = {'categorical_column': 'categorical'}
+        transformer = object()
+
+        # Run
+        ht.update_transformers_by_sdtype('categorical', transformer)
+
+        # Assert
+        expected_warnings_msg = (
+            'For this change to take effect, please refit your data using '
+            "'fit' or 'fit_transform'."
+        )
+
+        mock_print.assert_not_called()
+        mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
+        assert ht.field_transformers == {'categorical_column': transformer}
+
     def test_set_first_transformers_for_fields(self):
         """Test the ``set_first_transformers_for_fields`` method.
 

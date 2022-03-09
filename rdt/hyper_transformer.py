@@ -210,8 +210,38 @@ class HyperTransformer:
         self._provided_field_sdtypes.update(field_sdtypes)
         self.field_sdtypes.update(field_sdtypes)
 
-    def get_default_sdtype_transformers(self):
-        """Get the ``default_sdtype_transformer`` dict.
+    def update_transformers_by_sdtype(self, sdtype, transformer):
+        """Update the transformers for the specified ``sdtype``.
+
+        Given an ``sdtype`` and a ``transformer``, change all the fields of the ``sdtype``
+        to use the given transformer.
+
+        Args:
+            sdtype (str):
+                Semantic data type for the ``transformer``.
+            transformer (rdt.transformers.BaseTransformer):
+                Transformer to be used for the given ``sdtype``.
+        """
+        if not self.field_data_types:
+            msg = (
+                'Error: Nothing to update. Use the `detect_initial_config` method to'
+                'pre-populate all the sdtypes and transformers from your dataset.'
+            )
+            print(msg)  # noqa: T001
+
+        else:
+            for field, field_sdtype in self.field_data_types.items():
+                if field_sdtype == sdtype:
+                    self.field_transformers[field] = transformer
+
+            if self._fitted:
+                warnings.warn(
+                    'For this change to take effect, please refit your data using '
+                    "'fit' or 'fit_transform'."
+                )
+
+    def get_default_data_type_transformers(self):
+        """Get the ``default_data_type_transformer`` dict.
 
         Returns:
             dict:
