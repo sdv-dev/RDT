@@ -166,15 +166,44 @@ class HyperTransformer:
         self._fitted_fields.clear()
         self._fitted = False
 
-    def get_field_data_types(self):
-        """Get the ``field_data_types`` dict.
+    @staticmethod
+    def _validate_config(config):
+        sdtypes = config.get('sdtypes', {})
+        transformers = config.get('transformers', {})
+        for column, transformer in transformers.items():
+            input_type = transformer.get_input_type()
+            sdtype = sdtypes.get(column)
+            if input_type != sdtype:
+                warnings.warn(f'You are assigning a {input_type} transformer to a {sdtype} column'
+                              f" ('{column}'). If the transformer doesn't match the sdtype,"
+                              ' it may lead to errors.')
+
+    def get_config(self):
+        """Get the current ``HyperTransformer`` configuration.
 
         Returns:
             dict:
-                Mapping of fields to their data types. Fields can be defined as a string
-                representing a column name or a tuple of multiple column names.
+                A dictionary containing the following two dictionaries:
+                - sdtypes: A dictionary mapping column names to their ``sdtypes``.
+                - transformers: A dictionary mapping column names to their transformer instances.
         """
-        return self.field_data_types
+        return {
+            'sdtypes': self.field_data_types,
+            'transformers': self.field_transformers
+        }
+
+    def set_config(self, config):
+        """Set the ``HyperTransformer`` configuration.
+
+        Args:
+            config (dict):
+                A dictionary containing the following two dictionaries:
+                - sdtypes: A dictionary mapping column names to their ``sdtypes``.
+                - transformers: A dictionary mapping column names to their transformer instances.
+        """
+        self._validate_config(config)
+        self.field_data_types = config['sdtypes']
+        self.field_transformers = config['transformers']
 
     def update_field_data_types(self, field_data_types):
         """Update the ``field_data_types`` dict.
