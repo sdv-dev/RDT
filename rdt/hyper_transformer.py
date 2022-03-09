@@ -469,7 +469,7 @@ class HyperTransformer:
             output_columns = self.get_final_output_columns(input_column)
             self._output_columns.extend(output_columns)
 
-    def _validate_detect_config_called(self):
+    def _validate_detect_config_called(self, data):
         """Warn the user if they fit without calling ``detect_initial_config``.
 
         Note that this tip will only be printed until the first usage of
@@ -479,8 +479,10 @@ class HyperTransformer:
         if not self._config_detected:
             warnings.warn(
                 "Tip: You can use the method 'detect_initial_config' to inspect "
-                "the sdtypes and transformers first before fitting the data."
+                'the sdtypes and transformers first before fitting the data.'
             )
+        else:
+            pass  # check that the get_config() returns the same columns as data.columns
 
     def fit(self, data):
         """Fit the transformers to the data.
@@ -499,6 +501,44 @@ class HyperTransformer:
         self._fitted = True
         self._sort_output_columns()
 
+    def _validate_correctly_fitted(self, data):
+        """Validate the data to transform has been fitted.
+        
+        This method raises errors when:
+            - ``fit`` has not been called at all.
+            - The column names passed to ``fit`` are not the same as the ones passed to
+            ``transform``.
+            - The sdtype of the columns passed to ``fit`` are not the same as the ones
+            passed to ``transform``.
+        """
+        if not self._fitted:
+            raise NotFittedError
+
+        unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
+        if unknown_columns:
+            raise NotFittedError(
+                'The data you are trying to transform has different columns than the original '
+                f'fitted data (unknown columns: {unknown_columns}). Column names and their '
+                "sdtypes must be the same. Use the method 'get_config()' to see the expected "
+                'values.'
+            )
+        
+        unknown_sdtypes = {}
+        field_sdtypes = self.get_field_data_types()
+        for field in data.columns:
+            field_kind = data[field].dtype.kind
+            field_sdtype = self._DTYPES_TO_DATA_TYPES[field_kind]
+            if field_sdtypes[field] != field_sdtype:
+                unknown_sdtypes[field] = field_sdtype
+
+        if unknown_sdtypes:
+            raise NotFittedError(
+                'The data you are trying to transform has different sdtypes than the original '
+                f'fitted data (unknown sdtypes: {unknown_sdtypes}). Column names and their '
+                "sdtypes must be the same. Use the method 'get_config()' to see the expected "
+                'values.'
+            )
+
     def transform(self, data):
         """Transform the data.
 
@@ -512,10 +552,7 @@ class HyperTransformer:
             pandas.DataFrame:
                 Transformed data.
         """
-        if not self._fitted:
-            raise NotFittedError
-
-        unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
+        self._validate_correctly_fitted(data)
         if self.copy:
             data = data.copy()
 
@@ -523,7 +560,7 @@ class HyperTransformer:
             data = transformer.transform(data, drop=False)
 
         transformed_columns = self._subset(self._output_columns, data.columns)
-        return data.reindex(columns=unknown_columns + transformed_columns)
+        return data.reindex(columns=transformed_columns)
 
     def fit_transform(self, data):
         """Fit the transformers to the data and then transform it.
