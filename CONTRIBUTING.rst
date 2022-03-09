@@ -328,7 +328,7 @@ checks. It also prints a table describing each check and whether or not it passe
    Check                                   Correct    Details
    --------------------------------------  ---------  -----------------------------------------------------------------------------------------------------------------------
    Dataset Generators                      Yes        At least one Dataset Generator exists for the Transformer sdtype.
-   Output Sdtype s                            Yes        The Transformer can transform data and produce output(s) of the indicated sdtype(s).
+   Output Sdtypes                            Yes        The Transformer can transform data and produce output(s) of the indicated sdtype(s).
    Reverse Transform                       Yes        The Transformer can reverse transform the data it produces, going back to the original sdtype.
    Hypertransformer can transform          Yes        The HyperTransformer is able to use the Transformer and produce float values.
    Hypertransformer can reverse transform  Yes        The HyperTransformer is able to reverse the data that it has previously transformed and restore the original sdtype.

@@ -35,7 +35,7 @@ class HyperTransformer:
             Whether to make a copy of the input data or not. Defaults to ``True``.
         transform_output_sdtypes (list or None):
             List of acceptable sdtypes for the output of the ``transform`` method.
-            If ``None``, only ``numerical`` types will be considered acceptable.
+            If ``None``, only ``numerical`` sdtypes will be considered acceptable.
 
 
     Example:

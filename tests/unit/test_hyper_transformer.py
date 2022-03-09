@@ -316,7 +316,7 @@ class TestHyperTransformer(TestCase):
     def test__populate_field_sdtypes(self):
         """Test the ``_populate_field_sdtypes`` method.
 
-        This tests that if any field types are missing in the
+        This tests that if any field sdtypes are missing in the
         provided field_sdtypes dict, that the rest of the values
         are filled in using the sdtypes for the dtype.
 
@@ -324,10 +324,10 @@ class TestHyperTransformer(TestCase):
             - field_sdtypes will only define a few of the fields.
 
         Input:
-            - A DataFrame of various types.
+            - A DataFrame of various sdtypes.
 
         Expected behavior:
-            - field types will have values for all fields in
+            - field sdtypes will have values for all fields in
             the data.
         """
         # Setup
@@ -850,7 +850,7 @@ class TestHyperTransformer(TestCase):
             - A mock for ``get_default_tranformer``.
 
         Input:
-            - A DataFrame with multiple columns of different types.
+            - A DataFrame with multiple columns of different sdtypes.
 
         Expected behavior:
             - The ``_fit_field_transformer`` mock should be called with the correct
@@ -913,7 +913,7 @@ class TestHyperTransformer(TestCase):
             - The ``_output_columns`` will be hardcoded.
 
         Input:
-            - A DataFrame of multiple types.
+            - A DataFrame of multiple sdtypes.
 
         Output:
             - The transformed DataFrame with the correct columns dropped.
@@ -964,7 +964,7 @@ class TestHyperTransformer(TestCase):
             - The ``_fitted`` attribute will be False.
 
         Input:
-            - A DataFrame of multiple types.
+            - A DataFrame of multiple sdtypes.
 
         Expected behavior:
             - A ``NotFittedError`` is raised.
@@ -1015,7 +1015,7 @@ class TestHyperTransformer(TestCase):
             - The ``_input_columns`` will be hardcoded.
 
         Input:
-            - A DataFrame of multiple types.
+            - A DataFrame of multiple sdtypes.
 
         Output:
             - The reverse transformed DataFrame with the correct columns dropped.
@@ -1066,7 +1066,7 @@ class TestHyperTransformer(TestCase):
             - The ``_fitted`` attribute will be False.
 
         Input:
-            - A DataFrame of multiple types.
+            - A DataFrame of multiple sdtypes.
 
         Expected behavior:
             - A ``NotFittedError`` is raised.
@@ -1161,7 +1161,7 @@ class TestHyperTransformer(TestCase):
 
         Setup:
             - Initialize ``HyperTransformer`` with ``default_sdtype_transformers``
-            dict that only has some types set.
+            dict that only has some sdtypes set.
 
         Input:
             - Dict mapping new sdtypes to transformers.

@@ -30,7 +30,7 @@ CHECK_DETAILS = {
         'At least one Dataset Generator exists for the Transformer sdtype.',
     ),
     '_validate_transformed_data': (
-        'Output Sdtype s',
+        'Output Sdtypes',
         'The Transformer can transform data and produce output(s) of the indicated sdtype(s).',
     ),
     '_validate_reverse_transformed_data': (

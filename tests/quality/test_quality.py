@@ -13,7 +13,7 @@ from tests.quality.utils import download_single_table
 R2_THRESHOLD = 0.2
 TEST_THRESHOLD = 0.3
 MAX_SIZE = 5000000
-TYPES_TO_SKIP = {'numerical', 'float', 'integer', 'id', None}
+SDTYPES_TO_SKIP = {'numerical', 'float', 'integer', 'id', None}
 
 TYPE_TO_DTYPE = {
     'numerical': ['number'],
@@ -224,7 +224,7 @@ def test_quality(subtests):
     sdtypes_to_test = {
         sdtype
         for sdtype in transformers_by_type.keys()
-        if sdtype not in TYPES_TO_SKIP
+        if sdtype not in SDTYPES_TO_SKIP
     }
     test_cases = get_test_cases(sdtypes_to_test)
     all_regression_scores = get_regression_scores(test_cases, transformers_by_type)
