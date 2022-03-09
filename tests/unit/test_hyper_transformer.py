@@ -1011,27 +1011,6 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(NotFittedError):
             ht.reverse_transform(data)
 
-    def test_get_field_data_types(self):
-        """Test the ``get_field_data_types`` method.
-
-        This method should return the ``field_data_types`` attribute.
-
-        Output:
-            - Dict mapping fields to data types.
-        """
-        # Setup
-        field_data_types = {
-            'a': 'categorical',
-            'b': 'integer'
-        }
-        ht = HyperTransformer(field_data_types=field_data_types)
-
-        # Run
-        out = ht.get_field_data_types()
-
-        # Assert
-        assert out == {'a': 'categorical', 'b': 'integer'}
-
     def test_update_field_data_types(self):
         """Test the ``update_field_data_types`` method.
 

@@ -169,7 +169,7 @@ class HyperTransformer:
         for column, transformer in transformers.items():
             input_type = transformer.get_input_type()
             sdtype = sdtypes.get(column)
-            if transformer.get_input_type() != sdtypes.get(column):
+            if input_type != sdtype:
                 warnings.warn(f'You are assigning a {input_type} transformer to a {sdtype} column'
                               + f" ('{column}'). If the transformer doesn't match the sdtype,"
                               + ' it may lead to errors.')
@@ -200,16 +200,6 @@ class HyperTransformer:
         self._validate_config(config)
         self.field_data_types = config['sdtypes']
         self.field_transformers = config['transformers']
-
-    def get_field_data_types(self):
-        """Get the ``field_data_types`` dict.
-
-        Returns:
-            dict:
-                Mapping of fields to their data types. Fields can be defined as a string
-                representing a column name or a tuple of multiple column names.
-        """
-        return self.field_data_types
 
     def update_field_data_types(self, field_data_types):
         """Update the ``field_data_types`` dict.
