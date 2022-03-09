@@ -26,15 +26,15 @@ class HyperTransformer:
             This can be done by concatenating the name of the original field to the output name
             using ``.`` as a separator (eg. {field_name}.{transformer_output_name}).
         field_sdtypes (dict or None):
-            Dict mapping field names to their data types. If not provided, the data type is
+            Dict mapping field names to their sdtypes. If not provided, the sdtype is
             inferred using the column's Pandas ``dtype``.
         default_sdtype_transformers (dict or None):
-            Dict used to overwrite the default transformer for a data type. The keys are
-            data types and the values are Transformers or Transformer instances.
+            Dict used to overwrite the default transformer for a sdtype. The keys are
+            sdtypes and the values are Transformers or Transformer instances.
         copy (bool):
             Whether to make a copy of the input data or not. Defaults to ``True``.
         transform_output_types (list or None):
-            List of acceptable data types for the output of the ``transform`` method.
+            List of acceptable sdtypes for the output of the ``transform`` method.
             If ``None``, only ``numerical`` types will be considered acceptable.
 
 
@@ -44,7 +44,7 @@ class HyperTransformer:
 
         >>> ht = HyperTransformer()
 
-        Create a ``HyperTransformer`` passing a dict mapping fields to data types.
+        Create a ``HyperTransformer`` passing a dict mapping fields to sdtypes.
 
         >>> field_sdtypes = {
         ...     'a': 'categorical',
@@ -62,7 +62,7 @@ class HyperTransformer:
         ... }
         >>> ht = HyperTransformer(field_transformers=field_transformers)
 
-        Create a ``HyperTransformer`` passing a dict mapping data types to transformers.
+        Create a ``HyperTransformer`` passing a dict mapping sdtypes to transformers.
         >>> default_sdtype_transformers = {
         ...     'categorical': LabelEncoder(),
         ...     'numerical': FloatFormatter()
@@ -183,6 +183,7 @@ class HyperTransformer:
 
         Returns:
             dict:
+<<<<<<< HEAD
                 A dictionary containing the following two dictionaries:
                 - sdtypes: A dictionary mapping column names to their ``sdtypes``.
                 - transformers: A dictionary mapping column names to their transformer instances.
@@ -200,6 +201,10 @@ class HyperTransformer:
                 A dictionary containing the following two dictionaries:
                 - sdtypes: A dictionary mapping column names to their ``sdtypes``.
                 - transformers: A dictionary mapping column names to their transformer instances.
+=======
+                Mapping of fields to their sdtypes. Fields can be defined as a string
+                representing a column name or a tuple of multiple column names.
+>>>>>>> a64bb9b (Change data type to sdtype)
         """
         self._validate_config(config)
         self.field_sdtypes = config['sdtypes']
@@ -210,7 +215,7 @@ class HyperTransformer:
 
         Args:
             field_sdtypes (dict):
-                Mapping of fields to their data types. Fields can be defined as a string
+                Mapping of fields to their sdtypes. Fields can be defined as a string
                 representing a column name or a tuple of multiple column names. It will
                 update the existing ``field_sdtypes`` values. Calling this method will
                 require ``fit`` to be run again.
@@ -224,7 +229,7 @@ class HyperTransformer:
         Returns:
             dict:
                 The ``default_sdtype_transformers`` dictionary. The keys are
-                data types and the values are Transformers or Transformer instances.
+                sdtypes and the values are Transformers or Transformer instances.
         """
         return self.default_sdtype_transformers
 
@@ -233,8 +238,8 @@ class HyperTransformer:
 
         Args:
             new_sdtype_transformers (dict):
-                Dict mapping data types to the default transformer class or instance to use for
-                them. This dict does not need to contain an entry for every data type. It will be
+                Dict mapping sdtypes to the default transformer class or instance to use for
+                them. This dict does not need to contain an entry for every sdtype. It will be
                 used to overwrite the existing defaults. Calling this method will require ``fit``
                 to be run again.
         """
@@ -296,9 +301,9 @@ class HyperTransformer:
         """Return list of all final output columns related to a field.
 
         The ``HyperTransformer`` will figure out which transformers to use on a field during
-        ``transform``. If the outputs are not of an acceptable data type, they will also go
+        ``transform``. If the outputs are not of an acceptable sdtype, they will also go
         through transformations. This method finds all the output columns that are of an
-        acceptable final data type that originated from the specified field.
+        acceptable final sdtype that originated from the specified field.
 
         Args:
             field (str or tuple):

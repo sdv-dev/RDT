@@ -134,11 +134,11 @@ def get_transformer_instance(transformer):
 
 @lru_cache()
 def get_transformers_by_type():
-    """Build a ``dict`` mapping data types to valid existing transformers for that type.
+    """Build a ``dict`` mapping sdtypes to valid existing transformers for that type.
 
     Returns:
         dict:
-            Mapping of data types to a list of existing transformers that take that
+            Mapping of sdtypes to a list of existing transformers that take that
             type as an input.
     """
     sdtype_transformers = defaultdict(list)
@@ -152,11 +152,11 @@ def get_transformers_by_type():
 
 @lru_cache()
 def get_default_transformers():
-    """Build a ``dict`` mapping data types to a default transformer for that type.
+    """Build a ``dict`` mapping sdtypes to a default transformer for that type.
 
     Returns:
         dict:
-            Mapping of data types to a transformer.
+            Mapping of sdtypes to a transformer.
     """
     transformers_by_type = get_transformers_by_type()
     defaults = deepcopy(DEFAULT_TRANSFORMERS)
@@ -169,11 +169,11 @@ def get_default_transformers():
 
 @lru_cache()
 def get_default_transformer(sdtype):
-    """Get default transformer for a data type.
+    """Get default transformer for a sdtype.
 
     Returns:
         Transformer:
-            Default transformer for data type.
+            Default transformer for sdtype.
     """
     default_transformers = get_default_transformers()
     return default_transformers[sdtype]

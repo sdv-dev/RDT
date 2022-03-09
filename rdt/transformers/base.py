@@ -66,7 +66,7 @@ class BaseTransformer:
 
         Returns:
             dict:
-                Mapping from the transformed column names to the produced data types.
+                Mapping from the transformed column names to the produced sdtypes.
         """
         return self._add_prefix(self.OUTPUT_TYPES)
 

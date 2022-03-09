@@ -66,7 +66,7 @@ class FloatFormatter(BaseTransformer):
 
         Returns:
             dict:
-                Mapping from the transformed column names to supported data types.
+                Mapping from the transformed column names to supported sdtypes.
         """
         output_types = {
             'value': 'float',
@@ -448,7 +448,7 @@ class ClusterBasedNormalizer(FloatFormatter):
 
         Returns:
             dict:
-                Mapping from the transformed column names to supported data types.
+                Mapping from the transformed column names to supported sdtypes.
         """
         output_types = {
             'normalized': 'float',

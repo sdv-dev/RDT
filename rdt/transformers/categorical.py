@@ -304,7 +304,7 @@ class OneHotEncoder(BaseTransformer):
 
         Returns:
             dict:
-                Mapping from the transformed column names to the produced data types.
+                Mapping from the transformed column names to the produced sdtypes.
         """
         output_types = {f'value{i}': 'float' for i in range(len(self.dummies))}
 

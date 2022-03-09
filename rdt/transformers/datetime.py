@@ -60,7 +60,7 @@ class UnixTimestampEncoder(BaseTransformer):
 
         Returns:
             dict:
-                Mapping from the transformed column names to supported data types.
+                Mapping from the transformed column names to supported sdtypes.
         """
         output_types = {
             'value': 'float',

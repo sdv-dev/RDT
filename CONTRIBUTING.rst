@@ -162,7 +162,7 @@ There are only three required methods for a transformer:
    the Transformer instance.
 
 Each transformer class should be placed inside the ``rdt/transformers`` folder, in a module
-file named after the data type that the transformer operates on. For example, if you are
+file named after the sdtype that the transformer operates on. For example, if you are
 writing a transformer that works with ``categorical`` data, your transformer should be placed
 inside the ``rdt/transformers/categorical.py`` module.
 
@@ -289,15 +289,15 @@ Integration tests should test the entire workflow of going from input data, to f
 transforming and finally reverse transforming the data. By default, we run integration tests
 for each transformer that validate the following checks:
 
-1. The Transformer correctly defines the data type that it supports.
-2. At least one Dataset Generator exists for the Transformer data type.
-3. The Transformer can transform data and produces outputs of the indicated data types.
-4. The Transformer can reverse transform the data it produces, recovering the original data type.
+1. The Transformer correctly defines the sdtype that it supports.
+2. At least one Dataset Generator exists for the Transformer sdtype.
+3. The Transformer can transform data and produces outputs of the indicated sdtypes.
+4. The Transformer can reverse transform the data it produces, recovering the original sdtype.
    If ``is_composite_identity``, we expect that the reverse transformed data is equal to the
    original data.
 5. The HyperTransformer is able to use the Transformer and produce float values.
 6. The HyperTransformer is able to reverse the data that has previously transformed,
-   and restore the original data type.
+   and restore the original sdtype.
 
 If you wish to test any specific end-to-end scenarios that were not covered in the above checks, 
 add a new integration test. Integration tests can be added under
@@ -325,11 +325,11 @@ checks. It also prints a table describing each check and whether or not it passe
 
    Check                                   Correct    Details
    --------------------------------------  ---------  -----------------------------------------------------------------------------------------------------------------------
-   Dataset Generators                      Yes        At least one Dataset Generator exists for the Transformer data type.
-   Output Types                            Yes        The Transformer can transform data and produce output(s) of the indicated data type(s).
-   Reverse Transform                       Yes        The Transformer can reverse transform the data it produces, going back to the original data type.
+   Dataset Generators                      Yes        At least one Dataset Generator exists for the Transformer sdtype.
+   Output Types                            Yes        The Transformer can transform data and produce output(s) of the indicated sdtype(s).
+   Reverse Transform                       Yes        The Transformer can reverse transform the data it produces, going back to the original sdtype.
    Hypertransformer can transform          Yes        The HyperTransformer is able to use the Transformer and produce float values.
-   Hypertransformer can reverse transform  Yes        The HyperTransformer is able to reverse the data that it has previously transformed and restore the original data type.
+   Hypertransformer can reverse transform  Yes        The HyperTransformer is able to reverse the data that it has previously transformed and restore the original sdtype.
 
    In [3]: valid
    Out [3]: True
@@ -340,7 +340,7 @@ Transformer Performance
 """""""""""""""""""""""
 
 We want to ensure our transformers are as efficient as possible, in terms of time and memory.
-In order to do so, we run performance tests on each transformer, based on the input data type
+In order to do so, we run performance tests on each transformer, based on the input sdtype
 specified by the transformer.
 
 We generate test data using Dataset Generators. Each transformer should have at least one
@@ -366,7 +366,7 @@ and ``get_performance_thresholds``.
 You should make a generator for every type of column that you believe would be useful to test
 against. For some examples, you can look in the `dataset generator folder`_.
 
-The generators each have a ``DATA_TYPE`` class variable. This should match the data type that your
+The generators each have a ``DATA_TYPE`` class variable. This should match the sdtype that your
 ``transformer`` accepts as input.
 
 More details can be found in the `Development Guide`_.
@@ -425,22 +425,22 @@ Transformer Quality
 """""""""""""""""""
 
 To assess the quality of a transformer, we run quality tests that apply the Transformer
-on all the real world datasets that contain the Transformer input data type. The quality tests
+on all the real world datasets that contain the Transformer input sdtype. The quality tests
 look at how well the original correlations are preserved by using transformed data to train
 regression models that predict other columns in the data. We compare the transformer's quality
-results to that of other transformers of the same data type.
+results to that of other transformers of the same sdtype.
 
 .. _Adding a Dataset:
 
 Adding a Dataset
 ****************
 
-If the transformer you are creating adds a new data type, then a dataset with that type may need to
+If the transformer you are creating adds a new sdtype, then a dataset with that type may need to
 be added for the quality tests. This only needs to be done if the transformer being added is 
 expected to preserve or expose relationships in the data. This can be done using the following
 steps:
 
-1. Find a dataset containing the data type your transformer uses as an input.
+1. Find a dataset containing the sdtype your transformer uses as an input.
 
 2. Test your transformer against this dataset by loading it into a ``DataFrame`` and using the
    ``get_transformer_regression_scores`` in the ``test_quality`` package::
@@ -514,7 +514,7 @@ Summary of Steps to Add a New Transformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. If it does not exist, open an Issue in Github and describe the Transformer that will be added,
-   including the data type that it handles and how it will handle it.
+   including the sdtype that it handles and how it will handle it.
 2. Create and clone a fork of the RDT repository.
 3. Create a branch in this repository using the naming convention
    issue-[issue-number]-[transformer-name] (eg. issue-123-address-transformer).
@@ -524,7 +524,7 @@ Summary of Steps to Add a New Transformer
 6. Implement Unit Tests for the Transformer.
 7. Run the ``validate_transformer_unit_tests`` function and fix the reported errors.
 8. Run the ``validate_transformer_integration`` function and fix the reported errors.
-9. If required, implement the `Dataset Generators` for the new data type. This is described in the
+9. If required, implement the `Dataset Generators` for the new sdtype. This is described in the
    `Creating Dataset Generators`_ section.
 10. Run the ``validate_transformer_performance`` function and fix any errors reported.
     If there are no errors but performance can be improved, this function should be used for
@@ -532,9 +532,9 @@ Summary of Steps to Add a New Transformer
 11. If this transformer is expected to help preserve relationships in the data, run the
     ``validate_transformer_quality`` function. If the quality is too low, make the
     necessary enhancements to the transformer.
-12. If the quality tests fail because there is no dataset for the transformer's data type,
+12. If the quality tests fail because there is no dataset for the transformer's sdtype,
     follow the steps in the `Adding a Dataset`_ section to add a real world dataset
-    containing the new data type to the quality tests.
+    containing the new sdtype to the quality tests.
 13. Run the ``validate_pull_request`` function as a final check and fix any errors reported.
 14. After all the previous steps pass, all the new and modified files can be committed and pushed
     to github, and a Pull Request can be submitted. Follow the steps in the

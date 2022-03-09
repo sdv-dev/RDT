@@ -131,10 +131,10 @@ def test_hypertransformer_default_inputs():
 
     Setup:
         - Patch the ``DEFAULT_TRANSFORMERS`` to use the ``FrequencyEncoder``
-        for categorical data types, so that the output is predictable.
+        for categorical sdtypes, so that the output is predictable.
 
     Input:
-        - A dataframe with every data type.
+        - A dataframe with every sdtype.
 
     Expected behavior:
         - The transformed data should contain all the ML ready data.
@@ -187,7 +187,7 @@ def test_hypertransformer_field_transformers():
 
     Input:
         - A dict mapping each field to a transformer.
-        - A dataframe with every data type.
+        - A dataframe with every sdtype.
 
     Expected behavior:
         - The transformed data should contain all the ML ready data.

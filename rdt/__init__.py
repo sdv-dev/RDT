@@ -20,7 +20,7 @@ __all__ = [
 
 
 def get_demo(num_rows=5):
-    """Generate demo data with multiple data types.
+    """Generate demo data with multiple sdtypes.
 
     The first five rows are hard coded. The rest are randomly generated
     using ``np.random.seed(42)``.

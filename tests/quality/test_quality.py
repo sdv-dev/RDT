@@ -126,9 +126,9 @@ def get_regression_scores(test_cases, transformers_by_type):
         test_cases (list):
             List of test cases. Each test case is a tuple containing
             the dataset name, the name of the table to use from the
-            dataset, and the data types to test against for that table.
+            dataset, and the sdtypes to test against for that table.
         transformers_by_type (dict):
-            Dict mapping data type to list of transformers that have that
+            Dict mapping sdtype to list of transformers that have that
             type as their input type.
 
     Returns:
@@ -154,7 +154,7 @@ def get_results_table(regression_scores):
 
     Args:
         regression_scores (dict):
-            Dict mapping data types to a DataFrame where each row has
+            Dict mapping sdtypes to a DataFrame where each row has
             a table name, column name, transformer name and coefficient
             of determination for that transformer predicting that column.
 
@@ -162,7 +162,7 @@ def get_results_table(regression_scores):
         A DataFrame where each row has a transformer name, dataset name,
         average score for the dataset and a score comparing the transformer's
         average score for the dataset to the average of the average score for
-        the dataset across all transformers of the same data type.
+        the dataset across all transformers of the same sdtype.
     """
     results = pd.DataFrame()
     for _, scores in regression_scores.items():
@@ -199,14 +199,14 @@ def test_quality(subtests):
 
     This test has multiple steps.
         1. It creates a list of test cases. Each test case has a dataset
-        and a set of data types to test for the dataset.
-        2. A dictionary is created mapping data types to a DataFrame
+        and a set of sdtypes to test for the dataset.
+        2. A dictionary is created mapping sdtypes to a DataFrame
         containing the regression scores obtained from running the
         transformers of that type against the datasets in the test cases.
         Each row in the DataFrame has the transformer name, dataset name,
         column name and score. The scores are computed as follows:
-            - For every transformer of the data type, transform all the
-            columns of that data type.
+            - For every transformer of the sdtype, transform all the
+            columns of that sdtype.
             - For every numerical column in the dataset, the transformed
             columns are used as features to train a regression model.
             - The score is the coefficient of determination obtained from
@@ -215,7 +215,7 @@ def test_quality(subtests):
         a transformer name, dataset name, average score for the dataset and a score
         comparing the transformer's average score for the dataset to the average
         of the average score for the dataset across all transformers of the same
-        data type.
+        sdtype.
         4. For every unique transformer in the results, a test is run to check
         that the transformer's score for each table is either higher than the
         threshold, or the comparitive score is higher than the threshold.

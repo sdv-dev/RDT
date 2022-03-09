@@ -318,7 +318,7 @@ class TestHyperTransformer(TestCase):
 
         This tests that if any field types are missing in the
         provided field_sdtypes dict, that the rest of the values
-        are filled in using the data types for the dtype.
+        are filled in using the sdtypes for the dtype.
 
         Setup:
             - field_sdtypes will only define a few of the fields.
@@ -1089,7 +1089,7 @@ class TestHyperTransformer(TestCase):
         This method should return the ``field_sdtypes`` attribute.
 
         Output:
-            - Dict mapping fields to data types.
+            - Dict mapping fields to sdtypes.
         """
         # Setup
         field_sdtypes = {
@@ -1115,7 +1115,7 @@ class TestHyperTransformer(TestCase):
             one entry.
 
         Input:
-            - Dict mapping fields to data types.
+            - Dict mapping fields to sdtypes.
         """
         # Setup
         field_sdtypes = {
@@ -1139,7 +1139,7 @@ class TestHyperTransformer(TestCase):
         This method should return the ``default_sdtype_transformers`` attribute.
 
         Output:
-            - Dict mapping data types to transformers.
+            - Dict mapping sdtypes to transformers.
         """
         # Setup
         sdtype_transformers = {
@@ -1164,7 +1164,7 @@ class TestHyperTransformer(TestCase):
             dict that only has some types set.
 
         Input:
-            - Dict mapping new data types to transformers.
+            - Dict mapping new sdtypes to transformers.
         """
         # Setup
         sdtype_transformers = {

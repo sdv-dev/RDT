@@ -15,7 +15,7 @@ RDT Technical Overview
 ----------------------
 
 The goal of RDT is to be able to transform data that is not machine learning ready into data that
-is. By machine learning ready, we mean that the data should consist of data types that most machine
+is. By machine learning ready, we mean that the data should consist of sdtypes that most machine
 learning models can process. Usually this means outputting numeric data with no nulls. On top of this,
 RDT also enforces that those transformations can be reversed, so that data of the original form can
 be obtained again. RDT accomplishes this with the use of two main classes:
@@ -27,11 +27,11 @@ BaseTransformer
 """""""""""""""
 
 Every Transformer in RDT inherits from the ``BaseTransformer``. The goal of this class or any of
-its subclasses is to take data of a certain data type, and convert it into machine learning ready
+its subclasses is to take data of a certain sdtype, and convert it into machine learning ready
 data. To enable transformers to do this, the ``BaseTransformer`` has the following attributes:
 
 * ``INPUT_TYPE`` (str) - The input type for the transformer.
-* ``OUTPUT_TYPES`` (dict) - Dictionary mapping transformed column names to their data types.
+* ``OUTPUT_TYPES`` (dict) - Dictionary mapping transformed column names to their sdtypes.
 * ``DETERMINISTIC_TRANSFORM`` (bool) - Whether or not calling ``transform`` yields a deterministic
   output.
 * ``DETERMINISTIC_REVERSE`` (bool) - Whether or not calling ``reverse_transform`` yields a
@@ -88,7 +88,7 @@ get a machine learning ready output. It does so using the following methods:
 * ``fit(data)`` - Takes in a ``pandas.DataFrame``. For every column or group of columns in the
   data, it find a transformer to use on it and calls that transformer's `fit` method with those
   columns. If the output of the transformer is not machine learning ready, it will recursively
-  find transformers to use on that data type until it is. A sequence of transformers to use is
+  find transformers to use on that sdtype until it is. A sequence of transformers to use is
   created.
 * ``transform(data)`` - Takes in a ``pandas.DataFrame``. Goes through the sequence of transformers
   created during ``fit`` and calls their underlying ``transform`` method.
@@ -312,8 +312,8 @@ Dataset Generators
 ------------------
 
 In RDT, performance tests are run to assure that each transformer is efficient. In order to run
-these tests, we have classes that generate datasets of a certain data type. If a new transformer
-introduces a new data type, the a ``DatasetGenerator`` class will need to be added for it.
+these tests, we have classes that generate datasets of a certain sdtype. If a new transformer
+introduces a new sdtype, the a ``DatasetGenerator`` class will need to be added for it.
 
 BaseDatasetGenerator
 """"""""""""""""""""
@@ -321,7 +321,7 @@ BaseDatasetGenerator
 All dataset generators inherit from the ``BaseDatasetGenerator`` class. It has the following
 class attribute:
 
-* ``DATA_TYPE`` (str) - The data type for the class to generate.
+* ``DATA_TYPE`` (str) - The sdtype for the class to generate.
 
 They must implement the following methods.
 
@@ -342,7 +342,7 @@ Each generator must inherit from the base class as well as ``abc.ABC``.
 Example DatasetGenerator
 ************************
 
-Let's create a ``DatasetGenerator`` for the ``phone_number`` data type that we introduced earlier.
+Let's create a ``DatasetGenerator`` for the ``phone_number`` sdtype that we introduced earlier.
 We can start by implementing the ``generate`` method and setting the ``DATA_TYPE``.
 
 .. code-block:: Python

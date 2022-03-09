@@ -50,7 +50,7 @@ TRANSFORMER_ARGS = {
 def _get_dataset_sizes(sdtype):
     """Get a list of (fit_size, transform_size) for each dataset generator.
 
-    Based on the data type of the dataset generator, return the list of
+    Based on the sdtype of the dataset generator, return the list of
     sizes to run performance tests on. Each element in this list is a tuple
     of (fit_size, transform_size).
 

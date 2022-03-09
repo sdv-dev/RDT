@@ -49,7 +49,7 @@ TRANSFORMER_ARGS = {
     },
 }
 
-# Mapping of rdt data type to dtype
+# Mapping of rdt sdtype to dtype
 SDTYPE_TO_DTYPE = {
     'boolean': ['b', 'O'],
     'categorical': ['O', 'i', 'f'],
@@ -90,11 +90,11 @@ def _get_all_transformers():
 
 
 def _build_generator_map():
-    """Build a map of data type to data generator.
+    """Build a map of sdtype to data generator.
 
     Output:
         dict:
-            A mapping of data type (str) to a list of data
+            A mapping of sdtype (str) to a list of data
             generators (rdt.tests.datasets.BaseDatasetGenerator).
     """
     generators = defaultdict(list)
@@ -130,7 +130,7 @@ def _validate_transformed_data(transformer, transformed_data):
     for column, expected_sdtype in expected_sdtypes.items():
         message = f'Column {column} is expected but not found in transformed data.'
         assert column in transformed_data, message
-        message = f'Column {column} is not the expected data type {expected_sdtype}'
+        message = f'Column {column} is not the expected sdtype {expected_sdtype}'
         assert transformed_dtypes[column].kind in SDTYPE_TO_DTYPE[expected_sdtype], message
 
 
@@ -140,7 +140,7 @@ def _validate_reverse_transformed_data(transformer, reversed_data, input_dtype):
     Expect that the dtype is equal to the dtype of the input data.
     """
     expected_sdtype = transformer.get_input_type()
-    message = f'Reverse transformed data is not the expected data type {expected_sdtype}'
+    message = f'Reverse transformed data is not the expected sdtype {expected_sdtype}'
     assert reversed_data.dtypes[TEST_COL].kind in SDTYPE_TO_DTYPE[expected_sdtype], message
 
 
@@ -223,7 +223,7 @@ def _validate_hypertransformer_transformed_data(transformed_data):
 def _validate_hypertransformer_reverse_transformed_data(transformer, reversed_data):
     """Check that the reverse transformed data has the same dtype as the input."""
     expected_sdtype = transformer().get_input_type()
-    message = f'Reversed transformed data is not the expected data type {expected_sdtype}'
+    message = f'Reversed transformed data is not the expected sdtype {expected_sdtype}'
     assert reversed_data.dtype.kind in SDTYPE_TO_DTYPE[expected_sdtype], message
 
 
