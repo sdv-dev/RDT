@@ -183,13 +183,12 @@ class HyperTransformer:
 
         Returns:
             dict:
-<<<<<<< HEAD
                 A dictionary containing the following two dictionaries:
                 - sdtypes: A dictionary mapping column names to their ``sdtypes``.
                 - transformers: A dictionary mapping column names to their transformer instances.
         """
         return {
-            'sdtypes': self.field_data_types,
+            'sdtypes': self.field_sdtypes,
             'transformers': self.field_transformers
         }
 
@@ -201,10 +200,6 @@ class HyperTransformer:
                 A dictionary containing the following two dictionaries:
                 - sdtypes: A dictionary mapping column names to their ``sdtypes``.
                 - transformers: A dictionary mapping column names to their transformer instances.
-=======
-                Mapping of fields to their sdtypes. Fields can be defined as a string
-                representing a column name or a tuple of multiple column names.
->>>>>>> a64bb9b (Change data type to sdtype)
         """
         self._validate_config(config)
         self.field_sdtypes = config['sdtypes']

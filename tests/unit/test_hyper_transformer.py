@@ -700,11 +700,11 @@ class TestHyperTransformer(TestCase):
             - transformers: Maps to a dictionary that maps column names to transformers.
 
         Setup:
-            - Add entries to the ``field_data_types`` attribute.
+            - Add entries to the ``field_data_sdtypes`` attribute.
             - Add entries to the ``field_transformers`` attribute.
 
         Output:
-            - A dictionary with the key sdtypes mapping to the ``field_data_types`` attribute and
+            - A dictionary with the key sdtypes mapping to the ``field_data_sdtypes`` attribute and
             the key transformers mapping to the ``field_transformers`` attribute.
         """
         # Setup
@@ -713,7 +713,7 @@ class TestHyperTransformer(TestCase):
             'column1': FloatFormatter(),
             'column2': FrequencyEncoder()
         }
-        ht.field_data_types = {
+        ht.field_data_sdtypes = {
             'column1': 'numerical',
             'column2': 'categorical'
         }
@@ -723,7 +723,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         expected_config = {
-            'sdtypes': ht.field_data_types,
+            'sdtypes': ht.field_data_sdtypes,
             'transformers': ht.field_transformers
         }
         assert config == expected_config
@@ -755,7 +755,7 @@ class TestHyperTransformer(TestCase):
     def test_set_config(self):
         """Test the ``set_config`` method.
 
-        The method should set the ``instance.field_transformers`` and ``instance.field_data_types``
+        The method should set the ``instance.field_transformers`` and ``instance.field_data_sdtypes``
         attributes based on the config.
 
         Setup:
@@ -767,7 +767,7 @@ class TestHyperTransformer(TestCase):
                 - sdtypes: Maps to a dict that maps column names to ``sdtypes``.
 
         Expected behavior:
-            - The ``instance.field_transformers`` and ``instance.field_data_types`` should be set.
+            - The ``instance.field_transformers`` and ``instance.field_data_sdtypes`` should be set.
         """
         # Setup
         transformers = {
@@ -791,7 +791,7 @@ class TestHyperTransformer(TestCase):
         # Assert
         ht._validate_config.assert_called_once_with(config)
         assert ht.field_transformers == config['transformers']
-        assert ht.field_data_types == config['sdtypes']
+        assert ht.field_data_sdtypes == config['sdtypes']
 
     def get_data(self):
         return pd.DataFrame({
@@ -1079,34 +1079,8 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(NotFittedError):
             ht.reverse_transform(data)
 
-<<<<<<< HEAD
-    def test_update_field_data_types(self):
-        """Test the ``update_field_data_types`` method.
-=======
-    def test_get_field_sdtypes(self):
-        """Test the ``get_field_sdtypes`` method.
-
-        This method should return the ``field_sdtypes`` attribute.
-
-        Output:
-            - Dict mapping fields to sdtypes.
-        """
-        # Setup
-        field_sdtypes = {
-            'a': 'categorical',
-            'b': 'integer'
-        }
-        ht = HyperTransformer(field_sdtypes=field_sdtypes)
-
-        # Run
-        out = ht.get_field_sdtypes()
-
-        # Assert
-        assert out == {'a': 'categorical', 'b': 'integer'}
-
-    def test_update_field_sdtypes(self):
-        """Test the ``update_field_sdtypes`` method.
->>>>>>> 14e371d (Some updates)
+    def test_update_field_data_sdtypes(self):
+        """Test the ``update_field_data_sdtypes`` method.
 
         This method should update the ``field_sdtypes`` attribute.
 
