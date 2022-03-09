@@ -147,6 +147,7 @@ class HyperTransformer:
         self._fitted_fields = set()
         self._fitted = False
         self._transformers_tree = defaultdict(dict)
+        self._config_detected = False
 
     @staticmethod
     def _field_in_data(field, data):
@@ -388,6 +389,7 @@ class HyperTransformer:
         self.default_sdtype_transformers = {}
         self._provided_field_sdtypes = {}
         self._provided_field_transformers = {}
+        self._config_detected = True
 
         # Set the sdtypes and transformers of all fields to their defaults
         self._learn_config(data)
@@ -467,6 +469,19 @@ class HyperTransformer:
             output_columns = self.get_final_output_columns(input_column)
             self._output_columns.extend(output_columns)
 
+    def _validate_detect_config_called(self):
+        """Warn the user if they fit without calling ``detect_initial_config``.
+
+        Note that this tip will only be printed until the first usage of
+        ``detect_initial_config`` method. After that method has been used once
+        the tip will no longer be shown (for an instance of the HyperTransformer).
+        """
+        if not self._config_detected:
+            warnings.warn(
+                "Tip: You can use the method 'detect_initial_config' to inspect "
+                "the sdtypes and transformers first before fitting the data."
+            )
+
     def fit(self, data):
         """Fit the transformers to the data.
 
@@ -474,6 +489,7 @@ class HyperTransformer:
             data (pandas.DataFrame):
                 Data to fit the transformers to.
         """
+        self._validate_detect_config_called()
         self._learn_config(data)
         self._input_columns = list(data.columns)
         for field in self._input_columns:

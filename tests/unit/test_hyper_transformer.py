@@ -337,11 +337,31 @@ class TestHyperTransformer(TestCase):
         assert isinstance(next_transformer, FrequencyEncoder)
         assert next_transformer.add_noise is False
 
+    def test__validate_detect_config_called(self):
+        """Test the ``_validate_detect_config_called`` method.
+
+        Tests that the ``_validate_detect_config_called`` method raises a warning
+        if ``_config_detected`` is False (default value).
+
+        Expected behavior:
+            - A warning should be raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+        warning_msg = (
+            "Tip: You can use the method 'detect_initial_config' to inspect "
+            'the sdtypes and transformers first before fitting the data.'
+        )
+
+        # Run / Assert
+        with pytest.warns(UserWarning, match=warning_msg):
+            ht._validate_detect_config_called()
+
     def test_detect_initial_config(self):
         """Test the ``detect_initial_config`` method.
 
-        This tests that ``field_sdtypes`` and ``field_transformers`` are correctly set,
-        and that the appropriate configuration is printed.
+        This tests that ``field_data_types`` and ``field_transformers`` are correctly set,
+        ``_config_detected`` is set to True, and that the appropriate configuration is printed.
 
         Input:
             - A DataFrame.
@@ -366,9 +386,9 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert ht._provided_field_sdtypes == {}
         assert ht._provided_field_transformers == {}
-
+        assert ht._config_detected is True
         assert ht.field_sdtypes == {
-            'col1': 'float',
+                    'col1': 'float',
             'col2': 'categorical',
             'col3': 'boolean',
             'col4': 'datetime',
@@ -849,6 +869,7 @@ class TestHyperTransformer(TestCase):
             - A mock for ``_fit_field_transformer``.
             - A mock for ``_field_in_set``.
             - A mock for ``get_default_tranformer``.
+            - A mock for ``_validate_detect_config_called``.
 
         Input:
             - A DataFrame with multiple columns of different sdtypes.
@@ -886,6 +907,7 @@ class TestHyperTransformer(TestCase):
         ht._field_in_set.side_effect = [True, True, False, False, False]
         ht._validate_all_fields_fitted = Mock()
         ht._sort_output_columns = Mock()
+        ht._validate_detect_config_called = Mock()
 
         # Run
         ht.fit(data)
@@ -900,6 +922,7 @@ class TestHyperTransformer(TestCase):
         ])
         ht._validate_all_fields_fitted.assert_called_once()
         ht._sort_output_columns.assert_called_once()
+        ht._validate_detect_config_called.assert_called_once()
 
     def test_transform(self):
         """Test the ``transform`` method.
