@@ -109,14 +109,14 @@ class HyperTransformer:
 
     def _create_multi_column_fields(self):
         multi_column_fields = {}
-        for field in list(self.field_sdtypes) + list(self.field_transformers):
+        for field in list(self.provided_field_sdtypes) + list(self.provided_field_transformers):
             if isinstance(field, tuple):
                 for column in field:
                     multi_column_fields[column] = field
         return multi_column_fields
 
     def _validate_field_transformers(self):
-        for field in self.field_transformers:
+        for field in self.provided_field_transformers:
             if self._field_in_set(field, self._specified_fields):
                 raise ValueError(f'Multiple transformers specified for the field {field}. '
                                  'Each field can have at most one transformer defined in '
@@ -127,10 +127,11 @@ class HyperTransformer:
     def __init__(self, copy=True, field_sdtypes=None, default_sdtype_transformers=None,
                  field_transformers=None, transform_output_sdtypes=None):
         self.copy = copy
+        self.provided_field_sdtypes = field_sdtypes or {}
         self._fitted_field_sdtypes = {}
-        self.field_sdtypes = field_sdtypes or {}
         self.default_sdtype_transformers = default_sdtype_transformers or {}
-        self.field_transformers = field_transformers or {}
+        self.provided_field_transformers = field_transformers or {}
+        self._fitted_field_transformers = {}
         self._specified_fields = set()
         self._validate_field_transformers()
         self.transform_output_sdtypes = transform_output_sdtypes or self._DEFAULT_OUTPUT_SDTYPES
@@ -155,7 +156,7 @@ class HyperTransformer:
     def _populate_field_sdtypes(self, data):
         # get set of provided fields including multi-column fields
         provided_fields = set()
-        for field in self.field_sdtypes.keys():
+        for field in self.provided_field_sdtypes.keys():
             self._add_field_to_set(field, provided_fields)
 
         for field in data:
@@ -192,8 +193,8 @@ class HyperTransformer:
                 - transformers: A dictionary mapping column names to their transformer instances.
         """
         return {
-            'sdtypes': self.field_sdtypes,
-            'transformers': self.field_transformers
+            'sdtypes': {**self.provided_field_sdtypes, **self._fitted_field_sdtypes},
+            'transformers': {**self.provided_field_transformers, **self._fitted_field_transformers}
         }
 
     def set_config(self, config):
@@ -206,8 +207,8 @@ class HyperTransformer:
                 - transformers: A dictionary mapping column names to their transformer instances.
         """
         self._validate_config(config)
-        self.field_sdtypes = config['sdtypes']
-        self.field_transformers = config['transformers']
+        self.provided_field_sdtypes = config['sdtypes']
+        self.provided_field_transformers = config['transformers']
 
     def update_field_sdtypes(self, field_sdtypes):
         """Update the ``field_sdtypes`` dict.
@@ -219,7 +220,7 @@ class HyperTransformer:
                 update the existing ``field_sdtypes`` values. Calling this method will
                 require ``fit`` to be run again.
         """
-        self.field_sdtypes.update(field_sdtypes)
+        self.provided_field_sdtypes.update(field_sdtypes)
         self._unfit()
 
     def get_default_sdtype_transformers(self):
@@ -256,7 +257,7 @@ class HyperTransformer:
                 tuples of strings representing multiple column names. Calling this method will
                 require ``fit`` to be run again.
         """
-        self.field_transformers.update(field_transformers)
+        self.provided_field_transformers.update(field_transformers)
         self._unfit()
 
     def get_transformer(self, field):
@@ -371,21 +372,23 @@ class HyperTransformer:
                 Data which will have its configuration detected.
         """
         # Reset the state of the HyperTransformer
-        self.field_sdtypes = {}
-        self.field_transformers = {}
+        self.provided_field_sdtypes = {}
+        self._fitted_field_sdtypes = {}
+        self.provided_field_transformers = {}
+        self._fitted_field_transformers = {}
 
         # Set the sdtypes and transformers of all fields to their defaults
         for field in data:
             self._set_field_sdtype(data, field)
-            field_sdtype = self.field_sdtypes[field]
-            self.field_transformers[field] = get_default_transformer(field_sdtype)
+            field_sdtype = self._fitted_field_sdtypes[field]
+            self._fitted_field_transformers[field] = get_default_transformer(field_sdtype)
 
         print('Detecting a new config from the data ... SUCCESS')  # noqa: T001
         print('Setting the new config ... SUCCESS')  # noqa: T001
 
         config = {
-            'sdtypes': self.field_sdtypes,
-            'transformers': {k: repr(v) for k, v in self.field_transformers.items()}
+            'sdtypes': self._fitted_field_sdtypes,
+            'transformers': {k: repr(v) for k, v in self._fitted_field_transformers.items()}
         }
 
         print('Config:')  # noqa: T001
@@ -393,8 +396,10 @@ class HyperTransformer:
 
     def _get_next_transformer(self, output_field, output_sdtype, next_transformers):
         next_transformer = None
-        if output_field in self.field_transformers:
-            next_transformer = self.field_transformers[output_field]
+        field_transformers = {
+            **self.provided_field_transformers, ** self._fitted_field_transformers}
+        if output_field in field_transformers:
+            next_transformer = field_transformers[output_field]
 
         elif output_sdtype not in self.transform_output_sdtypes:
             if next_transformers is not None and output_field in next_transformers:
@@ -451,7 +456,6 @@ class HyperTransformer:
 
     def _sort_output_columns(self):
         """Sort ``_output_columns`` to follow the same order as the ``_input_columns``."""
-        self._output_columns = []
         for input_column in self._input_columns:
             output_columns = self.get_final_output_columns(input_column)
             self._output_columns.extend(output_columns)
@@ -468,11 +472,13 @@ class HyperTransformer:
         self._populate_field_sdtypes(data)
 
         # Loop through field_transformers that are first level
-        for field in self.field_transformers:
+        for field in self.provided_field_transformers:
             if self._field_in_data(field, data):
-                data = self._fit_field_transformer(data, field, self.field_transformers[field])
+                data = self._fit_field_transformer(
+                    data, field, self.provided_field_transformers[field]
+                )
 
-        field_sdtypes = {**self.field_sdtypes, **self._fitted_field_sdtypes}
+        field_sdtypes = {**self.provided_field_sdtypes, **self._fitted_field_sdtypes}
         for (field, sdtype) in field_sdtypes.items():
             if not self._field_in_set(field, self._fitted_fields):
                 if sdtype in self.default_sdtype_transformers:
