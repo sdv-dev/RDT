@@ -127,7 +127,7 @@ class HyperTransformer:
     def __init__(self, copy=True, field_sdtypes=None, default_sdtype_transformers=None,
                  field_transformers=None, transform_output_sdtypes=None):
         self.copy = copy
-        self.fitted_field_data_types = {}
+        self._fitted_field_data_types = {}
         self.field_data_types = field_data_types or {}
         self.default_data_type_transformers = default_data_type_transformers or {}
         self.field_transformers = field_transformers or {}
@@ -150,7 +150,7 @@ class HyperTransformer:
     def _set_field_sdtype(self, data, field):
         clean_data = data[field].dropna()
         kind = clean_data.infer_objects().dtype.kind
-        self.field_sdtypes[field] = self._DTYPES_TO_SDTYPES[kind]
+        self._fitted_field_data_types[field] = self._DTYPES_TO_DATA_TYPES[kind]
 
     def _populate_field_sdtypes(self, data):
         # get set of provided fields including multi-column fields
@@ -163,7 +163,7 @@ class HyperTransformer:
                 self._set_field_sdtype(data, field)
 
     def _unfit(self):
-        self.fitted_field_data_types = {}
+        self._fitted_field_data_types = {}
         self._transformers_sequence = []
         self._output_columns = []
         self._fitted_fields.clear()
@@ -472,7 +472,7 @@ class HyperTransformer:
             if self._field_in_data(field, data):
                 data = self._fit_field_transformer(data, field, self.field_transformers[field])
 
-        field_data_types = {**self.field_data_types, **self.fitted_field_data_types}
+        field_data_types = {**self.field_data_types, **self._fitted_field_data_types}
         for (field, data_type) in field_data_types.items():
             if not self._field_in_set(field, self._fitted_fields):
                 if sdtype in self.default_sdtype_transformers:
