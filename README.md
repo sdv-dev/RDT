@@ -92,7 +92,7 @@ from rdt import get_demo
 data = get_demo()
 ```
 
-This will return a `pandas.DataFrame` with 5 rows and 5 columns, one of each data type supported:
+This will return a `pandas.DataFrame` with 5 rows and 5 columns, one of each sdtype supported:
 
 ```
   last_login email_optin credit_card  age  dollars_spent

@@ -134,46 +134,46 @@ def get_transformer_instance(transformer):
 
 @lru_cache()
 def get_transformers_by_type():
-    """Build a ``dict`` mapping data types to valid existing transformers for that type.
+    """Build a ``dict`` mapping sdtypes to valid existing transformers for that sdtype.
 
     Returns:
         dict:
-            Mapping of data types to a list of existing transformers that take that
-            type as an input.
+            Mapping of sdtypes to a list of existing transformers that take that
+            sdtype as an input.
     """
-    data_type_transformers = defaultdict(list)
+    sdtype_transformers = defaultdict(list)
     transformer_classes = BaseTransformer.get_subclasses()
     for transformer in transformer_classes:
-        input_type = transformer.get_input_type()
-        data_type_transformers[input_type].append(transformer)
+        input_sdtype = transformer.get_input_sdtype()
+        sdtype_transformers[input_sdtype].append(transformer)
 
-    return data_type_transformers
+    return sdtype_transformers
 
 
 @lru_cache()
 def get_default_transformers():
-    """Build a ``dict`` mapping data types to a default transformer for that type.
+    """Build a ``dict`` mapping sdtypes to a default transformer for that sdtype.
 
     Returns:
         dict:
-            Mapping of data types to a transformer.
+            Mapping of sdtypes to a transformer.
     """
     transformers_by_type = get_transformers_by_type()
     defaults = deepcopy(DEFAULT_TRANSFORMERS)
-    for (data_type, transformers) in transformers_by_type.items():
-        if data_type not in defaults:
-            defaults[data_type] = transformers[0]
+    for (sdtype, transformers) in transformers_by_type.items():
+        if sdtype not in defaults:
+            defaults[sdtype] = transformers[0]
 
     return defaults
 
 
 @lru_cache()
-def get_default_transformer(data_type):
-    """Get default transformer for a data type.
+def get_default_transformer(sdtype):
+    """Get default transformer for a sdtype.
 
     Returns:
         Transformer:
-            Default transformer for data type.
+            Default transformer for sdtype.
     """
     default_transformers = get_default_transformers()
-    return default_transformers[data_type]
+    return default_transformers[sdtype]

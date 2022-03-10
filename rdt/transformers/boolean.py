@@ -28,7 +28,7 @@ class BinaryEncoder(BaseTransformer):
             are null values. Defaults to ``False``.
     """
 
-    INPUT_TYPE = 'boolean'
+    INPUT_SDTYPE = 'boolean'
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
 
@@ -38,20 +38,20 @@ class BinaryEncoder(BaseTransformer):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
 
-    def get_output_types(self):
-        """Return the output types returned by this transformer.
+    def get_output_sdtypes(self):
+        """Return the output sdtypes returned by this transformer.
 
         Returns:
             dict:
-                Mapping from the transformed column names to the produced data types.
+                Mapping from the transformed column names to the produced sdtypes.
         """
-        output_types = {
+        output_sdtypes = {
             'value': 'float',
         }
         if self.null_transformer and self.null_transformer.models_missing_values():
-            output_types['is_null'] = 'float'
+            output_sdtypes['is_null'] = 'float'
 
-        return self._add_prefix(output_types)
+        return self._add_prefix(output_sdtypes)
 
     def _fit(self, data):
         """Fit the transformer to the data.

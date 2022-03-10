@@ -23,13 +23,13 @@ class TestFloatFormatter(TestCase):
         assert nt.missing_value_replacement == 'mode'
         assert nt.model_missing_values is False
 
-    def test_get_output_types(self):
-        """Test the ``get_output_types`` method when a null column is created.
+    def test_get_output_sdtypes(self):
+        """Test the ``get_output_sdtypes`` method when a null column is created.
 
         When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output types:
+        method to the following dictionary of output sdtypes:
 
-        output_types = {
+        output_sdtypes = {
             'value': 'float',
             'is_null': 'float'
         }
@@ -41,7 +41,7 @@ class TestFloatFormatter(TestCase):
                 - sets ``self.column_prefix`` to a string.
 
         Output:
-            - the ``output_types`` dictionary, but with the ``self.column_prefix``
+            - the ``output_sdtypes`` dictionary, but with the ``self.column_prefix``
             added to the beginning of the keys.
         """
         # Setup
@@ -51,7 +51,7 @@ class TestFloatFormatter(TestCase):
         transformer.column_prefix = 'a#b'
 
         # Run
-        output = transformer.get_output_types()
+        output = transformer.get_output_sdtypes()
 
         # Assert
         expected = {
@@ -1213,13 +1213,13 @@ class TestGaussianNormalizer:
 
 class TestClusterBasedNormalizer(TestCase):
 
-    def test_get_output_types_model_missing_values_column_created(self):
-        """Test the ``get_output_types`` method when a null column is created.
+    def test_get_output_sdtypes_model_missing_values_column_created(self):
+        """Test the ``get_output_sdtypes`` method when a null column is created.
 
         When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output types:
+        method to the following dictionary of output sdtypes:
 
-        output_types = {
+        output_sdtypes = {
             'value': 'float',
             'is_null': 'float'
         }
@@ -1231,7 +1231,7 @@ class TestClusterBasedNormalizer(TestCase):
                 - sets ``self.column_prefix`` to a string.
 
         Output:
-            - the ``output_types`` dictionary, but with ``self.column_prefix``
+            - the ``output_sdtypes`` dictionary, but with ``self.column_prefix``
             added to the beginning of the keys.
         """
         # Setup
@@ -1241,7 +1241,7 @@ class TestClusterBasedNormalizer(TestCase):
         transformer.column_prefix = 'abc'
 
         # Run
-        output = transformer.get_output_types()
+        output = transformer.get_output_sdtypes()
 
         # Assert
         expected = {

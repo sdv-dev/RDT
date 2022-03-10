@@ -17,7 +17,7 @@ class IdentityTransformer(BaseTransformer):
             data (pandas.Series or numpy.ndarray):
                 Data to fit the transformer to.
         """
-        self.OUTPUT_TYPES = {
+        self.OUTPUT_SDTYPES = {
             column: None
             for column in self.columns
         }
