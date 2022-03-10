@@ -316,15 +316,9 @@ class TestHyperTransformer(TestCase):
     def test__populate_field_sdtypes(self):
         """Test the ``_populate_field_sdtypes`` method.
 
-<<<<<<< HEAD
         This tests that if any field sdtypes are missing in the
-        provided field_sdtypes dict, that the rest of the values
-        are filled in using the sdtypes for the dtype.
-=======
-        This tests that if any field types are missing in the
-        provided ``field_data_types`` dict, that the rest of the values
-        are added to ``fitted_field_data_types`` using the data types for the dtype.
->>>>>>> f3182dd (Add test cases)
+        provided ``field_sdtypes`` dict, than the rest of the values
+        are added to ``fitted_field_sdtypes`` using the sdtypes for the dtype.
 
         Setup:
             - field_sdtypes will only define a few of the fields.
@@ -333,7 +327,7 @@ class TestHyperTransformer(TestCase):
             - A DataFrame of various sdtypes.
 
         Expected behavior:
-            - ``fitted_field_data_types`` will have the new added values.
+            - ``fitted_field_sdtypes`` will have the new added values.
         """
         # Setup
         ht = HyperTransformer(field_sdtypes={'a': 'numerical', 'b': 'categorical'})
@@ -349,9 +343,9 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         expected_fields = {'a': 'numerical', 'b': 'categorical'}
-        assert ht.field_data_types == expected_fields
+        assert ht.field_sdtypes == expected_fields
         expected_fitted = {'c': 'boolean', 'd': 'float'}
-        assert ht.fitted_field_data_types == expected_fitted
+        assert ht.fitted_field_sdtypes == expected_fitted
 
     def test_detect_initial_config(self):
         """Test the ``detect_initial_config`` method.
