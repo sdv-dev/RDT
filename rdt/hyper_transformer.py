@@ -222,6 +222,7 @@ class HyperTransformer:
             transformer (rdt.transformers.BaseTransformer):
                 Transformer to be used for the given ``sdtype``.
         """
+        self.default_data_type_transformers[sdtype] = transformer
         if not self.field_data_types:
             msg = (
                 'Error: Nothing to update. Use the `detect_initial_config` method to'
@@ -249,18 +250,6 @@ class HyperTransformer:
                 sdtypes and the values are Transformers or Transformer instances.
         """
         return self.default_sdtype_transformers
-
-    def update_default_sdtype_transformers(self, new_sdtype_transformers):
-        """Update the ``default_sdtype_transformer`` dict.
-
-        Args:
-            new_sdtype_transformers (dict):
-                Dict mapping sdtypes to the default transformer class or instance to use for
-                them. This dict does not need to contain an entry for every sdtype. It will be
-                used to overwrite the existing defaults. Calling this method will require ``fit``
-                to be run again.
-        """
-        self.default_sdtype_transformers.update(new_sdtype_transformers)
 
     def set_first_transformers_for_fields(self, field_transformers):
         """Set the first transformer to use for certain fields.

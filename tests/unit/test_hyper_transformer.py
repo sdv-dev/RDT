@@ -1129,36 +1129,6 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert out == {'categorical': FrequencyEncoder, 'integer': FloatFormatter}
 
-    def test_update_default_sdtype_transformers(self):
-        """Test the ``update_default_sdtype_transformers`` method.
-
-        This method should update the ``default_sdtype_transformers`` attribute.
-
-        Setup:
-            - Initialize ``HyperTransformer`` with ``default_sdtype_transformers``
-            dict that only has some sdtypes set.
-
-        Input:
-            - Dict mapping new sdtypes to transformers.
-        """
-        # Setup
-        sdtype_transformers = {
-            'categorical': FrequencyEncoder,
-            'integer': FloatFormatter
-        }
-        ht = HyperTransformer(default_sdtype_transformers=sdtype_transformers)
-        ht._transformers_sequence = [FrequencyEncoder()]
-
-        # Run
-        ht.update_default_sdtype_transformers({'boolean': BinaryEncoder})
-
-        # Assert
-        assert ht.default_sdtype_transformers == {
-            'categorical': FrequencyEncoder,
-            'integer': FloatFormatter,
-            'boolean': BinaryEncoder
-        }
-
     @patch('rdt.hyper_transformer.print')
     def test_update_transformers_by_sdtype_no_field_data_types(self, mock_print):
         """Test that ``update_transformers_by_sdtype`` prints an error message.
@@ -1177,9 +1147,10 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
+        transformer = object()
 
         # Run
-        ht.update_transformers_by_sdtype('categorical', object())
+        ht.update_transformers_by_sdtype('categorical', transformer)
 
         # Assert
         expected_msg = (
@@ -1188,6 +1159,7 @@ class TestHyperTransformer(TestCase):
         )
         mock_print.assert_called_once_with(expected_msg)
         assert ht.field_transformers == {}
+        assert ht.default_data_type_transformers == {'categorical': transformer}
 
     @patch('rdt.hyper_transformer.print')
     def test_update_transformers_by_sdtype_field_data_types_not_fitted(self, mock_print):
@@ -1228,6 +1200,7 @@ class TestHyperTransformer(TestCase):
             'numerical_column': 'rdt.transformers.FloatFormatter',
         }
         assert ht.field_transformers == expected_field_transformers
+        assert ht.default_data_type_transformers == {'categorical': transformer}
 
     @patch('rdt.hyper_transformer.warnings')
     @patch('rdt.hyper_transformer.print')
@@ -1268,6 +1241,7 @@ class TestHyperTransformer(TestCase):
         mock_print.assert_not_called()
         mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
         assert ht.field_transformers == {'categorical_column': transformer}
+        assert ht.default_data_type_transformers == {'categorical': transformer}
 
     def test_set_first_transformers_for_fields(self):
         """Test the ``set_first_transformers_for_fields`` method.
