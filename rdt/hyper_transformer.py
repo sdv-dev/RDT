@@ -397,7 +397,8 @@ class HyperTransformer:
     def _get_next_transformer(self, output_field, output_sdtype, next_transformers):
         next_transformer = None
         field_transformers = {
-            **self.provided_field_transformers, ** self._fitted_field_transformers}
+            **self.provided_field_transformers, ** self._fitted_field_transformers
+        }
         if output_field in field_transformers:
             next_transformer = field_transformers[output_field]
 

@@ -364,3 +364,71 @@ def test_multiple_fits_different_columns():
     expected_transformed = pd.DataFrame({'col3.value': [1, 2, 3], 'col4.value': [1.0, 0.0, 0.0]})
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     pd.testing.assert_frame_equal(reverse, new_data)
+
+
+def test_detect_initial_config_doesnt_affect_fit():
+    """HyperTransformer should fit the same way regardless of ``detect_initial_config``.
+
+    Calling the ``detect_initial_config`` method should not affect the results of ``fit``,
+    ``transform`` or ``reverse_transform``.
+    """
+    # Setup
+    data = get_input_data()
+    ht = HyperTransformer()
+
+    # Run
+    ht.fit(data)
+    transformed1 = ht.transform(data)
+    reversed1 = ht.reverse_transform(transformed1)
+
+    ht.detect_initial_config(data)
+    ht.fit(data)
+    transformed2 = ht.transform(data)
+    reversed2 = ht.reverse_transform(transformed1)
+
+    # Assert
+    pd.testing.assert_frame_equal(transformed1, transformed2)
+    pd.testing.assert_frame_equal(reversed1, reversed2)
+
+
+def test_detect_initial_config():
+    """HyperTransformer should reset its state when ``detect_initial_config`` runs.
+
+    The ``field_sdtypes`` and ``field_transformers`` attributes should reset when
+    running the ``detect_initial_config`` method.
+    """
+    # Setup
+    data = pd.DataFrame({'col': ['a', 'b', 'c'], 'col2': [1, 2, 3]})
+    new_data = pd.DataFrame({'col': [1, 2, 3], 'col3': ['a', 'b', 'c']})
+    ht = HyperTransformer()
+    ht.fit(data)
+
+    # Run
+    ht.detect_initial_config(data)
+    sdtypes1 = ht._fitted_field_sdtypes
+    transformers1 = {k: repr(v) for (k, v) in ht._fitted_field_transformers.items()}
+
+    ht.fit(data)
+    sdtypes2 = ht._fitted_field_sdtypes
+    transformers2 = {k: repr(v) for (k, v) in ht._fitted_field_transformers.items()}
+
+    ht.detect_initial_config(new_data)
+    sdtypes3 = ht._fitted_field_sdtypes
+    transformers3 = {k: repr(v) for (k, v) in ht._fitted_field_transformers.items()}
+
+    ht.fit(new_data)
+    sdtypes4 = ht._fitted_field_sdtypes
+    transformers4 = {k: repr(v) for (k, v) in ht._fitted_field_transformers.items()}
+
+    # Assert
+    assert sdtypes1 == sdtypes2 == {'col': 'categorical', 'col2': 'integer'}
+    assert transformers1 == transformers2 == {
+        'col': 'FrequencyEncoder()',
+        'col2': "FloatFormatter(missing_value_replacement='mean')"
+    }
+
+    assert sdtypes3 == sdtypes4 == {'col': 'integer', 'col3': 'categorical'}
+    assert transformers3 == transformers4 == {
+        'col': "FloatFormatter(missing_value_replacement='mean')",
+        'col3': 'FrequencyEncoder()'
+    }
