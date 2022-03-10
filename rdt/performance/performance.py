@@ -47,15 +47,15 @@ TRANSFORMER_ARGS = {
 }
 
 
-def _get_dataset_sizes(data_type):
+def _get_dataset_sizes(sdtype):
     """Get a list of (fit_size, transform_size) for each dataset generator.
 
-    Based on the data type of the dataset generator, return the list of
+    Based on the sdtype of the dataset generator, return the list of
     sizes to run performance tests on. Each element in this list is a tuple
     of (fit_size, transform_size).
 
     Args:
-        input_type (str):
+        sdtype (str):
             The type of data that the generator returns.
 
     Returns:
@@ -64,7 +64,7 @@ def _get_dataset_sizes(data_type):
     """
     sizes = [(s, s) for s in DATASET_SIZES]
 
-    if data_type == 'categorical':
+    if sdtype == 'categorical':
         sizes = [(s, max(s, 1000)) for s in DATASET_SIZES if s <= 10000]
 
     return sizes
@@ -90,7 +90,7 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
     transformer_args = TRANSFORMER_ARGS.get(transformer.__name__, {})
     transformer_instance = transformer(**transformer_args)
 
-    sizes = _get_dataset_sizes(dataset_generator.DATA_TYPE)
+    sizes = _get_dataset_sizes(dataset_generator.SDTYPE)
 
     out = []
     for fit_size, transform_size in sizes:

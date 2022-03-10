@@ -32,8 +32,8 @@ class FrequencyEncoder(BaseTransformer):
             or just use the mean for all the replaced values. Defaults to ``False``.
     """
 
-    INPUT_TYPE = 'categorical'
-    OUTPUT_TYPES = {'value': 'float'}
+    INPUT_SDTYPE = 'categorical'
+    OUTPUT_SDTYPES = {'value': 'float'}
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
 
@@ -261,7 +261,7 @@ class OneHotEncoder(BaseTransformer):
     Null values are considered just another category.
     """
 
-    INPUT_TYPE = 'categorical'
+    INPUT_SDTYPE = 'categorical'
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
 
@@ -299,16 +299,16 @@ class OneHotEncoder(BaseTransformer):
 
         return data
 
-    def get_output_types(self):
-        """Return the output types produced by this transformer.
+    def get_output_sdtypes(self):
+        """Return the output sdtypes produced by this transformer.
 
         Returns:
             dict:
-                Mapping from the transformed column names to the produced data types.
+                Mapping from the transformed column names to the produced sdtypes.
         """
-        output_types = {f'value{i}': 'float' for i in range(len(self.dummies))}
+        output_sdtypes = {f'value{i}': 'float' for i in range(len(self.dummies))}
 
-        return self._add_prefix(output_types)
+        return self._add_prefix(output_sdtypes)
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -416,8 +416,8 @@ class LabelEncoder(BaseTransformer):
             integer value.
     """
 
-    INPUT_TYPE = 'categorical'
-    OUTPUT_TYPES = {'value': 'integer'}
+    INPUT_SDTYPE = 'categorical'
+    OUTPUT_SDTYPES = {'value': 'integer'}
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True

@@ -13,7 +13,7 @@ MIN_PERCENT = 20  # the minimum percentage of true or false is 20%
 class BooleanGenerator(BaseDatasetGenerator, ABC):
     """Base class for generators that generate boolean data."""
 
-    DATA_TYPE = 'boolean'
+    SDTYPE = 'boolean'
 
 
 class RandomBooleanGenerator(BooleanGenerator):

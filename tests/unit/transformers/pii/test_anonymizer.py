@@ -155,28 +155,28 @@ class TestPIIAnonymizer:
         assert mock_faker.Faker.called_once_with(['en_US', 'fr_FR'])
         assert instance._function == mock_faker.Faker.return_value.credit_card_full
 
-    def test_get_output_types(self):
-        """Test the ``get_output_types``.
+    def test_get_output_sdtypes(self):
+        """Test the ``get_output_sdtypes``.
 
         Setup:
             - initialize a ``PIIAnonymizer`` transformer which:
 
         Output:
-            - the ``output_types`` returns an empty dictionary.
+            - the ``output_sdtypes`` returns an empty dictionary.
         """
         # Setup
         transformer = PIIAnonymizer()
         transformer.column_prefix = 'a#b'
 
         # Run
-        output = transformer.get_output_types()
+        output = transformer.get_output_sdtypes()
 
         # Assert
         expected = {}
         assert output == expected
 
-    def test_get_output_types_model_missing_values(self):
-        """Test the ``get_output_types`` method when a null column is created.
+    def test_get_output_sdtypes_model_missing_values(self):
+        """Test the ``get_output_sdtypes`` method when a null column is created.
 
         Setup:
             - initialize a ``PIIAnonymizer`` transformer which:
@@ -185,7 +185,7 @@ class TestPIIAnonymizer:
                 - sets ``self.column_prefix`` to a string.
 
         Output:
-            - An ``output_types`` dictionary is being returned with the ``self.column_prefix``
+            - An ``output_sdtypes`` dictionary is being returned with the ``self.column_prefix``
               added to the beginning of the keys.
         """
         # Setup
@@ -195,7 +195,7 @@ class TestPIIAnonymizer:
         transformer.column_prefix = 'a#b'
 
         # Run
-        output = transformer.get_output_types()
+        output = transformer.get_output_sdtypes()
 
         # Assert
         expected = {

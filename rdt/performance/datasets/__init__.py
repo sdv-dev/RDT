@@ -16,15 +16,15 @@ __all__ = [
 
 
 def get_dataset_generators_by_type():
-    """Build a ``dict`` mapping data types to dataset generators.
+    """Build a ``dict`` mapping sdtypes to dataset generators.
 
     Returns:
         dict:
-            Mapping of data type to a list of dataset generators that produce
-            data of that data type.
+            Mapping of sdtype to a list of dataset generators that produce
+            data of that sdtype.
     """
     dataset_generators = defaultdict(list)
     for dataset_generator in BaseDatasetGenerator.get_subclasses():
-        dataset_generators[dataset_generator.DATA_TYPE].append(dataset_generator)
+        dataset_generators[dataset_generator.SDTYPE].append(dataset_generator)
 
     return dataset_generators

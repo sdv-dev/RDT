@@ -81,13 +81,13 @@ class TestUnixTimestampEncoder:
         # Assert
         assert output is True
 
-    def test_get_output_types(self):
-        """Test the ``get_output_types`` method when a null column is created.
+    def test_get_output_sdtypes(self):
+        """Test the ``get_output_sdtypes`` method when a null column is created.
 
         When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output types:
+        method to the following dictionary of output sdtypes:
 
-        output_types = {
+        output_sdtypes = {
             'value': 'float',
             'is_null': 'float'
         }
@@ -99,7 +99,7 @@ class TestUnixTimestampEncoder:
                 - sets ``self.column_prefix`` to a column name.
 
         Output:
-            - the ``output_types`` dictionary, but with the ``self.column_prefix``
+            - the ``output_sdtypes`` dictionary, but with the ``self.column_prefix``
             added to the beginning of the keys.
         """
         # Setup
@@ -109,7 +109,7 @@ class TestUnixTimestampEncoder:
         transformer.column_prefix = 'a#b'
 
         # Run
-        output = transformer.get_output_types()
+        output = transformer.get_output_sdtypes()
 
         # Assert
         expected = {

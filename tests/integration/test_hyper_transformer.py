@@ -14,8 +14,8 @@ from rdt.transformers import (
 
 class DummyTransformerNumerical(BaseTransformer):
 
-    INPUT_TYPE = 'categorical'
-    OUTPUT_TYPES = {
+    INPUT_SDTYPE = 'categorical'
+    OUTPUT_SDTYPES = {
         'value': 'float'
     }
 
@@ -31,8 +31,8 @@ class DummyTransformerNumerical(BaseTransformer):
 
 class DummyTransformerNotMLReady(BaseTransformer):
 
-    INPUT_TYPE = 'datetime'
-    OUTPUT_TYPES = {
+    INPUT_SDTYPE = 'datetime'
+    OUTPUT_SDTYPES = {
         'value': 'categorical',
     }
 
@@ -131,10 +131,10 @@ def test_hypertransformer_default_inputs():
 
     Setup:
         - Patch the ``DEFAULT_TRANSFORMERS`` to use the ``FrequencyEncoder``
-        for categorical data types, so that the output is predictable.
+        for categorical sdtypes, so that the output is predictable.
 
     Input:
-        - A dataframe with every data type.
+        - A dataframe with every sdtype.
 
     Expected behavior:
         - The transformed data should contain all the ML ready data.
@@ -178,7 +178,7 @@ def test_hypertransformer_field_transformers():
 
     This tests that the transformers specified in the ``field_transformers``
     argument are used. Any output of a transformer that is not ML ready (not
-    in the ``_transform_output_types`` list) should be recursively transformed
+    in the ``_transform_output_sdtypes`` list) should be recursively transformed
     till it is.
 
     Setup:
@@ -187,7 +187,7 @@ def test_hypertransformer_field_transformers():
 
     Input:
         - A dict mapping each field to a transformer.
-        - A dataframe with every data type.
+        - A dataframe with every sdtype.
 
     Expected behavior:
         - The transformed data should contain all the ML ready data.
@@ -280,7 +280,7 @@ def test_with_unfitted_columns():
     """HyperTransform should be able to transform even if there are unseen columns in data."""
     # Setup
     data = get_input_data()
-    ht = HyperTransformer(default_data_type_transformers={'categorical': FrequencyEncoder})
+    ht = HyperTransformer(default_sdtype_transformers={'categorical': FrequencyEncoder})
     ht.fit(data)
 
     # Run
