@@ -132,6 +132,10 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ht._transformers_sequence = [BinaryEncoder(), FloatFormatter()]
         ht._fitted = True
+        sdtypes = {'col1': 'float', 'col2': 'categorical'}
+        ht._provided_field_sdtypes = sdtypes
+        transformers = {'col2': FloatFormatter(), 'col3': BinaryEncoder()}
+        ht._provided_field_transformers = transformers
 
         # Run
         ht._unfit()
@@ -140,6 +144,12 @@ class TestHyperTransformer(TestCase):
         assert ht._fitted is False
         assert ht._transformers_sequence == []
         assert ht._fitted_fields == set()
+        assert ht._output_columns == []
+        assert ht._transformers_tree == {}
+        assert ht.field_sdtypes == sdtypes
+        assert ht._provided_field_sdtypes == sdtypes
+        assert ht.field_transformers == transformers
+        assert ht._provided_field_transformers == transformers
 
     def test__create_multi_column_fields(self):
         """Test the ``_create_multi_column_fields`` method.
@@ -1070,7 +1080,6 @@ class TestHyperTransformer(TestCase):
         }
         ht = HyperTransformer(field_sdtypes={'a': 'float'})
         ht._transformers_sequence = [FrequencyEncoder()]
-        ht._unfit = Mock()
 
         # Run
         ht.update_field_sdtypes(field_sdtypes)
@@ -1078,7 +1087,6 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert ht._provided_field_sdtypes == {'a': 'categorical', 'b': 'integer'}
         assert ht.field_sdtypes == {'a': 'categorical', 'b': 'integer'}
-        ht._unfit.assert_called_once()
 
     def test_get_default_sdtype_transformers(self):
         """Test the ``get_default_sdtype_transformers`` method.
@@ -1120,7 +1128,6 @@ class TestHyperTransformer(TestCase):
         }
         ht = HyperTransformer(default_sdtype_transformers=sdtype_transformers)
         ht._transformers_sequence = [FrequencyEncoder()]
-        ht._unfit = Mock()
 
         # Run
         ht.update_default_sdtype_transformers({'boolean': BinaryEncoder})
@@ -1131,7 +1138,6 @@ class TestHyperTransformer(TestCase):
             'integer': FloatFormatter,
             'boolean': BinaryEncoder
         }
-        ht._unfit.assert_called_once()
 
     def test_set_first_transformers_for_fields(self):
         """Test the ``set_first_transformers_for_fields`` method.
@@ -1153,7 +1159,6 @@ class TestHyperTransformer(TestCase):
         }
         ht = HyperTransformer(field_transformers=field_transformers)
         ht._transformers_sequence = [FrequencyEncoder()]
-        ht._unfit = Mock()
 
         # Run
         ht.set_first_transformers_for_fields({
@@ -1167,7 +1172,6 @@ class TestHyperTransformer(TestCase):
             'b': FrequencyEncoder,
             'c': BinaryEncoder
         }
-        ht._unfit.assert_called_once()
 
     def test_get_transformer(self):
         """Test the ``get_transformer`` method.

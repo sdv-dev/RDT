@@ -153,15 +153,6 @@ class HyperTransformer:
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
-    def _unfit(self):
-        self.field_sdtypes = self._provided_field_sdtypes.copy()
-        self.field_transformers = self._provided_field_transformers.copy()
-        self._transformers_sequence = []
-        self._output_columns = []
-        self._fitted_fields.clear()
-        self._fitted = False
-        self._transformers_tree = defaultdict(dict)
-
     @staticmethod
     def _validate_config(config):
         sdtypes = config.get('sdtypes', {})
@@ -215,7 +206,6 @@ class HyperTransformer:
         """
         self._provided_field_sdtypes.update(field_sdtypes)
         self.field_sdtypes.update(field_sdtypes)
-        self._unfit()
 
     def get_default_sdtype_transformers(self):
         """Get the ``default_sdtype_transformer`` dict.
@@ -238,7 +228,6 @@ class HyperTransformer:
                 to be run again.
         """
         self.default_sdtype_transformers.update(new_sdtype_transformers)
-        self._unfit()
 
     def set_first_transformers_for_fields(self, field_transformers):
         """Set the first transformer to use for certain fields.
@@ -253,7 +242,6 @@ class HyperTransformer:
         """
         self._provided_field_transformers.update(field_transformers)
         self.field_transformers.update(field_transformers)
-        self._unfit()
 
     def get_transformer(self, field):
         """Get the transformer instance used for a field.
@@ -368,6 +356,15 @@ class HyperTransformer:
                     self.field_transformers[field] = self.default_sdtype_transformers[sdtype]
                 else:
                     self.field_transformers[field] = get_default_transformer(sdtype)
+
+    def _unfit(self):
+        self.field_sdtypes = self._provided_field_sdtypes.copy()
+        self.field_transformers = self._provided_field_transformers.copy()
+        self._transformers_sequence = []
+        self._output_columns = []
+        self._fitted_fields.clear()
+        self._fitted = False
+        self._transformers_tree = defaultdict(dict)
 
     def detect_initial_config(self, data):
         """Print the configuration of the data.
