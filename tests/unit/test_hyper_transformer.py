@@ -86,7 +86,7 @@ class TestHyperTransformer(TestCase):
             ('integer',): int_transformer
         }
         ht = HyperTransformer()
-        ht.provided_field_transformers = field_transformers
+        ht.field_transformers = field_transformers
 
         # Run / Assert
         error_msg = (
@@ -106,9 +106,11 @@ class TestHyperTransformer(TestCase):
 
         # Asserts
         assert ht.copy is True
-        assert ht.provided_field_sdtypes == {}
+        assert ht._provided_field_sdtypes == {}
+        assert ht.field_sdtypes == {}
         assert ht.default_sdtype_transformers == {}
-        assert ht.provided_field_sdtypes == {}
+        assert ht._provided_field_transformers == {}
+        assert ht.field_transformers == {}
         multi_column_mock.assert_called_once()
         validation_mock.assert_called_once()
 
@@ -156,13 +158,13 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
-        ht.provided_field_transformers = {
+        ht.field_transformers = {
             'a': BinaryEncoder,
             'b': UnixTimestampEncoder,
             ('c', 'd'): UnixTimestampEncoder,
             'e': FloatFormatter
         }
-        ht.provided_field_sdtypes = {
+        ht.field_sdtypes = {
             'f': 'categorical',
             ('g', 'h'): 'datetime'
         }
@@ -342,10 +344,10 @@ class TestHyperTransformer(TestCase):
         ht._populate_field_sdtypes(data)
 
         # Assert
-        expected_fields = {'a': 'numerical', 'b': 'categorical'}
-        assert ht.provided_field_sdtypes == expected_fields
-        expected_fitted = {'c': 'boolean', 'd': 'float'}
-        assert ht._fitted_field_sdtypes == expected_fitted
+        expected_provided = {'a': 'numerical', 'b': 'categorical'}
+        assert ht._provided_field_sdtypes == expected_provided
+        expected_fields = {'a': 'numerical', 'b': 'categorical', 'c': 'boolean', 'd': 'float'}
+        assert ht.field_sdtypes == expected_fields
 
     def test_detect_initial_config(self):
         """Test the ``detect_initial_config`` method.
@@ -374,14 +376,15 @@ class TestHyperTransformer(TestCase):
         output = f_out.getvalue()
 
         # Assert
-        assert ht._fitted_field_sdtypes == {
+        assert ht._provided_field_sdtypes == {}
+        assert ht.field_sdtypes == {
             'col1': 'float',
             'col2': 'categorical',
             'col3': 'boolean',
             'col4': 'datetime',
             'col5': 'integer'
         }
-        field_transformers = {k: repr(v) for (k, v) in ht._fitted_field_transformers.items()}
+        field_transformers = {k: repr(v) for (k, v) in ht.field_transformers.items()}
         assert field_transformers == {
             'col1': "FloatFormatter(missing_value_replacement='mean')",
             'col2': 'FrequencyEncoder()',
@@ -710,11 +713,11 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
-        ht.provided_field_transformers = {
+        ht.field_transformers = {
             'column1': FloatFormatter(),
             'column2': FrequencyEncoder()
         }
-        ht.provided_field_sdtypes = {
+        ht.field_sdtypes = {
             'column1': 'numerical',
             'column2': 'categorical'
         }
@@ -724,8 +727,8 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         expected_config = {
-            'sdtypes': ht.provided_field_sdtypes,
-            'transformers': ht.provided_field_transformers
+            'sdtypes': ht.field_sdtypes,
+            'transformers': ht.field_transformers
         }
         assert config == expected_config
 
@@ -791,8 +794,10 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         ht._validate_config.assert_called_once_with(config)
-        assert ht.provided_field_transformers == config['transformers']
-        assert ht.provided_field_sdtypes == config['sdtypes']
+        assert ht._provided_field_transformers == config['transformers']
+        assert ht.field_transformers == config['transformers']
+        assert ht._provided_field_sdtypes == config['sdtypes']
+        assert ht.field_sdtypes == config['sdtypes']
 
     def get_data(self):
         return pd.DataFrame({
@@ -1105,7 +1110,8 @@ class TestHyperTransformer(TestCase):
         ht.update_field_sdtypes(field_sdtypes)
 
         # Assert
-        assert ht.provided_field_sdtypes == {'a': 'categorical', 'b': 'integer'}
+        assert ht._provided_field_sdtypes == {'a': 'categorical', 'b': 'integer'}
+        assert ht.field_sdtypes == {'a': 'categorical', 'b': 'integer'}
         ht._unfit.assert_called_once()
 
     def test_get_default_sdtype_transformers(self):
@@ -1190,7 +1196,7 @@ class TestHyperTransformer(TestCase):
         })
 
         # Assert
-        assert ht.provided_field_transformers == {
+        assert ht.field_transformers == {
             'a': FrequencyEncoder,
             'b': FrequencyEncoder,
             'c': BinaryEncoder

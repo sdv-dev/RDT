@@ -335,13 +335,17 @@ def test_multiple_fits_different_data():
     # Run
     ht.fit(data)
     ht.fit(new_data)
-    transformed = ht.transform(new_data)
-    reverse = ht.reverse_transform(transformed)
+    transformed1 = ht.transform(new_data)
+    transformed2 = ht.transform(new_data)
+    reverse1 = ht.reverse_transform(transformed1)
+    reverse2 = ht.reverse_transform(transformed2)
 
     # Assert
     expected_transformed = pd.DataFrame({'col2.value': [1, 2, 3], 'col1.value': [1.0, 0.0, 0.0]})
-    pd.testing.assert_frame_equal(transformed, expected_transformed)
-    pd.testing.assert_frame_equal(reverse, new_data)
+    pd.testing.assert_frame_equal(transformed1, expected_transformed)
+    pd.testing.assert_frame_equal(transformed2, expected_transformed)
+    pd.testing.assert_frame_equal(reverse1, new_data)
+    pd.testing.assert_frame_equal(reverse2, new_data)
 
 
 def test_multiple_fits_different_columns():
@@ -357,13 +361,73 @@ def test_multiple_fits_different_columns():
     # Run
     ht.fit(data)
     ht.fit(new_data)
-    transformed = ht.transform(new_data)
-    reverse = ht.reverse_transform(transformed)
+    transformed1 = ht.transform(new_data)
+    transformed2 = ht.transform(new_data)
+    reverse1 = ht.reverse_transform(transformed1)
+    reverse2 = ht.reverse_transform(transformed2)
 
     # Assert
     expected_transformed = pd.DataFrame({'col3.value': [1, 2, 3], 'col4.value': [1.0, 0.0, 0.0]})
-    pd.testing.assert_frame_equal(transformed, expected_transformed)
-    pd.testing.assert_frame_equal(reverse, new_data)
+    pd.testing.assert_frame_equal(transformed1, expected_transformed)
+    pd.testing.assert_frame_equal(transformed2, expected_transformed)
+    pd.testing.assert_frame_equal(reverse1, new_data)
+    pd.testing.assert_frame_equal(reverse2, new_data)
+
+
+def test_multiple_fits_with_set_config():
+    """HyperTransformer should be able to be used multiple times regardless of the data.
+
+    Fitting, transforming and reverse transforming should work when called on different data.
+    """
+    # Setup
+    data = get_input_data()
+    ht = HyperTransformer()
+
+    # Run
+    ht.set_config(config={
+        'sdtypes': {'integer': 'float'},
+        'transformers': {'bool': FrequencyEncoder}
+    })
+    ht.fit(data)
+    transformed1 = ht.transform(data)
+    reverse1 = ht.reverse_transform(transformed1)
+
+    ht.fit(data)
+    transformed2 = ht.transform(data)
+    reverse2 = ht.reverse_transform(transformed2)
+
+    # Assert
+    pd.testing.assert_frame_equal(transformed1, transformed2)
+    pd.testing.assert_frame_equal(reverse1, reverse2)
+
+
+def test_multiple_detect_configs_with_set_config():
+    """HyperTransformer should be able to be used multiple times regardless of the data.
+
+    Fitting, transforming and reverse transforming should work when called on different data.
+    """
+    # Setup
+    data = get_input_data()
+    ht = HyperTransformer()
+
+    # Run
+    ht.fit(data)
+    transformed1 = ht.transform(data)
+    reverse1 = ht.reverse_transform(transformed1)
+
+    ht.set_config(config={
+        'sdtypes': {'integers': 'float'},
+        'transformers': {'bool': FrequencyEncoder}
+    })
+
+    ht.detect_initial_config(data)
+    ht.fit(data)
+    transformed2 = ht.transform(data)
+    reverse2 = ht.reverse_transform(transformed2)
+
+    # Assert
+    pd.testing.assert_frame_equal(transformed1, transformed2)
+    pd.testing.assert_frame_equal(reverse1, reverse2)
 
 
 def test_detect_initial_config_doesnt_affect_fit():
@@ -391,44 +455,23 @@ def test_detect_initial_config_doesnt_affect_fit():
     pd.testing.assert_frame_equal(reversed1, reversed2)
 
 
-def test_detect_initial_config():
-    """HyperTransformer should reset its state when ``detect_initial_config`` runs.
+def test_multiple_detects():
+    """HyperTransformer should be able to be used multiple times regardless of the data.
 
-    The ``field_sdtypes`` and ``field_transformers`` attributes should reset when
-    running the ``detect_initial_config`` method.
+    Fitting, transforming and reverse transforming should work when called on different data.
     """
     # Setup
-    data = pd.DataFrame({'col': ['a', 'b', 'c'], 'col2': [1, 2, 3]})
-    new_data = pd.DataFrame({'col': [1, 2, 3], 'col3': ['a', 'b', 'c']})
+    data = pd.DataFrame({'col2': [1, 2, 3], 'col1': [1.0, 0.0, 0.0]})
+    new_data = get_input_data()
     ht = HyperTransformer()
-    ht.fit(data)
 
     # Run
     ht.detect_initial_config(data)
-    sdtypes1 = ht._fitted_field_sdtypes
-    transformers1 = {k: repr(v) for (k, v) in ht._fitted_field_transformers.items()}
-
-    ht.fit(data)
-    sdtypes2 = ht._fitted_field_sdtypes
-    transformers2 = {k: repr(v) for (k, v) in ht._fitted_field_transformers.items()}
-
     ht.detect_initial_config(new_data)
-    sdtypes3 = ht._fitted_field_sdtypes
-    transformers3 = {k: repr(v) for (k, v) in ht._fitted_field_transformers.items()}
-
     ht.fit(new_data)
-    sdtypes4 = ht._fitted_field_sdtypes
-    transformers4 = {k: repr(v) for (k, v) in ht._fitted_field_transformers.items()}
+    transformed = ht.transform(new_data)
+    reverse = ht.reverse_transform(transformed)
 
     # Assert
-    assert sdtypes1 == sdtypes2 == {'col': 'categorical', 'col2': 'integer'}
-    assert transformers1 == transformers2 == {
-        'col': 'FrequencyEncoder()',
-        'col2': "FloatFormatter(missing_value_replacement='mean')"
-    }
-
-    assert sdtypes3 == sdtypes4 == {'col': 'integer', 'col3': 'categorical'}
-    assert transformers3 == transformers4 == {
-        'col': "FloatFormatter(missing_value_replacement='mean')",
-        'col3': 'FrequencyEncoder()'
-    }
+    pd.testing.assert_frame_equal(transformed, get_transformed_data())
+    pd.testing.assert_frame_equal(reverse, get_reversed_data())
