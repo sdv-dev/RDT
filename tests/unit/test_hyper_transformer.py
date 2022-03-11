@@ -315,40 +315,6 @@ class TestHyperTransformer(TestCase):
         assert isinstance(next_transformer, FrequencyEncoder)
         assert next_transformer.add_noise is False
 
-    def test__populate_field_sdtypes(self):
-        """Test the ``_populate_field_sdtypes`` method.
-
-        This tests that if any field sdtypes are missing in the
-        provided ``field_sdtypes`` dict, than the rest of the values
-        are added to ``_fitted_field_sdtypes`` using the sdtypes for the dtype.
-
-        Setup:
-            - field_sdtypes will only define a few of the fields.
-
-        Input:
-            - A DataFrame of various sdtypes.
-
-        Expected behavior:
-            - ``_fitted_field_sdtypes`` will have the new added values.
-        """
-        # Setup
-        ht = HyperTransformer(field_sdtypes={'a': 'numerical', 'b': 'categorical'})
-        data = pd.DataFrame({
-            'a': [np.nan, 1, 2, 3],
-            'b': [np.nan, 'category1', 'category2', 'category3'],
-            'c': [np.nan, True, False, True],
-            'd': [np.nan, 1.0, 2.0, 3.0]
-        })
-
-        # Run
-        ht._populate_field_sdtypes(data)
-
-        # Assert
-        expected_provided = {'a': 'numerical', 'b': 'categorical'}
-        assert ht._provided_field_sdtypes == expected_provided
-        expected_fields = {'a': 'numerical', 'b': 'categorical', 'c': 'boolean', 'd': 'float'}
-        assert ht.field_sdtypes == expected_fields
-
     def test_detect_initial_config(self):
         """Test the ``detect_initial_config`` method.
 

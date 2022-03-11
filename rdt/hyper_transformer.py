@@ -153,24 +153,9 @@ class HyperTransformer:
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
-    def _set_field_sdtype(self, data, field):
-        clean_data = data[field].dropna()
-        kind = clean_data.infer_objects().dtype.kind
-        assert field not in self.field_sdtypes
-        self.field_sdtypes[field] = self._DTYPES_TO_SDTYPES[kind]
-
-    def _populate_field_sdtypes(self, data):
-        # get set of provided fields including multi-column fields
-        provided_fields = set()
-        for field in self.field_sdtypes.keys():
-            self._add_field_to_set(field, provided_fields)  # review this later
-
-        for field in data:
-            if field not in provided_fields:
-                self._set_field_sdtype(data, field)
-
     def _unfit(self):
         self.field_sdtypes = self._provided_field_sdtypes.copy()
+        self.field_transformers = self._provided_field_transformers.copy()
         self._transformers_sequence = []
         self._output_columns = []
         self._fitted_fields.clear()
@@ -230,7 +215,7 @@ class HyperTransformer:
         """
         self._provided_field_sdtypes.update(field_sdtypes)
         self.field_sdtypes.update(field_sdtypes)
-        self._unfit()  # delete?
+        self._unfit()
 
     def get_default_sdtype_transformers(self):
         """Get the ``default_sdtype_transformer`` dict.
@@ -368,30 +353,42 @@ class HyperTransformer:
 
         return yaml.safe_dump(dict(modified_tree))
 
+    def _set_field_sdtype(self, data, field):
+        clean_data = data[field].dropna()
+        kind = clean_data.infer_objects().dtype.kind
+        self.field_sdtypes[field] = self._DTYPES_TO_SDTYPES[kind]
+
+    def _learn_config(self, data):
+        for field in data:
+            if field not in self.field_sdtypes:
+                self._set_field_sdtype(data, field)
+            if field not in self.field_transformers:
+                sdtype = self.field_sdtypes[field]
+                if sdtype in self.default_sdtype_transformers:
+                    self.field_transformers[field] = self.default_sdtype_transformers[sdtype]
+                else:
+                    self.field_transformers[field] = get_default_transformer(sdtype)
+
     def detect_initial_config(self, data):
         """Print the configuration of the data.
 
         This method detects the ``sdtype`` and transformer of each field in the data
         and then prints them as a json object.
 
-        NOTE: This method partially resets the state of the ``HyperTransformer``.
-        Previously set ``sdtypes`` or transformers will be lost.
+        NOTE: This method completely resets the state of the ``HyperTransformer``.
 
         Args:
             data (pd.DataFrame):
                 Data which will have its configuration detected.
         """
         # Reset the state of the HyperTransformer
+        self.default_sdtype_transformers = {}
         self._provided_field_sdtypes = {}
-        self.field_sdtypes = {}
         self._provided_field_transformers = {}
-        self.field_transformers = {}
+        self._unfit()
 
         # Set the sdtypes and transformers of all fields to their defaults
-        for field in data:
-            self._set_field_sdtype(data, field)
-            field_sdtype = self.field_sdtypes[field]
-            self.field_transformers[field] = get_default_transformer(field_sdtype)
+        self._learn_config(data)
 
         print('Detecting a new config from the data ... SUCCESS')  # noqa: T001
         print('Setting the new config ... SUCCESS')  # noqa: T001
@@ -477,23 +474,9 @@ class HyperTransformer:
         """
         self._unfit()
         self._input_columns = list(data.columns)
-        self._populate_field_sdtypes(data)
-
-        # Loop through field_transformers that are first level
-        for field in self._provided_field_transformers:
-            if self._field_in_data(field, data):
-                data = self._fit_field_transformer(
-                    data, field, self._provided_field_transformers[field]
-                )
-
-        for (field, sdtype) in self.field_sdtypes.items():
-            if not self._field_in_set(field, self._fitted_fields):
-                if sdtype in self.default_sdtype_transformers:
-                    transformer = self.default_sdtype_transformers[sdtype]
-                else:
-                    transformer = get_default_transformer(sdtype)
-
-                data = self._fit_field_transformer(data, field, transformer)
+        self._learn_config(data)
+        for field in self.field_sdtypes.keys():
+            data = self._fit_field_transformer(data, field, self.field_transformers[field])
 
         self._validate_all_fields_fitted()
         self._fitted = True
