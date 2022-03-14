@@ -182,6 +182,9 @@ class HyperTransformer:
     def set_config(self, config):
         """Set the ``HyperTransformer`` configuration.
 
+        This method will only update the sdtypes/transformers passed. Other previously
+        learned sdtypes/transformers will not be affected.
+
         Args:
             config (dict):
                 A dictionary containing the following two dictionaries:
@@ -346,7 +349,19 @@ class HyperTransformer:
         kind = clean_data.infer_objects().dtype.kind
         self.field_sdtypes[field] = self._DTYPES_TO_SDTYPES[kind]
 
+    def _unfit(self):
+        self.field_sdtypes = self._provided_field_sdtypes.copy()
+        self.field_transformers = self._provided_field_transformers.copy()
+        self._transformers_sequence = []
+        self._input_columns = []
+        self._output_columns = []
+        self._fitted_fields.clear()
+        self._fitted = False
+        self._transformers_tree = defaultdict(dict)
+
     def _learn_config(self, data):
+        """Unfit the HyperTransformer and learn the sdtypes and transformers of the data."""
+        self._unfit()
         for field in data:
             if field not in self.field_sdtypes:
                 self._set_field_sdtype(data, field)
@@ -356,15 +371,6 @@ class HyperTransformer:
                     self.field_transformers[field] = self.default_sdtype_transformers[sdtype]
                 else:
                     self.field_transformers[field] = get_default_transformer(sdtype)
-
-    def _unfit(self):
-        self.field_sdtypes = self._provided_field_sdtypes.copy()
-        self.field_transformers = self._provided_field_transformers.copy()
-        self._transformers_sequence = []
-        self._output_columns = []
-        self._fitted_fields.clear()
-        self._fitted = False
-        self._transformers_tree = defaultdict(dict)
 
     def detect_initial_config(self, data):
         """Print the configuration of the data.
@@ -382,7 +388,6 @@ class HyperTransformer:
         self.default_sdtype_transformers = {}
         self._provided_field_sdtypes = {}
         self._provided_field_transformers = {}
-        self._unfit()
 
         # Set the sdtypes and transformers of all fields to their defaults
         self._learn_config(data)
@@ -469,10 +474,9 @@ class HyperTransformer:
             data (pandas.DataFrame):
                 Data to fit the transformers to.
         """
-        self._unfit()
-        self._input_columns = list(data.columns)
         self._learn_config(data)
-        for field in self.field_sdtypes.keys():
+        self._input_columns = list(data.columns)
+        for field in self._input_columns:
             data = self._fit_field_transformer(data, field, self.field_transformers[field])
 
         self._validate_all_fields_fitted()
