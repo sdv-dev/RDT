@@ -296,3 +296,182 @@ def test_with_unfitted_columns():
     expected_reversed = expected_reversed.reindex(
         columns=['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'])
     pd.testing.assert_frame_equal(expected_reversed, reverse)
+
+
+def test_multiple_fits():
+    """HyperTransformer should be able to be used multiple times.
+
+    Fitting, transforming and reverse transforming should produce the same results when
+    called on the same data multiple times.
+    """
+    # Setup
+    data = get_input_data()
+    ht = HyperTransformer()
+
+    # Run
+    ht.fit(data)
+    transformed1 = ht.transform(data)
+    reversed1 = ht.reverse_transform(transformed1)
+
+    ht.fit(data)
+    transformed2 = ht.transform(data)
+    reversed2 = ht.reverse_transform(transformed2)
+
+    # Assert
+    pd.testing.assert_frame_equal(transformed1, transformed2)
+    pd.testing.assert_frame_equal(reversed1, reversed2)
+
+
+def test_multiple_fits_different_data():
+    """HyperTransformer should be able to be used multiple times regardless of the data.
+
+    Fitting, transforming and reverse transforming should work when called on different data.
+    """
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2, 3], 'col2': [1.0, 0.0, 0.0]})
+    new_data = pd.DataFrame({'col2': [1, 2, 3], 'col1': [1.0, 0.0, 0.0]})
+    ht = HyperTransformer()
+
+    # Run
+    ht.fit(data)
+    ht.fit(new_data)
+    transformed1 = ht.transform(new_data)
+    transformed2 = ht.transform(new_data)
+    reverse1 = ht.reverse_transform(transformed1)
+    reverse2 = ht.reverse_transform(transformed2)
+
+    # Assert
+    expected_transformed = pd.DataFrame({'col2.value': [1, 2, 3], 'col1.value': [1.0, 0.0, 0.0]})
+    pd.testing.assert_frame_equal(transformed1, expected_transformed)
+    pd.testing.assert_frame_equal(transformed2, expected_transformed)
+    pd.testing.assert_frame_equal(reverse1, new_data)
+    pd.testing.assert_frame_equal(reverse2, new_data)
+
+
+def test_multiple_fits_different_columns():
+    """HyperTransformer should be able to be used multiple times regardless of the data.
+
+    Fitting, transforming and reverse transforming should work when called on different data.
+    """
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2, 3], 'col2': [1.0, 0.0, 0.0]})
+    new_data = pd.DataFrame({'col3': [1, 2, 3], 'col4': [1.0, 0.0, 0.0]})
+    ht = HyperTransformer()
+
+    # Run
+    ht.fit(data)
+    ht.fit(new_data)
+    transformed1 = ht.transform(new_data)
+    transformed2 = ht.transform(new_data)
+    reverse1 = ht.reverse_transform(transformed1)
+    reverse2 = ht.reverse_transform(transformed2)
+
+    # Assert
+    expected_transformed = pd.DataFrame({'col3.value': [1, 2, 3], 'col4.value': [1.0, 0.0, 0.0]})
+    pd.testing.assert_frame_equal(transformed1, expected_transformed)
+    pd.testing.assert_frame_equal(transformed2, expected_transformed)
+    pd.testing.assert_frame_equal(reverse1, new_data)
+    pd.testing.assert_frame_equal(reverse2, new_data)
+
+
+def test_multiple_fits_with_set_config():
+    """HyperTransformer should be able to be used multiple times regardless of the data.
+
+    Fitting, transforming and reverse transforming should work when called on different data.
+    """
+    # Setup
+    data = get_input_data()
+    ht = HyperTransformer()
+
+    # Run
+    ht.set_config(config={
+        'sdtypes': {'integer': 'float'},
+        'transformers': {'bool': FrequencyEncoder}
+    })
+    ht.fit(data)
+    transformed1 = ht.transform(data)
+    reverse1 = ht.reverse_transform(transformed1)
+
+    ht.fit(data)
+    transformed2 = ht.transform(data)
+    reverse2 = ht.reverse_transform(transformed2)
+
+    # Assert
+    pd.testing.assert_frame_equal(transformed1, transformed2)
+    pd.testing.assert_frame_equal(reverse1, reverse2)
+
+
+def test_multiple_detect_configs_with_set_config():
+    """HyperTransformer should be able to be used multiple times regardless of the data.
+
+    Fitting, transforming and reverse transforming should work when called on different data.
+    """
+    # Setup
+    data = get_input_data()
+    ht = HyperTransformer()
+
+    # Run
+    ht.fit(data)
+    transformed1 = ht.transform(data)
+    reverse1 = ht.reverse_transform(transformed1)
+
+    ht.set_config(config={
+        'sdtypes': {'integers': 'float'},
+        'transformers': {'bool': FrequencyEncoder}
+    })
+
+    ht.detect_initial_config(data)
+    ht.fit(data)
+    transformed2 = ht.transform(data)
+    reverse2 = ht.reverse_transform(transformed2)
+
+    # Assert
+    pd.testing.assert_frame_equal(transformed1, transformed2)
+    pd.testing.assert_frame_equal(reverse1, reverse2)
+
+
+def test_detect_initial_config_doesnt_affect_fit():
+    """HyperTransformer should fit the same way regardless of ``detect_initial_config``.
+
+    Calling the ``detect_initial_config`` method should not affect the results of ``fit``,
+    ``transform`` or ``reverse_transform``.
+    """
+    # Setup
+    data = get_input_data()
+    ht = HyperTransformer()
+
+    # Run
+    ht.fit(data)
+    transformed1 = ht.transform(data)
+    reversed1 = ht.reverse_transform(transformed1)
+
+    ht.detect_initial_config(data)
+    ht.fit(data)
+    transformed2 = ht.transform(data)
+    reversed2 = ht.reverse_transform(transformed1)
+
+    # Assert
+    pd.testing.assert_frame_equal(transformed1, transformed2)
+    pd.testing.assert_frame_equal(reversed1, reversed2)
+
+
+def test_multiple_detects():
+    """HyperTransformer should be able to be used multiple times regardless of the data.
+
+    Fitting, transforming and reverse transforming should work when called on different data.
+    """
+    # Setup
+    data = pd.DataFrame({'col2': [1, 2, 3], 'col1': [1.0, 0.0, 0.0]})
+    new_data = get_input_data()
+    ht = HyperTransformer()
+
+    # Run
+    ht.detect_initial_config(data)
+    ht.detect_initial_config(new_data)
+    ht.fit(new_data)
+    transformed = ht.transform(new_data)
+    reverse = ht.reverse_transform(transformed)
+
+    # Assert
+    pd.testing.assert_frame_equal(transformed, get_transformed_data())
+    pd.testing.assert_frame_equal(reverse, get_reversed_data())
