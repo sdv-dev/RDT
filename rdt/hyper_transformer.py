@@ -86,6 +86,16 @@ class HyperTransformer:
     ]
 
     @staticmethod
+    def print_tip(text):
+        """Print a text with ``Tip: `` at the start of the text.
+
+        Args:
+            text (str):
+                Text to print.
+        """
+        print(f'Tip: {text}')  # noqa: T001
+
+    @staticmethod
     def _add_field_to_set(field, field_set):
         if isinstance(field, tuple):
             field_set.update(field)
@@ -240,35 +250,28 @@ class HyperTransformer:
                 Dict mapping column names to transformers to be used for that column.
         """
         if self._fitted:
-            warning_msg = (
-                "Warning: For this change to take effect, please refit your data using 'fit' "
+            warnings.warn(
+                "For this change to take effect, please refit your data using 'fit' "
                 "or 'fit_transform'."
             )
-            print(warning_msg)  # noqa: T001
 
         if len(self.field_transformers) == 0:
-            tip_msg = (
-                'Tip: Use the `detect_initial_config` method to pre-populate all the sdtypes '
+            self.print_tip(
+                'Use the `detect_initial_config` method to pre-populate all the sdtypes '
                 'and transformers from your dataset.'
             )
-            print(tip_msg)  # noqa: T001
 
         for column_name, transformer in column_name_transformer.items():
-            current_transformer = self.field_transformers.get(column_name)
-            if current_transformer:
-                current_transformer_type = current_transformer.get_input_type()
-                if current_transformer_type != transformer.get_input_type():
-                    warning_msg = (
-                        f'Warning: You are assigning a {transformer.get_input_type()} transformer '
-                        f'to a {current_transformer_type} column ({column_name}).'
-                    )
-                    info_msg = (
-                        "If the transformer doesn't match the sdtype, it may lead to errors."
-                    )
-                    print(warning_msg)  # noqa: T001
-                    print(info_msg)  # noqa: T001
+            current_sdtype = self.field_sdtypes.get(column_name)
+            if current_sdtype and current_sdtype != transformer.get_input_type():
+                warnings.warn(
+                    f'You are assigning a {transformer.get_input_type()} transformer '
+                    f'to a {current_sdtype} column ({column_name}). '
+                    "If the transformer doesn't match the sdtype, it may lead to errors."
+                )
 
             self.field_transformers[column_name] = transformer
+            self.field_sdtypes[column_name] = transformer.get_input_type()
 
     def set_first_transformers_for_fields(self, field_transformers):
         """Set the first transformer to use for certain fields.
