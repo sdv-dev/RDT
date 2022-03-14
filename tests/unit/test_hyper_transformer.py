@@ -836,18 +836,18 @@ class TestHyperTransformer(TestCase):
         return data
 
     @patch('rdt.hyper_transformer.get_default_transformer')
-    def test__learn_config(self, get_default_transformer_mock):
-        """Test the ``_learn_config`` method.
+    def test_fit(self, get_default_transformer_mock):
+        """Test the ``fit`` method.
 
-        Tests that the ``_learn_config`` method calls ``_unfit`` and then loops through the
-        fields in the passed data. It should call ``_set_field_sdtype`` for fields that
-        weren't provided an sdtype. Also, for the fields that weren't provided a transformer,
-        it should first look in ``default_sdtype_transformers`` and then use the default
-        if it doesn't find anything.
+        Tests that the ``fit`` method loops through the fields in ``field_transformers``
+        and ``field_sdtypes`` that are in the data. It should try to find a transformer
+        in ``default_sdtype_transformers`` and then use the default if it doesn't find one
+        when looping through ``field_sdtypes``. It should then call ``_fit_field_transformer``
+        with the correct arguments.
 
         Setup:
-            - A mock for ``_unfit``.
-            - A mock for ``_set_field_sdtype``.
+            - A mock for ``_fit_field_transformer``.
+            - A mock for ``_field_in_set``.
             - A mock for ``get_default_tranformer``.
 
         Input:
@@ -866,9 +866,6 @@ class TestHyperTransformer(TestCase):
         datetime_transformer = Mock()
 
         data = self.get_data()
-        field_sdtypes = {
-            'integer': 'float'
-        }
         field_transformers = {
             'integer': int_transformer,
             'float': float_transformer,
@@ -880,79 +877,19 @@ class TestHyperTransformer(TestCase):
         }
         get_default_transformer_mock.return_value = datetime_transformer
         ht = HyperTransformer(
-            field_sdtypes=field_sdtypes,
             field_transformers=field_transformers,
             default_sdtype_transformers=default_sdtype_transformers
         )
-        ht.field_sdtypes = field_sdtypes
-        ht._set_field_sdtype = Mock()
-
-        # Run
-        ht._learn_config(data)
-
-        # Assert
-        ht._unfit.assert_called_once()
-        ht._set_field_sdtype.assert_has_calls([
-            call(data, 'float'),
-            call(data, 'categorical'),
-            call(data, 'bool'),
-            call(data, 'datetime')
-        ])
-
-
-    def test_fit(self):
-        """Test the ``fit`` method.
-
-        Tests that the ``fit`` method calls ``_fit_field_transformer`` with the correct
-        arguments in the correct order and calls the other auxiliary methods once each.
-
-        Setup:
-            - field_transformers with some mocked transformers.
-            - default_sdtype_transformers with some mocked transformers.
-            - A mock for ``_validate_all_fields_fitted``.
-            - A mock for ``_sort_output_columns``.
-            - A mock for ``_learn_config``.
-
-        Input:
-            - A DataFrame with multiple columns of different sdtypes.
-
-        Expected behavior:
-            - The ``_fit_field_transformer`` mock should be called with the correct
-            arguments in the correct order.
-            - ``_validate_all_fields_fitted``, ``_sort_output_columns`` and 
-            ``_learn_config`` should each be called once.
-            - ``_fitted`` should be True.
-            - ``_input_columns`` should have the columns of the data.
-        """
-        # Setup
-        int_transformer = Mock()
-        int_out_transformer = Mock()
-        float_transformer = Mock()
-        categorical_transformer = Mock()
-        bool_transformer = Mock()
-        datetime_transformer = Mock()
-
-        data = self.get_data()
-        field_transformers = {
-            'integer': int_transformer,
-            'float': float_transformer,
-            'integer.out': int_out_transformer
-        }
-        default_sdtype_transformers = {
-            'boolean': bool_transformer,
-            'categorical': categorical_transformer
-        }
-        ht = HyperTransformer(
-            field_transformers=field_transformers,
-            default_sdtype_transformers=default_sdtype_transformers
-        )
+        ht._fit_field_transformer = Mock()
+        ht._fit_field_transformer.return_value = data
+        ht._field_in_set = Mock()
+        ht._field_in_set.side_effect = [True, True, False, False, False]
         ht._validate_all_fields_fitted = Mock()
         ht._sort_output_columns = Mock()
-        ht._learn_config = Mock()
 
         # Run
         ht.fit(data)
-        
+
         # Assert
         ht._fit_field_transformer.assert_has_calls([
             call(data, 'integer', int_transformer),
@@ -961,11 +898,8 @@ class TestHyperTransformer(TestCase):
             call(data, 'bool', bool_transformer),
             call(data, 'datetime', datetime_transformer)
         ])
-        assert ht._input_columns == list(data.columns)
-        assert ht._fitted == True
         ht._validate_all_fields_fitted.assert_called_once()
         ht._sort_output_columns.assert_called_once()
-        ht._learn_config.assert_called_once()
 
     def test_transform(self):
         """Test the ``transform`` method.
