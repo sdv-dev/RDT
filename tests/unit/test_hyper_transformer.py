@@ -1315,8 +1315,8 @@ class TestHyperTransformer(TestCase):
         instance = HyperTransformer()
         instance._fitted = False
         mock_numerical = Mock()
-        mock_numerical.get_input_type.return_value = 'numerical'
         instance.field_transformers = {'my_column': mock_numerical}
+        instance.field_sdtypes = {'my_column': 'categorical'}
         mock_transformer = Mock()
         mock_transformer.get_input_type.return_value = 'datetime'
         column_name_transformer = {
