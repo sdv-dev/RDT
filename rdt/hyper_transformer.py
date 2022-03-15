@@ -18,27 +18,6 @@ class HyperTransformer:
     The ``HyperTransformer`` class contains a collection of ``transformers`` that can be
     used to transform and reverse transform one or more columns at once.
 
-    Args:
-        field_transformers (dict or None):
-            Dict used to overwrite the transformer used for a field. If no transformer is
-            specified for a field, a default transformer is selected. The keys are fields
-            which can be defined as a string of the column name or a tuple of multiple column
-            names. Keys can also specify transformers for fields derived by other transformers.
-            This can be done by concatenating the name of the original field to the output name
-            using ``.`` as a separator (eg. {field_name}.{transformer_output_name}).
-        field_sdtypes (dict or None):
-            Dict mapping field names to their sdtypes. If not provided, the sdtype is
-            inferred using the column's Pandas ``dtype``.
-        default_sdtype_transformers (dict or None):
-            Dict used to overwrite the default transformer for a sdtype. The keys are
-            sdtypes and the values are Transformers or Transformer instances.
-        copy (bool):
-            Whether to make a copy of the input data or not. Defaults to ``True``.
-        transform_output_sdtypes (list or None):
-            List of acceptable sdtypes for the output of the ``transform`` method.
-            If ``None``, only ``numerical`` sdtypes will be considered acceptable.
-
-
     Example:
         Create a simple ``HyperTransformer`` instance that will decide which transformers
         to use based on the fit data ``dtypes``.
@@ -145,22 +124,20 @@ class HyperTransformer:
 
             self._add_field_to_set(field, self._specified_fields)
 
-    def __init__(self, copy=True, field_sdtypes=None, default_sdtype_transformers=None,
-                 field_transformers=None, transform_output_sdtypes=None):
-        self.copy = copy
-        self.default_sdtype_transformers = default_sdtype_transformers or {}
+    def __init__(self):
+        self.default_sdtype_transformers = {}
 
         # ``_provided_field_sdtypes``` contains only the sdtypes specified by the user,
         # while `field_sdtypes` contains both the sdtypes specified by the user and the
         # ones learned through ``fit``/``detect_initial_config``. Same for ``field_transformers``.
-        self._provided_field_sdtypes = field_sdtypes or {}
-        self.field_sdtypes = self._provided_field_sdtypes.copy()
-        self._provided_field_transformers = field_transformers or {}
-        self.field_transformers = self._provided_field_transformers.copy()
+        self._provided_field_sdtypes = {}
+        self.field_sdtypes = {}
+        self._provided_field_transformers = {}
+        self.field_transformers = {}
 
         self._specified_fields = set()
         self._validate_field_transformers()
-        self.transform_output_sdtypes = transform_output_sdtypes or self._DEFAULT_OUTPUT_SDTYPES
+        self._valid_output_sdtypes = self._DEFAULT_OUTPUT_SDTYPES
         self._multi_column_fields = self._create_multi_column_fields()
         self._transformers_sequence = []
         self._output_columns = []
@@ -473,7 +450,7 @@ class HyperTransformer:
         if output_field in self.field_transformers:
             next_transformer = self.field_transformers[output_field]
 
-        elif output_sdtype not in self.transform_output_sdtypes:
+        elif output_sdtype not in self._valid_output_sdtypes:
             if next_transformers is not None and output_field in next_transformers:
                 next_transformer = next_transformers[output_field]
             else:
@@ -589,8 +566,6 @@ class HyperTransformer:
     def transform(self, data):
         """Transform the data.
 
-        If ``self.copy`` is ``True`` make a copy of the input data to avoid modifying it.
-
         Args:
             data (pandas.DataFrame):
                 Data to transform.
@@ -600,8 +575,11 @@ class HyperTransformer:
                 Transformed data.
         """
         self._validate_correctly_fitted(data)
-        if self.copy:
-            data = data.copy()
+        if not self._fitted:
+            raise NotFittedError
+
+        unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
+        data = data.copy()
 
         for transformer in self._transformers_sequence:
             data = transformer.transform(data, drop=False)
