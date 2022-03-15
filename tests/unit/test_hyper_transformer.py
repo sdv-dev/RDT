@@ -1218,8 +1218,6 @@ class TestHyperTransformer(TestCase):
 
         mock_warnings.warn.assert_called_once_with(expected_message)
         assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance.field_sdtypes['my_column'] == 'datetime'
-        assert instance._provided_field_sdtypes == {'my_column': 'datetime'}
         assert instance._provided_field_transformers == {'my_column': mock_transformer}
 
     @patch('rdt.hyper_transformer.warnings')
@@ -1243,8 +1241,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``self.field_transformers`` has been updated.
-            - ``self.field_sdtypes`` has been updated.
-            - ``self._provided_field_sdtypes`` has been updated.
             - ``self._provided_field_transformers`` has been updated.
         """
         # Setup
@@ -1263,8 +1259,6 @@ class TestHyperTransformer(TestCase):
         # Assert
         mock_warnings.warn.assert_not_called()
         assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance.field_sdtypes['my_column'] == 'datetime'
-        assert instance._provided_field_sdtypes == {'my_column': 'datetime'}
         assert instance._provided_field_transformers == {'my_column': mock_transformer}
 
     @patch('rdt.hyper_transformer.print')
@@ -1287,8 +1281,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``self.field_transformers`` has been updated.
-            - ``self.field_sdtypes`` has been updated.
-            - ``self._provided_field_sdtypes`` has been updated.
             - ``self._provided_field_transformers`` has been updated.
         """
         # Setup
@@ -1310,8 +1302,6 @@ class TestHyperTransformer(TestCase):
         )
         mock_print.assert_called_once_with(expected_message)
         assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance.field_sdtypes['my_column'] == 'datetime'
-        assert instance._provided_field_sdtypes == {'my_column': 'datetime'}
         assert instance._provided_field_transformers == {'my_column': mock_transformer}
 
     @patch('rdt.hyper_transformer.print')
@@ -1336,8 +1326,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``self.field_transformers`` has been updated.
-            - ``self.field_sdtypes`` has been updated.
-            - ``self._provided_field_sdtypes`` has been updated.
             - ``self._provided_field_transformers`` has been updated.
         """
         # Setup
@@ -1364,8 +1352,6 @@ class TestHyperTransformer(TestCase):
 
         assert mock_warnings.called_once_with(expected_call)
         assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance.field_sdtypes['my_column'] == 'datetime'
-        assert instance._provided_field_sdtypes == {'my_column': 'datetime'}
         assert instance._provided_field_transformers == {'my_column': mock_transformer}
 
     def test_set_first_transformers_for_fields(self):

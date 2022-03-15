@@ -272,8 +272,6 @@ class HyperTransformer:
 
             self.field_transformers[column_name] = transformer
             self._provided_field_transformers[column_name] = transformer
-            self.field_sdtypes[column_name] = transformer.get_input_type()
-            self._provided_field_sdtypes[column_name] = transformer.get_input_type()
 
     def set_first_transformers_for_fields(self, field_transformers):
         """Set the first transformer to use for certain fields.
