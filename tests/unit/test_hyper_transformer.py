@@ -138,7 +138,6 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
 
         # Asserts
-        assert ht.copy is True
         assert ht._provided_field_sdtypes == {}
         assert ht.field_sdtypes == {}
         assert ht.default_sdtype_transformers == {}
@@ -259,10 +258,9 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         transformer = FloatFormatter()
-        ht = HyperTransformer(
-            field_transformers={'a.out': transformer},
-            default_sdtype_transformers={'numerical': GaussianNormalizer()}
-        )
+        ht = HyperTransformer()
+        ht.field_transformers = {'a.out': transformer}
+        ht.default_sdtype_transformers = {'numerical': GaussianNormalizer()}
 
         # Run
         next_transformer = ht._get_next_transformer('a.out', 'numerical', None)
@@ -291,9 +289,8 @@ class TestHyperTransformer(TestCase):
             - None.
         """
         # Setup
-        ht = HyperTransformer(
-            default_sdtype_transformers={'numerical': GaussianNormalizer()}
-        )
+        ht = HyperTransformer()
+        ht.default_sdtype_transformers = {'numerical': GaussianNormalizer()}
 
         # Run
         next_transformer = ht._get_next_transformer('a.out', 'numerical', None)
@@ -325,9 +322,8 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         transformer = FrequencyEncoder()
-        ht = HyperTransformer(
-            default_sdtype_transformers={'categorical': OneHotEncoder()}
-        )
+        ht = HyperTransformer()
+        ht.default_sdtype_transformers = {'categorical': OneHotEncoder()}
         next_transformers = {'a.out': transformer}
 
         # Run
@@ -359,9 +355,8 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformer = FrequencyEncoder(add_noise=True)
         mock.return_value = transformer
-        ht = HyperTransformer(
-            default_sdtype_transformers={'categorical': OneHotEncoder()}
-        )
+        ht = HyperTransformer()
+        ht.default_sdtype_transformers = {'categorical': OneHotEncoder()}
 
         # Run
         next_transformer = ht._get_next_transformer('a.out', 'categorical', None)
@@ -647,12 +642,8 @@ class TestHyperTransformer(TestCase):
         # Setup
         int_transformer = Mock()
         float_transformer = Mock()
-        field_transformers = {
-            'integer': int_transformer,
-            'float': float_transformer,
-            'intege': int_transformer
-        }
-        ht = HyperTransformer(field_transformers=field_transformers)
+        ht = HyperTransformer()
+        ht._specified_fields = {'integer', 'float', 'categorical'}
         ht._fitted_fields = {'integer', 'float'}
 
         # Run
@@ -981,10 +972,10 @@ class TestHyperTransformer(TestCase):
             'categorical': categorical_transformer
         }
         get_default_transformer_mock.return_value = datetime_transformer
-        ht = HyperTransformer(
-            field_transformers=field_transformers,
-            default_sdtype_transformers=default_sdtype_transformers
-        )
+
+        ht = HyperTransformer()
+        ht.field_transformers = field_transformers
+        ht.default_sdtype_transformers = default_sdtype_transformers
         ht._fit_field_transformer = Mock()
         ht._fit_field_transformer.return_value = data
         ht._field_in_set = Mock()
@@ -997,13 +988,13 @@ class TestHyperTransformer(TestCase):
         ht.fit(data)
 
         # Assert
-        ht._fit_field_transformer.assert_has_calls([
+        ht._fit_field_transformer.call_args_list == [
             call(data, 'integer', int_transformer),
             call(data, 'float', float_transformer),
             call(data, 'categorical', categorical_transformer),
             call(data, 'bool', bool_transformer),
             call(data, 'datetime', datetime_transformer)
-        ])
+        ]
         ht._validate_all_fields_fitted.assert_called_once()
         ht._sort_output_columns.assert_called_once()
         ht._validate_detect_config_called.assert_called_once()
@@ -1296,6 +1287,57 @@ class TestHyperTransformer(TestCase):
         mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
         assert ht.field_transformers == {'categorical_column': transformer}
 
+    def test_update_field_sdtypes(self):
+        """Test the ``update_field_sdtypes`` method.
+
+        This method should update the ``field_sdtypes`` and
+        ``_provided_field_sdtypes`` attributes.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``field_sdtypes`` having
+            one entry.
+
+        Input:
+            - Dict mapping fields to sdtypes.
+        """
+        # Setup
+        field_sdtypes = {
+            'a': 'categorical',
+            'b': 'integer'
+        }
+        ht = HyperTransformer()
+        ht.field_sdtypes = {'a': 'float'}
+        ht._transformers_sequence = [FrequencyEncoder()]
+
+        # Run
+        ht.update_field_sdtypes(field_sdtypes)
+
+        # Assert
+        assert ht._provided_field_sdtypes == {'a': 'categorical', 'b': 'integer'}
+        assert ht.field_sdtypes == {'a': 'categorical', 'b': 'integer'}
+
+    def test_get_default_sdtype_transformers(self):
+        """Test the ``get_default_sdtype_transformers`` method.
+
+        This method should return the ``default_sdtype_transformers`` attribute.
+
+        Output:
+            - Dict mapping sdtypes to transformers.
+        """
+        # Setup
+        sdtype_transformers = {
+            'categorical': FrequencyEncoder,
+            'integer': FloatFormatter
+        }
+        ht = HyperTransformer()
+        ht.default_sdtype_transformers = sdtype_transformers
+
+        # Run
+        out = ht.get_default_sdtype_transformers()
+
+        # Assert
+        assert out == {'categorical': FrequencyEncoder, 'integer': FloatFormatter}
+
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_fitted(self, mock_warnings):
         """Test update transformers.
@@ -1492,13 +1534,9 @@ class TestHyperTransformer(TestCase):
             - Warning should be raised with the proper message.
         """
         # Setup
-        instance = HyperTransformer()
-        instance._user_message = Mock()
-        instance._fitted = True
-        instance.field_sdtypes = {'a': 'categorical'}
-        column_name_to_sdtype = {
-            'my_column': 'numerical'
-        }
+        ht = HyperTransformer()
+        ht.field_transformers = {'a': FrequencyEncoder, 'b': FloatFormatter}
+        ht._transformers_sequence = [FrequencyEncoder()]
 
         # Run
         instance.update_sdtypes(column_name_to_sdtype)
