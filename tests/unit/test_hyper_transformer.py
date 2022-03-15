@@ -1185,6 +1185,8 @@ class TestHyperTransformer(TestCase):
         Setup:
             - Initialize ``HyperTransformer`` with ``_fitted`` as ``True``.
             - Set some ``field_transformers``.
+
+        Input:
             - Dictionary with a ``column_name`` and ``object()``.
 
         Mock:
@@ -1201,12 +1203,12 @@ class TestHyperTransformer(TestCase):
         instance.field_transformers = {'a': object()}
         mock_transformer = Mock()
         mock_transformer.get_input_type.return_value = 'datetime'
-        column_name_transformer = {
+        column_name_to_transformer = {
             'my_column': mock_transformer
         }
 
         # Run
-        instance.update_transformers(column_name_transformer)
+        instance.update_transformers(column_name_to_transformer)
 
         # Assert
         expected_message = (
@@ -1230,7 +1232,9 @@ class TestHyperTransformer(TestCase):
         Setup:
             - Initialize ``HyperTransformer`` with ``_fitted`` as ``False``.
             - Set some ``field_transformers``.
-            - Dictionary with a ``column_name`` and ``object()``.
+
+        Input:
+            - Dictionary with a ``column_name`` and a ``Mock`` transformer.
 
         Mock:
             - Patch the ``print`` function in order to ensure that expected message is being
@@ -1249,12 +1253,12 @@ class TestHyperTransformer(TestCase):
         instance.field_transformers = {'a': object()}
         mock_transformer = Mock()
         mock_transformer.get_input_type.return_value = 'datetime'
-        column_name_transformer = {
+        column_name_to_transformer = {
             'my_column': mock_transformer
         }
 
         # Run
-        instance.update_transformers(column_name_transformer)
+        instance.update_transformers(column_name_to_transformer)
 
         # Assert
         mock_warnings.warn.assert_not_called()
@@ -1272,6 +1276,8 @@ class TestHyperTransformer(TestCase):
 
         Setup:
             - Initialize ``HyperTransformer`` with ``_fitted`` as ``False``.
+
+        Input:
             - Dictionary with a ``column_name`` and a ``Mock`` transformer.
 
         Mock:
@@ -1290,12 +1296,12 @@ class TestHyperTransformer(TestCase):
         instance._fitted = False
         mock_transformer = Mock()
         mock_transformer.get_input_type.return_value = 'datetime'
-        column_name_transformer = {
+        column_name_to_transformer = {
             'my_column': mock_transformer
         }
 
         # Run
-        instance.update_transformers(column_name_transformer)
+        instance.update_transformers(column_name_to_transformer)
 
         # Assert
         expected_message = (
@@ -1309,7 +1315,7 @@ class TestHyperTransformer(TestCase):
         assert instance._provided_field_transformers == {'my_column': mock_transformer}
 
     @patch('rdt.hyper_transformer.print')
-    def test_update_transformers_field_transformer_exists(self, mock_warnings):
+    def test_update_transformers_missmatch_sdtypes(self, mock_warnings):
         """Test update transformers.
 
         Ensure that the function updates properly the ``self.field_transformers`` and prints the
@@ -1319,6 +1325,8 @@ class TestHyperTransformer(TestCase):
             - Initialize ``HyperTransformer``.
             - Set ``field_transformers`` to contain a column and a mock transformer to be
               updated by ``update_transformer``.
+
+        Input:
             - Dictionary with a ``column_name`` and a ``Mock`` transformer.
 
         Mock:
@@ -1340,12 +1348,12 @@ class TestHyperTransformer(TestCase):
         instance.field_sdtypes = {'my_column': 'categorical'}
         mock_transformer = Mock()
         mock_transformer.get_input_type.return_value = 'datetime'
-        column_name_transformer = {
+        column_name_to_transformer = {
             'my_column': mock_transformer
         }
 
         # Run
-        instance.update_transformers(column_name_transformer)
+        instance.update_transformers(column_name_to_transformer)
 
         # Assert
         expected_call = (

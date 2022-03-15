@@ -242,11 +242,11 @@ class HyperTransformer:
         """
         self.default_sdtype_transformers.update(new_sdtype_transformers)
 
-    def update_transformers(self, column_name_transformer):
+    def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
 
         Args:
-            column_name_transformer(dict):
+            column_name_to_transformer(dict):
                 Dict mapping column names to transformers to be used for that column.
         """
         if self._fitted:
@@ -261,7 +261,7 @@ class HyperTransformer:
                 'and transformers from your dataset.'
             )
 
-        for column_name, transformer in column_name_transformer.items():
+        for column_name, transformer in column_name_to_transformer.items():
             current_sdtype = self.field_sdtypes.get(column_name)
             if current_sdtype and current_sdtype != transformer.get_input_type():
                 warnings.warn(
