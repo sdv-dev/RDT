@@ -18,8 +18,8 @@ from rdt.transformers import (
 class TestHyperTransformer(TestCase):
 
     @patch('rdt.hyper_transformer.print')
-    def test_print_tip(self, mock_print):
-        """Test that the ``print_tip`` function prints a message with a ``Tip: `` at the start.
+    def test__print_tip(self, mock_print):
+        """Test that the ``_print_tip`` function prints a message with a ``Tip: `` at the start.
 
         Mock:
             - Mock print function.
@@ -28,7 +28,7 @@ class TestHyperTransformer(TestCase):
             - Print has been called once with ``Tip: my tip.``.
         """
         # Run
-        HyperTransformer.print_tip('my tip.')
+        HyperTransformer._print_tip('my tip.')
 
         # Assert
         mock_print.assert_called_once_with('Tip: my tip.')

@@ -8,7 +8,8 @@ from copy import deepcopy
 import yaml
 
 from rdt.errors import Error, NotFittedError
-from rdt.transformers import get_default_transformer, get_transformer_instance
+from rdt.transformers import (
+    get_default_transformer, get_transformer_instance, get_transformers_by_type)
 
 
 class HyperTransformer:
@@ -84,16 +85,24 @@ class HyperTransformer:
         'float',
         'integer'
     ]
+    _REFIT_MESSAGE = (
+        "For this change to take effect, please refit your data using 'fit' or 'fit_transform'."
+    )
+    _DETECT_CONFIG_MESSAGE = (
+        'Use the `detect_initial_config` method to pre-populate all the sdtypes and transformers '
+        'from your dataset.'
+    )
 
     @staticmethod
-    def print_tip(text):
+    def _print_tip(text, prefix=True):
         """Print a text with ``Tip: `` at the start of the text.
 
         Args:
             text (str):
                 Text to print.
         """
-        print(f'Tip: {text}')  # noqa: T001
+        message = f'Tip: {text}' if prefix else text
+        print(message)  # noqa: T001
 
     @staticmethod
     def _add_field_to_set(field, field_set):
@@ -174,6 +183,10 @@ class HyperTransformer:
                 warnings.warn(f'You are assigning a {input_sdtype} transformer to a {sdtype} '
                               f"column ('{column}'). If the transformer doesn't match the "
                               'sdtype, it may lead to errors.')
+
+    @staticmethod
+    def _get_supported_sdtypes():
+        return get_transformers_by_type().keys()
 
     def get_config(self):
         """Get the current ``HyperTransformer`` configuration.
@@ -259,6 +272,30 @@ class HyperTransformer:
                 "'fit' or 'fit_transform'."
             )
 
+    def update_sdtypes(self, column_name_to_sdtype):
+        """Update the ``sdtypes`` for each specified column name.
+
+        Args:
+            column_name_to_sdtype(dict):
+                Dict mapping column names to ``sdtypes`` for that column.
+        """
+        if self._fitted:
+            warnings.warn(self._REFIT_MESSAGE)
+
+        if len(self.field_sdtypes) == 0:
+            self._print_tip(self._DETECT_CONFIG_MESSAGE)
+
+        for column_name, sdtype in column_name_to_sdtype.items():
+            if sdtype not in self._get_supported_sdtypes():
+                raise Exception(
+                    f"Unsupported sdtypes ('{sdtype}'). To use sdtypes with specific semantic "
+                    'meanings, please contact the SDV team to update to rdt_plus. Otherwise, use '
+                    "'pii' to anonymize the column."
+                )
+
+            self.field_sdtypes[column_name] = sdtype
+            self._provided_field_sdtypes[column_name] = sdtype
+
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
 
@@ -267,16 +304,10 @@ class HyperTransformer:
                 Dict mapping column names to transformers to be used for that column.
         """
         if self._fitted:
-            warnings.warn(
-                "For this change to take effect, please refit your data using 'fit' "
-                "or 'fit_transform'."
-            )
+            warnings.warn(self._REFIT_MESSAGE)
 
         if len(self.field_transformers) == 0:
-            raise Error(
-                'Nothing to update. Use the ``detect_initial_config`` method to pre-populate '
-                'all the sdtypes and transformers from your dataset.'
-            )
+            raise Error(self._DETECT_CONFIG_MESSAGE)
 
         for column_name, transformer in column_name_to_transformer.items():
             current_sdtype = self.field_sdtypes.get(column_name)
@@ -450,16 +481,16 @@ class HyperTransformer:
         # Set the sdtypes and transformers of all fields to their defaults
         self._learn_config(data)
 
-        print('Detecting a new config from the data ... SUCCESS')  # noqa: T001
-        print('Setting the new config ... SUCCESS')  # noqa: T001
+        self._print_tip('Detecting a new config from the data ... SUCCESS', False)
+        self._print_tip('Setting the new config ... SUCCESS', False)
 
         config = {
             'sdtypes': self.field_sdtypes,
             'transformers': {k: repr(v) for k, v in self.field_transformers.items()}
         }
 
-        print('Config:')  # noqa: T001
-        print(json.dumps(config, indent=4))  # noqa: T001
+        self._print_tip('Config:', False)
+        self._print_tip(json.dumps(config, indent=4), False)
 
     def _get_next_transformer(self, output_field, output_sdtype, next_transformers):
         next_transformer = None
