@@ -640,8 +640,6 @@ class TestHyperTransformer(TestCase):
             - Warnings should be raised.
         """
         # Setup
-        int_transformer = Mock()
-        float_transformer = Mock()
         ht = HyperTransformer()
         ht._specified_fields = {'integer', 'float', 'categorical'}
         ht._fitted_fields = {'integer', 'float'}
