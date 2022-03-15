@@ -1,12 +1,16 @@
 """Integration tests for the HyperTransformer."""
 
+import re
+import warnings
 from copy import deepcopy
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from rdt import HyperTransformer
+from rdt.errors import NotFittedError
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
     OneHotEncoder, UnixTimestampEncoder, get_default_transformer, get_default_transformers)
@@ -276,28 +280,6 @@ def test_subset_of_columns_nan_data():
     pd.testing.assert_frame_equal(subset, reverse)
 
 
-def test_with_unfitted_columns():
-    """HyperTransform should be able to transform even if there are unseen columns in data."""
-    # Setup
-    data = get_input_data()
-    ht = HyperTransformer(default_sdtype_transformers={'categorical': FrequencyEncoder})
-    ht.fit(data)
-
-    # Run
-    new_data = get_input_data()
-    new_column = pd.Series([4, 5, 6, 7, 8, 9])
-    new_data['z'] = new_column
-    transformed = ht.transform(new_data)
-    reverse = ht.reverse_transform(transformed)
-
-    # Assert
-    expected_reversed = get_reversed_data()
-    expected_reversed['z'] = new_column
-    expected_reversed = expected_reversed.reindex(
-        columns=['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'])
-    pd.testing.assert_frame_equal(expected_reversed, reverse)
-
-
 def test_multiple_fits():
     """HyperTransformer should be able to be used multiple times.
 
@@ -475,3 +457,48 @@ def test_multiple_detects():
     # Assert
     pd.testing.assert_frame_equal(transformed, get_transformed_data())
     pd.testing.assert_frame_equal(reverse, get_reversed_data())
+
+
+def test_detect_initial_config_not_called():
+    """HyperTransformer should raise a tip when ``detect_initial_config is not called``."""
+    # Setup
+    data = pd.DataFrame()
+    ht = HyperTransformer()
+
+    # Run / Assert
+    warning_msg = warnings.warn(
+        "Tip: You can use the method 'detect_initial_config' to inspect "
+        'the sdtypes and transformers first before fitting the data.'
+    )
+    with pytest.warns(UserWarning, match=warning_msg):
+        ht.fit(data)
+
+
+def test_transform_without_fit():
+    """HyperTransformer should raise an error when transforming without fitting."""
+    # Setup
+    data = pd.DataFrame()
+    ht = HyperTransformer()
+
+    # Run / Assert
+    with pytest.raises(NotFittedError):
+        ht.transform(data)
+
+
+def test_fit_data_different_than_detect():
+    """HyperTransformer should raise an error when transforming without fitting."""
+    # Setup
+    ht = HyperTransformer()
+    detect_data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    data = pd.DataFrame({'col1': [1, 2], 'col3': ['a', 'b']})
+
+    # Run / Assert
+    error_msg = re.escape(
+        'The data you are trying to fit has different columns than the original '
+        "detected data (unknown columns: ['col3']). Column names and their "
+        "sdtypes must be the same. Use the method 'get_config()' to see the expected "
+        'values.'
+    )
+    ht.detect_initial_config(detect_data)
+    with pytest.raises(NotFittedError, match=error_msg):
+        ht.fit(data)
