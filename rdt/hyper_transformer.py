@@ -279,7 +279,7 @@ class HyperTransformer:
 
         if unsupported_sdtypes:
             raise Exception(
-                f"Unsupported sdtypes ('{unsupported_sdtypes}'). To use ``sdtypes`` with specific"
+                f'Unsupported sdtypes ({unsupported_sdtypes}). To use ``sdtypes`` with specific '
                 'semantic meanings, please contact the SDV team to update to rdt_plus. Otherwise, '
                 "use 'pii' to anonymize the column."
             )

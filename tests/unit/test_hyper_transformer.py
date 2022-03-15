@@ -1291,6 +1291,162 @@ class TestHyperTransformer(TestCase):
         assert instance.field_transformers['my_column'] == mock_transformer
         assert instance._provided_field_transformers == {'my_column': mock_transformer}
 
+    @patch('rdt.hyper_transformer.warnings')
+    def test_update_sdtypes_fitted(self, mock_warnings):
+        """Test ``update_sdtypes``.
+
+        Ensure that the method properly updates ``self.field_sdtypes`` and prints the
+        expected messages to guide the end-user.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``_fitted`` as ``True``.
+            - Set some ``field_sdtypes``.
+
+        Input:
+            - Dictionary with a ``column_name`` and ``sdtype``.
+
+        Mock:
+            - Patch the ``warnings`` in order to ensure that expected message is being
+              warn to the end user.
+
+        Side Effects:
+            - ``self.field_sdtypes`` has been updated.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = True
+        instance.field_sdtypes = {'a': 'categorical'}
+        column_name_to_sdtype = {
+            'my_column': 'numerical'
+        }
+
+        # Run
+        instance.update_sdtypes(column_name_to_sdtype)
+
+        # Assert
+        expected_message = (
+            "For this change to take effect, please refit your data using 'fit' "
+            "or 'fit_transform'."
+        )
+
+        mock_warnings.warn.assert_called_once_with(expected_message)
+        assert instance.field_sdtypes == {'my_column': 'numerical', 'a': 'categorical'}
+        assert instance._provided_field_sdtypes == {'my_column': 'numerical'}
+
+    @patch('rdt.hyper_transformer.warnings')
+    def test_update_sdtypes_not_fitted(self, mock_warnings):
+        """Test ``update_sdtypes``.
+
+        Ensure that the method updates properly the ``self.field_sdtypes`` and prints the
+        expected messages to guide the end-user.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``_fitted`` as ``False``.
+            - Set some ``field_sdtypes``.
+
+        Input:
+            - Dictionary with a ``column_name`` and ``sdtype``.
+
+        Mock:
+            - Patch the ``print`` function in order to ensure that expected message is being
+              printed to the end user.
+
+        Side Effects:
+            - ``self.field_sdtypes`` has been updated.
+            - ``self._provided_field_sdtypes`` has been updated.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = False
+        instance.field_sdtypes = {'a': 'categorical'}
+        column_name_to_sdtype = {
+            'my_column': 'numerical'
+        }
+
+        # Run
+        instance.update_sdtypes(column_name_to_sdtype)
+
+        # Assert
+        mock_warnings.warn.assert_not_called()
+        assert instance.field_sdtypes == {'my_column': 'numerical', 'a': 'categorical'}
+        assert instance._provided_field_sdtypes == {'my_column': 'numerical'}
+
+    @patch('rdt.hyper_transformer.print')
+    def test_update_sdtypes_no_field_sdtypes(self, mock_print):
+        """Test ``update_sdtypes``.
+
+        Ensure that the method updates properly the ``self.field_sdtypes`` and prints the
+        expected messages to guide the end-user.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``_fitted`` as ``False``.
+
+        Input:
+            - Dictionary with a ``column_name`` and ``sdtype``.
+
+        Mock:
+            - Patch the ``print`` function in order to ensure that expected message is being
+              printed to the end user.
+
+        Side Effects:
+            - ``self.field_transformers`` has been updated.
+            - ``self.field_sdtypes`` has been updated.
+            - ``self._provided_field_sdtypes`` has been updated.
+            - ``self._provided_field_transformers`` has been updated.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = False
+        instance.field_sdtypes = {}
+        column_name_to_sdtype = {
+            'my_column': 'numerical'
+        }
+
+        # Run
+        instance.update_sdtypes(column_name_to_sdtype)
+
+        # Assert
+        expected_message = (
+            'Tip: Use the `detect_initial_config` method to pre-populate all the sdtypes '
+            'and transformers from your dataset.'
+        )
+        mock_print.assert_called_once_with(expected_message)
+        assert instance.field_sdtypes == {'my_column': 'numerical'}
+        assert instance._provided_field_sdtypes == {'my_column': 'numerical'}
+
+    def test_update_sdtypes_invalid_sdtype(self):
+        """Test ``update_sdtypes``.
+
+        Ensure that the method updates properly the ``self.field_sdtypes`` and prints the
+        expected messages to guide the end-user.
+
+        Setup:
+            - Initialize ``HyperTransformer``.
+
+        Input:
+            - Dictionary with a ``column_name`` and invalid ``sdtype``.
+
+        Side Effects:
+            - Exception should be raised.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._get_supported_sdtypes = Mock()
+        instance._get_supported_sdtypes.return_value = []
+        instance._fitted = False
+        column_name_to_sdtype = {
+            'my_column': 'credit_card'
+        }
+
+        # Run / Assert
+        expected_message = (
+            r'Unsupported sdtypes \(\[\'credit_card\'\]\). To use ``sdtypes`` with specific '
+            'semantic meanings, please contact the SDV team to update to rdt_plus. Otherwise, '
+            "use 'pii' to anonymize the column."
+        )
+        with pytest.raises(Exception, match=expected_message):
+            instance.update_sdtypes(column_name_to_sdtype)
+
     def test_get_transformer(self):
         """Test the ``get_transformer`` method.
 
