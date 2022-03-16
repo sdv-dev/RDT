@@ -1116,14 +1116,14 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
 
         # Run
-        ht.update_transformers_by_sdtype('categorical', object())
-
-        # Assert
         expected_msg = (
-            'Error: Nothing to update. Use the `detect_initial_config` method to '
+            'Nothing to update. Use the `detect_initial_config` method to '
             'pre-populate all the sdtypes and transformers from your dataset.'
         )
-        mock_print.assert_called_once_with(expected_msg)
+        with pytest.raises(Error, match=expected_msg):
+            ht.update_transformers_by_sdtype('categorical', object())
+
+        # Assert
         assert ht.field_transformers == {}
 
     @patch('rdt.hyper_transformer.print')
@@ -1253,36 +1253,6 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         assert out == {'categorical': FrequencyEncoder, 'integer': FloatFormatter}
-
-    def test_update_default_sdtype_transformers(self):
-        """Test the ``update_default_sdtype_transformers`` method.
-
-        This method should update the ``default_sdtype_transformers`` attribute.
-
-        Setup:
-            - Initialize ``HyperTransformer`` with ``default_sdtype_transformers``
-            dict that only has some sdtypes set.
-
-        Input:
-            - Dict mapping new sdtypes to transformers.
-        """
-        # Setup
-        sdtype_transformers = {
-            'categorical': FrequencyEncoder,
-            'integer': FloatFormatter
-        }
-        ht = HyperTransformer(default_sdtype_transformers=sdtype_transformers)
-        ht._transformers_sequence = [FrequencyEncoder()]
-
-        # Run
-        ht.update_default_sdtype_transformers({'boolean': BinaryEncoder})
-
-        # Assert
-        assert ht.default_sdtype_transformers == {
-            'categorical': FrequencyEncoder,
-            'integer': FloatFormatter,
-            'boolean': BinaryEncoder
-        }
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_fitted(self, mock_warnings):

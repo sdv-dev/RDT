@@ -242,13 +242,11 @@ class HyperTransformer:
             transformer (rdt.transformers.BaseTransformer):
                 Transformer class or instance to be used for the given ``sdtype``.
         """
-        self.default_sdtype_transformers[sdtype] = transformer
         if not self.field_sdtypes:
-            msg = (
-                'Error: Nothing to update. Use the `detect_initial_config` method to '
+            raise Error(
+                'Nothing to update. Use the `detect_initial_config` method to '
                 'pre-populate all the sdtypes and transformers from your dataset.'
             )
-            print(msg)  # noqa: T001
 
         else:
             for field, field_sdtype in self.field_sdtypes.items():
