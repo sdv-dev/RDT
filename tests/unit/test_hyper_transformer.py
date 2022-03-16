@@ -1363,7 +1363,7 @@ class TestHyperTransformer(TestCase):
         instance._fitted = True
         instance.field_transformers = {'a': object()}
         mock_transformer = Mock()
-        mock_transformer.get_input_type.return_value = 'datetime'
+        mock_transformer.get_input_sdtype.return_value = 'datetime'
         column_name_to_transformer = {
             'my_column': mock_transformer
         }
@@ -1409,7 +1409,7 @@ class TestHyperTransformer(TestCase):
         instance._fitted = False
         instance.field_transformers = {'a': object()}
         mock_transformer = Mock()
-        mock_transformer.get_input_type.return_value = 'datetime'
+        mock_transformer.get_input_sdtype.return_value = 'datetime'
         column_name_to_transformer = {
             'my_column': mock_transformer
         }
@@ -1447,7 +1447,7 @@ class TestHyperTransformer(TestCase):
         instance = HyperTransformer()
         instance._fitted = False
         mock_transformer = Mock()
-        mock_transformer.get_input_type.return_value = 'datetime'
+        mock_transformer.get_input_sdtype.return_value = 'datetime'
         column_name_to_transformer = {
             'my_column': mock_transformer
         }
@@ -1491,7 +1491,7 @@ class TestHyperTransformer(TestCase):
         instance.field_transformers = {'my_column': mock_numerical}
         instance.field_sdtypes = {'my_column': 'categorical'}
         mock_transformer = Mock()
-        mock_transformer.get_input_type.return_value = 'datetime'
+        mock_transformer.get_input_sdtype.return_value = 'datetime'
         column_name_to_transformer = {
             'my_column': mock_transformer
         }

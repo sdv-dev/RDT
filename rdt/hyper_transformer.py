@@ -278,9 +278,9 @@ class HyperTransformer:
 
         for column_name, transformer in column_name_to_transformer.items():
             current_sdtype = self.field_sdtypes.get(column_name)
-            if current_sdtype and current_sdtype != transformer.get_input_type():
+            if current_sdtype and current_sdtype != transformer.get_input_sdtype():
                 warnings.warn(
-                    f'You are assigning a {transformer.get_input_type()} transformer '
+                    f'You are assigning a {transformer.get_input_sdtype()} transformer '
                     f'to a {current_sdtype} column ({column_name}). '
                     "If the transformer doesn't match the sdtype, it may lead to errors."
                 )
