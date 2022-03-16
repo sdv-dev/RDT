@@ -230,17 +230,34 @@ class HyperTransformer:
         """
         return self.default_sdtype_transformers
 
-    def update_default_sdtype_transformers(self, new_sdtype_transformers):
-        """Update the ``default_sdtype_transformer`` dict.
+    def update_transformers_by_sdtype(self, sdtype, transformer):
+        """Update the transformers for the specified ``sdtype``.
+
+        Given an ``sdtype`` and a ``transformer``, change all the fields of the ``sdtype``
+        to use the given transformer.
 
         Args:
-            new_sdtype_transformers (dict):
-                Dict mapping sdtypes to the default transformer class or instance to use for
-                them. This dict does not need to contain an entry for every sdtype. It will be
-                used to overwrite the existing defaults. Calling this method will require ``fit``
-                to be run again.
+            sdtype (str):
+                Semantic data type for the transformer.
+            transformer (rdt.transformers.BaseTransformer):
+                Transformer class or instance to be used for the given ``sdtype``.
         """
-        self.default_sdtype_transformers.update(new_sdtype_transformers)
+        if not self.field_sdtypes:
+            raise Error(
+                'Nothing to update. Use the `detect_initial_config` method to '
+                'pre-populate all the sdtypes and transformers from your dataset.'
+            )
+
+        for field, field_sdtype in self.field_sdtypes.items():
+            if field_sdtype == sdtype:
+                self._provided_field_transformers[field] = transformer
+                self.field_transformers[field] = transformer
+
+        if self._fitted:
+            warnings.warn(
+                'For this change to take effect, please refit your data using '
+                "'fit' or 'fit_transform'."
+            )
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
