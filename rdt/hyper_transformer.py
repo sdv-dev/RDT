@@ -248,17 +248,16 @@ class HyperTransformer:
                 'pre-populate all the sdtypes and transformers from your dataset.'
             )
 
-        else:
-            for field, field_sdtype in self.field_sdtypes.items():
-                if field_sdtype == sdtype:
-                    self._provided_field_transformers[field] = transformer
-                    self.field_transformers[field] = transformer
+        for field, field_sdtype in self.field_sdtypes.items():
+            if field_sdtype == sdtype:
+                self._provided_field_transformers[field] = transformer
+                self.field_transformers[field] = transformer
 
-            if self._fitted:
-                warnings.warn(
-                    'For this change to take effect, please refit your data using '
-                    "'fit' or 'fit_transform'."
-                )
+        if self._fitted:
+            warnings.warn(
+                'For this change to take effect, please refit your data using '
+                "'fit' or 'fit_transform'."
+            )
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
