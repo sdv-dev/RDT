@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
-from rdt.errors import NotFittedError
+from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer, OneHotEncoder,
     UnixTimestampEncoder)
@@ -1261,8 +1261,7 @@ class TestHyperTransformer(TestCase):
         assert instance.field_transformers['my_column'] == mock_transformer
         assert instance._provided_field_transformers == {'my_column': mock_transformer}
 
-    @patch('rdt.hyper_transformer.print')
-    def test_update_transformers_no_field_transformers(self, mock_print):
+    def test_update_transformers_no_field_transformers(self):
         """Test update transformers.
 
         Ensure that the function updates properly the ``self.field_transformers`` and prints the
@@ -1293,16 +1292,12 @@ class TestHyperTransformer(TestCase):
         }
 
         # Run
-        instance.update_transformers(column_name_to_transformer)
-
-        # Assert
-        expected_message = (
-            'Tip: Use the `detect_initial_config` method to pre-populate all the sdtypes '
-            'and transformers from your dataset.'
+        expected_msg = (
+            'Nothing to update. Use the ``detect_initial_config`` method to pre-populate '
+            'all the sdtypes and transformers from your dataset.'
         )
-        mock_print.assert_called_once_with(expected_message)
-        assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance._provided_field_transformers == {'my_column': mock_transformer}
+        with pytest.raises(Error, match=expected_msg):
+            instance.update_transformers(column_name_to_transformer)
 
     @patch('rdt.hyper_transformer.print')
     def test_update_transformers_missmatch_sdtypes(self, mock_warnings):

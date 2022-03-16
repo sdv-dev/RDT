@@ -7,7 +7,7 @@ from copy import deepcopy
 
 import yaml
 
-from rdt.errors import NotFittedError
+from rdt.errors import Error, NotFittedError
 from rdt.transformers import get_default_transformer, get_transformer_instance
 
 
@@ -256,9 +256,9 @@ class HyperTransformer:
             )
 
         if len(self.field_transformers) == 0:
-            self.print_tip(
-                'Use the `detect_initial_config` method to pre-populate all the sdtypes '
-                'and transformers from your dataset.'
+            raise Error(
+                'Nothing to update. Use the ``detect_initial_config`` method to pre-populate '
+                'all the sdtypes and transformers from your dataset.'
             )
 
         for column_name, transformer in column_name_to_transformer.items():
