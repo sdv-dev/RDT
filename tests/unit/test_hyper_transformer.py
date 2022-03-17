@@ -1112,27 +1112,6 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(NotFittedError):
             ht.reverse_transform(data)
 
-    def test_get_default_sdtype_transformers(self):
-        """Test the ``get_default_sdtype_transformers`` method.
-
-        This method should return the ``default_sdtype_transformers`` attribute.
-
-        Output:
-            - Dict mapping sdtypes to transformers.
-        """
-        # Setup
-        sdtype_transformers = {
-            'categorical': FrequencyEncoder,
-            'integer': FloatFormatter
-        }
-        ht = HyperTransformer(default_sdtype_transformers=sdtype_transformers)
-
-        # Run
-        out = ht.get_default_sdtype_transformers()
-
-        # Assert
-        assert out == {'categorical': FrequencyEncoder, 'integer': FloatFormatter}
-
     @patch('rdt.hyper_transformer.print')
     def test_update_transformers_by_sdtype_no_field_sdtypes(self, mock_print):
         """Test that ``update_transformers_by_sdtype`` prints an error message.
