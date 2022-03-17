@@ -147,7 +147,6 @@ class HyperTransformer:
         self._fitted_fields = set()
         self._fitted = False
         self._transformers_tree = defaultdict(dict)
-        self._config_detected = False
 
     @staticmethod
     def _field_in_data(field, data):
@@ -389,7 +388,6 @@ class HyperTransformer:
         self.default_sdtype_transformers = {}
         self._provided_field_sdtypes = {}
         self._provided_field_transformers = {}
-        self._config_detected = True
 
         # Set the sdtypes and transformers of all fields to their defaults
         self._learn_config(data)
@@ -476,22 +474,22 @@ class HyperTransformer:
         ``detect_initial_config`` method. After that method has been used once
         the tip will no longer be shown (for an instance of the HyperTransformer).
         """
-        if not self._config_detected:
-            warnings.warn(
-                "Tip: You can use the method 'detect_initial_config' to inspect "
-                'the sdtypes and transformers first before fitting the data.'
+        if len(self.field_sdtypes) == 0 and len(self.field_transformers) == 0:
+            raise NotFittedError(
+                "No config detected. Set the config using 'set_config' or pre-populate "
+                "it automatically from your data using 'detect_initial_config' prior to "
+                'fitting your data.'
             )
 
-        else:
-            fields = list(self.field_sdtypes.keys())
-            unknown_columns = self._subset(data.columns, fields, not_in=True)
-            if unknown_columns:
-                raise NotFittedError(
-                    'The data you are trying to fit has different columns than the original '
-                    f'detected data (unknown columns: {unknown_columns}). Column names and their '
-                    "sdtypes must be the same. Use the method 'get_config()' to see the expected "
-                    'values.'
-                )
+        fields = list(self.field_sdtypes.keys())
+        unknown_columns = self._subset(data.columns, fields, not_in=True)
+        if unknown_columns:
+            raise NotFittedError(
+                'The data you are trying to fit has different columns than the original '
+                f'detected data (unknown columns: {unknown_columns}). Column names and their '
+                "sdtypes must be the same. Use the method 'get_config()' to see the expected "
+                'values.'
+            )
 
     def fit(self, data):
         """Fit the transformers to the data.

@@ -342,20 +342,21 @@ class TestHyperTransformer(TestCase):
         """Test the ``_validate_detect_config_called`` method.
 
         Tests that the ``_validate_detect_config_called`` method raises a warning
-        if ``_config_detected`` is False (default value).
+        when no values are passed to ``field_transformers`` and ``field_sdtypes``.
 
         Expected behavior:
             - A warning should be raised.
         """
         # Setup
         ht = HyperTransformer()
-        warning_msg = (
-            "Tip: You can use the method 'detect_initial_config' to inspect "
-            'the sdtypes and transformers first before fitting the data.'
+        error_msg = (
+            "No config detected. Set the config using 'set_config' or pre-populate "
+            "it automatically from your data using 'detect_initial_config' prior to "
+            'fitting your data.'
         )
 
         # Run / Assert
-        with pytest.warns(UserWarning, match=warning_msg):
+        with pytest.raises(NotFittedError, match=error_msg):
             ht._validate_detect_config_called(pd.DataFrame())
 
     def test__validate_correctly_fitted(self):
@@ -411,7 +412,6 @@ class TestHyperTransformer(TestCase):
         output = f_out.getvalue()
 
         # Assert
-        assert ht._config_detected is True
         assert ht._provided_field_sdtypes == {}
         assert ht._provided_field_transformers == {}
         assert ht.field_sdtypes == {
@@ -894,7 +894,6 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
-        ht._config_detected = True
         ht.field_sdtypes = {'col1': 'float', 'col2': 'categorical'}
         data = pd.DataFrame({'col1': [1, 2], 'col3': ['a', 'b']})
         error_msg = re.escape(

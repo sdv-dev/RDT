@@ -1,7 +1,6 @@
 """Integration tests for the HyperTransformer."""
 
 import re
-import warnings
 from copy import deepcopy
 from unittest.mock import patch
 
@@ -149,6 +148,7 @@ def test_hypertransformer_default_inputs():
 
     # Run
     ht = HyperTransformer()
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed = ht.transform(data)
     reverse_transformed = ht.reverse_transform(transformed)
@@ -198,19 +198,25 @@ def test_hypertransformer_field_transformers():
         - The reverse transformed data should be the same as the input.
     """
     # Setup
-    field_transformers = {
-        'integer': FloatFormatter(missing_value_replacement='mean'),
-        'float': FloatFormatter(missing_value_replacement='mean'),
-        'categorical': FrequencyEncoder,
-        'bool': BinaryEncoder(missing_value_replacement='mode'),
-        'datetime': DummyTransformerNotMLReady,
-        'datetime.value': FrequencyEncoder,
-        'names': FrequencyEncoder
+    config = {
+        'sdtypes': {},
+        'transformers': {
+            'integer': FloatFormatter(missing_value_replacement='mean'),
+            'float': FloatFormatter(missing_value_replacement='mean'),
+            'categorical': FrequencyEncoder,
+            'bool': BinaryEncoder(missing_value_replacement='mode'),
+            'datetime': DummyTransformerNotMLReady,
+            'datetime.value': FrequencyEncoder,
+            'names': FrequencyEncoder
+        }
     }
+
     data = get_input_data()
 
     # Run
-    ht = HyperTransformer(field_transformers=field_transformers)
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.set_config(config)
     ht.fit(data)
     transformed = ht.transform(data)
     reverse_transformed = ht.reverse_transform(transformed)
@@ -238,6 +244,7 @@ def test_single_category():
     })
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed = ht.transform(data)
     reverse = ht.reverse_transform(transformed)
@@ -253,6 +260,7 @@ def test_dtype_category():
 
     # Run
     ht = HyperTransformer()
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed = ht.transform(data)
     reverse = ht.reverse_transform(transformed)
@@ -270,6 +278,7 @@ def test_subset_of_columns_nan_data():
     data = get_input_data()
     subset = data[[data.columns[0]]].copy()
     ht = HyperTransformer()
+    ht.detect_initial_config(data)
     ht.fit(data)
 
     # Run
@@ -291,10 +300,12 @@ def test_multiple_fits():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed1 = ht.transform(data)
     reversed1 = ht.reverse_transform(transformed1)
 
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed2 = ht.transform(data)
     reversed2 = ht.reverse_transform(transformed2)
@@ -315,7 +326,9 @@ def test_multiple_fits_different_data():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
+    ht.detect_initial_config(new_data)
     ht.fit(new_data)
     transformed1 = ht.transform(new_data)
     transformed2 = ht.transform(new_data)
@@ -341,7 +354,9 @@ def test_multiple_fits_different_columns():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
+    ht.detect_initial_config(new_data)
     ht.fit(new_data)
     transformed1 = ht.transform(new_data)
     transformed2 = ht.transform(new_data)
@@ -366,6 +381,7 @@ def test_multiple_fits_with_set_config():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.set_config(config={
         'sdtypes': {'integer': 'float'},
         'transformers': {'bool': FrequencyEncoder}
@@ -393,6 +409,7 @@ def test_multiple_detect_configs_with_set_config():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed1 = ht.transform(data)
     reverse1 = ht.reverse_transform(transformed1)
@@ -423,6 +440,7 @@ def test_detect_initial_config_doesnt_affect_fit():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed1 = ht.transform(data)
     reversed1 = ht.reverse_transform(transformed1)
@@ -457,21 +475,6 @@ def test_multiple_detects():
     # Assert
     pd.testing.assert_frame_equal(transformed, get_transformed_data())
     pd.testing.assert_frame_equal(reverse, get_reversed_data())
-
-
-def test_detect_initial_config_not_called():
-    """HyperTransformer should raise a tip when ``detect_initial_config is not called``."""
-    # Setup
-    data = pd.DataFrame()
-    ht = HyperTransformer()
-
-    # Run / Assert
-    warning_msg = warnings.warn(
-        "Tip: You can use the method 'detect_initial_config' to inspect "
-        'the sdtypes and transformers first before fitting the data.'
-    )
-    with pytest.warns(UserWarning, match=warning_msg):
-        ht.fit(data)
 
 
 def test_transform_without_fit():
