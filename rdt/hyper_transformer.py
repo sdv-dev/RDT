@@ -89,8 +89,8 @@ class HyperTransformer:
         "For this change to take effect, please refit your data using 'fit' or 'fit_transform'."
     )
     _DETECT_CONFIG_MESSAGE = (
-        'Nothing to update. Use the `detect_initial_config` method to pre-populate all the sdtypes '
-        'and transformers from your dataset.'
+        'Nothing to update. Use the `detect_initial_config` method to pre-populate all the '
+        'sdtypes and transformers from your dataset.'
     )
 
     @staticmethod
