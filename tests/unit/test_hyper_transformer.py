@@ -341,11 +341,11 @@ class TestHyperTransformer(TestCase):
     def test__validate_detect_config_called(self):
         """Test the ``_validate_detect_config_called`` method.
 
-        Tests that the ``_validate_detect_config_called`` method raises a warning
+        Tests that the ``_validate_detect_config_called`` method raises an error
         when no values are passed to ``field_transformers`` and ``field_sdtypes``.
 
         Expected behavior:
-            - A warning should be raised.
+            - An error should be raised.
         """
         # Setup
         ht = HyperTransformer()

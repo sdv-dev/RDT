@@ -468,12 +468,7 @@ class HyperTransformer:
             self._output_columns.extend(output_columns)
 
     def _validate_detect_config_called(self, data):
-        """Warn the user if they fit without calling ``detect_initial_config``.
-
-        Note that this tip will only be printed until the first usage of
-        ``detect_initial_config`` method. After that method has been used once
-        the tip will no longer be shown (for an instance of the HyperTransformer).
-        """
+        """Assert the ``detect_initial_config`` method is correcly called before fitting."""
         if len(self.field_sdtypes) == 0 and len(self.field_transformers) == 0:
             raise NotFittedError(
                 "No config detected. Set the config using 'set_config' or pre-populate "
@@ -511,12 +506,8 @@ class HyperTransformer:
     def _validate_correctly_fitted(self, data):
         """Validate the data to transform has been fitted.
 
-        This method raises errors when:
-            - ``fit`` has not been called at all.
-            - The column names passed to ``fit`` are not the same as the ones passed to
-            ``transform``.
-            - The sdtype of the columns passed to ``fit`` are not the same as the ones
-            passed to ``transform``.
+        This method raises errors if ``fit`` is not been called at all or if the column names passed
+        to ``fit`` are not the same as the ones passed to ``transform``.
         """
         if not self._fitted:
             raise NotFittedError
