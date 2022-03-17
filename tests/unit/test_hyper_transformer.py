@@ -1552,7 +1552,7 @@ class TestHyperTransformer(TestCase):
             'semantic meanings, please contact the SDV team to update to rdt_plus. Otherwise, '
             "use 'pii' to anonymize the column."
         )
-        with pytest.raises(Exception, match=expected_message):
+        with pytest.raises(Error, match=expected_message):
             instance.update_sdtypes(column_name_to_sdtype)
 
     @patch('rdt.hyper_transformer.get_default_transformer')

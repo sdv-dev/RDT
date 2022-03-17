@@ -270,7 +270,7 @@ class HyperTransformer:
                 transformers_to_update[column] = get_default_transformer(sdtype)
 
         if unsupported_sdtypes:
-            raise Exception(
+            raise Error(
                 f'Unsupported sdtypes ({unsupported_sdtypes}). To use ``sdtypes`` with specific '
                 'semantic meanings, please contact the SDV team to update to rdt_plus. Otherwise, '
                 "use 'pii' to anonymize the column."
