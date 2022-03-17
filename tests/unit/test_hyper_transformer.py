@@ -1434,7 +1434,7 @@ class TestHyperTransformer(TestCase):
             "or 'fit_transform'."
         )
         user_message = (
-            'The transformers for these columns may change based on the new sdtype.'
+            'The transformers for these columns may change based on the new sdtype.\n'
             "Use 'get_config()' to verify the transformers."
         )
 
@@ -1480,7 +1480,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         user_message = (
-            'The transformers for these columns may change based on the new sdtype.'
+            'The transformers for these columns may change based on the new sdtype.\n'
             "Use 'get_config()' to verify the transformers."
         )
         mock_warnings.warn.assert_not_called()
@@ -1597,7 +1597,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         user_message = (
-            'The transformers for these columns may change based on the new sdtype.'
+            'The transformers for these columns may change based on the new sdtype.\n'
             "Use 'get_config()' to verify the transformers."
         )
         mock_warnings.warn.assert_not_called()

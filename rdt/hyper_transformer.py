@@ -100,8 +100,8 @@ class HyperTransformer:
         Args:
             text (str):
                 Text to print.
-            prefix (str):
-
+            prefix (str or None):
+                A prefix to add to the front of the text before printing.
         """
         message = f'{prefix}: {text}' if prefix else text
         print(message)  # noqa: T001
@@ -280,7 +280,7 @@ class HyperTransformer:
         self.field_transformers.update(transformers_to_update)
         self._provided_field_sdtypes.update(column_name_to_sdtype)
         self._user_message(
-            'The transformers for these columns may change based on the new sdtype.'
+            'The transformers for these columns may change based on the new sdtype.\n'
             "Use 'get_config()' to verify the transformers.", 'Info'
         )
         if self._fitted:
