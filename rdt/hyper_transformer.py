@@ -222,16 +222,6 @@ class HyperTransformer:
         self._provided_field_transformers = config['transformers']
         self.field_transformers.update(config['transformers'])
 
-    def get_default_sdtype_transformers(self):
-        """Get the ``default_sdtype_transformer`` dict.
-
-        Returns:
-            dict:
-                The ``default_sdtype_transformers`` dictionary. The keys are
-                sdtypes and the values are Transformers or Transformer instances.
-        """
-        return self.default_sdtype_transformers
-
     def update_transformers_by_sdtype(self, sdtype, transformer):
         """Update the transformers for the specified ``sdtype``.
 
