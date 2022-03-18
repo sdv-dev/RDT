@@ -236,15 +236,16 @@ def test_hypertransformer_field_transformers():
 def test_single_category():
     """Test that categorical variables with a single value are supported."""
     # Setup
-    ht = HyperTransformer(field_transformers={
-        'a': OneHotEncoder()
-    })
+    ht = HyperTransformer()
     data = pd.DataFrame({
         'a': ['a', 'a', 'a']
     })
 
     # Run
     ht.detect_initial_config(data)
+    ht.update_transformers(column_name_to_transformer={
+        'a': OneHotEncoder()
+    })
     ht.fit(data)
     transformed = ht.transform(data)
     reverse = ht.reverse_transform(transformed)

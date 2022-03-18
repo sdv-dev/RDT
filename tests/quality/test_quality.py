@@ -90,8 +90,9 @@ def get_transformer_regression_scores(data, sdtype, dataset_name, transformers, 
         target = numerical_transformer.fit_transform(target, column)
         target = format_array(target)
         for transformer in transformers:
-            ht = HyperTransformer(default_sdtype_transformers={sdtype: transformer})
-            ht.detect_initial_config(data)
+            ht = HyperTransformer()
+            ht.detect_initial_config(features)
+            ht.update_transformers_by_sdtype(sdtype=sdtype, transformer=transformer)
             ht.fit(features)
             transformed_features = ht.transform(features).to_numpy()
             score = get_regression_score(transformed_features, target)
