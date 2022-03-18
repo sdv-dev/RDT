@@ -1,5 +1,6 @@
 import contextlib
 import io
+import re
 from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
@@ -369,11 +370,58 @@ class TestHyperTransformer(TestCase):
         assert isinstance(next_transformer, FrequencyEncoder)
         assert next_transformer.add_noise is False
 
+    def test__validate_detect_config_called(self):
+        """Test the ``_validate_detect_config_called`` method.
+
+        Tests that the ``_validate_detect_config_called`` method raises an error
+        when no values are passed to ``field_transformers`` and ``field_sdtypes``.
+
+        Expected behavior:
+            - An error should be raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+        error_msg = (
+            "No config detected. Set the config using 'set_config' or pre-populate "
+            "it automatically from your data using 'detect_initial_config' prior to "
+            'fitting your data.'
+        )
+
+        # Run / Assert
+        with pytest.raises(NotFittedError, match=error_msg):
+            ht._validate_detect_config_called(pd.DataFrame())
+
+    def test__validate_correctly_fitted(self):
+        """Test the ``_validate_correctly_fitted`` method.
+
+        Tests that the ``_validate_correctly_fitted`` method raises a ``NotFittedError``
+        if the column names passed to ``fit`` are not the same as the ones passed to
+        ``transform``.
+
+        Expected behavior:
+            - A ``NotFittedError`` should be raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht._fitted = True
+        ht._input_columns = ['col1', 'col2']
+        data = pd.DataFrame({'col1': [1, 2], 'col3': ['a', 'b']})
+        error_msg = re.escape(
+            'The data you are trying to transform has different columns than the original '
+            "fitted data (unknown columns: ['col3']). Column names and their "
+            "sdtypes must be the same. Use the method 'get_config()' to see the expected "
+            'values.'
+        )
+
+        # Run / Assert
+        with pytest.raises(NotFittedError, match=error_msg):
+            ht._validate_correctly_fitted(data)
+
     def test_detect_initial_config(self):
         """Test the ``detect_initial_config`` method.
 
         This tests that ``field_sdtypes`` and ``field_transformers`` are correctly set,
-        and that the appropriate configuration is printed.
+        ``_config_detected`` is set to True, and that the appropriate configuration is printed.
 
         Input:
             - A DataFrame.
@@ -398,7 +446,6 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert ht._provided_field_sdtypes == {}
         assert ht._provided_field_transformers == {}
-
         assert ht.field_sdtypes == {
             'col1': 'float',
             'col2': 'categorical',
@@ -867,6 +914,31 @@ class TestHyperTransformer(TestCase):
 
         return data
 
+    def test__validate_detect_config_called_incorrect_data(self):
+        """Test the ``_validate_detect_config_called`` method.
+
+        Tests that the ``_validate_detect_config_called`` method raises a ``NotFittedError``
+        if the column names passed to ``fit`` are not the same as the ones passed to
+        ``detect_initial_config``.
+
+        Expected behavior:
+            - A ``NotFittedError`` should be raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_sdtypes = {'col1': 'float', 'col2': 'categorical'}
+        data = pd.DataFrame({'col1': [1, 2], 'col3': ['a', 'b']})
+        error_msg = re.escape(
+            'The data you are trying to fit has different columns than the original '
+            "detected data (unknown columns: ['col3']). Column names and their "
+            "sdtypes must be the same. Use the method 'get_config()' to see the expected "
+            'values.'
+        )
+
+        # Run / Assert
+        with pytest.raises(NotFittedError, match=error_msg):
+            ht._validate_detect_config_called(data)
+
     @patch('rdt.hyper_transformer.get_default_transformer')
     def test_fit(self, get_default_transformer_mock):
         """Test the ``fit`` method.
@@ -881,6 +953,7 @@ class TestHyperTransformer(TestCase):
             - A mock for ``_fit_field_transformer``.
             - A mock for ``_field_in_set``.
             - A mock for ``get_default_tranformer``.
+            - A mock for ``_validate_detect_config_called``.
 
         Input:
             - A DataFrame with multiple columns of different sdtypes.
@@ -918,6 +991,7 @@ class TestHyperTransformer(TestCase):
         ht._field_in_set.side_effect = [True, True, False, False, False]
         ht._validate_all_fields_fitted = Mock()
         ht._sort_output_columns = Mock()
+        ht._validate_detect_config_called = Mock()
 
         # Run
         ht.fit(data)
@@ -932,6 +1006,7 @@ class TestHyperTransformer(TestCase):
         ])
         ht._validate_all_fields_fitted.assert_called_once()
         ht._sort_output_columns.assert_called_once()
+        ht._validate_detect_config_called.assert_called_once()
 
     def test_transform(self):
         """Test the ``transform`` method.

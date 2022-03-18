@@ -1,12 +1,15 @@
 """Integration tests for the HyperTransformer."""
 
+import re
 from copy import deepcopy
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from rdt import HyperTransformer
+from rdt.errors import NotFittedError
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
     OneHotEncoder, UnixTimestampEncoder, get_default_transformer, get_default_transformers)
@@ -145,6 +148,7 @@ def test_hypertransformer_default_inputs():
 
     # Run
     ht = HyperTransformer()
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed = ht.transform(data)
     reverse_transformed = ht.reverse_transform(transformed)
@@ -194,19 +198,25 @@ def test_hypertransformer_field_transformers():
         - The reverse transformed data should be the same as the input.
     """
     # Setup
-    field_transformers = {
-        'integer': FloatFormatter(missing_value_replacement='mean'),
-        'float': FloatFormatter(missing_value_replacement='mean'),
-        'categorical': FrequencyEncoder,
-        'bool': BinaryEncoder(missing_value_replacement='mode'),
-        'datetime': DummyTransformerNotMLReady,
-        'datetime.value': FrequencyEncoder,
-        'names': FrequencyEncoder
+    config = {
+        'sdtypes': {},
+        'transformers': {
+            'integer': FloatFormatter(missing_value_replacement='mean'),
+            'float': FloatFormatter(missing_value_replacement='mean'),
+            'categorical': FrequencyEncoder,
+            'bool': BinaryEncoder(missing_value_replacement='mode'),
+            'datetime': DummyTransformerNotMLReady,
+            'datetime.value': FrequencyEncoder,
+            'names': FrequencyEncoder
+        }
     }
+
     data = get_input_data()
 
     # Run
-    ht = HyperTransformer(field_transformers=field_transformers)
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.set_config(config)
     ht.fit(data)
     transformed = ht.transform(data)
     reverse_transformed = ht.reverse_transform(transformed)
@@ -234,6 +244,7 @@ def test_single_category():
     })
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed = ht.transform(data)
     reverse = ht.reverse_transform(transformed)
@@ -249,6 +260,7 @@ def test_dtype_category():
 
     # Run
     ht = HyperTransformer()
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed = ht.transform(data)
     reverse = ht.reverse_transform(transformed)
@@ -266,6 +278,7 @@ def test_subset_of_columns_nan_data():
     data = get_input_data()
     subset = data[[data.columns[0]]].copy()
     ht = HyperTransformer()
+    ht.detect_initial_config(data)
     ht.fit(data)
 
     # Run
@@ -274,28 +287,6 @@ def test_subset_of_columns_nan_data():
 
     # Assert
     pd.testing.assert_frame_equal(subset, reverse)
-
-
-def test_with_unfitted_columns():
-    """HyperTransform should be able to transform even if there are unseen columns in data."""
-    # Setup
-    data = get_input_data()
-    ht = HyperTransformer(default_sdtype_transformers={'categorical': FrequencyEncoder})
-    ht.fit(data)
-
-    # Run
-    new_data = get_input_data()
-    new_column = pd.Series([4, 5, 6, 7, 8, 9])
-    new_data['z'] = new_column
-    transformed = ht.transform(new_data)
-    reverse = ht.reverse_transform(transformed)
-
-    # Assert
-    expected_reversed = get_reversed_data()
-    expected_reversed['z'] = new_column
-    expected_reversed = expected_reversed.reindex(
-        columns=['z', 'integer', 'float', 'categorical', 'bool', 'datetime', 'names'])
-    pd.testing.assert_frame_equal(expected_reversed, reverse)
 
 
 def test_multiple_fits():
@@ -309,10 +300,12 @@ def test_multiple_fits():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed1 = ht.transform(data)
     reversed1 = ht.reverse_transform(transformed1)
 
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed2 = ht.transform(data)
     reversed2 = ht.reverse_transform(transformed2)
@@ -333,7 +326,9 @@ def test_multiple_fits_different_data():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
+    ht.detect_initial_config(new_data)
     ht.fit(new_data)
     transformed1 = ht.transform(new_data)
     transformed2 = ht.transform(new_data)
@@ -359,7 +354,9 @@ def test_multiple_fits_different_columns():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
+    ht.detect_initial_config(new_data)
     ht.fit(new_data)
     transformed1 = ht.transform(new_data)
     transformed2 = ht.transform(new_data)
@@ -384,6 +381,7 @@ def test_multiple_fits_with_set_config():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.set_config(config={
         'sdtypes': {'integer': 'float'},
         'transformers': {'bool': FrequencyEncoder}
@@ -411,6 +409,7 @@ def test_multiple_detect_configs_with_set_config():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed1 = ht.transform(data)
     reverse1 = ht.reverse_transform(transformed1)
@@ -441,6 +440,7 @@ def test_detect_initial_config_doesnt_affect_fit():
     ht = HyperTransformer()
 
     # Run
+    ht.detect_initial_config(data)
     ht.fit(data)
     transformed1 = ht.transform(data)
     reversed1 = ht.reverse_transform(transformed1)
@@ -475,3 +475,33 @@ def test_multiple_detects():
     # Assert
     pd.testing.assert_frame_equal(transformed, get_transformed_data())
     pd.testing.assert_frame_equal(reverse, get_reversed_data())
+
+
+def test_transform_without_fit():
+    """HyperTransformer should raise an error when transforming without fitting."""
+    # Setup
+    data = pd.DataFrame()
+    ht = HyperTransformer()
+
+    # Run / Assert
+    with pytest.raises(NotFittedError):
+        ht.transform(data)
+
+
+def test_fit_data_different_than_detect():
+    """HyperTransformer should raise an error when transforming without fitting."""
+    # Setup
+    ht = HyperTransformer()
+    detect_data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    data = pd.DataFrame({'col1': [1, 2], 'col3': ['a', 'b']})
+
+    # Run / Assert
+    error_msg = re.escape(
+        'The data you are trying to fit has different columns than the original '
+        "detected data (unknown columns: ['col3']). Column names and their "
+        "sdtypes must be the same. Use the method 'get_config()' to see the expected "
+        'values.'
+    )
+    ht.detect_initial_config(detect_data)
+    with pytest.raises(NotFittedError, match=error_msg):
+        ht.fit(data)
