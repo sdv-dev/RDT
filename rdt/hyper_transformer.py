@@ -125,7 +125,7 @@ class HyperTransformer:
             self._add_field_to_set(field, self._specified_fields)
 
     def __init__(self):
-        self.default_sdtype_transformers = {}
+        self._default_sdtype_transformers = {}
 
         # ``_provided_field_sdtypes``` contains only the sdtypes specified by the user,
         # while `field_sdtypes` contains both the sdtypes specified by the user and the
@@ -409,8 +409,8 @@ class HyperTransformer:
                 self._set_field_sdtype(data, field)
             if field not in self.field_transformers:
                 sdtype = self.field_sdtypes[field]
-                if sdtype in self.default_sdtype_transformers:
-                    self.field_transformers[field] = self.default_sdtype_transformers[sdtype]
+                if sdtype in self._default_sdtype_transformers:
+                    self.field_transformers[field] = self._default_sdtype_transformers[sdtype]
                 else:
                     self.field_transformers[field] = get_default_transformer(sdtype)
 
@@ -427,7 +427,7 @@ class HyperTransformer:
                 Data which will have its configuration detected.
         """
         # Reset the state of the HyperTransformer
-        self.default_sdtype_transformers = {}
+        self._default_sdtype_transformers = {}
         self._provided_field_sdtypes = {}
         self._provided_field_transformers = {}
 
