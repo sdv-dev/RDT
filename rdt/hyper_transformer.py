@@ -506,8 +506,8 @@ class HyperTransformer:
     def _validate_correctly_fitted(self, data):
         """Validate the data to transform has been fitted.
 
-        This method raises errors if ``fit`` is not been called at all or if the column names passed
-        to ``fit`` are not the same as the ones passed to ``transform``.
+        This method raises errors if ``fit`` is not been called at all or if the column names
+        passed to ``fit`` are not the same as the ones passed to ``transform``.
         """
         if not self._fitted:
             raise NotFittedError
