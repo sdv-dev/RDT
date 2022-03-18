@@ -183,7 +183,41 @@ from rdt import HyperTransformer
 ht = HyperTransformer()
 ```
 
-### 2. Fit the HyperTransformer
+### 2. Detect the initial config
+
+Before fitting the ``HyperTransformer`` you have to detect the intial config for your data.
+
+This is done by calling the ``detect_initial_config`` method passsing your data.
+
+```python3
+ht.detect_initial_config(data)
+```
+
+Which should print in console a ``json`` format of the initial configuration, similar to this:
+
+```
+Detecting a new config from the data ... SUCCESS
+Setting the new config ... SUCCESS
+Config:
+{
+    "sdtypes": {
+        "last_login": "datetime",
+        "email_optin": "boolean",
+        "credit_card": "categorical",
+        "age": "integer",
+        "dollars_spent": "float"
+    },
+    "transformers": {
+        "last_login": "UnixTimestampEncoder(missing_value_replacement='mean')",
+        "email_optin": "BinaryEncoder(missing_value_replacement='mode')",
+        "credit_card": "FrequencyEncoder()",
+        "age": "FloatFormatter(missing_value_replacement='mean')",
+        "dollars_spent": "FloatFormatter(missing_value_replacement='mean')"
+    }
+}
+```
+
+### 3. Fit the HyperTransformer
 
 Just like the transfomer, the HyperTransformer needs to be fitted before being able to transform
 data.
@@ -194,7 +228,7 @@ This is done by calling its `fit` method passing the `data` DataFrame.
 ht.fit(data)
 ```
 
-### 3. Transform the table data
+### 4. Transform the table data
 
 Once the HyperTransformer is fitted, we can pass the data again to its `transform` method in order
 to get the transformed version of the data.
@@ -214,7 +248,7 @@ The output will be another `pandas.DataFrame` with the numerical representation 
 4      1.608595e+18                 0.0               -1.0                  1.0           0.883881         32                19.99                    0.0
 ```
 
-### 4. Revert the table transformation
+### 5. Revert the table transformation
 
 In order to revert the transformation and recover the original data from the transformed one,
 we need to call `reverse_transform` method of the `HyperTransformer` instance passing it the

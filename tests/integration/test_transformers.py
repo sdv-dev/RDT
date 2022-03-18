@@ -252,6 +252,7 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
             TEST_COL: get_transformer_name(transformer_class),
         })
 
+    hypertransformer.detect_initial_config(input_data)
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)
