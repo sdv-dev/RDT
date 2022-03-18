@@ -575,9 +575,6 @@ class HyperTransformer:
                 Transformed data.
         """
         self._validate_correctly_fitted(data)
-        if not self._fitted:
-            raise NotFittedError
-
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
         data = data.copy()
 
