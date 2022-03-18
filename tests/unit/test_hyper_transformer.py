@@ -140,7 +140,7 @@ class TestHyperTransformer(TestCase):
         # Asserts
         assert ht._provided_field_sdtypes == {}
         assert ht.field_sdtypes == {}
-        assert ht.default_sdtype_transformers == {}
+        assert ht._default_sdtype_transformers == {}
         assert ht._provided_field_transformers == {}
         assert ht.field_transformers == {}
         multi_column_mock.assert_called_once()
@@ -245,7 +245,7 @@ class TestHyperTransformer(TestCase):
         Setup:
             - field_transformers is given a transformer for the
             output field.
-            - default_sdtype_transformers will be given a different transformer
+            - _default_sdtype_transformers will be given a different transformer
             for the output sdtype of the output field.
 
         Input:
@@ -260,7 +260,7 @@ class TestHyperTransformer(TestCase):
         transformer = FloatFormatter()
         ht = HyperTransformer()
         ht.field_transformers = {'a.out': transformer}
-        ht.default_sdtype_transformers = {'numerical': GaussianNormalizer()}
+        ht._default_sdtype_transformers = {'numerical': GaussianNormalizer()}
 
         # Run
         next_transformer = ht._get_next_transformer('a.out', 'numerical', None)
@@ -277,7 +277,7 @@ class TestHyperTransformer(TestCase):
         is returned.
 
         Setup:
-            - default_sdtype_transformers will be given a transformer
+            - _default_sdtype_transformers will be given a transformer
             for the output sdtype of the output field.
 
         Input:
@@ -290,7 +290,7 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
-        ht.default_sdtype_transformers = {'numerical': GaussianNormalizer()}
+        ht._default_sdtype_transformers = {'numerical': GaussianNormalizer()}
 
         # Run
         next_transformer = ht._get_next_transformer('a.out', 'numerical', None)
@@ -308,7 +308,7 @@ class TestHyperTransformer(TestCase):
         field, then it is used.
 
         Setup:
-            - default_sdtype_transformers will be given a transformer
+            - _default_sdtype_transformers will be given a transformer
             for the output sdtype of the output field.
 
         Input:
@@ -323,7 +323,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformer = FrequencyEncoder()
         ht = HyperTransformer()
-        ht.default_sdtype_transformers = {'categorical': OneHotEncoder()}
+        ht._default_sdtype_transformers = {'categorical': OneHotEncoder()}
         next_transformers = {'a.out': transformer}
 
         # Run
@@ -356,7 +356,7 @@ class TestHyperTransformer(TestCase):
         transformer = FrequencyEncoder(add_noise=True)
         mock.return_value = transformer
         ht = HyperTransformer()
-        ht.default_sdtype_transformers = {'categorical': OneHotEncoder()}
+        ht._default_sdtype_transformers = {'categorical': OneHotEncoder()}
 
         # Run
         next_transformer = ht._get_next_transformer('a.out', 'categorical', None)
@@ -934,7 +934,7 @@ class TestHyperTransformer(TestCase):
 
         Tests that the ``fit`` method loops through the fields in ``field_transformers``
         and ``field_sdtypes`` that are in the data. It should try to find a transformer
-        in ``default_sdtype_transformers`` and then use the default if it doesn't find one
+        in ``_default_sdtype_transformers`` and then use the default if it doesn't find one
         when looping through ``field_sdtypes``. It should then call ``_fit_field_transformer``
         with the correct arguments.
 
@@ -973,7 +973,7 @@ class TestHyperTransformer(TestCase):
 
         ht = HyperTransformer()
         ht.field_transformers = field_transformers
-        ht.default_sdtype_transformers = default_sdtype_transformers
+        ht._default_sdtype_transformers = default_sdtype_transformers
         ht._fit_field_transformer = Mock()
         ht._fit_field_transformer.return_value = data
         ht._field_in_set = Mock()
