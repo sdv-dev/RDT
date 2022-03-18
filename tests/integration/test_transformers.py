@@ -6,7 +6,7 @@ import pytest
 
 from rdt import HyperTransformer
 from rdt.performance.datasets import BaseDatasetGenerator
-from rdt.transformers import BaseTransformer, get_transformer_name
+from rdt.transformers import BaseTransformer
 
 DATA_SIZE = 1000
 TEST_COL = 'test_col'
@@ -243,16 +243,19 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
             List of steps that the validation has completed.
     """
     transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
+    hypertransformer = HyperTransformer()
     if transformer_args:
-        hypertransformer = HyperTransformer(field_transformers={
-            TEST_COL: transformer_class(**transformer_args),
-        })
+        field_transformers = {
+            TEST_COL: transformer_class(**transformer_args)
+        }
+
     else:
-        hypertransformer = HyperTransformer(field_transformers={
-            TEST_COL: get_transformer_name(transformer_class),
-        })
+        field_transformers = {
+            TEST_COL: transformer_class
+        }
 
     hypertransformer.detect_initial_config(input_data)
+    hypertransformer.update_transformers(field_transformers)
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)
