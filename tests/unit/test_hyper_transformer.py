@@ -1285,57 +1285,6 @@ class TestHyperTransformer(TestCase):
         mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
         assert ht.field_transformers == {'categorical_column': transformer}
 
-    def test_update_field_sdtypes(self):
-        """Test the ``update_field_sdtypes`` method.
-
-        This method should update the ``field_sdtypes`` and
-        ``_provided_field_sdtypes`` attributes.
-
-        Setup:
-            - Initialize ``HyperTransformer`` with ``field_sdtypes`` having
-            one entry.
-
-        Input:
-            - Dict mapping fields to sdtypes.
-        """
-        # Setup
-        field_sdtypes = {
-            'a': 'categorical',
-            'b': 'integer'
-        }
-        ht = HyperTransformer()
-        ht.field_sdtypes = {'a': 'float'}
-        ht._transformers_sequence = [FrequencyEncoder()]
-
-        # Run
-        ht.update_field_sdtypes(field_sdtypes)
-
-        # Assert
-        assert ht._provided_field_sdtypes == {'a': 'categorical', 'b': 'integer'}
-        assert ht.field_sdtypes == {'a': 'categorical', 'b': 'integer'}
-
-    def test_get_default_sdtype_transformers(self):
-        """Test the ``get_default_sdtype_transformers`` method.
-
-        This method should return the ``default_sdtype_transformers`` attribute.
-
-        Output:
-            - Dict mapping sdtypes to transformers.
-        """
-        # Setup
-        sdtype_transformers = {
-            'categorical': FrequencyEncoder,
-            'integer': FloatFormatter
-        }
-        ht = HyperTransformer()
-        ht.default_sdtype_transformers = sdtype_transformers
-
-        # Run
-        out = ht.get_default_sdtype_transformers()
-
-        # Assert
-        assert out == {'categorical': FrequencyEncoder, 'integer': FloatFormatter}
-
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_fitted(self, mock_warnings):
         """Test update transformers.
@@ -1526,15 +1475,21 @@ class TestHyperTransformer(TestCase):
 
         Mock:
             - Patch the ``warnings`` module.
+            - Mock the instance ``_user_message`` to ensure that has been called.
 
         Side Effects:
             - ``self.field_sdtypes`` has been updated.
             - Warning should be raised with the proper message.
         """
         # Setup
-        ht = HyperTransformer()
-        ht.field_transformers = {'a': FrequencyEncoder, 'b': FloatFormatter}
-        ht._transformers_sequence = [FrequencyEncoder()]
+        instance = HyperTransformer()
+        instance.field_transformers = {'a': FrequencyEncoder, 'b': FloatFormatter}
+        instance.field_sdtypes = {'a': 'categorical'}
+        instance._fitted = True
+        instance._user_message = Mock()
+        column_name_to_sdtype = {
+            'my_column': 'numerical'
+        }
 
         # Run
         instance.update_sdtypes(column_name_to_sdtype)
