@@ -262,6 +262,36 @@ class TestUnixTimestampEncoder:
             1.577837e+18, 1.580515e+18, 1.583021e+18,
         ]), rtol=1e-5)
 
+    def test__reverse_transform_helper_nulls(self):
+        """Test the ``_reverse_transform_helper`` with null values.
+
+        Setup:
+            - Mock the ``instance.null_transformer``.
+            - Set the ``missing_value_replacement``.
+
+        Input:
+            - a pandas series.
+
+        Output:
+            - a pandas datetime index.
+
+        Expected behavior:
+            - The mock should call its ``reverse_transform`` method.
+        """
+        # Setup
+        data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
+        transformer = UnixTimestampEncoder(missing_value_replacement='mean')
+        transformer.null_transformer = Mock()
+        transformer.null_transformer.reverse_transform.return_value = pd.Series([1, 2, 3])
+
+        # Run
+        transformer._reverse_transform_helper(data)
+
+        # Assert
+        transformer.null_transformer.reverse_transform.assert_called_once()
+        datetimes = transformer.null_transformer.reverse_transform.mock_calls[0][1][0]
+        np.testing.assert_array_equal(data.to_numpy(), datetimes)
+
     @patch('rdt.transformers.datetime.NullTransformer')
     def test__fit(self, null_transformer_mock):
         """Test the ``_fit`` method for numpy arrays.
