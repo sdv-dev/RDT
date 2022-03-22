@@ -55,13 +55,21 @@ class PIIAnonymizer(BaseTransformer):
         Raises:
             ``AttributeError`` if the provider or the function is not found.
         """
-        module = getattr(faker.providers, provider_name)
-        if provider_name == 'BaseProvider':
-            getattr(module, function_name)
+        try:
+            module = getattr(faker.providers, provider_name)
+            if provider_name == 'BaseProvider':
+                getattr(module, function_name)
 
-        else:
-            provider = getattr(module, 'Provider')
-            getattr(provider, function_name)
+            else:
+                provider = getattr(module, 'Provider')
+                getattr(provider, function_name)
+
+        except AttributeError as exception:
+            raise AttributeError(
+                f"The provided '{provider_name}' module does not contain a function "
+                f"'{function_name}'.\nRefer to the Faker docs to find the correct function: "
+                'https://faker.readthedocs.io/en/master/providers.html'
+            ) from exception
 
     def __init__(self, provider_name=None, function_name='lexify', function_kwargs=None,
                  locales=None, missing_value_replacement=None, model_missing_values=False):

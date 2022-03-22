@@ -59,14 +59,23 @@ class TestPIIAnonymizer:
         being raised or when the ``function`` is not within the ``provider``.
         """
         # Setup
-        expected_provider_message = "module 'faker.providers' has no attribute 'TestProvider'"
-        expected_function_message = "type object 'BaseProvider' has no attribute 'TestFunction'"
+        expected_message = (
+            "The provided 'TestProvider' module does not contain a function "
+            "'TestFunction'.\nRefer to the Faker docs to find the correct function: "
+            'https://faker.readthedocs.io/en/master/providers.html'
+        )
+
+        expected_message_function = (
+            "The provided 'BaseProvider' module does not contain a function "
+            "'TestFunction'.\nRefer to the Faker docs to find the correct function: "
+            'https://faker.readthedocs.io/en/master/providers.html'
+        )
 
         # Run
-        with pytest.raises(AttributeError, match=expected_provider_message):
+        with pytest.raises(AttributeError, match=expected_message):
             PIIAnonymizer.check_provider_function('TestProvider', 'TestFunction')
 
-        with pytest.raises(AttributeError, match=expected_function_message):
+        with pytest.raises(AttributeError, match=expected_message_function):
             PIIAnonymizer.check_provider_function('BaseProvider', 'TestFunction')
 
     @patch('rdt.transformers.pii.anonymizer.faker')
