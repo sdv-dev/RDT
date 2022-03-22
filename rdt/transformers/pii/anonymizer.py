@@ -74,13 +74,6 @@ class PIIAnonymizer(BaseTransformer):
                 'https://faker.readthedocs.io/en/master/providers.html'
             ) from exception
 
-    def _build_function(self):
-        """Return a callable ``faker`` function."""
-        def func():
-            return getattr(self.faker, self.function_name)(**self.function_kwargs)
-
-        return func
-
     def _check_locales(self):
         """Check if the locales exist for the provided provider."""
         locales = self.locales if isinstance(self.locales, list) else [self.locales]
@@ -117,10 +110,12 @@ class PIIAnonymizer(BaseTransformer):
 
         self.locales = locales
         self.faker = faker.Faker(locales)
-        self._function = self._build_function()
-
         if self.locales:
             self._check_locales()
+
+    def _function(self):
+        """Return a callable ``faker`` function."""
+        return getattr(self.faker, self.function_name)(**self.function_kwargs)
 
     def get_output_sdtypes(self):
         """Return the output sdtypes supported by the transformer.
