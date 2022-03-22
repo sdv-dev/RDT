@@ -143,10 +143,12 @@ class UnixTimestampEncoder(BaseTransformer):
             pandas.Series
         """
         data = self._reverse_transform_helper(data)
-
         datetime_data = pd.to_datetime(data)
+        if type(datetime_data) != pd.Series:
+            datetime_data = pd.Series(datetime_data)
+
         if self.datetime_format:
-            datetime_data = pd.Series(datetime_data.strftime(self.datetime_format))
+            datetime_data = datetime_data.dt.strftime(self.datetime_format)
 
         return datetime_data
 

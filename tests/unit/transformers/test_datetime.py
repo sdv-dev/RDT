@@ -392,8 +392,8 @@ class TestUnixTimestampEncoder:
         output = ute._reverse_transform(pd.Series([None]))
 
         # Assert
-        expected = pd.to_datetime(['NaT'])
-        pd.testing.assert_index_equal(output, expected)
+        expected = pd.Series(pd.to_datetime(['NaT']))
+        pd.testing.assert_series_equal(output, expected)
 
     def test__reverse_transform(self):
         """Test the ``_reverse_transform`` method.
@@ -414,8 +414,8 @@ class TestUnixTimestampEncoder:
         output = ute._reverse_transform(transformed)
 
         # Assert
-        expected = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
-        pd.testing.assert_series_equal(output.to_series(), expected.to_series())
+        expected = pd.Series(pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01']))
+        pd.testing.assert_series_equal(output, expected)
 
     def test__reverse_transform_datetime_format(self):
         """Test the ``_reverse_transform`` method returns the correct datetime format.
