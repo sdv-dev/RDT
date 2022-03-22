@@ -144,7 +144,7 @@ class UnixTimestampEncoder(BaseTransformer):
         """
         data = self._reverse_transform_helper(data)
         datetime_data = pd.to_datetime(data)
-        if type(datetime_data) != pd.Series:
+        if not isinstance(datetime_data, pd.Series):
             datetime_data = pd.Series(datetime_data)
 
         if self.datetime_format:
