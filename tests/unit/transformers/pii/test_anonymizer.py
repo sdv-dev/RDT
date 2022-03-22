@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from rdt.errors import Error
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.pii.anonymizer import PIIAnonymizer
 
@@ -60,23 +61,14 @@ class TestPIIAnonymizer:
         """
         # Setup
         expected_message = (
-            "The provided 'TestProvider' module does not contain a function "
-            "'TestFunction'.\nRefer to the Faker docs to find the correct function: "
-            'https://faker.readthedocs.io/en/master/providers.html'
-        )
-
-        expected_message_function = (
-            "The provided 'BaseProvider' module does not contain a function "
+            "The 'TestProvider' module does not contain a function named "
             "'TestFunction'.\nRefer to the Faker docs to find the correct function: "
             'https://faker.readthedocs.io/en/master/providers.html'
         )
 
         # Run
-        with pytest.raises(AttributeError, match=expected_message):
+        with pytest.raises(Error, match=expected_message):
             PIIAnonymizer.check_provider_function('TestProvider', 'TestFunction')
-
-        with pytest.raises(AttributeError, match=expected_message_function):
-            PIIAnonymizer.check_provider_function('BaseProvider', 'TestFunction')
 
     def test__build_function(self):
         """Test that build function returns a callable function, that calls the inner function.
@@ -146,6 +138,36 @@ class TestPIIAnonymizer:
 
         # Assert
         function.assert_called_once_with(type='int')
+
+    @patch('rdt.transformers.pii.anonymizer.importlib')
+    @patch('rdt.transformers.pii.anonymizer.warnings')
+    def test__check_locales(self, mock_warnings, mock_importlib):
+        """Test that check locales warns the user if the spec was not found.
+
+        Mock:
+            - Mock importlib with side effects to return one `None` and one value.
+            - Mock the warnings.
+        Side Effect:
+            - mock_warnings has been called once with the expected message.
+        """
+        # Setup
+        instance = Mock()
+        instance.provider_name = 'credit_card'
+        instance.function_name = 'credit_card_full'
+        instance.locales = ['es_ES', 'en_US']
+        mock_importlib.util.find_spec.side_effect = [None, 'en_US']
+
+        # Run
+        PIIAnonymizer._check_locales(instance)
+
+        # Assert
+        expected_message = (
+            "Locales ['es_ES'] do not support provider 'credit_card' "
+            "and function 'credit_card_full'.\nIn place of these locales, 'en_US' will "
+            'be used instead. Please refer to the localized provider docs for more '
+            'information: https://faker.readthedocs.io/en/master/locales.html'
+        )
+        mock_warnings.warn.assert_called_once_with(expected_message)
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.PIIAnonymizer._build_function')
@@ -217,7 +239,7 @@ class TestPIIAnonymizer:
         """
         # Run
         instance = PIIAnonymizer(
-            provider_name='CreditCard',
+            provider_name='credit_card',
             function_name='credit_card_full',
             function_kwargs={
                 'type': 'visa'
@@ -226,8 +248,8 @@ class TestPIIAnonymizer:
         )
 
         # Assert
-        mock_check_provider_function.assert_called_once_with('CreditCard', 'credit_card_full')
-        assert instance.provider_name == 'CreditCard'
+        mock_check_provider_function.assert_called_once_with('credit_card', 'credit_card_full')
+        assert instance.provider_name == 'credit_card'
         assert instance.function_name == 'credit_card_full'
         assert instance.function_kwargs == {'type': 'visa'}
         assert instance.missing_value_replacement is None
@@ -235,6 +257,22 @@ class TestPIIAnonymizer:
         assert instance.locales == ['en_US', 'fr_FR']
         assert mock_faker.Faker.called_once_with(['en_US', 'fr_FR'])
         assert instance._function == mock__build_function.return_value
+
+    def test___init__no_function_name(self):
+        """Test the instantiation of the transformer with custom parameters.
+
+        Test that the transformer raises an error when no functino name is provided.
+
+        Raises:
+            - Error.
+        """
+        # Run / Assert
+        expected_message = (
+            'Please specify the function name to use from the '
+            "'credit_card' provider."
+        )
+        with pytest.raises(Error, match=expected_message):
+            PIIAnonymizer(provider_name='credit_card', locales=['en_US', 'fr_FR'])
 
     def test_get_output_sdtypes(self):
         """Test the ``get_output_sdtypes``.

@@ -1,11 +1,14 @@
 """Personal Identifiable Information Anonymizer."""
 
+import importlib
 import inspect
+import warnings
 from copy import deepcopy
 
 import faker
 import numpy as np
 
+from rdt.errors import Error
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
@@ -65,8 +68,8 @@ class PIIAnonymizer(BaseTransformer):
                 getattr(provider, function_name)
 
         except AttributeError as exception:
-            raise AttributeError(
-                f"The provided '{provider_name}' module does not contain a function "
+            raise Error(
+                f"The '{provider_name}' module does not contain a function named "
                 f"'{function_name}'.\nRefer to the Faker docs to find the correct function: "
                 'https://faker.readthedocs.io/en/master/providers.html'
             ) from exception
@@ -78,11 +81,34 @@ class PIIAnonymizer(BaseTransformer):
 
         return func
 
-    def __init__(self, provider_name=None, function_name='lexify', function_kwargs=None,
+    def _check_locales(self):
+        """Check if the locales exist for the provided provider."""
+        locales = self.locales if isinstance(self.locales, list) else [self.locales]
+        missed_locales = []
+        for locale in locales:
+            spec = importlib.util.find_spec(f'faker.providers.{self.provider_name}.{locale}')
+            if spec is None:
+                missed_locales.append(locale)
+
+        if missed_locales:
+            warnings.warn(
+                f"Locales {missed_locales} do not support provider '{self.provider_name}' "
+                f"and function '{self.function_name}'.\nIn place of these locales, 'en_US' will "
+                'be used instead. Please refer to the localized provider docs for more '
+                'information: https://faker.readthedocs.io/en/master/locales.html'
+            )
+
+    def __init__(self, provider_name=None, function_name=None, function_kwargs=None,
                  locales=None, missing_value_replacement=None, model_missing_values=False):
         self.data_length = None
         self.provider_name = provider_name if provider_name else 'BaseProvider'
-        self.function_name = function_name
+        if self.provider_name != 'BaseProvider' and function_name is None:
+            raise Error(
+                'Please specify the function name to use from the '
+                f"'{self.provider_name}' provider."
+            )
+
+        self.function_name = function_name if function_name else 'lexify'
         self.function_kwargs = deepcopy(function_kwargs) if function_kwargs else {}
         self.check_provider_function(self.provider_name, self.function_name)
 
@@ -92,6 +118,9 @@ class PIIAnonymizer(BaseTransformer):
         self.locales = locales
         self.faker = faker.Faker(locales)
         self._function = self._build_function()
+
+        if self.locales:
+            self._check_locales()
 
     def get_output_sdtypes(self):
         """Return the output sdtypes supported by the transformer.
