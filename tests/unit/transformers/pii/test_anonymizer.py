@@ -78,9 +78,79 @@ class TestPIIAnonymizer:
         with pytest.raises(AttributeError, match=expected_message_function):
             PIIAnonymizer.check_provider_function('BaseProvider', 'TestFunction')
 
+    def test__build_function(self):
+        """Test that build function returns a callable function, that calls the inner function.
+
+        This function has to return the function from the `instance.faker` object (instance of
+        faker) with the `instance.function_name`. Then, this function, has to be called with
+        the `instance.function_kwargs` when the returned function is called.
+
+
+        Mock:
+            - Instance of 'PIIAnonymizer'.
+            - Faker instance.
+            - A function for the faker instance.
+
+        Output:
+            - Callable function.
+
+        Side Effects:
+            - The returned function, when called, has to call the `faker.<function_name>` function
+              with no kwargs.
+        """
+        # setup
+        instance = Mock()
+        function = Mock()
+        instance.faker.number = function
+        instance.function_name = 'number'
+        instance.function_kwargs = {}
+
+        # Run
+        result = PIIAnonymizer._build_function(instance)
+        function.assert_not_called()  # ensure that the function has not been called yet.
+        result()
+
+        # Assert
+        function.assert_called_once_with()
+
+    def test__build_function_kwargs(self):
+        """Test that build function returns a callable function, that calls the inner function.
+
+        This function has to return the function from the `instance.faker` object (instance of
+        faker) with the `instance.function_name`. Then, this function, has to be called with
+        the `instance.function_kwargs` when the returned function is called.
+
+
+        Mock:
+            - Instance of 'PIIAnonymizer'.
+            - Faker instance.
+            - A function for the faker instance.
+
+        Output:
+            - Callable function.
+
+        Side Effects:
+            - The returned function, when called, has to call the `faker.<function_name>` function
+              with the provided kwargs.
+        """
+        # setup
+        instance = Mock()
+        function = Mock()
+        instance.faker.number = function
+        instance.function_name = 'number'
+        instance.function_kwargs = {'type': 'int'}
+
+        # Run
+        result = PIIAnonymizer._build_function(instance)
+        result()
+
+        # Assert
+        function.assert_called_once_with(type='int')
+
     @patch('rdt.transformers.pii.anonymizer.faker')
+    @patch('rdt.transformers.pii.anonymizer.PIIAnonymizer._build_function')
     @patch('rdt.transformers.pii.anonymizer.PIIAnonymizer.check_provider_function')
-    def test___init__default(self, mock_check_provider_function, mock_faker):
+    def test___init__default(self, mock_check_provider_function, mock__build_function, mock_faker):
         """Test the default instantiation of the transformer.
 
         Test that by default the transformer is being instantiated with ``BaseProvider`` and
@@ -89,6 +159,7 @@ class TestPIIAnonymizer:
         Mock:
             - ``check_provider_function`` mock and assert that this is being called with
               ``BaseProvider`` and ``lexify``.
+            - ``_build_function`` mock and assert that its return value is assigned to `_function`.
             - ``faker`` mock to ensure that is being called with ``None`` as locales
               and that the ``lexify`` from the instance is being assigned to the ``_function``.
 
@@ -115,11 +186,12 @@ class TestPIIAnonymizer:
         assert not instance.model_missing_values
         assert instance.locales is None
         assert mock_faker.Faker.called_once_with(None)
-        assert instance._function == mock_faker.Faker.return_value.lexify
+        assert instance._function == mock__build_function.return_value
 
     @patch('rdt.transformers.pii.anonymizer.faker')
+    @patch('rdt.transformers.pii.anonymizer.PIIAnonymizer._build_function')
     @patch('rdt.transformers.pii.anonymizer.PIIAnonymizer.check_provider_function')
-    def test___init__custom(self, mock_check_provider_function, mock_faker):
+    def test___init__custom(self, mock_check_provider_function, mock__build_function, mock_faker):
         """Test the instantiation of the transformer with custom parameters.
 
         Test that the transformer can be instantiated with a custom provider and function, and
@@ -162,7 +234,7 @@ class TestPIIAnonymizer:
         assert not instance.model_missing_values
         assert instance.locales == ['en_US', 'fr_FR']
         assert mock_faker.Faker.called_once_with(['en_US', 'fr_FR'])
-        assert instance._function == mock_faker.Faker.return_value.credit_card_full
+        assert instance._function == mock__build_function.return_value
 
     def test_get_output_sdtypes(self):
         """Test the ``get_output_sdtypes``.
@@ -380,7 +452,6 @@ class TestPIIAnonymizer:
             'c',
         ])
         instance.get_output_columns.return_value = ['is_null']
-
         function = Mock()
         function.side_effect = [1, 2, 3]
         instance._function = function
@@ -408,7 +479,7 @@ class TestPIIAnonymizer:
         called_arg = instance.null_transformer.reverse_transform.call_args[0][0]
         np.testing.assert_array_equal(expected_call, called_arg)
 
-        expected_function_calls = [call(type='a'), call(type='a'), call(type='a')]
+        expected_function_calls = [call(), call(), call()]
         assert function.call_args_list == expected_function_calls
 
     def test___repr__default(self):

@@ -71,6 +71,13 @@ class PIIAnonymizer(BaseTransformer):
                 'https://faker.readthedocs.io/en/master/providers.html'
             ) from exception
 
+    def _build_function(self):
+        """Return a callable ``faker`` function."""
+        def func():
+            return getattr(self.faker, self.function_name)(**self.function_kwargs)
+
+        return func
+
     def __init__(self, provider_name=None, function_name='lexify', function_kwargs=None,
                  locales=None, missing_value_replacement=None, model_missing_values=False):
         self.data_length = None
@@ -84,7 +91,7 @@ class PIIAnonymizer(BaseTransformer):
 
         self.locales = locales
         self.faker = faker.Faker(locales)
-        self._function = getattr(self.faker, function_name)
+        self._function = self._build_function()
 
     def get_output_sdtypes(self):
         """Return the output sdtypes supported by the transformer.
@@ -142,7 +149,7 @@ class PIIAnonymizer(BaseTransformer):
             pandas.Series
         """
         reverse_transformed = np.array([
-            self._function(**self.function_kwargs)
+            self._function()
             for _ in range(self.data_length)
         ], dtype=object)
 
