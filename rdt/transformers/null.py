@@ -1,15 +1,9 @@
 """Transformer for data that contains Null values."""
 
 import logging
-import warnings
 
 import numpy as np
 import pandas as pd
-
-IRREVERSIBLE_WARNING = (
-    'Replacing nulls with existing value without `model_missing_values`, which is not reversible. '
-    'Use `model_missing_values=True` to ensure that the transformation is reversible.'
-)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -90,7 +84,7 @@ class NullTransformer():
                 'Extra column not created.'
             )
             LOGGER.info(guidance_message)
-        
+
         if not self._model_missing_values:
             self._null_percentage = null_values.sum() / len(data)
 
@@ -108,10 +102,6 @@ class NullTransformer():
         """
         isna = data.isna()
         if isna.any() and self._missing_value_replacement is not None:
-            if (not self._model_missing_values and
-                    self._missing_value_replacement in data.to_numpy()):
-                warnings.warn(IRREVERSIBLE_WARNING)
-
             data = data.fillna(self._missing_value_replacement)
 
         if self._model_missing_values:
