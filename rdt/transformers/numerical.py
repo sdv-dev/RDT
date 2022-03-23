@@ -250,8 +250,10 @@ class GaussianNormalizer(FloatFormatter):
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values
         )
-        self._distributions = self._get_distributions()
 
+        self.distribution = distribution  # Distribution initialized by the user
+
+        self._distributions = self._get_distributions()
         if isinstance(distribution, str):
             distribution = self._distributions[distribution]
 
@@ -440,8 +442,8 @@ class ClusterBasedNormalizer(FloatFormatter):
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values
         )
-        self._max_clusters = max_clusters
-        self._weight_threshold = weight_threshold
+        self.max_clusters = max_clusters
+        self.weight_threshold = weight_threshold
 
     def get_output_sdtypes(self):
         """Return the output sdtypes supported by the transformer.
@@ -467,7 +469,7 @@ class ClusterBasedNormalizer(FloatFormatter):
                 Data to fit to.
         """
         self._bgm_transformer = BayesianGaussianMixture(
-            n_components=self._max_clusters,
+            n_components=self.max_clusters,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,
             n_init=1
@@ -479,7 +481,7 @@ class ClusterBasedNormalizer(FloatFormatter):
             data = data[:, 0]
 
         self._bgm_transformer.fit(data.reshape(-1, 1))
-        self.valid_component_indicator = self._bgm_transformer.weights_ > self._weight_threshold
+        self.valid_component_indicator = self._bgm_transformer.weights_ > self.weight_threshold
 
     def _transform(self, data):
         """Transform the numerical data.
@@ -496,9 +498,9 @@ class ClusterBasedNormalizer(FloatFormatter):
             data, model_missing_values = data[:, 0], data[:, 1]
 
         data = data.reshape((len(data), 1))
-        means = self._bgm_transformer.means_.reshape((1, self._max_clusters))
+        means = self._bgm_transformer.means_.reshape((1, self.max_clusters))
 
-        stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self._max_clusters))
+        stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self.max_clusters))
         normalized_values = (data - means) / (self.STD_MULTIPLIER * stds)
         normalized_values = normalized_values[:, self.valid_component_indicator]
         component_probs = self._bgm_transformer.predict_proba(data)
