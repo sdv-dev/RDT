@@ -33,7 +33,7 @@ class RandomIntegerGenerator(CategoricalGenerator):
                 'memory': 400.0
             },
             'transform': {
-                'time': 3e-06,
+                'time': 5e-06,
                 'memory': 400.0
             },
             'reverse_transform': {
