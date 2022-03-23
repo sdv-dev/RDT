@@ -102,9 +102,6 @@ class UnixTimestampEncoder(BaseTransformer):
         if self.missing_value_replacement is not None:
             data = self.null_transformer.reverse_transform(data)
 
-        if isinstance(data, np.ndarray) and (data.ndim == 2):
-            data = data[:, 0]
-
         data = np.round(data.astype(np.float64))
         return data
 
@@ -146,8 +143,14 @@ class UnixTimestampEncoder(BaseTransformer):
             pandas.Series
         """
         data = self._reverse_transform_helper(data)
+        datetime_data = pd.to_datetime(data)
+        if not isinstance(datetime_data, pd.Series):
+            datetime_data = pd.Series(datetime_data)
 
-        return pd.to_datetime(data, format=self.datetime_format)
+        if self.datetime_format:
+            datetime_data = datetime_data.dt.strftime(self.datetime_format)
+
+        return datetime_data
 
 
 class OptimizedTimestampEncoder(UnixTimestampEncoder):
@@ -156,7 +159,7 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
     This transformer replaces datetime values with an integer timestamp transformed to float.
     It optimizes the output values by finding the smallest time unit that is not zero on
     the training datetimes and dividing the generated numerical values by the value of the next
-    smallest time unit. This, apart from reducing the orders of magnitued of the transformed
+    smallest time unit. This, apart from reducing the orders of magnitude of the transformed
     values, ensures that reverted values always are zero on the lower time units.
 
     Null values are replaced using a ``NullTransformer``.
