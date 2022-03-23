@@ -219,7 +219,7 @@ class TestPIIAnonymizer:
     def test___init__no_function_name(self):
         """Test the instantiation of the transformer with custom parameters.
 
-        Test that the transformer raises an error when no functino name is provided.
+        Test that the transformer raises an error when no function name is provided.
 
         Raises:
             - Error.
