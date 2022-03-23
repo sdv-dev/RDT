@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from rdt.errors import Error
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.pii.anonymizer import PIIAnonymizer
 
@@ -59,15 +60,77 @@ class TestPIIAnonymizer:
         being raised or when the ``function`` is not within the ``provider``.
         """
         # Setup
-        expected_provider_message = "module 'faker.providers' has no attribute 'TestProvider'"
-        expected_function_message = "type object 'BaseProvider' has no attribute 'TestFunction'"
+        expected_message = (
+            "The 'TestProvider' module does not contain a function named "
+            "'TestFunction'.\nRefer to the Faker docs to find the correct function: "
+            'https://faker.readthedocs.io/en/master/providers.html'
+        )
 
         # Run
-        with pytest.raises(AttributeError, match=expected_provider_message):
+        with pytest.raises(Error, match=expected_message):
             PIIAnonymizer.check_provider_function('TestProvider', 'TestFunction')
 
-        with pytest.raises(AttributeError, match=expected_function_message):
-            PIIAnonymizer.check_provider_function('BaseProvider', 'TestFunction')
+    def test__function(self):
+        """Test that `_function`.
+
+        The method `_function` should return a call from the `instance.faker.provider.<function>`.
+
+        Mock:
+            - Instance of 'PIIAnonymizer'.
+            - Faker instance.
+            - A function for the faker instance.
+
+        Output:
+            - Return value of mocked function.
+
+        Side Effects:
+            - The returned function, when called, has to call the `faker.<function_name>` function
+              with the provided kwargs.
+        """
+        # setup
+        instance = Mock()
+        function = Mock()
+        function.return_value = 1
+        instance.faker.number = function
+        instance.function_name = 'number'
+        instance.function_kwargs = {'type': 'int'}
+
+        # Run
+        result = PIIAnonymizer._function(instance)
+
+        # Assert
+        function.assert_called_once_with(type='int')
+        assert result == 1
+
+    @patch('rdt.transformers.pii.anonymizer.importlib')
+    @patch('rdt.transformers.pii.anonymizer.warnings')
+    def test__check_locales(self, mock_warnings, mock_importlib):
+        """Test that check locales warns the user if the spec was not found.
+
+        Mock:
+            - Mock importlib with side effects to return one `None` and one value.
+            - Mock the warnings.
+        Side Effect:
+            - mock_warnings has been called once with the expected message.
+        """
+        # Setup
+        instance = Mock()
+        instance.provider_name = 'credit_card'
+        instance.function_name = 'credit_card_full'
+        instance.locales = ['es_ES', 'en_US']
+        mock_importlib.util.find_spec.side_effect = [None, 'en_US']
+
+        # Run
+        PIIAnonymizer._check_locales(instance)
+
+        # Assert
+        expected_message = (
+            "Locales ['es_ES'] do not support provider 'credit_card' "
+            "and function 'credit_card_full'.\nIn place of these locales, 'en_US' will "
+            'be used instead. Please refer to the localized provider docs for more '
+            'information: https://faker.readthedocs.io/en/master/locales.html'
+        )
+        mock_warnings.warn.assert_called_once_with(expected_message)
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.PIIAnonymizer.check_provider_function')
@@ -106,7 +169,6 @@ class TestPIIAnonymizer:
         assert not instance.model_missing_values
         assert instance.locales is None
         assert mock_faker.Faker.called_once_with(None)
-        assert instance._function == mock_faker.Faker.return_value.lexify
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.PIIAnonymizer.check_provider_function')
@@ -136,7 +198,7 @@ class TestPIIAnonymizer:
         """
         # Run
         instance = PIIAnonymizer(
-            provider_name='CreditCard',
+            provider_name='credit_card',
             function_name='credit_card_full',
             function_kwargs={
                 'type': 'visa'
@@ -145,15 +207,30 @@ class TestPIIAnonymizer:
         )
 
         # Assert
-        mock_check_provider_function.assert_called_once_with('CreditCard', 'credit_card_full')
-        assert instance.provider_name == 'CreditCard'
+        mock_check_provider_function.assert_called_once_with('credit_card', 'credit_card_full')
+        assert instance.provider_name == 'credit_card'
         assert instance.function_name == 'credit_card_full'
         assert instance.function_kwargs == {'type': 'visa'}
         assert instance.missing_value_replacement is None
         assert not instance.model_missing_values
         assert instance.locales == ['en_US', 'fr_FR']
         assert mock_faker.Faker.called_once_with(['en_US', 'fr_FR'])
-        assert instance._function == mock_faker.Faker.return_value.credit_card_full
+
+    def test___init__no_function_name(self):
+        """Test the instantiation of the transformer with custom parameters.
+
+        Test that the transformer raises an error when no function name is provided.
+
+        Raises:
+            - Error.
+        """
+        # Run / Assert
+        expected_message = (
+            'Please specify the function name to use from the '
+            "'credit_card' provider."
+        )
+        with pytest.raises(Error, match=expected_message):
+            PIIAnonymizer(provider_name='credit_card', locales=['en_US', 'fr_FR'])
 
     def test_get_output_sdtypes(self):
         """Test the ``get_output_sdtypes``.
@@ -371,7 +448,6 @@ class TestPIIAnonymizer:
             'c',
         ])
         instance.get_output_columns.return_value = ['is_null']
-
         function = Mock()
         function.side_effect = [1, 2, 3]
         instance._function = function
@@ -399,7 +475,7 @@ class TestPIIAnonymizer:
         called_arg = instance.null_transformer.reverse_transform.call_args[0][0]
         np.testing.assert_array_equal(expected_call, called_arg)
 
-        expected_function_calls = [call(type='a'), call(type='a'), call(type='a')]
+        expected_function_calls = [call(), call(), call()]
         assert function.call_args_list == expected_function_calls
 
     def test___repr__default(self):
