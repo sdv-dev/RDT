@@ -1,6 +1,7 @@
 """Transformer for datetime data."""
 import numpy as np
 import pandas as pd
+from pandas.core.tools.datetimes import guess_datetime_format
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
@@ -112,6 +113,10 @@ class UnixTimestampEncoder(BaseTransformer):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
+        if self.datetime_format is None and data.dtype == 'object':
+            date_string = data[data.notna()].astype(str)
+            self.datetime_format = guess_datetime_format(date_string.to_numpy()[0])
+
         transformed = self._transform_helper(data)
         self.null_transformer = NullTransformer(
             self.missing_value_replacement,
