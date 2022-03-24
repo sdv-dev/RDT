@@ -109,6 +109,7 @@ class TestGaussianNormalizer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
     def test_not_model_missing_values(self):
+        np.random.seed(6)
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
@@ -123,8 +124,8 @@ class TestGaussianNormalizer:
         assert transformed.shape == (6, 1)
 
         reverse = ct.reverse_transform(transformed)
-
-        np.testing.assert_array_almost_equal(reverse, data, decimal=2)
+        expected = pd.DataFrame([1, 2, 1, np.nan, np.nan, 1], columns=['a'])
+        pd.testing.assert_frame_equal(reverse, expected)
 
     def test_int(self):
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])

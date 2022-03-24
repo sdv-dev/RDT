@@ -5,21 +5,22 @@ from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEn
 
 
 def test_unixtimestampencoder():
+    np.random.seed(7)
     ute = UnixTimestampEncoder(missing_value_replacement='mean')
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
 
     # Run
     ute._fit(data.copy())
     transformed = ute._transform(data.copy())
-    reverted = ute._reverse_transform(transformed)
+    reverted = ute._reverse_transform(transformed.copy())
 
     # Asserts
-    expect_trans = np.array([
-        np.nan,
+    expect_transformed = np.array([
+        3.500064e+17,
         845510400000000000,
         -145497600000000000
     ])
-    np.testing.assert_almost_equal(expect_trans, transformed)
+    np.testing.assert_almost_equal(expect_transformed, transformed)
     pd.testing.assert_series_equal(reverted, data)
 
 
@@ -43,6 +44,7 @@ def test_unixtimestampencoder_different_format():
 
 
 def test_optimizedtimestampencoder():
+    np.random.seed(7)
     ote = OptimizedTimestampEncoder(missing_value_replacement='mean')
     data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
     ote.columns = 'column'
@@ -50,11 +52,11 @@ def test_optimizedtimestampencoder():
     # Run
     ote._fit(data.copy())
     transformed = ote._transform(data.copy())
-    reverted = ote._reverse_transform(transformed)
+    reverted = ote._reverse_transform(transformed.copy())
 
     # Asserts
     expect_trans = np.array([
-        np.nan,
+        4051.0,
         9786.0,
         -1684.0
     ])
