@@ -88,6 +88,7 @@ DEFAULT_TRANSFORMERS = {
     'categorical': FrequencyEncoder(),
     'boolean': BinaryEncoder(missing_value_replacement='mode'),
     'datetime': UnixTimestampEncoder(missing_value_replacement='mean'),
+    'pii': PIIAnonymizer(),
 }
 
 
