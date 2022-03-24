@@ -25,17 +25,18 @@ def test_unixtimestampencoder():
 
 
 def test_unixtimestampencoder_different_format():
+    np.random.seed(7)
     ute = UnixTimestampEncoder(missing_value_replacement='mean', datetime_format='%b %d, %Y')
     data = pd.Series([None, 'Oct 17, 1996', 'May 23, 1965'])
 
     # Run
     ute._fit(data.copy())
     transformed = ute._transform(data.copy())
-    reverted = ute._reverse_transform(transformed)
+    reverted = ute._reverse_transform(transformed.copy())
 
     # Asserts
     expect_trans = np.array([
-        np.nan,
+        3.500064e+17,
         845510400000000000,
         -145497600000000000
     ])
