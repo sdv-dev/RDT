@@ -12,6 +12,18 @@ from rdt.transformers import (
     get_default_transformer, get_transformer_instance, get_transformers_by_type)
 
 
+class Config(dict):
+    """Config dict for ``HyperTransformer`` with a better representation."""
+
+    def __repr__(self):
+        """Pretty print the dictionary."""
+        config = {
+            'sdtypes': self['sdtypes'],
+            'transformers': {k: repr(v) for k, v in self['transformers'].items()}
+        }
+        return json.dumps(config, indent=4)
+
+
 class HyperTransformer:
     """HyperTransformer class.
 
@@ -53,8 +65,8 @@ class HyperTransformer:
     # pylint: disable=too-many-instance-attributes
 
     _DTYPES_TO_SDTYPES = {
-        'i': 'integer',
-        'f': 'float',
+        'i': 'numerical',
+        'f': 'numerical',
         'O': 'categorical',
         'b': 'boolean',
         'M': 'datetime',
@@ -176,10 +188,10 @@ class HyperTransformer:
                 - sdtypes: A dictionary mapping column names to their ``sdtypes``.
                 - transformers: A dictionary mapping column names to their transformer instances.
         """
-        return {
+        return Config({
             'sdtypes': self.field_sdtypes,
             'transformers': self.field_transformers
-        }
+        })
 
     def set_config(self, config):
         """Set the ``HyperTransformer`` configuration.
@@ -437,13 +449,13 @@ class HyperTransformer:
         self._user_message('Detecting a new config from the data ... SUCCESS')
         self._user_message('Setting the new config ... SUCCESS')
 
-        config = {
+        config = Config({
             'sdtypes': self.field_sdtypes,
-            'transformers': {k: repr(v) for k, v in self.field_transformers.items()}
-        }
+            'transformers': self.field_transformers
+        })
 
         self._user_message('Config:')
-        self._user_message(json.dumps(config, indent=4))
+        self._user_message(config)
 
     def _get_next_transformer(self, output_field, output_sdtype, next_transformers):
         next_transformer = None
