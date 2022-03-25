@@ -52,7 +52,8 @@ def get_demo(num_rows=5):
         return data.iloc[:num_rows]
 
     # Randomly generate the remaining rows
-    np.random.seed(42)
+    random_state = np.random.get_state()
+    np.random.set_state(np.random.RandomState(42).get_state())
     num_rows -= 5
 
     login_dates = np.array([
@@ -67,6 +68,8 @@ def get_demo(num_rows=5):
 
     dollars_spent = np.around(np.random.uniform(0, 100, size=num_rows), decimals=2)
     dollars_spent[np.random.random(size=num_rows) > 0.8] = np.nan
+
+    np.random.set_state(random_state)
 
     return data.append(pd.DataFrame({
         'last_login': login_dates,

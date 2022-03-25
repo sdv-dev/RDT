@@ -109,7 +109,8 @@ class TestGaussianNormalizer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
     def test_not_model_missing_values(self):
-        np.random.seed(6)
+        random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(6).get_state())
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
@@ -126,6 +127,7 @@ class TestGaussianNormalizer:
         reverse = ct.reverse_transform(transformed)
         expected = pd.DataFrame([1, 2, 1, np.nan, np.nan, 1], columns=['a'])
         pd.testing.assert_frame_equal(reverse, expected)
+        np.random.set_state(random_state)
 
     def test_int(self):
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
@@ -185,7 +187,8 @@ class TestClusterBasedNormalizer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_some_nulls(self):
-        np.random.seed(10)
+        random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(10).get_state())
         data = self.generate_data()
         mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
         data[mask] = np.nan
@@ -206,9 +209,11 @@ class TestClusterBasedNormalizer:
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+        np.random.set_state(random_state)
 
     def test_all_nulls(self):
-        np.random.seed(10)
+        random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(10).get_state())
         data = pd.DataFrame([np.nan, None] * 50, columns=['col'])
         column = 'col'
 
@@ -228,6 +233,7 @@ class TestClusterBasedNormalizer:
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data)
+        np.random.set_state(random_state)
 
     def test_data_different_sizes(self):
         data = np.concatenate([
@@ -249,7 +255,8 @@ class TestClusterBasedNormalizer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_multiple_components(self):
-        np.random.seed(10)
+        random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(10).get_state())
         data = np.concatenate([
             np.random.normal(loc=5, scale=0.02, size=300),
             np.random.normal(loc=-4, scale=0.1, size=1000),
@@ -270,3 +277,4 @@ class TestClusterBasedNormalizer:
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+        np.random.set_state(random_state)

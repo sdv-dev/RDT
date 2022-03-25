@@ -123,11 +123,12 @@ class NullTransformer():
         Returns:
             pandas.Series
         """
+        data = data.copy()
         if self._model_missing_values:
             if self.nulls:
                 isna = data[:, 1] > 0.5
 
-            data = data[:, 0].copy()
+            data = data[:, 0]
 
         elif self.nulls:
             isna = np.random.random((len(data), )) < self._null_percentage

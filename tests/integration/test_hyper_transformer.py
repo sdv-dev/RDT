@@ -128,7 +128,6 @@ def test_hypertransformer_default_inputs():
         - The reverse transformed data should be the same as the input.
     """
     # Setup
-    np.random.seed(22)
     datetimes = pd.to_datetime([
         np.nan,
         '2010-02-01',
@@ -177,8 +176,8 @@ def test_hypertransformer_default_inputs():
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
     reversed_datetimes = pd.to_datetime([
-        np.nan,
-        np.nan,
+        '2010-01-09 20:34:17.142857216',
+        '2010-02-01',
         '2010-01-01',
         '2010-01-01',
         '2010-01-01',
@@ -188,13 +187,17 @@ def test_hypertransformer_default_inputs():
     ])
     expected_reversed = pd.DataFrame({
         'integer': [1, 2, 1, 3, 1, 4, 2, 3],
-        'float': [np.nan, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
+        'float': [0.1, 0.2, 0.1, 0.20000000000000004, 0.1, 0.4, 0.20000000000000004, 0.3],
         'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
-        'bool': [False, False, False, True, np.nan, False, True, False],
+        'bool': [False, False, False, True, False, False, True, False],
         'datetime': reversed_datetimes,
         'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
     }, index=TEST_DATA_INDEX)
-    pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
+    for row in range(reverse_transformed.shape[0]):
+        for column in range(reverse_transformed.shape[1]):
+            expected = expected_reversed.iloc[row, column]
+            actual = reverse_transformed.iloc[row, column]
+            assert pd.isna(actual) or expected == actual
 
     assert isinstance(ht._transformers_tree['integer']['transformer'], FloatFormatter)
     assert ht._transformers_tree['integer']['outputs'] == ['integer.value']
@@ -234,7 +237,6 @@ def test_hypertransformer_field_transformers():
         - The reverse transformed data should be the same as the input.
     """
     # Setup
-    np.random.seed(22)
     config = {
         'sdtypes': {},
         'transformers': {
