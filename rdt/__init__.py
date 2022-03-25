@@ -18,6 +18,8 @@ __all__ = [
     'transformers'
 ]
 
+RANDOM_SEED = 42
+
 
 def get_demo(num_rows=5):
     """Generate demo data with multiple sdtypes.
@@ -52,21 +54,27 @@ def get_demo(num_rows=5):
         return data.iloc[:num_rows]
 
     # Randomly generate the remaining rows
-    np.random.seed(42)
-    num_rows -= 5
+    random_state = np.random.get_state()
+    np.random.set_state(np.random.RandomState(RANDOM_SEED).get_state())
+    try:
+        num_rows -= 5
 
-    login_dates = np.array([
-        np.datetime64('2000-01-01') + np.timedelta64(np.random.randint(0, 10000), 'D')
-        for _ in range(num_rows)
-    ])
-    login_dates[np.random.random(size=num_rows) > 0.8] = np.datetime64('NaT')
+        login_dates = np.array([
+            np.datetime64('2000-01-01') + np.timedelta64(np.random.randint(0, 10000), 'D')
+            for _ in range(num_rows)
+        ])
+        login_dates[np.random.random(size=num_rows) > 0.8] = np.datetime64('NaT')
 
-    email_optin = pd.Series([True, False, np.nan], dtype='object').sample(num_rows, replace=True)
-    credit_card = np.random.choice(['VISA', 'AMEX', np.nan, 'DISCOVER'], size=num_rows)
-    age = np.random.randint(18, 100, size=num_rows)
+        email_optin = pd.Series([True, False, np.nan], dtype='object').sample(
+            num_rows, replace=True)
+        credit_card = np.random.choice(['VISA', 'AMEX', np.nan, 'DISCOVER'], size=num_rows)
+        age = np.random.randint(18, 100, size=num_rows)
 
-    dollars_spent = np.around(np.random.uniform(0, 100, size=num_rows), decimals=2)
-    dollars_spent[np.random.random(size=num_rows) > 0.8] = np.nan
+        dollars_spent = np.around(np.random.uniform(0, 100, size=num_rows), decimals=2)
+        dollars_spent[np.random.random(size=num_rows) > 0.8] = np.nan
+
+    finally:
+        np.random.set_state(random_state)
 
     return data.append(pd.DataFrame({
         'last_login': login_dates,

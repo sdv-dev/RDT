@@ -1,15 +1,9 @@
 """Transformer for data that contains Null values."""
 
 import logging
-import warnings
 
 import numpy as np
 import pandas as pd
-
-IRREVERSIBLE_WARNING = (
-    'Replacing nulls with existing value without `model_missing_values`, which is not reversible. '
-    'Use `model_missing_values=True` to ensure that the transformation is reversible.'
-)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,6 +27,7 @@ class NullTransformer():
     nulls = None
     _model_missing_values = None
     _missing_value_replacement = None
+    _null_percentage = None
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False):
         self._missing_value_replacement = missing_value_replacement
@@ -90,6 +85,9 @@ class NullTransformer():
             )
             LOGGER.info(guidance_message)
 
+        if not self._model_missing_values:
+            self._null_percentage = null_values.sum() / len(data)
+
     def transform(self, data):
         """Replace null values with the indicated ``missing_value_replacement``.
 
@@ -104,10 +102,6 @@ class NullTransformer():
         """
         isna = data.isna()
         if isna.any() and self._missing_value_replacement is not None:
-            if (not self._model_missing_values and
-                    self._missing_value_replacement in data.to_numpy()):
-                warnings.warn(IRREVERSIBLE_WARNING)
-
             data = data.fillna(self._missing_value_replacement)
 
         if self._model_missing_values:
@@ -119,8 +113,8 @@ class NullTransformer():
         """Restore null values to the data.
 
         If a null indicator column was created during fit, use it as a reference.
-        Otherwise, replace all instances of ``missing_value_replacement`` that can be found in
-        data.
+        Otherwise, randomly replace values with ``np.nan``. The percentage of values
+        that will be replaced is the percentage of null values seen in the fitted data.
 
         Args:
             data (numpy.ndarray):
@@ -129,14 +123,15 @@ class NullTransformer():
         Returns:
             pandas.Series
         """
+        data = data.copy()
         if self._model_missing_values:
             if self.nulls:
                 isna = data[:, 1] > 0.5
 
-            data = data[:, 0].copy()
+            data = data[:, 0]
 
         elif self.nulls:
-            isna = self._missing_value_replacement == data
+            isna = np.random.random((len(data), )) < self._null_percentage
 
         data = pd.Series(data)
 

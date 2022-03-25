@@ -55,7 +55,7 @@ TEST_DATA_INDEX = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
 
 def get_input_data():
     datetimes = pd.to_datetime([
-        np.nan,
+        '2010-02-01',
         '2010-02-01',
         '2010-01-01',
         '2010-01-01',
@@ -66,9 +66,9 @@ def get_input_data():
     ])
     data = pd.DataFrame({
         'integer': [1, 2, 1, 3, 1, 4, 2, 3],
-        'float': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
-        'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
-        'bool': [False, np.nan, False, True, False, True, True, False],
+        'float': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
+        'categorical': ['a', 'a', 'b', 'b', 'a', 'b', 'a', 'a'],
+        'bool': [False, False, False, True, False, False, True, False],
         'datetime': datetimes,
         'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
     }, index=TEST_DATA_INDEX)
@@ -78,7 +78,7 @@ def get_input_data():
 
 def get_transformed_data():
     datetimes = [
-        1.263069e+18,
+        1.264982e+18,
         1.264982e+18,
         1.262304e+18,
         1.262304e+18,
@@ -90,33 +90,16 @@ def get_transformed_data():
     return pd.DataFrame({
         'integer.value': [1, 2, 1, 3, 1, 4, 2, 3],
         'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
-        'categorical.value': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
-        'bool.value': [0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0],
+        'categorical.value': [0.3125, 0.3125, .8125, 0.8125, 0.3125, 0.8125, 0.3125, 0.3125],
+        'bool.value': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
         'datetime.value': datetimes,
         'names.value': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
     }, index=TEST_DATA_INDEX)
 
 
 def get_reversed_data():
-    datetimes = pd.to_datetime([
-        np.nan,
-        '2010-02-01',
-        '2010-01-01',
-        '2010-01-01',
-        '2010-01-01',
-        '2010-02-01',
-        '2010-01-01',
-        '2010-01-01',
-    ])
-    data = pd.DataFrame({
-        'integer': [1, 2, 1, 3, 1, 4, 2, 3],
-        'float': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
-        'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
-        'bool': [np.nan, np.nan, np.nan, True, np.nan, True, True, np.nan],
-        'datetime': datetimes,
-        'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
-    }, index=TEST_DATA_INDEX)
-
+    data = get_input_data()
+    data['bool'] = data['bool'].astype('object')
     return data
 
 
@@ -138,13 +121,31 @@ def test_hypertransformer_default_inputs():
 
     Input:
         - A dataframe with every sdtype.
+        - A fixed random seed to guarantee the samle values are null.
 
     Expected behavior:
         - The transformed data should contain all the ML ready data.
         - The reverse transformed data should be the same as the input.
     """
     # Setup
-    data = get_input_data()
+    datetimes = pd.to_datetime([
+        np.nan,
+        '2010-02-01',
+        '2010-01-01',
+        '2010-01-01',
+        '2010-01-01',
+        '2010-02-01',
+        '2010-01-01',
+        '2010-01-01',
+    ])
+    data = pd.DataFrame({
+        'integer': [1, 2, 1, 3, 1, 4, 2, 3],
+        'float': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
+        'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
+        'bool': [False, np.nan, False, True, False, np.nan, True, False],
+        'datetime': datetimes,
+        'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
+    }, index=TEST_DATA_INDEX)
 
     # Run
     ht = HyperTransformer()
@@ -154,11 +155,49 @@ def test_hypertransformer_default_inputs():
     reverse_transformed = ht.reverse_transform(transformed)
 
     # Assert
-    expected_transformed = get_transformed_data()
+    expected_datetimes = [
+        1.263069e+18,
+        1.264982e+18,
+        1.262304e+18,
+        1.262304e+18,
+        1.262304e+18,
+        1.264982e+18,
+        1.262304e+18,
+        1.262304e+18
+    ]
+    expected_transformed = pd.DataFrame({
+        'integer.value': [1, 2, 1, 3, 1, 4, 2, 3],
+        'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
+        'categorical.value': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
+        'bool.value': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+        'datetime.value': expected_datetimes,
+        'names.value': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
+    }, index=TEST_DATA_INDEX)
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
-    expected_reversed = get_reversed_data()
-    pd.testing.assert_frame_equal(expected_reversed, reverse_transformed)
+    reversed_datetimes = pd.to_datetime([
+        '2010-01-09 20:34:17.142857216',
+        '2010-02-01',
+        '2010-01-01',
+        '2010-01-01',
+        '2010-01-01',
+        '2010-02-01',
+        '2010-01-01',
+        '2010-01-01',
+    ])
+    expected_reversed = pd.DataFrame({
+        'integer': [1, 2, 1, 3, 1, 4, 2, 3],
+        'float': [0.1, 0.2, 0.1, 0.20000000000000004, 0.1, 0.4, 0.20000000000000004, 0.3],
+        'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
+        'bool': [False, False, False, True, False, False, True, False],
+        'datetime': reversed_datetimes,
+        'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
+    }, index=TEST_DATA_INDEX)
+    for row in range(reverse_transformed.shape[0]):
+        for column in range(reverse_transformed.shape[1]):
+            expected = expected_reversed.iloc[row, column]
+            actual = reverse_transformed.iloc[row, column]
+            assert pd.isna(actual) or expected == actual
 
     assert isinstance(ht._transformers_tree['integer']['transformer'], FloatFormatter)
     assert ht._transformers_tree['integer']['outputs'] == ['integer.value']
@@ -225,7 +264,7 @@ def test_hypertransformer_field_transformers():
     expected_transformed = get_transformed_data()
     rename = {'datetime.value': 'datetime.value.value'}
     expected_transformed = expected_transformed.rename(columns=rename)
-    transformed_datetimes = [0.9375, 0.75, 0.3125, 0.3125, 0.3125, 0.75, 0.3125, 0.3125]
+    transformed_datetimes = [0.8125, 0.8125, 0.3125, 0.3125, 0.3125, 0.8125, 0.3125, 0.3125]
     expected_transformed['datetime.value.value'] = transformed_datetimes
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
