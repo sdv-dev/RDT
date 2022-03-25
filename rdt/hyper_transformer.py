@@ -16,7 +16,7 @@ class Config(dict):
     """Config dict for ``HyperTransformer`` with a better representation."""
 
     def __repr__(self):
-        """Preaty print the dictionary."""
+        """Pretty print the dictionary."""
         config = {
             'sdtypes': self['sdtypes'],
             'transformers': {k: repr(v) for k, v in self['transformers'].items()}
