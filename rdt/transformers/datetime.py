@@ -74,7 +74,11 @@ class UnixTimestampEncoder(BaseTransformer):
     def _convert_to_datetime(self, data):
         if data.dtype == 'object':
             try:
-                data = pd.to_datetime(data, format=self.datetime_format)
+                pandas_datetime_format = None
+                if self.datetime_format:
+                    pandas_datetime_format = self.datetime_format.replace('%-', '%')
+
+                data = pd.to_datetime(data, format=pandas_datetime_format)
 
             except ValueError as error:
                 if 'Unknown string format:' in str(error):
