@@ -334,6 +334,7 @@ class TestUnixTimestampEncoder:
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
         transformer = UnixTimestampEncoder()
         transformer._transform_helper = Mock()
+        transformer._transform_helper.return_value = pd.Series(data)
 
         # Run
         transformer._fit(data)

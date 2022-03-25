@@ -1342,7 +1342,8 @@ class TestClusterBasedNormalizer(TestCase):
             - a numpy array with the transformed data.
         """
         # Setup
-        np.random.seed(10)
+        random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(10).get_state())
         transformer = ClusterBasedNormalizer(max_clusters=3, missing_value_replacement=None)
         transformer._bgm_transformer = Mock()
 
@@ -1392,6 +1393,7 @@ class TestClusterBasedNormalizer(TestCase):
 
         expected_component = np.array([1., 1., 1., 1., 1., 0., 0., 0., 0., 0.])
         np.testing.assert_allclose(output[:, 1], expected_component)
+        np.random.set_state(random_state)
 
     def test__transform_missing_value_replacement(self):
         """Test ``_transform`` with ``np.nan`` values.
@@ -1413,7 +1415,8 @@ class TestClusterBasedNormalizer(TestCase):
             - a numpy array with the transformed data.
         """
         # Setup
-        np.random.seed(10)
+        random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(10).get_state())
         transformer = ClusterBasedNormalizer(missing_value_replacement=0.0, max_clusters=3)
         transformer._bgm_transformer = Mock()
 
@@ -1467,6 +1470,7 @@ class TestClusterBasedNormalizer(TestCase):
 
         expected_null = np.array([0., 1., 0., 0., 0., 0., 0., 1., 1., 0.])
         np.testing.assert_allclose(output[:, 2], expected_null)
+        np.random.set_state(random_state)
 
     def test__reverse_transform_helper(self):
         """Test ``_reverse_transform_helper``.
