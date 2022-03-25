@@ -83,8 +83,6 @@ TRANSFORMERS = {
 
 DEFAULT_TRANSFORMERS = {
     'numerical': FloatFormatter(missing_value_replacement='mean'),
-    'integer': FloatFormatter(missing_value_replacement='mean'),
-    'float': FloatFormatter(missing_value_replacement='mean'),
     'categorical': FrequencyEncoder(),
     'boolean': BinaryEncoder(missing_value_replacement='mode'),
     'datetime': UnixTimestampEncoder(missing_value_replacement='mean'),
@@ -162,7 +160,7 @@ def get_default_transformers():
     defaults = deepcopy(DEFAULT_TRANSFORMERS)
     for (sdtype, transformers) in transformers_by_type.items():
         if sdtype not in defaults:
-            defaults[sdtype] = transformers[0]
+            defaults[sdtype] = transformers[0]()
 
     return defaults
 

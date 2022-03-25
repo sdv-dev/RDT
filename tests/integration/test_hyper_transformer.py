@@ -423,7 +423,7 @@ def test_multiple_fits_with_set_config():
     # Run
     ht.detect_initial_config(data)
     ht.set_config(config={
-        'sdtypes': {'integer': 'float'},
+        'sdtypes': {'integer': 'numerical'},
         'transformers': {'bool': FrequencyEncoder}
     })
     ht.fit(data)
