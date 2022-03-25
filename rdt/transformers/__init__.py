@@ -83,12 +83,9 @@ TRANSFORMERS = {
 
 DEFAULT_TRANSFORMERS = {
     'numerical': FloatFormatter(missing_value_replacement='mean'),
-    'integer': FloatFormatter(missing_value_replacement='mean'),
-    'float': FloatFormatter(missing_value_replacement='mean'),
     'categorical': FrequencyEncoder(),
     'boolean': BinaryEncoder(missing_value_replacement='mode'),
     'datetime': UnixTimestampEncoder(missing_value_replacement='mean'),
-    'pii': PIIAnonymizer(),
 }
 
 
@@ -146,7 +143,7 @@ def get_transformers_by_type():
     transformer_classes = BaseTransformer.get_subclasses()
     for transformer in transformer_classes:
         input_sdtype = transformer.get_input_sdtype()
-        sdtype_transformers[input_sdtype].append(transformer)
+        sdtype_transformers[input_sdtype].append(transformer())
 
     return sdtype_transformers
 
