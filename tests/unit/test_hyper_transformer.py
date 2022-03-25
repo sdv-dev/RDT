@@ -442,11 +442,11 @@ class TestHyperTransformer(TestCase):
         assert ht._provided_field_sdtypes == {}
         assert ht._provided_field_transformers == {}
         assert ht.field_sdtypes == {
-            'col1': 'float',
+            'col1': 'numerical',
             'col2': 'categorical',
             'col3': 'boolean',
             'col4': 'datetime',
-            'col5': 'integer'
+            'col5': 'numerical'
         }
 
         field_transformers = {k: repr(v) for (k, v) in ht.field_transformers.items()}
@@ -464,11 +464,11 @@ class TestHyperTransformer(TestCase):
             'Config:',
             '{',
             '    "sdtypes": {',
-            '        "col1": "float",',
+            '        "col1": "numerical",',
             '        "col2": "categorical",',
             '        "col3": "boolean",',
             '        "col4": "datetime",',
-            '        "col5": "integer"',
+            '        "col5": "numerical"',
             '    },',
             '    "transformers": {',
             '        "col1": "FloatFormatter(missing_value_replacement=\'mean\')",',
