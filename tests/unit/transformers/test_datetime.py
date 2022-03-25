@@ -342,22 +342,25 @@ class TestUnixTimestampEncoder:
         # Assert
         transformer._transform_helper.assert_called_once()
 
-    @patch('rdt.transformers.datetime.guess_datetime_format')
-    def test__fit_calls_guess_datetime_format(self, mock_guess_datetime_format):
+    @patch('rdt.transformers.datetime._guess_datetime_format_for_array')
+    def test__fit_calls_guess_datetime_format(self, mock__guess_datetime_format_for_array):
         """Test the ``_fit`` method.
 
         The ``_fit`` method should call the ``_transform_helper`` method.
         """
         # Setup
-        data = pd.Series([np.nan, '2020-02-01', '2020-03-01'])
-        mock_guess_datetime_format.return_value = '%Y-%m-%d'
+        data = pd.Series(['2020-02-01', '2020-03-01'])
+        mock__guess_datetime_format_for_array.return_value = '%Y-%m-%d'
         transformer = UnixTimestampEncoder()
 
         # Run
         transformer._fit(data)
 
         # Assert
-        mock_guess_datetime_format.assert_called_once_with('2020-02-01')
+        np.testing.assert_array_equal(
+            mock__guess_datetime_format_for_array.call_args[0][0],
+            np.array(['2020-02-01', '2020-03-01'])
+        )
         assert transformer.datetime_format == '%Y-%m-%d'
 
     def test__transform(self):
