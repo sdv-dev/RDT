@@ -143,7 +143,7 @@ def get_transformers_by_type():
     transformer_classes = BaseTransformer.get_subclasses()
     for transformer in transformer_classes:
         input_sdtype = transformer.get_input_sdtype()
-        sdtype_transformers[input_sdtype].append(transformer())
+        sdtype_transformers[input_sdtype].append(transformer)
 
     return sdtype_transformers
 
@@ -160,7 +160,7 @@ def get_default_transformers():
     defaults = deepcopy(DEFAULT_TRANSFORMERS)
     for (sdtype, transformers) in transformers_by_type.items():
         if sdtype not in defaults:
-            defaults[sdtype] = transformers[0]
+            defaults[sdtype] = transformers[0]()
 
     return defaults
 
