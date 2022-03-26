@@ -93,10 +93,7 @@ class TestGaussianNormalizer:
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianNormalizer(
-            missing_value_replacement='mean',
-            model_missing_values=True
-        )
+        ct = GaussianNormalizer(model_missing_values=True)
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -114,10 +111,7 @@ class TestGaussianNormalizer:
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianNormalizer(
-            missing_value_replacement='mean',
-            model_missing_values=False
-        )
+        ct = GaussianNormalizer(model_missing_values=False)
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -147,10 +141,7 @@ class TestGaussianNormalizer:
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
         column = 'a'
 
-        ct = GaussianNormalizer(
-            missing_value_replacement='mean',
-            model_missing_values=True
-        )
+        ct = GaussianNormalizer(model_missing_values=True)
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -194,10 +185,7 @@ class TestClusterBasedNormalizer:
         data[mask] = np.nan
         column = 'col'
 
-        bgmm_transformer = ClusterBasedNormalizer(
-            missing_value_replacement='mean',
-            model_missing_values=True
-        )
+        bgmm_transformer = ClusterBasedNormalizer(model_missing_values=True)
         bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
@@ -209,30 +197,6 @@ class TestClusterBasedNormalizer:
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
-        np.random.set_state(random_state)
-
-    def test_all_nulls(self):
-        random_state = np.random.get_state()
-        np.random.set_state(np.random.RandomState(10).get_state())
-        data = pd.DataFrame([np.nan, None] * 50, columns=['col'])
-        column = 'col'
-
-        bgmm_transformer = ClusterBasedNormalizer(
-            missing_value_replacement=0,
-            model_missing_values=True
-        )
-        bgmm_transformer.fit(data, column)
-        transformed = bgmm_transformer.transform(data)
-
-        expected = pd.DataFrame({
-            'col.normalized': [0.0] * 100,
-            'col.component': [0.0] * 100,
-            'col.is_null': [1.0] * 100
-        })
-        pd.testing.assert_frame_equal(expected, transformed)
-
-        reverse = bgmm_transformer.reverse_transform(transformed)
-        np.testing.assert_array_almost_equal(reverse, data)
         np.random.set_state(random_state)
 
     def test_data_different_sizes(self):
