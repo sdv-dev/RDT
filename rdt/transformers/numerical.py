@@ -1,6 +1,7 @@
 """Transformers for numerical data."""
 import copy
 import sys
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -337,7 +338,9 @@ class GaussianNormalizer(FloatFormatter):
         if data.ndim > 1:
             data = data[:, 0]
 
-        self._univariate.fit(data)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            self._univariate.fit(data)
 
     def _copula_transform(self, data):
         cdf = self._univariate.cdf(data)
@@ -480,7 +483,10 @@ class ClusterBasedNormalizer(FloatFormatter):
         if data.ndim > 1:
             data = data[:, 0]
 
-        self._bgm_transformer.fit(data.reshape(-1, 1))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            self._bgm_transformer.fit(data.reshape(-1, 1))
+
         self.valid_component_indicator = self._bgm_transformer.weights_ > self.weight_threshold
 
     def _transform(self, data):
