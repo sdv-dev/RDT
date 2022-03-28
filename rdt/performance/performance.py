@@ -34,11 +34,9 @@ TRANSFORMER_ARGS = {
         'model_missing_values': True
     },
     'GaussianNormalizer': {
-        'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
     'ClusterBasedNormalizer': {
-        'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
     'PIIAnonymizer': {
