@@ -193,11 +193,6 @@ class GaussianNormalizer(FloatFormatter):
     to :math:`u` and then to :math:`x`.
 
     Args:
-        missing_value_replacement (object or None):
-            Indicate what to do with the null values. If an integer or float is given,
-            replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
-            given, replace them with the corresponding aggregation. If ``None`` is given,
-            do not replace them. Defaults to ``None``.
         model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not. The column
             will be created only if there are null values. If ``True``, create the new column if
@@ -241,11 +236,10 @@ class GaussianNormalizer(FloatFormatter):
     _univariate = None
     COMPOSITION_IS_IDENTITY = False
 
-    def __init__(self, missing_value_replacement=None, model_missing_values=False,
-                 learn_rounding_scheme=False, enforce_min_max_values=False,
-                 distribution='parametric'):
+    def __init__(self, model_missing_values=False, learn_rounding_scheme=False,
+                 enforce_min_max_values=False, distribution='parametric'):
         super().__init__(
-            missing_value_replacement=missing_value_replacement,
+            missing_value_replacement='mean',
             model_missing_values=model_missing_values,
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values
@@ -391,11 +385,6 @@ class ClusterBasedNormalizer(FloatFormatter):
     based on the mean and std of the selected component.
 
     Args:
-        missing_value_replacement (object or None):
-            Indicate what to do with the null values. If an integer or float is given,
-            replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
-            given, replace them with the corresponding aggregation. If ``None`` is given,
-            do not replace them. Defaults to ``None``.
         model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not. The column
             will be created only if there are null values. If ``True``, create the new column if
@@ -433,11 +422,10 @@ class ClusterBasedNormalizer(FloatFormatter):
     _bgm_transformer = None
     valid_component_indicator = None
 
-    def __init__(self, missing_value_replacement=None, model_missing_values=False,
-                 learn_rounding_scheme=False, enforce_min_max_values=False, max_clusters=10,
-                 weight_threshold=0.005):
+    def __init__(self, model_missing_values=False, learn_rounding_scheme=False,
+                 enforce_min_max_values=False, max_clusters=10, weight_threshold=0.005):
         super().__init__(
-            missing_value_replacement=missing_value_replacement,
+            missing_value_replacement='mean',
             model_missing_values=model_missing_values,
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values

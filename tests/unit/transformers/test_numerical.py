@@ -770,13 +770,12 @@ class TestGaussianNormalizer:
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
         ct = GaussianNormalizer(
-            missing_value_replacement='mode',
             model_missing_values=False,
             learn_rounding_scheme=False,
             enforce_min_max_values=False
         )
 
-        assert ct.missing_value_replacement == 'mode'
+        assert ct.missing_value_replacement == 'mean'
         assert ct.model_missing_values is False
         assert ct.learn_rounding_scheme is False
         assert ct.enforce_min_max_values is False
@@ -985,7 +984,7 @@ class TestGaussianNormalizer:
         """
         # Setup
         data = pd.Series([0.0, np.nan, 1.0])
-        ct = GaussianNormalizer(missing_value_replacement='mean')
+        ct = GaussianNormalizer()
         ct._get_univariate = Mock()
 
         # Run
@@ -1005,7 +1004,8 @@ class TestGaussianNormalizer:
         Validate that ``_fit`` calls ``_get_univariate``.
 
         Setup:
-            - create an instance of the ``GaussianNormalizer``.
+            - create an instance of the ``GaussianNormalizer`` with ``model_missing_values``
+            set to True.
             - mock the  ``_get_univariate`` method.
 
         Input:
@@ -1016,10 +1016,7 @@ class TestGaussianNormalizer:
         """
         # Setup
         data = pd.Series([0.0, np.nan, 1.0])
-        ct = GaussianNormalizer(
-            missing_value_replacement='mean',
-            model_missing_values=True
-        )
+        ct = GaussianNormalizer(model_missing_values=True)
         ct._get_univariate = Mock()
 
         # Run
@@ -1158,7 +1155,7 @@ class TestGaussianNormalizer:
         expected = pd.Series([
             0.0, 1.0, 2.0, np.nan
         ])
-        ct = GaussianNormalizer(missing_value_replacement='mean')
+        ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
         ct.null_transformer = NullTransformer(
@@ -1344,7 +1341,7 @@ class TestClusterBasedNormalizer(TestCase):
         # Setup
         random_state = np.random.get_state()
         np.random.set_state(np.random.RandomState(10).get_state())
-        transformer = ClusterBasedNormalizer(max_clusters=3, missing_value_replacement=None)
+        transformer = ClusterBasedNormalizer(max_clusters=3)
         transformer._bgm_transformer = Mock()
 
         means = np.array([
@@ -1406,7 +1403,6 @@ class TestClusterBasedNormalizer(TestCase):
                 - ``_bgm_transformer`` is mocked with the appropriate ``means_``, ``covariances_``
                 and ``predict_proba.return_value``.
                 - ``valid_component_indicator`` is set to ``np.array([True, True, False])``.
-                - ``null_transformer`` is set to ``NullTransformer(0.0, True)``.
 
         Input:
             - a pandas Series.
@@ -1417,7 +1413,7 @@ class TestClusterBasedNormalizer(TestCase):
         # Setup
         random_state = np.random.get_state()
         np.random.set_state(np.random.RandomState(10).get_state())
-        transformer = ClusterBasedNormalizer(missing_value_replacement=0.0, max_clusters=3)
+        transformer = ClusterBasedNormalizer(max_clusters=3)
         transformer._bgm_transformer = Mock()
 
         means = np.array([
@@ -1541,12 +1537,13 @@ class TestClusterBasedNormalizer(TestCase):
             - ``_reverse_transform_helper`` should be called once with the correct data.
         """
         # Setup
-        transformer = ClusterBasedNormalizer(max_clusters=3, missing_value_replacement=None)
+        transformer = ClusterBasedNormalizer(max_clusters=3)
         transformer.output_columns = ['col.normalized', 'col.component']
+        reversed_data = np.array([0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97])
+        transformer.null_transformer = Mock()
+        transformer.null_transformer.reverse_transform.return_value = reversed_data
         transformer._reverse_transform_helper = Mock()
-        transformer._reverse_transform_helper.return_value = np.array(
-            [0.01, 0.02, -0.01, -0.01, 0.0, 0.99, 0.97, 1.02, 1.03, 0.97]
-        )
+        transformer._reverse_transform_helper.return_value = reversed_data
 
         data = pd.DataFrame({
             'col1': [-0.069, -0.061, -0.086, -0.086, -0.078, 0.073, 0.057, 0.098, 0.107, 0.057],
@@ -1570,7 +1567,7 @@ class TestClusterBasedNormalizer(TestCase):
             call_data
         )
 
-    def test__reverse_transform_missing_value_replacement(self):
+    def test__reverse_transform_missing_value_replacement_model_missing_values_is_true(self):
         """Test ``_reverse_transform`` with ``np.nan`` values.
 
         Validate that the method correctly calls ``_reverse_transform_helper`` and produces the
@@ -1594,7 +1591,6 @@ class TestClusterBasedNormalizer(TestCase):
         """
         # Setup
         transformer = ClusterBasedNormalizer(
-            missing_value_replacement='mean',
             model_missing_values=True,
             max_clusters=3
         )
@@ -1620,6 +1616,82 @@ class TestClusterBasedNormalizer(TestCase):
         # Asserts
         expected = pd.Series(
             [np.nan, np.nan, np.nan, np.nan, np.nan, 0.63, 0.62, 0.67, np.nan, 0.62]
+        )
+        np.testing.assert_allclose(expected, output, rtol=1e-2)
+
+        call_data = np.array([
+            [-0.033385, 0., 1.],
+            [-0.046177, 0., 1.],
+            [-0.058968, 0., 1.],
+            [-0.058968, 0., 1.],
+            [-0.046177, 0., 1.],
+            [0.134944, 1., 0.],
+            [0.1226, 1., 0.],
+            [-0.046177, 0., 0.],
+            [-0.046177, 0., 1.],
+            [0.1226, 1., 0.]
+        ])
+        transformer._reverse_transform_helper.assert_called_once()
+        np.testing.assert_allclose(
+            transformer._reverse_transform_helper.call_args[0][0],
+            call_data,
+            rtol=1e-1
+        )
+
+    def test__reverse_transform_missing_value_replacement_model_missing_values_is_false(self):
+        """Test ``_reverse_transform`` with ``np.nan`` values.
+
+        Validate that the method correctly calls ``_reverse_transform_helper`` and produces the
+        appropriate output when passed a numpy array containing ``np.nan`` values.
+
+        Setup:
+            - create an instance of the ``ClusterBasedNormalizer`` where the ``output_columns``
+            is a list of two columns.
+            - mock the `_reverse_transform_helper` with the appropriate return value.
+            - set ``null_transformer`` to ``NullTransformer`` with ``model_missing_values`` as
+              False, then fit it to a pandas Series.
+            - Mock the ``nul_transformer.reverse_transform`` method to get predicatable outputs.
+
+        Input:
+            - a numpy ndarray containing transformed ``np.nan`` values.
+
+        Ouput:
+            - a pandas Series with the reverse transformed data.
+
+        Side Effects:
+            - ``_reverse_transform_helper`` should be called once with the correct data.
+        """
+        # Setup
+        transformer = ClusterBasedNormalizer(
+            model_missing_values=True,
+            max_clusters=3
+        )
+        transformer.output_columns = ['col.normalized', 'col.component']
+        transformer._reverse_transform_helper = Mock()
+        transformer._reverse_transform_helper.return_value = np.array([
+            0.68351419, 0.67292805, 0.66234274, 0.66234274, 0.67292805,
+            0.63579893, 0.62239389, 0.67292805, 0.67292805, 0.62239389
+        ])
+
+        transformer.null_transformer = NullTransformer('mean', model_missing_values=False)
+        transformer.null_transformer.fit(pd.Series([0, np.nan]))
+        transformer.null_transformer.reverse_transform = Mock()
+        transformer.null_transformer.reverse_transform.return_value = np.array(
+            [np.nan, np.nan, np.nan, np.nan, np.nan, 0.635799, np.nan, 0.672928, 0.672928, np.nan]
+        )
+
+        data = np.array([
+            [-0.033, -0.046, -0.058, -0.058, -0.046, 0.134, 0.122, -0.046, -0.046, 0.122],
+            [0, 0, 0, 0, 0, 1, 1, 0, 0, 1],
+            [1, 1, 1, 1, 1, 0, 0, 0, 1, 0]
+        ]).transpose()
+
+        # Run
+        output = transformer._reverse_transform(data)
+
+        # Asserts
+        expected = pd.Series(
+            [np.nan, np.nan, np.nan, np.nan, np.nan, 0.63, np.nan, 0.67, 0.67, np.nan]
         )
         np.testing.assert_allclose(expected, output, rtol=1e-2)
 
