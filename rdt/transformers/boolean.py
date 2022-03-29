@@ -105,4 +105,8 @@ class BinaryEncoder(BaseTransformer):
 
             data = pd.Series(data)
 
-        return np.round(data).clip(0, 1).astype('boolean').astype('object')
+        isna = data.isna()
+        data = np.round(data).clip(0, 1).astype('boolean').astype('object')
+        data[isna] = np.nan
+
+        return data
