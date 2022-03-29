@@ -111,8 +111,8 @@ from rdt import HyperTransformer
 ht = HyperTransformer()
 ```
 
-The HyperTransformer needs to know about the columns in your dataset and which transformers to
-apply to each. These are described by a config. We can ask the HyperTransformer to automatically
+The `HyperTransformer` needs to know about the columns in your dataset and which transformers to
+apply to each. These are described by a config. We can ask the `HyperTransformer` to automatically
 detect it based on the data we plan to use.
 
 ```python3
@@ -233,7 +233,7 @@ datetime column replaced with `last_login.value`.
 4         NaN    DISCOVER   32          19.99      1.608595e+18
 ```
 
-### 5. Revert the column transformation
+### Revert the column transformation
 
 In order to revert the previous transformation, the transformed data can be passed to
 the `reverse_transform` method of the transformer:
