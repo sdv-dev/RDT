@@ -1033,6 +1033,38 @@ class TestGaussianNormalizer:
             np.array([0.0, 0.5, 1.0])
         )
 
+    @patch('rdt.transformers.numerical.warnings')
+    def test__fit_catch_warnings(self, mock_warnings):
+        """Test the ``_fit`` method.
+
+        Validate that ``_fit`` uses ``catch_warnings`` and ``warnings.simplefilter``.
+
+        Setup:
+            - create an instance of the ``GaussianNormalizer``.
+            - mock the  ``warnings`` package.
+
+        Input:
+            - a pandas series of float values.
+
+        Side effect:
+            - call the `warnings.catch_warnings`` method.
+            - call the `warnings.simplefilter`` method.
+        """
+        # Setup
+        data = pd.Series([0.0, np.nan, 1.0])
+        ct = GaussianNormalizer(
+            missing_value_replacement='mean',
+            model_missing_values=True
+        )
+        ct._get_univariate = Mock()
+
+        # Run
+        ct._fit(data)
+
+        # Assert
+        mock_warnings.catch_warnings.assert_called_once()
+        mock_warnings.simplefilter.assert_called_once_with('ignore')
+
     def test__copula_transform(self):
         """Test the ``_copula_transform`` method.
 
@@ -1323,6 +1355,44 @@ class TestClusterBasedNormalizer(TestCase):
         assert transformer._bgm_transformer == bgm_instance
         assert transformer.valid_component_indicator.sum() == 2
         assert transformer.null_transformer.models_missing_values()
+
+    @patch('rdt.transformers.numerical.BayesianGaussianMixture')
+    @patch('rdt.transformers.numerical.warnings')
+    def test__fit_catch_warnings(self, mock_warnings, mock_bgm):
+        """Test the ``_fit`` method.
+
+        Validate that ``_fit`` uses ``catch_warnings`` and ``warnings.simplefilter``.
+
+        Setup:
+            - create an instance of the ``GaussianNormalizer``.
+            - mock the  ``warnings`` package.
+
+        Input:
+            - a pandas series of float values.
+
+        Side effect:
+            - call the `warnings.catch_warnings`` method.
+            - call the `warnings.simplefilter`` method.
+        """
+        # Setup
+        bgm_instance = mock_bgm.return_value
+        bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
+        transformer = ClusterBasedNormalizer(
+            max_clusters=10,
+            weight_threshold=0.005,
+            model_missing_values=True
+        )
+
+        data = pd.Series(np.random.random(size=100))
+        mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
+        data[mask] = np.nan
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        mock_warnings.catch_warnings.assert_called_once()
+        mock_warnings.simplefilter.assert_called_once_with('ignore')
 
     def test__transform(self):
         """Test ``_transform``.
