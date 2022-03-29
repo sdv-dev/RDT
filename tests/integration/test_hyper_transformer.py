@@ -309,26 +309,6 @@ def test_dtype_category():
     pd.testing.assert_frame_equal(reverse, data)
 
 
-def test_subset_of_columns_nan_data():
-    """HyperTransform should be able to transform a subset of the training columns.
-
-    See https://github.com/sdv-dev/RDT/issues/152
-    """
-    # Setup
-    data = get_input_data()
-    subset = data[[data.columns[0]]].copy()
-    ht = HyperTransformer()
-    ht.detect_initial_config(data)
-    ht.fit(data)
-
-    # Run
-    transformed = ht.transform(subset)
-    reverse = ht.reverse_transform(transformed)
-
-    # Assert
-    pd.testing.assert_frame_equal(subset, reverse)
-
-
 def test_multiple_fits():
     """HyperTransformer should be able to be used multiple times.
 
