@@ -1,3 +1,4 @@
+import platform
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -485,7 +486,8 @@ class TestUnixTimestampEncoder:
 
         # Assert
         expected = pd.Series(['Jan 1, 2020', 'Feb 1, 2020', 'Mar 1, 2020'])
-        pd.testing.assert_series_equal(output, expected)
+        if 'windows' not in platform.system().lower():
+            pd.testing.assert_series_equal(output, expected)
 
 
 class TestOptimizedTimestampEncoder:
