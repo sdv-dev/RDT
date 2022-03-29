@@ -1359,12 +1359,12 @@ class TestClusterBasedNormalizer(TestCase):
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     @patch('rdt.transformers.numerical.warnings')
     def test__fit_catch_warnings(self, mock_warnings, mock_bgm):
-        """Test the ``_fit`` method.
+        """Test ``_fit`` with ``np.nan`` values.
 
         Validate that ``_fit`` uses ``catch_warnings`` and ``warnings.simplefilter``.
 
         Setup:
-            - create an instance of the ``GaussianNormalizer``.
+            - create an instance of the ``ClusterBasedNormalizer``.
             - mock the  ``warnings`` package.
 
         Input:
@@ -1377,15 +1377,8 @@ class TestClusterBasedNormalizer(TestCase):
         # Setup
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
-        transformer = ClusterBasedNormalizer(
-            max_clusters=10,
-            weight_threshold=0.005,
-            model_missing_values=True
-        )
-
+        transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
         data = pd.Series(np.random.random(size=100))
-        mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
-        data[mask] = np.nan
 
         # Run
         transformer._fit(data)
