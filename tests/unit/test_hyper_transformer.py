@@ -412,6 +412,30 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(NotFittedError, match=error_msg):
             ht._validate_correctly_fitted(data)
 
+    def test__validate_correctly_fitted_with_subset(self):
+        """Test the ``_validate_correctly_fitted`` method with a subset of the data.
+
+        Tests that the ``_validate_correctly_fitted`` method raises a ``NotFittedError``
+        if any column names passed to ``fit`` are not in the ones passed to ``transform``.
+
+        Expected behavior:
+            - A ``NotFittedError`` should be raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht._fitted = True
+        ht._input_columns = ['col1', 'col2']
+        data = pd.DataFrame({'col1': [1, 2]})
+        error_msg = re.escape(
+            'The data you are trying to transform has different columns than the original '
+            'fitted data. Column names and their sdtypes must be the same. Use the method '
+            "'get_config()' to see the expected values."
+        )
+
+        # Run / Assert
+        with pytest.raises(NotFittedError, match=error_msg):
+            ht._validate_correctly_fitted(data)
+
     def test_detect_initial_config(self):
         """Test the ``detect_initial_config`` method.
 
