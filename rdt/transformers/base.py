@@ -141,7 +141,7 @@ class BaseTransformer:
         if len(columns) == 1:
             columns = columns[0]
 
-        return data[columns]
+        return data[columns].copy()
 
     @staticmethod
     def _set_columns_data(data, columns_data, columns):
