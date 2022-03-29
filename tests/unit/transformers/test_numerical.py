@@ -1051,11 +1051,8 @@ class TestGaussianNormalizer:
             - call the `warnings.simplefilter`` method.
         """
         # Setup
-        data = pd.Series([0.0, np.nan, 1.0])
-        ct = GaussianNormalizer(
-            missing_value_replacement='mean',
-            model_missing_values=True
-        )
+        data = pd.Series([0.0, 0.5, 1.0])
+        ct = GaussianNormalizer()
         ct._get_univariate = Mock()
 
         # Run
