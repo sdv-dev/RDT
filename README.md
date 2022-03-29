@@ -4,7 +4,7 @@
     <i>This repository is part of <a href="https://sdv.dev">The Synthetic Data Vault Project</a>, a project from <a href="https://datacebo.com">DataCebo</a>.</i>
 </p>
 
-[![Development Status](https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow)](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
+[![Development Status](https://img.shields.io/badge/Development%20Status-3%20--%20Alpha-yellow)](https://pypi.org/search/?q=&o=&c=Development+Status+%3A%3A+3+-+Alpha)
 [![PyPi Shield](https://img.shields.io/pypi/v/RDT.svg)](https://pypi.python.org/pypi/RDT)
 [![Unit Tests](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml/badge.svg)](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
@@ -33,16 +33,16 @@ the transformations in order to revert them as needed.
 | :book: **[Documentation]**                    | Quickstarts, User and Development Guides, and API Reference.         |
 | :octocat: **[Repository]**                    | The link to the Github Repository of this library.                   |
 | :scroll: **[License]**                        | The entire ecosystem is published under the MIT License.             |
-| :keyboard: **[Development Status]**           | This software is in its Pre-Alpha stage.                             |
+| :keyboard: **[Development Status]**           | This software is in its Alpha stage.                             |
 | [![][Slack Logo] **Community**][Community]    | Join our Slack Workspace for announcements and discussions.          |
 | [![][MyBinder Logo] **Tutorials**][Tutorials] | Run the SDV Tutorials in a Binder environment.                       |
 
 [Website]: https://sdv.dev
 [SDV Blog]: https://sdv.dev/blog
-[Documentation]: https://sdv.dev/SDV
+[Documentation]: https://datacebo.gitbook.io/rdt
 [Repository]: https://github.com/sdv-dev/RDT
 [License]: https://github.com/sdv-dev/RDT/blob/master/LICENSE
-[Development Status]: https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha
+[Development Status]: https://pypi.org/search/?q=&o=&c=Development+Status+%3A%3A+3+-+Alpha
 [Slack Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/slack.png
 [Community]: https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw
 [MyBinder Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/mybinder.png
@@ -76,23 +76,18 @@ For more installation options please visit the [RDT installation Guide](INSTALL.
 In this short series of tutorials we will guide you through a series of steps that will
 help you getting started using **RDT** to transform columns, tables and datasets.
 
-## Transforming a column
+## Load the demo data
 
-In this first guide, you will learn how to use **RDT** in its simplest form, transforming
-a single column loaded as a `pandas.DataFrame` object.
-
-### 1. Load the demo data
-
-You can load some demo data using the `rdt.get_demo` function, which will return some random
-data for you to play with.
+After you have installed RDT, you can get started using the demo dataset.
 
 ```python3
 from rdt import get_demo
 
-data = get_demo()
+customers = get_demo()
 ```
 
-This will return a `pandas.DataFrame` with 5 rows and 5 columns, one of each sdtype supported:
+This dataset contains some randomly generated values that describes the customers of an online
+marketplace. 
 
 ```
   last_login email_optin credit_card  age  dollars_spent
@@ -103,9 +98,101 @@ This will return a `pandas.DataFrame` with 5 rows and 5 columns, one of each sdt
 4 2020-12-22         NaN    DISCOVER   32          19.99
 ```
 
-Notice that RDT may introduce some null values randomly.
+Let's transform this data so that each column is converted to full, numerical data ready for data
+science.
 
-### 2. Load the transformer
+## Creating the HyperTransformer & config
+
+The `HyperTransformer` is capable of transforming multi-column datasets.
+
+```python3
+from rdt import HyperTransformer
+
+ht = HyperTransformer()
+```
+
+The HyperTransformer needs to know about the columns in your dataset and which transformers to
+apply to each. These are described by a config. We can ask the HyperTransformer to automatically
+detect it based on the data we plan to use.
+
+```python3
+ht.detect_initial_config(data=customers)
+```
+
+This will create and set the config.
+
+```python3
+Config:
+{
+    "sdtypes": {
+        "last_login": "datetime",
+        "email_optin": "boolean",
+        "credit_card": "categorical",
+        "age": "numerical",
+        "dollars_spent": "numerical"
+    },
+    "transformers": {
+        "last_login": "UnixTimestampEncoder(missing_value_replacement='mean')",
+        "email_optin": "BinaryEncoder(missing_value_replacement='mode')",
+        "credit_card": "FrequencyEncoder()",
+        "age": "FloatFormatter(missing_value_replacement='mean')",
+        "dollars_spent": "FloatFormatter(missing_value_replacement='mean')"
+    }
+}
+```
+
+The `sdtypes` dictionary describes the semantic data types of each of your columns and the
+`transformers` dictionary describes which transformer to use for each column.
+
+## Fitting & using the HyperTransformer 
+
+The `HyperTransformer` references the config while learning the data during the `fit` stage.
+
+```python3
+ht.fit(customers)
+```
+
+Once the transformer is fit, it's ready to use. Use the transform method to transform all columns
+of your dataset at once.
+
+```python3
+transformed_data = ht.transform(customers)
+```
+
+```
+   last_login.value  email_optin.value  credit_card.value  age.value  dollars_spent.value
+0      1.624666e+18                0.0                0.2         29                99.99
+1      1.612915e+18                0.0                0.2         18                36.87
+2      1.611814e+18                0.0                0.5         21                 2.50
+3      1.601078e+18                1.0                0.7         45                25.00
+4      1.608595e+18                0.0                0.9         32                19.99
+```
+
+The `HyperTransformer` applied the assigned transformer to each individual column. Each column now
+contains fully numerical data that you can use for your project!
+
+When you're done with your project, you can also transform the data back to the original format
+using the `reverse_transform` method.
+
+```python3
+original_format_data = ht.reverse_transform(transformed_data)
+```
+
+```
+  last_login email_optin credit_card  age  dollars_spent
+0        NaT       False        VISA   29          99.99
+1 2021-02-10       False        VISA   18            NaN
+2        NaT       False        AMEX   21            NaN
+3 2020-09-26        True         NaN   45          25.00
+4 2020-12-22       False    DISCOVER   32          19.99
+```
+
+## Transforming a single column
+
+It is also possible to transform a single column of a `pandas.DataFrame`. To do this,
+follow the following steps.
+
+### Load the transformer
 
 In this example we will use the datetime column, so let's load a `UnixTimestampEncoder`.
 
@@ -115,36 +202,35 @@ from rdt.transformers import UnixTimestampEncoder
 transformer = UnixTimestampEncoder()
 ```
 
-### 3. Fit the Transformer
+### Fit the Transformer
 
 Before being able to transform the data, we need the transformer to learn from it.
 
 We will do this by calling its `fit` method passing the column that we want to transform.
 
 ```python3
-transformer.fit(data, column='last_login')
+transformer.fit(customers, column='last_login')
 ```
 
-### 4. Transform the data
+### Transform the data
 
 Once the transformer is fitted, we can pass the data again to its `transform` method in order
 to get the transformed version of the data.
 
 ```python3
-transformed = transformer.transform(data)
+transformed = transformer.transform(customers)
 ```
 
-The output will be a `pandas.DataFrame` with two added columns, `last_login.value` containing 
-the datetimes transformed to integer timestamps, and `last_login.is_null` indicating with 1s
-which values were null in the original data.
+The output will be a `pandas.DataFrame` similar to the input data, except with the original
+datetime column replaced with `last_login.value`.
 
 ```
-  email_optin credit_card  age  dollars_spent  last_login.value  last_login.is_null
-0       False        VISA   29          99.99      1.624666e+18                 0.0
-1       False        VISA   18            NaN      1.612915e+18                 0.0
-2       False        AMEX   21           2.50      1.611814e+18                 1.0
-3        True         NaN   45          25.00      1.601078e+18                 0.0
-4         NaN    DISCOVER   32          19.99      1.608595e+18                 0.0
+  email_optin credit_card  age  dollars_spent  last_login.value
+0       False        VISA   29          99.99      1.624666e+18
+1       False        VISA   18            NaN      1.612915e+18
+2       False        AMEX   21           2.50               NaN
+3        True         NaN   45          25.00      1.601078e+18
+4         NaN    DISCOVER   32          19.99      1.608595e+18
 ```
 
 ### 5. Revert the column transformation
@@ -166,107 +252,6 @@ like the original ones, except for the order of the columns.
 2       False        AMEX   21           2.50        NaT
 3        True         NaN   45          25.00 2020-09-26
 4         NaN    DISCOVER   32          19.99 2020-12-22
-```
-
-## Transforming a table
-
-Once we know how to transform a single column, we can try to go the next level and transform
-a table with multiple columns.
-
-### 1. Load the HyperTransformer
-
-In order to manuipulate a complete table we will need to load a `rdt.HyperTransformer`.
-
-```python3
-from rdt import HyperTransformer
-
-ht = HyperTransformer()
-```
-
-### 2. Detect the initial config
-
-Before fitting the ``HyperTransformer`` you have to detect the intial config for your data.
-
-This is done by calling the ``detect_initial_config`` method passsing your data.
-
-```python3
-ht.detect_initial_config(data)
-```
-
-Which should print in console a ``json`` format of the initial configuration, similar to this:
-
-```
-Detecting a new config from the data ... SUCCESS
-Setting the new config ... SUCCESS
-Config:
-{
-    "sdtypes": {
-        "last_login": "datetime",
-        "email_optin": "boolean",
-        "credit_card": "categorical",
-        "age": "integer",
-        "dollars_spent": "float"
-    },
-    "transformers": {
-        "last_login": "UnixTimestampEncoder(missing_value_replacement='mean')",
-        "email_optin": "BinaryEncoder(missing_value_replacement='mode')",
-        "credit_card": "FrequencyEncoder()",
-        "age": "FloatFormatter(missing_value_replacement='mean')",
-        "dollars_spent": "FloatFormatter(missing_value_replacement='mean')"
-    }
-}
-```
-
-### 3. Fit the HyperTransformer
-
-Just like the transfomer, the HyperTransformer needs to be fitted before being able to transform
-data.
-
-This is done by calling its `fit` method passing the `data` DataFrame.
-
-```python3
-ht.fit(data)
-```
-
-### 4. Transform the table data
-
-Once the HyperTransformer is fitted, we can pass the data again to its `transform` method in order
-to get the transformed version of the data.
-
-```python3
-transformed = ht.transform(data)
-```
-
-The output will be another `pandas.DataFrame` with the numerical representation of our data.
-
-```
-   last_login.value  last_login.is_null  email_optin.value  email_optin.is_null  credit_card.value  age.value  dollars_spent.value  dollars_spent.is_null
-0      1.624666e+18                 0.0                0.0                  0.0           0.203204         29                99.99                    0.0
-1      1.612915e+18                 0.0                0.0                  0.0           0.117002         18                36.87                    1.0
-2      1.611814e+18                 1.0                0.0                  0.0           0.502184         21                 2.50                    0.0
-3      1.601078e+18                 0.0                1.0                  0.0           0.734610         45                25.00                    0.0
-4      1.608595e+18                 0.0               -1.0                  1.0           0.883881         32                19.99                    0.0
-```
-
-### 5. Revert the table transformation
-
-In order to revert the transformation and recover the original data from the transformed one,
-we need to call `reverse_transform` method of the `HyperTransformer` instance passing it the
-transformed data.
-
-```python3
-reversed_data = ht.reverse_transform(transformed)
-```
-
-Which should output, again, a table that looks exactly like the original one.
-
-```
-  last_login email_optin credit_card  age  dollars_spent
-0 2021-06-26       False        VISA   29          99.99
-1 2021-02-10       False        VISA   18            NaN
-2        NaT       False        AMEX   21           2.50
-3 2020-09-26        True         NaN   45          25.00
-4 2020-12-22        <NA>    DISCOVER   32          19.99
 ```
 
 ---

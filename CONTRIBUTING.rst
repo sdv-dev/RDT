@@ -216,7 +216,6 @@ check and whether or not it passed.
    isort                      Yes        Imports are properly sorted.
    pylint                     Yes        Code is properly formatted and structured.
    pydocstyle                 Yes        The docstrings are properly written.
-   Transformer Name           Yes        Transformer name ends with ``Transformer``.
    Transformer is subclass    Yes        The transformer is subclass of ``BaseTransformer``.
    Valid module               Yes        The transformer is placed inside a valid module.
    Valid test module          Yes        The transformer tests are placed inside the valid module.
