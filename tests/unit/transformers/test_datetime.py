@@ -1,3 +1,4 @@
+import platform
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -342,6 +343,27 @@ class TestUnixTimestampEncoder:
         # Assert
         transformer._transform_helper.assert_called_once()
 
+    @patch('rdt.transformers.datetime._guess_datetime_format_for_array')
+    def test__fit_calls_guess_datetime_format(self, mock__guess_datetime_format_for_array):
+        """Test the ``_fit`` method.
+
+        The ``_fit`` method should call the ``_transform_helper`` method.
+        """
+        # Setup
+        data = pd.Series(['2020-02-01', '2020-03-01'])
+        mock__guess_datetime_format_for_array.return_value = '%Y-%m-%d'
+        transformer = UnixTimestampEncoder()
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        np.testing.assert_array_equal(
+            mock__guess_datetime_format_for_array.call_args[0][0],
+            np.array(['2020-02-01', '2020-03-01'])
+        )
+        assert transformer.datetime_format == '%Y-%m-%d'
+
     def test__transform(self):
         """Test the ``_transform`` method for numpy arrays.
 
@@ -441,6 +463,31 @@ class TestUnixTimestampEncoder:
         # Assert
         expected = pd.Series(['Jan 01, 2020', 'Feb 01, 2020', 'Mar 01, 2020'])
         pd.testing.assert_series_equal(output, expected)
+
+    def test__reverse_transform_datetime_format_with_strftime_formats(self):
+        """Test the ``_reverse_transform`` method returns the correct datetime format.
+
+        Setup:
+            - Set the instance to have a different ``datetime_format`` which includes `-` on it.
+
+        Input:
+            - a numpy array of integers.
+
+        Output:
+            - a pandas ``Series`` of the datetimes in the right format.
+        """
+        # Setup
+        ute = UnixTimestampEncoder(missing_value_replacement=None)
+        ute.datetime_format = '%b %-d, %Y'
+        transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
+
+        # Run
+        output = ute._reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series(['Jan 1, 2020', 'Feb 1, 2020', 'Mar 1, 2020'])
+        if 'windows' not in platform.system().lower():
+            pd.testing.assert_series_equal(output, expected)
 
 
 class TestOptimizedTimestampEncoder:
