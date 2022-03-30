@@ -1,6 +1,7 @@
 """Transformer for datetime data."""
 import numpy as np
 import pandas as pd
+from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
@@ -73,7 +74,11 @@ class UnixTimestampEncoder(BaseTransformer):
     def _convert_to_datetime(self, data):
         if data.dtype == 'object':
             try:
-                data = pd.to_datetime(data, format=self.datetime_format)
+                pandas_datetime_format = None
+                if self.datetime_format:
+                    pandas_datetime_format = self.datetime_format.replace('%-', '%')
+
+                data = pd.to_datetime(data, format=pandas_datetime_format)
 
             except ValueError as error:
                 if 'Unknown string format:' in str(error):
@@ -112,6 +117,9 @@ class UnixTimestampEncoder(BaseTransformer):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
+        if self.datetime_format is None and data.dtype == 'object':
+            self.datetime_format = _guess_datetime_format_for_array(data.to_numpy())
+
         transformed = self._transform_helper(data)
         self.null_transformer = NullTransformer(
             self.missing_value_replacement,
