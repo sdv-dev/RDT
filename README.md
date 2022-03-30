@@ -121,7 +121,7 @@ ht.detect_initial_config(data=customers)
 
 This will create and set the config.
 
-```python3
+```
 Config:
 {
     "sdtypes": {
