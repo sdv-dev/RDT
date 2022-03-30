@@ -272,8 +272,7 @@ class TestBinaryEncoder(TestCase):
         assert isinstance(result, pd.Series)
         np.testing.assert_equal(result.array, expected)
 
-    @patch('rdt.transformers.boolean.np')
-    def test__reverse_transform_numpy_nan(self, mock_np):
+    def test__reverse_transform_numpy_nan(self):
         """Test the ``_reverse_transform`` method with decimals that are out of range.
 
         Expect that the ``_reverse_transform`` method contains the `np.nan` instead of
@@ -291,16 +290,11 @@ class TestBinaryEncoder(TestCase):
         # Setup
         data = np.array([1.9, np.nan, 1.01])
         transformer = Mock()
-        mock_np.ndarray = np.ndarray
-        mock_np.round = np.round
-        mock_np.clip = np.clip
-        nan_value = object()
-        mock_np.nan = nan_value
         transformer.missing_value_replacement = None
 
         # Run
         result = BinaryEncoder._reverse_transform(transformer, data)
 
         # Asserts
-        expected = np.array([True, nan_value, True])
-        np.testing.assert_equal(result.array, expected)
+        assert np.isnan(result[1])
+        assert isinstance(result[1], float)
