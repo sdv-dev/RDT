@@ -15,11 +15,129 @@ from rdt.transformers import (
 class Config(dict):
     """Config dict for ``HyperTransformer`` with a better representation."""
 
+    def __init__(self):
+        super().__init__()
+        self._provided_field_sdtypes = {}
+        self._provided_field_transformers = {}
+        self['field_transformers'] = {}
+        self['field_sdtypes'] = {}
+
+    @staticmethod
+    def _validate_config(config):
+        sdtypes = config.get('sdtypes', {})
+        transformers = config.get('transformers', {})
+        for column, transformer in transformers.items():
+            input_sdtype = transformer.get_input_sdtype()
+            sdtype = sdtypes.get(column)
+            if input_sdtype != sdtype:
+                warnings.warn(
+                    f'You are assigning a {input_sdtype} transformer to a {sdtype} '
+                    f"column ('{column}'). If the transformer doesn't match the "
+                    'sdtype, it may lead to errors.'
+                )
+
+    @staticmethod
+    def _get_supported_sdtypes():
+        return get_transformers_by_type().keys()
+
+    def reset(self):
+        """Reset the `field_sdtypes` and `field_transformers`."""
+        self['field_sdtypes'] = self._provided_field_sdtypes.copy()
+        self['field_transformers'] = self._provided_field_transformers.copy()
+
+    def update_sdtypes(self, column_name_to_sdtype):
+        """Update the ``sdtypes`` for each specified column name.
+
+        Args:
+            column_name_to_sdtype(dict):
+                Dict mapping column names to ``sdtypes`` for that column.
+        """
+        unsupported_sdtypes = []
+        transformers_to_update = {}
+        for column, sdtype in column_name_to_sdtype.items():
+            if sdtype not in self._get_supported_sdtypes():
+                unsupported_sdtypes.append(sdtype)
+            elif self.field_sdtypes.get(column) != sdtype:
+                current_transformer = self.field_transformers.get(column)
+                if not current_transformer or current_transformer.get_input_sdtype() != sdtype:
+                    transformers_to_update[column] = get_default_transformer(sdtype)
+
+        if unsupported_sdtypes:
+            raise Error(
+                f'Unsupported sdtypes ({unsupported_sdtypes}). To use ``sdtypes`` with specific '
+                'semantic meanings, please contact the SDV team to update to rdt_plus. Otherwise, '
+                "use 'pii' to anonymize the column."
+            )
+
+        self.field_sdtypes.update(column_name_to_sdtype)
+        self.field_transformers.update(transformers_to_update)
+        self._provided_field_sdtypes.update(column_name_to_sdtype)
+
+    def update_transformers_by_sdtype(self, sdtype, transformer):
+        """Update the transformers for the specified ``sdtype``.
+
+        Given an ``sdtype`` and a ``transformer``, change all the fields of the ``sdtype``
+        to use the given transformer.
+
+        Args:
+            sdtype (str):
+                Semantic data type for the transformer.
+            transformer (rdt.transformers.BaseTransformer):
+                Transformer class or instance to be used for the given ``sdtype``.
+        """
+        if not self['field_sdtypes']:
+            raise Error(
+                'Nothing to update. Use the `detect_initial_config` method to '
+                'pre-populate all the sdtypes and transformers from your dataset.'
+            )
+
+        for field, field_sdtype in self['field_sdtypes'].items():
+            if field_sdtype == sdtype:
+                self._provided_field_transformers[field] = transformer
+                self['field_transformers'][field] = transformer
+
+    def update_transformers(self, column_name_to_transformer):
+        """Update any of the transformers assigned to each of the column names.
+
+        Args:
+            column_name_to_transformer(dict):
+                Dict mapping column names to transformers to be used for that column.
+        """
+        for column_name, transformer in column_name_to_transformer.items():
+            current_sdtype = self['field_sdtypes'].get(column_name)
+            if current_sdtype and current_sdtype != transformer.get_input_sdtype():
+                warnings.warn(
+                    f'You are assigning a {transformer.get_input_sdtype()} transformer '
+                    f'to a {current_sdtype} column ({column_name}). '
+                    "If the transformer doesn't match the sdtype, it may lead to errors."
+                )
+
+            self['field_transformers'][column_name] = transformer
+            self._provided_field_transformers[column_name] = transformer
+
+    def set_config(self, config):
+        """Set the ``HyperTransformer`` configuration.
+
+        This method will only update the sdtypes/transformers passed. Other previously
+        learned sdtypes/transformers will not be affected.
+
+        Args:
+            config (dict):
+                A dictionary containing the following two dictionaries:
+                - sdtypes: A dictionary mapping column names to their ``sdtypes``.
+                - transformers: A dictionary mapping column names to their transformer instances.
+        """
+        self._validate_config(config)
+        self._provided_field_sdtypes = config['sdtypes']
+        self['field_sdtypes'].update(config['sdtypes'])
+        self._provided_field_transformers = config['transformers']
+        self['field_transformers'].update(config['transformers'])
+
     def __repr__(self):
         """Pretty print the dictionary."""
         config = {
-            'sdtypes': self['sdtypes'],
-            'transformers': {k: repr(v) for k, v in self['transformers'].items()}
+            'sdtypes': self['field_sdtypes'],
+            'transformers': {k: repr(v) for k, v in self['field_transformers'].items()}
         }
         return json.dumps(config, indent=4)
 
@@ -121,14 +239,15 @@ class HyperTransformer:
 
     def _create_multi_column_fields(self):
         multi_column_fields = {}
-        for field in list(self.field_sdtypes) + list(self.field_transformers):
+        for field in list(self.config['field_sdtypes']) + list(self.config['field_transformers']):
             if isinstance(field, tuple):
                 for column in field:
                     multi_column_fields[column] = field
+
         return multi_column_fields
 
     def _validate_field_transformers(self):
-        for field in self.field_transformers:
+        for field in self.config['field_transformers']:
             if self._field_in_set(field, self._specified_fields):
                 raise ValueError(f'Multiple transformers specified for the field {field}. '
                                  'Each field can have at most one transformer defined in '
@@ -138,15 +257,7 @@ class HyperTransformer:
 
     def __init__(self):
         self._default_sdtype_transformers = {}
-
-        # ``_provided_field_sdtypes``` contains only the sdtypes specified by the user,
-        # while `field_sdtypes` contains both the sdtypes specified by the user and the
-        # ones learned through ``fit``/``detect_initial_config``. Same for ``field_transformers``.
-        self._provided_field_sdtypes = {}
-        self.field_sdtypes = {}
-        self._provided_field_transformers = {}
-        self.field_transformers = {}
-
+        self.config = Config()
         self._specified_fields = set()
         self._validate_field_transformers()
         self._valid_output_sdtypes = self._DEFAULT_OUTPUT_SDTYPES
@@ -163,22 +274,6 @@ class HyperTransformer:
         all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
         return field in data or all_columns_in_data
 
-    @staticmethod
-    def _validate_config(config):
-        sdtypes = config.get('sdtypes', {})
-        transformers = config.get('transformers', {})
-        for column, transformer in transformers.items():
-            input_sdtype = transformer.get_input_sdtype()
-            sdtype = sdtypes.get(column)
-            if input_sdtype != sdtype:
-                warnings.warn(f'You are assigning a {input_sdtype} transformer to a {sdtype} '
-                              f"column ('{column}'). If the transformer doesn't match the "
-                              'sdtype, it may lead to errors.')
-
-    @staticmethod
-    def _get_supported_sdtypes():
-        return get_transformers_by_type().keys()
-
     def get_config(self):
         """Get the current ``HyperTransformer`` configuration.
 
@@ -188,10 +283,7 @@ class HyperTransformer:
                 - sdtypes: A dictionary mapping column names to their ``sdtypes``.
                 - transformers: A dictionary mapping column names to their transformer instances.
         """
-        return Config({
-            'sdtypes': self.field_sdtypes,
-            'transformers': self.field_transformers
-        })
+        return self.config
 
     def set_config(self, config):
         """Set the ``HyperTransformer`` configuration.
@@ -205,13 +297,7 @@ class HyperTransformer:
                 - sdtypes: A dictionary mapping column names to their ``sdtypes``.
                 - transformers: A dictionary mapping column names to their transformer instances.
         """
-        self._validate_config(config)
-        self._provided_field_sdtypes = config['sdtypes']
-        self.field_sdtypes.update(config['sdtypes'])
-        self._provided_field_transformers = config['transformers']
-        self.field_transformers.update(config['transformers'])
-        if self._fitted:
-            warnings.warn(self._REFIT_MESSAGE)
+        self.config.set_config(config)
 
     def update_transformers_by_sdtype(self, sdtype, transformer):
         """Update the transformers for the specified ``sdtype``.
@@ -225,17 +311,7 @@ class HyperTransformer:
             transformer (rdt.transformers.BaseTransformer):
                 Transformer class or instance to be used for the given ``sdtype``.
         """
-        if not self.field_sdtypes:
-            raise Error(
-                'Nothing to update. Use the `detect_initial_config` method to '
-                'pre-populate all the sdtypes and transformers from your dataset.'
-            )
-
-        for field, field_sdtype in self.field_sdtypes.items():
-            if field_sdtype == sdtype:
-                self._provided_field_transformers[field] = transformer
-                self.field_transformers[field] = transformer
-
+        self.config.update_transformers_by_sdtype(sdtype, transformer)
         if self._fitted:
             warnings.warn(
                 'For this change to take effect, please refit your data using '
@@ -249,29 +325,10 @@ class HyperTransformer:
             column_name_to_sdtype(dict):
                 Dict mapping column names to ``sdtypes`` for that column.
         """
-        if len(self.field_sdtypes) == 0:
+        if len(self.config['field_sdtypes']) == 0:
             raise Error(self._DETECT_CONFIG_MESSAGE)
 
-        unsupported_sdtypes = []
-        transformers_to_update = {}
-        for column, sdtype in column_name_to_sdtype.items():
-            if sdtype not in self._get_supported_sdtypes():
-                unsupported_sdtypes.append(sdtype)
-            elif self.field_sdtypes.get(column) != sdtype:
-                current_transformer = self.field_transformers.get(column)
-                if not current_transformer or current_transformer.get_input_sdtype() != sdtype:
-                    transformers_to_update[column] = get_default_transformer(sdtype)
-
-        if unsupported_sdtypes:
-            raise Error(
-                f'Unsupported sdtypes ({unsupported_sdtypes}). To use ``sdtypes`` with specific '
-                'semantic meanings, please contact the SDV team to update to rdt_plus. Otherwise, '
-                "use 'pii' to anonymize the column."
-            )
-
-        self.field_sdtypes.update(column_name_to_sdtype)
-        self.field_transformers.update(transformers_to_update)
-        self._provided_field_sdtypes.update(column_name_to_sdtype)
+        self.config.update_sdtypes(column_name_to_sdtype)
         self._user_message(
             'The transformers for these columns may change based on the new sdtype.\n'
             "Use 'get_config()' to verify the transformers.", 'Info'
@@ -288,21 +345,10 @@ class HyperTransformer:
         """
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
-
-        if len(self.field_transformers) == 0:
+        if len(self.config['field_transformers']) == 0:
             raise Error(self._DETECT_CONFIG_MESSAGE)
 
-        for column_name, transformer in column_name_to_transformer.items():
-            current_sdtype = self.field_sdtypes.get(column_name)
-            if current_sdtype and current_sdtype != transformer.get_input_sdtype():
-                warnings.warn(
-                    f'You are assigning a {transformer.get_input_sdtype()} transformer '
-                    f'to a {current_sdtype} column ({column_name}). '
-                    "If the transformer doesn't match the sdtype, it may lead to errors."
-                )
-
-            self.field_transformers[column_name] = transformer
-            self._provided_field_transformers[column_name] = transformer
+        self.config.update_transformers(column_name_to_transformer)
 
     def get_transformer(self, field):
         """Get the transformer instance used for a field.
@@ -405,11 +451,10 @@ class HyperTransformer:
     def _set_field_sdtype(self, data, field):
         clean_data = data[field].dropna()
         kind = clean_data.infer_objects().dtype.kind
-        self.field_sdtypes[field] = self._DTYPES_TO_SDTYPES[kind]
+        self.config['field_sdtypes'][field] = self._DTYPES_TO_SDTYPES[kind]
 
     def _unfit(self):
-        self.field_sdtypes = self._provided_field_sdtypes.copy()
-        self.field_transformers = self._provided_field_transformers.copy()
+        self.config.reset()
         self._transformers_sequence = []
         self._input_columns = []
         self._output_columns = []
@@ -421,14 +466,15 @@ class HyperTransformer:
         """Unfit the HyperTransformer and learn the sdtypes and transformers of the data."""
         self._unfit()
         for field in data:
-            if field not in self.field_sdtypes:
+            if field not in self.config['field_sdtypes']:
                 self._set_field_sdtype(data, field)
-            if field not in self.field_transformers:
-                sdtype = self.field_sdtypes[field]
+            if field not in self.config['field_transformers']:
+                sdtype = self.config['field_sdtypes'][field]
                 if sdtype in self._default_sdtype_transformers:
-                    self.field_transformers[field] = self._default_sdtype_transformers[sdtype]
+                    default_transformer = self._default_sdtype_transformers[sdtype]
+                    self.config['field_transformers'][field] = default_transformer
                 else:
-                    self.field_transformers[field] = get_default_transformer(sdtype)
+                    self.config['field_transformers'][field] = get_default_transformer(sdtype)
 
     def detect_initial_config(self, data):
         """Print the configuration of the data.
@@ -444,8 +490,7 @@ class HyperTransformer:
         """
         # Reset the state of the HyperTransformer
         self._default_sdtype_transformers = {}
-        self._provided_field_sdtypes = {}
-        self._provided_field_transformers = {}
+        self.config = Config()
 
         # Set the sdtypes and transformers of all fields to their defaults
         self._learn_config(data)
@@ -453,18 +498,13 @@ class HyperTransformer:
         self._user_message('Detecting a new config from the data ... SUCCESS')
         self._user_message('Setting the new config ... SUCCESS')
 
-        config = Config({
-            'sdtypes': self.field_sdtypes,
-            'transformers': self.field_transformers
-        })
-
         self._user_message('Config:')
-        self._user_message(config)
+        self._user_message(self.config)
 
     def _get_next_transformer(self, output_field, output_sdtype, next_transformers):
         next_transformer = None
-        if output_field in self.field_transformers:
-            next_transformer = self.field_transformers[output_field]
+        if output_field in self.config['field_transformers']:
+            next_transformer = self.config['field_transformers'][output_field]
 
         elif output_sdtype not in self._valid_output_sdtypes:
             if next_transformers is not None and output_field in next_transformers:
@@ -527,14 +567,14 @@ class HyperTransformer:
 
     def _validate_detect_config_called(self, data):
         """Assert the ``detect_initial_config`` method is correcly called before fitting."""
-        if len(self.field_sdtypes) == 0 and len(self.field_transformers) == 0:
+        if len(self.config['field_sdtypes']) == 0 and len(self.config['field_transformers']) == 0:
             raise NotFittedError(
                 "No config detected. Set the config using 'set_config' or pre-populate "
                 "it automatically from your data using 'detect_initial_config' prior to "
                 'fitting your data.'
             )
 
-        fields = list(self.field_sdtypes.keys())
+        fields = list(self.config['field_sdtypes'].keys())
         unknown_columns = self._subset(data.columns, fields, not_in=True)
         if unknown_columns:
             raise NotFittedError(
@@ -555,7 +595,8 @@ class HyperTransformer:
         self._learn_config(data)
         self._input_columns = list(data.columns)
         for field in self._input_columns:
-            data = self._fit_field_transformer(data, field, self.field_transformers[field])
+            data = self._fit_field_transformer(
+                data, field, self.config['field_transformers'][field])
 
         self._validate_all_fields_fitted()
         self._fitted = True
