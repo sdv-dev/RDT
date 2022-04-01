@@ -33,20 +33,20 @@ the transformations in order to revert them as needed.
 | :book: **[Documentation]**                    | Quickstarts, User and Development Guides, and API Reference.         |
 | :octocat: **[Repository]**                    | The link to the Github Repository of this library.                   |
 | :scroll: **[License]**                        | The entire ecosystem is published under the MIT License.             |
-| :keyboard: **[Development Status]**           | This software is in its Alpha stage.                             |
+| :keyboard: **[Development Status]**           | This software is in its Alpha stage.                                 |
 | [![][Slack Logo] **Community**][Community]    | Join our Slack Workspace for announcements and discussions.          |
-| [![][MyBinder Logo] **Tutorials**][Tutorials] | Run the SDV Tutorials in a Binder environment.                       |
+| [![][Google Colab Logo] **Tutorials**][Tutorials] | Run the RDT Tutorials in a notebook.                             |
 
 [Website]: https://sdv.dev
 [SDV Blog]: https://sdv.dev/blog
-[Documentation]: https://datacebo.gitbook.io/rdt
+[Documentation]: https://docs.sdv.dev/RDT
 [Repository]: https://github.com/sdv-dev/RDT
 [License]: https://github.com/sdv-dev/RDT/blob/master/LICENSE
 [Development Status]: https://pypi.org/search/?q=&o=&c=Development+Status+%3A%3A+3+-+Alpha
 [Slack Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/slack.png
 [Community]: https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw
-[MyBinder Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/mybinder.png
-[Tutorials]: https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials
+[Google Colab Logo]: https://colab.research.google.com/img/favicon.ico
+[Tutorials]: https://colab.research.google.com/drive/1T_3XSPPOVILATsyRV9xjQPa0hvM1vnM-?usp=sharing
 
 # Install
 
