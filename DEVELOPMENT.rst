@@ -16,11 +16,12 @@ RDT Technical Overview
 
 The goal of RDT is to be able to transform data that is not machine learning ready into data that
 is. By machine learning ready, we mean that the data should consist of data types that most machine
-learning models can process. Usually this means outputting numeric data with no nulls. The data
-types used by RDT are called ``sdtypes``. You can think of them as representing the **semantic**
-or **statistical** meaning of a datatype. On top of this, RDT also enforces that those transformations
-can be reversed, so that data of the original form can be obtained again. RDT accomplishes this
-with the use of two main classes:
+learning models can process. Usually this means outputting numeric data with no nulls. 
+
+The data types used by RDT are called ``sdtypes``. You can think of them as representing the
+**semantic** or **statistical** meaning of a datatype. On top of this, RDT also enforces that
+those transformations can be reversed, so that data of the original form can be obtained again.
+RDT accomplishes this with the use of two main classes:
 
 * ``BaseTransformer``
 * ``HyperTransformer``
