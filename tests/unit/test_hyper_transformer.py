@@ -1696,6 +1696,57 @@ class TestHyperTransformer(TestCase):
         assert instance._provided_field_sdtypes == {'a': 'numerical'}
         instance._user_message.assert_called_once_with(user_message, 'Info')
 
+    @patch('rdt.hyper_transformer.warnings')
+    def test_update_sdtypes_different_sdtype_transformer_provided(self, mock_warnings):
+        """Test ``update_sdtypes``.
+
+        Ensure that the method properly updates the ``self.field_sdtypes`` but doesn't change
+        the transformer if it is already of the correct type.
+
+        Setup:
+            - Initialize ``HyperTransformer`` with ``_fitted`` as ``False``.
+            - Set some ``field_sdtypes``.
+            - Set ``field_transformers`` entry for the column whose ``sdtype`` will be changed
+            to match the new ``sdtype``.
+
+        Input:
+            - Dictionary with a ``column_name`` and different ``sdtype``.
+
+        Mock:
+            - Patch the ``warnings`` module.
+
+        Side Effects:
+            - ``self.field_sdtypes`` has been updated.
+            - ``self._provided_field_sdtypes`` has been updated.
+            - ``self.field_transformers`` should not be updated.
+            - No warning should be raised.
+            - User message should be printed.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = False
+        instance._user_message = Mock()
+        instance.field_sdtypes = {'a': 'categorical'}
+        transformer = FloatFormatter()
+        instance.field_transformers = {'a': transformer}
+        column_name_to_sdtype = {
+            'a': 'numerical'
+        }
+
+        # Run
+        instance.update_sdtypes(column_name_to_sdtype)
+
+        # Assert
+        user_message = (
+            'The transformers for these columns may change based on the new sdtype.\n'
+            "Use 'get_config()' to verify the transformers."
+        )
+        mock_warnings.warn.assert_not_called()
+        assert instance.field_sdtypes == {'a': 'numerical'}
+        assert instance.field_transformers == {'a': transformer}
+        assert instance._provided_field_sdtypes == {'a': 'numerical'}
+        instance._user_message.assert_called_once_with(user_message, 'Info')
+
     def test_get_transformer(self):
         """Test the ``get_transformer`` method.
 
