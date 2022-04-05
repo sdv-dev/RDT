@@ -886,6 +886,43 @@ class TestHyperTransformer(TestCase):
         assert ht._provided_field_sdtypes == config['sdtypes']
         assert ht.field_sdtypes == config['sdtypes']
 
+    @patch('rdt.hyper_transformer.warnings')
+    def test_set_config_already_fitted(self, mock_warnings):
+        """Test the ``set_config`` method.
+
+        The method should raise a warning if the ``HyperTransformer`` has already been fit.
+
+        Setup:
+            - Mock the ``_validate_config`` method.
+            - Mock warnings to make sure user warning is raised.
+            - Set ``instance._fitted`` to True.
+
+        Input:
+            - A dict of two empty dicts.
+
+        Expected behavior:
+            - Warning should be raised to user.
+        """
+        # Setup
+
+        config = {
+            'sdtypes': {},
+            'transformers': {}
+        }
+        ht = HyperTransformer()
+        ht._fitted = True
+        ht._validate_config = Mock()
+
+        # Run
+        ht.set_config(config)
+
+        # Assert
+        expected_warnings_msg = (
+            'For this change to take effect, please refit your data using '
+            "'fit' or 'fit_transform'."
+        )
+        mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
+
     def get_data(self):
         return pd.DataFrame({
             'integer': [1, 2, 1, 3],
