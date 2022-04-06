@@ -210,6 +210,8 @@ class HyperTransformer:
         self.field_sdtypes.update(config['sdtypes'])
         self._provided_field_transformers = config['transformers']
         self.field_transformers.update(config['transformers'])
+        if self._fitted:
+            warnings.warn(self._REFIT_MESSAGE)
 
     def update_transformers_by_sdtype(self, sdtype, transformer):
         """Update the transformers for the specified ``sdtype``.
