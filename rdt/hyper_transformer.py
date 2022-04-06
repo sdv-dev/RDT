@@ -15,12 +15,8 @@ from rdt.transformers import (
 class Config(dict):
     """Config dict for ``HyperTransformer`` with a better representation."""
 
-    def __init__(self):
-        super().__init__()
-        self._provided_field_sdtypes = {}
-        self._provided_field_transformers = {}
-        self['field_transformers'] = {}
-        self['field_sdtypes'] = {}
+    _provided_field_transformers = None
+    _provided_field_sdtypes = None
 
     @staticmethod
     def _validate_config(config):
@@ -39,6 +35,33 @@ class Config(dict):
     @staticmethod
     def _get_supported_sdtypes():
         return get_transformers_by_type().keys()
+
+    def set_config(self, config):
+        """Set the ``HyperTransformer`` configuration.
+
+        This method will only update the sdtypes/transformers passed. Other previously
+        learned sdtypes/transformers will not be affected.
+
+        Args:
+            config (dict):
+                A dictionary containing the following two dictionaries:
+                - sdtypes: A dictionary mapping column names to their ``sdtypes``.
+                - transformers: A dictionary mapping column names to their transformer instances.
+        """
+        self._validate_config(config)
+        self._provided_field_sdtypes = config['sdtypes']
+        self['field_sdtypes'].update(config['sdtypes'])
+        self._provided_field_transformers = config['transformers']
+        self['field_transformers'].update(config['transformers'])
+
+    def __init__(self, config=None):
+        super().__init__()
+        self._provided_field_sdtypes = {}
+        self._provided_field_transformers = {}
+        self['field_transformers'] = {}
+        self['field_sdtypes'] = {}
+        if config:
+            self.set_config(config)
 
     def reset(self):
         """Reset the `field_sdtypes` and `field_transformers`."""
@@ -114,24 +137,6 @@ class Config(dict):
 
             self['field_transformers'][column_name] = transformer
             self._provided_field_transformers[column_name] = transformer
-
-    def set_config(self, config):
-        """Set the ``HyperTransformer`` configuration.
-
-        This method will only update the sdtypes/transformers passed. Other previously
-        learned sdtypes/transformers will not be affected.
-
-        Args:
-            config (dict):
-                A dictionary containing the following two dictionaries:
-                - sdtypes: A dictionary mapping column names to their ``sdtypes``.
-                - transformers: A dictionary mapping column names to their transformer instances.
-        """
-        self._validate_config(config)
-        self._provided_field_sdtypes = config['sdtypes']
-        self['field_sdtypes'].update(config['sdtypes'])
-        self._provided_field_transformers = config['transformers']
-        self['field_transformers'].update(config['transformers'])
 
     def __repr__(self):
         """Pretty print the dictionary."""
