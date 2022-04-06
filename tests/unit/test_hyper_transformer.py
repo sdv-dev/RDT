@@ -1,6 +1,5 @@
 import contextlib
 import io
-import json
 import re
 from collections import defaultdict
 from unittest import TestCase
@@ -11,8 +10,8 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
-from rdt.hyper_transformer import Config
 from rdt.errors import Error, NotFittedError
+from rdt.hyper_transformer import Config
 from rdt.transformers import (
     BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer, OneHotEncoder,
     UnixTimestampEncoder)
@@ -190,7 +189,6 @@ class TestConfig(TestCase):
         assert config._provided_field_transformers == transformers
         assert config['field_transformers'] == transformers
         assert config['field_sdtypes'] == sdtypes
-
 
     def test_reset(self):
         """Test that `reset` resets the `field_sdtypes` and `field_transformers`.
@@ -374,8 +372,6 @@ class TestHyperTransformer(TestCase):
         ht._transformers_sequence = [BinaryEncoder(), FloatFormatter()]
         ht._output_columns = ['col1', 'col2']
         ht._input_columns = ['col3', 'col4']
-        sdtypes = {'col1': 'float', 'col2': 'categorical'}
-        transformers = {'col2': FloatFormatter(), 'col3': BinaryEncoder()}
 
         # Run
         ht._unfit()
