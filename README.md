@@ -39,7 +39,7 @@ the transformations in order to revert them as needed.
 
 [Website]: https://sdv.dev
 [SDV Blog]: https://sdv.dev/blog
-[Documentation]: https://docs.sdv.dev/RDT
+[Documentation]: https://docs.sdv.dev/rdt
 [Repository]: https://github.com/sdv-dev/RDT
 [License]: https://github.com/sdv-dev/RDT/blob/master/LICENSE
 [Development Status]: https://pypi.org/search/?q=&o=&c=Development+Status+%3A%3A+3+-+Alpha
