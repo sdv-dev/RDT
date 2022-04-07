@@ -156,6 +156,7 @@ class HyperTransformer:
         self._input_columns = []
         self._fitted_fields = set()
         self._fitted = False
+        self._modifed_config = False
         self._transformers_tree = defaultdict(dict)
 
     @staticmethod
@@ -210,6 +211,7 @@ class HyperTransformer:
         self.field_sdtypes.update(config['sdtypes'])
         self._provided_field_transformers = config['transformers']
         self.field_transformers.update(config['transformers'])
+        self._modifed_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
@@ -236,11 +238,9 @@ class HyperTransformer:
                 self._provided_field_transformers[field] = transformer
                 self.field_transformers[field] = transformer
 
+        self._modifed_config = True
         if self._fitted:
-            warnings.warn(
-                'For this change to take effect, please refit your data using '
-                "'fit' or 'fit_transform'."
-            )
+            warnings.warn(self._REFIT_MESSAGE)
 
     def update_sdtypes(self, column_name_to_sdtype):
         """Update the ``sdtypes`` for each specified column name.
@@ -274,6 +274,7 @@ class HyperTransformer:
             'The transformers for these columns may change based on the new sdtype.\n'
             "Use 'get_config()' to verify the transformers.", 'Info'
         )
+        self._modifed_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
@@ -284,6 +285,7 @@ class HyperTransformer:
             column_name_to_transformer(dict):
                 Dict mapping column names to transformers to be used for that column.
         """
+        self._modifed_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
@@ -523,8 +525,7 @@ class HyperTransformer:
             output_columns = self.get_final_output_columns(input_column)
             self._output_columns.extend(output_columns)
 
-    def _validate_detect_config_called(self, data):
-        """Assert the ``detect_initial_config`` method is correcly called before fitting."""
+    def _validate_config_exists(self):
         if len(self.field_sdtypes) == 0 and len(self.field_transformers) == 0:
             raise NotFittedError(
                 "No config detected. Set the config using 'set_config' or pre-populate "
@@ -532,6 +533,9 @@ class HyperTransformer:
                 'fitting your data.'
             )
 
+    def _validate_detect_config_called(self, data):
+        """Assert the ``detect_initial_config`` method is correcly called before fitting."""
+        self._validate_config_exists()
         fields = list(self.field_sdtypes.keys())
         unknown_columns = self._subset(data.columns, fields, not_in=True)
         if unknown_columns:
@@ -557,6 +561,7 @@ class HyperTransformer:
 
         self._validate_all_fields_fitted()
         self._fitted = True
+        self._modifed_config = False
         self._sort_output_columns()
 
     def _validate_correctly_fitted(self, data):
@@ -565,8 +570,12 @@ class HyperTransformer:
         This method raises errors if ``fit`` is not been called at all or if the column names
         passed to ``fit`` are not the same as the ones passed to ``transform``.
         """
-        if not self._fitted:
-            raise NotFittedError
+        self._validate_config_exists()
+        if not self._fitted or self._modifed_config:
+            raise NotFittedError(
+                'The HyperTransformer is not ready to use. Please fit your data first using '
+                "'fit' or 'fit_transform'."
+            )
 
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
         is_subset = any(column not in data.columns for column in self._input_columns)

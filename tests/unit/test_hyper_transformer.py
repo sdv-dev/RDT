@@ -143,6 +143,15 @@ class TestHyperTransformer(TestCase):
         assert ht._default_sdtype_transformers == {}
         assert ht._provided_field_transformers == {}
         assert ht.field_transformers == {}
+        assert ht._specified_fields == set()
+        assert ht._valid_output_sdtypes == ht._DEFAULT_OUTPUT_SDTYPES
+        assert ht._transformers_sequence == []
+        assert ht._output_columns == []
+        assert ht._input_columns == []
+        assert ht._fitted_fields == set()
+        assert ht._fitted is False
+        assert ht._modifed_config is False
+        assert ht._transformers_tree == defaultdict(dict)
         multi_column_mock.assert_called_once()
         validation_mock.assert_called_once()
 
