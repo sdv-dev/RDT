@@ -258,7 +258,9 @@ class HyperTransformer:
             if sdtype not in self._get_supported_sdtypes():
                 unsupported_sdtypes.append(sdtype)
             elif self.field_sdtypes.get(column) != sdtype:
-                transformers_to_update[column] = get_default_transformer(sdtype)
+                current_transformer = self.field_transformers.get(column)
+                if not current_transformer or current_transformer.get_input_sdtype() != sdtype:
+                    transformers_to_update[column] = get_default_transformer(sdtype)
 
         if unsupported_sdtypes:
             raise Error(
