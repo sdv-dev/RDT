@@ -1,7 +1,6 @@
 """Hyper transformer module."""
 
 import json
-import re
 import warnings
 from collections import defaultdict
 from copy import deepcopy
