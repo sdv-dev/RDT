@@ -90,6 +90,10 @@ class HyperTransformer:
         'Nothing to update. Use the `detect_initial_config` method to pre-populate all the '
         'sdtypes and transformers from your dataset.'
     )
+    _NOT_FIT_MESSAGE = (
+        'The HyperTransformer is not ready to use. Please fit your data first using '
+        "'fit' or 'fit_transform'."
+    )
 
     @staticmethod
     def _user_message(text, prefix=None):
@@ -615,7 +619,7 @@ class HyperTransformer:
 
     def _validate_config_exists(self):
         if len(self.field_sdtypes) == 0 and len(self.field_transformers) == 0:
-            raise NotFittedError(
+            raise Error(
                 "No config detected. Set the config using 'set_config' or pre-populate "
                 "it automatically from your data using 'detect_initial_config' prior to "
                 'fitting your data.'
@@ -627,7 +631,7 @@ class HyperTransformer:
         fields = list(self.field_sdtypes.keys())
         unknown_columns = self._subset(data.columns, fields, not_in=True)
         if unknown_columns:
-            raise NotFittedError(
+            raise Error(
                 'The data you are trying to fit has different columns than the original '
                 f'detected data (unknown columns: {unknown_columns}). Column names and their '
                 "sdtypes must be the same. Use the method 'get_config()' to see the expected "
@@ -641,7 +645,7 @@ class HyperTransformer:
             data (pandas.DataFrame):
                 Data to fit the transformers to.
         """
-        self._validate_detect_config_called(data)
+        self._validate_detect_config_called()
         self._learn_config(data)
         self._input_columns = list(data.columns)
         for field in self._input_columns:
@@ -652,27 +656,46 @@ class HyperTransformer:
         self._modifed_config = False
         self._sort_output_columns()
 
-    def _validate_correctly_fitted(self, data):
-        """Validate the data to transform has been fitted.
-
-        This method raises errors if ``fit`` is not been called at all or if the column names
-        passed to ``fit`` are not the same as the ones passed to ``transform``.
-        """
+    def _transform(self, data, prevent_subset):
         self._validate_config_exists()
-        if not self._fitted or self._modifed_config:
-            raise NotFittedError(
-                'The HyperTransformer is not ready to use. Please fit your data first using '
-                "'fit' or 'fit_transform'."
-            )
+        if not self._fitted:
+            raise NotFittedError(self._NOT_FIT_MESSAGE)
 
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
-        is_subset = any(column not in data.columns for column in self._input_columns)
-        if unknown_columns or is_subset:
-            raise NotFittedError(
-                'The data you are trying to transform has different columns than the '
-                'original data. Column names and their sdtypes must be the same.'
-                "Use the method 'get_config()' to see the expected values."
+        if prevent_subset:
+            is_subset = all(column in self._input_columns for column in data.columns)
+            if unknown_columns or is_subset:
+                raise Error(
+                    'The data you are trying to transform has different columns than the original '
+                    'data. Column names and their sdtypes must be the same. Use the method '
+                    "'get_config()' to see the expected values."
+                )
+
+        elif unknown_columns:
+            raise Error(
+                'Unexpected column names in the data you are trying to transform: '
+                f"{unknown_columns}. Use 'get_config()' to see the acceptable column names."
             )
+
+        data = data.copy()
+        for transformer in self._transformers_sequence:
+            data = transformer.transform(data, drop=False)
+
+        transformed_columns = self._subset(self._output_columns, data.columns)
+        return data.reindex(columns=transformed_columns)
+
+    def transform_subset(self, data):
+        """Transform a subset of the fitted data's columns.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to transform.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed subset.
+        """
+        return self._transform(data, prevent_subset=False)
 
     def transform(self, data):
         """Transform the data.
@@ -685,13 +708,7 @@ class HyperTransformer:
             pandas.DataFrame:
                 Transformed data.
         """
-        self._validate_correctly_fitted(data)
-        data = data.copy()
-        for transformer in self._transformers_sequence:
-            data = transformer.transform(data, drop=False)
-
-        transformed_columns = self._subset(self._output_columns, data.columns)
-        return data.reindex(columns=transformed_columns)
+        return self._transform(data, prevent_subset=True)
 
     def fit_transform(self, data):
         """Fit the transformers to the data and then transform it.
@@ -707,6 +724,43 @@ class HyperTransformer:
         self.fit(data)
         return self.transform(data)
 
+    def _reverse_transform(self, data, prevent_subset):
+        self._validate_detect_config_called()
+        if not self._fitted:
+            raise NotFittedError(self._NOT_FIT_MESSAGE)
+
+        if prevent_subset:
+            is_subset = all(column in self._output_columns for column in data.columns)
+            if is_subset:
+                raise Error()
+
+        unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
+        if unknown_columns:
+            raise Error(
+                'There are unexpected column names in the data you are trying to transform. '
+                f'A reverse transform is not defined for {unknown_columns}.'
+            )
+
+        for transformer in reversed(self._transformers_sequence):
+            data = transformer.reverse_transform(data, drop=False)
+
+        reversed_columns = self._subset(self._input_columns, data.columns)
+
+        return data.reindex(columns=reversed_columns)
+
+    def reverse_transform_subset(self, data):
+        """Revert the transformations for a subset of the fitted columns.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to revert.
+
+        Returns:
+            pandas.DataFrame:
+                Reversed subset.
+        """
+        return self._reverse_transform(data, prevent_subset=False)
+
     def reverse_transform(self, data):
         """Revert the transformations back to the original values.
 
@@ -718,13 +772,4 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
-        if not self._fitted:
-            raise NotFittedError
-
-        unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
-        for transformer in reversed(self._transformers_sequence):
-            data = transformer.reverse_transform(data, drop=False)
-
-        reversed_columns = self._subset(self._input_columns, data.columns)
-
-        return data.reindex(columns=unknown_columns + reversed_columns)
+        return self._reverse_transform(data, prevent_subset=True)
