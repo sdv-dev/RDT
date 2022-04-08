@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
-from rdt.errors import NotFittedError
+from rdt.errors import Error
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
     OneHotEncoder, UnixTimestampEncoder, get_default_transformer, get_default_transformers)
@@ -497,6 +497,18 @@ def test_multiple_detects():
     pd.testing.assert_frame_equal(reverse, get_reversed_data())
 
 
+def test_transform_without_fit():
+    """HyperTransformer should raise an error when transforming without fitting."""
+    # Setup
+    data = pd.DataFrame()
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+
+    # Run / Assert
+    with pytest.raises(Error):
+        ht.transform(data)
+
+
 def test_fit_data_different_than_detect():
     """HyperTransformer should raise an error when transforming without fitting."""
     # Setup
@@ -512,7 +524,7 @@ def test_fit_data_different_than_detect():
         'values.'
     )
     ht.detect_initial_config(detect_data)
-    with pytest.raises(NotFittedError, match=error_msg):
+    with pytest.raises(Error, match=error_msg):
         ht.fit(data)
 
 
