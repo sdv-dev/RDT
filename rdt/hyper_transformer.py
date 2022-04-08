@@ -82,7 +82,9 @@ class Config:
             if sdtype not in self._get_supported_sdtypes():
                 unsupported_sdtypes.append(sdtype)
             elif self.field_sdtypes.get(column) != sdtype:
-                transformers_to_update[column] = get_default_transformer(sdtype)
+                current_transformer = self.field_transformers.get(column)
+                if not current_transformer or current_transformer.get_input_sdtype() != sdtype:
+                    transformers_to_update[column] = get_default_transformer(sdtype)
 
         if unsupported_sdtypes:
             raise Error(
@@ -153,12 +155,16 @@ class Config:
         """Return the fields sdtypes."""
         return self.field_sdtypes
 
-    def __repr__(self):
-        """Pretty print the dictionary."""
-        config = {
+    def to_dict(self):
+        """Return a `dict` object of `Config`."""
+        return {
             'sdtypes': self.field_sdtypes,
             'transformers': {k: repr(v) for k, v in self.field_transformers.items()}
         }
+
+    def __repr__(self):
+        """Pretty print the dictionary."""
+        config = self.to_dict()
         return json.dumps(config, indent=4)
 
 
@@ -303,7 +309,7 @@ class HyperTransformer:
                 - sdtypes: A dictionary mapping column names to their ``sdtypes``.
                 - transformers: A dictionary mapping column names to their transformer instances.
         """
-        return self.config.to_dict()
+        return self.config
 
     def set_config(self, config):
         """Set the ``HyperTransformer`` configuration.
@@ -318,6 +324,11 @@ class HyperTransformer:
                 - transformers: A dictionary mapping column names to their transformer instances.
         """
         self.config.set_config(config)
+        if self._fitted:
+            warnings.warn(
+                'For this change to take effect, please refit your data using '
+                "'fit' or 'fit_transform'."
+            )
 
     def update_transformers_by_sdtype(self, sdtype, transformer):
         """Update the transformers for the specified ``sdtype``.
