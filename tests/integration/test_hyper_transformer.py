@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
-from rdt.errors import Error
+from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
     OneHotEncoder, UnixTimestampEncoder, get_default_transformer, get_default_transformers)
@@ -594,3 +594,60 @@ def test_transform_unseen_columns():
     )
     with pytest.raises(NotFittedError, match=error_msg):
         ht.transform(different_data)
+
+def test_transform_subset():
+    """Test the ``transform_subset`` method.
+
+    The method should return a ``pandas.DataFrame`` with the subset of columns transformed.
+
+    Setup:
+        - Detect the config and fit the data.
+
+    Input:
+        - A ``pandas.DataFrame`` with a subset of the fitted columns.
+
+    Ouput:
+        - A ``pandas.DataFrame`` with the subset transformed.
+    """
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    subset = data[['col1']]
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.fit(data)
+
+    # Run
+    transformed = ht.transform_subset(subset)
+
+    # Assert
+    expected = pd.DataFrame({'col1.value': [1, 2]})
+    pd.testing.assert_frame_equal(transformed, expected)
+
+
+def test_reverse_transform_subset():
+    """Test the ``reverse_transform_subset`` method.
+
+    The method should return a ``pandas.DataFrame`` with the subset of columns reverse transformed.
+
+    Setup:
+        - Detect the config and fit the data.
+
+    Input:
+        - A ``pandas.DataFrame`` with a subset of the output columns.
+
+    Ouput:
+        - A ``pandas.DataFrame`` with the subset reverse transformed.
+    """
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    subset = pd.DataFrame({'col1.value': [1, 2]})
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.fit(data)
+
+    # Run
+    reverse_transformed = ht.reverse_transform_subset(subset)
+
+    # Assert
+    expected = pd.DataFrame({'col1': [1, 2]})
+    pd.testing.assert_frame_equal(reverse_transformed, expected)
