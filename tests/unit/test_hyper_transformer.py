@@ -711,11 +711,11 @@ class TestHyperTransformer(TestCase):
 
         field_transformers = {k: repr(v) for (k, v) in ht.config.field_transformers.items()}
         assert field_transformers == {
-            'col1': "FloatFormatter(missing_value_replacement='mean')",
-            'col2': 'FrequencyEncoder()',
-            'col3': "BinaryEncoder(missing_value_replacement='mode')",
-            'col4': "UnixTimestampEncoder(missing_value_replacement='mean')",
-            'col5': "FloatFormatter(missing_value_replacement='mean')"
+            'col1': repr(FloatFormatter(missing_value_replacement='mean')),
+            'col2': repr(FrequencyEncoder()),
+            'col3': repr(BinaryEncoder(missing_value_replacement='mode')),
+            'col4': repr(UnixTimestampEncoder(missing_value_replacement='mean')),
+            'col5': repr(FloatFormatter(missing_value_replacement='mean'))
         }
 
         expected_output = '\n'.join((
@@ -731,11 +731,11 @@ class TestHyperTransformer(TestCase):
             '        "col5": "numerical"',
             '    },',
             '    "transformers": {',
-            '        "col1": "FloatFormatter(missing_value_replacement=\'mean\')",',
-            '        "col2": "FrequencyEncoder()",',
-            '        "col3": "BinaryEncoder(missing_value_replacement=\'mode\')",',
-            '        "col4": "UnixTimestampEncoder(missing_value_replacement=\'mean\')",',
-            '        "col5": "FloatFormatter(missing_value_replacement=\'mean\')"',
+            '        "col1": FloatFormatter(missing_value_replacement=\'mean\'),',
+            '        "col2": FrequencyEncoder(),',
+            '        "col3": BinaryEncoder(missing_value_replacement=\'mode\'),',
+            '        "col4": UnixTimestampEncoder(missing_value_replacement=\'mean\'),',
+            '        "col5": FloatFormatter(missing_value_replacement=\'mean\')',
             '    }',
             '}',
             ''

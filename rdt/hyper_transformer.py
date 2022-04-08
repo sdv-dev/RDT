@@ -1,6 +1,7 @@
 """Hyper transformer module."""
 
 import json
+import re
 import warnings
 from collections import defaultdict
 from copy import deepcopy
@@ -147,17 +148,20 @@ class Config:
             if provided_transformer:
                 self._provided_field_transformers[column_name] = transformer
 
-    def to_dict(self):
-        """Return a `dict` object of `Config`."""
-        return {
+    def __repr__(self):
+        """Pretty print the dictionary."""
+        config = {
             'sdtypes': self.field_sdtypes,
             'transformers': {k: repr(v) for k, v in self.field_transformers.items()}
         }
 
-    def __repr__(self):
-        """Pretty print the dictionary."""
-        config = self.to_dict()
-        return json.dumps(config, indent=4)
+        printed = json.dumps(config, indent=4)
+        for transformer in self.field_transformers.values():
+            quoted_transformer = f'"{transformer}"'
+            if quoted_transformer in printed:
+                printed = printed.replace(quoted_transformer, repr(transformer))
+
+        return printed
 
 
 class HyperTransformer:
