@@ -9,7 +9,7 @@ import yaml
 
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
-    get_default_transformer, get_transformer_instance, get_transformers_by_type)
+    BaseTransformer, get_default_transformer, get_transformer_instance, get_transformers_by_type)
 
 
 class Config(dict):
@@ -234,11 +234,26 @@ class HyperTransformer:
             transformer (rdt.transformers.BaseTransformer):
                 Transformer class or instance to be used for the given ``sdtype``.
         """
+        if self._fitted:
+            warnings.warn(self._REFIT_MESSAGE)
+
         if not self.field_sdtypes:
             raise Error(
                 'Nothing to update. Use the `detect_initial_config` method to '
                 'pre-populate all the sdtypes and transformers from your dataset.'
             )
+
+        if sdtype not in self._get_supported_sdtypes():
+            raise Error(
+                'Invalid sdtype. If you are trying to use a premium sdtype, contact info@sdv.dev '
+                'about RDT Add-Ons.'
+            )
+
+        if not isinstance(transformer, BaseTransformer) and transformer is not None:
+            raise Error('Invalid transformer. Please input an rdt transformer object.')
+
+        if transformer.get_input_sdtype() != sdtype:
+            raise Error("The transformer you've assigned is incompatible with the sdtype.")
 
         for field, field_sdtype in self.field_sdtypes.items():
             if field_sdtype == sdtype:
@@ -246,8 +261,6 @@ class HyperTransformer:
                 self.field_transformers[field] = transformer
 
         self._modifed_config = True
-        if self._fitted:
-            warnings.warn(self._REFIT_MESSAGE)
 
     def update_sdtypes(self, column_name_to_sdtype):
         """Update the ``sdtypes`` for each specified column name.
