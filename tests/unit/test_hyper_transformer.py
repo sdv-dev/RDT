@@ -444,6 +444,29 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(NotFittedError, match=error_msg):
             ht._validate_correctly_fitted(data)
 
+    def test__validate_correctly_fitted_not_fitted(self):
+        """Test the ``_validate_correctly_fitted`` method.
+
+        Tests that the ``_validate_correctly_fitted`` method raises a ``NotFittedError``
+        when not ``_fitted`` is set to False.
+
+        Expected behavior:
+            - A ``NotFittedError`` should be raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht._fitted = False
+        ht.field_sdtypes = {'col1': 'categorical'}
+        data = pd.DataFrame()
+        error_msg = (
+            'The HyperTransformer is not ready to use. Please fit your data first using '
+            "'fit' or 'fit_transform'."
+        )
+
+        # Run / Assert
+        with pytest.raises(NotFittedError, match=error_msg):
+            ht._validate_correctly_fitted(data)
+
     def test_detect_initial_config(self):
         """Test the ``detect_initial_config`` method.
 
