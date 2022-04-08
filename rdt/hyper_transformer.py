@@ -147,14 +147,6 @@ class Config:
             if provided_transformer:
                 self._provided_field_transformers[column_name] = transformer
 
-    def get_field_transformers(self):
-        """Return the fields transformers."""
-        return self.field_transformers
-
-    def get_field_sdtypes(self):
-        """Return the fields sdtypes."""
-        return self.field_sdtypes
-
     def to_dict(self):
         """Return a `dict` object of `Config`."""
         return {

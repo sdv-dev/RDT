@@ -385,6 +385,52 @@ class TestHyperTransformer(TestCase):
         assert ht._transformers_tree == {}
         ht.config.reset.assert_called_once()
 
+    @patch('rdt.hyper_transformer.get_default_transformer')
+    def test__learn_config(self, mock_get_default_transformer):
+        """Test the ``_learn_config`` method.
+
+        Test that the method properly learns the config.
+
+        - Setup:
+            - Create instance of HyperTransformer.
+            - Set some field_sdtypes to the config.
+            - Set a default `numerical` transformer.
+
+        - Input:
+            - Fields, an array of fields.
+
+        - Mock:
+            - Mock the `config` class.
+            - Patch `get_default_transformers` to return a transformer and assert calling it.
+
+        - Side Effects:
+            - `instance.config.update_transformers` has been called three times with
+              the expected transformers.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht._default_sdtype_transformers = {'numerical': FloatFormatter}
+        ht.config = Mock()
+        ht.config.field_transformers = {}
+        ht.config.field_sdtypes = {
+            'a': 'numerical',
+            'b': 'numerical',
+            'c': 'other'
+        }
+        fields = ['a', 'b', 'c']
+        mock_get_default_transformer.return_value = BinaryEncoder
+
+        # Run
+        ht._learn_config(fields)
+
+        # Assert
+        ht.config.update_transformers.call_args_list == [
+            call('a', FloatFormatter),
+            call('b', FloatFormatter),
+            call('c', BinaryEncoder)
+        ]
+        mock_get_default_transformer.assert_called_once_with('other')
+
     def test__create_multi_column_fields(self):
         """Test the ``_create_multi_column_fields`` method.
 
