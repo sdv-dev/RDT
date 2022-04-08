@@ -580,11 +580,9 @@ class HyperTransformer:
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
         is_subset = any(column not in data.columns for column in self._input_columns)
         if unknown_columns or is_subset:
-            unknown_text = f' (unknown columns: {unknown_columns})' if unknown_columns else ''
             raise NotFittedError(
-                'The data you are trying to transform has different columns than the original '
-                f'fitted data{unknown_text}. Column names and their sdtypes must be the same. '
-                "Use the method 'get_config()' to see the expected values."
+                'The data you are trying to transform has different columns than the '
+                'original data. Column names and their sdtypes must be the same.'
             )
 
     def transform(self, data):

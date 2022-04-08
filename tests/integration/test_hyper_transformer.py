@@ -564,3 +564,21 @@ def test_transform_without_config():
     )
     with pytest.raises(NotFittedError, match=error_msg):
         ht.transform(data)
+
+
+def test_transform_unseen_columns():
+    """HyperTransformer shouldn't transform when the data wasn't seen during fit."""
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    different_data = pd.DataFrame({'col3': [1, 2]})
+    ht = HyperTransformer()
+
+    # Run / Assert
+    ht.detect_initial_config(data)
+    ht.fit(data)
+    error_msg = error_msg = (
+        'The data you are trying to transform has different columns than the original data. '
+        'Column names and their sdtypes must be the same.'
+    )
+    with pytest.raises(NotFittedError, match=error_msg):
+        ht.transform(different_data)
