@@ -21,7 +21,14 @@ class Config(dict):
             'sdtypes': self['sdtypes'],
             'transformers': {k: repr(v) for k, v in self['transformers'].items()}
         }
-        return json.dumps(config, indent=4)
+
+        printed = json.dumps(config, indent=4)
+        for transformer in self['transformers'].values():
+            quoted_transformer = f'"{transformer}"'
+            if quoted_transformer in printed:
+                printed = printed.replace(quoted_transformer, repr(transformer))
+
+        return printed
 
 
 class HyperTransformer:
