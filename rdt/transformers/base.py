@@ -186,8 +186,7 @@ class BaseTransformer:
 
         for arg, value in instanced.items():
             if defaults[arg] != value:
-                value = f"'{value}'" if isinstance(value, str) else value
-                custom_args.append(f'{arg}={value}')
+                custom_args.append(f'{arg}={repr(value)}')
 
         args_string = ', '.join(custom_args)
         return f'{class_name}({args_string})'
