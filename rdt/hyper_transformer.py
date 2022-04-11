@@ -583,6 +583,7 @@ class HyperTransformer:
             raise NotFittedError(
                 'The data you are trying to transform has different columns than the '
                 'original data. Column names and their sdtypes must be the same.'
+                "Use the method 'get_config()' to see the expected values."
             )
 
     def transform(self, data):
