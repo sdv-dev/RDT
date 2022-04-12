@@ -13,7 +13,7 @@ from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
 
-class PIIAnonymizer(BaseTransformer):
+class AnonymizedFaker(BaseTransformer):
     """Personal Identifiable Information Anonymizer using Faker.
 
     This transformer will drop a column and regenerate it with the previously specified
