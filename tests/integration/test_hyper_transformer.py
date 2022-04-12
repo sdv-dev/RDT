@@ -582,3 +582,20 @@ def test_transform_unseen_columns():
     )
     with pytest.raises(NotFittedError, match=error_msg):
         ht.transform(different_data)
+
+
+def test_incorrect_update_sdtypes():
+    """HyperTransformer should crash when update_sdytpes is passed non-existing columns."""
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    different_data = pd.DataFrame({'col3': [1, 2]})
+    ht = HyperTransformer()
+
+    # Run / Assert
+    ht.detect_initial_config(data)
+    error_msg = error_msg = re.escape(
+        "Invalid column names: ['col3']. These columns do not exist in the "
+        "config. Use 'set_config()' to write and set your entire config at once."
+    )
+    with pytest.raises(NotFittedError, match=error_msg):
+        ht.update_sdtypes(different_data)
