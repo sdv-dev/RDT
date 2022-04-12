@@ -1950,8 +1950,14 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         transformer = Mock()
         ht._transformers_tree = {
-            'field1': {'transformer': transformer, 'outputs': ['field1.out1', 'field1.out2']},
-            'field1.out1': {'transformer': transformer, 'outputs': ['field1.out1.value']},
+            'field1': {
+                'transformer': transformer,
+                'outputs': ['field1.out1', 'field1.out2']
+            },
+            'field1.out1': {
+                'transformer': transformer,
+                'outputs': ['field1.out1.value']
+            },
             'field1.out2': {
                 'transformer': transformer,
                 'outputs': ['field1.out2.out1', 'field.out2.out2']
@@ -1964,7 +1970,10 @@ class TestHyperTransformer(TestCase):
                 'transformer': transformer,
                 'outputs': ['field1.out2.out2.value']
             },
-            'field2': {'transformer': transformer, 'outputs': ['field2.value']}
+            'field2': {
+                'transformer': transformer,
+                'outputs': ['field2.value']
+            }
         }
         ht._fitted = True
 

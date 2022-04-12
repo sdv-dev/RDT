@@ -429,7 +429,7 @@ class HyperTransformer:
         outputs = self._transformers_tree[field].get('outputs', []).copy()
         while len(outputs) > 0:
             output = outputs.pop()
-            transformer = self._transformers_tree[output].get('transformer')
+            transformer = self._transformers_tree.get(output, {}).get('transformer')
             if output in self._transformers_tree and transformer:
                 outputs.extend(self._transformers_tree[output].get('outputs', []))
             else:
