@@ -185,6 +185,7 @@ class HyperTransformer:
 
     @staticmethod
     def _get_supported_sdtypes():
+        get_transformers_by_type.cache_clear()
         return get_transformers_by_type().keys()
 
     def get_config(self):
