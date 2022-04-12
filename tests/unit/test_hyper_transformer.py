@@ -12,8 +12,8 @@ import pytest
 from rdt import HyperTransformer
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
-    BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer, OneHotEncoder,
-    UnixTimestampEncoder)
+    BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer, LabelEncoder,
+    OneHotEncoder, UnixTimestampEncoder)
 
 
 class TestHyperTransformer(TestCase):
@@ -1269,17 +1269,11 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(NotFittedError):
             ht.reverse_transform(data)
 
-    @patch('rdt.hyper_transformer.print')
-    def test_update_transformers_by_sdtype_no_field_sdtypes(self, mock_print):
-        """Test that ``update_transformers_by_sdtype`` prints an error message.
-
-        Ensure that no changes have been made and an error message has been printed.
+    def test_update_transformers_by_sdtype_no_config(self):
+        """Test that ``update_transformers_by_sdtype`` raises error if config is empty.
 
         Setup:
             - HyperTransformer instance.
-
-        Mock:
-            - Print function.
 
         Side Effects:
             - HyperTransformer's field_transformers have not been upated.
@@ -1299,17 +1293,13 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert ht.field_transformers == {}
 
-    @patch('rdt.hyper_transformer.print')
-    def test_update_transformers_by_sdtype_field_sdtypes_not_fitted(self, mock_print):
-        """Test that ``update_transformers_by_sdtype`` doesn't print anything.
+    def test_update_transformers_by_sdtype_field_sdtypes_not_fitted(self):
+        """Test ``update_transformers_by_sdtype`` if ``HyperTransformer`` hasn't been fitted.
 
-        Ensure that the ``field_transformers`` that have the input ``sdtype`` have been updated.
+        Ensure that the ``field_transformers`` matching the input ``sdtype`` have been updated.
 
         Setup:
             - HyperTransformer instance with ``field_transformers`` and ``field-data_types``.
-
-        Mock:
-            - Print function.
 
         Side Effects:
             - HyperTransformer's ``field_transformers`` are upated with the input data.
@@ -1317,53 +1307,51 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
+        ff = FloatFormatter()
         ht.field_transformers = {
-            'categorical_column': 'rdt.transformers.BaseTransformer',
-            'numerical_column': 'rdt.transformers.FloatFormatter',
+            'categorical_column': FrequencyEncoder(),
+            'numerical_column': ff,
         }
         ht.field_sdtypes = {
             'categorical_column': 'categorical',
             'numerical_column': 'numerical',
 
         }
-        transformer = object()
+        transformer = LabelEncoder()
 
         # Run
         ht.update_transformers_by_sdtype('categorical', transformer)
 
         # Assert
-        mock_print.assert_not_called()
         expected_field_transformers = {
             'categorical_column': transformer,
-            'numerical_column': 'rdt.transformers.FloatFormatter',
+            'numerical_column': ff,
         }
         assert ht.field_transformers == expected_field_transformers
 
     @patch('rdt.hyper_transformer.warnings')
-    @patch('rdt.hyper_transformer.print')
-    def test_update_transformers_by_sdtype_field_sdtypes_fitted(self, mock_print, mock_warnings):
-        """Test that ``update_transformers_by_sdtype`` doesn't print anything.
+    def test_update_transformers_by_sdtype_field_sdtypes_fitted(self, mock_warnings):
+        """Test ``update_transformers_by_sdtype`` if ``HyperTransformer`` has aleady been fit.
 
         Ensure that the ``field_transformers`` that have the input ``sdtype`` have been updated and
-        a warning message has been printed.
+        a warning message has been raised.
 
         Setup:
             - HyperTransformer instance with ``field_transformers`` and ``field-data_types``.
+            - ``instance._fitted`` set to True.
 
         Mock:
-            - Print function.
             - Warnings from the HyperTransformer.
 
         Side Effects:
             - HyperTransformer's ``field_transformers`` are upated with the input data.
-            - Print not called.
         """
         # Setup
         ht = HyperTransformer()
         ht._fitted = True
-        ht.field_transformers = {'categorical_column': 'rdt.transformers.BaseTransformer'}
+        ht.field_transformers = {'categorical_column': FrequencyEncoder()}
         ht.field_sdtypes = {'categorical_column': 'categorical'}
-        transformer = object()
+        transformer = LabelEncoder()
 
         # Run
         ht.update_transformers_by_sdtype('categorical', transformer)
@@ -1374,9 +1362,88 @@ class TestHyperTransformer(TestCase):
             "'fit' or 'fit_transform'."
         )
 
-        mock_print.assert_not_called()
         mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
         assert ht.field_transformers == {'categorical_column': transformer}
+
+    def test_update_transformers_by_sdtype_unsupported_sdtype_raises_error(self):
+        """Test ``update_transformers_by_sdtype`` with an unsupported sdtype.
+
+        An error should be raised.
+
+        Setup:
+            - HyperTransformer instance with ``field_transformers`` and ``field-data_types``.
+
+        Side Effects:
+            - Error is raised with a message about invalid sdtypes and premium sdtypes.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            'categorical_column': Mock(),
+            'numerical_column': Mock(),
+        }
+        ht.field_sdtypes = {
+            'categorical_column': 'categorical',
+            'numerical_column': 'numerical',
+        }
+
+        # Run / Assert
+        expected_msg = (
+            'Invalid sdtype. If you are trying to use a premium sdtype, contact info@sdv.dev '
+            'about RDT Add-Ons.'
+        )
+        with pytest.raises(Error, match=expected_msg):
+            ht.update_transformers_by_sdtype('fake_type', Mock())
+
+    def test_update_transformers_by_sdtype_bad_transformer_raises_error(self):
+        """Test ``update_transformers_by_sdtype`` with an object that isn't a transformer instance.
+
+        Setup:
+            - HyperTransformer instance with ``field_transformers`` and ``field-data_types``.
+
+        Side Effects:
+            - Error is raised with a message about using a transformer instance.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            'categorical_column': Mock(),
+            'numerical_column': Mock(),
+        }
+        ht.field_sdtypes = {
+            'categorical_column': 'categorical',
+            'numerical_column': 'numerical',
+        }
+
+        # Run / Assert
+        expected_msg = 'Invalid transformer. Please input an rdt transformer object.'
+        with pytest.raises(Error, match=expected_msg):
+            ht.update_transformers_by_sdtype('categorical', Mock())
+
+    def test_update_transformers_by_sdtype_mismatched_sdtype_raises_error(self):
+        """Test ``update_transformers_by_sdtype`` with a mismatched sdtype and transformer.
+
+        Setup:
+            - HyperTransformer instance with ``field_transformers`` and ``field-data_types``.
+
+        Side Effects:
+            - Error is raised with a message about sdtype not matching transformer's sdtype.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            'categorical_column': Mock(),
+            'numerical_column': Mock(),
+        }
+        ht.field_sdtypes = {
+            'categorical_column': 'categorical',
+            'numerical_column': 'numerical',
+        }
+
+        # Run / Assert
+        expected_msg = "The transformer you've assigned is incompatible with the sdtype."
+        with pytest.raises(Error, match=expected_msg):
+            ht.update_transformers_by_sdtype('categorical', FloatFormatter())
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_fitted(self, mock_warnings):
