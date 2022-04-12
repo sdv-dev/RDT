@@ -143,6 +143,15 @@ class TestHyperTransformer(TestCase):
         assert ht._default_sdtype_transformers == {}
         assert ht._provided_field_transformers == {}
         assert ht.field_transformers == {}
+        assert ht._specified_fields == set()
+        assert ht._valid_output_sdtypes == ht._DEFAULT_OUTPUT_SDTYPES
+        assert ht._transformers_sequence == []
+        assert ht._output_columns == []
+        assert ht._input_columns == []
+        assert ht._fitted_fields == set()
+        assert ht._fitted is False
+        assert ht._modifed_config is False
+        assert ht._transformers_tree == defaultdict(dict)
         multi_column_mock.assert_called_once()
         validation_mock.assert_called_once()
 
@@ -400,12 +409,11 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ht._fitted = True
         ht._input_columns = ['col1', 'col2']
+        ht.field_sdtypes = ['categorical', 'numerical']
         data = pd.DataFrame({'col1': [1, 2], 'col3': ['a', 'b']})
-        error_msg = re.escape(
-            'The data you are trying to transform has different columns than the original '
-            "fitted data (unknown columns: ['col3']). Column names and their "
-            "sdtypes must be the same. Use the method 'get_config()' to see the expected "
-            'values.'
+        error_msg = (
+            'The data you are trying to transform has different columns than the original data. '
+            'Column names and their sdtypes must be the same.'
         )
 
         # Run / Assert
@@ -425,11 +433,34 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ht._fitted = True
         ht._input_columns = ['col1', 'col2']
+        ht.field_sdtypes = ['categorical', 'numerical']
         data = pd.DataFrame({'col1': [1, 2]})
-        error_msg = re.escape(
-            'The data you are trying to transform has different columns than the original '
-            'fitted data. Column names and their sdtypes must be the same. Use the method '
-            "'get_config()' to see the expected values."
+        error_msg = (
+            'The data you are trying to transform has different columns than the original data. '
+            'Column names and their sdtypes must be the same.'
+        )
+
+        # Run / Assert
+        with pytest.raises(NotFittedError, match=error_msg):
+            ht._validate_correctly_fitted(data)
+
+    def test__validate_correctly_fitted_not_fitted(self):
+        """Test the ``_validate_correctly_fitted`` method.
+
+        Tests that the ``_validate_correctly_fitted`` method raises a ``NotFittedError``
+        when not ``_fitted`` is set to False.
+
+        Expected behavior:
+            - A ``NotFittedError`` should be raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht._fitted = False
+        ht.field_sdtypes = {'col1': 'categorical'}
+        data = pd.DataFrame()
+        error_msg = (
+            'The HyperTransformer is not ready to use. Please fit your data first using '
+            "'fit' or 'fit_transform'."
         )
 
         # Run / Assert
@@ -1096,6 +1127,7 @@ class TestHyperTransformer(TestCase):
             bool_transformer,
             datetime_transformer
         ]
+        ht.field_sdtypes = {'col1': 'categorical'}
         ht._input_columns = list(data.columns)
         expected = self.get_transformed_data(True)
         ht._output_columns = list(expected.columns)

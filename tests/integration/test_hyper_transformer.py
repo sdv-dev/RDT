@@ -497,17 +497,6 @@ def test_multiple_detects():
     pd.testing.assert_frame_equal(reverse, get_reversed_data())
 
 
-def test_transform_without_fit():
-    """HyperTransformer should raise an error when transforming without fitting."""
-    # Setup
-    data = pd.DataFrame()
-    ht = HyperTransformer()
-
-    # Run / Assert
-    with pytest.raises(NotFittedError):
-        ht.transform(data)
-
-
 def test_fit_data_different_than_detect():
     """HyperTransformer should raise an error when transforming without fitting."""
     # Setup
@@ -525,3 +514,71 @@ def test_fit_data_different_than_detect():
     ht.detect_initial_config(detect_data)
     with pytest.raises(NotFittedError, match=error_msg):
         ht.fit(data)
+
+
+def test_transform_without_fitting():
+    """HyperTransformer shouldn't transform when fit hasn't been called yet."""
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    ht = HyperTransformer()
+
+    # Run / Assert
+    ht.detect_initial_config(data)
+    error_msg = (
+        'The HyperTransformer is not ready to use. Please fit your data first using '
+        "'fit' or 'fit_transform'."
+    )
+    with pytest.raises(NotFittedError, match=error_msg):
+        ht.transform(data)
+
+
+def test_transform_without_refitting():
+    """HyperTransformer shouldn't transform when a new config hasn't been fitted."""
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    ht = HyperTransformer()
+
+    # Run / Assert
+    ht.detect_initial_config(data)
+    ht.fit(data)
+    ht.update_sdtypes({'col1': 'categorical'})
+    error_msg = (
+        'The HyperTransformer is not ready to use. Please fit your data first using '
+        "'fit' or 'fit_transform'."
+    )
+    with pytest.raises(NotFittedError, match=error_msg):
+        ht.transform(data)
+
+
+def test_transform_without_config():
+    """HyperTransformer shouldn't transform when a config hasn't been set."""
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    ht = HyperTransformer()
+
+    # Run / Assert
+    error_msg = (
+        "No config detected. Set the config using 'set_config' or pre-populate "
+        "it automatically from your data using 'detect_initial_config' prior to "
+        'fitting your data.'
+    )
+    with pytest.raises(NotFittedError, match=error_msg):
+        ht.transform(data)
+
+
+def test_transform_unseen_columns():
+    """HyperTransformer shouldn't transform when the data wasn't seen during fit."""
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    different_data = pd.DataFrame({'col3': [1, 2]})
+    ht = HyperTransformer()
+
+    # Run / Assert
+    ht.detect_initial_config(data)
+    ht.fit(data)
+    error_msg = error_msg = (
+        'The data you are trying to transform has different columns than the original data. '
+        'Column names and their sdtypes must be the same.'
+    )
+    with pytest.raises(NotFittedError, match=error_msg):
+        ht.transform(different_data)
