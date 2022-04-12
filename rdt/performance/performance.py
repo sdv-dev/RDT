@@ -39,7 +39,7 @@ TRANSFORMER_ARGS = {
     'ClusterBasedNormalizer': {
         'model_missing_values': True
     },
-    'PIIAnonymizer': {
+    'AnonymizedFaker': {
         'model_missing_values': True
     },
 }
