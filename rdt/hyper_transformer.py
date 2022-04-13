@@ -331,18 +331,19 @@ class HyperTransformer:
         for column_name in column_names:
             if column_name not in self.field_transformers:
                 unknown_columns.append(column_name)
-            else:
-                self.field_transformers[column_name] = None
-                self._provided_field_transformers[column_name] = None
-
-        if self._fitted:
-            warnings.warn(self._REFIT_MESSAGE)
 
         if unknown_columns:
             raise Error(
                 f'Invalid column names: {unknown_columns}. These columns do not exist in the '
                 "config. Use 'get_config()' to see the expected values."
             )
+
+        for column_name in column_names:
+            self.field_transformers[column_name] = None
+            self._provided_field_transformers[column_name] = None
+
+        if self._fitted:
+            warnings.warn(self._REFIT_MESSAGE)
 
     def remove_transformers_by_sdtype(self, sdtype):
         """Remove transformers for given ``sdtype``.
