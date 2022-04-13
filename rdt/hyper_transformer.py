@@ -176,12 +176,15 @@ class HyperTransformer:
         sdtypes = config.get('sdtypes', {})
         transformers = config.get('transformers', {})
         for column, transformer in transformers.items():
-            input_sdtype = transformer.get_input_sdtype()
-            sdtype = sdtypes.get(column)
-            if input_sdtype != sdtype:
-                warnings.warn(f'You are assigning a {input_sdtype} transformer to a {sdtype} '
-                              f"column ('{column}'). If the transformer doesn't match the "
-                              'sdtype, it may lead to errors.')
+            if transformer is not None:
+                input_sdtype = transformer.get_input_sdtype()
+                sdtype = sdtypes.get(column)
+                if input_sdtype != sdtype:
+                    warnings.warn(
+                        f'You are assigning a {input_sdtype} transformer to a {sdtype} '
+                        f"column ('{column}'). If the transformer doesn't match the "
+                        'sdtype, it may lead to errors.'
+                    )
 
     @staticmethod
     def _get_supported_sdtypes():
@@ -316,16 +319,69 @@ class HyperTransformer:
             raise Error(self._DETECT_CONFIG_MESSAGE)
 
         for column_name, transformer in column_name_to_transformer.items():
-            current_sdtype = self.field_sdtypes.get(column_name)
-            if current_sdtype and current_sdtype != transformer.get_input_sdtype():
-                warnings.warn(
-                    f'You are assigning a {transformer.get_input_sdtype()} transformer '
-                    f'to a {current_sdtype} column ({column_name}). '
-                    "If the transformer doesn't match the sdtype, it may lead to errors."
-                )
+            if transformer is not None:
+                current_sdtype = self.field_sdtypes.get(column_name)
+                if current_sdtype and current_sdtype != transformer.get_input_sdtype():
+                    warnings.warn(
+                        f'You are assigning a {transformer.get_input_sdtype()} transformer '
+                        f'to a {current_sdtype} column ({column_name}). '
+                        "If the transformer doesn't match the sdtype, it may lead to errors."
+                    )
 
             self.field_transformers[column_name] = transformer
             self._provided_field_transformers[column_name] = transformer
+
+    def remove_transformers(self, column_names):
+        """Remove transformers for given columns.
+
+        This will remove the transformer for a given column name and this will not be
+        transformed.
+
+        Args:
+            column_names (list):
+                List of columns to remove the transformers for.
+        """
+        unknown_columns = []
+        for column_name in column_names:
+            if column_name not in self.field_transformers:
+                unknown_columns.append(column_name)
+
+        if unknown_columns:
+            raise Error(
+                f'Invalid column names: {unknown_columns}. These columns do not exist in the '
+                "config. Use 'get_config()' to see the expected values."
+            )
+
+        for column_name in column_names:
+            self.field_transformers[column_name] = None
+            self._provided_field_transformers[column_name] = None
+
+        if self._fitted:
+            warnings.warn(self._REFIT_MESSAGE)
+
+    def remove_transformers_by_sdtype(self, sdtype):
+        """Remove transformers for given ``sdtype``.
+
+        This will remove the transformers for a given ``sdtype``  and those will not be
+        transformed.
+
+        Args:
+            sdtype (str):
+                Semantic data type for the transformers to be removed.
+        """
+        if sdtype not in self._get_supported_sdtypes():
+            raise Error(
+                f"Invalid sdtype '{sdtype}'. If you are trying to use a premium sdtype, "
+                'contact info@sdv.dev about RDT Add-Ons.'
+            )
+
+        for column_name, column_sdtype in self.field_sdtypes.items():
+            if column_sdtype == sdtype:
+                self.field_transformers[column_name] = None
+                self._provided_field_transformers[column_name] = None
+
+        if self._fitted:
+            warnings.warn(self._REFIT_MESSAGE)
 
     def get_transformer(self, field):
         """Get the transformer instance used for a field.
@@ -388,7 +444,8 @@ class HyperTransformer:
         outputs = self._transformers_tree[field].get('outputs', []).copy()
         while len(outputs) > 0:
             output = outputs.pop()
-            if output in self._transformers_tree:
+            transformer = self._transformers_tree.get(output, {}).get('transformer')
+            if output in self._transformers_tree and transformer:
                 outputs.extend(self._transformers_tree[output].get('outputs', []))
             else:
                 final_outputs.append(output)
@@ -515,32 +572,40 @@ class HyperTransformer:
             transformer (Transformer):
                 Instance of transformer class that will fit the data.
         """
-        transformer = get_transformer_instance(transformer)
-        transformer.fit(data, field)
-        self._add_field_to_set(field, self._fitted_fields)
-        self._transformers_sequence.append(transformer)
-        data = transformer.transform(data)
+        if transformer is None:
+            self._add_field_to_set(field, self._fitted_fields)
+            self._transformers_tree[field]['transformer'] = None
+            self._transformers_tree[field]['outputs'] = [field]
 
-        output_sdtypes = transformer.get_output_sdtypes()
-        next_transformers = transformer.get_next_transformers()
-        self._transformers_tree[field]['transformer'] = transformer
-        self._transformers_tree[field]['outputs'] = list(output_sdtypes)
-        for (output_name, output_sdtype) in output_sdtypes.items():
-            output_field = self._multi_column_fields.get(output_name, output_name)
-            next_transformer = self._get_next_transformer(
-                output_field, output_sdtype, next_transformers)
+        else:
+            transformer = get_transformer_instance(transformer)
+            transformer.fit(data, field)
+            self._add_field_to_set(field, self._fitted_fields)
+            self._transformers_sequence.append(transformer)
+            data = transformer.transform(data)
 
-            if next_transformer:
-                if self._field_in_data(output_field, data):
-                    self._fit_field_transformer(data, output_field, next_transformer)
+            output_sdtypes = transformer.get_output_sdtypes()
+            next_transformers = transformer.get_next_transformers()
+            self._transformers_tree[field]['transformer'] = transformer
+            self._transformers_tree[field]['outputs'] = list(output_sdtypes)
+            for (output_name, output_sdtype) in output_sdtypes.items():
+                output_field = self._multi_column_fields.get(output_name, output_name)
+                next_transformer = self._get_next_transformer(
+                    output_field, output_sdtype, next_transformers)
+
+                if next_transformer:
+                    if self._field_in_data(output_field, data):
+                        self._fit_field_transformer(data, output_field, next_transformer)
 
         return data
 
     def _validate_all_fields_fitted(self):
         non_fitted_fields = self._specified_fields.difference(self._fitted_fields)
         if non_fitted_fields:
-            warnings.warn('The following fields were specified in the input arguments but not'
-                          + f'found in the data: {non_fitted_fields}')
+            warnings.warn(
+                'The following fields were specified in the input arguments but not '
+                f'found in the data: {non_fitted_fields}'
+            )
 
     def _sort_output_columns(self):
         """Sort ``_output_columns`` to follow the same order as the ``_input_columns``."""
