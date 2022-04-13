@@ -493,8 +493,6 @@ class HyperTransformer:
         self.field_sdtypes[field] = self._DTYPES_TO_SDTYPES[kind]
 
     def _unfit(self):
-        self.field_sdtypes = self._provided_field_sdtypes.copy()
-        self.field_transformers = self._provided_field_transformers.copy()
         self._transformers_sequence = []
         self._input_columns = []
         self._output_columns = []
@@ -630,11 +628,13 @@ class HyperTransformer:
         """Assert the ``detect_initial_config`` method is correcly called before fitting."""
         self._validate_config_exists()
         fields = list(self.field_sdtypes.keys())
+        missing = any(column not in data.columns for column in fields)
         unknown_columns = self._subset(data.columns, fields, not_in=True)
-        if unknown_columns:
+        if unknown_columns or missing:
+            unknown_text = f' (unknown columns: {unknown_columns})'
             raise Error(
                 'The data you are trying to fit has different columns than the original '
-                f'detected data (unknown columns: {unknown_columns}). Column names and their '
+                f'detected data{unknown_text}. Column names and their '
                 "sdtypes must be the same. Use the method 'get_config()' to see the expected "
                 'values.'
             )
@@ -647,7 +647,7 @@ class HyperTransformer:
                 Data to fit the transformers to.
         """
         self._validate_detect_config_called(data)
-        self._learn_config(data)
+        self._unfit()
         self._input_columns = list(data.columns)
         for field in self._input_columns:
             data = self._fit_field_transformer(data, field, self.field_transformers[field])
