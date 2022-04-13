@@ -689,6 +689,11 @@ class TestHyperTransformer(TestCase):
             - Dataframe with a column.
             - HyperTransformer instance.
 
+        Input:
+            - A DataFrame with two columns.
+            - A column name to fit the transformer to.
+            - A ``None`` value as ``transformer``.
+
         Output:
             - input data.
 
@@ -1857,6 +1862,9 @@ class TestHyperTransformer(TestCase):
             - Instance of HyperTransformers.
             - Set some ``field_transformers``.
 
+        Input:
+            - List with column name.
+
         Side Effects:
             - After removing using ``remove_transformers`` the columns transformer should be set
               to ``None``.
@@ -1889,6 +1897,9 @@ class TestHyperTransformer(TestCase):
         Setup:
             - Instance of HyperTransformer.
             - Set some ``field_transformers``.
+
+        Input:
+            - List with column name, one valid and one invalid.
 
         Mock:
             - Mock ``warnings`` from ``rdt.hyper_transformer``.
@@ -1933,6 +1944,9 @@ class TestHyperTransformer(TestCase):
             - Set some ``field_transformers``.
             - Set ``ht._fitted`` to ``True``.
 
+        Input:
+            - List with column name.
+
         Mock:
             - Mock ``warnings`` from ``rdt.hyper_transformer``.
 
@@ -1949,7 +1963,7 @@ class TestHyperTransformer(TestCase):
         }
 
         # Run
-        ht.remove_transformers(column_names=['column3'])
+        ht.remove_transformers(column_names=['column3', 'column2'])
 
         # Assert
         expected_warnings_msg = (
@@ -1957,6 +1971,11 @@ class TestHyperTransformer(TestCase):
             "'fit' or 'fit_transform'."
         )
         mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
+        assert ht.field_transformers == {
+            'column1': 'transformer',
+            'column2': None,
+            'column3': None
+        }
 
     @patch('rdt.hyper_transformer.warnings')
     def test_remove_transformers_by_sdtype(self, mock_warnings):
@@ -1969,6 +1988,9 @@ class TestHyperTransformer(TestCase):
             - Instance of HyperTransformer.
             - Set ``field_transformers``.
             - Set ``field_sdtypes``.
+
+        Input:
+            - String representation for an sdtype.
 
         Side Effects:
             - ``instance.field_transformers`` are set to ``None`` for the columns
@@ -2016,6 +2038,9 @@ class TestHyperTransformer(TestCase):
 
         Setup:
             - Instance of HyperTransformer.
+
+        Input:
+            - String representation for an sdtype.
 
         Side Effects:
             - When calling with a premium ``sdtype`` an ``Error`` should be raised.
@@ -2159,7 +2184,7 @@ class TestHyperTransformer(TestCase):
             ht.get_output_transformers('field')
 
     def test_get_final_output_columns(self):
-        """Test the ``get_fianl_output_columns`` method.
+        """Test the ``get_final_output_columns`` method.
 
         The method should traverse the tree starting at the provided field and return a list of
         all final column names (leaf nodes) that are descedants of that field.
@@ -2210,7 +2235,7 @@ class TestHyperTransformer(TestCase):
         outputs == ['field1.out1.value', 'field1.out2.out1.value', 'field1.out2.out2.value']
 
     def test_get_final_output_columns_transformer_is_none(self):
-        """Test the ``get_fianl_output_columns`` method.
+        """Test the ``get_final_output_columns`` method.
 
         Setup:
             - Set the ``_transformers_tree`` to have a field with a ``transformer`` as ``None``.
