@@ -273,6 +273,15 @@ class HyperTransformer:
         if len(self.field_sdtypes) == 0:
             raise Error(self._DETECT_CONFIG_MESSAGE)
 
+        data_columns = column_name_to_sdtype.keys()
+        config_columns = self.field_sdtypes.keys()
+        unknown_columns = self._subset(data_columns, config_columns, not_in=True)
+        if unknown_columns:
+            raise NotFittedError(
+                f'Invalid column names: {unknown_columns}. These columns do not exist in the '
+                "config. Use 'set_config()' to write and set your entire config at once."
+            )
+
         unsupported_sdtypes = []
         transformers_to_update = {}
         for column, sdtype in column_name_to_sdtype.items():
@@ -285,9 +294,8 @@ class HyperTransformer:
 
         if unsupported_sdtypes:
             raise Error(
-                f'Unsupported sdtypes ({unsupported_sdtypes}). To use ``sdtypes`` with specific '
-                'semantic meanings, please contact the SDV team to update to rdt_plus. Otherwise, '
-                "use 'pii' to anonymize the column."
+                f'Invalid sdtypes: {unsupported_sdtypes}. If you are trying to use a '
+                'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
             )
 
         self.field_sdtypes.update(column_name_to_sdtype)

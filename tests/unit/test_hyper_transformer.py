@@ -1644,7 +1644,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         instance = HyperTransformer()
         instance.field_transformers = {'a': FrequencyEncoder, 'b': FloatFormatter}
-        instance.field_sdtypes = {'a': 'categorical'}
+        instance.field_sdtypes = {'my_column': 'categorical'}
         instance._fitted = True
         instance._user_message = Mock()
         column_name_to_sdtype = {
@@ -1665,7 +1665,7 @@ class TestHyperTransformer(TestCase):
         )
 
         mock_warnings.warn.assert_called_once_with(expected_message)
-        assert instance.field_sdtypes == {'my_column': 'numerical', 'a': 'categorical'}
+        assert instance.field_sdtypes == {'my_column': 'numerical'}
         assert instance._provided_field_sdtypes == {'my_column': 'numerical'}
         instance._user_message.assert_called_once_with(user_message, 'Info')
 
@@ -1696,7 +1696,7 @@ class TestHyperTransformer(TestCase):
         instance = HyperTransformer()
         instance._fitted = False
         instance._user_message = Mock()
-        instance.field_sdtypes = {'a': 'categorical'}
+        instance.field_sdtypes = {'my_column': 'categorical'}
         column_name_to_sdtype = {
             'my_column': 'numerical'
         }
@@ -1710,7 +1710,7 @@ class TestHyperTransformer(TestCase):
             "Use 'get_config()' to verify the transformers."
         )
         mock_warnings.warn.assert_not_called()
-        assert instance.field_sdtypes == {'my_column': 'numerical', 'a': 'categorical'}
+        assert instance.field_sdtypes == {'my_column': 'numerical'}
         assert instance._provided_field_sdtypes == {'my_column': 'numerical'}
         instance._user_message.assert_called_once_with(user_message, 'Info')
 
@@ -1773,10 +1773,9 @@ class TestHyperTransformer(TestCase):
         }
 
         # Run / Assert
-        expected_message = (
-            r'Unsupported sdtypes \(\[\'credit_card\'\]\). To use ``sdtypes`` with specific '
-            'semantic meanings, please contact the SDV team to update to rdt_plus. Otherwise, '
-            "use 'pii' to anonymize the column."
+        expected_message = re.escape(
+            "Invalid sdtypes: ['credit_card']. If you are trying to use a "
+            'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
         )
         with pytest.raises(Error, match=expected_message):
             instance.update_sdtypes(column_name_to_sdtype)
