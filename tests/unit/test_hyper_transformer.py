@@ -679,6 +679,43 @@ class TestHyperTransformer(TestCase):
         transformer2.fit.assert_not_called()
         assert ht._transformers_sequence == [transformer1]
 
+    def test__fit_field_transformer_transformer_is_none(self):
+        """Test the ``_fit_field_transformer`` method.
+
+        Test that when a ``transformer`` is ``None`` the ``outputs`` are the same
+        as the field.
+
+        Setup:
+            - Dataframe with a column.
+            - HyperTransformer instance.
+
+        Input:
+            - A DataFrame with two columns.
+            - A column name to fit the transformer to.
+            - A ``None`` value as ``transformer``.
+
+        Output:
+            - input data.
+
+        Side Effects:
+            - ``ht._transformers_sequence`` has not been updated.
+            - ``ht._transformers_tree`` contains the ``column`` with a ``transformer`` as ``None``
+              and ``outputs`` is the name of the column.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        ht = HyperTransformer()
+
+        # Run
+        out = ht._fit_field_transformer(data, 'a', None)
+
+        # Assert
+        pd.testing.assert_frame_equal(out, data)
+        assert ht._transformers_sequence == []
+        assert ht._transformers_tree == {
+            'a': {'transformer': None, 'outputs': ['a']},
+        }
+
     @patch('rdt.hyper_transformer.warnings')
     def test__validate_all_fields_fitted(self, warnings_mock):
         """Test the ``_validate_all_fields_fitted`` method.
@@ -1883,6 +1920,220 @@ class TestHyperTransformer(TestCase):
         assert instance._provided_field_sdtypes == {'a': 'numerical'}
         instance._user_message.assert_called_once_with(user_message, 'Info')
 
+    def test_remove_transformers(self):
+        """Test the ``remove_transformers`` method.
+
+        Test that the method removes the ``transformers`` from ``instance.field_transformers``.
+
+        Setup:
+            - Instance of HyperTransformers.
+            - Set some ``field_transformers``.
+
+        Input:
+            - List with column name.
+
+        Side Effects:
+            - After removing using ``remove_transformers`` the columns transformer should be set
+              to ``None``.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            'column1': 'transformer',
+            'column2': 'transformer',
+            'column3': 'transformer'
+        }
+
+        # Run
+        ht.remove_transformers(column_names=['column2'])
+
+        # Assert
+        assert ht._provided_field_transformers == {'column2': None}
+        assert ht.field_transformers == {
+            'column1': 'transformer',
+            'column2': None,
+            'column3': 'transformer'
+        }
+
+    def test_remove_transformers_unknown_columns(self):
+        """Test the ``remove_transformers`` method.
+
+        Test that the method raises an ``Error`` when a column does not exist in
+        ``field_transformers``.
+
+        Setup:
+            - Instance of HyperTransformer.
+            - Set some ``field_transformers``.
+
+        Input:
+            - List with column name, one valid and one invalid.
+
+        Mock:
+            - Mock ``warnings`` from ``rdt.hyper_transformer``.
+
+        Side Effects:
+            - When calling ``remove_transformers`` with a column that does not exist in the
+              ``field_transformers`` an error should be raised..
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            'column1': 'transformer',
+            'column2': 'transformer',
+            'column3': 'transformer'
+        }
+
+        error_msg = re.escape(
+            "Invalid column names: ['column4']. These columns do not exist in the "
+            "config. Use 'get_config()' to see the expected values."
+        )
+
+        # Run / Assert
+        with pytest.raises(Error, match=error_msg):
+            ht.remove_transformers(column_names=['column3', 'column4'])
+
+        # Assert
+        assert ht.field_transformers == {
+            'column1': 'transformer',
+            'column2': 'transformer',
+            'column3': 'transformer'
+        }
+
+    @patch('rdt.hyper_transformer.warnings')
+    def test_remove_transformers_fitted(self, mock_warnings):
+        """Test the ``remove_transformers`` method.
+
+        Test that the method raises a warning when changes have been applied to the
+        ``field_transformers``.
+
+        Setup:
+            - Instance of HyperTransformer.
+            - Set some ``field_transformers``.
+            - Set ``ht._fitted`` to ``True``.
+
+        Input:
+            - List with column name.
+
+        Mock:
+            - Mock ``warnings`` from ``rdt.hyper_transformer``.
+
+        Side Effects:
+            - Warnings has been called once with the expected message.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht._fitted = True
+        ht.field_transformers = {
+            'column1': 'transformer',
+            'column2': 'transformer',
+            'column3': 'transformer'
+        }
+
+        # Run
+        ht.remove_transformers(column_names=['column3', 'column2'])
+
+        # Assert
+        expected_warnings_msg = (
+            'For this change to take effect, please refit your data using '
+            "'fit' or 'fit_transform'."
+        )
+        mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
+        assert ht.field_transformers == {
+            'column1': 'transformer',
+            'column2': None,
+            'column3': None
+        }
+
+    @patch('rdt.hyper_transformer.warnings')
+    def test_remove_transformers_by_sdtype(self, mock_warnings):
+        """Test remove transformers by sdtype.
+
+        Test that when calling ``remove_transformers_by_sdtype``, those transformers
+        that belong to this ``sdtype`` are being removed.
+
+        Setup:
+            - Instance of HyperTransformer.
+            - Set ``field_transformers``.
+            - Set ``field_sdtypes``.
+
+        Input:
+            - String representation for an sdtype.
+
+        Side Effects:
+            - ``instance.field_transformers`` are set to ``None`` for the columns
+              that belong to that ``sdtype``.
+            - ``instance._provided_field_transformers`` has been updated too.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht._fitted = True
+        ht.field_transformers = {
+            'column1': 'transformer',
+            'column2': 'transformer',
+            'column3': 'transformer'
+        }
+        ht.field_sdtypes = {
+            'column1': 'numerical',
+            'column2': 'categorical',
+            'column3': 'categorical'
+        }
+
+        # Run
+        ht.remove_transformers_by_sdtype('categorical')
+
+        # Assert
+        ht.field_transformers == {
+            'column1': 'transformer',
+            'column2': None,
+            'column3': None
+        }
+        ht._provided_field_transformers == {
+            'column2': None,
+            'column3': None
+        }
+        expected_warnings_msg = (
+            'For this change to take effect, please refit your data using '
+            "'fit' or 'fit_transform'."
+        )
+        mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
+
+    def test_remove_transformers_by_sdtype_premium_sdtype(self):
+        """Test remove transformers by sdtype.
+
+        Test that when calling ``remove_transformers_by_sdtype`` with a premium ``sdtype``
+        an ``Error`` is being raised.
+
+        Setup:
+            - Instance of HyperTransformer.
+
+        Input:
+            - String representation for an sdtype.
+
+        Side Effects:
+            - When calling with a premium ``sdtype`` an ``Error`` should be raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+
+        # Run
+        error_msg = re.escape(
+            "Invalid sdtype 'phone_number'. If you are trying to use a premium sdtype, "
+            'contact info@sdv.dev about RDT Add-Ons.'
+        )
+        with pytest.raises(Error, match=error_msg):
+            ht.remove_transformers_by_sdtype('phone_number')
+
+        # Assert
+        ht.field_transformers == {
+            'column1': 'transformer',
+            'column2': None,
+            'column3': None
+        }
+        ht._provided_field_transformers == {
+            'column2': None,
+            'column3': None
+        }
+
     def test_get_transformer(self):
         """Test the ``get_transformer`` method.
 
@@ -2000,7 +2251,7 @@ class TestHyperTransformer(TestCase):
             ht.get_output_transformers('field')
 
     def test_get_final_output_columns(self):
-        """Test the ``get_fianl_output_columns`` method.
+        """Test the ``get_final_output_columns`` method.
 
         The method should traverse the tree starting at the provided field and return a list of
         all final column names (leaf nodes) that are descedants of that field.
@@ -2017,8 +2268,14 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         transformer = Mock()
         ht._transformers_tree = {
-            'field1': {'transformer': transformer, 'outputs': ['field1.out1', 'field1.out2']},
-            'field1.out1': {'transformer': transformer, 'outputs': ['field1.out1.value']},
+            'field1': {
+                'transformer': transformer,
+                'outputs': ['field1.out1', 'field1.out2']
+            },
+            'field1.out1': {
+                'transformer': transformer,
+                'outputs': ['field1.out1.value']
+            },
             'field1.out2': {
                 'transformer': transformer,
                 'outputs': ['field1.out2.out1', 'field.out2.out2']
@@ -2031,7 +2288,10 @@ class TestHyperTransformer(TestCase):
                 'transformer': transformer,
                 'outputs': ['field1.out2.out2.value']
             },
-            'field2': {'transformer': transformer, 'outputs': ['field2.value']}
+            'field2': {
+                'transformer': transformer,
+                'outputs': ['field2.value']
+            }
         }
         ht._fitted = True
 
@@ -2040,6 +2300,31 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         outputs == ['field1.out1.value', 'field1.out2.out1.value', 'field1.out2.out2.value']
+
+    def test_get_final_output_columns_transformer_is_none(self):
+        """Test the ``get_final_output_columns`` method.
+
+        Setup:
+            - Set the ``_transformers_tree`` to have a field with a ``transformer`` as ``None``.
+
+        Output:
+            - List of the ``outputs`` that has been specified in the ``_transformers_tree``.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht._transformers_tree = {
+            'field1': {
+                'transformer': None,
+                'outputs': ['field1']
+            }
+        }
+        ht._fitted = True
+
+        # Run
+        outputs = ht.get_final_output_columns('field1')
+
+        # Assert
+        assert outputs == ['field1']
 
     def test_get_final_output_columns_raises_error_if_not_fitted(self):
         """Test that the ``get_final_output_columns`` raises ``NotFittedError``.
