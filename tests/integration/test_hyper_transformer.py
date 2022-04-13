@@ -597,7 +597,7 @@ def test_update_sdtypes_incorrect_columns():
         "Invalid column names: ['col3']. These columns do not exist in the "
         "config. Use 'set_config()' to write and set your entire config at once."
     )
-    with pytest.raises(NotFittedError, match=error_msg):
+    with pytest.raises(Error, match=error_msg):
         ht.update_sdtypes(column_name_to_sdtype)
 
 

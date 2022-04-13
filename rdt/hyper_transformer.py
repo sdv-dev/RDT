@@ -277,7 +277,7 @@ class HyperTransformer:
         config_columns = self.field_sdtypes.keys()
         unknown_columns = self._subset(data_columns, config_columns, not_in=True)
         if unknown_columns:
-            raise NotFittedError(
+            raise Error(
                 f'Invalid column names: {unknown_columns}. These columns do not exist in the '
                 "config. Use 'set_config()' to write and set your entire config at once."
             )

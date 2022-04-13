@@ -1780,6 +1780,38 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(Error, match=expected_message):
             instance.update_sdtypes(column_name_to_sdtype)
 
+    def test_update_sdtypes_invalid_columns(self):
+        """Test ``update_sdtypes``.
+
+        Ensure that the method updates raises the appropriate error when passed
+        columns not present in the config.
+
+        Setup:
+            - Initialize ``HyperTransformer``.
+
+        Input:
+            - Dictionary with an invalid ``column_name`` and ``sdtype``.
+
+        Side Effects:
+            - Exception should be raised.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance.field_sdtypes = {
+            'my_column': 'categorical'
+        }
+        column_name_to_sdtype = {
+            'unexpected': 'categorical'
+        }
+
+        # Run / Assert
+        expected_message = re.escape(
+            "Invalid column names: ['unexpected']. These columns do not exist in the "
+            "config. Use 'set_config()' to write and set your entire config at once."
+        )
+        with pytest.raises(Error, match=expected_message):
+            instance.update_sdtypes(column_name_to_sdtype)
+
     @patch('rdt.hyper_transformer.get_default_transformer')
     @patch('rdt.hyper_transformer.warnings')
     def test_update_sdtypes_different_sdtype(self, mock_warnings, default_mock):
