@@ -750,7 +750,7 @@ class TestHyperTransformer(TestCase):
 
         Setup:
             - Initialize the ``HyperTransformer`` with:
-                - A mock for the ``get_final_output_columns`` method, with ``side_effect``
+                - A mock for the ``_get_final_output_columns`` method, with ``side_effect``
                 set to the lists of generated output columns for each input column.
                 - A list of columns names for ``_input_columns``.
 
@@ -759,8 +759,8 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
-        ht.get_final_output_columns = Mock()
-        ht.get_final_output_columns.side_effect = [
+        ht._get_final_output_columns = Mock()
+        ht._get_final_output_columns.side_effect = [
             ['a.is_null'], ['b.value', 'b.is_null'], ['c.value']
         ]
         ht._input_columns = ['a', 'b', 'c']
@@ -2134,8 +2134,8 @@ class TestHyperTransformer(TestCase):
             'column3': None
         }
 
-    def test_get_transformer(self):
-        """Test the ``get_transformer`` method.
+    def test__get_transformer(self):
+        """Test the ``_get_transformer`` method.
 
         The method should return the transformer instance stored for the field in the
         ``_transformers_tree``.
@@ -2163,17 +2163,17 @@ class TestHyperTransformer(TestCase):
         ht._fitted = True
 
         # Run
-        out1 = ht.get_transformer('field')
-        out2 = ht.get_transformer('field.out1')
-        out3 = ht.get_transformer('field.out2')
+        out1 = ht._get_transformer('field')
+        out2 = ht._get_transformer('field.out1')
+        out3 = ht._get_transformer('field.out2')
 
         # Assert
         out1 == transformer1
         out2 == transformer2
         out3 == transformer3
 
-    def test_get_transformer_raises_error_if_not_fitted(self):
-        """Test that ``get_transformer`` raises ``NotFittedError``.
+    def test__get_transformer_raises_error_if_not_fitted(self):
+        """Test that ``_get_transformer`` raises ``NotFittedError``.
 
         If the ``HyperTransformer`` hasn't been fitted, a ``NotFittedError`` should be raised.
 
@@ -2193,10 +2193,10 @@ class TestHyperTransformer(TestCase):
 
         # Run / Assert
         with pytest.raises(NotFittedError):
-            ht.get_transformer('field1')
+            ht._get_transformer('field1')
 
-    def test_get_output_transformers(self):
-        """Test the ``get_output_transformers`` method.
+    def test__get_output_transformers(self):
+        """Test the ``_get_output_transformers`` method.
 
         The method should return a dict mapping each output column created from
         transforming the specified field, to the transformers to be used on them.
@@ -2223,7 +2223,7 @@ class TestHyperTransformer(TestCase):
         ht._fitted = True
 
         # Run
-        output_transformers = ht.get_output_transformers('field1')
+        output_transformers = ht._get_output_transformers('field1')
 
         # Assert
         output_transformers == {
@@ -2231,8 +2231,8 @@ class TestHyperTransformer(TestCase):
             'field1.out2': transformer3
         }
 
-    def test_get_output_transformers_raises_error_if_not_fitted(self):
-        """Test that the ``get_output_transformers`` raises ``NotFittedError``.
+    def test__get_output_transformers_raises_error_if_not_fitted(self):
+        """Test that the ``_get_output_transformers`` raises ``NotFittedError``.
 
         If the ``HyperTransformer`` hasn't been fitted, a ``NotFittedError`` should be raised.
 
@@ -2248,10 +2248,10 @@ class TestHyperTransformer(TestCase):
 
         # Run / Assert
         with pytest.raises(NotFittedError):
-            ht.get_output_transformers('field')
+            ht._get_output_transformers('field')
 
-    def test_get_final_output_columns(self):
-        """Test the ``get_final_output_columns`` method.
+    def test__get_final_output_columns(self):
+        """Test the ``_get_final_output_columns`` method.
 
         The method should traverse the tree starting at the provided field and return a list of
         all final column names (leaf nodes) that are descedants of that field.
@@ -2296,13 +2296,13 @@ class TestHyperTransformer(TestCase):
         ht._fitted = True
 
         # Run
-        outputs = ht.get_final_output_columns('field1')
+        outputs = ht._get_final_output_columns('field1')
 
         # Assert
         outputs == ['field1.out1.value', 'field1.out2.out1.value', 'field1.out2.out2.value']
 
-    def test_get_final_output_columns_transformer_is_none(self):
-        """Test the ``get_final_output_columns`` method.
+    def test__get_final_output_columns_transformer_is_none(self):
+        """Test the ``_get_final_output_columns`` method.
 
         Setup:
             - Set the ``_transformers_tree`` to have a field with a ``transformer`` as ``None``.
@@ -2321,13 +2321,13 @@ class TestHyperTransformer(TestCase):
         ht._fitted = True
 
         # Run
-        outputs = ht.get_final_output_columns('field1')
+        outputs = ht._get_final_output_columns('field1')
 
         # Assert
         assert outputs == ['field1']
 
-    def test_get_final_output_columns_raises_error_if_not_fitted(self):
-        """Test that the ``get_final_output_columns`` raises ``NotFittedError``.
+    def test__get_final_output_columns_raises_error_if_not_fitted(self):
+        """Test that the ``_get_final_output_columns`` raises ``NotFittedError``.
 
         If the ``HyperTransformer`` hasn't been fitted, a ``NotFittedError`` should be raised.
 
@@ -2343,10 +2343,10 @@ class TestHyperTransformer(TestCase):
 
         # Run / Assert
         with pytest.raises(NotFittedError):
-            ht.get_final_output_columns('field')
+            ht._get_final_output_columns('field')
 
-    def test_get_transformer_tree_yaml(self):
-        """Test the ``get_transformer_tree_yaml`` method.
+    def test__get_transformer_tree_yaml(self):
+        """Test the ``_get_transformer_tree_yaml`` method.
 
         The method should return a YAML representation of the tree.
 
@@ -2376,7 +2376,7 @@ class TestHyperTransformer(TestCase):
         ht._fitted = True
 
         # Run
-        tree_yaml = ht.get_transformer_tree_yaml()
+        tree_yaml = ht._get_transformer_tree_yaml()
 
         # Assert
         assert tree_yaml == (
