@@ -23,7 +23,7 @@ class Config(dict):
         }
 
         printed = json.dumps(config, indent=4)
-        for transformer in self['transformers'].values():
+        for _, transformer in self['transformers'].items():
             quoted_transformer = f'"{transformer}"'
             if quoted_transformer in printed:
                 printed = printed.replace(quoted_transformer, repr(transformer))
@@ -315,7 +315,6 @@ class HyperTransformer:
             column_name_to_transformer(dict):
                 Dict mapping column names to transformers to be used for that column.
         """
-        self._modifed_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
@@ -334,6 +333,8 @@ class HyperTransformer:
 
             self.field_transformers[column_name] = transformer
             self._provided_field_transformers[column_name] = transformer
+
+        self._modifed_config = True
 
     def remove_transformers(self, column_names):
         """Remove transformers for given columns.
@@ -645,7 +646,7 @@ class HyperTransformer:
             data (pandas.DataFrame):
                 Data to fit the transformers to.
         """
-        self._validate_detect_config_called()
+        self._validate_detect_config_called(data)
         self._learn_config(data)
         self._input_columns = list(data.columns)
         for field in self._input_columns:
@@ -658,12 +659,13 @@ class HyperTransformer:
 
     def _transform(self, data, prevent_subset):
         self._validate_config_exists()
-        if not self._fitted:
+        if not self._fitted or self._modifed_config:
             raise NotFittedError(self._NOT_FIT_MESSAGE)
 
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
         if prevent_subset:
-            is_subset = all(column in self._input_columns for column in data.columns)
+            contained = all(column in self._input_columns for column in data.columns)
+            is_subset = contained and len(data.columns) < len(self._input_columns)
             if unknown_columns or is_subset:
                 raise Error(
                     'The data you are trying to transform has different columns than the original '
@@ -725,17 +727,22 @@ class HyperTransformer:
         return self.transform(data)
 
     def _reverse_transform(self, data, prevent_subset):
-        self._validate_detect_config_called()
-        if not self._fitted:
+        self._validate_config_exists()
+        if not self._fitted or self._modifed_config:
             raise NotFittedError(self._NOT_FIT_MESSAGE)
 
-        if prevent_subset:
-            is_subset = all(column in self._output_columns for column in data.columns)
-            if is_subset:
-                raise Error()
-
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
-        if unknown_columns:
+        if prevent_subset:
+            contained = all(column in self._output_columns for column in data.columns)
+            is_subset = contained and len(data.columns) < len(self._output_columns)
+            if unknown_columns or is_subset:
+                raise Error(
+                    'There are unexpected columns in the data you are trying to transform. '
+                    'You must provide a transformed dataset with all the columns from the '
+                    'original data.'
+                )
+
+        elif unknown_columns:
             raise Error(
                 'There are unexpected column names in the data you are trying to transform. '
                 f'A reverse transform is not defined for {unknown_columns}.'

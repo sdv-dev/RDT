@@ -574,7 +574,7 @@ def test_transform_without_config():
         "it automatically from your data using 'detect_initial_config' prior to "
         'fitting your data.'
     )
-    with pytest.raises(NotFittedError, match=error_msg):
+    with pytest.raises(Error, match=error_msg):
         ht.transform(data)
 
 
@@ -592,8 +592,9 @@ def test_transform_unseen_columns():
         'The data you are trying to transform has different columns than the original data. '
         'Column names and their sdtypes must be the same.'
     )
-    with pytest.raises(NotFittedError, match=error_msg):
+    with pytest.raises(Error, match=error_msg):
         ht.transform(different_data)
+
 
 def test_transform_subset():
     """Test the ``transform_subset`` method.
