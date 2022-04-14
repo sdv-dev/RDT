@@ -383,7 +383,7 @@ class HyperTransformer:
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
-    def get_transformer(self, field):
+    def _get_transformer(self, field):
         """Get the transformer instance used for a field.
 
         Args:
@@ -399,7 +399,7 @@ class HyperTransformer:
 
         return self._transformers_tree[field].get('transformer', None)
 
-    def get_output_transformers(self, field):
+    def _get_output_transformers(self, field):
         """Return dict mapping output columns of field to transformers used on them.
 
         Args:
@@ -420,7 +420,7 @@ class HyperTransformer:
 
         return next_transformers
 
-    def get_final_output_columns(self, field):
+    def _get_final_output_columns(self, field):
         """Return list of all final output columns related to a field.
 
         The ``HyperTransformer`` will figure out which transformers to use on a field during
@@ -452,7 +452,7 @@ class HyperTransformer:
 
         return sorted(final_outputs, reverse=True)
 
-    def get_transformer_tree_yaml(self):
+    def _get_transformer_tree_yaml(self):
         """Return yaml representation of transformers tree.
 
         After running ``fit``, a sequence of transformers is created to run each original column
@@ -610,7 +610,7 @@ class HyperTransformer:
     def _sort_output_columns(self):
         """Sort ``_output_columns`` to follow the same order as the ``_input_columns``."""
         for input_column in self._input_columns:
-            output_columns = self.get_final_output_columns(input_column)
+            output_columns = self._get_final_output_columns(input_column)
             self._output_columns.extend(output_columns)
 
     def _validate_config_exists(self):
