@@ -23,7 +23,7 @@ class Config(dict):
         }
 
         printed = json.dumps(config, indent=4)
-        for _, transformer in self['transformers'].items():
+        for transformer in self['transformers'].values():
             quoted_transformer = f'"{transformer}"'
             if quoted_transformer in printed:
                 printed = printed.replace(quoted_transformer, repr(transformer))
