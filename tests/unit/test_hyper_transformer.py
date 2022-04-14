@@ -176,8 +176,6 @@ class TestHyperTransformer(TestCase):
         ht._transformers_sequence = [BinaryEncoder(), FloatFormatter()]
         ht._output_columns = ['col1', 'col2']
         ht._input_columns = ['col3', 'col4']
-        sdtypes = {'col1': 'float', 'col2': 'categorical'}
-        transformers = {'col2': FloatFormatter(), 'col3': BinaryEncoder()}
 
         # Run
         ht._unfit()
@@ -368,7 +366,7 @@ class TestHyperTransformer(TestCase):
         that doesn't already have one. If it doesn't find a transformer it should use
         ``_default_sdtype_transformers`` and if that also doesn't have one it should use
         ``get_default_transformer``.
-    
+
         Setup:
             - A mock for ``get_default_tranformer``.
             - ``field_transformers`` partially provided.
@@ -1088,7 +1086,6 @@ class TestHyperTransformer(TestCase):
             'categorical': categorical_transformer,
             'datetime': datetime_transformer
         }
-
 
         ht = HyperTransformer()
         ht.field_transformers = field_transformers
@@ -2436,9 +2433,9 @@ class TestHyperTransformer(TestCase):
         out3 = ht._get_transformer('field.out2')
 
         # Assert
-        out1 == transformer1
-        out2 == transformer2
-        out3 == transformer3
+        assert out1 == transformer1
+        assert out2 == transformer2
+        assert out3 == transformer3
 
     def test__get_transformer_raises_error_if_not_fitted(self):
         """Test that ``_get_transformer`` raises ``NotFittedError``.
@@ -2494,7 +2491,7 @@ class TestHyperTransformer(TestCase):
         output_transformers = ht._get_output_transformers('field1')
 
         # Assert
-        output_transformers == {
+        assert output_transformers == {
             'field1.out1': transformer2,
             'field1.out2': transformer3
         }
