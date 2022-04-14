@@ -497,6 +497,18 @@ def test_multiple_detects():
     pd.testing.assert_frame_equal(reverse, get_reversed_data())
 
 
+def test_transform_without_fit():
+    """HyperTransformer should raise an error when transforming without fitting."""
+    # Setup
+    data = pd.DataFrame()
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+
+    # Run / Assert
+    with pytest.raises(Error):
+        ht.transform(data)
+
+
 def test_fit_data_different_than_detect():
     """HyperTransformer should raise an error when transforming without fitting."""
     # Setup
@@ -512,7 +524,7 @@ def test_fit_data_different_than_detect():
         'values.'
     )
     ht.detect_initial_config(detect_data)
-    with pytest.raises(NotFittedError, match=error_msg):
+    with pytest.raises(Error, match=error_msg):
         ht.fit(data)
 
 
@@ -562,7 +574,7 @@ def test_transform_without_config():
         "it automatically from your data using 'detect_initial_config' prior to "
         'fitting your data.'
     )
-    with pytest.raises(NotFittedError, match=error_msg):
+    with pytest.raises(Error, match=error_msg):
         ht.transform(data)
 
 
@@ -580,7 +592,7 @@ def test_transform_unseen_columns():
         'The data you are trying to transform has different columns than the original data. '
         'Column names and their sdtypes must be the same.'
     )
-    with pytest.raises(NotFittedError, match=error_msg):
+    with pytest.raises(Error, match=error_msg):
         ht.transform(different_data)
 
 
@@ -616,3 +628,61 @@ def test_update_sdtypes_incorrect_sdtype():
     )
     with pytest.raises(Error, match=error_msg):
         ht.update_sdtypes(column_name_to_sdtype)
+
+
+def test_transform_subset():
+    """Test the ``transform_subset`` method.
+
+    The method should return a ``pandas.DataFrame`` with the subset of columns transformed.
+
+    Setup:
+        - Detect the config and fit the data.
+
+    Input:
+        - A ``pandas.DataFrame`` with a subset of the fitted columns.
+
+    Ouput:
+        - A ``pandas.DataFrame`` with the subset transformed.
+    """
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    subset = data[['col1']]
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.fit(data)
+
+    # Run
+    transformed = ht.transform_subset(subset)
+
+    # Assert
+    expected = pd.DataFrame({'col1.value': [1, 2]})
+    pd.testing.assert_frame_equal(transformed, expected)
+
+
+def test_reverse_transform_subset():
+    """Test the ``reverse_transform_subset`` method.
+
+    The method should return a ``pandas.DataFrame`` with the subset of columns reverse transformed.
+
+    Setup:
+        - Detect the config and fit the data.
+
+    Input:
+        - A ``pandas.DataFrame`` with a subset of the output columns.
+
+    Ouput:
+        - A ``pandas.DataFrame`` with the subset reverse transformed.
+    """
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    subset = pd.DataFrame({'col1.value': [1, 2]})
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.fit(data)
+
+    # Run
+    reverse_transformed = ht.reverse_transform_subset(subset)
+
+    # Assert
+    expected = pd.DataFrame({'col1': [1, 2]})
+    pd.testing.assert_frame_equal(reverse_transformed, expected)

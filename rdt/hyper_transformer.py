@@ -90,6 +90,10 @@ class HyperTransformer:
         'Nothing to update. Use the `detect_initial_config` method to pre-populate all the '
         'sdtypes and transformers from your dataset.'
     )
+    _NOT_FIT_MESSAGE = (
+        'The HyperTransformer is not ready to use. Please fit your data first using '
+        "'fit' or 'fit_transform'."
+    )
 
     @staticmethod
     def _user_message(text, prefix=None):
@@ -176,12 +180,15 @@ class HyperTransformer:
         sdtypes = config.get('sdtypes', {})
         transformers = config.get('transformers', {})
         for column, transformer in transformers.items():
-            input_sdtype = transformer.get_input_sdtype()
-            sdtype = sdtypes.get(column)
-            if input_sdtype != sdtype:
-                warnings.warn(f'You are assigning a {input_sdtype} transformer to a {sdtype} '
-                              f"column ('{column}'). If the transformer doesn't match the "
-                              'sdtype, it may lead to errors.')
+            if transformer is not None:
+                input_sdtype = transformer.get_input_sdtype()
+                sdtype = sdtypes.get(column)
+                if input_sdtype != sdtype:
+                    warnings.warn(
+                        f'You are assigning a {input_sdtype} transformer to a {sdtype} '
+                        f"column ('{column}'). If the transformer doesn't match the "
+                        'sdtype, it may lead to errors.'
+                    )
 
     @staticmethod
     def _get_supported_sdtypes():
@@ -316,7 +323,6 @@ class HyperTransformer:
             column_name_to_transformer(dict):
                 Dict mapping column names to transformers to be used for that column.
         """
-        self._modifed_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
@@ -324,18 +330,73 @@ class HyperTransformer:
             raise Error(self._DETECT_CONFIG_MESSAGE)
 
         for column_name, transformer in column_name_to_transformer.items():
-            current_sdtype = self.field_sdtypes.get(column_name)
-            if current_sdtype and current_sdtype != transformer.get_input_sdtype():
-                warnings.warn(
-                    f'You are assigning a {transformer.get_input_sdtype()} transformer '
-                    f'to a {current_sdtype} column ({column_name}). '
-                    "If the transformer doesn't match the sdtype, it may lead to errors."
-                )
+            if transformer is not None:
+                current_sdtype = self.field_sdtypes.get(column_name)
+                if current_sdtype and current_sdtype != transformer.get_input_sdtype():
+                    warnings.warn(
+                        f'You are assigning a {transformer.get_input_sdtype()} transformer '
+                        f'to a {current_sdtype} column ({column_name}). '
+                        "If the transformer doesn't match the sdtype, it may lead to errors."
+                    )
 
             self.field_transformers[column_name] = transformer
             self._provided_field_transformers[column_name] = transformer
 
-    def get_transformer(self, field):
+        self._modifed_config = True
+
+    def remove_transformers(self, column_names):
+        """Remove transformers for given columns.
+
+        This will remove the transformer for a given column name and this will not be
+        transformed.
+
+        Args:
+            column_names (list):
+                List of columns to remove the transformers for.
+        """
+        unknown_columns = []
+        for column_name in column_names:
+            if column_name not in self.field_transformers:
+                unknown_columns.append(column_name)
+
+        if unknown_columns:
+            raise Error(
+                f'Invalid column names: {unknown_columns}. These columns do not exist in the '
+                "config. Use 'get_config()' to see the expected values."
+            )
+
+        for column_name in column_names:
+            self.field_transformers[column_name] = None
+            self._provided_field_transformers[column_name] = None
+
+        if self._fitted:
+            warnings.warn(self._REFIT_MESSAGE)
+
+    def remove_transformers_by_sdtype(self, sdtype):
+        """Remove transformers for given ``sdtype``.
+
+        This will remove the transformers for a given ``sdtype``  and those will not be
+        transformed.
+
+        Args:
+            sdtype (str):
+                Semantic data type for the transformers to be removed.
+        """
+        if sdtype not in self._get_supported_sdtypes():
+            raise Error(
+                f"Invalid sdtype '{sdtype}'. If you are trying to use a premium sdtype, "
+                'contact info@sdv.dev about RDT Add-Ons.'
+            )
+
+        for column_name, column_sdtype in self.field_sdtypes.items():
+            if column_sdtype == sdtype:
+                self.field_transformers[column_name] = None
+                self._provided_field_transformers[column_name] = None
+
+        if self._fitted:
+            warnings.warn(self._REFIT_MESSAGE)
+
+    def _get_transformer(self, field):
         """Get the transformer instance used for a field.
 
         Args:
@@ -351,7 +412,7 @@ class HyperTransformer:
 
         return self._transformers_tree[field].get('transformer', None)
 
-    def get_output_transformers(self, field):
+    def _get_output_transformers(self, field):
         """Return dict mapping output columns of field to transformers used on them.
 
         Args:
@@ -372,7 +433,7 @@ class HyperTransformer:
 
         return next_transformers
 
-    def get_final_output_columns(self, field):
+    def _get_final_output_columns(self, field):
         """Return list of all final output columns related to a field.
 
         The ``HyperTransformer`` will figure out which transformers to use on a field during
@@ -396,14 +457,15 @@ class HyperTransformer:
         outputs = self._transformers_tree[field].get('outputs', []).copy()
         while len(outputs) > 0:
             output = outputs.pop()
-            if output in self._transformers_tree:
+            transformer = self._transformers_tree.get(output, {}).get('transformer')
+            if output in self._transformers_tree and transformer:
                 outputs.extend(self._transformers_tree[output].get('outputs', []))
             else:
                 final_outputs.append(output)
 
         return sorted(final_outputs, reverse=True)
 
-    def get_transformer_tree_yaml(self):
+    def _get_transformer_tree_yaml(self):
         """Return yaml representation of transformers tree.
 
         After running ``fit``, a sequence of transformers is created to run each original column
@@ -523,42 +585,50 @@ class HyperTransformer:
             transformer (Transformer):
                 Instance of transformer class that will fit the data.
         """
-        transformer = get_transformer_instance(transformer)
-        transformer.fit(data, field)
-        self._add_field_to_set(field, self._fitted_fields)
-        self._transformers_sequence.append(transformer)
-        data = transformer.transform(data)
+        if transformer is None:
+            self._add_field_to_set(field, self._fitted_fields)
+            self._transformers_tree[field]['transformer'] = None
+            self._transformers_tree[field]['outputs'] = [field]
 
-        output_sdtypes = transformer.get_output_sdtypes()
-        next_transformers = transformer.get_next_transformers()
-        self._transformers_tree[field]['transformer'] = transformer
-        self._transformers_tree[field]['outputs'] = list(output_sdtypes)
-        for (output_name, output_sdtype) in output_sdtypes.items():
-            output_field = self._multi_column_fields.get(output_name, output_name)
-            next_transformer = self._get_next_transformer(
-                output_field, output_sdtype, next_transformers)
+        else:
+            transformer = get_transformer_instance(transformer)
+            transformer.fit(data, field)
+            self._add_field_to_set(field, self._fitted_fields)
+            self._transformers_sequence.append(transformer)
+            data = transformer.transform(data)
 
-            if next_transformer:
-                if self._field_in_data(output_field, data):
-                    self._fit_field_transformer(data, output_field, next_transformer)
+            output_sdtypes = transformer.get_output_sdtypes()
+            next_transformers = transformer.get_next_transformers()
+            self._transformers_tree[field]['transformer'] = transformer
+            self._transformers_tree[field]['outputs'] = list(output_sdtypes)
+            for (output_name, output_sdtype) in output_sdtypes.items():
+                output_field = self._multi_column_fields.get(output_name, output_name)
+                next_transformer = self._get_next_transformer(
+                    output_field, output_sdtype, next_transformers)
+
+                if next_transformer:
+                    if self._field_in_data(output_field, data):
+                        self._fit_field_transformer(data, output_field, next_transformer)
 
         return data
 
     def _validate_all_fields_fitted(self):
         non_fitted_fields = self._specified_fields.difference(self._fitted_fields)
         if non_fitted_fields:
-            warnings.warn('The following fields were specified in the input arguments but not'
-                          + f'found in the data: {non_fitted_fields}')
+            warnings.warn(
+                'The following fields were specified in the input arguments but not '
+                f'found in the data: {non_fitted_fields}'
+            )
 
     def _sort_output_columns(self):
         """Sort ``_output_columns`` to follow the same order as the ``_input_columns``."""
         for input_column in self._input_columns:
-            output_columns = self.get_final_output_columns(input_column)
+            output_columns = self._get_final_output_columns(input_column)
             self._output_columns.extend(output_columns)
 
     def _validate_config_exists(self):
         if len(self.field_sdtypes) == 0 and len(self.field_transformers) == 0:
-            raise NotFittedError(
+            raise Error(
                 "No config detected. Set the config using 'set_config' or pre-populate "
                 "it automatically from your data using 'detect_initial_config' prior to "
                 'fitting your data.'
@@ -570,7 +640,7 @@ class HyperTransformer:
         fields = list(self.field_sdtypes.keys())
         unknown_columns = self._subset(data.columns, fields, not_in=True)
         if unknown_columns:
-            raise NotFittedError(
+            raise Error(
                 'The data you are trying to fit has different columns than the original '
                 f'detected data (unknown columns: {unknown_columns}). Column names and their '
                 "sdtypes must be the same. Use the method 'get_config()' to see the expected "
@@ -595,27 +665,47 @@ class HyperTransformer:
         self._modifed_config = False
         self._sort_output_columns()
 
-    def _validate_correctly_fitted(self, data):
-        """Validate the data to transform has been fitted.
-
-        This method raises errors if ``fit`` is not been called at all or if the column names
-        passed to ``fit`` are not the same as the ones passed to ``transform``.
-        """
+    def _transform(self, data, prevent_subset):
         self._validate_config_exists()
         if not self._fitted or self._modifed_config:
-            raise NotFittedError(
-                'The HyperTransformer is not ready to use. Please fit your data first using '
-                "'fit' or 'fit_transform'."
-            )
+            raise NotFittedError(self._NOT_FIT_MESSAGE)
 
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
-        is_subset = any(column not in data.columns for column in self._input_columns)
-        if unknown_columns or is_subset:
-            raise NotFittedError(
-                'The data you are trying to transform has different columns than the '
-                'original data. Column names and their sdtypes must be the same.'
-                "Use the method 'get_config()' to see the expected values."
+        if prevent_subset:
+            contained = all(column in self._input_columns for column in data.columns)
+            is_subset = contained and len(data.columns) < len(self._input_columns)
+            if unknown_columns or is_subset:
+                raise Error(
+                    'The data you are trying to transform has different columns than the original '
+                    'data. Column names and their sdtypes must be the same. Use the method '
+                    "'get_config()' to see the expected values."
+                )
+
+        elif unknown_columns:
+            raise Error(
+                'Unexpected column names in the data you are trying to transform: '
+                f"{unknown_columns}. Use 'get_config()' to see the acceptable column names."
             )
+
+        data = data.copy()
+        for transformer in self._transformers_sequence:
+            data = transformer.transform(data, drop=False)
+
+        transformed_columns = self._subset(self._output_columns, data.columns)
+        return data.reindex(columns=transformed_columns)
+
+    def transform_subset(self, data):
+        """Transform a subset of the fitted data's columns.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to transform.
+
+        Returns:
+            pandas.DataFrame:
+                Transformed subset.
+        """
+        return self._transform(data, prevent_subset=False)
 
     def transform(self, data):
         """Transform the data.
@@ -628,13 +718,7 @@ class HyperTransformer:
             pandas.DataFrame:
                 Transformed data.
         """
-        self._validate_correctly_fitted(data)
-        data = data.copy()
-        for transformer in self._transformers_sequence:
-            data = transformer.transform(data, drop=False)
-
-        transformed_columns = self._subset(self._output_columns, data.columns)
-        return data.reindex(columns=transformed_columns)
+        return self._transform(data, prevent_subset=True)
 
     def fit_transform(self, data):
         """Fit the transformers to the data and then transform it.
@@ -650,6 +734,48 @@ class HyperTransformer:
         self.fit(data)
         return self.transform(data)
 
+    def _reverse_transform(self, data, prevent_subset):
+        self._validate_config_exists()
+        if not self._fitted or self._modifed_config:
+            raise NotFittedError(self._NOT_FIT_MESSAGE)
+
+        unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
+        if prevent_subset:
+            contained = all(column in self._output_columns for column in data.columns)
+            is_subset = contained and len(data.columns) < len(self._output_columns)
+            if unknown_columns or is_subset:
+                raise Error(
+                    'There are unexpected columns in the data you are trying to transform. '
+                    'You must provide a transformed dataset with all the columns from the '
+                    'original data.'
+                )
+
+        elif unknown_columns:
+            raise Error(
+                'There are unexpected column names in the data you are trying to transform. '
+                f'A reverse transform is not defined for {unknown_columns}.'
+            )
+
+        for transformer in reversed(self._transformers_sequence):
+            data = transformer.reverse_transform(data, drop=False)
+
+        reversed_columns = self._subset(self._input_columns, data.columns)
+
+        return data.reindex(columns=reversed_columns)
+
+    def reverse_transform_subset(self, data):
+        """Revert the transformations for a subset of the fitted columns.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to revert.
+
+        Returns:
+            pandas.DataFrame:
+                Reversed subset.
+        """
+        return self._reverse_transform(data, prevent_subset=False)
+
     def reverse_transform(self, data):
         """Revert the transformations back to the original values.
 
@@ -661,13 +787,4 @@ class HyperTransformer:
             pandas.DataFrame:
                 reversed data.
         """
-        if not self._fitted:
-            raise NotFittedError
-
-        unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
-        for transformer in reversed(self._transformers_sequence):
-            data = transformer.reverse_transform(data, drop=False)
-
-        reversed_columns = self._subset(self._input_columns, data.columns)
-
-        return data.reindex(columns=unknown_columns + reversed_columns)
+        return self._reverse_transform(data, prevent_subset=True)
