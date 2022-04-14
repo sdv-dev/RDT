@@ -149,13 +149,7 @@ class HyperTransformer:
 
     def __init__(self):
         self._default_sdtype_transformers = {}
-
-        # ``_provided_field_sdtypes``` contains only the sdtypes specified by the user,
-        # while `field_sdtypes` contains both the sdtypes specified by the user and the
-        # ones learned through ``fit``/``detect_initial_config``. Same for ``field_transformers``.
-        self._provided_field_sdtypes = {}
         self.field_sdtypes = {}
-        self._provided_field_transformers = {}
         self.field_transformers = {}
 
         self._specified_fields = set()
@@ -222,9 +216,7 @@ class HyperTransformer:
                 - transformers: A dictionary mapping column names to their transformer instances.
         """
         self._validate_config(config)
-        self._provided_field_sdtypes = config['sdtypes']
         self.field_sdtypes.update(config['sdtypes'])
-        self._provided_field_transformers = config['transformers']
         self.field_transformers.update(config['transformers'])
         self._modifed_config = True
         if self._fitted:
@@ -265,7 +257,6 @@ class HyperTransformer:
 
         for field, field_sdtype in self.field_sdtypes.items():
             if field_sdtype == sdtype:
-                self._provided_field_transformers[field] = transformer
                 self.field_transformers[field] = transformer
 
         self._modifed_config = True
@@ -299,7 +290,6 @@ class HyperTransformer:
 
         self.field_sdtypes.update(column_name_to_sdtype)
         self.field_transformers.update(transformers_to_update)
-        self._provided_field_sdtypes.update(column_name_to_sdtype)
         self._user_message(
             'The transformers for these columns may change based on the new sdtype.\n'
             "Use 'get_config()' to verify the transformers.", 'Info'
@@ -332,7 +322,6 @@ class HyperTransformer:
                     )
 
             self.field_transformers[column_name] = transformer
-            self._provided_field_transformers[column_name] = transformer
 
         self._modifed_config = True
 
@@ -359,7 +348,6 @@ class HyperTransformer:
 
         for column_name in column_names:
             self.field_transformers[column_name] = None
-            self._provided_field_transformers[column_name] = None
 
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
@@ -383,7 +371,6 @@ class HyperTransformer:
         for column_name, column_sdtype in self.field_sdtypes.items():
             if column_sdtype == sdtype:
                 self.field_transformers[column_name] = None
-                self._provided_field_transformers[column_name] = None
 
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
@@ -527,8 +514,8 @@ class HyperTransformer:
         """
         # Reset the state of the HyperTransformer
         self._default_sdtype_transformers = {}
-        self._provided_field_sdtypes = {}
-        self._provided_field_transformers = {}
+        self.field_sdtypes = {}
+        self.field_transformers = {}
 
         # Set the sdtypes and transformers of all fields to their defaults
         self._learn_config(data)
@@ -631,7 +618,7 @@ class HyperTransformer:
         missing = any(column not in data.columns for column in fields)
         unknown_columns = self._subset(data.columns, fields, not_in=True)
         if unknown_columns or missing:
-            unknown_text = f' (unknown columns: {unknown_columns})'
+            unknown_text = f' (unknown columns: {unknown_columns})' if unknown_columns else ''
             raise Error(
                 'The data you are trying to fit has different columns than the original '
                 f'detected data{unknown_text}. Column names and their '
