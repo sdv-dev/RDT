@@ -171,18 +171,58 @@ class HyperTransformer:
 
     @staticmethod
     def _validate_config(config):
-        sdtypes = config.get('sdtypes', {})
-        transformers = config.get('transformers', {})
+        if list(config.keys()) != ['sdtypes', 'transformers']:
+            raise Error(
+                'Error: Invalid config. Please provide 2 dictionaries '
+                "named 'sdtypes' and 'transformers'."
+            )
+
+        sdtypes = config['sdtypes']
+        transformers = config['transformers']
+        if sdtypes.keys() != transformers.keys():
+            raise Error(
+                "The column names in the 'sdtypes' dictionary must match the "
+                "column names in the 'transformers' dictionary."
+            )
+
+        unsupported_sdtypes = []
+        for column, sdtype in sdtypes.items():
+            if sdtype not in HyperTransformer._get_supported_sdtypes():
+                unsupported_sdtypes.append(sdtype)
+
+        if unsupported_sdtypes:
+            raise Error(
+                f'Invalid sdtypes: {unsupported_sdtypes}. If you are trying to use a '
+                'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
+            )
+
+        invalid_transformers_columns = []
+        for column_name, transformer in transformers.items():
+            if transformer is not None:
+                try:
+                    get_transformer_instance(transformer)
+                except ValueError:
+                    invalid_transformers_columns.append(column_name)
+
+        if invalid_transformers_columns:
+            raise Error(
+                f'Invalid transformers for columns: {invalid_transformers_columns}. '
+                'Please assign an rdt transformer object to each column name.'
+            )
+
+        mismatched_columns = []
         for column, transformer in transformers.items():
             if transformer is not None:
                 input_sdtype = transformer.get_input_sdtype()
                 sdtype = sdtypes.get(column)
                 if input_sdtype != sdtype:
-                    warnings.warn(
-                        f'You are assigning a {input_sdtype} transformer to a {sdtype} '
-                        f"column ('{column}'). If the transformer doesn't match the "
-                        'sdtype, it may lead to errors.'
-                    )
+                    mismatched_columns.append(column)
+
+        if mismatched_columns:
+            raise Error(
+                "Some transformers you've assigned are not compatible with the sdtypes. "
+                f'Please change the following columns: {mismatched_columns}'
+            )
 
     def _validate_update_columns(self, update_columns):
         unknown_columns = self._subset(update_columns, self.field_sdtypes.keys(), not_in=True)
