@@ -1820,7 +1820,6 @@ class TestHyperTransformer(TestCase):
         mock_warnings.warn.assert_called_once_with(expected_message)
         assert instance.field_transformers['my_column'] == transformer
 
-
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_not_fitted(self, mock_warnings):
         """Test update transformers.
@@ -1858,7 +1857,6 @@ class TestHyperTransformer(TestCase):
         # Assert
         mock_warnings.warn.assert_not_called()
         assert instance.field_transformers['my_column'] == transformer
-
 
     def test_update_transformers_no_field_transformers(self):
         """Test update transformers.
@@ -1941,8 +1939,6 @@ class TestHyperTransformer(TestCase):
         )
 
         assert mock_warnings.called_once_with(expected_call)
-        assert instance._provided_field_transformers == {'my_column': transformer}
-
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_sdtypes_fitted(self, mock_warnings):

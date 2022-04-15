@@ -344,8 +344,6 @@ class HyperTransformer:
         for column_name, transformer in column_name_to_transformer.items():
             if transformer is not None:
                 self.field_transformers[column_name] = transformer
-                self._provided_field_transformers[column_name] = transformer
-
                 current_sdtype = self.field_sdtypes.get(column_name)
                 if current_sdtype and current_sdtype != transformer.get_input_sdtype():
                     incompatible_sdtypes.append(column_name)
