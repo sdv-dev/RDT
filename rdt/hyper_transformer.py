@@ -307,8 +307,9 @@ class HyperTransformer:
         self._modified_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
-    
-    def _validate_transformers(self, column_name_to_transformer):
+
+    @staticmethod
+    def _validate_transformers(column_name_to_transformer):
         """Validate the given transformers are valid.
 
         Args:
@@ -325,7 +326,7 @@ class HyperTransformer:
             if transformer is not None:
                 try:
                     get_transformer_instance(transformer)
-                except:
+                except ValueError:
                     invalid_transformers_columns.append(column_name)
 
         if invalid_transformers_columns:
@@ -358,7 +359,7 @@ class HyperTransformer:
                 current_sdtype = self.field_sdtypes.get(column_name)
                 if current_sdtype and current_sdtype != transformer.get_input_sdtype():
                     incompatible_sdtypes.append(column_name)
-        
+
         if incompatible_sdtypes:
             warnings.warn(
                 "Some transformers you've assigned are not compatible with the sdtypes. "
