@@ -150,7 +150,7 @@ class TestHyperTransformer(TestCase):
         assert ht._input_columns == []
         assert ht._fitted_fields == set()
         assert ht._fitted is False
-        assert ht._modifed_config is False
+        assert ht._modified_config is False
         assert ht._transformers_tree == defaultdict(dict)
         multi_column_mock.assert_called_once()
         validation_mock.assert_called_once()
@@ -1754,10 +1754,9 @@ class TestHyperTransformer(TestCase):
         instance = HyperTransformer()
         instance._fitted = True
         instance.field_transformers = {'a': object()}
-        mock_transformer = Mock()
-        mock_transformer.get_input_sdtype.return_value = 'datetime'
+        transformer = FrequencyEncoder()
         column_name_to_transformer = {
-            'my_column': mock_transformer
+            'my_column': transformer
         }
 
         # Run
@@ -1770,8 +1769,8 @@ class TestHyperTransformer(TestCase):
         )
 
         mock_warnings.warn.assert_called_once_with(expected_message)
-        assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance._provided_field_transformers == {'my_column': mock_transformer}
+        assert instance.field_transformers['my_column'] == transformer
+        assert instance._provided_field_transformers == {'my_column': transformer}
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_not_fitted(self, mock_warnings):
@@ -1800,10 +1799,9 @@ class TestHyperTransformer(TestCase):
         instance = HyperTransformer()
         instance._fitted = False
         instance.field_transformers = {'a': object()}
-        mock_transformer = Mock()
-        mock_transformer.get_input_sdtype.return_value = 'datetime'
+        transformer = BinaryEncoder()
         column_name_to_transformer = {
-            'my_column': mock_transformer
+            'my_column': transformer
         }
 
         # Run
@@ -1811,8 +1809,8 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         mock_warnings.warn.assert_not_called()
-        assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance._provided_field_transformers == {'my_column': mock_transformer}
+        assert instance.field_transformers['my_column'] == transformer
+        assert instance._provided_field_transformers == {'my_column': transformer}
 
     def test_update_transformers_no_field_transformers(self):
         """Test update transformers.
@@ -1874,7 +1872,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``self.field_transformers`` has been updated.
-            - ``self._provided_field_transformers`` has been updated.
         """
         # Setup
         instance = HyperTransformer()
@@ -1882,10 +1879,9 @@ class TestHyperTransformer(TestCase):
         mock_numerical = Mock()
         instance.field_transformers = {'my_column': mock_numerical}
         instance.field_sdtypes = {'my_column': 'categorical'}
-        mock_transformer = Mock()
-        mock_transformer.get_input_sdtype.return_value = 'datetime'
+        transformer = BinaryEncoder()
         column_name_to_transformer = {
-            'my_column': mock_transformer
+            'my_column': transformer
         }
 
         # Run
@@ -1893,14 +1889,13 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         expected_call = (
-            'You are assigning a datetime transformer to a numerical column '
-            "(my_column). If the transformer doesn't match the "
-            'sdtype, it may lead to errors.'
+            "Some transformers you've assigned are not compatible with the sdtypes. "
+            f"Use 'update_sdtypes' to update: {'my_column'}"
         )
 
         assert mock_warnings.called_once_with(expected_call)
-        assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance._provided_field_transformers == {'my_column': mock_transformer}
+        assert instance.field_transformers['my_column'] == transformer
+        assert instance._provided_field_transformers == {'my_column': transformer}
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_sdtypes_fitted(self, mock_warnings):
@@ -2165,6 +2160,33 @@ class TestHyperTransformer(TestCase):
         assert instance.field_transformers == {'a': transformer}
         assert instance._provided_field_sdtypes == {'a': 'numerical'}
         instance._user_message.assert_called_once_with(user_message, 'Info')
+
+    def test__validate_transformers(self):
+        """Test ``_validate_transformers``.
+
+        Ensure that the method properly raises an error when an invalid transformer is passed.
+
+        Setup:
+            - Initialize ``HyperTransformer``.
+
+        Input:
+            - Dictionary of column names to transformers, where at least one of them is invalid.
+        """
+        # Setup
+        instance = HyperTransformer()
+        column_name_to_transformer = {
+            'col1': FrequencyEncoder(),
+            'col2': 'Unexpected',
+            'col3': None
+        }
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Invalid transformers for columns: ['col2']. "
+            'Please assign an rdt transformer object to each column name.'
+        )
+        with pytest.raises(Error, match=error_msg):
+            instance._validate_transformers(column_name_to_transformer)
 
     def test_remove_transformers(self):
         """Test the ``remove_transformers`` method.
