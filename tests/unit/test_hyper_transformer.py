@@ -138,10 +138,8 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
 
         # Asserts
-        assert ht._provided_field_sdtypes == {}
         assert ht.field_sdtypes == {}
         assert ht._default_sdtype_transformers == {}
-        assert ht._provided_field_transformers == {}
         assert ht.field_transformers == {}
         assert ht._specified_fields == set()
         assert ht._valid_output_sdtypes == ht._DEFAULT_OUTPUT_SDTYPES
@@ -165,18 +163,12 @@ class TestHyperTransformer(TestCase):
             - instance._transformers_sequence is a list of transformers
             - instance._output_columns is a list of columns
             - instance._input_columns is a list of columns
-            - instance._provided_field_sdtypes is a dict of strings to strings
-            - instance._provided_field_transformers is a dict of strings to transformers
 
         Expected behavior:
             - instance._fitted is set to False
             - instance._transformers_sequence is set to []
             - instance._output_columns is an empty list
             - instance._input_columns is an empty list
-            - instance._provided_field_sdtypes doesn't change
-            - instance.field_sdtypes is the same as instance._provided_field_sdtypes
-            - instance._provided_field_transformers doesn't change
-            - instance.field_transformers is the same as instance._provided_field_transformers
         """
         # Setup
         ht = HyperTransformer()
@@ -184,10 +176,6 @@ class TestHyperTransformer(TestCase):
         ht._transformers_sequence = [BinaryEncoder(), FloatFormatter()]
         ht._output_columns = ['col1', 'col2']
         ht._input_columns = ['col3', 'col4']
-        sdtypes = {'col1': 'float', 'col2': 'categorical'}
-        ht._provided_field_sdtypes = sdtypes
-        transformers = {'col2': FloatFormatter(), 'col3': BinaryEncoder()}
-        ht._provided_field_transformers = transformers
 
         # Run
         ht._unfit()
@@ -199,10 +187,6 @@ class TestHyperTransformer(TestCase):
         assert ht._output_columns == []
         assert ht._input_columns == []
         assert ht._transformers_tree == {}
-        assert ht.field_sdtypes == sdtypes
-        assert ht._provided_field_sdtypes == sdtypes
-        assert ht.field_transformers == transformers
-        assert ht._provided_field_transformers == transformers
 
     def test__create_multi_column_fields(self):
         """Test the ``_create_multi_column_fields`` method.
@@ -374,26 +358,68 @@ class TestHyperTransformer(TestCase):
         assert isinstance(next_transformer, FrequencyEncoder)
         assert next_transformer.add_noise is False
 
-    def test__validate_detect_config_called(self):
-        """Test the ``_validate_detect_config_called`` method.
+    @patch('rdt.hyper_transformer.get_default_transformer')
+    def test__learn_config(self, get_default_transformer_mock):
+        """Test the ``_learn_config_method.
 
-        Tests that the ``_validate_detect_config_called`` method raises an error
-        when no values are passed to ``field_transformers`` and ``field_sdtypes``.
+        Tests that the method learns the ``sdtype`` and ``transformer`` for every field
+        that doesn't already have one. If it doesn't find a transformer it should use
+        ``_default_sdtype_transformers`` and if that also doesn't have one it should use
+        ``get_default_transformer``.
 
-        Expected behavior:
-            - An error should be raised.
+        Setup:
+            - A mock for ``get_default_tranformer``.
+            - ``field_transformers`` partially provided.
+            - ``field_sdtypes`` partially provided.
+
+        Input:
+            - A DataFrame with multiple columns of different sdtypes.
+
+        Side effects:
+            - The appropriate ``sdtypes`` and ``transformers`` should be found.
         """
         # Setup
-        ht = HyperTransformer()
-        error_msg = (
-            "No config detected. Set the config using 'set_config' or pre-populate "
-            "it automatically from your data using 'detect_initial_config' prior to "
-            'fitting your data.'
-        )
+        int_transformer = Mock()
+        float_transformer = Mock()
+        categorical_transformer = Mock()
+        bool_transformer = Mock()
+        datetime_transformer = Mock()
 
-        # Run / Assert
-        with pytest.raises(Error, match=error_msg):
-            ht._validate_detect_config_called(pd.DataFrame())
+        data = self.get_data()
+        field_transformers = {
+            'integer': int_transformer,
+            'float': float_transformer,
+        }
+        default_sdtype_transformers = {
+            'boolean': bool_transformer,
+            'categorical': categorical_transformer
+        }
+        get_default_transformer_mock.return_value = datetime_transformer
+        ht = HyperTransformer()
+        ht.field_transformers = field_transformers
+        ht.field_sdtypes = {'datetime': 'datetime'}
+        ht._default_sdtype_transformers = default_sdtype_transformers
+        ht._unfit = Mock()
+
+        # Run
+        ht._learn_config(data)
+
+        # Assert
+        assert ht.field_sdtypes == {
+            'integer': 'numerical',
+            'float': 'numerical',
+            'bool': 'boolean',
+            'categorical': 'categorical',
+            'datetime': 'datetime'
+        }
+        assert ht.field_transformers == {
+            'integer': int_transformer,
+            'float': float_transformer,
+            'categorical': categorical_transformer,
+            'bool': bool_transformer,
+            'datetime': datetime_transformer
+        }
+        ht._unfit.assert_called_once()
 
     def test_detect_initial_config(self):
         """Test the ``detect_initial_config`` method.
@@ -422,8 +448,6 @@ class TestHyperTransformer(TestCase):
         output = f_out.getvalue()
 
         # Assert
-        assert ht._provided_field_sdtypes == {}
-        assert ht._provided_field_transformers == {}
         assert ht.field_sdtypes == {
             'col1': 'numerical',
             'col2': 'categorical',
@@ -839,8 +863,7 @@ class TestHyperTransformer(TestCase):
     def test_set_config(self):
         """Test the ``set_config`` method.
 
-        The method should set the ``instance._provided_field_sdtypes``,
-        ``instance.field_sdtypes``, ``instance._provided_field_transformers ``and
+        The method should set the ``instance.field_sdtypes``, and
         ``instance.field_transformers`` attributes based on the config.
 
         Setup:
@@ -852,8 +875,7 @@ class TestHyperTransformer(TestCase):
                 - sdtypes: Maps to a dict that maps column names to ``sdtypes``.
 
         Expected behavior:
-            - The attributes ``instance._provided_field_sdtypes``, ``instance.field_sdtypes``,
-            ``instance._provided_field_transformers `` and ``instance.field_transformers``
+            - The attributes , ``instance.field_sdtypes`` and ``instance.field_transformers``
             should be set.
         """
         # Setup
@@ -877,9 +899,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         ht._validate_config.assert_called_once_with(config)
-        assert ht._provided_field_transformers == config['transformers']
         assert ht.field_transformers == config['transformers']
-        assert ht._provided_field_sdtypes == config['sdtypes']
         assert ht.field_sdtypes == config['sdtypes']
 
     @patch('rdt.hyper_transformer.warnings')
@@ -960,11 +980,29 @@ class TestHyperTransformer(TestCase):
 
         return data
 
-    def test_fit_incorrect_data(self):
-        """Test the ``fit`` method with unknown columns.
+    def test__validate_detect_config_called(self):
+        """Test the ``_validate_detect_config_called`` method.
 
-        Tests that the ``fit`` method raises a ``Error`` if the column names passed to ``fit``
-        are not the same as the ones passed to ``detect_initial_config``.
+        Tests that the ``_validate_detect_config_called`` method raises an error
+        when no values are passed to ``field_transformers`` and ``field_sdtypes``.
+
+        Expected behavior:
+            - An error should be raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+        error_msg = (
+            "No config detected. Set the config using 'set_config' or pre-populate "
+            "it automatically from your data using 'detect_initial_config' prior to "
+            'fitting your data.'
+        )
+
+        # Run / Assert
+        with pytest.raises(Error, match=error_msg):
+            ht._validate_detect_config_called(pd.DataFrame())
+
+    def test__validate_detect_config_called_incorrect_data(self):
+        """Test the ``_validate_detect_config_called`` method.
 
         Setup:
             - Mock the ``_validate_config_exists`` method.
@@ -987,22 +1025,41 @@ class TestHyperTransformer(TestCase):
 
         # Run / Assert
         with pytest.raises(Error, match=error_msg):
-            ht.fit(data)
+            ht._validate_detect_config_called(data)
 
-    @patch('rdt.hyper_transformer.get_default_transformer')
-    def test_fit(self, get_default_transformer_mock):
+    def test__validate_detect_config_called_missing_columns(self):
+        """Test the ``_validate_detect_config_called`` method.
+
+        Tests that the ``_validate_detect_config_called`` method raises a ``NotFittedError``
+        if any column names passed to ``fit`` are not present in the ones passed to
+        ``detect_initial_config``.
+
+        Expected behavior:
+            - A ``NotFittedError`` should be raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_sdtypes = {'col1': 'float', 'col2': 'categorical'}
+        data = pd.DataFrame({'col1': [1, 2]})
+        error_msg = re.escape(
+            'The data you are trying to fit has different columns than the original '
+            'detected data. Column names and their sdtypes must be the same. Use the '
+            "method 'get_config()' to see the expected values."
+        )
+
+        # Run / Assert
+        with pytest.raises(Error, match=error_msg):
+            ht._validate_detect_config_called(data)
+
+    def test_fit(self):
         """Test the ``fit`` method.
 
         Tests that the ``fit`` method loops through the fields in ``field_transformers``
-        and ``field_sdtypes`` that are in the data. It should try to find a transformer
-        in ``_default_sdtype_transformers`` and then use the default if it doesn't find one
-        when looping through ``field_sdtypes``. It should then call ``_fit_field_transformer``
-        with the correct arguments.
+        and ``field_sdtypes`` that are in the data.
 
         Setup:
             - A mock for ``_fit_field_transformer``.
             - A mock for ``_field_in_set``.
-            - A mock for ``get_default_tranformer``.
             - A mock for ``_validate_detect_config_called``.
 
         Input:
@@ -1024,24 +1081,14 @@ class TestHyperTransformer(TestCase):
         field_transformers = {
             'integer': int_transformer,
             'float': float_transformer,
-            'integer.out': int_out_transformer
+            'integer.out': int_out_transformer,
+            'bool': bool_transformer,
+            'categorical': categorical_transformer,
+            'datetime': datetime_transformer
         }
-        default_sdtype_transformers = {
-            'boolean': bool_transformer,
-            'categorical': categorical_transformer
-        }
-        get_default_transformer_mock.return_value = datetime_transformer
 
         ht = HyperTransformer()
         ht.field_transformers = field_transformers
-        ht.field_sdtypes = {
-            'integer': 'numerical',
-            'float': 'numerical',
-            'bool': 'boolean',
-            'categorical': 'categorical',
-            'datetime': 'datetime'
-        }
-        ht._default_sdtype_transformers = default_sdtype_transformers
         ht._fit_field_transformer = Mock()
         ht._fit_field_transformer.return_value = data
         ht._field_in_set = Mock()
@@ -1049,6 +1096,7 @@ class TestHyperTransformer(TestCase):
         ht._validate_all_fields_fitted = Mock()
         ht._sort_output_columns = Mock()
         ht._validate_detect_config_called = Mock()
+        ht._unfit = Mock()
 
         # Run
         ht.fit(data)
@@ -1064,6 +1112,7 @@ class TestHyperTransformer(TestCase):
         ht._validate_all_fields_fitted.assert_called_once()
         ht._sort_output_columns.assert_called_once()
         ht._validate_detect_config_called.assert_called_once()
+        ht._unfit.assert_called_once()
 
     def test_transform(self):
         """Test the ``transform`` method.
@@ -1771,7 +1820,6 @@ class TestHyperTransformer(TestCase):
 
         mock_warnings.warn.assert_called_once_with(expected_message)
         assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance._provided_field_transformers == {'my_column': mock_transformer}
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_not_fitted(self, mock_warnings):
@@ -1794,7 +1842,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``self.field_transformers`` has been updated.
-            - ``self._provided_field_transformers`` has been updated.
         """
         # Setup
         instance = HyperTransformer()
@@ -1812,7 +1859,6 @@ class TestHyperTransformer(TestCase):
         # Assert
         mock_warnings.warn.assert_not_called()
         assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance._provided_field_transformers == {'my_column': mock_transformer}
 
     def test_update_transformers_no_field_transformers(self):
         """Test update transformers.
@@ -1833,7 +1879,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``self.field_transformers`` has been updated.
-            - ``self._provided_field_transformers`` has been updated.
         """
         # Setup
         instance = HyperTransformer()
@@ -1874,7 +1919,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``self.field_transformers`` has been updated.
-            - ``self._provided_field_transformers`` has been updated.
         """
         # Setup
         instance = HyperTransformer()
@@ -1900,7 +1944,6 @@ class TestHyperTransformer(TestCase):
 
         assert mock_warnings.called_once_with(expected_call)
         assert instance.field_transformers['my_column'] == mock_transformer
-        assert instance._provided_field_transformers == {'my_column': mock_transformer}
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_sdtypes_fitted(self, mock_warnings):
@@ -1949,7 +1992,6 @@ class TestHyperTransformer(TestCase):
 
         mock_warnings.warn.assert_called_once_with(expected_message)
         assert instance.field_sdtypes == {'my_column': 'numerical'}
-        assert instance._provided_field_sdtypes == {'my_column': 'numerical'}
         instance._user_message.assert_called_once_with(user_message, 'Info')
 
     @patch('rdt.hyper_transformer.warnings')
@@ -1971,7 +2013,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``self.field_sdtypes`` has been updated.
-            - ``self._provided_field_sdtypes`` has been updated.
             - No warning should be raised.
             - User message should be printed.
         """
@@ -1994,7 +2035,6 @@ class TestHyperTransformer(TestCase):
         )
         mock_warnings.warn.assert_not_called()
         assert instance.field_sdtypes == {'my_column': 'numerical'}
-        assert instance._provided_field_sdtypes == {'my_column': 'numerical'}
         instance._user_message.assert_called_once_with(user_message, 'Info')
 
     def test_update_sdtypes_no_field_sdtypes(self):
@@ -2116,7 +2156,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``self.field_sdtypes`` has been updated.
-            - ``self._provided_field_sdtypes`` has been updated.
             - ``self.field_transformers`` has been updated.
             - No warning should be raised.
             - User message should be printed.
@@ -2143,7 +2182,6 @@ class TestHyperTransformer(TestCase):
         mock_warnings.warn.assert_not_called()
         assert instance.field_sdtypes == {'a': 'numerical'}
         assert instance.field_transformers == {'a': transformer_mock}
-        assert instance._provided_field_sdtypes == {'a': 'numerical'}
         instance._user_message.assert_called_once_with(user_message, 'Info')
 
     @patch('rdt.hyper_transformer.warnings')
@@ -2167,7 +2205,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``self.field_sdtypes`` has been updated.
-            - ``self._provided_field_sdtypes`` has been updated.
             - ``self.field_transformers`` should not be updated.
             - No warning should be raised.
             - User message should be printed.
@@ -2194,7 +2231,6 @@ class TestHyperTransformer(TestCase):
         mock_warnings.warn.assert_not_called()
         assert instance.field_sdtypes == {'a': 'numerical'}
         assert instance.field_transformers == {'a': transformer}
-        assert instance._provided_field_sdtypes == {'a': 'numerical'}
         instance._user_message.assert_called_once_with(user_message, 'Info')
 
     def test_remove_transformers(self):
@@ -2225,7 +2261,6 @@ class TestHyperTransformer(TestCase):
         ht.remove_transformers(column_names=['column2'])
 
         # Assert
-        assert ht._provided_field_transformers == {'column2': None}
         assert ht.field_transformers == {
             'column1': 'transformer',
             'column2': None,
@@ -2339,7 +2374,6 @@ class TestHyperTransformer(TestCase):
         Side Effects:
             - ``instance.field_transformers`` are set to ``None`` for the columns
               that belong to that ``sdtype``.
-            - ``instance._provided_field_transformers`` has been updated too.
         """
         # Setup
         ht = HyperTransformer()
@@ -2359,12 +2393,8 @@ class TestHyperTransformer(TestCase):
         ht.remove_transformers_by_sdtype('categorical')
 
         # Assert
-        ht.field_transformers == {
+        assert ht.field_transformers == {
             'column1': 'transformer',
-            'column2': None,
-            'column3': None
-        }
-        ht._provided_field_transformers == {
             'column2': None,
             'column3': None
         }
@@ -2400,17 +2430,6 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(Error, match=error_msg):
             ht.remove_transformers_by_sdtype('phone_number')
 
-        # Assert
-        ht.field_transformers == {
-            'column1': 'transformer',
-            'column2': None,
-            'column3': None
-        }
-        ht._provided_field_transformers == {
-            'column2': None,
-            'column3': None
-        }
-
     def test__get_transformer(self):
         """Test the ``_get_transformer`` method.
 
@@ -2445,9 +2464,9 @@ class TestHyperTransformer(TestCase):
         out3 = ht._get_transformer('field.out2')
 
         # Assert
-        out1 == transformer1
-        out2 == transformer2
-        out3 == transformer3
+        assert out1 == transformer1
+        assert out2 == transformer2
+        assert out3 == transformer3
 
     def test__get_transformer_raises_error_if_not_fitted(self):
         """Test that ``_get_transformer`` raises ``NotFittedError``.
@@ -2503,7 +2522,7 @@ class TestHyperTransformer(TestCase):
         output_transformers = ht._get_output_transformers('field1')
 
         # Assert
-        output_transformers == {
+        assert output_transformers == {
             'field1.out1': transformer2,
             'field1.out2': transformer3
         }
@@ -2555,7 +2574,7 @@ class TestHyperTransformer(TestCase):
             },
             'field1.out2': {
                 'transformer': transformer,
-                'outputs': ['field1.out2.out1', 'field.out2.out2']
+                'outputs': ['field1.out2.out1', 'field1.out2.out2']
             },
             'field1.out2.out1': {
                 'transformer': transformer,
@@ -2576,7 +2595,7 @@ class TestHyperTransformer(TestCase):
         outputs = ht._get_final_output_columns('field1')
 
         # Assert
-        outputs == ['field1.out1.value', 'field1.out2.out1.value', 'field1.out2.out2.value']
+        assert outputs == ['field1.out2.out2.value', 'field1.out2.out1.value', 'field1.out1.value']
 
     def test__get_final_output_columns_transformer_is_none(self):
         """Test the ``_get_final_output_columns`` method.
