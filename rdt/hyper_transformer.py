@@ -179,15 +179,16 @@ class HyperTransformer:
 
         sdtypes = config['sdtypes']
         transformers = config['transformers']
-        if sdtypes.keys() != transformers.keys():
+        if set(sdtypes.keys()) != set(transformers.keys()):
             raise Error(
                 "The column names in the 'sdtypes' dictionary must match the "
                 "column names in the 'transformers' dictionary."
             )
 
         unsupported_sdtypes = []
-        for column, sdtype in sdtypes.items():
-            if sdtype not in HyperTransformer._get_supported_sdtypes():
+        supported_sdtypes = HyperTransformer._get_supported_sdtypes()
+        for sdtype in sdtypes.values():
+            if sdtype not in supported_sdtypes:
                 unsupported_sdtypes.append(sdtype)
 
         if unsupported_sdtypes:
@@ -197,26 +198,24 @@ class HyperTransformer:
             )
 
         invalid_transformers_columns = []
+        mismatched_columns = []
         for column_name, transformer in transformers.items():
             if transformer is not None:
                 try:
                     get_transformer_instance(transformer)
                 except ValueError:
                     invalid_transformers_columns.append(column_name)
+                else:
+                    input_sdtype = transformer.get_input_sdtype()
+                    sdtype = sdtypes.get(column_name)
+                    if input_sdtype != sdtype:
+                        mismatched_columns.append(column_name)
 
         if invalid_transformers_columns:
             raise Error(
                 f'Invalid transformers for columns: {invalid_transformers_columns}. '
                 'Please assign an rdt transformer object to each column name.'
             )
-
-        mismatched_columns = []
-        for column, transformer in transformers.items():
-            if transformer is not None:
-                input_sdtype = transformer.get_input_sdtype()
-                sdtype = sdtypes.get(column)
-                if input_sdtype != sdtype:
-                    mismatched_columns.append(column)
 
         if mismatched_columns:
             raise Error(

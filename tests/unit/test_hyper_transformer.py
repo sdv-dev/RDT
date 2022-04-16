@@ -2184,7 +2184,7 @@ class TestHyperTransformer(TestCase):
             instance.update_transformers(column_name_to_transformer)
 
     @patch('rdt.hyper_transformer.warnings')
-    def t(self, mock_warnings):
+    def test_update_sdtypes_fitted(self, mock_warnings):
         """Test ``update_sdtypes``.
 
         Ensure that the method properly updates ``self.field_sdtypes`` and prints the
