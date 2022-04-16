@@ -596,6 +596,40 @@ def test_transform_unseen_columns():
         ht.transform(different_data)
 
 
+def test_update_sdtypes_incorrect_columns():
+    """HyperTransformer should crash when update_sdytpes is passed non-existing columns."""
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    column_name_to_sdtype = {'col3': [1, 2]}
+    ht = HyperTransformer()
+
+    # Run / Assert
+    ht.detect_initial_config(data)
+    error_msg = error_msg = re.escape(
+        "Invalid column names: ['col3']. These columns do not exist in the "
+        "config. Use 'set_config()' to write and set your entire config at once."
+    )
+    with pytest.raises(Error, match=error_msg):
+        ht.update_sdtypes(column_name_to_sdtype)
+
+
+def test_update_sdtypes_incorrect_sdtype():
+    """HyperTransformer should crash when update_sdytpes is passed non-existing columns."""
+    # Setup
+    data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
+    column_name_to_sdtype = {'col1': 'unexpected'}
+    ht = HyperTransformer()
+
+    # Run / Assert
+    ht.detect_initial_config(data)
+    error_msg = error_msg = re.escape(
+        "Invalid sdtypes: ['unexpected']. If you are trying to use a "
+        'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
+    )
+    with pytest.raises(Error, match=error_msg):
+        ht.update_sdtypes(column_name_to_sdtype)
+
+
 def test_transform_subset():
     """Test the ``transform_subset`` method.
 
