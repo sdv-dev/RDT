@@ -1803,6 +1803,7 @@ class TestHyperTransformer(TestCase):
         instance = HyperTransformer()
         instance._fitted = True
         instance.field_transformers = {'a': object()}
+        instance._validate_transformers = Mock()
         transformer = FrequencyEncoder()
         column_name_to_transformer = {
             'my_column': transformer
@@ -1819,6 +1820,7 @@ class TestHyperTransformer(TestCase):
 
         mock_warnings.warn.assert_called_once_with(expected_message)
         assert instance.field_transformers['my_column'] == transformer
+        instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_not_fitted(self, mock_warnings):
@@ -1846,6 +1848,7 @@ class TestHyperTransformer(TestCase):
         instance = HyperTransformer()
         instance._fitted = False
         instance.field_transformers = {'a': object()}
+        instance._validate_transformers = Mock()
         transformer = BinaryEncoder()
         column_name_to_transformer = {
             'my_column': transformer
@@ -1857,6 +1860,7 @@ class TestHyperTransformer(TestCase):
         # Assert
         mock_warnings.warn.assert_not_called()
         assert instance.field_transformers['my_column'] == transformer
+        instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
 
     def test_update_transformers_no_field_transformers(self):
         """Test update transformers.
@@ -1924,6 +1928,7 @@ class TestHyperTransformer(TestCase):
         mock_numerical = Mock()
         instance.field_transformers = {'my_column': mock_numerical}
         instance.field_sdtypes = {'my_column': 'categorical'}
+        instance._validate_transformers = Mock()
         transformer = BinaryEncoder()
         column_name_to_transformer = {
             'my_column': transformer
@@ -1939,6 +1944,7 @@ class TestHyperTransformer(TestCase):
         )
 
         assert mock_warnings.called_once_with(expected_call)
+        instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_sdtypes_fitted(self, mock_warnings):
