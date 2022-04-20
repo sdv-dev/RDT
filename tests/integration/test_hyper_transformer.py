@@ -238,14 +238,20 @@ def test_hypertransformer_field_transformers():
     """
     # Setup
     config = {
-        'sdtypes': {},
+        'sdtypes': {
+            'integer': 'numerical',
+            'float': 'numerical',
+            'categorical': 'categorical',
+            'bool': 'boolean',
+            'datetime': 'datetime',
+            'names': 'categorical'
+        },
         'transformers': {
             'integer': FloatFormatter(missing_value_replacement='mean'),
             'float': FloatFormatter(missing_value_replacement='mean'),
             'categorical': FrequencyEncoder,
             'bool': BinaryEncoder(missing_value_replacement='mode'),
             'datetime': DummyTransformerNotMLReady,
-            'datetime.value': FrequencyEncoder,
             'names': FrequencyEncoder
         }
     }
@@ -403,8 +409,8 @@ def test_multiple_fits_with_set_config():
     # Run
     ht.detect_initial_config(data)
     ht.set_config(config={
-        'sdtypes': {'integer': 'numerical'},
-        'transformers': {'bool': FrequencyEncoder}
+        'sdtypes': {'integer': 'categorical'},
+        'transformers': {'integer': FrequencyEncoder}
     })
     ht.fit(data)
     transformed1 = ht.transform(data)
@@ -435,8 +441,8 @@ def test_multiple_detect_configs_with_set_config():
     reverse1 = ht.reverse_transform(transformed1)
 
     ht.set_config(config={
-        'sdtypes': {'integers': 'float'},
-        'transformers': {'bool': FrequencyEncoder}
+        'sdtypes': {'integers': 'categorical'},
+        'transformers': {'integers': FrequencyEncoder}
     })
 
     ht.detect_initial_config(data)
