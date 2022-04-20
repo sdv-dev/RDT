@@ -2017,7 +2017,7 @@ class TestHyperTransformer(TestCase):
         # Run / Assert
         expected_msg = re.escape(
             "Invalid column names: ['unknown_column']. These columns do not exist in "
-            "the config. Use 'set_config' to write and set your entire config at once."
+            "the config. Use 'set_config()' to write and set your entire config at once."
         )
         with pytest.raises(Error, match=expected_msg):
             instance.update_transformers(column_name_to_transformer)
@@ -2309,6 +2309,32 @@ class TestHyperTransformer(TestCase):
         assert instance.field_sdtypes == {'a': 'numerical'}
         assert instance.field_transformers == {'a': transformer}
         instance._user_message.assert_called_once_with(user_message, 'Info')
+
+    def test__validate_update_columns(self):
+        """Test ``_validate_update_columns``.
+
+        Ensure that the method properly raises an error when an invalid column is passed.
+
+        Setup:
+            - Initialize ``HyperTransformer``.
+
+        Input:
+            - List of ``update_columns``.
+            - List of ``config_columns``.
+
+        Side Effect:
+            An error is raised with the columns that are not within the ``config_columns``.
+        """
+        # Setup
+        instance = HyperTransformer()
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Invalid column names: ['col2']. These columns do not exist in the "
+            "config. Use 'set_config()' to write and set your entire config at once."
+        )
+        with pytest.raises(Error, match=error_msg):
+            instance._validate_update_columns(['col1', 'col2'], ['col1'])
 
     def test__validate_transformers(self):
         """Test ``_validate_transformers``.

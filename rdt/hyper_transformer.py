@@ -184,6 +184,14 @@ class HyperTransformer:
                         'sdtype, it may lead to errors.'
                     )
 
+    def _validate_update_columns(self, update_columns, config_columns):
+        unknown_columns = self._subset(update_columns, config_columns, not_in=True)
+        if unknown_columns:
+            raise Error(
+                f'Invalid column names: {unknown_columns}. These columns do not exist in the '
+                "config. Use 'set_config()' to write and set your entire config at once."
+            )
+
     @staticmethod
     def _get_supported_sdtypes():
         get_transformers_by_type.cache_clear()
@@ -271,14 +279,9 @@ class HyperTransformer:
         if len(self.field_sdtypes) == 0:
             raise Error(self._DETECT_CONFIG_MESSAGE)
 
-        data_columns = column_name_to_sdtype.keys()
+        update_columns = column_name_to_sdtype.keys()
         config_columns = self.field_sdtypes.keys()
-        unknown_columns = self._subset(data_columns, config_columns, not_in=True)
-        if unknown_columns:
-            raise Error(
-                f'Invalid column names: {unknown_columns}. These columns do not exist in the '
-                "config. Use 'set_config()' to write and set your entire config at once."
-            )
+        self._validate_update_columns(update_columns, config_columns)
 
         unsupported_sdtypes = []
         transformers_to_update = {}
@@ -346,14 +349,9 @@ class HyperTransformer:
         if len(self.field_transformers) == 0:
             raise Error(self._DETECT_CONFIG_MESSAGE)
 
-        invalid_columns = list(
-            set(column_name_to_transformer).difference(set(self.field_transformers)))
-        if invalid_columns:
-            raise Error(
-                f'Invalid column names: {invalid_columns}. These columns do not exist in '
-                "the config. Use 'set_config' to write and set your entire config at once."
-            )
-
+        update_columns = column_name_to_transformer.keys()
+        config_columns = self.field_transformers.keys()
+        self._validate_update_columns(update_columns, config_columns)
         self._validate_transformers(column_name_to_transformer)
 
         incompatible_sdtypes = []
