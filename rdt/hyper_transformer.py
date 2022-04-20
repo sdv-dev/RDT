@@ -170,6 +170,52 @@ class HyperTransformer:
         return field in data or all_columns_in_data
 
     @staticmethod
+    def _get_supported_sdtypes():
+        get_transformers_by_type.cache_clear()
+        return get_transformers_by_type().keys()
+
+    def get_config(self):
+        """Get the current ``HyperTransformer`` configuration.
+
+        Returns:
+            dict:
+                A dictionary containing the following two dictionaries:
+                - sdtypes: A dictionary mapping column names to their ``sdtypes``.
+                - transformers: A dictionary mapping column names to their transformer instances.
+        """
+        return Config({
+            'sdtypes': self.field_sdtypes,
+            'transformers': self.field_transformers
+        })
+
+    @staticmethod
+    def _validate_transformers(column_name_to_transformer):
+        """Validate the given transformers are valid.
+
+        Args:
+            column_name_to_transformer (dict):
+                Dict mapping column names to transformers to be used for that column.
+
+        Raises:
+            Error:
+                Raises an error if ``column_name_to_transformer`` contains one or more
+                invalid transformers.
+        """
+        invalid_transformers_columns = []
+        for column_name, transformer in column_name_to_transformer.items():
+            if transformer is not None:
+                try:
+                    get_transformer_instance(transformer)
+                except (ValueError, AttributeError):
+                    invalid_transformers_columns.append(column_name)
+
+        if invalid_transformers_columns:
+            raise Error(
+                f'Invalid transformers for columns: {invalid_transformers_columns}. '
+                'Please assign an rdt transformer object to each column name.'
+            )
+
+    @staticmethod
     def _validate_config(config):
         if list(config.keys()) != ['sdtypes', 'transformers']:
             raise Error(
@@ -197,25 +243,15 @@ class HyperTransformer:
                 'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
             )
 
-        invalid_transformers_columns = []
+        HyperTransformer._validate_transformers(transformers)
+
         mismatched_columns = []
         for column_name, transformer in transformers.items():
             if transformer is not None:
-                try:
-                    get_transformer_instance(transformer)
-                except:
-                    invalid_transformers_columns.append(column_name)
-                else:
-                    input_sdtype = transformer.get_input_sdtype()
-                    sdtype = sdtypes.get(column_name)
-                    if input_sdtype != sdtype:
-                        mismatched_columns.append(column_name)
-
-        if invalid_transformers_columns:
-            raise Error(
-                f'Invalid transformers for columns: {invalid_transformers_columns}. '
-                'Please assign an rdt transformer object to each column name.'
-            )
+                input_sdtype = transformer.get_input_sdtype()
+                sdtype = sdtypes.get(column_name)
+                if input_sdtype != sdtype:
+                    mismatched_columns.append(column_name)
 
         if mismatched_columns:
             raise Error(
@@ -346,33 +382,6 @@ class HyperTransformer:
         self._modified_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
-
-    @staticmethod
-    def _validate_transformers(column_name_to_transformer):
-        """Validate the given transformers are valid.
-
-        Args:
-            column_name_to_transformer (dict):
-                Dict mapping column names to transformers to be used for that column.
-
-        Raises:
-            Error:
-                Raises an error if ``column_name_to_transformer`` contains one or more
-                invalid transformers.
-        """
-        invalid_transformers_columns = []
-        for column_name, transformer in column_name_to_transformer.items():
-            if transformer is not None:
-                try:
-                    get_transformer_instance(transformer)
-                except ValueError:
-                    invalid_transformers_columns.append(column_name)
-
-        if invalid_transformers_columns:
-            raise Error(
-                f'Invalid transformers for columns: {invalid_transformers_columns}. '
-                'Please assign an rdt transformer object to each column name.'
-            )
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.

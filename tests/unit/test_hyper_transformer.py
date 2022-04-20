@@ -723,8 +723,7 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert ht._output_columns == ['a.is_null', 'b.value', 'b.is_null', 'c.value']
 
-    @patch('rdt.hyper_transformer.warnings')
-    def test__validate_config(self, warnings_mock):
+    def test__validate_config(self):
         """Test the ``_validate_config`` method.
 
         The method should throw a warnings if the ``sdtypes`` of any column name doesn't match
