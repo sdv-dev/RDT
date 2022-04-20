@@ -280,25 +280,6 @@ class HyperTransformer:
                 "config. Use 'set_config()' to write and set your entire config at once."
             )
 
-    @staticmethod
-    def _get_supported_sdtypes():
-        get_transformers_by_type.cache_clear()
-        return get_transformers_by_type().keys()
-
-    def get_config(self):
-        """Get the current ``HyperTransformer`` configuration.
-
-        Returns:
-            dict:
-                A dictionary containing the following two dictionaries:
-                - sdtypes: A dictionary mapping column names to their ``sdtypes``.
-                - transformers: A dictionary mapping column names to their transformer instances.
-        """
-        return Config({
-            'sdtypes': self.field_sdtypes,
-            'transformers': self.field_transformers
-        })
-
     def set_config(self, config):
         """Set the ``HyperTransformer`` configuration.
 
@@ -370,7 +351,7 @@ class HyperTransformer:
         update_columns = column_name_to_sdtype.keys()
         self._validate_update_columns(update_columns)
 
-        HyperTransformer._validate_sdtypes(column_name_to_sdtype)
+        self._validate_sdtypes(column_name_to_sdtype)
 
         transformers_to_update = {}
         for column, sdtype in column_name_to_sdtype.items():
