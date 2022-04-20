@@ -1802,6 +1802,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         instance = HyperTransformer()
         instance._fitted = True
+        instance.field_sdtypes = {'my_column': 'categorical'}
         instance.field_transformers = {'my_column': object()}
         instance._validate_transformers = Mock()
         transformer = FrequencyEncoder()
@@ -1847,7 +1848,8 @@ class TestHyperTransformer(TestCase):
         # Setup
         instance = HyperTransformer()
         instance._fitted = False
-        instance.field_transformers = {'my_column': object()}
+        instance.field_transformers = {'my_column': BinaryEncoder}
+        instance.field_sdtypes = {'my_column': 'boolean'}
         instance._validate_transformers = Mock()
         transformer = BinaryEncoder()
         column_name_to_transformer = {
@@ -2327,6 +2329,7 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         instance = HyperTransformer()
+        instance.field_sdtypes = {'col1': 'categorical'}
 
         # Run / Assert
         error_msg = re.escape(
@@ -2334,7 +2337,7 @@ class TestHyperTransformer(TestCase):
             "config. Use 'set_config()' to write and set your entire config at once."
         )
         with pytest.raises(Error, match=error_msg):
-            instance._validate_update_columns(['col1', 'col2'], ['col1'])
+            instance._validate_update_columns(['col1', 'col2'])
 
     def test__validate_transformers(self):
         """Test ``_validate_transformers``.

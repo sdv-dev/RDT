@@ -184,8 +184,8 @@ class HyperTransformer:
                         'sdtype, it may lead to errors.'
                     )
 
-    def _validate_update_columns(self, update_columns, config_columns):
-        unknown_columns = self._subset(update_columns, config_columns, not_in=True)
+    def _validate_update_columns(self, update_columns):
+        unknown_columns = self._subset(update_columns, self.field_sdtypes.keys(), not_in=True)
         if unknown_columns:
             raise Error(
                 f'Invalid column names: {unknown_columns}. These columns do not exist in the '
@@ -280,8 +280,7 @@ class HyperTransformer:
             raise Error(self._DETECT_CONFIG_MESSAGE)
 
         update_columns = column_name_to_sdtype.keys()
-        config_columns = self.field_sdtypes.keys()
-        self._validate_update_columns(update_columns, config_columns)
+        self._validate_update_columns(update_columns)
 
         unsupported_sdtypes = []
         transformers_to_update = {}
@@ -350,8 +349,7 @@ class HyperTransformer:
             raise Error(self._DETECT_CONFIG_MESSAGE)
 
         update_columns = column_name_to_transformer.keys()
-        config_columns = self.field_transformers.keys()
-        self._validate_update_columns(update_columns, config_columns)
+        self._validate_update_columns(update_columns)
         self._validate_transformers(column_name_to_transformer)
 
         incompatible_sdtypes = []
