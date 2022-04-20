@@ -723,8 +723,7 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert ht._output_columns == ['a.is_null', 'b.value', 'b.is_null', 'c.value']
 
-    @patch('rdt.hyper_transformer.warnings')
-    def test__validate_config(self, warnings_mock):
+    def test__validate_config(self):
         """Test the ``_validate_config`` method.
 
         The method should throw a warnings if the ``sdtypes`` of any column name doesn't match
@@ -755,14 +754,12 @@ class TestHyperTransformer(TestCase):
         }
 
         # Run
-        HyperTransformer._validate_config(config)
-
-        # Assert
-        expected_message = (
-            "You are assigning a categorical transformer to a numerical column ('column2'). "
-            "If the transformer doesn't match the sdtype, it may lead to errors."
+        error_msg = re.escape(
+            "Some transformers you've assigned are not compatible with the sdtypes. "
+            "Please change the following columns: ['column2']"
         )
-        warnings_mock.warn.assert_called_once_with(expected_message)
+        with pytest.raises(Error, match=error_msg):
+            HyperTransformer._validate_config(config)
 
     @patch('rdt.hyper_transformer.warnings')
     def test__validate_config_no_warning(self, warnings_mock):
@@ -799,6 +796,167 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         warnings_mock.warn.assert_not_called()
+
+    def test__validate_config_invalid_key(self):
+        """Test the ``_validate_config`` method.
+
+        The method should crash if an unexpected key is present in the config.
+
+        Input:
+            - A config with an unexpected key.
+
+        Expected behavior:
+            - It should raise an error.
+        """
+        # Setup
+        transformers = {
+            'column1': FloatFormatter(),
+            'column2': FrequencyEncoder()
+        }
+        sdtypes = {
+            'column1': 'numerical',
+            'column2': 'numerical'
+        }
+        config = {
+            'sdtypes': sdtypes,
+            'transformers': transformers,
+            'unexpected': 10
+        }
+
+        # Run / Assert
+        error_msg = re.escape(
+            'Error: Invalid config. Please provide 2 dictionaries '
+            "named 'sdtypes' and 'transformers'."
+        )
+        with pytest.raises(Error, match=error_msg):
+            HyperTransformer._validate_config(config)
+
+    def test__validate_config_missing_sdtypes(self):
+        """Test the ``_validate_config`` method.
+
+        The method should crash if ``sdytpes`` is missing from the config.
+
+        Input:
+            - A config with only ``transformers``.
+
+        Expected behavior:
+            - It should raise an error.
+        """
+        # Setup
+        transformers = {
+            'column1': FloatFormatter(),
+            'column2': FrequencyEncoder()
+        }
+        config = {
+            'transformers': transformers,
+        }
+
+        # Run / Assert
+        error_msg = re.escape(
+            'Error: Invalid config. Please provide 2 dictionaries '
+            "named 'sdtypes' and 'transformers'."
+        )
+        with pytest.raises(Error, match=error_msg):
+            HyperTransformer._validate_config(config)
+
+    def test__validate_config_mismatched_columns(self):
+        """Test the ``_validate_config`` method.
+
+        The method should crash if ``sdytpes`` and ``transformers`` have different of columns.
+
+        Input:
+            - A config with mismatched ``transformers`` and ``sdtypes`` .
+
+        Expected behavior:
+            - It should raise an error.
+        """
+        # Setup
+        sdtypes = {
+            'column1': 'numerical',
+            'column2': 'numerical'
+        }
+        transformers = {
+            'column1': FloatFormatter(),
+            'column3': FrequencyEncoder()
+        }
+        config = {
+            'sdtypes': sdtypes,
+            'transformers': transformers,
+        }
+
+        # Run / Assert
+        error_msg = re.escape(
+            "The column names in the 'sdtypes' dictionary must match the "
+            "column names in the 'transformers' dictionary."
+        )
+        with pytest.raises(Error, match=error_msg):
+            HyperTransformer._validate_config(config)
+
+    def test__validate_config_invalid_sdtype(self):
+        """Test the ``_validate_config`` method.
+
+        The method should crash if ``sdytpes`` is passed non-supported values.
+
+        Input:
+            - A config with incorrect ``sdytpes``.
+
+        Expected behavior:
+            - It should raise an error.
+        """
+        # Setup
+        sdtypes = {
+            'column1': 'numerical',
+            'column2': 'unexpected'
+        }
+        transformers = {
+            'column1': FloatFormatter(),
+            'column2': FrequencyEncoder()
+        }
+        config = {
+            'sdtypes': sdtypes,
+            'transformers': transformers,
+        }
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Invalid sdtypes: ['unexpected']. If you are trying to use a "
+            'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
+        )
+        with pytest.raises(Error, match=error_msg):
+            HyperTransformer._validate_config(config)
+
+    def test__validate_config_invalid_transformer(self):
+        """Test the ``_validate_config`` method.
+
+        The method should crash if ``transformers`` is passed non-supported values.
+
+        Input:
+            - A config with incorrect ``transformers``.
+
+        Expected behavior:
+            - It should raise an error.
+        """
+        # Setup
+        sdtypes = {
+            'column1': 'numerical',
+            'column2': 'numerical'
+        }
+        transformers = {
+            'column1': FloatFormatter(),
+            'column2': 'unexpected'
+        }
+        config = {
+            'sdtypes': sdtypes,
+            'transformers': transformers,
+        }
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Invalid transformers for columns: ['column2']. "
+            'Please assign an rdt transformer object to each column name.'
+        )
+        with pytest.raises(Error, match=error_msg):
+            HyperTransformer._validate_config(config)
 
     def test_get_config(self):
         """Test the ``get_config`` method.
