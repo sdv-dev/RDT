@@ -1802,7 +1802,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         instance = HyperTransformer()
         instance._fitted = True
-        instance.field_transformers = {'a': object()}
+        instance.field_transformers = {'my_column': object()}
         instance._validate_transformers = Mock()
         transformer = FrequencyEncoder()
         column_name_to_transformer = {
@@ -1847,7 +1847,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         instance = HyperTransformer()
         instance._fitted = False
-        instance.field_transformers = {'a': object()}
+        instance.field_transformers = {'my_column': object()}
         instance._validate_transformers = Mock()
         transformer = BinaryEncoder()
         column_name_to_transformer = {
@@ -1945,6 +1945,82 @@ class TestHyperTransformer(TestCase):
 
         assert mock_warnings.called_once_with(expected_call)
         instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
+
+    def test_update_transformers_transformer_is_none(self):
+        """Test update transformers.
+
+        Ensure that the function updates properly the ``self.field_transformers`` with ``None``.
+
+        Setup:
+            - Initialize ``HyperTransformer``.
+            - Set ``field_transformers`` to contain a column and a mock transformer to be
+              updated by ``update_transformer``.
+
+        Input:
+            - Dictionary with a ``column_name`` and a ``None`` transformer.
+
+        Mock:
+            - Transformer, mock for the replacement transformer.
+
+        Side Effects:
+            - ``self.field_transformers`` has been updated.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = False
+        mock_numerical = Mock()
+        instance.field_transformers = {'my_column': mock_numerical}
+        instance.field_sdtypes = {'my_column': 'categorical'}
+        instance._validate_transformers = Mock()
+        column_name_to_transformer = {
+            'my_column': None
+        }
+
+        # Run
+        instance.update_transformers(column_name_to_transformer)
+
+        # Assert
+        assert instance.field_transformers == {'my_column': None}
+        instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
+
+    def test_update_transformers_column_doesnt_exist_in_config(self):
+        """Test update transformers.
+
+        Ensure that the function raises an error if the ``column`` is not in the
+        ``self.field_transformers``.
+
+        Setup:
+            - Initialize ``HyperTransformer``.
+            - Set ``field_transformers`` to contain a column and a mock transformer to be
+              updated by ``update_transformer``.
+
+        Input:
+            - Dictionary with a ``column_name`` and a ``None`` transformer.
+
+        Mock:
+            - Transformer, mock for the replacement transformer.
+
+        Side Effects:
+            - An ``Error`` has been raised.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = False
+        mock_numerical = Mock()
+        instance.field_transformers = {'my_column': mock_numerical}
+        instance.field_sdtypes = {'my_column': 'categorical'}
+        instance._validate_transformers = Mock()
+        column_name_to_transformer = {
+            'unknown_column': None
+        }
+
+        # Run / Assert
+        expected_msg = re.escape(
+            "Invalid column names: ['unknown_column']. These columns do not exist in "
+            "the config. Use 'set_config' to write and set your entire config at once."
+        )
+        with pytest.raises(Error, match=expected_msg):
+            instance.update_transformers(column_name_to_transformer)
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_sdtypes_fitted(self, mock_warnings):
