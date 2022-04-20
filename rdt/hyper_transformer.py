@@ -216,6 +216,30 @@ class HyperTransformer:
             )
 
     @staticmethod
+    def _validate_sdtypes(sdtypes):
+        """Validate the given sdtypes are valid.
+
+        Args:
+            sdtypes (dict):
+                Dict mapping column names to sdtypes to be used for that column.
+
+        Raises:
+            Error:
+                Raises an error if ``sdtypes`` contains one or more invalid sdtype.
+        """
+        supported_sdtypes = HyperTransformer._get_supported_sdtypes()
+        unsupported_sdtypes = []
+        for sdtype in sdtypes.values():
+            if sdtype not in supported_sdtypes:
+                unsupported_sdtypes.append(sdtype)
+
+        if unsupported_sdtypes:
+            raise Error(
+                f'Invalid sdtypes: {unsupported_sdtypes}. If you are trying to use a '
+                'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
+            )
+
+    @staticmethod
     def _validate_config(config):
         if list(config.keys()) != ['sdtypes', 'transformers']:
             raise Error(
@@ -231,18 +255,7 @@ class HyperTransformer:
                 "column names in the 'transformers' dictionary."
             )
 
-        unsupported_sdtypes = []
-        supported_sdtypes = HyperTransformer._get_supported_sdtypes()
-        for sdtype in sdtypes.values():
-            if sdtype not in supported_sdtypes:
-                unsupported_sdtypes.append(sdtype)
-
-        if unsupported_sdtypes:
-            raise Error(
-                f'Invalid sdtypes: {unsupported_sdtypes}. If you are trying to use a '
-                'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
-            )
-
+        HyperTransformer._validate_sdtypes(sdtypes)
         HyperTransformer._validate_transformers(transformers)
 
         mismatched_columns = []
@@ -357,21 +370,14 @@ class HyperTransformer:
         update_columns = column_name_to_sdtype.keys()
         self._validate_update_columns(update_columns)
 
-        unsupported_sdtypes = []
+        HyperTransformer._validate_sdtypes(column_name_to_sdtype)
+
         transformers_to_update = {}
         for column, sdtype in column_name_to_sdtype.items():
-            if sdtype not in self._get_supported_sdtypes():
-                unsupported_sdtypes.append(sdtype)
-            elif self.field_sdtypes.get(column) != sdtype:
+            if self.field_sdtypes.get(column) != sdtype:
                 current_transformer = self.field_transformers.get(column)
                 if not current_transformer or current_transformer.get_input_sdtype() != sdtype:
                     transformers_to_update[column] = get_default_transformer(sdtype)
-
-        if unsupported_sdtypes:
-            raise Error(
-                f'Invalid sdtypes: {unsupported_sdtypes}. If you are trying to use a '
-                'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
-            )
 
         self.field_sdtypes.update(column_name_to_sdtype)
         self.field_transformers.update(transformers_to_update)
