@@ -866,7 +866,7 @@ class TestHyperTransformer(TestCase):
         The method should crash if ``sdytpes`` and ``transformers`` have different of columns.
 
         Input:
-            - A config with only ``transformers``.
+            - A config with mismatched ``transformers`` and ``sdtypes`` .
 
         Expected behavior:
             - It should raise an error.

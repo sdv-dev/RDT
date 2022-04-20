@@ -203,7 +203,7 @@ class HyperTransformer:
             if transformer is not None:
                 try:
                     get_transformer_instance(transformer)
-                except ValueError:
+                except:
                     invalid_transformers_columns.append(column_name)
                 else:
                     input_sdtype = transformer.get_input_sdtype()
