@@ -1819,6 +1819,40 @@ class TestHyperTransformer(TestCase):
         }
         assert ht.field_transformers == expected_field_transformers
 
+    def test_update_transformers_by_sdtype_with_transformer_as_none(self):
+        """Test ``update_transformers_by_sdtype`` with ``transformer`` as ``None``.
+
+        Ensure that ``update_transformers_by_sdtype`` works with ``transformer`` as ``None``.
+
+        Setup:
+            - HyperTransformer instance with ``field_transformers`` and ``field-data_types``.
+
+        Side Effects:
+            - HyperTransformer's ``field_transformers`` are upated with the ``None`` value.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ff = FloatFormatter()
+        ht.field_transformers = {
+            'categorical_column': FrequencyEncoder(),
+            'numerical_column': ff,
+        }
+        ht.field_sdtypes = {
+            'categorical_column': 'categorical',
+            'numerical_column': 'numerical',
+
+        }
+
+        # Run
+        ht.update_transformers_by_sdtype('categorical', None)
+
+        # Assert
+        expected_field_transformers = {
+            'categorical_column': None,
+            'numerical_column': ff,
+        }
+        assert ht.field_transformers == expected_field_transformers
+
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_by_sdtype_field_sdtypes_fitted(self, mock_warnings):
         """Test ``update_transformers_by_sdtype`` if ``HyperTransformer`` has aleady been fit.
