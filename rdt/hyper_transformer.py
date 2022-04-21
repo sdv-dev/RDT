@@ -241,7 +241,7 @@ class HyperTransformer:
 
     @staticmethod
     def _validate_config(config):
-        if list(config.keys()) != ['sdtypes', 'transformers']:
+        if set(config.keys()) != {'sdtypes', 'transformers'}:
             raise Error(
                 'Error: Invalid config. Please provide 2 dictionaries '
                 "named 'sdtypes' and 'transformers'."
