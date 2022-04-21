@@ -135,6 +135,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.6.5.dev0',
+    version='1.0.0.dev0',
     zip_safe=False,
 )
