@@ -329,7 +329,7 @@ class HyperTransformer:
         if not isinstance(transformer, BaseTransformer) and transformer is not None:
             raise Error('Invalid transformer. Please input an rdt transformer object.')
 
-        if transformer.get_input_sdtype() != sdtype:
+        if transformer is not None and transformer.get_input_sdtype() != sdtype:
             raise Error("The transformer you've assigned is incompatible with the sdtype.")
 
         for field, field_sdtype in self.field_sdtypes.items():
