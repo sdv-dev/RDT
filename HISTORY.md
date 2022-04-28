@@ -1,10 +1,108 @@
 # History
 
+## 1.0.0 - 2022-4-25
+
+The main update of this release is the introduction of a `config`, which describes the `sdtypes` and `transformers` that will be used by the `HyperTransformer` for each column of the data, where `sdtype` stands for the **semantic** or **statistical** meaning of a datatype. The user can interact with this config through the newly created methods `update_sdtypes`, `get_config`, `set_config`, `update_transformers`, `update_transformers_by_sdtype` and `remove_transformer_by_sdtype`.
+
+This release also included various new features and updates, including:
+
+* Users can now transform subsets of the data using its own methods, `transform_subset` and `reverse_transform_subset`.
+* User validation was added for the following methods: `transform`, `reverse_transform`, `update_sdtypes`, `update_transformers`, `set_config`.
+* Unnecessary warnings were removed from `GaussianNormalizer.fit` and `FrequencyEncoder.transform`.
+* The user can now set a transformers as None.
+* Transformers that cannot work with missing values will automatically fill them in.
+* Added support for additional datetime formats.
+* Setting  `model_missing_values = False` in a transformer was updated to keep track of the percentage of missing values, instead of producing data containing `NaN`'s.
+* All parameters were removed from the `HyperTransformer`.
+* The demo dataset `get_demo` was improved to be more intuitive.
+
+Finally, a number of transformers were redesigned to be more user friendly. Among them, the following transformers have also been renamed:
+
+* `BayesGMMTransformer` -> `ClusterBasedNormalizer`
+* `GaussianCopulaTransformer` -> `GaussianNormalizer`
+* `DateTimeRoundedTransformer` -> `OptimizedTimestampEncoder`
+* `DateTimeTransformer` -> `UnixTimestampEncoder`
+* `NumericalTransformer` -> `FloatFormatter`
+* `LabelEncodingTransformer` -> `LabelEncoder`
+* `OneHotEncodingTransformer` -> `OneHotEncoder`
+* `CategoricalTransformer` -> `FrequencyEncoder`
+* `BooleanTransformer` -> `BinaryEncoder`
+* `PIIAnonymizer` -> `AnonymizedFaker`
+
+### New Features
+
+* Fix using None as transformer when update_transformers_by_sdtype - Issue [#496](https://github.com/sdv-dev/RDT/issues/496) by @pvk-developer
+* Rename PIIAnonymizer --> AnonymizedFaker - Issue [#483](https://github.com/sdv-dev/RDT/issues/483) by @pvk-developer
+* User validation for reverse_transform - Issue [#480](https://github.com/sdv-dev/RDT/issues/480) by @amontanez24
+* User validation for transform - Issue [#479](https://github.com/sdv-dev/RDT/issues/479) by @fealho\
+* User validation for set_config - Issue [#478](https://github.com/sdv-dev/RDT/issues/478) by @fealho
+* User validation for update_transformers_by_sdtype - Issue [#477](https://github.com/sdv-dev/RDT/issues/477) by @amontanez24
+* User validation for update_transformers - Issue [#475](https://github.com/sdv-dev/RDT/issues/475) by @fealho
+* User validation for update_sdtypes - Issue [#474](https://github.com/sdv-dev/RDT/issues/474) by @fealho
+* Allow columns to not have a transformer - Issue [#473](https://github.com/sdv-dev/RDT/issues/473) by @pvk-developer
+* Create methods to transform a subset of the data (& reverse transform it) - Issue [#472](https://github.com/sdv-dev/RDT/issues/472) by @amontanez24
+* Throw a warning if you use set_config on a HyperTransformer that's already fit - Issue [#466](https://github.com/sdv-dev/RDT/issues/466) by @amontanez24
+* Update README for RDT 1.0 - Issue [#454](https://github.com/sdv-dev/RDT/issues/454) by @amontanez24
+* Issue with printing PIIAnonymizer in HyperTransformer - Issue [#452](https://github.com/sdv-dev/RDT/issues/452) by @pvk-developer
+* Pretty print get_config - Issue [#450](https://github.com/sdv-dev/RDT/issues/450) by @pvk-developer
+* Silence warning for GaussianNormalizer.fit - Issue [#443](https://github.com/sdv-dev/RDT/issues/443) by @pvk-developer
+* Transformers that cannot work with missing values should automatically fill them in - Issue [#442](https://github.com/sdv-dev/RDT/issues/442) by @amontanez24
+* More descriptive error message in PIIAnonymizer when provider_name and function_name don't align - Issue [#440](https://github.com/sdv-dev/RDT/issues/440) by @pvk-developer
+* Can we support additional datetime formats? - Issue [#439](https://github.com/sdv-dev/RDT/issues/439) by @pvk-developer
+* Update FrequencyEncoder.transform so that pandas won't throw a warning - Issue [#436](https://github.com/sdv-dev/RDT/issues/436) by @pvk-developer
+* Update functionality when model_missing_values=False - Issue [#435](https://github.com/sdv-dev/RDT/issues/435) by @amontanez24
+* Create methods for getting and setting a config - Issue [#418](https://github.com/sdv-dev/RDT/issues/418) by @amontanez24
+* Input validation & error handling in HyperTransformer - Issue [#408](https://github.com/sdv-dev/RDT/issues/408) by @fealho and @amontanez24
+* Remove unneeded params from HyperTransformer - Issue [#407](https://github.com/sdv-dev/RDT/issues/407) by @pvk-developer
+* Rename property: _valid_output_sdtypes - Issue [#406](https://github.com/sdv-dev/RDT/issues/406) by @amontanez24
+* Add pii as a new sdtype in HyperTransformer - Issue [#404](https://github.com/sdv-dev/RDT/issues/404) by @pvk-developer
+* Update transformers by data type (in HyperTransformer) - Issue [#403](https://github.com/sdv-dev/RDT/issues/403) by @pvk-developer
+* Update transformers by column name in HyperTransformer - Issue [#402](https://github.com/sdv-dev/RDT/issues/402) by @pvk-developer
+* Improve updating field_data_types in HyperTransformer - Issue [#400](https://github.com/sdv-dev/RDT/issues/400) by @amontanez24
+* Create method to auto detect HyperTransformer config from data - Issue [#399](https://github.com/sdv-dev/RDT/issues/399) by @fealho
+* Update HyperTransformer default transformers - Issue [#398](https://github.com/sdv-dev/RDT/issues/398) by @fealho
+* Add PIIAnonymizer - Issue [#397](https://github.com/sdv-dev/RDT/issues/397) by @pvk-developer
+* Improve the way we print an individual transformer - Issue [#395](https://github.com/sdv-dev/RDT/issues/395) by @amontanez24
+* Rename columns parameter in fit for each individual transformer - Issue [#376](https://github.com/sdv-dev/RDT/issues/376) by @fealho and @pvk-developer
+* Create a more descriptive demo dataset - Issue [#374](https://github.com/sdv-dev/RDT/issues/374) by @fealho
+* Delete unnecessary transformers - Issue [#373](https://github.com/sdv-dev/RDT/issues/373) by @fealho
+* Update NullTransformer to make it user friendly - Issue [#372](https://github.com/sdv-dev/RDT/issues/372) by @pvk-developer
+* Update BayesGMMTransformer to make it user friendly - Issue [#371](https://github.com/sdv-dev/RDT/issues/371) by @amontanez24
+* Update GaussianCopulaTransformer to make it user friendly - Issue [#370](https://github.com/sdv-dev/RDT/issues/370) by @amontanez24
+* Update DateTimeRoundedTransformer to make it user friendly - Issue [#369](https://github.com/sdv-dev/RDT/issues/369) by @amontanez24
+* Update DateTimeTransformer to make it user friendly - Issue [#368](https://github.com/sdv-dev/RDT/issues/368) by @amontanez24
+* Update NumericalTransformer to make it user friendly - Issue [#367](https://github.com/sdv-dev/RDT/issues/367) by @amontanez24
+* Update LabelEncodingTransformer to make it user friendly - Issue [#366](https://github.com/sdv-dev/RDT/issues/366) by @fealho
+* Update OneHotEncodingTransformer to make it user friendly - Issue [#365](https://github.com/sdv-dev/RDT/issues/365) by @fealho
+* Update CategoricalTransformer to make it user friendly - Issue [#364](https://github.com/sdv-dev/RDT/issues/364) by @fealho
+* Update BooleanTransformer to make it user friendly - Issue [#363](https://github.com/sdv-dev/RDT/issues/363) by @fealho
+* Update names & functionality for handling missing values - Issue [#362](https://github.com/sdv-dev/RDT/issues/362) by @pvk-developer
+
+### Bugs
+
+* Checking keys of config as set - Issue [#497](https://github.com/sdv-dev/RDT/issues/497) by @amontanez24
+* Only update transformer used when necessary for update_sdtypes - Issue [#469](https://github.com/sdv-dev/RDT/issues/469) by @amontanez24
+* Fix how get_config prints transformers - Issue [#468](https://github.com/sdv-dev/RDT/issues/468) by @pvk-developer
+* NullTransformer reverse_transform alters input data due to not copying - Issue [#455](https://github.com/sdv-dev/RDT/issues/455) by @amontanez24
+* Attempting to transform a subset of the data should lead to an Error - Issue [#451](https://github.com/sdv-dev/RDT/issues/451) by @amontanez24
+* Detect_initial_config isn't detecting sdtype "numerical" - Issue [#449](https://github.com/sdv-dev/RDT/issues/449) by @pvk-developer
+* PIIAnonymizer not generating multiple locales - Issue [#447](https://github.com/sdv-dev/RDT/issues/447) by @pvk-developer
+* Error when printing ClusterBasedNormalizer and GaussianNormalizer - Issue [#441](https://github.com/sdv-dev/RDT/issues/441) by @pvk-developer
+* Datetime reverse transform crashes if datetime_format is specified - Issue [#438](https://github.com/sdv-dev/RDT/issues/438) by @amontanez24
+* Correct datetime format is not recovered on reverse_transform - Issue [#437](https://github.com/sdv-dev/RDT/issues/437) by @pvk-developer
+* Use numpy NaN values in BinaryEncoder - Issue [#434](https://github.com/sdv-dev/RDT/issues/434) by @pvk-developer
+* Duplicate _output_columns during fitting - Issue [#423](https://github.com/sdv-dev/RDT/issues/423) by @fealho
+
+### Internal Improvements
+
+* Making methods that aren't part of API private - Issue [#489](https://github.com/sdv-dev/RDT/issues/489) by @amontanez24
+* Fix columns missing in config and update transformers to None - Issue [#495](https://github.com/sdv-dev/RDT/issues/495) by @pvk-developer
+
 ## 0.6.4 - 2022-3-7
 
 This release fixes multiple bugs concerning the `HyperTransformer`. One is that the `get_transformer_tree_yaml` method no longer crashes on
 every call. Another is that calling the `update_field_data_types` and `update_default_data_type_transformers` after fitting no longer breaks the `transform`
-method. 
+method.
 
 The `HyperTransformer` now sorts its outputs for both `transform` and `reverse_transform` based on the order of the input's columns. It is also now possible
 to create transformers that simply drops columns during `transform` and don't return any new columns.
