@@ -16,7 +16,7 @@ This release also included various new features and updates, including:
 * All parameters were removed from the `HyperTransformer`.
 * The demo dataset `get_demo` was improved to be more intuitive.
 
-Finally, a number of transformers were redesigned to be more user friedy. Among them, the following transformers have also been renamed:
+Finally, a number of transformers were redesigned to be more user friendly. Among them, the following transformers have also been renamed:
 
 * `BayesGMMTransformer` -> `ClusterBasedNormalizer`
 * `GaussianCopulaTransformer` -> `GaussianNormalizer`
