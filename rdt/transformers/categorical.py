@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import psutil
-from scipy.stats import norm
+from scipy.stats import norm, uniform
 
 from rdt.transformers.base import BaseTransformer
 
@@ -425,6 +425,9 @@ class LabelEncoder(BaseTransformer):
     values_to_categories = None
     categories_to_values = None
 
+    def __init__(self, add_noise=False):
+        self.add_noise = add_noise
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -472,7 +475,10 @@ class LabelEncoder(BaseTransformer):
             size=is_null.sum()
         )
 
-        return mapped.astype('int64')
+        if self.add_noise:
+            mapped = np.random.uniform(mapped, mapped + 1)
+
+        return mapped
 
     def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
@@ -484,5 +490,8 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
+        if self.add_noise:
+            data = np.floor(data)
+
         data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
         return data.round().map(self.values_to_categories)

@@ -1577,7 +1577,7 @@ class TestLabelEncoder:
             transformed = transformer._transform(data)
 
         # Assert
-        expected = pd.Series([0, 1, 2])
+        expected = pd.Series([0., 1., 2.])
         pd.testing.assert_series_equal(transformed[:-1], expected)
 
         assert 0 <= transformed[3] <= 2
@@ -1610,7 +1610,7 @@ class TestLabelEncoder:
             transformed = transformer._transform(transform_data)
 
         # Assert
-        expected = pd.Series([0, 1, 2])
+        expected = pd.Series([0., 1., 2.])
         pd.testing.assert_series_equal(transformed[:3], expected)
 
         assert all([0 <= value < len(fit_data) for value in transformed[3:]])

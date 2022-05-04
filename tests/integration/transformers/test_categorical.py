@@ -286,7 +286,7 @@ def test_label_numerical_2d_array():
 
     transformer = LabelEncoder()
     transformer.fit(data, column)
-    transformed = pd.DataFrame([0, 1, 2, 3], columns=['column_name.value'])
+    transformed = pd.DataFrame([0., 1., 2., 3.], columns=['column_name.value'])
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
