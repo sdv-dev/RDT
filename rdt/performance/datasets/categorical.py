@@ -12,7 +12,7 @@ from rdt.performance.datasets.utils import add_nans
 class CategoricalGenerator(BaseDatasetGenerator, ABC):
     """Base class for generators that generate catgorical data."""
 
-    DATA_TYPE = 'categorical'
+    SDTYPE = 'categorical'
 
 
 class RandomIntegerGenerator(CategoricalGenerator):
@@ -33,7 +33,7 @@ class RandomIntegerGenerator(CategoricalGenerator):
                 'memory': 400.0
             },
             'transform': {
-                'time': 3e-06,
+                'time': 5e-06,
                 'memory': 400.0
             },
             'reverse_transform': {

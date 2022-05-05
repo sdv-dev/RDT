@@ -16,9 +16,12 @@ RDT Technical Overview
 
 The goal of RDT is to be able to transform data that is not machine learning ready into data that
 is. By machine learning ready, we mean that the data should consist of data types that most machine
-learning models can process. Usually this means outputting numeric data with no nulls. On top of this,
-RDT also enforces that those transformations can be reversed, so that data of the original form can
-be obtained again. RDT accomplishes this with the use of two main classes:
+learning models can process. Usually this means outputting numeric data with no nulls. 
+
+The data types used by RDT are called ``sdtypes``. You can think of them as representing the
+**semantic** or **statistical** meaning of a datatype. On top of this, RDT also enforces that
+those transformations can be reversed, so that data of the original form can be obtained again.
+RDT accomplishes this with the use of two main classes:
 
 * ``BaseTransformer``
 * ``HyperTransformer``
@@ -27,11 +30,11 @@ BaseTransformer
 """""""""""""""
 
 Every Transformer in RDT inherits from the ``BaseTransformer``. The goal of this class or any of
-its subclasses is to take data of a certain data type, and convert it into machine learning ready
+its subclasses is to take data of a certain sdtype, and convert it into machine learning ready
 data. To enable transformers to do this, the ``BaseTransformer`` has the following attributes:
 
-* ``INPUT_TYPE`` (str) - The input type for the transformer.
-* ``OUTPUT_TYPES`` (dict) - Dictionary mapping transformed column names to their data types.
+* ``INPUT_SDTYPE`` (str) - The input sdtype for the transformer.
+* ``OUTPUT_SDTYPES`` (dict) - Dictionary mapping transformed column names to their sdtypes.
 * ``DETERMINISTIC_TRANSFORM`` (bool) - Whether or not calling ``transform`` yields a deterministic
   output.
 * ``DETERMINISTIC_REVERSE`` (bool) - Whether or not calling ``reverse_transform`` yields a
@@ -52,8 +55,8 @@ data. To enable transformers to do this, the ``BaseTransformer`` has the followi
 It also has the following default methods, which the ``Transformer`` subclasses may overwrite when
 necessary:
 
-* ``get_output_types()`` - Returns the name of the columns that the transform method creates. By
-  default this will be the ``OUTPUT_TYPES`` dictionary with the column names prepended with the
+* ``get_output_sdtypes()`` - Returns the name of the columns that the transform method creates. By
+  default this will be the ``OUTPUT_SDTYPES`` dictionary with the column names prepended with the
   ``column_prefix`` with a dot (`.`) as the separator.
 * ``is_transform_deterministic()`` - Returns a boolean indicating whether the output of the
   ``transform`` method is deterministic. By default this is the value of the
@@ -88,7 +91,7 @@ get a machine learning ready output. It does so using the following methods:
 * ``fit(data)`` - Takes in a ``pandas.DataFrame``. For every column or group of columns in the
   data, it find a transformer to use on it and calls that transformer's `fit` method with those
   columns. If the output of the transformer is not machine learning ready, it will recursively
-  find transformers to use on that data type until it is. A sequence of transformers to use is
+  find transformers to use on that sdtype until it is. A sequence of transformers to use is
   created.
 * ``transform(data)`` - Takes in a ``pandas.DataFrame``. Goes through the sequence of transformers
   created during ``fit`` and calls their underlying ``transform`` method.
@@ -135,7 +138,7 @@ Let's start by setting the necessary attributes and writing the ``__init__`` met
 
     class USPhoneNumberTransformer(BaseTransformer):
 
-        INPUT_TYPE = 'phone_number'
+        INPUT_SDTYPE = 'phone_number'
         DETERMINISTIC_TRANSFORM = True
         DETERMINISTIC_REVERSE = True
         COMPOSITION_IS_IDENTITY = True
@@ -152,28 +155,28 @@ Now we can write the ``_fit`` method.
         self.has_country_code = len(number) == 11
 
 Since the ``country_code`` may or may not be present, we can overwrite the
-``get_next_transformers`` and ``get_output_types`` methods accordingly.
+``get_next_transformers`` and ``get_output_sdtypes`` methods accordingly.
 
 .. code-block:: Python
 
-    def get_output_types(self):
-        output_types = {
+    def get_output_sdtypes(self):
+        output_sdtypes = {
             'area_code': 'categorical',
             'exchange': 'integer',
             'line': 'integer'
         }
         if self.has_country_code:
-            output_types['country_code'] = 'categorical'
+            output_sdtypes['country_code'] = 'categorical'
 
-        return self._add_prefix(output_types)
+        return self._add_prefix(output_sdtypes)
 
     def get_next_transformers(self):
         next_transformers = {
-            'country_code': 'CategoricalTransformer',
-            'area_code': 'CategoricalTransformer'
+            'country_code': 'FrequencyEncoder',
+            'area_code': 'FrequencyEncoder'
         }
         if self.has_country_code:
-            next_transformers['country_code'] = 'CategoricalTransformer'
+            next_transformers['country_code'] = 'FrequencyEncoder'
         
         return self._add_prefix(next_transformers)
 
@@ -205,7 +208,7 @@ handles that for us. Let's view the complete class below.
 .. code-block:: Python
     class USPhoneNumberTransformer(BaseTransformer):
 
-        INPUT_TYPE = 'phone_number'
+        INPUT_SDTYPE = 'phone_number'
         DETERMINISTIC_TRANSFORM = True
         DETERMINISTIC_REVERSE = True
         COMPOSITION_IS_IDENTITY = True
@@ -217,24 +220,24 @@ handles that for us. Let's view the complete class below.
             number = ''.join(columns_data.loc[0].split('-'))
             self.has_country_code = len(number) == 11
 
-        def get_output_types(self):
-            output_types = {
+        def get_output_sdtypes(self):
+            output_sdtypes = {
                 'area_code': 'categorical',
                 'exchange': 'integer',
                 'line': 'integer'
             }
             if self.has_country_code:
-                output_types['country_code'] = 'categorical'
+                output_sdtypes['country_code'] = 'categorical'
 
-            return self._add_prefix(output_types)
+            return self._add_prefix(output_sdtypes)
 
         def get_next_transformers(self):
             next_transformers = {
-                'country_code': 'CategoricalTransformer',
-                'area_code': 'CategoricalTransformer'
+                'country_code': 'FrequencyEncoder',
+                'area_code': 'FrequencyEncoder'
             }
             if self.has_country_code:
-                next_transformers['country_code'] = 'CategoricalTransformer'
+                next_transformers['country_code'] = 'FrequencyEncoder'
 
             return self._add_prefix(next_transformers)
         
@@ -286,8 +289,8 @@ We can also run it using the `HyperTransformer`.
 .. code-block:: Python
 
     In [1]: ht = HyperTransformer(
-                default_data_type_transformers={'phone_number': USPhoneNumberTransformer},
-                field_data_types={'phone_numbers': 'phone_number'}
+                default_sdtype_transformers={'phone_number': USPhoneNumberTransformer},
+                field_sdtypes={'phone_numbers': 'phone_number'}
             )
             ht.fit(data)
             transformed = ht.transform(data)
@@ -312,8 +315,8 @@ Dataset Generators
 ------------------
 
 In RDT, performance tests are run to assure that each transformer is efficient. In order to run
-these tests, we have classes that generate datasets of a certain data type. If a new transformer
-introduces a new data type, the a ``DatasetGenerator`` class will need to be added for it.
+these tests, we have classes that generate datasets of a certain sdtype. If a new transformer
+introduces a new sdtype, the a ``DatasetGenerator`` class will need to be added for it.
 
 BaseDatasetGenerator
 """"""""""""""""""""
@@ -321,12 +324,12 @@ BaseDatasetGenerator
 All dataset generators inherit from the ``BaseDatasetGenerator`` class. It has the following
 class attribute:
 
-* ``DATA_TYPE`` (str) - The data type for the class to generate.
+* ``SDTYPE`` (str) - The sdtype for the class to generate.
 
 They must implement the following methods.
 
 * ``generate(num_rows)`` - Takes in an int representing the number of rows to generate. Returns a
-  ``numpy.ndarray`` of size ``num_rows`` where each value is of the class' ``DATA_TYPE``.
+  ``numpy.ndarray`` of size ``num_rows`` where each value is of the class' ``SDTYPE``.
 
 * ``get_performance_thresholds()`` - Returns a dict mapping each of the main methods for a
   transformer (``fit``, ``transform``, ``reverse_transform``) to the expected time and memory it
@@ -336,14 +339,14 @@ Implementing a DatasetGenerator
 """""""""""""""""""""""""""""""
 
 To create a new ``DatasetGenerator``, the methods described above need to be implemented. The
-class should be placed in a new file in the following location ``tests/datasets/{DATA_TYPE}.py``.
+class should be placed in a new file in the following location ``tests/datasets/{SDTYPE}.py``.
 Each generator must inherit from the base class as well as ``abc.ABC``.
 
 Example DatasetGenerator
 ************************
 
-Let's create a ``DatasetGenerator`` for the ``phone_number`` data type that we introduced earlier.
-We can start by implementing the ``generate`` method and setting the ``DATA_TYPE``.
+Let's create a ``DatasetGenerator`` for the ``phone_number`` sdtype that we introduced earlier.
+We can start by implementing the ``generate`` method and setting the ``SDTYPE``.
 
 .. code-block:: Python
 
@@ -354,7 +357,7 @@ We can start by implementing the ``generate`` method and setting the ``DATA_TYPE
     from tests.datasets.base import BaseDatasetGenerator
 
     class USPhoneNumberGenerator(BaseDatasetGenerator, ABC):
-        DATA_TYPE = 'phone_number'
+        SDTYPE = 'phone_number'
         
         @staticmethod
         def generate(num_rows):

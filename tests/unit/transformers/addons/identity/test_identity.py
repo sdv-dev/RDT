@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 import numpy as np
 
-from rdt.transformers import IdentityTransformer
+from rdt.transformers.addons.identity.identity import IdentityTransformer
 
 
 class TestIdentityTransformer(TestCase):
@@ -11,7 +11,7 @@ class TestIdentityTransformer(TestCase):
     def test__fit(self):
         """Test ``IdentityTransformer._fit`` function.
 
-        The ``_fit`` function is expected to learn the columns ``INPUT_TYPE`` and
+        The ``_fit`` function is expected to learn the columns ``INPUT_SDTYPE`` and
         ``OUTPUT_COLUMNS`` from the ``self.columns``.
 
         Setup:
@@ -30,13 +30,13 @@ class TestIdentityTransformer(TestCase):
         IdentityTransformer._fit(instance, data)
 
         # assert
-        expected_output_types = {
+        expected_output_sdtypes = {
             'a': None,
             'b': None,
             'c': None,
         }
 
-        assert instance.OUTPUT_TYPES == expected_output_types
+        assert instance.OUTPUT_SDTYPES == expected_output_sdtypes
 
     def test__transform(self):
         """Test ``IdentityTransformer._transform`` function.

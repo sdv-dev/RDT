@@ -21,7 +21,8 @@ install_requires = [
     'scipy>=1.5.4,<1.8',
     'psutil>=5.7,<6',
     'scikit-learn>=0.24,<2',
-    'pyyaml>=5.4.1,<6'
+    'pyyaml>=5.4.1,<6',
+    'Faker>=3.0.0,<10',
 ]
 
 copulas_requires = [
@@ -72,7 +73,7 @@ development_requires = [
     'flake8-print>=4.0.0,<4.1',
     'isort>=4.3.4,<5',
     'pylint>=2.5.3,<3',
-    'pandas-vet>=0.2.2,<0.3',
+    'pandas-vet>=0.2.3,<0.3',
     'flake8-multiline-containers>=0.0.18,<0.1',
     'flake8-pytest-style>=1.5.0,<2',
     'flake8-quotes>=3.3.0,<4',
@@ -134,6 +135,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='0.6.4',
+    version='1.0.0.dev1',
     zip_safe=False,
 )

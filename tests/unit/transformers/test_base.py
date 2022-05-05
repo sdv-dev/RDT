@@ -37,27 +37,27 @@ class TestBaseTransformer:
         assert Child in subclasses
         assert Parent not in subclasses
 
-    def test_get_input_type(self):
-        """Test the ``get_input_type`` method.
+    def test_get_input_sdtype(self):
+        """Test the ``get_input_sdtype`` method.
 
-        This method should return the value defined in the ``INPUT_TYPE`` of the child classes.
+        This method should return the value defined in the ``INPUT_SDTYPE`` of the child classes.
 
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer``,
-            containing only a ``INPUT_TYPE`` attribute.
+            containing only a ``INPUT_SDTYPE`` attribute.
 
         Output:
-            - the string stored in the ``INPUT_TYPE`` attribute.
+            - the string stored in the ``INPUT_SDTYPE`` attribute.
         """
         # Setup
         class Dummy(BaseTransformer):
-            INPUT_TYPE = 'categorical'
+            INPUT_SDTYPE = 'categorical'
 
         # Run
-        input_type = Dummy.get_input_type()
+        input_sdtype = Dummy.get_input_sdtype()
 
         # Assert
-        assert input_type == 'categorical'
+        assert input_sdtype == 'categorical'
 
     def test__add_prefix_none(self):
         """Test the ``_add_prefix`` method when passed a ``None``.
@@ -115,32 +115,98 @@ class TestBaseTransformer:
         }
         assert output == expected
 
-    def test_get_output_types(self):
-        """Test the ``get_output_types`` method.
+    def test___repr___no_parameters(self):
+        """Test that the ``__str__`` method returns the class name.
+
+        The ``__repr__`` method should return the class name followed by paranthesis.
+        """
+        # Setup
+        transformer = BaseTransformer()
+
+        # Run
+        text = repr(transformer)
+
+        # Assert
+        assert text == 'BaseTransformer()'
+
+    def test___repr___with_parameters(self):
+        """Test that the ``__repr__`` method returns the class name and parameters.
+
+        The ``_repr__`` method should return the class name followed by all non-default
+        parameters wrapped in paranthesis.
+
+        Setup:
+            - Create a dummy class which inherits from the ``BaseTransformer`` where:
+                - The class has two parameters in its ``__init__`` method with default values.
+                - The class instance only sets one of them.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            def __init__(self, param1=None, param2=None, param3=None):
+                self.param1 = param1
+                self.param2 = param2
+                self.param3 = param3
+
+        transformer = Dummy(param2='value', param3=True)
+
+        # Run
+        text = repr(transformer)
+
+        # Assert
+        assert text == "Dummy(param2='value', param3=True)"
+
+    def test__str__(self):
+        """Test the ``__str__`` method.
+
+        The ``_str__`` method should return the class name followed by all non-default
+        parameters wrapped in paranthesis.
+
+        Setup:
+            - Create a dummy class which inherits from the ``BaseTransformer`` where:
+                - The class has two parameters in its ``__init__`` method with default values.
+                - The class instance only sets one of them.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            def __init__(self, param1=None, param2=None, param3=None):
+                self.param1 = param1
+                self.param2 = param2
+                self.param3 = param3
+
+        transformer = Dummy(param2='value', param3=True)
+
+        # Run
+        text = str(transformer)
+
+        # Assert
+        assert text == "Dummy(param2='value', param3=True)"
+
+    def test_get_output_sdtypes(self):
+        """Test the ``get_output_sdtypes`` method.
 
         Validate that the ``_add_prefix`` method is properly applied to the value stored in the
-        ``OUTPUT_TYPES`` attribute.
+        ``OUTPUT_SDTYPES`` attribute.
 
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer`` where:
                 - ``column_prefix`` is set to ``'column_name'``.
-                - ``OUTPUT_TYPES`` is set to dictionary.
+                - ``OUTPUT_SDTYPES`` is set to dictionary.
 
         Output:
-            - the dictionary set in ``OUTPUT_TYPES`` with the ``column_prefix`` string
+            - the dictionary set in ``OUTPUT_SDTYPES`` with the ``column_prefix`` string
             added to the beginning of the keys.
         """
         # Setup
         class Dummy(BaseTransformer):
             column_prefix = 'column_name'
-            OUTPUT_TYPES = {
+            OUTPUT_SDTYPES = {
                 'value': 'numerical'
             }
 
         dummy_transformer = Dummy()
 
         # Run
-        output = dummy_transformer.get_output_types()
+        output = dummy_transformer.get_output_sdtypes()
 
         # Assert
         expected = {
@@ -148,16 +214,16 @@ class TestBaseTransformer:
         }
         assert output == expected
 
-    def test_get_output_types_none(self):
-        """Test the ``get_output_types`` method.
+    def test_get_output_sdtypes_none(self):
+        """Test the ``get_output_sdtypes`` method.
 
-        Validate that a dict is returned even if ``OUTPUT_TYPES`` attribute is None.
+        Validate that a dict is returned even if ``OUTPUT_SDTYPES`` attribute is None.
 
         Output:
             - An empty ``dict``.
         """
         # Run
-        output = BaseTransformer().get_output_types()
+        output = BaseTransformer().get_output_sdtypes()
 
         # Assert
         expected = {}
@@ -177,15 +243,15 @@ class TestBaseTransformer:
         """
         # Setup
         class Dummy(BaseTransformer):
-            columns = ['col1, col2, col3']
+            columns = ['col1', 'col2', 'col3']
 
         dummy_transformer = Dummy()
 
         # Run
-        output = dummy_transformer.get_input_columns()
+        output = dummy_transformer.get_input_column()
 
         # Assert
-        expected = ['col1, col2, col3']
+        expected = 'col1'
         assert output == expected
 
     def test_get_output_columns(self):
@@ -195,7 +261,7 @@ class TestBaseTransformer:
 
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer``
-            and sets the ``column_prefix`` and ``OUTPUT_TYPES`` attributes.
+            and sets the ``column_prefix`` and ``OUTPUT_SDTYPES`` attributes.
 
         Output:
             - A list of each output name with the prefix prepended.
@@ -203,7 +269,7 @@ class TestBaseTransformer:
         # Setup
         class Dummy(BaseTransformer):
             column_prefix = 'column_name'
-            OUTPUT_TYPES = {
+            OUTPUT_SDTYPES = {
                 'out1': 'numerical',
                 'out2': 'categorical'
             }
@@ -704,7 +770,7 @@ class TestBaseTransformer:
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer`` where:
                 - ``columns`` is set to a list of columns from the data.
-                - ``OUTPUT_TYPES`` is set to a dictionary.
+                - ``OUTPUT_SDTYPES`` is set to a dictionary.
 
         Input:
             - a dataframe.
@@ -713,7 +779,7 @@ class TestBaseTransformer:
             - ``self.column_prefix`` should be set to the elements stored in ``self.columns``
             joined by hashtags (e.g. ['a', 'b'] -> 'a#b').
             - ``self.output_columns`` should be set to a list of the keys of what's returned
-            from the ``get_output_types`` method.
+            from the ``get_output_sdtypes`` method.
         """
         # Setup
         data = pd.DataFrame({
@@ -724,7 +790,7 @@ class TestBaseTransformer:
 
         class Dummy(BaseTransformer):
             columns = ['a', 'b']
-            OUTPUT_TYPES = {
+            OUTPUT_SDTYPES = {
                 'value': 'numerical',
                 'is_null': 'float'
             }
@@ -749,7 +815,7 @@ class TestBaseTransformer:
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer`` where:
                 - ``columns`` is set to a list of columns from the data.
-                - ``OUTPUT_TYPES`` is set to a dictionary.
+                - ``OUTPUT_SDTYPES`` is set to a dictionary.
 
         Input:
             - a dataframe where the generated column name already exists
@@ -759,7 +825,7 @@ class TestBaseTransformer:
             - ``self.column_prefix`` should be set to the elements stored in ``self.columns``
             joined by hashtags, with a hashtag added at the end (e.g. ['a', 'b'] -> 'a#b#').
             - ``self.output_columns`` should be set to a list of the keys of what's returned
-            from the ``get_output_types`` method.
+            from the ``get_output_sdtypes`` method.
         """
         # Setup
         data = pd.DataFrame({
@@ -769,7 +835,7 @@ class TestBaseTransformer:
         })
 
         class Dummy(BaseTransformer):
-            OUTPUT_TYPES = {
+            OUTPUT_SDTYPES = {
                 'value': 'numerical',
                 'is_null': 'float'
             }
@@ -804,23 +870,23 @@ class TestBaseTransformer:
         Validate that the ``fit`` method (1) sets ``self.columns`` to the passed columns of the
         data, (2) sets ``self.column_prefix`` to the appropriate string (the joined column names
         separated by a hashtag) and (3) sets ``self.output_columns`` to the correct dictionary
-        mapping column names to accepted output data types.
+        mapping column names to accepted output sdtypes.
 
         Setup:
             - create a dummy class which inherits from the ``BaseTransformer``, which defines:
-                - a ``OUTPUT_TYPES`` dictionary.
+                - a ``OUTPUT_SDTYPES`` dictionary.
                 - a ``_fit`` method which simply stores the passed data to ``self._passed_data``.
 
         Input:
             - a dataframe.
-            - a list of column names from the dataframe.
+            - a column name.
 
         Side effects:
             - ``self.columns`` should be set to the passed columns of the data.
             - ``self.column_prefix`` should be set to the joined column names
             separated by a hashtag.
             - ``self.output_columns`` should be set to the correct dictionary mapping
-            column names to accepted output data types.
+            column names to accepted output sdtypes.
         """
         # Setup
         data = pd.DataFrame({
@@ -828,10 +894,10 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         })
-        columns = ['a', 'b']
+        column = 'a'
 
         class Dummy(BaseTransformer):
-            OUTPUT_TYPES = {
+            OUTPUT_SDTYPES = {
                 'value': 'categorical',
                 'is_null': 'float'
             }
@@ -842,17 +908,14 @@ class TestBaseTransformer:
         dummy_transformer = Dummy()
 
         # Run
-        dummy_transformer.fit(data, columns)
+        dummy_transformer.fit(data, column)
 
         # Assert
-        expected_data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6]
-        })
-        assert dummy_transformer.columns == ['a', 'b']
-        pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_data)
-        assert dummy_transformer.column_prefix == 'a#b'
-        assert dummy_transformer.output_columns == ['a#b.value', 'a#b.is_null']
+        expected_data = pd.Series([1, 2, 3], name='a')
+        assert dummy_transformer.columns == ['a']
+        pd.testing.assert_series_equal(dummy_transformer._passed_data, expected_data)
+        assert dummy_transformer.column_prefix == 'a'
+        assert dummy_transformer.output_columns == ['a.value', 'a.is_null']
 
     def test__transform_raises_error(self):
         """Test ``_transform`` raises ``NotImplementedError``."""
@@ -1044,13 +1107,13 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         })
-        columns = ['a', 'b', 'c']
+        column = 'a'
 
         # Run
-        output = BaseTransformer.fit_transform(self, data, columns)
+        output = BaseTransformer.fit_transform(self, data, column)
 
         # Assert
-        self.fit.assert_called_once_with(data, columns)
+        self.fit.assert_called_once_with(data, column)
         self.transform.assert_called_once_with(data)
         assert output == self.transform.return_value
 

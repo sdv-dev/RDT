@@ -13,7 +13,7 @@ from rdt.performance.datasets.utils import add_nans
 class DatetimeGenerator(BaseDatasetGenerator, ABC):
     """Base class for generators that generate datatime data."""
 
-    DATA_TYPE = 'datetime'
+    SDTYPE = 'datetime'
 
 
 class RandomGapDatetimeGenerator(DatetimeGenerator):

@@ -8,9 +8,9 @@ from rdt.performance.datasets import get_dataset_generators_by_type
 from rdt.performance.performance import evaluate_transformer_performance
 from rdt.performance.profiling import profile_transformer
 from rdt.transformers import get_transformers_by_type
-from rdt.transformers.numerical import BayesGMMTransformer
+from rdt.transformers.numerical import ClusterBasedNormalizer
 
-SANDBOX_TRANSFORMERS = [BayesGMMTransformer]
+SANDBOX_TRANSFORMERS = [ClusterBasedNormalizer]
 
 
 def _get_performance_test_cases():
@@ -20,8 +20,8 @@ def _get_performance_test_cases():
     dataset_generators = get_dataset_generators_by_type()
     transformers = get_transformers_by_type()
 
-    for data_type, transformers_for_type in transformers.items():
-        dataset_generators_for_type = dataset_generators.get(data_type, [])
+    for sdtype, transformers_for_type in transformers.items():
+        dataset_generators_for_type = dataset_generators.get(sdtype, [])
 
         for transformer in transformers_for_type:
             if transformer in SANDBOX_TRANSFORMERS:

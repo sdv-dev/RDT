@@ -1,5 +1,6 @@
 """BaseTransformer module."""
 import abc
+import inspect
 
 import pandas as pd
 
@@ -12,8 +13,8 @@ class BaseTransformer:
     and ``fit_transform`` method is already implemented.
     """
 
-    INPUT_TYPE = None
-    OUTPUT_TYPES = None
+    INPUT_SDTYPE = None
+    OUTPUT_SDTYPES = None
     DETERMINISTIC_TRANSFORM = None
     DETERMINISTIC_REVERSE = None
     COMPOSITION_IS_IDENTITY = None
@@ -41,33 +42,33 @@ class BaseTransformer:
         return subclasses
 
     @classmethod
-    def get_input_type(cls):
-        """Return the input type supported by the transformer.
+    def get_input_sdtype(cls):
+        """Return the input sdtype supported by the transformer.
 
         Returns:
             string:
-                Accepted input type of the transformer.
+                Accepted input sdtype of the transformer.
         """
-        return cls.INPUT_TYPE
+        return cls.INPUT_SDTYPE
 
     def _add_prefix(self, dictionary):
         if not dictionary:
             return {}
 
         output = {}
-        for output_columns, output_type in dictionary.items():
-            output[f'{self.column_prefix}.{output_columns}'] = output_type
+        for output_columns, output_sdtype in dictionary.items():
+            output[f'{self.column_prefix}.{output_columns}'] = output_sdtype
 
         return output
 
-    def get_output_types(self):
-        """Return the output types produced by this transformer.
+    def get_output_sdtypes(self):
+        """Return the output sdtypes produced by this transformer.
 
         Returns:
             dict:
-                Mapping from the transformed column names to the produced data types.
+                Mapping from the transformed column names to the produced sdtypes.
         """
-        return self._add_prefix(self.OUTPUT_TYPES)
+        return self._add_prefix(self.OUTPUT_SDTYPES)
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -105,14 +106,14 @@ class BaseTransformer:
         """
         return self._add_prefix(self.NEXT_TRANSFORMERS)
 
-    def get_input_columns(self):
-        """Return list of input column names for transformer.
+    def get_input_column(self):
+        """Return input column name for transformer.
 
         Returns:
-            list:
-                Input column names.
+            str:
+                Input column name.
         """
-        return self.columns
+        return self.columns[0]
 
     def get_output_columns(self):
         """Return list of column names created in ``transform``.
@@ -121,7 +122,7 @@ class BaseTransformer:
             list:
                 Names of columns created during ``transform``.
         """
-        return list(self.get_output_types())
+        return list(self.get_output_sdtypes())
 
     def _store_columns(self, columns, data):
         if isinstance(columns, tuple) and columns not in data:
@@ -140,7 +141,7 @@ class BaseTransformer:
         if len(columns) == 1:
             columns = columns[0]
 
-        return data[columns]
+        return data[columns].copy()
 
     @staticmethod
     def _set_columns_data(data, columns_data, columns):
@@ -157,13 +158,38 @@ class BaseTransformer:
 
     def _build_output_columns(self, data):
         self.column_prefix = '#'.join(self.columns)
-        self.output_columns = list(self.get_output_types().keys())
+        self.output_columns = list(self.get_output_sdtypes().keys())
 
         # make sure none of the generated `output_columns` exists in the data
         data_columns = set(data.columns)
         while data_columns & set(self.output_columns):
             self.column_prefix += '#'
-            self.output_columns = list(self.get_output_types().keys())
+            self.output_columns = list(self.get_output_sdtypes().keys())
+
+    def __repr__(self):
+        """Represent initialization of transformer as text.
+
+        Returns:
+            str:
+                The name of the transformer followed by any non-default parameters.
+        """
+        class_name = self.__class__.__name__
+        custom_args = []
+        args = inspect.getfullargspec(self.__init__)
+        keys = args.args[1:]
+        defaults = args.defaults or []
+        defaults = dict(zip(keys, defaults))
+        instanced = {key: getattr(self, key) for key in keys}
+
+        if defaults == instanced:
+            return f'{class_name}()'
+
+        for arg, value in instanced.items():
+            if defaults[arg] != value:
+                custom_args.append(f'{arg}={repr(value)}')
+
+        args_string = ', '.join(custom_args)
+        return f'{class_name}({args_string})'
 
     def _fit(self, columns_data):
         """Fit the transformer to the data.
@@ -174,16 +200,16 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def fit(self, data, columns):
-        """Fit the transformer to the `columns` of the `data`.
+    def fit(self, data, column):
+        """Fit the transformer to a `column` of the `data`.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            columns (list):
-                Column names. Must be present in the data.
+            column (str):
+                Column name. Must be present in the data.
         """
-        self._store_columns(columns, data)
+        self._store_columns(column, data)
 
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
@@ -231,22 +257,20 @@ class BaseTransformer:
 
         return data
 
-    def fit_transform(self, data, columns):
-        """Fit the transformer to the `columns` of the `data` and then transform them.
+    def fit_transform(self, data, column):
+        """Fit the transformer to a `column` of the `data` and then transform it.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            columns (list or tuple or str):
-                List or tuple of column names from the data to transform.
-                If only one column is provided, it can be passed as a string instead.
-                If none are passed, fits on the entire dataset.
+            column (str):
+                A column name.
 
         Returns:
             pd.DataFrame:
                 The entire table, containing the transformed data.
         """
-        self.fit(data, columns)
+        self.fit(data, column)
         return self.transform(data)
 
     def _reverse_transform(self, columns_data):

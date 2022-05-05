@@ -1,12 +1,13 @@
 """Transformer for datetime data."""
 import numpy as np
 import pandas as pd
+from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
 
-class DatetimeTransformer(BaseTransformer):
+class UnixTimestampEncoder(BaseTransformer):
     """Transformer for datetime data.
 
     This transformer replaces datetime values with an integer timestamp
@@ -15,40 +16,32 @@ class DatetimeTransformer(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        nan (int, str or None):
-            Indicate what to do with the null values. If an integer is given, replace them
+        missing_value_replacement (object or None):
+            Indicate what to do with the null values. If an object is given, replace them
             with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
             them with the corresponding aggregation. If ``None`` is given, do not replace them.
-            Defaults to ``'mean'``.
-        null_column (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``None``, only create a new column when the data contains null values.
-            If ``True``, always create the new column whether there are null values or not.
-            If ``False``, do not create the new column.
             Defaults to ``None``.
-        strip_constant (bool):
-            Whether to optimize the output values by finding the smallest time unit that
-            is not zero on the training datetimes and dividing the generated numerical
-            values by the value of the next smallest time unit. This, a part from reducing the
-            orders of magnitued of the transformed values, ensures that reverted values always
-            are zero on the lower time units.
-        format (str):
+        model_missing_values (bool):
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
+        datetime_format (str):
             The strftime to use for parsing time. For more information, see
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
     """
 
-    INPUT_TYPE = 'datetime'
+    INPUT_SDTYPE = 'datetime'
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
 
     null_transformer = None
-    divider = None
 
-    def __init__(self, nan='mean', null_column=None, strip_constant=False, datetime_format=None):
-        self.nan = nan
-        self.null_column = null_column
-        self.strip_constant = strip_constant
+    def __init__(self, missing_value_replacement=None, model_missing_values=False,
+                 datetime_format=None):
+        self.missing_value_replacement = missing_value_replacement
+        self.model_missing_values = model_missing_values
         self.datetime_format = datetime_format
 
     def is_composition_identity(self):
@@ -58,40 +51,34 @@ class DatetimeTransformer(BaseTransformer):
             bool:
                 Whether or not transforming and then reverse transforming returns the input data.
         """
-        if self.null_transformer and not self.null_transformer.creates_null_column():
+        if self.null_transformer and not self.null_transformer.models_missing_values():
             return False
 
         return self.COMPOSITION_IS_IDENTITY
 
-    def get_output_types(self):
-        """Return the output types supported by the transformer.
+    def get_output_sdtypes(self):
+        """Return the output sdtypes supported by the transformer.
 
         Returns:
             dict:
-                Mapping from the transformed column names to supported data types.
+                Mapping from the transformed column names to supported sdtypes.
         """
-        output_types = {
+        output_sdtypes = {
             'value': 'float',
         }
-        if self.null_transformer and self.null_transformer.creates_null_column():
-            output_types['is_null'] = 'float'
+        if self.null_transformer and self.null_transformer.models_missing_values():
+            output_sdtypes['is_null'] = 'float'
 
-        return self._add_prefix(output_types)
-
-    def _find_divider(self, transformed):
-        self.divider = 1
-        multipliers = [10] * 9 + [60, 60, 24]
-        for multiplier in multipliers:
-            candidate = self.divider * multiplier
-            if (transformed % candidate).any():
-                break
-
-            self.divider = candidate
+        return self._add_prefix(output_sdtypes)
 
     def _convert_to_datetime(self, data):
         if data.dtype == 'object':
             try:
-                data = pd.to_datetime(data, format=self.datetime_format)
+                pandas_datetime_format = None
+                if self.datetime_format:
+                    pandas_datetime_format = self.datetime_format.replace('%-', '%')
+
+                data = pd.to_datetime(data, format=pandas_datetime_format)
 
             except ValueError as error:
                 if 'Unknown string format:' in str(error):
@@ -110,11 +97,18 @@ class DatetimeTransformer(BaseTransformer):
         integers[nulls] = np.nan
         transformed = pd.Series(integers)
 
-        if self.strip_constant:
-            self._find_divider(transformed)
-            transformed = transformed // self.divider
-
         return transformed
+
+    def _reverse_transform_helper(self, data):
+        """Transform integer values back into datetimes."""
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
+        if self.missing_value_replacement is not None:
+            data = self.null_transformer.reverse_transform(data)
+
+        data = np.round(data.astype(np.float64))
+        return data
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -123,8 +117,14 @@ class DatetimeTransformer(BaseTransformer):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
+        if self.datetime_format is None and data.dtype == 'object':
+            self.datetime_format = _guess_datetime_format_for_array(data.to_numpy())
+
         transformed = self._transform_helper(data)
-        self.null_transformer = NullTransformer(self.nan, self.null_column, copy=True)
+        self.null_transformer = NullTransformer(
+            self.missing_value_replacement,
+            self.model_missing_values
+        )
         self.null_transformer.fit(transformed)
 
     def _transform(self, data):
@@ -150,48 +150,71 @@ class DatetimeTransformer(BaseTransformer):
         Returns:
             pandas.Series
         """
-        if not isinstance(data, np.ndarray):
-            data = data.to_numpy()
+        data = self._reverse_transform_helper(data)
+        datetime_data = pd.to_datetime(data)
+        if not isinstance(datetime_data, pd.Series):
+            datetime_data = pd.Series(datetime_data)
 
-        if self.nan is not None:
-            data = self.null_transformer.reverse_transform(data)
+        if self.datetime_format:
+            datetime_data = datetime_data.dt.strftime(self.datetime_format)
 
-        if isinstance(data, np.ndarray) and (data.ndim == 2):
-            data = data[:, 0]
-
-        data = np.round(data.astype(np.float64))
-        if self.strip_constant:
-            data = data * self.divider
-
-        return pd.to_datetime(data)
+        return datetime_data
 
 
-class DatetimeRoundedTransformer(DatetimeTransformer):
-    """Transformer for datetime data.
+class OptimizedTimestampEncoder(UnixTimestampEncoder):
+    """Optimized transformer for datetime data.
 
     This transformer replaces datetime values with an integer timestamp transformed to float.
     It optimizes the output values by finding the smallest time unit that is not zero on
     the training datetimes and dividing the generated numerical values by the value of the next
-    smallest time unit. This, apart from reducing the orders of magnitued of the transformed
+    smallest time unit. This, apart from reducing the orders of magnitude of the transformed
     values, ensures that reverted values always are zero on the lower time units.
 
     Null values are replaced using a ``NullTransformer``.
 
-    This class behaves exactly as the ``DatetimeTransformer`` with ``strip_constant=True``.
+    This class behaves exactly as the ``UnixTimestampEncoder`` except with the optimization.
 
     Args:
-        nan (int, str or None):
-            Indicate what to do with the null values. If an integer is given, replace them
+        missing_value_replacement (object or None):
+            Indicate what to do with the null values. If an object is given, replace them
             with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
             them with the corresponding aggregation. If ``None`` is given, do not replace them.
-            Defaults to ``'mean'``.
-        null_column (bool):
-            Whether to create a new column to indicate which values were null or not.
-            If ``None``, only create a new column when the data contains null values.
-            If ``True``, always create the new column whether there are null values or not.
-            If ``False``, do not create the new column.
             Defaults to ``None``.
+        model_missing_values (bool):
+            Whether to create a new column to indicate which values were null or not. The column
+            will be created only if there are null values. If ``True``, create the new column if
+            there are null values. If ``False``, do not create the new column even if there
+            are null values. Defaults to ``False``.
+        datetime_format (str):
+            The strftime to use for parsing time. For more information, see
+            https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
     """
 
-    def __init__(self, nan='mean', null_column=None):
-        super().__init__(nan=nan, null_column=null_column, strip_constant=True)
+    divider = None
+
+    def __init__(self, missing_value_replacement=None, model_missing_values=False,
+                 datetime_format=None):
+        super().__init__(missing_value_replacement=missing_value_replacement,
+                         model_missing_values=model_missing_values,
+                         datetime_format=datetime_format)
+
+    def _find_divider(self, transformed):
+        self.divider = 1
+        multipliers = [10] * 9 + [60, 60, 24]
+        for multiplier in multipliers:
+            candidate = self.divider * multiplier
+            if (transformed % candidate).any():
+                break
+
+            self.divider = candidate
+
+    def _transform_helper(self, data):
+        """Transform datetime values to integer."""
+        data = super()._transform_helper(data)
+        self._find_divider(data)
+        return data // self.divider
+
+    def _reverse_transform_helper(self, data):
+        """Transform integer values back into datetimes."""
+        data = super()._reverse_transform_helper(data)
+        return data * self.divider

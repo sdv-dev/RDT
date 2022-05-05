@@ -30,8 +30,8 @@ def test_dummy_transformer_series_output():
     # Setup
     class DummyTransformer(BaseTransformer):
 
-        INPUT_TYPE = 'boolean'
-        OUTPUT_TYPES = {
+        INPUT_SDTYPE = 'boolean'
+        OUTPUT_SDTYPES = {
             'value': 'float'
         }
 
@@ -88,8 +88,8 @@ def test_dummy_transformer_dataframe_output():
     # Setup
     class DummyTransformer(BaseTransformer):
 
-        INPUT_TYPE = 'boolean'
-        OUTPUT_TYPES = {
+        INPUT_SDTYPE = 'boolean'
+        OUTPUT_SDTYPES = {
             'value': 'float',
             'null': 'float'
         }
@@ -129,87 +129,6 @@ def test_dummy_transformer_dataframe_output():
     expected_transform = pd.DataFrame({
         'bool.value': [1., 0., 1., -1.],
         'bool.null': [0., 0., 0., 1.]
-    })
-    pd.testing.assert_frame_equal(expected_transform, transformed)
-    pd.testing.assert_frame_equal(reverse, data)
-
-
-def test_dummy_transformer_multi_column_input():
-    """Test a transformer that inputs a DataFrame.
-
-    This validates that a Transformer that is implemented to
-    expect multiple columns as the input for the `_transform`
-    method works as expected.
-
-    Setup:
-        - A DummyTransformer that implements a _transform
-          that expects a DataFrame with multiple columns as
-          input, and a reverse transform that produces the
-          same set of columns.
-
-    Input:
-        - A DataFrame with three year, month and day columns that
-          represent dates.
-
-    Expected behavior:
-        - The data should be transformed into a DataFrame that contains
-          a single float column with the timestamp values of the inputed
-          datetimes.
-        - The data should be able to be transformed and reverse
-          transformed to re-produce the input data.
-    """
-    # Setup
-    class DummyTransformer(BaseTransformer):
-
-        INPUT_TYPE = 'datetime'
-        OUTPUT_TYPES = {
-            'value': 'float',
-        }
-
-        def _fit(self, data):
-            pass
-
-        def _transform(self, data):
-            # Convert multiple columns into a single datetime
-            data = pd.to_datetime(data)
-
-            float_data = data.to_numpy().astype(float)
-            data_is_nan = data.isna().to_numpy().astype(float)
-
-            output = dict(zip(
-                self.output_columns,
-                [float_data, data_is_nan]
-            ))
-
-            output = pd.DataFrame(output).fillna(-1)
-
-            return output
-
-        def _reverse_transform(self, data):
-            datetimes = data.round().astype('datetime64[ns]')
-            out = pd.DataFrame({
-                'year': datetimes.dt.year,
-                'month': datetimes.dt.month,
-                'day': datetimes.dt.day,
-            })
-
-            return out
-
-    # Run
-    data = pd.DataFrame({
-        'year': [2001, 2002, 2003],
-        'month': [1, 2, 3],
-        'day': [1, 2, 3],
-    })
-
-    transformer = DummyTransformer()
-    transformed = transformer.fit_transform(data, ['year', 'month', 'day'])
-
-    reverse = transformer.reverse_transform(transformed)
-
-    # Assert
-    expected_transform = pd.DataFrame({
-        'year#month#day.value': [9.783072e+17, 1.012608e+18, 1.046650e+18]
     })
     pd.testing.assert_frame_equal(expected_transform, transformed)
     pd.testing.assert_frame_equal(reverse, data)

@@ -11,17 +11,51 @@ from rdt.transformers import BaseTransformer
 DATA_SIZE = 1000
 TEST_COL = 'test_col'
 
-PRIMARY_DATA_TYPES = ['boolean', 'categorical', 'datetime', 'numerical']
+PRIMARY_SDTYPES = ['boolean', 'categorical', 'datetime', 'numerical']
 
+# Additional arguments for transformers
+TRANSFORMER_ARGS = {
+    'BinaryEncoder': {
+        'missing_value_replacement': -1,
+        'model_missing_values': True
+    },
+    'UnixTimestampEncoder': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'OptimizedTimestampEncoder': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'FloatFormatter': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'NumericalRoundedBoundedTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'NumericalBoundedTransformer': {
+        'missing_value_replacement': 'mean',
+        'model_missing_values': True
+    },
+    'GaussianNormalizer': {
+        'model_missing_values': True
+    },
+    'ClusterBasedNormalizer': {
+        'model_missing_values': True
+    },
+}
 
-# Mapping of rdt data type to dtype
-DATA_TYPE_TO_DTYPES = {
+# Mapping of rdt sdtype to dtype
+SDTYPE_TO_DTYPES = {
     'boolean': ['b', 'O'],
     'categorical': ['O', 'i', 'f'],
     'datetime': ['M'],
     'numerical': ['f', 'i'],
     'integer': ['i'],
     'float': ['f', 'i'],
+    'pii': ['O', 'i', 'f'],
 }
 
 
@@ -54,31 +88,31 @@ def _get_all_transformers():
 
 
 def _build_generator_map():
-    """Build a map of data type to data generator.
+    """Build a map of sdtype to data generator.
 
     Output:
         dict:
-            A mapping of data type (str) to a list of data
+            A mapping of sdtype (str) to a list of data
             generators (rdt.tests.datasets.BaseDatasetGenerator).
     """
     generators = defaultdict(list)
 
     for generator in BaseDatasetGenerator.get_subclasses():
-        generators[generator.DATA_TYPE].append(generator)
+        generators[generator.SDTYPE].append(generator)
 
     return generators
 
 
-def _find_dataset_generators(data_type, generators):
-    """Find the dataset generators for the given data_type."""
-    if data_type is None:
+def _find_dataset_generators(sdtype, generators):
+    """Find the dataset generators for the given sdtype."""
+    if sdtype is None:
         primary_generators = []
-        for primary_data_type in PRIMARY_DATA_TYPES:
-            primary_generators.extend(_find_dataset_generators(primary_data_type, generators))
+        for primary_sdtype in PRIMARY_SDTYPES:
+            primary_generators.extend(_find_dataset_generators(primary_sdtype, generators))
 
         return primary_generators
 
-    return generators.get(data_type, [])
+    return generators.get(sdtype, [])
 
 
 def _validate_dataset_generators(dataset_generators):
@@ -88,14 +122,14 @@ def _validate_dataset_generators(dataset_generators):
 
 def _validate_transformed_data(transformer, transformed_data):
     """Check that the transformed data is the expected dtype."""
-    expected_data_types = transformer.get_output_types()
+    expected_sdtypes = transformer.get_output_sdtypes()
     transformed_dtypes = transformed_data.dtypes
 
-    for column, expected_data_type in expected_data_types.items():
+    for column, expected_sdtype in expected_sdtypes.items():
         message = f'Column {column} is expected but not found in transformed data.'
         assert column in transformed_data, message
-        message = f'Column {column} is not the expected data type {expected_data_type}'
-        assert transformed_dtypes[column].kind in DATA_TYPE_TO_DTYPES[expected_data_type], message
+        message = f'Column {column} is not the expected sdtype {expected_sdtype}'
+        assert transformed_dtypes[column].kind in SDTYPE_TO_DTYPES[expected_sdtype], message
 
 
 def _validate_reverse_transformed_data(transformer, reversed_data, input_dtype):
@@ -103,9 +137,9 @@ def _validate_reverse_transformed_data(transformer, reversed_data, input_dtype):
 
     Expect that the dtype is equal to the dtype of the input data.
     """
-    expected_data_type = transformer.get_input_type()
-    message = f'Reverse transformed data is not the expected data type {expected_data_type}'
-    assert reversed_data.dtypes[TEST_COL].kind in DATA_TYPE_TO_DTYPES[expected_data_type], message
+    expected_sdtype = transformer.get_input_sdtype()
+    message = f'Reverse transformed data is not the expected sdtype {expected_sdtype}'
+    assert reversed_data.dtypes[TEST_COL].kind in SDTYPE_TO_DTYPES[expected_sdtype], message
 
 
 def _validate_composition(transformer, reversed_data, input_data):
@@ -146,7 +180,9 @@ def _test_transformer_with_dataset(transformer_class, input_data, steps):
         steps (list):
             List of steps that the validation has completed.
     """
-    transformer = transformer_class()
+
+    transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
+    transformer = transformer_class(**transformer_args)
     # Fit
     transformer.fit(input_data, [TEST_COL])
 
@@ -179,14 +215,14 @@ def _validate_hypertransformer_transformed_data(transformed_data):
     assert transformed_data.notna().all(axis=None), 'Transformed data has nulls.'
 
     for dtype in transformed_data.dtypes:
-        assert dtype.kind in DATA_TYPE_TO_DTYPES['numerical'], 'Transformed data is not numerical.'
+        assert dtype.kind in SDTYPE_TO_DTYPES['numerical'], 'Transformed data is not numerical.'
 
 
 def _validate_hypertransformer_reverse_transformed_data(transformer, reversed_data):
     """Check that the reverse transformed data has the same dtype as the input."""
-    expected_data_type = transformer().get_input_type()
-    message = f'Reversed transformed data is not the expected data type {expected_data_type}'
-    assert reversed_data.dtype.kind in DATA_TYPE_TO_DTYPES[expected_data_type], message
+    expected_sdtype = transformer().get_input_sdtype()
+    message = f'Reversed transformed data is not the expected sdtype {expected_sdtype}'
+    assert reversed_data.dtype.kind in SDTYPE_TO_DTYPES[expected_sdtype], message
 
 
 def _test_transformer_with_hypertransformer(transformer_class, input_data, steps):
@@ -204,9 +240,20 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
         steps (list):
             List of steps that the validation has completed.
     """
-    hypertransformer = HyperTransformer(field_transformers={
-        TEST_COL: transformer_class.__name__,
-    })
+    transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
+    hypertransformer = HyperTransformer()
+    if transformer_args:
+        field_transformers = {
+            TEST_COL: transformer_class(**transformer_args)
+        }
+
+    else:
+        field_transformers = {
+            TEST_COL: transformer_class
+        }
+
+    hypertransformer.detect_initial_config(input_data)
+    hypertransformer.update_transformers(field_transformers)
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)
@@ -235,9 +282,9 @@ def validate_transformer(transformer, steps=None, subtests=None):
         subtests:
             Whether or not to test with subtests.
     """
-    input_data_type = transformer.get_input_type()
+    input_sdtype = transformer.get_input_sdtype()
 
-    dataset_generators = _find_dataset_generators(input_data_type, generators)
+    dataset_generators = _find_dataset_generators(input_sdtype, generators)
     _validate_helper(_validate_dataset_generators, [dataset_generators], steps)
 
     for dg in dataset_generators:

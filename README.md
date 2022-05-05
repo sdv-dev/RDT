@@ -4,7 +4,7 @@
     <i>This repository is part of <a href="https://sdv.dev">The Synthetic Data Vault Project</a>, a project from <a href="https://datacebo.com">DataCebo</a>.</i>
 </p>
 
-[![Development Status](https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow)](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
+[![Development Status](https://img.shields.io/badge/Development%20Status-3%20--%20Alpha-yellow)](https://pypi.org/search/?q=&o=&c=Development+Status+%3A%3A+3+-+Alpha)
 [![PyPi Shield](https://img.shields.io/pypi/v/RDT.svg)](https://pypi.python.org/pypi/RDT)
 [![Unit Tests](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml/badge.svg)](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
@@ -33,20 +33,20 @@ the transformations in order to revert them as needed.
 | :book: **[Documentation]**                    | Quickstarts, User and Development Guides, and API Reference.         |
 | :octocat: **[Repository]**                    | The link to the Github Repository of this library.                   |
 | :scroll: **[License]**                        | The entire ecosystem is published under the MIT License.             |
-| :keyboard: **[Development Status]**           | This software is in its Pre-Alpha stage.                             |
+| :keyboard: **[Development Status]**           | This software is in its Alpha stage.                                 |
 | [![][Slack Logo] **Community**][Community]    | Join our Slack Workspace for announcements and discussions.          |
-| [![][MyBinder Logo] **Tutorials**][Tutorials] | Run the SDV Tutorials in a Binder environment.                       |
+| [![][Google Colab Logo] **Tutorials**][Tutorials] | Run the RDT Tutorials in a notebook.                             |
 
 [Website]: https://sdv.dev
 [SDV Blog]: https://sdv.dev/blog
-[Documentation]: https://sdv.dev/SDV
+[Documentation]: https://docs.sdv.dev/rdt
 [Repository]: https://github.com/sdv-dev/RDT
 [License]: https://github.com/sdv-dev/RDT/blob/master/LICENSE
-[Development Status]: https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha
+[Development Status]: https://pypi.org/search/?q=&o=&c=Development+Status+%3A%3A+3+-+Alpha
 [Slack Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/slack.png
 [Community]: https://join.slack.com/t/sdv-space/shared_invite/zt-gdsfcb5w-0QQpFMVoyB2Yd6SRiMplcw
-[MyBinder Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/mybinder.png
-[Tutorials]: https://mybinder.org/v2/gh/sdv-dev/SDV/master?filepath=tutorials
+[Google Colab Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/google_colab.png
+[Tutorials]: https://colab.research.google.com/drive/1T_3XSPPOVILATsyRV9xjQPa0hvM1vnM-?usp=sharing
 
 # Install
 
@@ -76,88 +76,164 @@ For more installation options please visit the [RDT installation Guide](INSTALL.
 In this short series of tutorials we will guide you through a series of steps that will
 help you getting started using **RDT** to transform columns, tables and datasets.
 
-## Transforming a column
+## Load the demo data
 
-In this first guide, you will learn how to use **RDT** in its simplest form, transforming
-a single column loaded as a `pandas.DataFrame` object.
-
-### 1. Load the demo data
-
-You can load some demo data using the `rdt.get_demo` function, which will return some random
-data for you to play with.
+After you have installed RDT, you can get started using the demo dataset.
 
 ```python3
 from rdt import get_demo
 
-data = get_demo()
+customers = get_demo()
 ```
 
-This will return a `pandas.DataFrame` with 10 rows and 4 columns, one of each data type supported:
+This dataset contains some randomly generated values that describes the customers of an online
+marketplace. 
 
 ```
-   0_int    1_float 2_str          3_datetime
-0   38.0  46.872441     b 2021-02-10 21:50:00
-1   77.0  13.150228   NaN 2021-07-19 21:14:00
-2   21.0        NaN     b                 NaT
-3   10.0  37.128869     c 2019-10-15 21:39:00
-4   91.0  41.341214     a 2020-10-31 11:57:00
-5   67.0  92.237335     a                 NaT
-6    NaN  51.598682   NaN 2020-04-01 01:56:00
-7    NaN  42.204396     c 2020-03-12 22:12:00
-8   68.0        NaN     c 2021-02-25 16:04:00
-9    7.0  31.542918     a 2020-07-12 03:12:00
+  last_login email_optin credit_card  age  dollars_spent
+0 2021-06-26       False        VISA   29          99.99
+1 2021-02-10       False        VISA   18            NaN
+2        NaT       False        AMEX   21           2.50
+3 2020-09-26        True         NaN   45          25.00
+4 2020-12-22         NaN    DISCOVER   32          19.99
 ```
 
-Notice how the data is random, so your output might look a bit different. Also notice how
-RDT introduced some null values randomly.
+Let's transform this data so that each column is converted to full, numerical data ready for data
+science.
 
-### 2. Load the transformer
+## Creating the HyperTransformer & config
 
-In this example we will use the datetime column, so let's load a `DatetimeTransformer`.
+The `HyperTransformer` is capable of transforming multi-column datasets.
 
 ```python3
-from rdt.transformers import DatetimeTransformer
+from rdt import HyperTransformer
 
-transformer = DatetimeTransformer()
+ht = HyperTransformer()
 ```
 
-### 3. Fit the Transformer
+The `HyperTransformer` needs to know about the columns in your dataset and which transformers to
+apply to each. These are described by a config. We can ask the `HyperTransformer` to automatically
+detect it based on the data we plan to use.
+
+```python3
+ht.detect_initial_config(data=customers)
+```
+
+This will create and set the config.
+
+```
+Config:
+{
+    "sdtypes": {
+        "last_login": "datetime",
+        "email_optin": "boolean",
+        "credit_card": "categorical",
+        "age": "numerical",
+        "dollars_spent": "numerical"
+    },
+    "transformers": {
+        "last_login": "UnixTimestampEncoder(missing_value_replacement='mean')",
+        "email_optin": "BinaryEncoder(missing_value_replacement='mode')",
+        "credit_card": "FrequencyEncoder()",
+        "age": "FloatFormatter(missing_value_replacement='mean')",
+        "dollars_spent": "FloatFormatter(missing_value_replacement='mean')"
+    }
+}
+```
+
+The `sdtypes` dictionary describes the semantic data types of each of your columns and the
+`transformers` dictionary describes which transformer to use for each column.
+
+## Fitting & using the HyperTransformer 
+
+The `HyperTransformer` references the config while learning the data during the `fit` stage.
+
+```python3
+ht.fit(customers)
+```
+
+Once the transformer is fit, it's ready to use. Use the transform method to transform all columns
+of your dataset at once.
+
+```python3
+transformed_data = ht.transform(customers)
+```
+
+```
+   last_login.value  email_optin.value  credit_card.value  age.value  dollars_spent.value
+0      1.624666e+18                0.0                0.2         29                99.99
+1      1.612915e+18                0.0                0.2         18                36.87
+2      1.611814e+18                0.0                0.5         21                 2.50
+3      1.601078e+18                1.0                0.7         45                25.00
+4      1.608595e+18                0.0                0.9         32                19.99
+```
+
+The `HyperTransformer` applied the assigned transformer to each individual column. Each column now
+contains fully numerical data that you can use for your project!
+
+When you're done with your project, you can also transform the data back to the original format
+using the `reverse_transform` method.
+
+```python3
+original_format_data = ht.reverse_transform(transformed_data)
+```
+
+```
+  last_login email_optin credit_card  age  dollars_spent
+0        NaT       False        VISA   29          99.99
+1 2021-02-10       False        VISA   18            NaN
+2        NaT       False        AMEX   21            NaN
+3 2020-09-26        True         NaN   45          25.00
+4 2020-12-22       False    DISCOVER   32          19.99
+```
+
+## Transforming a single column
+
+It is also possible to transform a single column of a `pandas.DataFrame`. To do this,
+follow the following steps.
+
+### Load the transformer
+
+In this example we will use the datetime column, so let's load a `UnixTimestampEncoder`.
+
+```python3
+from rdt.transformers import UnixTimestampEncoder
+
+transformer = UnixTimestampEncoder()
+```
+
+### Fit the Transformer
 
 Before being able to transform the data, we need the transformer to learn from it.
 
 We will do this by calling its `fit` method passing the column that we want to transform.
 
 ```python3
-transformer.fit(data, columns=['3_datetime'])
+transformer.fit(customers, column='last_login')
 ```
 
-### 4. Transform the data
+### Transform the data
 
 Once the transformer is fitted, we can pass the data again to its `transform` method in order
 to get the transformed version of the data.
 
 ```python3
-transformed = transformer.transform(data)
+transformed = transformer.transform(customers)
 ```
 
-The output will be a `numpy.ndarray` with two columns, one with the datetimes transformed
-to integer timestamps, and another one indicating with 1s which values were null in the
-original data.
+The output will be a `pandas.DataFrame` similar to the input data, except with the original
+datetime column replaced with `last_login.value`.
 
 ```
-array([[1.61299380e+18, 0.00000000e+00],
-       [1.62672924e+18, 0.00000000e+00],
-       [1.59919923e+18, 1.00000000e+00],
-       [1.57117554e+18, 0.00000000e+00],
-       [1.60414542e+18, 0.00000000e+00],
-       [1.59919923e+18, 1.00000000e+00],
-       [1.58570616e+18, 0.00000000e+00],
-       [1.58405112e+18, 0.00000000e+00],
-       [1.61426904e+18, 0.00000000e+00],
-       [1.59452352e+18, 0.00000000e+00]])
+  email_optin credit_card  age  dollars_spent  last_login.value
+0       False        VISA   29          99.99      1.624666e+18
+1       False        VISA   18            NaN      1.612915e+18
+2       False        AMEX   21           2.50               NaN
+3        True         NaN   45          25.00      1.601078e+18
+4         NaN    DISCOVER   32          19.99      1.608595e+18
 ```
 
-### 5. Revert the column transformation
+### Revert the column transformation
 
 In order to revert the previous transformation, the transformed data can be passed to
 the `reverse_transform` method of the transformer:
@@ -166,99 +242,16 @@ the `reverse_transform` method of the transformer:
 reversed_data = transformer.reverse_transform(transformed)
 ```
 
-The output will be a `pandas.Series` containing the reverted values, which should be exactly
-like the original ones.
+The output will be a `pandas.DataFrame` containing the reverted values, which should be exactly
+like the original ones, except for the order of the columns.
 
 ```
-0   2021-02-10 21:50:00
-1   2021-07-19 21:14:00
-2                   NaT
-3   2019-10-15 21:39:00
-4   2020-10-31 11:57:00
-5                   NaT
-6   2020-04-01 01:56:00
-7   2020-03-12 22:12:00
-8   2021-02-25 16:04:00
-9   2020-07-12 03:12:00
-dtype: datetime64[ns]
-```
-
-## Transforming a table
-
-Once we know how to transform a single column, we can try to go the next level and transform
-a table with multiple columns.
-
-### 1. Load the HyperTransformer
-
-In order to manuipulate a complete table we will need to load a `rdt.HyperTransformer`.
-
-```python3
-from rdt import HyperTransformer
-
-ht = HyperTransformer()
-```
-
-### 2. Fit the HyperTransformer
-
-Just like the transfomer, the HyperTransformer needs to be fitted before being able to transform
-data.
-
-This is done by calling its `fit` method passing the `data` DataFrame.
-
-```python3
-ht.fit(data)
-```
-
-### 3. Transform the table data
-
-Once the HyperTransformer is fitted, we can pass the data again to its `transform` method in order
-to get the transformed version of the data.
-
-```python3
-transformed = ht.transform(data)
-```
-
-The output, will now be another `pandas.DataFrame` with the numerical representation of our
-data.
-
-```
-    0_int  0_int#1    1_float  1_float#1  2_str    3_datetime  3_datetime#1
-0  38.000      0.0  46.872441        0.0   0.70  1.612994e+18           0.0
-1  77.000      0.0  13.150228        0.0   0.90  1.626729e+18           0.0
-2  21.000      0.0  44.509511        1.0   0.70  1.599199e+18           1.0
-3  10.000      0.0  37.128869        0.0   0.15  1.571176e+18           0.0
-4  91.000      0.0  41.341214        0.0   0.45  1.604145e+18           0.0
-5  67.000      0.0  92.237335        0.0   0.45  1.599199e+18           1.0
-6  47.375      1.0  51.598682        0.0   0.90  1.585706e+18           0.0
-7  47.375      1.0  42.204396        0.0   0.15  1.584051e+18           0.0
-8  68.000      0.0  44.509511        1.0   0.15  1.614269e+18           0.0
-9   7.000      0.0  31.542918        0.0   0.45  1.594524e+18           0.0
-```
-
-### 4. Revert the table transformation
-
-In order to revert the transformation and recover the original data from the transformed one,
-we need to call `reverse_transform` method of the `HyperTransformer` instance passing it the
-transformed data.
-
-```python3
-reversed_data = ht.reverse_transform(transformed)
-```
-
-Which should output, again, a table that looks exactly like the original one.
-
-```
-   0_int    1_float 2_str          3_datetime
-0   38.0  46.872441     b 2021-02-10 21:50:00
-1   77.0  13.150228   NaN 2021-07-19 21:14:00
-2   21.0        NaN     b                 NaT
-3   10.0  37.128869     c 2019-10-15 21:39:00
-4   91.0  41.341214     a 2020-10-31 11:57:00
-5   67.0  92.237335     a                 NaT
-6    NaN  51.598682   NaN 2020-04-01 01:56:00
-7    NaN  42.204396     c 2020-03-12 22:12:00
-8   68.0        NaN     c 2021-02-25 16:04:00
-9    7.0  31.542918     a 2020-07-12 03:12:00
+  email_optin credit_card  age  dollars_spent last_login
+0       False        VISA   29          99.99 2021-06-26
+1       False        VISA   18            NaN 2021-02-10
+2       False        AMEX   21           2.50        NaT
+3        True         NaN   45          25.00 2020-09-26
+4         NaN    DISCOVER   32          19.99 2020-12-22
 ```
 
 ---

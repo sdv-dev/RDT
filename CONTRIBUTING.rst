@@ -162,9 +162,11 @@ There are only three required methods for a transformer:
    the Transformer instance.
 
 Each transformer class should be placed inside the ``rdt/transformers`` folder, in a module
-file named after the data type that the transformer operates on. For example, if you are
-writing a transformer that works with ``categorical`` data, your transformer should be placed
-inside the ``rdt/transformers/categorical.py`` module.
+file named after the data type that the transformer operates on. The data
+types used by RDT are called ``sdtypes``, and you can think of them as representing the **semantic**
+or **statistical** meaning of a datatype. For example, if you are writing a transformer that works
+with ``categorical`` data, your transformer should be placed inside the
+``rdt/transformers/categorical.py`` module.
 
 For more detailed guide on writing transformers, refer to the `Development Guide`_.
 
@@ -172,10 +174,10 @@ On top of adding the new class, unit tests must be written to cover all of the m
 class uses. In some cases, integration tests may also be required. More details on this can be
 found below.
 
-If the transformer add a previously unsupported `Data Type` to RDT, then more steps will need
+If the transformer adds a previously unsupported `sdtype` to RDT, then more steps will need
 to be taken for the quality and performance tests. A new `DatasetGenerator` class may need to
-be created for the `Data Type`. You may also need to find a real world dataset containing this
-`Data Type` and request for it to be added. More details for these steps can be found below in
+be created for the `sdtype`. You may also need to find a real world dataset containing this
+`sdtype` and request for it to be added. More details for these steps can be found below in
 the `Transformer Performance`_ and `Transformer Quality`_ sections respectively.
 
 Transformer Validations
@@ -203,7 +205,7 @@ check and whether or not it passed.
 
    In [1]: from tests.contributing import validate_transformer_code_style
 
-   In [2]: valid = validate_transformer_code_style('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+   In [2]: valid = validate_transformer_code_style('rdt.transformers.BinaryEncoder') # Replace BinaryEncoder with your transformer
    Validating source file C:\Datacebo\RDT\rdt\transformers\boolean.py
 
    SUCCESS: The code style is correct.
@@ -214,7 +216,6 @@ check and whether or not it passed.
    isort                      Yes        Imports are properly sorted.
    pylint                     Yes        Code is properly formatted and structured.
    pydocstyle                 Yes        The docstrings are properly written.
-   Transformer Name           Yes        Transformer name ends with ``Transformer``.
    Transformer is subclass    Yes        The transformer is subclass of ``BaseTransformer``.
    Valid module               Yes        The transformer is placed inside a valid module.
    Valid test module          Yes        The transformer tests are placed inside the valid module.
@@ -245,24 +246,24 @@ prints a table summarizing the test coverage and provides a link to the full cov
 
    In [1]: from tests.contributing import validate_transformer_unit_tests
 
-   In [2]: test_coverage = validate_transformer_unit_tests('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+   In [2]: test_coverage = validate_transformer_unit_tests('rdt.transformers.BinaryEncoder') # Replace BinaryEncoder with your transformer
    Validating source file C:\Datacebo\RDT\rdt\transformers\boolean.py
 
    ================================================= test session starts =================================================
    collected 12 items
 
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test___init__ PASSED                            [  8%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__fit_array PASSED                          [ 16%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__fit_nan_ignore PASSED                     [ 25%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__fit_nan_not_ignore PASSED                 [ 33%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_2d_ndarray PASSED       [ 41%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_float_values PASSED     [ 50%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_float_values_out_of_range PASSED [ 58%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_nan_ignore PASSED       [ 66%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_nan_not_ignore PASSED   [ 75%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__reverse_transform_not_null_values PASSED  [ 83%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__transform_array PASSED                    [ 91%]
-   tests/unit/transformers/test_boolean.py::TestBooleanTransformer::test__transform_series PASSED                   [100%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test___init__ PASSED                            [  8%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__fit_array PASSED                          [ 16%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__fit_nan_ignore PASSED                     [ 25%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__fit_nan_not_ignore PASSED                 [ 33%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_2d_ndarray PASSED       [ 41%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_float_values PASSED     [ 50%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_float_values_out_of_range PASSED [ 58%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_nan_ignore PASSED       [ 66%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_nan_not_ignore PASSED   [ 75%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__reverse_transform_not_null_values PASSED  [ 83%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__transform_array PASSED                    [ 91%]
+   tests/unit/transformers/test_boolean.py::TestBinaryEncoder::test__transform_series PASSED                   [100%]
 
    ============================================ 12 passed, 1 warning in 0.08s ============================================
 
@@ -289,15 +290,15 @@ Integration tests should test the entire workflow of going from input data, to f
 transforming and finally reverse transforming the data. By default, we run integration tests
 for each transformer that validate the following checks:
 
-1. The Transformer correctly defines the data type that it supports.
-2. At least one Dataset Generator exists for the Transformer data type.
-3. The Transformer can transform data and produces outputs of the indicated data types.
-4. The Transformer can reverse transform the data it produces, recovering the original data type.
+1. The Transformer correctly defines the sdtype that it supports.
+2. At least one Dataset Generator exists for the Transformer sdtype.
+3. The Transformer can transform data and produces outputs of the indicated sdtypes.
+4. The Transformer can reverse transform the data it produces, recovering the original sdtype.
    If ``is_composite_identity``, we expect that the reverse transformed data is equal to the
    original data.
 5. The HyperTransformer is able to use the Transformer and produce float values.
 6. The HyperTransformer is able to reverse the data that has previously transformed,
-   and restore the original data type.
+   and restore the original sdtype.
 
 If you wish to test any specific end-to-end scenarios that were not covered in the above checks, 
 add a new integration test. Integration tests can be added under
@@ -318,18 +319,18 @@ checks. It also prints a table describing each check and whether or not it passe
 
    In [1]: from tests.contributing import validate_transformer_integration
 
-   In [2]: valid = validate_transformer_integration('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
-   Validating Integration Tests for transformer BooleanTransformer
+   In [2]: valid = validate_transformer_integration('rdt.transformers.BinaryEncoder') # Replace BinaryEncoder with your transformer
+   Validating Integration Tests for transformer BinaryEncoder
 
    SUCCESS: The integration tests were successful.
 
    Check                                   Correct    Details
    --------------------------------------  ---------  -----------------------------------------------------------------------------------------------------------------------
-   Dataset Generators                      Yes        At least one Dataset Generator exists for the Transformer data type.
-   Output Types                            Yes        The Transformer can transform data and produce output(s) of the indicated data type(s).
-   Reverse Transform                       Yes        The Transformer can reverse transform the data it produces, going back to the original data type.
+   Dataset Generators                      Yes        At least one Dataset Generator exists for the Transformer sdtype.
+   Output Sdtypes                            Yes        The Transformer can transform data and produce output(s) of the indicated sdtype(s).
+   Reverse Transform                       Yes        The Transformer can reverse transform the data it produces, going back to the original sdtype.
    Hypertransformer can transform          Yes        The HyperTransformer is able to use the Transformer and produce float values.
-   Hypertransformer can reverse transform  Yes        The HyperTransformer is able to reverse the data that it has previously transformed and restore the original data type.
+   Hypertransformer can reverse transform  Yes        The HyperTransformer is able to reverse the data that it has previously transformed and restore the original sdtype.
 
    In [3]: valid
    Out [3]: True
@@ -340,11 +341,11 @@ Transformer Performance
 """""""""""""""""""""""
 
 We want to ensure our transformers are as efficient as possible, in terms of time and memory.
-In order to do so, we run performance tests on each transformer, based on the input data type
+In order to do so, we run performance tests on each transformer, based on the input sdtype
 specified by the transformer.
 
 We generate test data using Dataset Generators. Each transformer should have at least one
-Dataset Generator that produces data of the transformer's input type.
+Dataset Generator that produces data of the transformer's input sdtype.
 If there are any specific dataset characteristics that you think may affect your transformer
 performance (e.g. constant data, mostly null data), consider adding a Dataset Generator
 for that scenario as well.
@@ -355,7 +356,7 @@ Creating Dataset Generators
 ***************************
 
 In order to test performance, we have a class that is responsible for generating data to test
-the transformer methods against. Each subclass implements two static method, ``generate`` 
+the transformer methods against. Each subclass implements two static methods, ``generate`` 
 and ``get_performance_thresholds``.
 
 1. ``generate`` takes in the number of rows to generate, and outputs the expected number
@@ -366,7 +367,7 @@ and ``get_performance_thresholds``.
 You should make a generator for every type of column that you believe would be useful to test
 against. For some examples, you can look in the `dataset generator folder`_.
 
-The generators each have a ``DATA_TYPE`` class variable. This should match the data type that your
+The generators each have a ``SDTYPE`` class variable. This should match the sdtype that your
 ``transformer`` accepts as input.
 
 More details can be found in the `Development Guide`_.
@@ -401,8 +402,8 @@ of the transformer.
 
    In [1]: from tests.contributing import validate_transformer_performance
 
-   In [2]: results = validate_transformer_performance('rdt.transformers.DatetimeTransformer') # Replace DatetimeTransformer with your transformer
-   Validating Performance for transformer DatetimeTransformer
+   In [2]: results = validate_transformer_performance('rdt.transformers.UnixTimestampEncoder') # Replace UnixTimestampEncoder with your transformer
+   Validating Performance for transformer UnixTimestampEncoder
 
    SUCCESS: The Performance Tests were successful.
 
@@ -425,28 +426,28 @@ Transformer Quality
 """""""""""""""""""
 
 To assess the quality of a transformer, we run quality tests that apply the Transformer
-on all the real world datasets that contain the Transformer input data type. The quality tests
+on all the real world datasets that contain the Transformer input sdtype. The quality tests
 look at how well the original correlations are preserved by using transformed data to train
 regression models that predict other columns in the data. We compare the transformer's quality
-results to that of other transformers of the same data type.
+results to that of other transformers of the same sdtype.
 
 .. _Adding a Dataset:
 
 Adding a Dataset
 ****************
 
-If the transformer you are creating adds a new data type, then a dataset with that type may need to
+If the transformer you are creating adds a new sdtype, then a dataset with that sdtype may need to
 be added for the quality tests. This only needs to be done if the transformer being added is 
 expected to preserve or expose relationships in the data. This can be done using the following
 steps:
 
-1. Find a dataset containing the data type your transformer uses as an input.
+1. Find a dataset containing the sdtype your transformer uses as an input.
 
 2. Test your transformer against this dataset by loading it into a ``DataFrame`` and using the
    ``get_transformer_regression_scores`` in the ``test_quality`` package::
 
     from tests.quality.test_quality import get_transformer_regression_scores
-    get_transformer_regression_scores(data, data_type, dataset_name, [transformer])
+    get_transformer_regression_scores(data, sdtype, dataset_name, [transformer])
 
 3. If the scores are higher than the ``TEST_THRESHOLD`` in the ``test_quality`` package, contact
    one of the `RDT core contributors`_ on GitHub and ask them to add the dataset. Once this is
@@ -463,8 +464,8 @@ on each dataset, how that score compares to average and whether or not it is acc
 
    In [1]: from tests.contributing import validate_transformer_quality
 
-   In [2]: results = validate_transformer_quality('rdt.transformers.CategoricalTransformer') # Replace CategoricalTransformer with your transformer
-   Validating Quality Tests for transformer CategoricalTransformer
+   In [2]: results = validate_transformer_quality('rdt.transformers.FrequencyEncoder') # Replace FrequencyEncoder with your transformer
+   Validating Quality Tests for transformer FrequencyEncoder
 
    SUCCESS: The quality tests were successful.
 
@@ -488,7 +489,7 @@ above. It also prints a table summarizing the results of all these checks.
 
    In [1]: from tests.contributing import validate_pull_request
 
-   In [2]: valid = validate_pull_request('rdt.transformers.BooleanTransformer') # Replace BooleanTransformer with your transformer
+   In [2]: valid = validate_pull_request('rdt.transformers.BinaryEncoder') # Replace BinaryEncoder with your transformer
    ...................
 
    Check              Correct    Details
@@ -514,7 +515,7 @@ Summary of Steps to Add a New Transformer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. If it does not exist, open an Issue in Github and describe the Transformer that will be added,
-   including the data type that it handles and how it will handle it.
+   including the sdtype that it handles and how it will handle it.
 2. Create and clone a fork of the RDT repository.
 3. Create a branch in this repository using the naming convention
    issue-[issue-number]-[transformer-name] (eg. issue-123-address-transformer).
@@ -524,7 +525,7 @@ Summary of Steps to Add a New Transformer
 6. Implement Unit Tests for the Transformer.
 7. Run the ``validate_transformer_unit_tests`` function and fix the reported errors.
 8. Run the ``validate_transformer_integration`` function and fix the reported errors.
-9. If required, implement the `Dataset Generators` for the new data type. This is described in the
+9. If required, implement the `Dataset Generators` for the new sdtype. This is described in the
    `Creating Dataset Generators`_ section.
 10. Run the ``validate_transformer_performance`` function and fix any errors reported.
     If there are no errors but performance can be improved, this function should be used for
@@ -532,9 +533,9 @@ Summary of Steps to Add a New Transformer
 11. If this transformer is expected to help preserve relationships in the data, run the
     ``validate_transformer_quality`` function. If the quality is too low, make the
     necessary enhancements to the transformer.
-12. If the quality tests fail because there is no dataset for the transformer's data type,
+12. If the quality tests fail because there is no dataset for the transformer's sdtype,
     follow the steps in the `Adding a Dataset`_ section to add a real world dataset
-    containing the new data type to the quality tests.
+    containing the new sdtype to the quality tests.
 13. Run the ``validate_pull_request`` function as a final check and fix any errors reported.
 14. After all the previous steps pass, all the new and modified files can be committed and pushed
     to github, and a Pull Request can be submitted. Follow the steps in the

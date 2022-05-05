@@ -1,17 +1,20 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.numerical import (
-    BayesGMMTransformer, GaussianCopulaTransformer, NumericalTransformer)
+from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
 
 
-class TestNumericalTransformer:
+class TestFloatFormatter:
 
-    def test_null_column(self):
+    def test_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
+        column = 'a'
 
-        nt = NumericalTransformer()
-        nt.fit(data, list(data.columns))
+        nt = FloatFormatter(
+            missing_value_replacement='mean',
+            model_missing_values=True,
+        )
+        nt.fit(data, column)
         transformed = nt.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -22,11 +25,12 @@ class TestNumericalTransformer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
-    def test_not_null_column(self):
+    def test_not_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
+        column = 'a'
 
-        nt = NumericalTransformer(null_column=False)
-        nt.fit(data, list(data.columns))
+        nt = FloatFormatter(model_missing_values=False)
+        nt.fit(data, column)
         transformed = nt.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -38,9 +42,10 @@ class TestNumericalTransformer:
 
     def test_int(self):
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
+        column = 'a'
 
-        nt = NumericalTransformer(dtype=int)
-        nt.fit(data, list(data.columns))
+        nt = FloatFormatter()
+        nt.fit(data, column)
         transformed = nt.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -49,27 +54,29 @@ class TestNumericalTransformer:
         reverse = nt.reverse_transform(transformed)
         assert list(reverse['a']) == [1, 2, 1, 2, 1]
 
-    def test_int_nan(self):
+    def test_int_nan_not_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
+        column = 'a'
 
-        nt = NumericalTransformer(dtype=int)
-        nt.fit(data, list(data.columns))
+        nt = FloatFormatter()
+        nt.fit(data, column)
         transformed = nt.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
-        assert transformed.shape == (6, 2)
+        assert transformed.shape == (6, 1)
 
         reverse = nt.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
 
-class TestGaussianCopulaTransformer:
+class TestGaussianNormalizer:
 
     def test_stats(self):
         data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['a'])
+        column = 'a'
 
-        ct = GaussianCopulaTransformer()
-        ct.fit(data, list(data.columns))
+        ct = GaussianNormalizer()
+        ct.fit(data, column)
         transformed = ct.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -82,11 +89,12 @@ class TestGaussianCopulaTransformer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
-    def test_null_column(self):
+    def test_model_missing_values(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
+        column = 'a'
 
-        ct = GaussianCopulaTransformer()
-        ct.fit(data, list(data.columns))
+        ct = GaussianNormalizer(model_missing_values=True)
+        ct.fit(data, column)
         transformed = ct.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -97,25 +105,30 @@ class TestGaussianCopulaTransformer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
-    def test_not_null_column(self):
+    def test_not_model_missing_values(self):
+        random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(6).get_state())
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
+        column = 'a'
 
-        ct = GaussianCopulaTransformer(null_column=False)
-        ct.fit(data, list(data.columns))
+        ct = GaussianNormalizer(model_missing_values=False)
+        ct.fit(data, column)
         transformed = ct.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (6, 1)
 
         reverse = ct.reverse_transform(transformed)
-
-        np.testing.assert_array_almost_equal(reverse, data, decimal=2)
+        expected = pd.DataFrame([1, 2, 1, np.nan, np.nan, 1], columns=['a'])
+        pd.testing.assert_frame_equal(reverse, expected)
+        np.random.set_state(random_state)
 
     def test_int(self):
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
+        column = 'a'
 
-        ct = GaussianCopulaTransformer(dtype=int)
-        ct.fit(data, list(data.columns))
+        ct = GaussianNormalizer()
+        ct.fit(data, column)
         transformed = ct.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -126,9 +139,10 @@ class TestGaussianCopulaTransformer:
 
     def test_int_nan(self):
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
+        column = 'a'
 
-        ct = GaussianCopulaTransformer(dtype=int)
-        ct.fit(data, list(data.columns))
+        ct = GaussianNormalizer(model_missing_values=True)
+        ct.fit(data, column)
         transformed = ct.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -138,7 +152,7 @@ class TestGaussianCopulaTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
 
-class TestBayesGMMTransformer:
+class TestClusterBasedNormalizer:
 
     def generate_data(self):
         data1 = np.random.normal(loc=5, scale=1, size=100)
@@ -149,9 +163,10 @@ class TestBayesGMMTransformer:
 
     def test_dataframe(self):
         data = self.generate_data()
+        column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer()
-        bgmm_transformer.fit(data, list(data.columns))
+        bgmm_transformer = ClusterBasedNormalizer()
+        bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -163,13 +178,15 @@ class TestBayesGMMTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_some_nulls(self):
-        np.random.seed(10)
+        random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(10).get_state())
         data = self.generate_data()
         mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
         data[mask] = np.nan
+        column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer()
-        bgmm_transformer.fit(data, list(data.columns))
+        bgmm_transformer = ClusterBasedNormalizer(model_missing_values=True)
+        bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -180,23 +197,7 @@ class TestBayesGMMTransformer:
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
-
-    def test_all_nulls(self):
-        np.random.seed(10)
-        data = pd.DataFrame([np.nan, None] * 50, columns=['col'])
-        bgmm_transformer = BayesGMMTransformer()
-        bgmm_transformer.fit(data, list(data.columns))
-        transformed = bgmm_transformer.transform(data)
-
-        expected = pd.DataFrame({
-            'col.normalized': [0.0] * 100,
-            'col.component': [0.0] * 100,
-            'col.is_null': [1.0] * 100
-        })
-        pd.testing.assert_frame_equal(expected, transformed)
-
-        reverse = bgmm_transformer.reverse_transform(transformed)
-        np.testing.assert_array_almost_equal(reverse, data)
+        np.random.set_state(random_state)
 
     def test_data_different_sizes(self):
         data = np.concatenate([
@@ -204,9 +205,10 @@ class TestBayesGMMTransformer:
             np.random.normal(loc=100, scale=1, size=500),
         ])
         data = pd.DataFrame(data, columns=['col'])
+        column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer()
-        bgmm_transformer.fit(data, list(data.columns))
+        bgmm_transformer = ClusterBasedNormalizer()
+        bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -217,7 +219,8 @@ class TestBayesGMMTransformer:
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
     def test_multiple_components(self):
-        np.random.seed(10)
+        random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(10).get_state())
         data = np.concatenate([
             np.random.normal(loc=5, scale=0.02, size=300),
             np.random.normal(loc=-4, scale=0.1, size=1000),
@@ -226,9 +229,10 @@ class TestBayesGMMTransformer:
         ])
         data = pd.DataFrame(data, columns=['col'])
         data = data.sample(frac=1).reset_index(drop=True)
+        column = 'col'
 
-        bgmm_transformer = BayesGMMTransformer()
-        bgmm_transformer.fit(data, list(data.columns))
+        bgmm_transformer = ClusterBasedNormalizer()
+        bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
         assert isinstance(transformed, pd.DataFrame)
@@ -237,3 +241,4 @@ class TestBayesGMMTransformer:
 
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+        np.random.set_state(random_state)

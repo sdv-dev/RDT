@@ -1,42 +1,69 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.datetime import DatetimeTransformer
+from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
 
 
-def test_no_strip():
-    dtt = DatetimeTransformer(strip_constant=False)
-    data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
+class TestUnixTimestampEncoder:
+    def setup_method(self):
+        self.random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(7).get_state())
 
-    # Run
-    dtt._fit(data.copy())
-    transformed = dtt._transform(data.copy())
-    reverted = dtt._reverse_transform(transformed)
+    def teardown_method(self):
+        np.random.set_state(self.random_state)
 
-    # Asserts
-    expect_trans = np.array([
-        [350006400000000000, 1.0],
-        [845510400000000000, 0.0],
-        [-145497600000000000, 0.0]
-    ])
-    np.testing.assert_almost_equal(expect_trans, transformed)
-    pd.testing.assert_series_equal(reverted, data)
+    def test_unixtimestampencoder(self):
+        ute = UnixTimestampEncoder(missing_value_replacement='mean')
+        data = pd.DataFrame({'column': pd.to_datetime([None, '1996-10-17', '1965-05-23'])})
+
+        # Run
+        ute.fit(data, column='column')
+        transformed = ute.transform(data)
+        reverted = ute.reverse_transform(transformed)
+
+        # Asserts
+        expected_transformed = pd.DataFrame({
+            'column.value': [3.500064e+17, 845510400000000000, -145497600000000000]
+        })
+
+        pd.testing.assert_frame_equal(expected_transformed, transformed)
+        pd.testing.assert_frame_equal(reverted, data)
+
+    def test_unixtimestampencoder_different_format(self):
+        ute = UnixTimestampEncoder(missing_value_replacement='mean', datetime_format='%b %d, %Y')
+        data = pd.DataFrame({'column': [None, 'Oct 17, 1996', 'May 23, 1965']})
+
+        # Run
+        ute.fit(data, column='column')
+        transformed = ute.transform(data)
+        reverted = ute.reverse_transform(transformed)
+
+        # Asserts
+        expect_transformed = pd.DataFrame({
+            'column.value': [3.500064e+17, 845510400000000000, -145497600000000000]
+        })
+        pd.testing.assert_frame_equal(expect_transformed, transformed)
+        pd.testing.assert_frame_equal(reverted, data)
 
 
-def test_strip():
-    dtt = DatetimeTransformer(strip_constant=True)
-    data = pd.to_datetime(pd.Series([None, '1996-10-17', '1965-05-23']))
+class TestOptimizedTimestampEncoder:
+    def setup_method(self):
+        self.random_state = np.random.get_state()
+        np.random.set_state(np.random.RandomState(7).get_state())
 
-    # Run
-    dtt._fit(data.copy())
-    transformed = dtt._transform(data.copy())
-    reverted = dtt._reverse_transform(transformed)
+    def teardown_method(self):
+        np.random.set_state(self.random_state)
 
-    # Asserts
-    expect_trans = np.array([
-        [4051.0, 1.0],
-        [9786.0, 0.0],
-        [-1684.0, 0.0]
-    ])
-    np.testing.assert_almost_equal(expect_trans, transformed)
-    pd.testing.assert_series_equal(reverted, data)
+    def test_optimizedtimestampencoder(self):
+        ote = OptimizedTimestampEncoder(missing_value_replacement='mean')
+        data = pd.DataFrame({'column': pd.to_datetime([None, '1996-10-17', '1965-05-23'])})
+
+        # Run
+        ote.fit(data, column='column')
+        transformed = ote.transform(data)
+        reverted = ote.reverse_transform(transformed)
+
+        # Asserts
+        expect_transformed = pd.DataFrame({'column.value': [4051.0, 9786.0, -1684.0]})
+        pd.testing.assert_frame_equal(expect_transformed, transformed)
+        pd.testing.assert_frame_equal(reverted, data)
