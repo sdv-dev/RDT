@@ -1582,6 +1582,37 @@ class TestLabelEncoder:
 
         assert 0 <= transformed[3] <= 2
 
+    def test__transform_add_noise(self):
+        """Test the ``_transform`` method with ``add_noise``.
+
+        Validate that each category of the passed data is replaced with its corresponding
+        integer value.
+
+        Setup:
+            - create an instance of the ``LabelEncoder``, where ``categories_to_values``
+            and ``values_to_categories`` are set to dictionaries.
+
+        Input:
+            - a pandas series.
+
+        Output:
+            - a numpy array containing the transformed data.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 4])
+        transformer = LabelEncoder(add_noise=True)
+        transformer.categories_to_values = {1: 0, 2: 1, 3: 2}
+        transformer.values_to_categories = {0: 1, 1: 2, 2: 3}
+
+        # Run
+        transformed = transformer._transform(data)
+
+        # Assert
+        assert 0 <= transformed[0] < 1
+        assert 1 <= transformed[1] < 2
+        assert 2 <= transformed[2] < 3
+        assert 0 <= transformed[3] < 3
+
     def test__transform_unseen_categories(self):
         """Test the ``_transform`` method with multiple unseen categories.
 

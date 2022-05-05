@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import psutil
-from scipy.stats import norm, uniform
+from scipy.stats import norm
 
 from rdt.transformers.base import BaseTransformer
 
@@ -450,6 +450,9 @@ class LabelEncoder(BaseTransformer):
         """Replace each category with its corresponding integer value.
 
         If a category has not been seen before, a random value is assigned.
+
+        If ``add_noise`` is True, the integer values will be replaced by a
+        random number between the value and the value + 1.
 
         Args:
             data (pandas.Series):
