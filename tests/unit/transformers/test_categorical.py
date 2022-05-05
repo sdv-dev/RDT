@@ -1585,12 +1585,12 @@ class TestLabelEncoder:
     def test__transform_add_noise(self):
         """Test the ``_transform`` method with ``add_noise``.
 
-        Validate that each category of the passed data is replaced with its corresponding
-        integer value.
+        Validate that the method correctly transforms the categories when ``add_noise`` is True.
 
         Setup:
             - create an instance of the ``LabelEncoder``, where ``categories_to_values``
             and ``values_to_categories`` are set to dictionaries.
+            - set ``add_noise`` to True.
 
         Input:
             - a pandas series.
@@ -1660,6 +1660,28 @@ class TestLabelEncoder:
         """
         # Setup
         transformer = LabelEncoder()
+        transformer.values_to_categories = {0: 'a', 1: 'b', 2: 'c'}
+        data = pd.Series([0, 1, 10])
+
+        # Run
+        out = transformer._reverse_transform(data)
+
+        # Assert
+        pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
+
+    def test__reverse_transform_add_noise(self):
+        """Test the ``_reverse_transform`` method with ``add_noise``.
+
+        Test that the method correctly reverse transforms the data
+        when ``add_noise`` is set to True.
+
+        Input:
+            - pd.Series
+        Output:
+            - corresponding categories
+        """
+        # Setup
+        transformer = LabelEncoder(add_noise=True)
         transformer.values_to_categories = {0: 'a', 1: 'b', 2: 'c'}
         data = pd.Series([0, 1, 10])
 
