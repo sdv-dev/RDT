@@ -781,10 +781,10 @@ class TestGaussianNormalizer:
         assert ct.enforce_min_max_values is False
 
     def test___init__str_distr(self):
-        """If distribution is an str, it is resolved using the _DISTRIBUTIONS dict."""
-        ct = GaussianNormalizer(distribution='univariate')
+        """If distribution is a str, it is resolved using the _DISTRIBUTIONS dict."""
+        ct = GaussianNormalizer(distribution='gamma')
 
-        assert ct._distribution is copulas.univariate.Univariate
+        assert ct._distribution is copulas.univariate.GammaUnivariate
 
     def test___init__non_distr(self):
         """If distribution is not an str, it is store as given."""
@@ -831,38 +831,6 @@ class TestGaussianNormalizer:
 
         # Assert
         expected = {
-            'univariate': univariate.Univariate,
-            'parametric': (
-                univariate.Univariate, {
-                    'parametric': univariate.ParametricType.PARAMETRIC,
-                },
-            ),
-            'bounded': (
-                univariate.Univariate,
-                {
-                    'bounded': univariate.BoundedType.BOUNDED,
-                },
-            ),
-            'semi_bounded': (
-                univariate.Univariate,
-                {
-                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
-                },
-            ),
-            'parametric_bounded': (
-                univariate.Univariate,
-                {
-                    'parametric': univariate.ParametricType.PARAMETRIC,
-                    'bounded': univariate.BoundedType.BOUNDED,
-                },
-            ),
-            'parametric_semi_bounded': (
-                univariate.Univariate,
-                {
-                    'parametric': univariate.ParametricType.PARAMETRIC,
-                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
-                },
-            ),
             'gaussian': univariate.GaussianUnivariate,
             'gamma': univariate.GammaUnivariate,
             'beta': univariate.BetaUnivariate,
@@ -885,7 +853,7 @@ class TestGaussianNormalizer:
             - a copy of the value stored in ``self._distribution``.
         """
         # Setup
-        distribution = copulas.univariate.Univariate()
+        distribution = copulas.univariate.BetaUnivariate()
         ct = GaussianNormalizer(distribution=distribution)
 
         # Run
@@ -937,7 +905,7 @@ class TestGaussianNormalizer:
             - an instance of ``copulas.univariate.Univariate`` without any arguments.
         """
         # Setup
-        distribution = copulas.univariate.Univariate
+        distribution = copulas.univariate.BetaUnivariate
         ct = GaussianNormalizer(distribution=distribution)
 
         # Run
