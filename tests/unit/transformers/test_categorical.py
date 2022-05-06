@@ -1683,7 +1683,7 @@ class TestLabelEncoder:
         # Setup
         transformer = LabelEncoder(add_noise=True)
         transformer.values_to_categories = {0: 'a', 1: 'b', 2: 'c'}
-        data = pd.Series([0, 1, 10])
+        data = pd.Series([0.5, 1.0, 10.9])
 
         # Run
         out = transformer._reverse_transform(data)
