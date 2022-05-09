@@ -1577,10 +1577,41 @@ class TestLabelEncoder:
             transformed = transformer._transform(data)
 
         # Assert
-        expected = pd.Series([0, 1, 2])
+        expected = pd.Series([0., 1., 2.])
         pd.testing.assert_series_equal(transformed[:-1], expected)
 
         assert 0 <= transformed[3] <= 2
+
+    def test__transform_add_noise(self):
+        """Test the ``_transform`` method with ``add_noise``.
+
+        Validate that the method correctly transforms the categories when ``add_noise`` is True.
+
+        Setup:
+            - create an instance of the ``LabelEncoder``, where ``categories_to_values``
+            and ``values_to_categories`` are set to dictionaries.
+            - set ``add_noise`` to True.
+
+        Input:
+            - a pandas series.
+
+        Output:
+            - a numpy array containing the transformed data.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 4])
+        transformer = LabelEncoder(add_noise=True)
+        transformer.categories_to_values = {1: 0, 2: 1, 3: 2}
+        transformer.values_to_categories = {0: 1, 1: 2, 2: 3}
+
+        # Run
+        transformed = transformer._transform(data)
+
+        # Assert
+        assert 0 <= transformed[0] < 1
+        assert 1 <= transformed[1] < 2
+        assert 2 <= transformed[2] < 3
+        assert 0 <= transformed[3] < 3
 
     def test__transform_unseen_categories(self):
         """Test the ``_transform`` method with multiple unseen categories.
@@ -1610,7 +1641,7 @@ class TestLabelEncoder:
             transformed = transformer._transform(transform_data)
 
         # Assert
-        expected = pd.Series([0, 1, 2])
+        expected = pd.Series([0., 1., 2.])
         pd.testing.assert_series_equal(transformed[:3], expected)
 
         assert all([0 <= value < len(fit_data) for value in transformed[3:]])
@@ -1631,6 +1662,28 @@ class TestLabelEncoder:
         transformer = LabelEncoder()
         transformer.values_to_categories = {0: 'a', 1: 'b', 2: 'c'}
         data = pd.Series([0, 1, 10])
+
+        # Run
+        out = transformer._reverse_transform(data)
+
+        # Assert
+        pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
+
+    def test__reverse_transform_add_noise(self):
+        """Test the ``_reverse_transform`` method with ``add_noise``.
+
+        Test that the method correctly reverse transforms the data
+        when ``add_noise`` is set to True.
+
+        Input:
+            - pd.Series
+        Output:
+            - corresponding categories
+        """
+        # Setup
+        transformer = LabelEncoder(add_noise=True)
+        transformer.values_to_categories = {0: 'a', 1: 'b', 2: 'c'}
+        data = pd.Series([0.5, 1.0, 10.9])
 
         # Run
         out = transformer._reverse_transform(data)
