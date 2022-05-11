@@ -458,15 +458,18 @@ class LabelEncoder(BaseTransformer):
             if unique_data.dtype.type in [np.str_, np.object_]:
                 try:
                     unique_data.astype(np.float)
+                    unique_data = list(unique_data)
+                    unique_data.sort(key=float)
+                    unique_data = np.array(unique_data)
+
                 except ValueError as error:
                     raise Error(
                         'The data must be numerical or able to be casted as a float if order_by '
                         "is 'numerical_value'."
                     ) from error
 
-            unique_data = list(unique_data)
-            unique_data.sort(key=float)
-            unique_data = np.array(unique_data)
+            else:
+                unique_data = np.sort(unique_data)
 
         return unique_data
 
