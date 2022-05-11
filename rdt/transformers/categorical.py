@@ -449,13 +449,13 @@ class LabelEncoder(BaseTransformer):
 
     def _order_categories(self, unique_data):
         if self.order_by == 'alphabetical':
-            if unique_data.dtype != 'object':
+            if unique_data.dtype.type not in [np.str_, np.object_]:
                 raise Error("The data must be of type string if order_by is 'alphabetical'.")
 
             unique_data = np.sort(unique_data)
 
         elif self.order_by == 'numerical_value':
-            if unique_data.dtype == 'object':
+            if unique_data.dtype.type in [np.str_, np.object_]:
                 try:
                     unique_data.astype(np.float)
                 except ValueError as error:
@@ -464,7 +464,9 @@ class LabelEncoder(BaseTransformer):
                         "is 'numerical_value'."
                     ) from error
 
-            unique_data = np.sort(unique_data)
+            unique_data = list(unique_data)
+            unique_data.sort(key=float)
+            unique_data = np.array(unique_data)
 
         return unique_data
 
