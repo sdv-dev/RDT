@@ -1639,21 +1639,48 @@ class TestLabelEncoder:
     def test__order_categories_numerical_error(self):
         """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
 
-        If the array is made up of strings that can be converted to floats, and `order_by`
-        is 'numerical_value', then we should still order the categories.
+        If the array is made up of strings that can't be converted to floats, and `order_by`
+        is 'numerical_value', then we should raise an error.
 
         Setup:
             - Set ``order_by`` to 'numerical_value'.
 
         Input:
-            - numpy array of strings that can be floats and are unordered.
+            - numpy array of strings.
 
-        Output:
-            - Same numpy array but with the strings ordered numerically.
+        Expected behavior:
+            - Error should be raised.
         """
         # Setup
         transformer = LabelEncoder(order_by='numerical_value')
         arr = np.array(['one', 'two', 'three', 'four'])
+
+        # Run / Assert
+        message = (
+            'The data must be numerical or able to be casted as a float if order_by '
+            "is 'numerical_value'."
+        )
+        with pytest.raises(Error, match=message):
+            transformer._order_categories(arr)
+
+    def test__order_categories_numerical_different_dtype_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
+
+        If the array is made up of a dtype that is not numeric and can't be converted to a float,
+        and `order_by` is 'numerical_value', then we should raise an error.
+
+        Setup:
+            - Set ``order_by`` to 'numerical_value'.
+
+        Input:
+            - numpy array of booleans.
+
+        Expected behavior:
+            - Error should be raised.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='numerical_value')
+        arr = np.array([True, False, False, True])
 
         # Run / Assert
         message = (

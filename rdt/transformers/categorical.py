@@ -418,7 +418,7 @@ class LabelEncoder(BaseTransformer):
 
     Args:
         add_noise (bool):
-            Whether to generate uniform noise around the label for of each category.
+            Whether to generate uniform noise around the label for each category.
             Defaults to ``False``.
         order_by (None or str):
             A string defining how to order the categories before assigning them labels. Defaults to
@@ -455,6 +455,10 @@ class LabelEncoder(BaseTransformer):
             unique_data = np.sort(unique_data)
 
         elif self.order_by == 'numerical_value':
+            error_message = (
+                'The data must be numerical or able to be casted as a float if order_by '
+                "is 'numerical_value'."
+            )
             if unique_data.dtype.type in [np.str_, np.object_]:
                 try:
                     unique_data.astype(np.float)
@@ -463,13 +467,13 @@ class LabelEncoder(BaseTransformer):
                     unique_data = np.array(unique_data)
 
                 except ValueError as error:
-                    raise Error(
-                        'The data must be numerical or able to be casted as a float if order_by '
-                        "is 'numerical_value'."
-                    ) from error
+                    raise Error(error_message) from error
+
+            elif np.issubdtype(unique_data.dtype.type, np.number):
+                unique_data = np.sort(unique_data)
 
             else:
-                unique_data = np.sort(unique_data)
+                raise Error(error_message)
 
         return unique_data
 
