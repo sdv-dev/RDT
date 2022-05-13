@@ -1565,6 +1565,29 @@ class TestLabelEncoder:
         # Assert
         np.testing.assert_array_equal(ordered, np.array(['four', 'one', 'three', 'two']))
 
+    def test__order_categories_alphabetical_with_nans(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        Setup:
+            - Set ``order_by`` to 'alphabetical'.
+
+        Input:
+            - numpy array of strings that are unordered and have nans.
+
+        Output:
+            - Same numpy array but with the strings alphabetically ordered and nan at the end.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='alphabetical')
+        arr = np.array(['one', 'two', 'three', np.nan, 'four'], dtype='object')
+
+        # Run
+        ordered = transformer._order_categories(arr)
+
+        # Assert
+        expected = np.array(['four', 'one', 'three', 'two', np.nan], dtype='object')
+        pd.testing.assert_series_equal(pd.Series(ordered), pd.Series(expected))
+
     def test__order_categories_alphabetical_error(self):
         """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
 
@@ -1603,38 +1626,13 @@ class TestLabelEncoder:
         """
         # Setup
         transformer = LabelEncoder(order_by='numerical_value')
-        arr = np.array([5, 3.11, 100, 67.8, -2.5])
+        arr = np.array([5, 3.11, 100, 67.8, np.nan, -2.5])
 
         # Run
         ordered = transformer._order_categories(arr)
 
         # Assert
-        np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100]))
-
-    def test__order_categories_numerical_represented_as_strings(self):
-        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
-
-        If the array is made up of strings that can be converted to floats, and `order_by`
-        is 'numerical_value', then we should still order the categories.
-
-        Setup:
-            - Set ``order_by`` to 'numerical_value'.
-
-        Input:
-            - numpy array of strings that can be floats and are unordered.
-
-        Output:
-            - Same numpy array but with the strings ordered numerically.
-        """
-        # Setup
-        transformer = LabelEncoder(order_by='numerical_value')
-        arr = np.array(['5', '3.11', '100', '67.8', '-2.5'])
-
-        # Run
-        ordered = transformer._order_categories(arr)
-
-        # Assert
-        np.testing.assert_array_equal(ordered, np.array(['-2.5', '3.11', '5', '67.8', '100']))
+        np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, np.nan]))
 
     def test__order_categories_numerical_error(self):
         """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
