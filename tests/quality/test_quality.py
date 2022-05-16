@@ -89,12 +89,15 @@ def get_transformer_regression_scores(data, sdtype, dataset_name, transformers, 
         numerical_transformer = FloatFormatter(model_missing_values=False)
         target = numerical_transformer.fit_transform(target, column)
         target = format_array(target)
+        nans = np.isnan(target)[:, 0]
+        target = target[~nans]
         for transformer in transformers:
             ht = HyperTransformer()
             ht.detect_initial_config(features)
             ht.update_transformers_by_sdtype(sdtype=sdtype, transformer=transformer())
             ht.fit(features)
             transformed_features = ht.transform(features).to_numpy()
+            transformed_features = transformed_features[~nans]
             score = get_regression_score(transformed_features, target)
             row = pd.Series({
                 'transformer_name': transformer.__name__,
