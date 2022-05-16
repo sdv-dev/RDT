@@ -454,10 +454,7 @@ class LabelEncoder(BaseTransformer):
 
         elif self.order_by == 'numerical_value':
             if not np.issubdtype(unique_data.dtype.type, np.number):
-                raise Error(
-                    'The data must be numerical or able to be casted as a float if order_by '
-                    "is 'numerical_value'."
-                )
+                raise Error("The data must be numerical if order_by is 'numerical_value'.")
 
         if self.order_by is not None:
             unique_data = np.sort(unique_data[~pd.isna(unique_data)])

@@ -1654,10 +1654,7 @@ class TestLabelEncoder:
         arr = np.array(['one', 'two', 'three', 'four'])
 
         # Run / Assert
-        message = (
-            'The data must be numerical or able to be casted as a float if order_by '
-            "is 'numerical_value'."
-        )
+        message = ("The data must be numerical if order_by is 'numerical_value'.")
         with pytest.raises(Error, match=message):
             transformer._order_categories(arr)
 
@@ -1681,10 +1678,7 @@ class TestLabelEncoder:
         arr = np.array([True, False, False, True])
 
         # Run / Assert
-        message = (
-            'The data must be numerical or able to be casted as a float if order_by '
-            "is 'numerical_value'."
-        )
+        message = ("The data must be numerical if order_by is 'numerical_value'.")
         with pytest.raises(Error, match=message):
             transformer._order_categories(arr)
 
