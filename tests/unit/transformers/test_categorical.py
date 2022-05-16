@@ -1563,7 +1563,7 @@ class TestLabelEncoder:
         ordered = transformer._order_categories(arr)
 
         # Assert
-        np.testing.assert_array_equal(ordered, np.array(['four', 'one', 'three', 'two', np.nan]))
+        np.testing.assert_array_equal(ordered, np.array(['four', 'one', 'three', 'two']))
 
     def test__order_categories_alphabetical_with_nans(self):
         """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.

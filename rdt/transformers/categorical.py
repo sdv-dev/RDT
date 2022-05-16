@@ -457,8 +457,10 @@ class LabelEncoder(BaseTransformer):
                 raise Error("The data must be numerical if order_by is 'numerical_value'.")
 
         if self.order_by is not None:
-            unique_data = np.sort(unique_data[~pd.isna(unique_data)])
-            unique_data = np.append(unique_data, [np.nan])
+            nans = pd.isna(unique_data)
+            unique_data = np.sort(unique_data[~nans])
+            if nans.any():
+                unique_data = np.append(unique_data, [np.nan])
 
         return unique_data
 
