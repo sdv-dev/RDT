@@ -304,3 +304,47 @@ def test_label_numerical_nans():
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
+
+
+def test_label_encoder_order_by_numerical():
+    """Test the LabelEncoder appropriately transforms data if `order_by` is 'numerical_value'.
+
+    Input:
+        - pandas.DataFrame of numeric data.
+
+    Output:
+        - Transformed data should map labels to values based on numerical order.
+    """
+
+    data = pd.DataFrame([5, np.nan, 3.11, 100, 67.8, -2.5], columns=['column_name'])
+
+    transformer = LabelEncoder(order_by='numerical_value')
+    transformer.fit(data, 'column_name')
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    expected = pd.DataFrame([2, 5, 1, 4, 3, 0], columns=['column_name.value'])
+    pd.testing.assert_frame_equal(transformed, expected)
+    pd.testing.assert_frame_equal(reverse, data)
+
+
+def test_label_encoder_order_by_alphabetical():
+    """Test the LabelEncoder appropriately transforms data if `order_by` is 'alphabetical'.
+
+    Input:
+        - pandas.DataFrame of string data.
+
+    Output:
+        - Transformed data should map labels to values based on alphabetical order.
+    """
+
+    data = pd.DataFrame(['one', 'two', np.nan, 'three', 'four'], columns=['column_name'])
+
+    transformer = LabelEncoder(order_by='alphabetical')
+    transformer.fit(data, 'column_name')
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    expected = pd.DataFrame([1, 3, 4, 2, 0], columns=['column_name.value'])
+    pd.testing.assert_frame_equal(transformed, expected)
+    pd.testing.assert_frame_equal(reverse, data)

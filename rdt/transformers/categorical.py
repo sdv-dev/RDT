@@ -7,6 +7,7 @@ import pandas as pd
 import psutil
 from scipy.stats import norm
 
+from rdt.errors import Error
 from rdt.transformers.base import BaseTransformer
 
 
@@ -414,6 +415,17 @@ class LabelEncoder(BaseTransformer):
         categories_to_values (dict):
             Dictionary that maps each category with the corresponding
             integer value.
+
+    Args:
+        add_noise (bool):
+            Whether to generate uniform noise around the label for each category.
+            Defaults to ``False``.
+        order_by (None or str):
+            A string defining how to order the categories before assigning them labels. Defaults to
+            ``None``. Options include:
+            - ``'numerical_value'``: Order the categories by numerical value.
+            - ``'alphabetical'``: Order the categories alphabetically.
+            - ``None``: Use the order that the categories appear in when fitting.
     """
 
     INPUT_SDTYPE = 'categorical'
@@ -425,8 +437,32 @@ class LabelEncoder(BaseTransformer):
     values_to_categories = None
     categories_to_values = None
 
-    def __init__(self, add_noise=False):
+    def __init__(self, add_noise=False, order_by=None):
         self.add_noise = add_noise
+        if order_by not in [None, 'alphabetical', 'numerical_value']:
+            raise Error(
+                "order_by must be one of the following values: None, 'numerical_value' or "
+                "'alphabetical'"
+            )
+
+        self.order_by = order_by
+
+    def _order_categories(self, unique_data):
+        if self.order_by == 'alphabetical':
+            if unique_data.dtype.type not in [np.str_, np.object_]:
+                raise Error("The data must be of type string if order_by is 'alphabetical'.")
+
+        elif self.order_by == 'numerical_value':
+            if not np.issubdtype(unique_data.dtype.type, np.number):
+                raise Error("The data must be numerical if order_by is 'numerical_value'.")
+
+        if self.order_by is not None:
+            nans = pd.isna(unique_data)
+            unique_data = np.sort(unique_data[~nans])
+            if nans.any():
+                unique_data = np.append(unique_data, [np.nan])
+
+        return unique_data
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -440,6 +476,7 @@ class LabelEncoder(BaseTransformer):
                 Data to fit the transformer to.
         """
         unique_data = pd.unique(data.fillna(np.nan))
+        unique_data = self._order_categories(unique_data)
         self.values_to_categories = dict(enumerate(unique_data))
         self.categories_to_values = {
             category: value

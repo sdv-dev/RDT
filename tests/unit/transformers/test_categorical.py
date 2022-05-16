@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from rdt.errors import Error
 from rdt.transformers.categorical import FrequencyEncoder, LabelEncoder, OneHotEncoder
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
@@ -1515,6 +1516,171 @@ class TestOneHotEncoder:
 
 
 class TestLabelEncoder:
+
+    def test___init__(self):
+        """Passed arguments must be stored as attributes."""
+        # Run
+        transformer = LabelEncoder(add_noise='add_noise_value', order_by='alphabetical')
+
+        # Asserts
+        assert transformer.add_noise == 'add_noise_value'
+        assert transformer.order_by == 'alphabetical'
+
+    def test___init___bad_order_by(self):
+        """Test that the ``__init__`` raises error if ``order_by`` is a bad value.
+
+        Input:
+            - ``order_by`` will be set to an unexpected string.
+
+        Expected behavior:
+            - An error should be raised.
+        """
+        # Run / Assert
+        message = (
+            "order_by must be one of the following values: None, 'numerical_value' or "
+            "'alphabetical'"
+        )
+        with pytest.raises(Error, match=message):
+            LabelEncoder(order_by='bad_value')
+
+    def test__order_categories_alphabetical(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        Setup:
+            - Set ``order_by`` to 'alphabetical'.
+
+        Input:
+            - numpy array of strings that are unordered.
+
+        Output:
+            - Same numpy array but with the strings alphabetically ordered.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='alphabetical')
+        arr = np.array(['one', 'two', 'three', 'four'])
+
+        # Run
+        ordered = transformer._order_categories(arr)
+
+        # Assert
+        np.testing.assert_array_equal(ordered, np.array(['four', 'one', 'three', 'two']))
+
+    def test__order_categories_alphabetical_with_nans(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        Setup:
+            - Set ``order_by`` to 'alphabetical'.
+
+        Input:
+            - numpy array of strings that are unordered and have nans.
+
+        Output:
+            - Same numpy array but with the strings alphabetically ordered and nan at the end.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='alphabetical')
+        arr = np.array(['one', 'two', 'three', np.nan, 'four'], dtype='object')
+
+        # Run
+        ordered = transformer._order_categories(arr)
+
+        # Assert
+        expected = np.array(['four', 'one', 'three', 'two', np.nan], dtype='object')
+        pd.testing.assert_series_equal(pd.Series(ordered), pd.Series(expected))
+
+    def test__order_categories_alphabetical_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        If ``order_by`` is 'alphabetical' but the data isn't a string, then an error should
+        be raised.
+
+        Setup:
+            - Set ``order_by`` to 'alphabetical'.
+
+        Input:
+            - numpy array of strings that are unordered.
+
+        Output:
+            - Same numpy array but with the strings alphabetically ordered.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='alphabetical')
+        arr = np.array([1, 2, 3, 4])
+
+        # Run / Assert
+        message = "The data must be of type string if order_by is 'alphabetical'."
+        with pytest.raises(Error, match=message):
+            transformer._order_categories(arr)
+
+    def test__order_categories_numerical(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
+
+        Setup:
+            - Set ``order_by`` to 'numerical_value'.
+
+        Input:
+            - numpy array of numbers that are unordered.
+
+        Output:
+            - Same numpy array but with the numbers ordered.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='numerical_value')
+        arr = np.array([5, 3.11, 100, 67.8, np.nan, -2.5])
+
+        # Run
+        ordered = transformer._order_categories(arr)
+
+        # Assert
+        np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, np.nan]))
+
+    def test__order_categories_numerical_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
+
+        If the array is made up of strings that can't be converted to floats, and `order_by`
+        is 'numerical_value', then we should raise an error.
+
+        Setup:
+            - Set ``order_by`` to 'numerical_value'.
+
+        Input:
+            - numpy array of strings.
+
+        Expected behavior:
+            - Error should be raised.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='numerical_value')
+        arr = np.array(['one', 'two', 'three', 'four'])
+
+        # Run / Assert
+        message = ("The data must be numerical if order_by is 'numerical_value'.")
+        with pytest.raises(Error, match=message):
+            transformer._order_categories(arr)
+
+    def test__order_categories_numerical_different_dtype_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
+
+        If the array is made up of a dtype that is not numeric and can't be converted to a float,
+        and `order_by` is 'numerical_value', then we should raise an error.
+
+        Setup:
+            - Set ``order_by`` to 'numerical_value'.
+
+        Input:
+            - numpy array of booleans.
+
+        Expected behavior:
+            - Error should be raised.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='numerical_value')
+        arr = np.array([True, False, False, True])
+
+        # Run / Assert
+        message = ("The data must be numerical if order_by is 'numerical_value'.")
+        with pytest.raises(Error, match=message):
+            transformer._order_categories(arr)
 
     def test__fit(self):
         """Test the ``_fit`` method.
