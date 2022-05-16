@@ -452,24 +452,16 @@ class LabelEncoder(BaseTransformer):
             if unique_data.dtype.type not in [np.str_, np.object_]:
                 raise Error("The data must be of type string if order_by is 'alphabetical'.")
 
-            nans = pd.isna(unique_data)
-            if nans.any():
-                nan_rep = unique_data[nans][0]
-                unique_data = np.sort(unique_data[~nans])
-                unique_data = np.append(unique_data, [nan_rep])
-
-            else:
-                unique_data = np.sort(unique_data)
-
         elif self.order_by == 'numerical_value':
-            if np.issubdtype(unique_data.dtype.type, np.number):
-                unique_data = np.sort(unique_data)
-
-            else:
+            if not np.issubdtype(unique_data.dtype.type, np.number):
                 raise Error(
                     'The data must be numerical or able to be casted as a float if order_by '
                     "is 'numerical_value'."
                 )
+
+        if self.order_by is not None:
+            unique_data = np.sort(unique_data[~pd.isna(unique_data)])
+            unique_data = np.append(unique_data, [np.nan])
 
         return unique_data
 
