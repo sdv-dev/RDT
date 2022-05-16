@@ -6,7 +6,8 @@ import pandas as pd
 import pytest
 
 from rdt.errors import Error
-from rdt.transformers.categorical import FrequencyEncoder, LabelEncoder, OneHotEncoder
+from rdt.transformers.categorical import (
+    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
@@ -1856,3 +1857,70 @@ class TestLabelEncoder:
 
         # Assert
         pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
+
+
+class TestCustomLabelEncoder:
+
+    def test___init__(self):
+        """Passed arguments must be stored as attributes."""
+        # Run
+        transformer = CustomLabelEncoder(order=['b', 'c', 'a'], add_noise='add_noise_value')
+
+        # Asserts
+        assert transformer.add_noise == 'add_noise_value'
+        assert transformer.order == ['b', 'c', 'a']
+
+    def test__fit(self):
+        """Test the ``_fit`` method.
+
+        Validate that a unique integer representation for each category of the data is stored
+        in the ``categories_to_values`` attribute, and the reverse is stored in the
+        ``values_to_categories`` attribute. The order should match the ``self.order`` indices.
+
+        Setup:
+            - create an instance of the ``CustomLabelEncoder``.
+
+        Input:
+            - a pandas series.
+
+        Side effects:
+            - set the ``values_to_categories`` dictionary to the appropriate value.
+            - set ``categories_to_values`` dictionary to the appropriate value.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 2, np.nan, 1])
+        transformer = CustomLabelEncoder(order=[2, 3, np.nan, 1])
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.values_to_categories == {0: 2, 1: 3, 2: np.nan, 3: 1}
+        assert transformer.categories_to_values == {2: 0, 3: 1, 1: 3, np.nan: 2}
+
+    def test__fit_error(self):
+        """Test the ``_fit`` method checks that data is in ``self.order``.
+
+        If the data being fit is not in ``self.order`` an error should be raised.
+
+        Setup:
+            - create an instance of the ``CustomLabelEncoder``.
+
+        Input:
+            - a pandas series.
+
+        Side effects:
+            - set the ``values_to_categories`` dictionary to the appropriate value.
+            - set ``categories_to_values`` dictionary to the appropriate value.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 2, 1, 4])
+        transformer = CustomLabelEncoder(order=[2, 1])
+
+        # Run / Assert
+        message = re.escape(
+            "Unknown categories '[3, 4]'. All possible categories must be defined in the "
+            "'order' parameter."
+        )
+        with pytest.raises(Error, match=message):
+            transformer._fit(data)

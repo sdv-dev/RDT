@@ -11,7 +11,8 @@ from pathlib import Path
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
-from rdt.transformers.categorical import FrequencyEncoder, LabelEncoder, OneHotEncoder
+from rdt.transformers.categorical import (
+    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder)
 from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
@@ -21,6 +22,7 @@ __all__ = [
     'BaseTransformer',
     'BinaryEncoder',
     'ClusterBasedNormalizer',
+    'CustomLabelEncoder',
     'FloatFormatter',
     'FrequencyEncoder',
     'GaussianNormalizer',

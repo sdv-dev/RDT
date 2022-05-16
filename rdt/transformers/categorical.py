@@ -535,3 +535,49 @@ class LabelEncoder(BaseTransformer):
 
         data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
         return data.round().map(self.values_to_categories)
+
+
+class CustomLabelEncoder(LabelEncoder):
+    """Custom label encoder for categorical data.
+
+    This class works very similarly to the ``LabelEncoder``, except that is requires the ordering
+    for the labels to be provided.
+
+    Null values are considered just another category.
+
+    Args:
+        order (list):
+            A list of all the unique categories for the data. The order of the list determines the
+            label that each category will get.
+        add_noise (bool):
+            Whether to generate uniform noise around the label for each category.
+            Defaults to ``False``.
+    """
+
+    def __init__(self, order, add_noise=False):
+        self.order = order
+        super().__init__(add_noise=add_noise)
+
+    def _fit(self, data):
+        """Fit the transformer to the data.
+
+        Generate a unique integer representation for each category and
+        store them in the `categories_to_values` dict and its reverse
+        `values_to_categories`.
+
+        Args:
+            data (pandas.Series):
+                Data to fit the transformer to.
+        """
+        missing = list(data[~data.isin(self.order)].unique())
+        if len(missing) > 0:
+            raise Error(
+                f"Unknown categories '{missing}'. All possible categories must be defined in the "
+                "'order' parameter."
+            )
+
+        self.values_to_categories = dict(enumerate(self.order))
+        self.categories_to_values = {
+            category: value
+            for value, category in self.values_to_categories.items()
+        }
