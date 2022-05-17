@@ -236,7 +236,7 @@ class TestAnonymizedFaker:
         """Test the ``get_output_sdtypes``.
 
         Setup:
-            - initialize a ``AnonymizedFaker`` transformer which:
+            - initialize a ``AnonymizedFaker`` transformer with default values.
 
         Output:
             - the ``output_sdtypes`` returns an empty dictionary.

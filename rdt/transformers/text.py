@@ -1,8 +1,6 @@
-"""Transformers that act as generators."""
-import warnings
+"""Transformers for text data."""
 
 import numpy as np
-import pandas as pd
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
@@ -30,12 +28,13 @@ class RegexGenerator(BaseTransformer):
             there are null values. If ``False``, do not create the new column even if there
             are null values. Defaults to ``False``.
     """
+
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = False
     INPUT_SDTYPE = 'text'
     null_transformer = None
 
-    def __init__(self, regex_format='[A-Za-z]{4}', missing_value_replacement=None,
+    def __init__(self, regex_format='[A-Za-z]{5}', missing_value_replacement=None,
                  model_missing_values=False):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
@@ -96,12 +95,21 @@ class RegexGenerator(BaseTransformer):
         Returns:
             pandas.Series
         """
-        generator, _ = strings_from_regex(self.regex_format)
+        generator, size = strings_from_regex(self.regex_format)
+        if size > self.data_length:
+            reverse_transformed = np.array([
+                generator.__next__()
+                for _ in range(self.data_length)
+            ])
 
-        reverse_transformed = np.array([
-            generator
-            for _ in range(self.data_length)
-        ], dtype=object)
+        else:
+            generated_values = list(generator)
+            reverse_transformed = []
+            while len(reverse_transformed) < self.data_length:
+                remaining = self.data_length - len(reverse_transformed)
+                reverse_transformed.extend(generated_values[:remaining])
+
+            reverse_transformed = np.array(reverse_transformed)
 
         if self.null_transformer.models_missing_values():
             reverse_transformed = np.column_stack((reverse_transformed, data))

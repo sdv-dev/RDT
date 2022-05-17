@@ -1,0 +1,255 @@
+"""Test Text Transformers."""
+
+from unittest.mock import Mock, call, patch
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from rdt.transformers.null import NullTransformer
+from rdt.transformers.text import RegexGenerator
+from rdt.transformers.utils import strings_from_regex
+
+
+class TestRegexGenerator:
+    """Test class for ``RegexGenerator``."""
+
+    def test___init__default(self):
+        """Test the default instantiation of the transformer.
+
+        Test that ``RegexGenerator`` defaults to ``regex_format='[A-Za-z]{5}'``
+
+        Side effects:
+            - the ``instance.missing_value_replacement`` is ``None``.
+            - the ``instance.model_missing_values`` is ``False``
+            - the ``instance.regex_format`` is ``'[A-Za-z]{5}'``'.
+        """
+        # Run
+        instance = RegexGenerator()
+
+        # Assert
+        assert instance.missing_value_replacement is None
+        assert instance.model_missing_values is False
+        assert instance.regex_format == '[A-Za-z]{5}'
+
+    def test___init__custom(self):
+        """Test the default instantiation of the transformer.
+
+        Test that when creating an instance of ``RegexGenerator`` and passing a
+        ``regex_format`` this is being stored and the ``missing_value_replacement`` or
+        ``model_missing_values`` are set to the custom values as well.
+
+        Side effects:
+            - the ``instance.missing_value_replacement`` is ``AAAA``.
+            - the ``instance.model_missing_values`` is ``True``
+            - the ``instance.regex_format`` is ``'[A-Za-z]{5}'``'.
+        """
+        # Run
+        instance = RegexGenerator(
+            regex_format='[0-9]',
+            missing_value_replacement='AAAA',
+            model_missing_values=True
+        )
+
+        # Assert
+        assert instance.missing_value_replacement == 'AAAA'
+        assert instance.model_missing_values
+        assert instance.regex_format == '[0-9]'
+
+    def test_get_output_sdtypes(self):
+        """Test the ``get_output_sdtypes``.
+
+        Setup:
+            - initialize a ``RegexGenerator`` transformer with default values.
+
+        Output:
+            - the ``output_sdtypes`` returns an empty dictionary.
+        """
+        # Setup
+        instance = RegexGenerator()
+        instance.column_prefix = 'a#b'
+
+        # Run
+        output = instance.get_output_sdtypes()
+
+        # Assert
+        expected = {}
+        assert output == expected
+
+    def test_get_output_sdtypes_model_missing_values(self):
+        """Test the ``get_output_sdtypes`` method when a null column is created.
+
+        Setup:
+            - initialize a ``RegexGenerator`` transformer which:
+                - sets ``self.null_transformer`` to a ``NullTransformer`` where
+                ``self.model_missing_values`` is True.
+                - sets ``self.column_prefix`` to a string.
+
+        Output:
+            - An ``output_sdtypes`` dictionary is being returned with the ``self.column_prefix``
+              added to the beginning of the keys.
+        """
+        # Setup
+        instance = RegexGenerator()
+        instance.null_transformer = NullTransformer(missing_value_replacement='fill')
+        instance.null_transformer._model_missing_values = True
+        instance.column_prefix = 'a#b'
+
+        # Run
+        output = instance.get_output_sdtypes()
+
+        # Assert
+        expected = {
+            'a#b.is_null': 'float'
+        }
+        assert output == expected
+
+    @patch('rdt.transformers.text.NullTransformer')
+    def test__fit(self, mock_null_transformer):
+        """Test the ``_fit`` method.
+
+        Validate that the ``_fit`` method uses the ``NullTransformer`` to parse the data
+        and learn the length of it.
+
+        Setup:
+            - Initialize a ``RegexGenerator`` transformer.
+            - Mock the ``NullTransformer``.
+
+        Input:
+            - ``pd.Series`` containing 3 strings.
+
+        Side Effects:
+            - ``NullTransformer`` instance has been created with ``model_missing_values`` as
+              ``False`` and ``missing_value_replacement`` as ``None``.
+            - ``ǸullTransformer`` instance method ``fit`` has been called with the input data.
+            - ``instance.data_length`` equals to the length of the input data.
+        """
+        # Setup
+        instance = RegexGenerator()
+
+        columns_data = pd.Series(['1', '2', '3'])
+
+        # Run
+        instance._fit(columns_data)
+
+        # Assert
+        mock_null_transformer.assert_called_once_with(None, False)
+        mock_null_transformer.return_value.fit.called_once_with(columns_data)
+        assert instance.data_length == 3
+
+    def test__transform(self):
+        """Test the ``_transform`` method.
+
+        Validate that the ``_transform`` method returns ``None`` when the ``NullTransformer``
+        does not model the missing values.
+
+        Setup:
+            - Initialize a ``RegexGenerator`` transformer.
+
+        Input:
+            - ``pd.Series`` with three values.
+
+        Output:
+            - ``None``.
+        """
+        # Setup
+        columns_data = pd.Series([1, 2, 3])
+        instance = RegexGenerator()
+
+        # Run
+        result = instance._transform(columns_data)
+
+        # Assert
+        assert result is None
+
+    def test__transform_model_missing_values(self):
+        """Test the ``_transform`` method.
+
+        Validate that the ``_transform`` method uses the ``NullTransformer`` instance to
+        transform the data.
+
+        Setup:
+            - Initialize a ``RegexGenerator`` transformer.
+            - Mock the ``null_transformer`` of the instance.
+            - Mock the return value of the ``null_transformer.transform``.
+
+        Input:
+            - ``pd.Series`` with three values.
+
+        Output:
+            - The second dimension of the mocked return value of the
+              ``null_transformer.transform``.
+        """
+        # Setup
+        columns_data = pd.Series([1, 2, 3])
+        instance = RegexGenerator()
+        instance.null_transformer = Mock()
+
+        instance.null_transformer.transform.return_value = np.array([
+            [4, 0],
+            [5, 1],
+            [6, 0],
+        ])
+
+        # Run
+        result = instance._transform(columns_data)
+
+        # Assert
+        instance.null_transformer.transform.assert_called_once_with(columns_data)
+        np.testing.assert_array_equal(result, np.array([0, 1, 0]))
+
+    @patch('rdt.transformers.text.strings_from_regex')
+    def test__reverse_transform_generator_size_bigger_than_data_legnth(self,
+                                                                       mock_strings_from_regex):
+        """Test the ``_reverse_transform`` method.
+
+        Validate that the ``_reverse_transform`` method calls the ``strings_from_regex``
+        function using the ``instance.regex_format`` and then generates the
+        ``instance.data_length`` number of data.
+
+        Setup:
+            - Initialize a ``RegexGenerator`` instance.
+            - Set ``data_length`` to 4.
+
+        Mock:
+            - Mock the ``strings_from_regex`` function to return a generator and a size of 10.
+            - Mock the ``null_transformer`` of the instance.
+            - Mokc the return value of the ``null_transformer.reverse_transform``.
+        """
+
+    @patch('rdt.transformers.text.strings_from_regex')
+    def test__reverse_transform_generator_size_smaller_than_data_legnth(self,
+                                                                        mock_strings_from_regex):
+        """Test the ``_reverse_transform`` method.
+
+        Validate that the ``_reverse_transform`` method calls the ``strings_from_regex``
+        function using the ``instance.regex_format`` and then generates the
+        ``instance.data_length`` number of data.
+
+        Setup:
+            - Initialize a ``RegexGenerator`` instance.
+            - Set ``data_length`` to 4.
+
+        Mock:
+            - Mock the ``strings_from_regex`` function to return a generator and a size of 10.
+            - Mock the ``null_transformer`` of the instance.
+            - Mokc the return value of the ``null_transformer.reverse_transform``.
+        """
+
+    @patch('rdt.transformers.text.strings_from_regex')
+    def test__reverse_transform_models_missing_values(self, mock_strings_from_regex):
+        """Test the ``_reverse_transform`` method.
+
+        Validate that the ``_reverse_transform`` method calls the ``strings_from_regex``
+        function using the ``instance.regex_format`` and then generates the
+        ``instance.data_length`` number of data.
+
+        Setup:
+            - Initialize a ``RegexGenerator`` instance.
+            - Set ``data_length`` to 4.
+
+        Mock:
+            - Mock the ``strings_from_regex`` function to return a generator and a size of 10.
+            - Mock the ``null_transformer`` of the instance.
+            - Mokc the return value of the ``null_transformer.reverse_transform``.
+        """
