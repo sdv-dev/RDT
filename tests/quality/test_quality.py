@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_score
 
 from rdt import HyperTransformer
-from rdt.transformers import FloatFormatter, get_transformers_by_type
+from rdt.transformers import CustomLabelEncoder, FloatFormatter, get_transformers_by_type
 from tests.quality.utils import download_single_table
 
 R2_THRESHOLD = 0.2
@@ -23,6 +23,7 @@ TYPE_TO_DTYPE = {
     'datetime': ['datetime'],
     'boolean': ['bool']
 }
+TRANSFORMERS_TO_SKIP = [CustomLabelEncoder]
 
 
 def format_array(array):
@@ -226,6 +227,9 @@ def test_quality(subtests):
         threshold, or the comparitive score is higher than the threshold.
     """
     transformers_by_type = get_transformers_by_type()
+    transformers_by_type = {
+        k: v for k, v in transformers_by_type.items() if v not in TRANSFORMERS_TO_SKIP
+    }
     sdtypes_to_test = {
         sdtype
         for sdtype in transformers_by_type.keys()
