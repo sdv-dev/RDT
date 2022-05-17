@@ -271,32 +271,6 @@ class TestFloatFormatter(TestCase):
         # Asserts
         assert transformer._rounding_digits == 4
 
-    def test__fit_learn_rounding_scheme_true_large_numbers(self):
-        """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True`` on large numbers.
-
-        If the ``learn_rounding_scheme`` parameter is set to ``True`` and the data is
-        very large, ``_fit`` should learn ``_rounding_digits`` to be None.
-
-        Input:
-        - Series of data with numbers between 10^10 and 10^20
-        Side Effect:
-        - ``_rounding_digits`` is set to None
-        """
-        # Setup
-        exponents = [np.random.randint(10, 20) for i in range(10)]
-        big_numbers = [10**exponents[i] for i in range(10)]
-        data = pd.Series(big_numbers)
-
-        # Run
-        transformer = FloatFormatter(
-            missing_value_replacement='mean',
-            learn_rounding_scheme=True
-        )
-        transformer._fit(data)
-
-        # Asserts
-        assert transformer._rounding_digits is None
-
     def test__fit_learn_rounding_scheme_true_max_decimals(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
 
@@ -328,7 +302,9 @@ class TestFloatFormatter(TestCase):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
 
         If the ``learn_rounding_scheme`` parameter is set to ``True``, and the data
-        contains values that are infinite, ``_fit`` shouldn't round.
+        contains only integers or infinite values, ``_fit`` should learn
+        ``_rounding_digits`` to be None.
+
 
         Input:
         - Series with ``np.inf`` as a value
@@ -361,30 +337,6 @@ class TestFloatFormatter(TestCase):
         """
         # Setup
         data = pd.Series([0, 0, 0])
-
-        # Run
-        transformer = FloatFormatter(
-            missing_value_replacement='mean',
-            learn_rounding_scheme=True
-        )
-        transformer._fit(data)
-
-        # Asserts
-        assert transformer._rounding_digits is None
-
-    def test__fit_learn_rounding_scheme_true_max_negative(self):
-        """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
-
-        If the ``learn_rounding_scheme`` parameter is set to ``True``, and the max
-        in the data is negative, the ``_fit`` method should set ``_rounding_digits`` to None.
-
-        Input:
-        - Series with negative max value
-        Side Effect:
-        - ``_rounding_digits`` is set to None
-        """
-        # Setup
-        data = pd.Series([-500, -220, -10])
 
         # Run
         transformer = FloatFormatter(
