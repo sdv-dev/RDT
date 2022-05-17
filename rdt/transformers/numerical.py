@@ -95,19 +95,10 @@ class FloatFormatter(BaseTransformer):
         data = np.array(data)
         roundable_data = data[~(np.isinf(data) | pd.isna(data))]
         if ((roundable_data % 1) != 0).any():
-            if not (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
-                return None
-
-            for decimal in range(MAX_DECIMALS + 1):
-                if (roundable_data == roundable_data.round(decimal)).all():
-                    return decimal
-
-        elif len(roundable_data) > 0:
-            maximum = max(abs(roundable_data))
-            start = int(np.log10(maximum)) if maximum != 0 else 0
-            for decimal in range(-start, 1):
-                if (roundable_data == roundable_data.round(decimal)).all():
-                    return decimal
+            if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
+                for decimal in range(MAX_DECIMALS + 1):
+                    if (roundable_data == roundable_data.round(decimal)).all():
+                        return decimal
 
         return None
 
