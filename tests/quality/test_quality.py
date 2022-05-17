@@ -227,9 +227,11 @@ def test_quality(subtests):
         threshold, or the comparitive score is higher than the threshold.
     """
     transformers_by_type = get_transformers_by_type()
-    transformers_by_type = {
-        k: v for k, v in transformers_by_type.items() if v not in TRANSFORMERS_TO_SKIP
-    }
+    for transformer_list in transformers_by_type.values():
+        for transformer in transformer_list:
+            if transformer in TRANSFORMERS_TO_SKIP:
+                transformer_list.remove(transformer)
+
     sdtypes_to_test = {
         sdtype
         for sdtype in transformers_by_type.keys()
