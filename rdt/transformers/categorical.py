@@ -468,8 +468,8 @@ class LabelEncoder(BaseTransformer):
         """Fit the transformer to the data.
 
         Generate a unique integer representation for each category and
-        store them in the `categories_to_values` dict and its reverse
-        `values_to_categories`.
+        store them in the ``categories_to_values`` dict and its reverse
+        ``values_to_categories``.
 
         Args:
             data (pandas.Series):
@@ -540,7 +540,7 @@ class LabelEncoder(BaseTransformer):
 class CustomLabelEncoder(LabelEncoder):
     """Custom label encoder for categorical data.
 
-    This class works very similarly to the ``LabelEncoder``, except that is requires the ordering
+    This class works very similarly to the ``LabelEncoder``, except that it requires the ordering
     for the labels to be provided.
 
     Null values are considered just another category.
@@ -555,20 +555,21 @@ class CustomLabelEncoder(LabelEncoder):
     """
 
     def __init__(self, order, add_noise=False):
-        self.order = order
+        self.order = pd.Series(order).fillna(np.nan)
         super().__init__(add_noise=add_noise)
 
     def _fit(self, data):
         """Fit the transformer to the data.
 
         Generate a unique integer representation for each category and
-        store them in the `categories_to_values` dict and its reverse
-        `values_to_categories`.
+        store them in the ``categories_to_values`` dict and its reverse
+        ``values_to_categories``.
 
         Args:
             data (pandas.Series):
                 Data to fit the transformer to.
         """
+        data = data.fillna(np.nan)
         missing = list(data[~data.isin(self.order)].unique())
         if len(missing) > 0:
             raise Error(

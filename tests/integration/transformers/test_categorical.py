@@ -351,7 +351,7 @@ def test_label_encoder_order_by_alphabetical():
 
 
 def test_custom_label_encoder():
-    """The the CustomLabelEncoder.
+    """Test the CustomLabelEncoder end to end.
 
     Input:
         - pandas.DataFrame of different types of data.
@@ -369,5 +369,28 @@ def test_custom_label_encoder():
     reverse = transformer.reverse_transform(transformed)
 
     expected = pd.DataFrame([2, 3, 1, 4, 0], columns=['column_name.value'])
+    pd.testing.assert_frame_equal(transformed, expected)
+    pd.testing.assert_frame_equal(reverse, data)
+
+
+def test_custom_label_encoder_nans():
+    """The the CustomLabelEncoder with missing values.
+
+    Input:
+        - pandas.DataFrame of different types of data and different types of missing values.
+
+    Output:
+        - Transformed data should have values based on the provided order.
+        - Reverse transformed data should match the input
+    """
+
+    data = pd.DataFrame(['two', 3, 1, np.nan, 'zero', None], columns=['column_name'])
+    transformer = CustomLabelEncoder(order=['zero', 1, 'two', 3, None])
+    transformer.fit(data, 'column_name')
+
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    expected = pd.DataFrame([2, 3, 1, 4, 0, 4], columns=['column_name.value'])
     pd.testing.assert_frame_equal(transformed, expected)
     pd.testing.assert_frame_equal(reverse, data)

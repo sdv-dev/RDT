@@ -1862,13 +1862,16 @@ class TestLabelEncoder:
 class TestCustomLabelEncoder:
 
     def test___init__(self):
-        """Passed arguments must be stored as attributes."""
+        """The the ``__init__`` method.
+
+        Passed arguments must be stored as attributes.
+        """
         # Run
-        transformer = CustomLabelEncoder(order=['b', 'c', 'a'], add_noise='add_noise_value')
+        transformer = CustomLabelEncoder(order=['b', 'c', 'a', None], add_noise='add_noise_value')
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
-        assert transformer.order == ['b', 'c', 'a']
+        pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
 
     def test__fit(self):
         """Test the ``_fit`` method.
@@ -1895,8 +1898,13 @@ class TestCustomLabelEncoder:
         transformer._fit(data)
 
         # Assert
-        assert transformer.values_to_categories == {0: 2, 1: 3, 2: np.nan, 3: 1}
-        assert transformer.categories_to_values == {2: 0, 3: 1, 1: 3, np.nan: 2}
+        expected_values_to_categories = {0: 2, 1: 3, 2: np.nan, 3: 1}
+        expected_categories_to_values = {2: 0, 3: 1, 1: 3, np.nan: 2}
+        for key, value in transformer.values_to_categories.items():
+            assert value == expected_values_to_categories[key] or pd.isna(value)
+
+        for key, value in transformer.categories_to_values.items():
+            assert value == expected_categories_to_values.get(key) or pd.isna(key)
 
     def test__fit_error(self):
         """Test the ``_fit`` method checks that data is in ``self.order``.
