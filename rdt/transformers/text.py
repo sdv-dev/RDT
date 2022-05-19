@@ -36,6 +36,7 @@ class RegexGenerator(BaseTransformer):
 
     def __init__(self, regex_format='[A-Za-z]{5}', missing_value_replacement=None,
                  model_missing_values=False):
+        self.data_length = None
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
         self.regex_format = regex_format

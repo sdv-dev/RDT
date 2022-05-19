@@ -1,14 +1,33 @@
 """Test Text Transformers."""
 
-from unittest.mock import Mock, call, patch
+from string import ascii_uppercase
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.text import RegexGenerator
-from rdt.transformers.utils import strings_from_regex
+
+
+class AsciiGenerator:
+    """Ascii Upercase Generator."""
+
+    def __init__(self, max_size=26):
+        self.pos = 0
+        self.max_size = max_size
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.pos >= self.max_size:
+            raise StopIteration
+
+        char = ascii_uppercase[self.pos]
+        self.pos += 1
+
+        return char
 
 
 class TestRegexGenerator:
@@ -28,6 +47,7 @@ class TestRegexGenerator:
         instance = RegexGenerator()
 
         # Assert
+        assert instance.data_length is None
         assert instance.missing_value_replacement is None
         assert instance.model_missing_values is False
         assert instance.regex_format == '[A-Za-z]{5}'
@@ -52,6 +72,7 @@ class TestRegexGenerator:
         )
 
         # Assert
+        assert instance.data_length is None
         assert instance.missing_value_replacement == 'AAAA'
         assert instance.model_missing_values
         assert instance.regex_format == '[0-9]'
@@ -210,12 +231,31 @@ class TestRegexGenerator:
         Setup:
             - Initialize a ``RegexGenerator`` instance.
             - Set ``data_length`` to 4.
+            - Initialie a generator.
 
         Mock:
-            - Mock the ``strings_from_regex`` function to return a generator and a size of 10.
+            - Mock the ``strings_from_regex`` function to return a generator and a size of 5.
             - Mock the ``null_transformer`` of the instance.
-            - Mokc the return value of the ``null_transformer.reverse_transform``.
+            - Mock the return value of the ``null_transformer.reverse_transform``.
         """
+        # Setup
+        instance = RegexGenerator('[A-Z]')
+        columns_data = pd.Series()
+        instance.null_transformer = Mock()
+        instance.null_transformer.models_missing_values.return_value = False
+        instance.data_length = 3
+        generator = AsciiGenerator(max_size=5)
+        mock_strings_from_regex.return_value = (generator, 5)
+        instance.null_transformer.reverse_transform.return_value = np.array(['A', 'B', 'C'])
+
+        # Run
+        result = instance._reverse_transform(columns_data)
+
+        # Assert
+        expected_null_call = np.array(['A', 'B', 'C'])
+        null_call = instance.null_transformer.reverse_transform.call_args_list[0][0][0]
+        np.testing.assert_array_equal(null_call, expected_null_call)
+        np.testing.assert_array_equal(result, np.array(['A', 'B', 'C']))
 
     @patch('rdt.transformers.text.strings_from_regex')
     def test__reverse_transform_generator_size_smaller_than_data_legnth(self,
@@ -229,12 +269,56 @@ class TestRegexGenerator:
         Setup:
             - Initialize a ``RegexGenerator`` instance.
             - Set ``data_length`` to 4.
+            - Initialie a generator.
 
         Mock:
-            - Mock the ``strings_from_regex`` function to return a generator and a size of 10.
+            - Mock the ``strings_from_regex`` function to return a generator and a size of 5.
             - Mock the ``null_transformer`` of the instance.
-            - Mokc the return value of the ``null_transformer.reverse_transform``.
+            - Mock the return value of the ``null_transformer.reverse_transform``.
         """
+        # Setup
+        instance = RegexGenerator('[A-Z]')
+        columns_data = pd.Series()
+        instance.null_transformer = Mock()
+        instance.null_transformer.models_missing_values.return_value = False
+        instance.data_length = 11
+        generator = AsciiGenerator(5)
+        mock_strings_from_regex.return_value = (generator, 5)
+        instance.null_transformer.reverse_transform.return_value = np.array([
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'A'
+        ])
+
+        # Run
+        result = instance._reverse_transform(columns_data)
+
+        # Assert
+        expected_null_call = np.array([
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'A'
+        ])
+
+        null_call = instance.null_transformer.reverse_transform.call_args_list[0][0][0]
+        np.testing.assert_array_equal(null_call, expected_null_call)
+        np.testing.assert_array_equal(result, expected_null_call)
 
     @patch('rdt.transformers.text.strings_from_regex')
     def test__reverse_transform_models_missing_values(self, mock_strings_from_regex):
@@ -247,9 +331,53 @@ class TestRegexGenerator:
         Setup:
             - Initialize a ``RegexGenerator`` instance.
             - Set ``data_length`` to 4.
+            - Initialie a generator.
 
         Mock:
-            - Mock the ``strings_from_regex`` function to return a generator and a size of 10.
+            - Mock the ``strings_from_regex`` function to return a generator and a size of 5.
             - Mock the ``null_transformer`` of the instance.
             - Mokc the return value of the ``null_transformer.reverse_transform``.
         """
+        # Setup
+        columns_data = pd.DataFrame({
+            'is_null': [0, 1, 0, 0, 0, 0]
+        })
+        instance = RegexGenerator('[A-Z]')
+        instance.null_transformer = Mock()
+        instance.null_transformer.models_missing_values.return_value = True
+        instance.data_length = 6
+        generator = AsciiGenerator(5)
+        mock_strings_from_regex.return_value = (generator, 5)
+        instance.null_transformer.reverse_transform.return_value = np.array([
+            'A',
+            np.nan,
+            'C',
+            'D',
+            'E',
+            'A'
+        ])
+
+        # Run
+        result = instance._reverse_transform(columns_data)
+
+        # Assert
+        expected_null_call = np.array([
+            ['A', 0],
+            ['B', 1],
+            ['C', 0],
+            ['D', 0],
+            ['E', 0],
+            ['A', 0]
+        ])
+        expected_result = np.array([
+            'A',
+            np.nan,
+            'C',
+            'D',
+            'E',
+            'A',
+        ])
+
+        null_call = instance.null_transformer.reverse_transform.call_args_list[0][0][0]
+        np.testing.assert_array_equal(null_call, expected_null_call)
+        np.testing.assert_array_equal(result, expected_result)
