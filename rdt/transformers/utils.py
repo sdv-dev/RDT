@@ -15,8 +15,8 @@ def _literal(character, max_repeat):
 def _in(options, max_repeat):
     generators = []
     sizes = []
-    for op, args in options:
-        generator, size = _GENERATORS[op](args, max_repeat)
+    for option, args in options:
+        generator, size = _GENERATORS[option](args, max_repeat)
         generators.append(generator)
         sizes.append(size)
 
@@ -41,8 +41,8 @@ def _max_repeat(options, max_repeat):
     if max_ == sre_parse.MAXREPEAT:
         max_ = max_repeat
 
-    op, args = options[0]
-    generator, size = _GENERATORS[op](args, max_repeat)
+    option, args = options[0]
+    generator, size = _GENERATORS[option](args, max_repeat)
 
     generators = []
     sizes = []
@@ -50,7 +50,7 @@ def _max_repeat(options, max_repeat):
         if repeat:
             sizes.append(size ** repeat)
             repeat_generators = [
-                (_GENERATORS[op](args, max_repeat)[0], op, args)
+                (_GENERATORS[option](args, max_repeat)[0], option, args)
                 for _ in range(repeat)
             ]
             generators.append(_from_generators(repeat_generators, max_repeat))
@@ -97,25 +97,25 @@ def _from_generators(generators, max_repeat):
 
     remaining = True
     while remaining:
-        string = []
-        for index, (generator, op, args) in enumerate(generators):
+        generated = []
+        for index, (generator, option, args) in enumerate(generators):
             remaining = True
             try:
                 value = next(generator)
-                string.append(value)
+                generated.append(value)
                 previous[index] = value
-                string.extend(previous[index + 1:])
+                generated.extend(previous[index + 1:])
                 break
             except StopIteration:
-                generator = _GENERATORS[op](args, max_repeat)[0]
-                generators[index] = generator, op, args
+                generator = _GENERATORS[option](args, max_repeat)[0]
+                generators[index] = generator, option, args
                 value = next(generator)
                 previous[index] = value
-                string.append(value)
+                generated.append(value)
                 remaining = False
 
         if remaining:
-            yield ''.join(reversed(string))
+            yield ''.join(reversed(generated))
 
 
 def strings_from_regex(regex, max_repeat=16):
@@ -142,10 +142,10 @@ def strings_from_regex(regex, max_repeat=16):
     parsed = sre_parse.parse(regex, flags=sre_parse.SRE_FLAG_UNICODE)
     generators = []
     sizes = []
-    for op, args in reversed(parsed):
-        if op != sre_parse.AT:
-            generator, size = _GENERATORS[op](args, max_repeat)
-            generators.append((generator, op, args))
+    for option, args in reversed(parsed):
+        if option != sre_parse.AT:
+            generator, size = _GENERATORS[option](args, max_repeat)
+            generators.append((generator, option, args))
             sizes.append(size)
 
     return _from_generators(generators, max_repeat), np.prod(sizes)

@@ -99,7 +99,7 @@ class RegexGenerator(BaseTransformer):
         generator, size = strings_from_regex(self.regex_format)
         if size > self.data_length:
             reverse_transformed = np.array([
-                generator.__next__()
+                next(generator)
                 for _ in range(self.data_length)
             ])
 
