@@ -1,7 +1,7 @@
 import sre_parse
 from sre_constants import MAXREPEAT
 
-from rdt.transformers.utils import strings_from_regex, _any, _max_repeat
+from rdt.transformers.utils import _any, _max_repeat, strings_from_regex
 
 
 def test_strings_from_regex_literal():
