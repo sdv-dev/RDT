@@ -101,7 +101,7 @@ class RegexGenerator(BaseTransformer):
             reverse_transformed = np.array([
                 next(generator)
                 for _ in range(self.data_length)
-            ])
+            ], dtype=object)
 
         else:
             generated_values = list(generator)
@@ -110,7 +110,7 @@ class RegexGenerator(BaseTransformer):
                 remaining = self.data_length - len(reverse_transformed)
                 reverse_transformed.extend(generated_values[:remaining])
 
-            reverse_transformed = np.array(reverse_transformed)
+            reverse_transformed = np.array(reverse_transformed, dtype=object)
 
         if self.null_transformer.models_missing_values():
             reverse_transformed = np.column_stack((reverse_transformed, data))

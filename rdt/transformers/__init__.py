@@ -16,6 +16,7 @@ from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEn
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
 from rdt.transformers.pii.anonymizer import AnonymizedFaker
+from rdt.transformers.text import RegexGenerator
 
 __all__ = [
     'BaseTransformer',
@@ -29,6 +30,7 @@ __all__ = [
     'OneHotEncoder',
     'OptimizedTimestampEncoder',
     'UnixTimestampEncoder',
+    'RegexGenerator',
     'AnonymizedFaker',
     'get_transformer_name',
     'get_transformer_class',

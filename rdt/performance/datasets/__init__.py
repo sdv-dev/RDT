@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from rdt.performance.datasets import boolean, categorical, datetime, numerical, pii
+from rdt.performance.datasets import boolean, categorical, datetime, numerical, pii, text
 from rdt.performance.datasets.base import BaseDatasetGenerator
 
 __all__ = [
@@ -10,8 +10,9 @@ __all__ = [
     'categorical',
     'datetime',
     'numerical',
-    'BaseDatasetGenerator',
+    'text',
     'pii',
+    'BaseDatasetGenerator',
 ]
 
 

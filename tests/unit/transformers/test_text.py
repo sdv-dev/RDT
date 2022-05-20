@@ -368,7 +368,7 @@ class TestRegexGenerator:
             ['D', 0],
             ['E', 0],
             ['A', 0]
-        ])
+        ], dtype=object)
         expected_result = np.array([
             'A',
             np.nan,
