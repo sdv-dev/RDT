@@ -97,7 +97,11 @@ class RegexGenerator(BaseTransformer):
         Returns:
             pandas.Series
         """
-        sample_size = len(data) or self.data_length
+        if data is not None and len(data):
+            sample_size = len(data)
+        else:
+            sample_size = self.data_length
+
         generator, size = strings_from_regex(self.regex_format)
         if sample_size > size:
             warnings.warn(
