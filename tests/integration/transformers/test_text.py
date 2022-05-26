@@ -99,3 +99,26 @@ def test_regexgenerator_data_length_bigger_than_regex():
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     pd.testing.assert_frame_equal(reverse_transform, expected_reverse_transformed)
+
+
+def test_regexgenerator_input_data_bigger_than_data_length():
+    """Test the ``RegexGenerator`` with input dataframe bigger than the learned data length."""
+    data = pd.DataFrame({
+        'id': [1, 2, 3, 4, 5],
+        'username': ['a', 'b', 'c', 'd', 'e']
+    })
+
+    instance = RegexGenerator('[a-b]', model_missing_values=True)
+    instance.fit(data, 'username')
+
+    transformed = pd.DataFrame({
+        'id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    })
+    reverse_transform = instance.reverse_transform(transformed)
+
+    expected_reverse_transformed = pd.DataFrame({
+        'id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        'username': ['a', 'b', 'a', 'b', 'a', 'b', 'a', 'b', 'a', 'b'],
+    })
+
+    pd.testing.assert_frame_equal(reverse_transform, expected_reverse_transformed)

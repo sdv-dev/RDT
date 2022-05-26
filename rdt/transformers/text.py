@@ -1,4 +1,5 @@
 """Transformers for text data."""
+import warnings
 
 import numpy as np
 
@@ -36,10 +37,10 @@ class RegexGenerator(BaseTransformer):
 
     def __init__(self, regex_format='[A-Za-z]{5}', missing_value_replacement=None,
                  model_missing_values=False):
-        self.data_length = None
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
         self.regex_format = regex_format
+        self.data_length = None
 
     def get_output_sdtypes(self):
         """Return the output sdtypes supported by the transformer.
@@ -69,7 +70,7 @@ class RegexGenerator(BaseTransformer):
         self.data_length = len(data)
 
     def _transform(self, data):
-        """Drop the column and return ``null`` column if ``models_missing_values``.
+        """Return ``null`` column if ``models_missing_values``.
 
         Args:
             data (pandas.Series):
@@ -96,18 +97,26 @@ class RegexGenerator(BaseTransformer):
         Returns:
             pandas.Series
         """
+        sample_size = len(data) or self.data_length
         generator, size = strings_from_regex(self.regex_format)
-        if size > self.data_length:
+        if sample_size > size:
+            warnings.warn(
+                f"The data has {sample_size} rows but the regex for '{self.get_input_column()}' "
+                f'can only create {size} unique values. Some values in '
+                f"'{self.get_input_column()}' may be repeated."
+            )
+
+        if size > sample_size:
             reverse_transformed = np.array([
                 next(generator)
-                for _ in range(self.data_length)
+                for _ in range(sample_size)
             ], dtype=object)
 
         else:
             generated_values = list(generator)
             reverse_transformed = []
-            while len(reverse_transformed) < self.data_length:
-                remaining = self.data_length - len(reverse_transformed)
+            while len(reverse_transformed) < sample_size:
+                remaining = sample_size - len(reverse_transformed)
                 reverse_transformed.extend(generated_values[:remaining])
 
             reverse_transformed = np.array(reverse_transformed, dtype=object)

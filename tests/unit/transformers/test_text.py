@@ -220,7 +220,7 @@ class TestRegexGenerator:
         np.testing.assert_array_equal(result, np.array([0, 1, 0]))
 
     @patch('rdt.transformers.text.strings_from_regex')
-    def test__reverse_transform_generator_size_bigger_than_data_legnth(self,
+    def test__reverse_transform_generator_size_bigger_than_data_length(self,
                                                                        mock_strings_from_regex):
         """Test the ``_reverse_transform`` method.
 
@@ -231,7 +231,7 @@ class TestRegexGenerator:
         Setup:
             - Initialize a ``RegexGenerator`` instance.
             - Set ``data_length`` to 4.
-            - Initialie a generator.
+            - Initialize a generator.
 
         Mock:
             - Mock the ``strings_from_regex`` function to return a generator and a size of 5.
@@ -258,7 +258,7 @@ class TestRegexGenerator:
         np.testing.assert_array_equal(result, np.array(['A', 'B', 'C']))
 
     @patch('rdt.transformers.text.strings_from_regex')
-    def test__reverse_transform_generator_size_smaller_than_data_legnth(self,
+    def test__reverse_transform_generator_size_smaller_than_data_length(self,
                                                                         mock_strings_from_regex):
         """Test the ``_reverse_transform`` method.
 
@@ -269,7 +269,7 @@ class TestRegexGenerator:
         Setup:
             - Initialize a ``RegexGenerator`` instance.
             - Set ``data_length`` to 4.
-            - Initialie a generator.
+            - Initialize a generator.
 
         Mock:
             - Mock the ``strings_from_regex`` function to return a generator and a size of 5.
@@ -284,44 +284,24 @@ class TestRegexGenerator:
         instance.data_length = 11
         generator = AsciiGenerator(5)
         mock_strings_from_regex.return_value = (generator, 5)
-        instance.null_transformer.reverse_transform.return_value = np.array([
-            'A',
-            'B',
-            'C',
-            'D',
-            'E',
-            'A',
-            'B',
-            'C',
-            'D',
-            'E',
-            'A'
-        ])
+        return_value = np.array(['A', 'B', 'C', 'D', 'E', 'A', 'B', 'C', 'D', 'E', 'A'])
+        instance.null_transformer.reverse_transform.return_value = return_value
+        instance.columns = ['a']
 
         # Run
         result = instance._reverse_transform(columns_data)
 
         # Assert
-        expected_null_call = np.array([
-            'A',
-            'B',
-            'C',
-            'D',
-            'E',
-            'A',
-            'B',
-            'C',
-            'D',
-            'E',
-            'A'
-        ])
+        expected_null_call = np.array(['A', 'B', 'C', 'D', 'E', 'A', 'B', 'C', 'D', 'E', 'A'])
 
         null_call = instance.null_transformer.reverse_transform.call_args_list[0][0][0]
         np.testing.assert_array_equal(null_call, expected_null_call)
         np.testing.assert_array_equal(result, expected_null_call)
 
+    @patch('rdt.transformers.text.warnings')
     @patch('rdt.transformers.text.strings_from_regex')
-    def test__reverse_transform_models_missing_values(self, mock_strings_from_regex):
+    def test__reverse_transform_models_missing_values(self,
+                                                      mock_strings_from_regex, mock_warnings):
         """Test the ``_reverse_transform`` method.
 
         Validate that the ``_reverse_transform`` method calls the ``strings_from_regex``
@@ -331,36 +311,36 @@ class TestRegexGenerator:
         Setup:
             - Initialize a ``RegexGenerator`` instance.
             - Set ``data_length`` to 4.
-            - Initialie a generator.
+            - Initialize a generator.
 
         Mock:
             - Mock the ``strings_from_regex`` function to return a generator and a size of 5.
             - Mock the ``null_transformer`` of the instance.
-            - Mokc the return value of the ``null_transformer.reverse_transform``.
+            - Mock the return value of the ``null_transformer.reverse_transform``.
+            - Mock warnings and assert that has been called once
+
         """
         # Setup
-        columns_data = pd.DataFrame({
-            'is_null': [0, 1, 0, 0, 0, 0]
-        })
+        columns_data = pd.DataFrame({'is_null': [0, 1, 0, 0, 0, 0]})
         instance = RegexGenerator('[A-Z]')
         instance.null_transformer = Mock()
         instance.null_transformer.models_missing_values.return_value = True
         instance.data_length = 6
         generator = AsciiGenerator(5)
         mock_strings_from_regex.return_value = (generator, 5)
-        instance.null_transformer.reverse_transform.return_value = np.array([
-            'A',
-            np.nan,
-            'C',
-            'D',
-            'E',
-            'A'
-        ])
+        return_value = np.array(['A', np.nan, 'C', 'D', 'E', 'A'])
+        instance.columns = ['a']
+        instance.null_transformer.reverse_transform.return_value = return_value
 
         # Run
         result = instance._reverse_transform(columns_data)
 
         # Assert
+        expected_warning_message = (
+            "The data has 6 rows but the regex for 'a' "
+            'can only create 5 unique values. Some values in '
+            "'a' may be repeated."
+        )
         expected_null_call = np.array([
             ['A', 0],
             ['B', 1],
@@ -369,15 +349,10 @@ class TestRegexGenerator:
             ['E', 0],
             ['A', 0]
         ], dtype=object)
-        expected_result = np.array([
-            'A',
-            np.nan,
-            'C',
-            'D',
-            'E',
-            'A',
-        ])
+        expected_result = np.array(['A', np.nan, 'C', 'D', 'E', 'A'])
 
         null_call = instance.null_transformer.reverse_transform.call_args_list[0][0][0]
         np.testing.assert_array_equal(null_call, expected_null_call)
         np.testing.assert_array_equal(result, expected_result)
+
+        mock_warnings.warn.assert_called_once_with(expected_warning_message)
