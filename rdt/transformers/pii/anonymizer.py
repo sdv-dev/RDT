@@ -162,7 +162,7 @@ class AnonymizedFaker(BaseTransformer):
 
         return None
 
-    def _reverse_transform(self, data, sample_size=None):
+    def _reverse_transform(self, data):
         """Generate new anonymized data using a ``faker.provider.function``.
 
         Args:
