@@ -145,7 +145,7 @@ class AnonymizedFaker(BaseTransformer):
         self.data_length = len(data)
 
     def _transform(self, data):
-        """Drop the column and return ``null`` column if ``models_missing_values``.
+        """Return ``null`` column if ``models_missing_values``.
 
         Args:
             data (pandas.Series):
@@ -172,9 +172,14 @@ class AnonymizedFaker(BaseTransformer):
         Returns:
             pandas.Series
         """
+        if data is not None and len(data):
+            sample_size = len(data)
+        else:
+            sample_size = self.data_length
+
         reverse_transformed = np.array([
             self._function()
-            for _ in range(self.data_length)
+            for _ in range(sample_size)
         ], dtype=object)
 
         if self.null_transformer.models_missing_values():
