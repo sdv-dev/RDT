@@ -44,7 +44,7 @@ the transformations in order to revert them as needed.
 [License]: https://github.com/sdv-dev/RDT/blob/master/LICENSE
 [Development Status]: https://pypi.org/search/?q=&o=&c=Development+Status+%3A%3A+3+-+Alpha
 [Slack Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/slack.png
-[Community]: https://join.slack.com/t/sdv-space/shared_invite/zt-1aav3i22s-Rs6whyMH_H~War37wTQlgw
+[Community]: https://bit.ly/sdv-slack-invite
 [Google Colab Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/google_colab.png
 [Tutorials]: https://colab.research.google.com/drive/1T_3XSPPOVILATsyRV9xjQPa0hvM1vnM-?usp=sharing
 
