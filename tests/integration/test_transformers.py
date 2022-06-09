@@ -56,6 +56,7 @@ SDTYPE_TO_DTYPES = {
     'integer': ['i'],
     'float': ['f', 'i'],
     'pii': ['O', 'i', 'f'],
+    'text': ['O', 'i', 'f'],
 }
 
 
@@ -78,7 +79,8 @@ def _validate_helper(validator_function, args, steps):
 
 def _is_valid_transformer(transformer_name):
     """Determine if transformer should be tested or not."""
-    return transformer_name != 'IdentityTransformer' and 'Dummy' not in transformer_name
+    invalid_names = ['IdentityTransformer', 'Dummy', 'CustomLabelEncoder']
+    return all(invalid_name not in transformer_name for invalid_name in invalid_names)
 
 
 def _get_all_transformers():

@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_score
 
 from rdt import HyperTransformer
-from rdt.transformers import FloatFormatter, get_transformers_by_type
+from rdt.transformers import CustomLabelEncoder, FloatFormatter, get_transformers_by_type
 from tests.quality.utils import download_single_table
 
 R2_THRESHOLD = 0.2
@@ -23,6 +23,7 @@ TYPE_TO_DTYPE = {
     'datetime': ['datetime'],
     'boolean': ['bool']
 }
+TRANSFORMERS_TO_SKIP = [CustomLabelEncoder]
 
 
 def format_array(array):
@@ -89,12 +90,15 @@ def get_transformer_regression_scores(data, sdtype, dataset_name, transformers, 
         numerical_transformer = FloatFormatter(model_missing_values=False)
         target = numerical_transformer.fit_transform(target, column)
         target = format_array(target)
+        nans = np.isnan(target)[:, 0]
+        target = target[~nans]
         for transformer in transformers:
             ht = HyperTransformer()
             ht.detect_initial_config(features)
             ht.update_transformers_by_sdtype(sdtype=sdtype, transformer=transformer())
             ht.fit(features)
             transformed_features = ht.transform(features).to_numpy()
+            transformed_features = transformed_features[~nans]
             score = get_regression_score(transformed_features, target)
             row = pd.Series({
                 'transformer_name': transformer.__name__,
@@ -223,6 +227,11 @@ def test_quality(subtests):
         threshold, or the comparitive score is higher than the threshold.
     """
     transformers_by_type = get_transformers_by_type()
+    for transformer_list in transformers_by_type.values():
+        for transformer in transformer_list:
+            if transformer in TRANSFORMERS_TO_SKIP:
+                transformer_list.remove(transformer)
+
     sdtypes_to_test = {
         sdtype
         for sdtype in transformers_by_type.keys()

@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.categorical import FrequencyEncoder, LabelEncoder, OneHotEncoder
+from rdt.errors import Error
+from rdt.transformers.categorical import (
+    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
@@ -1516,6 +1518,171 @@ class TestOneHotEncoder:
 
 class TestLabelEncoder:
 
+    def test___init__(self):
+        """Passed arguments must be stored as attributes."""
+        # Run
+        transformer = LabelEncoder(add_noise='add_noise_value', order_by='alphabetical')
+
+        # Asserts
+        assert transformer.add_noise == 'add_noise_value'
+        assert transformer.order_by == 'alphabetical'
+
+    def test___init___bad_order_by(self):
+        """Test that the ``__init__`` raises error if ``order_by`` is a bad value.
+
+        Input:
+            - ``order_by`` will be set to an unexpected string.
+
+        Expected behavior:
+            - An error should be raised.
+        """
+        # Run / Assert
+        message = (
+            "order_by must be one of the following values: None, 'numerical_value' or "
+            "'alphabetical'"
+        )
+        with pytest.raises(Error, match=message):
+            LabelEncoder(order_by='bad_value')
+
+    def test__order_categories_alphabetical(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        Setup:
+            - Set ``order_by`` to 'alphabetical'.
+
+        Input:
+            - numpy array of strings that are unordered.
+
+        Output:
+            - Same numpy array but with the strings alphabetically ordered.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='alphabetical')
+        arr = np.array(['one', 'two', 'three', 'four'])
+
+        # Run
+        ordered = transformer._order_categories(arr)
+
+        # Assert
+        np.testing.assert_array_equal(ordered, np.array(['four', 'one', 'three', 'two']))
+
+    def test__order_categories_alphabetical_with_nans(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        Setup:
+            - Set ``order_by`` to 'alphabetical'.
+
+        Input:
+            - numpy array of strings that are unordered and have nans.
+
+        Output:
+            - Same numpy array but with the strings alphabetically ordered and nan at the end.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='alphabetical')
+        arr = np.array(['one', 'two', 'three', np.nan, 'four'], dtype='object')
+
+        # Run
+        ordered = transformer._order_categories(arr)
+
+        # Assert
+        expected = np.array(['four', 'one', 'three', 'two', np.nan], dtype='object')
+        pd.testing.assert_series_equal(pd.Series(ordered), pd.Series(expected))
+
+    def test__order_categories_alphabetical_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        If ``order_by`` is 'alphabetical' but the data isn't a string, then an error should
+        be raised.
+
+        Setup:
+            - Set ``order_by`` to 'alphabetical'.
+
+        Input:
+            - numpy array of strings that are unordered.
+
+        Output:
+            - Same numpy array but with the strings alphabetically ordered.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='alphabetical')
+        arr = np.array([1, 2, 3, 4])
+
+        # Run / Assert
+        message = "The data must be of type string if order_by is 'alphabetical'."
+        with pytest.raises(Error, match=message):
+            transformer._order_categories(arr)
+
+    def test__order_categories_numerical(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
+
+        Setup:
+            - Set ``order_by`` to 'numerical_value'.
+
+        Input:
+            - numpy array of numbers that are unordered.
+
+        Output:
+            - Same numpy array but with the numbers ordered.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='numerical_value')
+        arr = np.array([5, 3.11, 100, 67.8, np.nan, -2.5])
+
+        # Run
+        ordered = transformer._order_categories(arr)
+
+        # Assert
+        np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, np.nan]))
+
+    def test__order_categories_numerical_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
+
+        If the array is made up of strings that can't be converted to floats, and `order_by`
+        is 'numerical_value', then we should raise an error.
+
+        Setup:
+            - Set ``order_by`` to 'numerical_value'.
+
+        Input:
+            - numpy array of strings.
+
+        Expected behavior:
+            - Error should be raised.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='numerical_value')
+        arr = np.array(['one', 'two', 'three', 'four'])
+
+        # Run / Assert
+        message = ("The data must be numerical if order_by is 'numerical_value'.")
+        with pytest.raises(Error, match=message):
+            transformer._order_categories(arr)
+
+    def test__order_categories_numerical_different_dtype_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
+
+        If the array is made up of a dtype that is not numeric and can't be converted to a float,
+        and `order_by` is 'numerical_value', then we should raise an error.
+
+        Setup:
+            - Set ``order_by`` to 'numerical_value'.
+
+        Input:
+            - numpy array of booleans.
+
+        Expected behavior:
+            - Error should be raised.
+        """
+        # Setup
+        transformer = LabelEncoder(order_by='numerical_value')
+        arr = np.array([True, False, False, True])
+
+        # Run / Assert
+        message = ("The data must be numerical if order_by is 'numerical_value'.")
+        with pytest.raises(Error, match=message):
+            transformer._order_categories(arr)
+
     def test__fit(self):
         """Test the ``_fit`` method.
 
@@ -1577,10 +1744,41 @@ class TestLabelEncoder:
             transformed = transformer._transform(data)
 
         # Assert
-        expected = pd.Series([0, 1, 2])
+        expected = pd.Series([0., 1., 2.])
         pd.testing.assert_series_equal(transformed[:-1], expected)
 
         assert 0 <= transformed[3] <= 2
+
+    def test__transform_add_noise(self):
+        """Test the ``_transform`` method with ``add_noise``.
+
+        Validate that the method correctly transforms the categories when ``add_noise`` is True.
+
+        Setup:
+            - create an instance of the ``LabelEncoder``, where ``categories_to_values``
+            and ``values_to_categories`` are set to dictionaries.
+            - set ``add_noise`` to True.
+
+        Input:
+            - a pandas series.
+
+        Output:
+            - a numpy array containing the transformed data.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 4])
+        transformer = LabelEncoder(add_noise=True)
+        transformer.categories_to_values = {1: 0, 2: 1, 3: 2}
+        transformer.values_to_categories = {0: 1, 1: 2, 2: 3}
+
+        # Run
+        transformed = transformer._transform(data)
+
+        # Assert
+        assert 0 <= transformed[0] < 1
+        assert 1 <= transformed[1] < 2
+        assert 2 <= transformed[2] < 3
+        assert 0 <= transformed[3] < 3
 
     def test__transform_unseen_categories(self):
         """Test the ``_transform`` method with multiple unseen categories.
@@ -1610,7 +1808,7 @@ class TestLabelEncoder:
             transformed = transformer._transform(transform_data)
 
         # Assert
-        expected = pd.Series([0, 1, 2])
+        expected = pd.Series([0., 1., 2.])
         pd.testing.assert_series_equal(transformed[:3], expected)
 
         assert all([0 <= value < len(fit_data) for value in transformed[3:]])
@@ -1637,3 +1835,100 @@ class TestLabelEncoder:
 
         # Assert
         pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
+
+    def test__reverse_transform_add_noise(self):
+        """Test the ``_reverse_transform`` method with ``add_noise``.
+
+        Test that the method correctly reverse transforms the data
+        when ``add_noise`` is set to True.
+
+        Input:
+            - pd.Series
+        Output:
+            - corresponding categories
+        """
+        # Setup
+        transformer = LabelEncoder(add_noise=True)
+        transformer.values_to_categories = {0: 'a', 1: 'b', 2: 'c'}
+        data = pd.Series([0.5, 1.0, 10.9])
+
+        # Run
+        out = transformer._reverse_transform(data)
+
+        # Assert
+        pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
+
+
+class TestCustomLabelEncoder:
+
+    def test___init__(self):
+        """The the ``__init__`` method.
+
+        Passed arguments must be stored as attributes.
+        """
+        # Run
+        transformer = CustomLabelEncoder(order=['b', 'c', 'a', None], add_noise='add_noise_value')
+
+        # Asserts
+        assert transformer.add_noise == 'add_noise_value'
+        pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
+
+    def test__fit(self):
+        """Test the ``_fit`` method.
+
+        Validate that a unique integer representation for each category of the data is stored
+        in the ``categories_to_values`` attribute, and the reverse is stored in the
+        ``values_to_categories`` attribute. The order should match the ``self.order`` indices.
+
+        Setup:
+            - create an instance of the ``CustomLabelEncoder``.
+
+        Input:
+            - a pandas series.
+
+        Side effects:
+            - set the ``values_to_categories`` dictionary to the appropriate value.
+            - set ``categories_to_values`` dictionary to the appropriate value.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 2, np.nan, 1])
+        transformer = CustomLabelEncoder(order=[2, 3, np.nan, 1])
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        expected_values_to_categories = {0: 2, 1: 3, 2: np.nan, 3: 1}
+        expected_categories_to_values = {2: 0, 3: 1, 1: 3, np.nan: 2}
+        for key, value in transformer.values_to_categories.items():
+            assert value == expected_values_to_categories[key] or pd.isna(value)
+
+        for key, value in transformer.categories_to_values.items():
+            assert value == expected_categories_to_values.get(key) or pd.isna(key)
+
+    def test__fit_error(self):
+        """Test the ``_fit`` method checks that data is in ``self.order``.
+
+        If the data being fit is not in ``self.order`` an error should be raised.
+
+        Setup:
+            - create an instance of the ``CustomLabelEncoder``.
+
+        Input:
+            - a pandas series.
+
+        Side effects:
+            - set the ``values_to_categories`` dictionary to the appropriate value.
+            - set ``categories_to_values`` dictionary to the appropriate value.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 2, 1, 4])
+        transformer = CustomLabelEncoder(order=[2, 1])
+
+        # Run / Assert
+        message = re.escape(
+            "Unknown categories '[3, 4]'. All possible categories must be defined in the "
+            "'order' parameter."
+        )
+        with pytest.raises(Error, match=message):
+            transformer._fit(data)

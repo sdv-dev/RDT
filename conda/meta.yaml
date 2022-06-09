@@ -1,5 +1,5 @@
 {% set name = 'rdt' %}
-{% set version = '1.0.0' %}
+{% set version = '1.1.0.dev1' %}
 
 package:
   name: "{{ name|lower }}"

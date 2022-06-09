@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 
-from rdt.transformers import FrequencyEncoder, LabelEncoder, OneHotEncoder
+from rdt.transformers import CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder
 
 
 def test_frequency_encoder_numerical_nans():
@@ -286,7 +286,7 @@ def test_label_numerical_2d_array():
 
     transformer = LabelEncoder()
     transformer.fit(data, column)
-    transformed = pd.DataFrame([0, 1, 2, 3], columns=['column_name.value'])
+    transformed = pd.DataFrame([0., 1., 2., 3.], columns=['column_name.value'])
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
@@ -303,4 +303,94 @@ def test_label_numerical_nans():
     transformed = transformer.transform(data)
     reverse = transformer.reverse_transform(transformed)
 
+    pd.testing.assert_frame_equal(reverse, data)
+
+
+def test_label_encoder_order_by_numerical():
+    """Test the LabelEncoder appropriately transforms data if `order_by` is 'numerical_value'.
+
+    Input:
+        - pandas.DataFrame of numeric data.
+
+    Output:
+        - Transformed data should map labels to values based on numerical order.
+    """
+
+    data = pd.DataFrame([5, np.nan, 3.11, 100, 67.8, -2.5], columns=['column_name'])
+
+    transformer = LabelEncoder(order_by='numerical_value')
+    transformer.fit(data, 'column_name')
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    expected = pd.DataFrame([2, 5, 1, 4, 3, 0], columns=['column_name.value'])
+    pd.testing.assert_frame_equal(transformed, expected)
+    pd.testing.assert_frame_equal(reverse, data)
+
+
+def test_label_encoder_order_by_alphabetical():
+    """Test the LabelEncoder appropriately transforms data if `order_by` is 'alphabetical'.
+
+    Input:
+        - pandas.DataFrame of string data.
+
+    Output:
+        - Transformed data should map labels to values based on alphabetical order.
+    """
+
+    data = pd.DataFrame(['one', 'two', np.nan, 'three', 'four'], columns=['column_name'])
+
+    transformer = LabelEncoder(order_by='alphabetical')
+    transformer.fit(data, 'column_name')
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    expected = pd.DataFrame([1, 3, 4, 2, 0], columns=['column_name.value'])
+    pd.testing.assert_frame_equal(transformed, expected)
+    pd.testing.assert_frame_equal(reverse, data)
+
+
+def test_custom_label_encoder():
+    """Test the CustomLabelEncoder end to end.
+
+    Input:
+        - pandas.DataFrame of different types of data.
+
+    Output:
+        - Transformed data should have values based on the provided order.
+        - Reverse transformed data should match the input
+    """
+
+    data = pd.DataFrame(['two', 3, 1, np.nan, 'zero'], columns=['column_name'])
+    transformer = CustomLabelEncoder(order=['zero', 1, 'two', 3, np.nan])
+    transformer.fit(data, 'column_name')
+
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    expected = pd.DataFrame([2, 3, 1, 4, 0], columns=['column_name.value'])
+    pd.testing.assert_frame_equal(transformed, expected)
+    pd.testing.assert_frame_equal(reverse, data)
+
+
+def test_custom_label_encoder_nans():
+    """The the CustomLabelEncoder with missing values.
+
+    Input:
+        - pandas.DataFrame of different types of data and different types of missing values.
+
+    Output:
+        - Transformed data should have values based on the provided order.
+        - Reverse transformed data should match the input
+    """
+
+    data = pd.DataFrame(['two', 3, 1, np.nan, 'zero', None], columns=['column_name'])
+    transformer = CustomLabelEncoder(order=['zero', 1, 'two', 3, None])
+    transformer.fit(data, 'column_name')
+
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    expected = pd.DataFrame([2, 3, 1, 4, 0, 4], columns=['column_name.value'])
+    pd.testing.assert_frame_equal(transformed, expected)
     pd.testing.assert_frame_equal(reverse, data)

@@ -42,6 +42,9 @@ TRANSFORMER_ARGS = {
     'AnonymizedFaker': {
         'model_missing_values': True
     },
+    'RegexGenerator': {
+        'model_missing_values': True
+    },
 }
 
 

@@ -236,7 +236,7 @@ class TestAnonymizedFaker:
         """Test the ``get_output_sdtypes``.
 
         Setup:
-            - initialize a ``AnonymizedFaker`` transformer which:
+            - initialize a ``AnonymizedFaker`` transformer with default values.
 
         Output:
             - the ``output_sdtypes`` returns an empty dictionary.
@@ -392,7 +392,6 @@ class TestAnonymizedFaker:
             - the output of ``null_transformer.reverse_transform``.
         """
         # Setup
-        columns_data = pd.Series([1, 2, 3])
         instance = AnonymizedFaker()
         instance.null_transformer = Mock()
         instance.null_transformer.models_missing_values.return_value = False
@@ -401,14 +400,10 @@ class TestAnonymizedFaker:
         function.side_effect = ['a', 'b', 'c']
 
         instance._function = function
-        instance.null_transformer.reverse_transform.return_value = np.array([
-            'a',
-            'b',
-            'c',
-        ])
+        instance.null_transformer.reverse_transform.return_value = np.array(['a', 'b', 'c'])
 
         # Run
-        result = instance._reverse_transform(columns_data)
+        result = instance._reverse_transform(None)
 
         # Assert
         expected_null_call = np.array(['a', 'b', 'c'])

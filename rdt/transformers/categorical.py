@@ -7,6 +7,7 @@ import pandas as pd
 import psutil
 from scipy.stats import norm
 
+from rdt.errors import Error
 from rdt.transformers.base import BaseTransformer
 
 
@@ -414,6 +415,17 @@ class LabelEncoder(BaseTransformer):
         categories_to_values (dict):
             Dictionary that maps each category with the corresponding
             integer value.
+
+    Args:
+        add_noise (bool):
+            Whether to generate uniform noise around the label for each category.
+            Defaults to ``False``.
+        order_by (None or str):
+            A string defining how to order the categories before assigning them labels. Defaults to
+            ``None``. Options include:
+            - ``'numerical_value'``: Order the categories by numerical value.
+            - ``'alphabetical'``: Order the categories alphabetically.
+            - ``None``: Use the order that the categories appear in when fitting.
     """
 
     INPUT_SDTYPE = 'categorical'
@@ -425,18 +437,46 @@ class LabelEncoder(BaseTransformer):
     values_to_categories = None
     categories_to_values = None
 
+    def __init__(self, add_noise=False, order_by=None):
+        self.add_noise = add_noise
+        if order_by not in [None, 'alphabetical', 'numerical_value']:
+            raise Error(
+                "order_by must be one of the following values: None, 'numerical_value' or "
+                "'alphabetical'"
+            )
+
+        self.order_by = order_by
+
+    def _order_categories(self, unique_data):
+        if self.order_by == 'alphabetical':
+            if unique_data.dtype.type not in [np.str_, np.object_]:
+                raise Error("The data must be of type string if order_by is 'alphabetical'.")
+
+        elif self.order_by == 'numerical_value':
+            if not np.issubdtype(unique_data.dtype.type, np.number):
+                raise Error("The data must be numerical if order_by is 'numerical_value'.")
+
+        if self.order_by is not None:
+            nans = pd.isna(unique_data)
+            unique_data = np.sort(unique_data[~nans])
+            if nans.any():
+                unique_data = np.append(unique_data, [np.nan])
+
+        return unique_data
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
         Generate a unique integer representation for each category and
-        store them in the `categories_to_values` dict and its reverse
-        `values_to_categories`.
+        store them in the ``categories_to_values`` dict and its reverse
+        ``values_to_categories``.
 
         Args:
             data (pandas.Series):
                 Data to fit the transformer to.
         """
         unique_data = pd.unique(data.fillna(np.nan))
+        unique_data = self._order_categories(unique_data)
         self.values_to_categories = dict(enumerate(unique_data))
         self.categories_to_values = {
             category: value
@@ -447,6 +487,9 @@ class LabelEncoder(BaseTransformer):
         """Replace each category with its corresponding integer value.
 
         If a category has not been seen before, a random value is assigned.
+
+        If ``add_noise`` is True, the integer values will be replaced by a
+        random number between the value and the value + 1.
 
         Args:
             data (pandas.Series):
@@ -472,7 +515,10 @@ class LabelEncoder(BaseTransformer):
             size=is_null.sum()
         )
 
-        return mapped.astype('int64')
+        if self.add_noise:
+            mapped = np.random.uniform(mapped, mapped + 1)
+
+        return mapped
 
     def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
@@ -484,5 +530,55 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
+        if self.add_noise:
+            data = np.floor(data)
+
         data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
         return data.round().map(self.values_to_categories)
+
+
+class CustomLabelEncoder(LabelEncoder):
+    """Custom label encoder for categorical data.
+
+    This class works very similarly to the ``LabelEncoder``, except that it requires the ordering
+    for the labels to be provided.
+
+    Null values are considered just another category.
+
+    Args:
+        order (list):
+            A list of all the unique categories for the data. The order of the list determines the
+            label that each category will get.
+        add_noise (bool):
+            Whether to generate uniform noise around the label for each category.
+            Defaults to ``False``.
+    """
+
+    def __init__(self, order, add_noise=False):
+        self.order = pd.Series(order).fillna(np.nan)
+        super().__init__(add_noise=add_noise)
+
+    def _fit(self, data):
+        """Fit the transformer to the data.
+
+        Generate a unique integer representation for each category and
+        store them in the ``categories_to_values`` dict and its reverse
+        ``values_to_categories``.
+
+        Args:
+            data (pandas.Series):
+                Data to fit the transformer to.
+        """
+        data = data.fillna(np.nan)
+        missing = list(data[~data.isin(self.order)].unique())
+        if len(missing) > 0:
+            raise Error(
+                f"Unknown categories '{missing}'. All possible categories must be defined in the "
+                "'order' parameter."
+            )
+
+        self.values_to_categories = dict(enumerate(self.order))
+        self.categories_to_values = {
+            category: value
+            for value, category in self.values_to_categories.items()
+        }

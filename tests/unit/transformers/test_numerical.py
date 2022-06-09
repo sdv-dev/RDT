@@ -144,40 +144,36 @@ class TestFloatFormatter(TestCase):
     def test__learn_rounding_digits_negative_decimals_float(self):
         """Test the _learn_rounding_digits method with floats multiples of powers of 10.
 
-        If the data has all multiples of 10, 100, or any other higher power of 10,
-        the output is the negative number of decimals representing the corresponding
-        power of 10.
+        If the data has all multiples of 10 the output should be None.
 
         Input:
         - An array that contains floats that are multiples of powers of 10, 100 and 1000
           and a NaN.
         Output:
-        - -1
+        - None
         """
         data = np.array([1230., 12300., 123000., np.nan])
 
         output = FloatFormatter._learn_rounding_digits(data)
 
-        assert output == -1
+        assert output is None
 
     def test__learn_rounding_digits_negative_decimals_integer(self):
         """Test the _learn_rounding_digits method with integers multiples of powers of 10.
 
-        If the data has all multiples of 10, 100, or any other higher power of 10,
-        the output is the negative number of decimals representing the corresponding
-        power of 10.
+        If the data has all multiples of 10 the output should be None.
 
         Input:
         - An array that contains integers that are multiples of powers of 10, 100 and 1000
           and a NaN.
         Output:
-        - -1
+        - None
         """
         data = np.array([1230, 12300, 123000, np.nan])
 
         output = FloatFormatter._learn_rounding_digits(data)
 
-        assert output == -1
+        assert output is None
 
     def test__learn_rounding_digits_all_missing_value_replacements(self):
         """Test the _learn_rounding_digits method with data that is all NaNs.
@@ -275,33 +271,6 @@ class TestFloatFormatter(TestCase):
         # Asserts
         assert transformer._rounding_digits == 4
 
-    def test__fit_learn_rounding_scheme_true_large_numbers(self):
-        """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True`` on large numbers.
-`
-        If the ``learn_rounding_scheme`` parameter is set to ``True`` and the data is
-        very large, ``_fit`` should learn ``_rounding_digits`` to be the highest number of 0s
-        to round to that keeps the data the same.
-
-        Input:
-        - Series of data with numbers between 10^10 and 10^20
-        Side Effect:
-        - ``_rounding_digits`` is set to the minimum exponent seen in the data
-        """
-        # Setup
-        exponents = [np.random.randint(10, 20) for i in range(10)]
-        big_numbers = [10**exponents[i] for i in range(10)]
-        data = pd.Series(big_numbers)
-
-        # Run
-        transformer = FloatFormatter(
-            missing_value_replacement='mean',
-            learn_rounding_scheme=True
-        )
-        transformer._fit(data)
-
-        # Asserts
-        assert transformer._rounding_digits == -min(exponents)
-
     def test__fit_learn_rounding_scheme_true_max_decimals(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
 
@@ -333,14 +302,14 @@ class TestFloatFormatter(TestCase):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
 
         If the ``learn_rounding_scheme`` parameter is set to ``True``, and the data
-        contains values that are infinite, ``_fit`` should learn the ``_rounding_digits``
-        to be the min number of decimal places seen in the data with the infinite values
-        filtered out.
+        contains only integers or infinite values, ``_fit`` should learn
+        ``_rounding_digits`` to be None.
+
 
         Input:
         - Series with ``np.inf`` as a value
         Side Effect:
-        - ``_rounding_digits`` is set to max seen in rest of data
+        - ``_rounding_digits`` is set to None
         """
         # Setup
         data = pd.Series([15000, 4000, 60000, np.inf])
@@ -353,18 +322,18 @@ class TestFloatFormatter(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer._rounding_digits == -3
+        assert transformer._rounding_digits is None
 
     def test__fit_learn_rounding_scheme_true_max_zero(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
 
         If the ``learn_rounding_scheme`` parameter is set to ``True``, and the max
-        in the data is 0, ``_fit`` should learn the ``_rounding_digits`` to be 0.
+        in the data is 0, ``_fit`` should learn the ``_rounding_digits`` to be None.
 
         Input:
         - Series with 0 as max value
         Side Effect:
-        - ``_rounding_digits`` is set to 0
+        - ``_rounding_digits`` is set to None
         """
         # Setup
         data = pd.Series([0, 0, 0])
@@ -377,32 +346,7 @@ class TestFloatFormatter(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer._rounding_digits == 0
-
-    def test__fit_learn_rounding_scheme_true_max_negative(self):
-        """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
-
-        If the ``learn_rounding_scheme`` parameter is set to ``True``, and the max
-        in the data is negative, the ``_fit`` method should learn ``_rounding_digits``
-        to be the minimum number of digits seen in those negative values.
-
-        Input:
-        - Series with negative max value
-        Side Effect:
-        - ``_rounding_digits`` is set to min number of digits in array
-        """
-        # Setup
-        data = pd.Series([-500, -220, -10])
-
-        # Run
-        transformer = FloatFormatter(
-            missing_value_replacement='mean',
-            learn_rounding_scheme=True
-        )
-        transformer._fit(data)
-
-        # Asserts
-        assert transformer._rounding_digits == -1
+        assert transformer._rounding_digits is None
 
     def test__fit_enforce_min_max_values_false(self):
         """Test ``_fit`` with ``enforce_min_max_values`` set to ``False``.
@@ -781,10 +725,10 @@ class TestGaussianNormalizer:
         assert ct.enforce_min_max_values is False
 
     def test___init__str_distr(self):
-        """If distribution is an str, it is resolved using the _DISTRIBUTIONS dict."""
-        ct = GaussianNormalizer(distribution='univariate')
+        """If distribution is a str, it is resolved using the _DISTRIBUTIONS dict."""
+        ct = GaussianNormalizer(distribution='gamma')
 
-        assert ct._distribution is copulas.univariate.Univariate
+        assert ct._distribution is copulas.univariate.GammaUnivariate
 
     def test___init__non_distr(self):
         """If distribution is not an str, it is store as given."""
@@ -831,38 +775,6 @@ class TestGaussianNormalizer:
 
         # Assert
         expected = {
-            'univariate': univariate.Univariate,
-            'parametric': (
-                univariate.Univariate, {
-                    'parametric': univariate.ParametricType.PARAMETRIC,
-                },
-            ),
-            'bounded': (
-                univariate.Univariate,
-                {
-                    'bounded': univariate.BoundedType.BOUNDED,
-                },
-            ),
-            'semi_bounded': (
-                univariate.Univariate,
-                {
-                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
-                },
-            ),
-            'parametric_bounded': (
-                univariate.Univariate,
-                {
-                    'parametric': univariate.ParametricType.PARAMETRIC,
-                    'bounded': univariate.BoundedType.BOUNDED,
-                },
-            ),
-            'parametric_semi_bounded': (
-                univariate.Univariate,
-                {
-                    'parametric': univariate.ParametricType.PARAMETRIC,
-                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
-                },
-            ),
             'gaussian': univariate.GaussianUnivariate,
             'gamma': univariate.GammaUnivariate,
             'beta': univariate.BetaUnivariate,
@@ -885,7 +797,7 @@ class TestGaussianNormalizer:
             - a copy of the value stored in ``self._distribution``.
         """
         # Setup
-        distribution = copulas.univariate.Univariate()
+        distribution = copulas.univariate.BetaUnivariate()
         ct = GaussianNormalizer(distribution=distribution)
 
         # Run
@@ -937,7 +849,7 @@ class TestGaussianNormalizer:
             - an instance of ``copulas.univariate.Univariate`` without any arguments.
         """
         # Setup
-        distribution = copulas.univariate.Univariate
+        distribution = copulas.univariate.BetaUnivariate
         ct = GaussianNormalizer(distribution=distribution)
 
         # Run

@@ -95,19 +95,10 @@ class FloatFormatter(BaseTransformer):
         data = np.array(data)
         roundable_data = data[~(np.isinf(data) | pd.isna(data))]
         if ((roundable_data % 1) != 0).any():
-            if not (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
-                return None
-
-            for decimal in range(MAX_DECIMALS + 1):
-                if (roundable_data == roundable_data.round(decimal)).all():
-                    return decimal
-
-        elif len(roundable_data) > 0:
-            maximum = max(abs(roundable_data))
-            start = int(np.log10(maximum)) if maximum != 0 else 0
-            for decimal in range(-start, 1):
-                if (roundable_data == roundable_data.round(decimal)).all():
-                    return decimal
+            if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
+                for decimal in range(MAX_DECIMALS + 1):
+                    if (roundable_data == roundable_data.round(decimal)).all():
+                        return decimal
 
         return None
 
@@ -207,24 +198,9 @@ class GaussianNormalizer(FloatFormatter):
             Whether or not to clip the data returned by ``reverse_transform`` to the min and
             max values seen during ``fit``. Defaults to ``False``.
         distribution (copulas.univariate.Univariate or str):
-            Copulas univariate distribution to use. Defaults to ``parametric``. To choose from:
+            Copulas univariate distribution to use. Defaults to ``truncated_gaussian``.
+            Options include:
 
-                * ``univariate``: Let ``copulas`` select the optimal univariate distribution.
-                  This may result in non-parametric models being used.
-                * ``parametric``: Let ``copulas`` select the optimal univariate distribution,
-                  but restrict the selection to parametric distributions only.
-                * ``bounded``: Let ``copulas`` select the optimal univariate distribution,
-                  but restrict the selection to bounded distributions only.
-                  This may result in non-parametric models being used.
-                * ``semi_bounded``: Let ``copulas`` select the optimal univariate distribution,
-                  but restrict the selection to semi-bounded distributions only.
-                  This may result in non-parametric models being used.
-                * ``parametric_bounded``: Let ``copulas`` select the optimal univariate
-                  distribution, but restrict the selection to parametric and bounded distributions
-                  only.
-                * ``parametric_semi_bounded``: Let ``copulas`` select the optimal univariate
-                  distribution, but restrict the selection to parametric and semi-bounded
-                  distributions only.
                 * ``gaussian``: Use a Gaussian distribution.
                 * ``gamma``: Use a Gamma distribution.
                 * ``beta``: Use a Beta distribution.
@@ -238,7 +214,7 @@ class GaussianNormalizer(FloatFormatter):
     COMPOSITION_IS_IDENTITY = False
 
     def __init__(self, model_missing_values=False, learn_rounding_scheme=False,
-                 enforce_min_max_values=False, distribution='parametric'):
+                 enforce_min_max_values=False, distribution='truncated_gaussian'):
         super().__init__(
             missing_value_replacement='mean',
             model_missing_values=model_missing_values,
@@ -266,38 +242,6 @@ class GaussianNormalizer(FloatFormatter):
             raise
 
         return {
-            'univariate': univariate.Univariate,
-            'parametric': (
-                univariate.Univariate, {
-                    'parametric': univariate.ParametricType.PARAMETRIC,
-                },
-            ),
-            'bounded': (
-                univariate.Univariate,
-                {
-                    'bounded': univariate.BoundedType.BOUNDED,
-                },
-            ),
-            'semi_bounded': (
-                univariate.Univariate,
-                {
-                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
-                },
-            ),
-            'parametric_bounded': (
-                univariate.Univariate,
-                {
-                    'parametric': univariate.ParametricType.PARAMETRIC,
-                    'bounded': univariate.BoundedType.BOUNDED,
-                },
-            ),
-            'parametric_semi_bounded': (
-                univariate.Univariate,
-                {
-                    'parametric': univariate.ParametricType.PARAMETRIC,
-                    'bounded': univariate.BoundedType.SEMI_BOUNDED,
-                },
-            ),
             'gaussian': univariate.GaussianUnivariate,
             'gamma': univariate.GammaUnivariate,
             'beta': univariate.BetaUnivariate,
@@ -308,12 +252,11 @@ class GaussianNormalizer(FloatFormatter):
 
     def _get_univariate(self):
         distribution = self._distribution
-        if isinstance(distribution, self._distributions['univariate']):
+        if any(isinstance(distribution, dist) for dist in self._distributions.values()):
             return copy.deepcopy(distribution)
         if isinstance(distribution, tuple):
             return distribution[0](**distribution[1])
-        if isinstance(distribution, type) and \
-           issubclass(distribution, self._distributions['univariate']):
+        if isinstance(distribution, type) and distribution in self._distributions.values():
             return distribution()
 
         raise TypeError(f'Invalid distribution: {distribution}')
