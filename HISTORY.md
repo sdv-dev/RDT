@@ -3,7 +3,7 @@
 ## 1.1.0 - 2022-6-9
 
 This release adds multiple new transformers: the `CustomLabelEncoder` and the `RegexGenerator`. The `CustomLabelEncoder` works similarly 
-to the `LabelEncoder`,  except it allows users to provide the order of the categories. The `RegexGenerator` allows users to specify a regex
+to the `LabelEncoder`, except it allows users to provide the order of the categories. The `RegexGenerator` allows users to specify a regex
 pattern and will generate values that match that pattern.
 
 This release also improves current transformers. The `LabelEncoder` now has a parameter called `order_by` that allows users to specify the 
@@ -15,7 +15,7 @@ than the ones place by default.
 ### New Features
 
 * Add noise parameter to LabelEncoder - Issue [#500](https://github.com/sdv-dev/RDT/issues/500) by @fealho
-* Remove parameters related to distribution search and change default for GaussianNormalizer - Issue[#499](https://github.com/sdv-dev/RDT/issues/499) 
+* Remove parameters related to distribution search and change default for GaussianNormalizer - Issue [#499](https://github.com/sdv-dev/RDT/issues/499) 
 by @amontanez24
 * Add order_by parameter to LabelEncoder - Issue [#510](https://github.com/sdv-dev/RDT/issues/506) by @amontanez24
 * Only round to decimal places in FloatFormatter - Issue [#508](https://github.com/sdv-dev/RDT/issues/508) by @fealho
