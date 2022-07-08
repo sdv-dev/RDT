@@ -2,15 +2,20 @@
 
 import importlib
 import inspect
+import logging
 import warnings
 from copy import deepcopy
 
 import faker
 import numpy as np
+import pandas as pd
 
 from rdt.errors import Error
 from rdt.transformers.base import BaseTransformer
+from rdt.transformers.categorical import LabelEncoder
 from rdt.transformers.null import NullTransformer
+
+LOGGER = logging.getLogger(__name__)
 
 
 class AnonymizedFaker(BaseTransformer):
@@ -209,3 +214,140 @@ class AnonymizedFaker(BaseTransformer):
 
         args_string = ', '.join(custom_args)
         return f'{class_name}({args_string})'
+
+
+class PseudoAnonymizedFaker(AnonymizedFaker):
+    """Pseudo-anonymization Transformer using Faker.
+
+    This transformer anonymizes values that can be traced back to the original input by using
+    a mapping. The transformer will generate a mapping with the previously specified
+    ``Faker`` provider and ``function``.
+
+    Args:
+        provider_name (str):
+            The name of the provider in ``Faker``. If ``None`` the ``BaseProvider`` is used.
+            Defaults to ``None``.
+        function_name (str):
+            The name of the function to use within the ``faker.provider``. Defaults to
+            ``lexify``.
+        function_kwargs (dict):
+            Keyword args to pass into the ``function_name`` when being called.
+        locales (list):
+            List of localized providers to use instead of the global provider.
+    """
+
+    def __getstate__(self):
+        """Return a dictionary representation of the instance and warn the user when pickling."""
+        LOGGER.warning((
+            'You are saving the mapping information, which includes the original data. '
+            'Sharing this object with others will also give them access to the original data '
+            'used with this transformer.'
+        ))
+
+        return self.__dict__
+
+    def __init__(self, provider_name=None, function_name=None, function_kwargs=None, locales=None):
+        super().__init__(
+            provider_name=provider_name,
+            function_name=function_name,
+            function_kwargs=function_kwargs,
+            locales=locales,
+        )
+
+        self._mapping_dict = {}
+        self._reverse_mapping_dict = {}
+        self._label_encoder = None
+
+    def get_mapping(self):
+        """Return the mapping dictionary."""
+        return deepcopy(self._mapping_dict)
+
+    def get_output_sdtypes(self):
+        """Return the output sdtypes supported by the transformer.
+
+        Returns:
+            dict:
+                Mapping from the transformed column names to supported sdtypes.
+        """
+        output_sdtypes = {'value': 'float'}
+        return self._add_prefix(output_sdtypes)
+
+    def _fit(self, columns_data):
+        """Fit the transformer to the data.
+
+        Generate a ``_mapping_dict`` and a ``_reverse_mapping_dict`` for each
+        value in the provided ``columns_data`` using the ``Faker`` provider and
+        ``function``.
+
+        Args:
+            data (pandas.Series):
+                Data to fit the transformer to.
+        """
+        super()._fit(columns_data)
+        unique_values = columns_data[columns_data.notna()].unique()
+        unique_data_length = len(unique_values)
+        generated_values = [self._function() for _ in range(unique_data_length)]
+        if len(set(generated_values)) != unique_data_length:
+            counter = 0
+            while len(set(generated_values)) != unique_data_length:
+                generated_values.append(self._function())
+                counter += 1
+                if counter == 10:
+                    error_msg = (
+                        'Unable to generate enough unique values using the function: '
+                        f"'{self.function_name}' to map the input values. Please try again with "
+                        'another function.'
+                    )
+                    raise ValueError(error_msg)
+
+        generated_values = list(set(generated_values))
+        self._mapping_dict = dict(zip(unique_values, generated_values))
+        self._reverse_mapping_dict = dict(zip(generated_values, unique_values))
+
+    def _transform(self, columns_data):
+        """Replace each category with a numerical representation.
+
+        Map the input ``columns_data`` using the previously generated values for each one, then
+        use a ``LabelEncoder`` with ``add_noise=True`` to generate the numerical representation
+        for each one. If the  ``columns_data`` contain unknown values, a ``ValueError`` will be
+        raised with the unknown categories.
+
+        Args:
+            data (pandas.Series):
+                Data to transform.
+
+        Returns:
+            pd.Series
+        """
+        unique_values = columns_data[columns_data.notna()].unique()
+        new_values = list(set(unique_values) - set(self._mapping_dict))
+        if new_values:
+            if len(new_values) < 5:
+                error_msg = f'Unexpected new values found in the dataset: {new_values}'
+            else:
+                diff = len(new_values) - 5
+                error_msg = (
+                    'Unexpected new values found in the dataset: '
+                    f'{new_values[:5]} and {diff} more.'
+                )
+
+            raise ValueError(error_msg)
+
+        mapped_data = pd.DataFrame(columns_data.map(self._mapping_dict))
+        self._label_encoder = LabelEncoder(add_noise=True)
+        transformed = self._label_encoder.fit_transform(mapped_data, self.get_input_column())
+        return transformed[self._label_encoder.get_output_columns()]
+
+    def _reverse_transform(self, columns_data):
+        """Convert float values back to the mapped categorical values.
+
+        Args:
+            data (pd.Series or numpy.ndarray):
+                Data to revert.
+
+        Returns:
+            pandas.Series
+        """
+        data = pd.DataFrame(columns_data)
+        columns_data = self._label_encoder.reverse_transform(data)
+        return columns_data[self.get_input_column()]
