@@ -1,6 +1,9 @@
 """Test Personal Identifiable Information Transformer using Faker."""
 
+import logging
+import pickle
 import re
+import tempfile
 from unittest.mock import Mock, call, patch
 
 import numpy as np
@@ -513,6 +516,25 @@ class TestAnonymizedFaker:
 
 class TestPseudoAnonymizedFaker:
     """Test class for ``PseudoAnonymizedFaker``."""
+
+    def test___getstate__(self):
+        """Test that when pickling the warning message is being triggered."""
+        # Setup
+        anonymizer_logger = logging.getLogger('rdt.transformers.pii.anonymizer')
+        instance = PseudoAnonymizedFaker()
+
+        expected_warning_msg = (
+            'You are saving the mapping information, which includes the original data. '
+            'Sharing this object with others will also give them access to the original data '
+            'used with this transformer.'
+        )
+
+        # Run / Assert
+        with patch.object(anonymizer_logger, 'warning') as mock_logger:
+            with tempfile.TemporaryFile() as tmp:
+                pickle.dump(instance, tmp)
+
+            mock_logger.assert_called_once_with(expected_warning_msg)
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
