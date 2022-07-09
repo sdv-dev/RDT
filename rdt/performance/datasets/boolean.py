@@ -37,7 +37,7 @@ class RandomBooleanGenerator(BooleanGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-6,
+                'time': 2e-6,
                 'memory': 200.0
             },
             'transform': {
@@ -72,7 +72,7 @@ class RandomBooleanNaNsGenerator(BooleanGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-6,
+                'time': 2e-6,
                 'memory': 200.0
             },
             'transform': {

@@ -29,7 +29,7 @@ class RandomIntegerGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 400.0
             },
             'transform': {
@@ -56,7 +56,7 @@ class RandomIntegerNaNsGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 400.0
             },
             'transform': {
@@ -84,7 +84,7 @@ class RandomStringGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 500.0
             },
             'transform': {
@@ -111,7 +111,7 @@ class RandomStringNaNsGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 400.0
             },
             'transform': {
@@ -152,7 +152,7 @@ class RandomMixedGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 400.0
             },
             'transform': {
@@ -190,7 +190,7 @@ class RandomMixedNaNsGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 400.0
             },
             'transform': {
@@ -218,7 +218,7 @@ class SingleIntegerGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 400.0
             },
             'transform': {
@@ -245,7 +245,7 @@ class SingleIntegerNaNsGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 400.0
             },
             'transform': {
@@ -273,7 +273,7 @@ class SingleStringGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 400.0
             },
             'transform': {
@@ -300,7 +300,7 @@ class SingleStringNaNsGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 400.0
             },
             'transform': {
@@ -354,7 +354,7 @@ class UniqueIntegerNaNsGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-05,
+                'time': 2e-05,
                 'memory': 1000.0
             },
             'transform': {
