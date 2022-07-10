@@ -72,7 +72,6 @@ def test_profile_transformer(deepcopy_mock, multiprocessor_mock):
     assert fit_call[2]['args'][0] == transformer_mock.return_value.fit
     pd.testing.assert_frame_equal(fit_call[2]['args'][1], pd.DataFrame({'test': np.ones(100)}))
     assert transform_call[2]['args'][0] == transformer_mock.return_value.transform
-    # np.testing.assert_array_equal(transform_call[2]['args'][1], np.ones(100))
     pd.testing.assert_frame_equal(
         transform_call[2]['args'][1].reset_index(drop=True),
         pd.DataFrame({'test': np.ones(100)})
