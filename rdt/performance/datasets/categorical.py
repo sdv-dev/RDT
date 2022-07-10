@@ -33,7 +33,7 @@ class RandomIntegerGenerator(CategoricalGenerator):
                 'memory': 400.0
             },
             'transform': {
-                'time': 5e-06,
+                'time': 5e-05,
                 'memory': 400.0
             },
             'reverse_transform': {
@@ -60,7 +60,7 @@ class RandomIntegerNaNsGenerator(CategoricalGenerator):
                 'memory': 400.0
             },
             'transform': {
-                'time': 5e-06,
+                'time': 5e-05,
                 'memory': 1000.0
             },
             'reverse_transform': {
@@ -222,8 +222,8 @@ class SingleIntegerGenerator(CategoricalGenerator):
                 'memory': 400.0
             },
             'transform': {
-                'time': 3e-06,
-                'memory': 200.0
+                'time': 3e-05,
+                'memory': 400.0
             },
             'reverse_transform': {
                 'time': 1e-05,
@@ -249,8 +249,8 @@ class SingleIntegerNaNsGenerator(CategoricalGenerator):
                 'memory': 400.0
             },
             'transform': {
-                'time': 3e-06,
-                'memory': 200.0
+                'time': 3e-05,
+                'memory': 400.0
             },
             'reverse_transform': {
                 'time': 1e-05,
@@ -277,8 +277,8 @@ class SingleStringGenerator(CategoricalGenerator):
                 'memory': 400.0
             },
             'transform': {
-                'time': 4e-06,
-                'memory': 200.0
+                'time': 4e-05,
+                'memory': 400.0
             },
             'reverse_transform': {
                 'time': 1e-05,
@@ -304,8 +304,8 @@ class SingleStringNaNsGenerator(CategoricalGenerator):
                 'memory': 400.0
             },
             'transform': {
-                'time': 3e-06,
-                'memory': 200.0
+                'time': 3e-05,
+                'memory': 400.0
             },
             'reverse_transform': {
                 'time': 1e-05,
@@ -335,7 +335,7 @@ class UniqueIntegerGenerator(CategoricalGenerator):
                 'memory': 500000.0
             },
             'reverse_transform': {
-                'time': 0.0003,
+                'time': 0.0004,
                 'memory': 1000000.0,
             }
         }
@@ -389,7 +389,7 @@ class UniqueStringGenerator(CategoricalGenerator):
                 'memory': 500000.0
             },
             'reverse_transform': {
-                'time': 0.0003,
+                'time': 0.0004,
                 'memory': 1000000.0,
             }
         }

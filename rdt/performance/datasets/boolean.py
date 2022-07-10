@@ -37,15 +37,15 @@ class RandomBooleanGenerator(BooleanGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 2e-6,
-                'memory': 200.0
+                'time': 2e-5,
+                'memory': 400.0
             },
             'transform': {
-                'time': 1e-6,
-                'memory': 200.0
+                'time': 1e-5,
+                'memory': 400.0
             },
             'reverse_transform': {
-                'time': 5e-6,
+                'time': 5e-5,
                 'memory': 500.0,
             }
         }
@@ -72,8 +72,8 @@ class RandomBooleanNaNsGenerator(BooleanGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 2e-6,
-                'memory': 200.0
+                'time': 2e-5,
+                'memory': 400.0
             },
             'transform': {
                 'time': 1e-5,
@@ -105,15 +105,15 @@ class RandomSkewedBooleanGenerator(BooleanGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-6,
-                'memory': 200.0
+                'time': 1e-5,
+                'memory': 400.0
             },
             'transform': {
-                'time': 1e-6,
-                'memory': 200.0
+                'time': 1e-5,
+                'memory': 400.0
             },
             'reverse_transform': {
-                'time': 5e-6,
+                'time': 5e-5,
                 'memory': 500.0,
             }
         }
@@ -140,8 +140,8 @@ class RandomSkewedBooleanNaNsGenerator(BooleanGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-6,
-                'memory': 200.0
+                'time': 1e-5,
+                'memory': 400.0
             },
             'transform': {
                 'time': 1e-5,
@@ -168,15 +168,15 @@ class ConstantBooleanGenerator(BooleanGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-6,
-                'memory': 200.0
+                'time': 1e-5,
+                'memory': 400.0
             },
             'transform': {
-                'time': 1e-6,
-                'memory': 200.0
+                'time': 1e-5,
+                'memory': 400.0
             },
             'reverse_transform': {
-                'time': 5e-6,
+                'time': 5e-5,
                 'memory': 500.0,
             }
         }
@@ -202,8 +202,8 @@ class ConstantBooleanNaNsGenerator(BooleanGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 1e-6,
-                'memory': 200.0
+                'time': 1e-5,
+                'memory': 400.0
             },
             'transform': {
                 'time': 1e-5,

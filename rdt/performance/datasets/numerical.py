@@ -32,12 +32,12 @@ class RandomIntegerGenerator(NumericalGenerator):
                 'memory': 2500.0
             },
             'transform': {
-                'time': 5e-06,
-                'memory': 200.0
+                'time': 5e-05,
+                'memory': 400.0
             },
             'reverse_transform': {
-                'time': 5e-06,
-                'memory': 200.0,
+                'time': 5e-05,
+                'memory': 400.0,
             }
         }
 
@@ -59,11 +59,11 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
                 'memory': 2500.0
             },
             'transform': {
-                'time': 4e-06,
+                'time': 4e-05,
                 'memory': 400.0
             },
             'reverse_transform': {
-                'time': 2e-06,
+                'time': 2e-05,
                 'memory': 300.0,
             }
         }
@@ -89,11 +89,11 @@ class ConstantIntegerGenerator(NumericalGenerator):
             },
             'transform': {
                 'time': 1e-05,
-                'memory': 200.0
+                'memory': 400.0
             },
             'reverse_transform': {
-                'time': 5e-06,
-                'memory': 200.0,
+                'time': 5e-05,
+                'memory': 400.0,
             }
         }
 
@@ -115,11 +115,11 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
                 'memory': 600.0
             },
             'transform': {
-                'time': 3e-06,
+                'time': 3e-05,
                 'memory': 400.0
             },
             'reverse_transform': {
-                'time': 2e-06,
+                'time': 2e-05,
                 'memory': 300.0,
             }
         }
@@ -151,7 +151,7 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
                 'memory': 2000.0
             },
             'reverse_transform': {
-                'time': 5e-06,
+                'time': 5e-05,
                 'memory': 2000.0,
             }
         }
@@ -179,11 +179,11 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
                 'memory': 2500.0
             },
             'transform': {
-                'time': 3e-06,
+                'time': 3e-05,
                 'memory': 1000.0
             },
             'reverse_transform': {
-                'time': 2e-06,
+                'time': 2e-05,
                 'memory': 1000.0,
             }
         }
@@ -207,11 +207,11 @@ class NormalGenerator(NumericalGenerator):
             },
             'transform': {
                 'time': 1e-05,
-                'memory': 200.0
+                'memory': 400.0
             },
             'reverse_transform': {
                 'time': 1e-05,
-                'memory': 200.0,
+                'memory': 400.0,
             }
         }
 
@@ -233,11 +233,11 @@ class NormalNaNsGenerator(NumericalGenerator):
                 'memory': 2500.0
             },
             'transform': {
-                'time': 4e-06,
+                'time': 4e-05,
                 'memory': 400.0
             },
             'reverse_transform': {
-                'time': 5e-06,
+                'time': 5e-05,
                 'memory': 300.0,
             }
         }
@@ -260,12 +260,12 @@ class BigNormalGenerator(NumericalGenerator):
                 'memory': 2500.0
             },
             'transform': {
-                'time': 5e-06,
-                'memory': 200.0
+                'time': 5e-05,
+                'memory': 400.0
             },
             'reverse_transform': {
-                'time': 5e-06,
-                'memory': 200.0,
+                'time': 5e-05,
+                'memory': 400.0,
             }
         }
 
@@ -287,11 +287,11 @@ class BigNormalNaNsGenerator(NumericalGenerator):
                 'memory': 2500.0
             },
             'transform': {
-                'time': 3e-06,
+                'time': 3e-05,
                 'memory': 400.0
             },
             'reverse_transform': {
-                'time': 2e-06,
+                'time': 2e-05,
                 'memory': 300.0,
             }
         }
