@@ -612,7 +612,7 @@ class TestBaseTransformer:
         columns_data = pd.Series([7, 8, 9], name='c')
 
         # Run
-        BaseTransformer._set_columns_data(data, columns_data, columns)
+        result = BaseTransformer._set_columns_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -620,7 +620,7 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         }, index=[2, 0, 1])
-        pd.testing.assert_frame_equal(data, expected)
+        pd.testing.assert_frame_equal(result, expected)
 
     def test__set_columns_data_dataframe(self):
         """Test the ``_set_columns_data`` method.
@@ -649,7 +649,7 @@ class TestBaseTransformer:
         })
 
         # Run
-        BaseTransformer._set_columns_data(data, columns_data, columns)
+        result = BaseTransformer._set_columns_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -658,7 +658,7 @@ class TestBaseTransformer:
             'c': [7, 8, 9],
             'd': [10, 11, 12]
         }, index=[2, 0, 1])
-        pd.testing.assert_frame_equal(data, expected)
+        pd.testing.assert_frame_equal(result, expected)
 
     def test__set_columns_data_1d_array(self):
         """Test the ``_set_columns_data`` method.
@@ -684,7 +684,7 @@ class TestBaseTransformer:
         columns_data = np.array([7, 8, 9], dtype=np.int64)
 
         # Run
-        BaseTransformer._set_columns_data(data, columns_data, columns)
+        result = BaseTransformer._set_columns_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -692,7 +692,7 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         }, index=[2, 0, 1])
-        pd.testing.assert_frame_equal(data, expected)
+        pd.testing.assert_frame_equal(result, expected)
 
     def test__set_columns_data_2d_array(self):
         """Test the ``_set_columns_data`` method.
@@ -721,7 +721,7 @@ class TestBaseTransformer:
         ], dtype=np.int64)
 
         # Run
-        BaseTransformer._set_columns_data(data, columns_data, columns)
+        result = BaseTransformer._set_columns_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -729,7 +729,7 @@ class TestBaseTransformer:
             'b': [7, 8, 9],
             'c': [1, 5, 9]
         }, index=[2, 0, 1])
-        pd.testing.assert_frame_equal(data, expected)
+        pd.testing.assert_frame_equal(result, expected)
 
     def test__set_columns_data_none(self):
         """Test the ``_set_columns_data`` method.
@@ -752,14 +752,14 @@ class TestBaseTransformer:
         columns_data = None
 
         # Run
-        BaseTransformer._set_columns_data(data, columns_data, columns)
+        result = BaseTransformer._set_columns_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
             'a': [1, 2, 3],
             'b': [4, 5, 6],
         }, index=[2, 0, 1])
-        pd.testing.assert_frame_equal(data, expected)
+        pd.testing.assert_frame_equal(result, expected)
 
     def test__build_output_columns(self):
         """Test the ``_build_output_columns`` method.
