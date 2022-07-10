@@ -331,7 +331,7 @@ class UniqueIntegerGenerator(CategoricalGenerator):
                 'memory': 2000.0
             },
             'transform': {
-                'time': 0.0002,
+                'time': 0.0003,
                 'memory': 500000.0
             },
             'reverse_transform': {
