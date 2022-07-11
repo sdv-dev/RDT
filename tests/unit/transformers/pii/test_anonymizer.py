@@ -765,8 +765,9 @@ class TestPseudoAnonymizedFaker:
 
         # Run / Assert
         error_msg = (
-            'Unable to generate enough unique values using the function: '
-            "'lexify' to map the input values. Please try with another function."
+            'The Faker function you specified is only able to generate '
+            '1 unique values, which is not enough to '
+            'create a mapping. Please use a different Faker function for this column.'
         )
         with pytest.raises(ValueError, match=error_msg):
             instance._fit(data)
@@ -838,9 +839,16 @@ class TestPseudoAnonymizedFaker:
         instance._mapping_dict = {'a': 'z', 'b': 'y', 'c': 'x'}
 
         # Assert / Run
-        error_msg_short = re.escape('Unexpected new values found in the dataset: [1, 2, 3]')
+        error_msg_short = re.escape(
+            'The data you are transforming has new, unexpected values '
+            '(1, 2, 3). Please fit the transformer again using this '
+            'new data.'
+        )
         error_msg_long = re.escape(
-            'Unexpected new values found in the dataset: [1, 2, 3, 4, 5] and 5 more.')
+            'The data you are transforming has new, unexpected values '
+            '(1, 2, 3, 4, 5 and 5 more). Please fit the transformer again using this '
+            'new data.'
+        )
 
         with pytest.raises(ValueError, match=error_msg_short):
             instance._transform(pd.Series([1, 2, 3]))

@@ -294,9 +294,9 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
                 counter += 1
                 if counter == 10:
                     error_msg = (
-                        'Unable to generate enough unique values using the function: '
-                        f"'{self.function_name}' to map the input values. Please try with "
-                        'another function.'
+                        'The Faker function you specified is only able to generate '
+                        f'{len(set(generated_values))} unique values, which is not enough to '
+                        'create a mapping. Please use a different Faker function for this column.'
                     )
                     raise ValueError(error_msg)
 
@@ -322,13 +322,21 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         unique_values = columns_data[columns_data.notna()].unique()
         new_values = list(set(unique_values) - set(self._mapping_dict))
         if new_values:
+            new_values = [str(value) for value in new_values]
             if len(new_values) < 5:
-                error_msg = f'Unexpected new values found in the dataset: {new_values}'
+                new_values = ', '.join(new_values)
+                error_msg = (
+                    'The data you are transforming has new, unexpected values '
+                    f'({new_values}). Please fit the transformer again using this '
+                    'new data.'
+                )
             else:
                 diff = len(new_values) - 5
+                new_values = ', '.join(new_values[:5])
                 error_msg = (
-                    'Unexpected new values found in the dataset: '
-                    f'{new_values[:5]} and {diff} more.'
+                    'The data you are transforming has new, unexpected values '
+                    f'({new_values} and {diff} more). Please fit the transformer again '
+                    'using this new data.'
                 )
 
             raise ValueError(error_msg)
