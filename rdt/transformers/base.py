@@ -144,7 +144,7 @@ class BaseTransformer:
         return data[columns].copy()
 
     @staticmethod
-    def add_columns_to_data(data, columns, column_names):
+    def _add_columns_to_data(data, columns, column_names):
         """Add new columns to a ``pandas.DataFrame``.
 
         Args:
@@ -265,7 +265,7 @@ class BaseTransformer:
         columns_data = self._get_columns_data(data, self.columns)
         transformed_data = self._transform(columns_data)
 
-        data = self.add_columns_to_data(data, transformed_data, self.output_columns)
+        data = self._add_columns_to_data(data, transformed_data, self.output_columns)
         if drop:
             data = data.drop(self.columns, axis=1)
 
@@ -322,7 +322,7 @@ class BaseTransformer:
         columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
 
-        data = self.add_columns_to_data(data, reversed_data, self.columns)
+        data = self._add_columns_to_data(data, reversed_data, self.columns)
         if drop:
             data = data.drop(self.output_columns, axis=1)
 
