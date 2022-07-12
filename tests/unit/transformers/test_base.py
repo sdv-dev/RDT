@@ -588,8 +588,8 @@ class TestBaseTransformer:
         expected = pd.Series([4, 5, 6], name='b')
         pd.testing.assert_series_equal(columns_data, expected)
 
-    def test__set_columns_data_series(self):
-        """Test the ``_set_columns_data`` method.
+    def test_add_columns_to_data_series(self):
+        """Test the ``add_columns_to_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
         parameter if it is a ``Series`` and the ``data`` has a different index.
@@ -612,7 +612,7 @@ class TestBaseTransformer:
         columns_data = pd.Series([7, 8, 9], name='c')
 
         # Run
-        result = BaseTransformer._set_columns_data(data, columns_data, columns)
+        result = BaseTransformer.add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -622,8 +622,8 @@ class TestBaseTransformer:
         }, index=[2, 0, 1])
         pd.testing.assert_frame_equal(result, expected)
 
-    def test__set_columns_data_dataframe(self):
-        """Test the ``_set_columns_data`` method.
+    def test_add_columns_to_data_dataframe(self):
+        """Test the ``add_columns_to_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
         parameter if it is a ``DataFrame`` and the ``data`` has a different index.
@@ -649,7 +649,7 @@ class TestBaseTransformer:
         })
 
         # Run
-        result = BaseTransformer._set_columns_data(data, columns_data, columns)
+        result = BaseTransformer.add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -660,8 +660,8 @@ class TestBaseTransformer:
         }, index=[2, 0, 1])
         pd.testing.assert_frame_equal(result, expected)
 
-    def test__set_columns_data_1d_array(self):
-        """Test the ``_set_columns_data`` method.
+    def test_add_columns_to_data_1d_array(self):
+        """Test the ``add_columns_to_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
         parameter if it is a 1d array and the ``data`` has a different index.
@@ -684,7 +684,7 @@ class TestBaseTransformer:
         columns_data = np.array([7, 8, 9], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._set_columns_data(data, columns_data, columns)
+        result = BaseTransformer.add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -694,8 +694,8 @@ class TestBaseTransformer:
         }, index=[2, 0, 1])
         pd.testing.assert_frame_equal(result, expected)
 
-    def test__set_columns_data_2d_array(self):
-        """Test the ``_set_columns_data`` method.
+    def test_add_columns_to_data_2d_array(self):
+        """Test the ``add_columns_to_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
         parameter if it is a ``Series`` and the ``data`` has a different index.
@@ -721,7 +721,7 @@ class TestBaseTransformer:
         ], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._set_columns_data(data, columns_data, columns)
+        result = BaseTransformer.add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -731,8 +731,8 @@ class TestBaseTransformer:
         }, index=[2, 0, 1])
         pd.testing.assert_frame_equal(result, expected)
 
-    def test__set_columns_data_none(self):
-        """Test the ``_set_columns_data`` method.
+    def test_add_columns_to_data_none(self):
+        """Test the ``add_columns_to_data`` method.
 
         The method should not change the ``data``.
 
@@ -752,7 +752,7 @@ class TestBaseTransformer:
         columns_data = None
 
         # Run
-        result = BaseTransformer._set_columns_data(data, columns_data, columns)
+        result = BaseTransformer.add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
