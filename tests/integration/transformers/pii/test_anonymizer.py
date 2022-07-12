@@ -126,7 +126,7 @@ def test_pseudoanonymizedfaker():
 
 
 def test_pseudoanonymizedfaker_with_nans():
-    """End to end test with the default settings of the ``PseudoAnonymizedFaker``."""
+    """End to end test with the default settings of the ``PseudoAnonymizedFaker`` and ``nans``."""
     data = pd.DataFrame({
         'animals': ['cat', 'dog', np.nan, 'monkey']
     })
@@ -146,7 +146,7 @@ def test_pseudoanonymizedfaker_with_nans():
 
 
 def test_pseudoanonymizedfaker_with_custom_provider():
-    """End to end test with the default settings of the ``PseudoAnonymizedFaker``."""
+    """End to end test with custom settings of the ``PseudoAnonymizedFaker``."""
     data = pd.DataFrame({
         'animals': ['cat', 'dog', np.nan, 'monkey']
     })
