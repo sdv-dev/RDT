@@ -42,7 +42,7 @@ def _max_repeat(options, max_repeat):
         max_ = max_repeat
 
     option, args = options[0]
-    generator, size = _GENERATORS[option](args, max_repeat)  # pylint: disable=W0612
+    _, size = _GENERATORS[option](args, max_repeat)
 
     generators = []
     sizes = []

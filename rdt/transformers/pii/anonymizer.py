@@ -8,7 +8,6 @@ from copy import deepcopy
 
 import faker
 import numpy as np
-import pandas as pd
 
 from rdt.errors import Error
 from rdt.transformers.base import BaseTransformer
@@ -51,6 +50,7 @@ class AnonymizedFaker(BaseTransformer):
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = False
     INPUT_SDTYPE = 'pii'
+    OUTPUT_SDTYPES = {}
     null_transformer = None
 
     @staticmethod
@@ -129,7 +129,7 @@ class AnonymizedFaker(BaseTransformer):
             dict:
                 Mapping from the transformed column names to supported sdtypes.
         """
-        output_sdtypes = {}
+        output_sdtypes = self.OUTPUT_SDTYPES
         if self.null_transformer and self.null_transformer.models_missing_values():
             output_sdtypes['is_null'] = 'float'
 
@@ -236,6 +236,12 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             List of localized providers to use instead of the global provider.
     """
 
+    MAX_ATTEMPTS_FOR_UNIQUE_VALUES = 10
+    OUTPUT_SDTYPES = {'value': 'categorical'}
+    NEXT_TRANSFORMER = {
+        'value': LabelEncoder(add_noise=True)
+    }
+
     def __getstate__(self):
         """Return a dictionary representation of the instance and warn the user when pickling."""
         LOGGER.warning((
@@ -262,16 +268,6 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         """Return the mapping dictionary."""
         return deepcopy(self._mapping_dict)
 
-    def get_output_sdtypes(self):
-        """Return the output sdtypes supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported sdtypes.
-        """
-        output_sdtypes = {'value': 'float'}
-        return self._add_prefix(output_sdtypes)
-
     def _fit(self, columns_data):
         """Fit the transformer to the data.
 
@@ -283,7 +279,6 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
-        super()._fit(columns_data)
         unique_values = columns_data[columns_data.notna()].unique()
         unique_data_length = len(unique_values)
         generated_values = [self._function() for _ in range(unique_data_length)]
@@ -292,7 +287,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             while len(set(generated_values)) != unique_data_length:
                 generated_values.append(self._function())
                 counter += 1
-                if counter == 10:
+                if counter == self.MAX_ATTEMPTS_FOR_UNIQUE_VALUES:
                     error_msg = (
                         'The Faker function you specified is only able to generate '
                         f'{len(set(generated_values))} unique values, which is not enough to '
@@ -341,13 +336,11 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
 
             raise ValueError(error_msg)
 
-        mapped_data = pd.DataFrame(columns_data.map(self._mapping_dict))
-        self._label_encoder = LabelEncoder(add_noise=True)
-        transformed = self._label_encoder.fit_transform(mapped_data, self.get_input_column())
-        return transformed[self._label_encoder.get_output_columns()]
+        mapped_data = columns_data.map(self._mapping_dict)
+        return mapped_data
 
     def _reverse_transform(self, columns_data):
-        """Convert float values back to the mapped categorical values.
+        """Return the input data.
 
         Args:
             data (pd.Series or numpy.ndarray):
@@ -356,6 +349,4 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         Returns:
             pandas.Series
         """
-        data = pd.DataFrame(columns_data)
-        columns_data = self._label_encoder.reverse_transform(data)
-        return columns_data[self.get_input_column()]
+        return columns_data

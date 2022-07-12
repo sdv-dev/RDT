@@ -648,28 +648,6 @@ class TestPseudoAnonymizedFaker:
         assert result == {'a': 'b'}
         assert id(result) != id(instance._mapping_dict)
 
-    def test_get_output_sdtypes(self):
-        """Test the ``get_output_sdtypes`` method.
-
-        Test that the method returns the output sdtypes for the transformer instance.
-
-        Setup:
-            - Create an instance of ``PseudoAnonymizedFaker``.
-            - Setup ``column_prefix`` to ``my_column``.
-
-        Output:
-            - The dictionary ``{'my_column.value': 'float'}``.
-        """
-        # Setup
-        instance = PseudoAnonymizedFaker()
-        instance.column_prefix = 'my_column'
-
-        # Run
-        result = instance.get_output_sdtypes()
-
-        # Assert
-        assert result == {'my_column.value': 'float'}
-
     def test__fit(self):
         """Test the ``_fit`` method.
 
@@ -772,36 +750,26 @@ class TestPseudoAnonymizedFaker:
         with pytest.raises(ValueError, match=error_msg):
             instance._fit(data)
 
-    @patch('rdt.transformers.pii.anonymizer.LabelEncoder')
-    def test__transform(self, mock_label_encoder):
+    def test__transform(self):
         """Test the ``_transform`` method.
 
         Test that when ``_transform`` is being performed and no new values are present, the data
-        is being mapped to the ``instance._mapping_dict`` and then a ``LabelEncoder`` is being
-        fitted with the ``mapped_data`` dataframe.
+        is being mapped to the ``instance._mapping_dict``.
 
         Setup:
             - Instance of ``PseudoAnonymizedTransformer``.
             - ``_mapping_dict`` to the original data.
 
-        Mock:
-            - Mock the ``LabelEncoder``.
-
         Input:
             - pandas.Series with some data to be mapped.
 
         Output:
-            - The ``pandas.Series`` of the returned value from ``LabelEncoder.fit_transform``.
+            - The ``pandas.Series`` with the ``mapped_data``.
         """
         # Setup
         instance = PseudoAnonymizedFaker()
         instance._mapping_dict = {'a': 'z', 'b': 'y', 'c': 'x'}
         instance.columns = ['col']
-
-        label_encoder_instance = Mock()
-        mock_label_encoder.return_value = label_encoder_instance
-        label_encoder_instance.fit_transform.return_value = pd.DataFrame({'col': [1, 2, 3]})
-        label_encoder_instance.get_output_columns.return_value = ['col']
 
         data = pd.Series(['a', 'b', 'c'], name='col')
 
@@ -809,15 +777,7 @@ class TestPseudoAnonymizedFaker:
         result = instance._transform(data)
 
         # Assert
-        pd.testing.assert_frame_equal(pd.DataFrame({'col': [1, 2, 3]}), result)
-        label_encoder_instance.fit_transform.assert_called_once()
-        mock_label_encoder.assert_called_once_with(add_noise=True)
-        label_encoder_call_args = label_encoder_instance.fit_transform.call_args
-        pd.testing.assert_frame_equal(
-            label_encoder_call_args[0][0],
-            pd.DataFrame({'col': ['z', 'y', 'x']})
-        )
-        assert label_encoder_call_args[0][1] == 'col'
+        pd.testing.assert_series_equal(result, pd.Series(['z', 'y', 'x'], name='col'))
 
     def test__transform_with_new_values(self):
         """Test the ``_transform`` method.
@@ -863,32 +823,19 @@ class TestPseudoAnonymizedFaker:
         reverse transform the input data.
 
         Setup:
-            - instance of PseudoAnonymizedFaker
-
-        Mock:
-            - Mock ``instance._label_encoder``.
+            - instance of ``PseudoAnonymizedFaker``.
 
         Output:
-            - The return value of ``instance._label_encoder.reverse_transform``.
+            - The input data.
         """
         # Setup
         instance = PseudoAnonymizedFaker()
         instance.columns = ['col']
 
-        label_encoder_instance = Mock()
-        label_encoder_instance.reverse_transform.return_value = pd.DataFrame({
-            'col': ['x', 'z', 'c']
-        })
-
-        instance._label_encoder = label_encoder_instance
         data = pd.Series(['a', 'b', 'c'], name='col')
 
         # Run
         reverse_transformed = instance._reverse_transform(data)
 
         # Assert
-        pd.testing.assert_series_equal(reverse_transformed, pd.Series(['x', 'z', 'c'], name='col'))
-        pd.testing.assert_frame_equal(
-            label_encoder_instance.reverse_transform.call_args[0][0],
-            pd.DataFrame({'col': ['a', 'b', 'c']})
-        )
+        pd.testing.assert_series_equal(reverse_transformed, pd.Series(['a', 'b', 'c'], name='col'))
