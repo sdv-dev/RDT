@@ -144,17 +144,31 @@ class BaseTransformer:
         return data[columns].copy()
 
     @staticmethod
-    def _set_columns_data(data, columns_data, columns):
-        if columns_data is None:
-            return
+    def _add_columns_to_data(data, columns, column_names):
+        """Add new columns to a ``pandas.DataFrame``.
 
-        if isinstance(columns_data, (pd.DataFrame, pd.Series)):
-            columns_data.index = data.index
+        Args:
+            - data (pd.DataFrame):
+                The ``pandas.DataFrame`` to which the new columns have to be added.
+            - columns (pd.DataFrame, pd.Series, np.ndarray):
+                The data of the new columns to be added.
+            - column_names (list, np.ndarray):
+                The names of the new columns to be added.
 
-        if len(columns_data.shape) == 1:
-            data[columns[0]] = columns_data
-        else:
-            data[columns] = columns_data
+        Returns:
+            ``pandas.DataFrame`` with the new columns added.
+        """
+        if columns is not None:
+            if isinstance(columns, (pd.DataFrame, pd.Series)):
+                columns.index = data.index
+
+            if len(columns.shape) == 1:
+                data[column_names[0]] = columns
+            else:
+                new_data = pd.DataFrame(columns, columns=column_names)
+                data = pd.concat([data, new_data.set_index(data.index)], axis=1)
+
+        return data
 
     def _build_output_columns(self, data):
         self.column_prefix = '#'.join(self.columns)
@@ -251,7 +265,7 @@ class BaseTransformer:
         columns_data = self._get_columns_data(data, self.columns)
         transformed_data = self._transform(columns_data)
 
-        self._set_columns_data(data, transformed_data, self.output_columns)
+        data = self._add_columns_to_data(data, transformed_data, self.output_columns)
         if drop:
             data = data.drop(self.columns, axis=1)
 
@@ -308,7 +322,7 @@ class BaseTransformer:
         columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
 
-        self._set_columns_data(data, reversed_data, self.columns)
+        data = self._add_columns_to_data(data, reversed_data, self.columns)
         if drop:
             data = data.drop(self.output_columns, axis=1)
 
