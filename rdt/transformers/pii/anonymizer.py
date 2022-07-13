@@ -260,6 +260,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             locales=locales,
         )
 
+        self.faker = self.faker.unique
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
         self._label_encoder = None
@@ -281,19 +282,14 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         """
         unique_values = columns_data[columns_data.notna()].unique()
         unique_data_length = len(unique_values)
-        generated_values = [self._function() for _ in range(unique_data_length)]
-        if len(set(generated_values)) != unique_data_length:
-            counter = 0
-            while len(set(generated_values)) != unique_data_length:
-                generated_values.append(self._function())
-                counter += 1
-                if counter == self.MAX_ATTEMPTS_FOR_UNIQUE_VALUES:
-                    error_msg = (
-                        'The Faker function you specified is only able to generate '
-                        f'{len(set(generated_values))} unique values, which is not enough to '
-                        'create a mapping. Please use a different Faker function for this column.'
-                    )
-                    raise ValueError(error_msg)
+        try:
+            generated_values = [self._function() for _ in range(unique_data_length)]
+        except faker.exceptions.UniquenessException as exception:
+            raise Error(
+                'The Faker function you specified is not able to generate '
+                f'{unique_data_length} unique values. Please use a different '
+                'Faker function for this column.'
+            ) from exception
 
         generated_values = list(set(generated_values))
         self._mapping_dict = dict(zip(unique_values, generated_values))
@@ -304,7 +300,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
 
         Map the input ``columns_data`` using the previously generated values for each one, then
         use a ``LabelEncoder`` with ``add_noise=True`` to generate the numerical representation
-        for each one. If the  ``columns_data`` contain unknown values, a ``ValueError`` will be
+        for each one. If the  ``columns_data`` contain unknown values, a ``Error`` will be
         raised with the unknown categories.
 
         Args:
@@ -334,7 +330,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
                     'using this new data.'
                 )
 
-            raise ValueError(error_msg)
+            raise Error(error_msg)
 
         mapped_data = columns_data.map(self._mapping_dict)
         return mapped_data

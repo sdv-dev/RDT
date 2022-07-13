@@ -682,45 +682,11 @@ class TestPseudoAnonymizedFaker:
         assert instance._mapping_dict == {'a': 1, 'b': 2, 'c': 3}
         assert instance._reverse_mapping_dict == {1: 'a', 2: 'b', 3: 'c'}
 
-    def test__fit_multiple_iterations(self):
-        """Test the ``_fit`` method.
-
-        Test that when calling the ``_fit`` method we are iterating multiple times untill we get
-        the desired amount of unique values.
-
-        Setup:
-            -Instance of ``PseudoAnonymizedFaker``.
-
-        Input:
-            - ``pandas.Series`` representing a column.
-
-        Mock:
-            - Mock the ``instance._function`` to return controlled values.
-
-        Side Effects:
-            - ``instance._mapping_dict`` has been populated with the input unique data as keys and
-              ``_function`` returned values as values.
-            - ``instance._reverse_mapping_dict`` contains the ``_function`` returned values as keys
-              and the input data as values.
-        """
-        # Setup
-        instance = PseudoAnonymizedFaker()
-        instance._function = Mock()
-        instance._function.side_effect = [1, 2, 3, 1, 2, 3, 4]
-        data = pd.Series(['a', 'b', 'c', 'd'])
-
-        # Run
-        instance._fit(data)
-
-        # Assert
-        assert instance._mapping_dict == {'a': 1, 'b': 2, 'c': 3, 'd': 4}
-        assert instance._reverse_mapping_dict == {1: 'a', 2: 'b', 3: 'c', 4: 'd'}
-
     def test__fit_multiple_iterations_raises_an_error(self):
         """Test the ``_fit`` method.
 
         Test that when calling the ``_fit`` method and the ``instance._function`` is not
-        generating enough valid values raises a ``ValueError``.
+        generating enough valid values raises a ``Error``.
 
         Setup:
             -Instance of ``PseudoAnonymizedFaker``.
@@ -732,22 +698,19 @@ class TestPseudoAnonymizedFaker:
             - Mock the ``instance._function`` to return only 1 value.
 
         Side Effect:
-            - Raises an ``ValueError``.
+            - Raises an ``Error``.
         """
         # Setup
-        instance = PseudoAnonymizedFaker()
-        instance._function = Mock()
-        instance._function.__repr__ = 'lexify'
-        instance._function.side_effect = [1, 1, 1, 1, 1, 1, 1] * 10
+        instance = PseudoAnonymizedFaker('misc', 'boolean')
         data = pd.Series(['a', 'b', 'c', 'd'])
 
         # Run / Assert
         error_msg = (
-            'The Faker function you specified is only able to generate '
-            '1 unique values, which is not enough to '
-            'create a mapping. Please use a different Faker function for this column.'
+            'The Faker function you specified is not able to generate '
+            '4 unique values. Please use a different '
+            'Faker function for this column.'
         )
-        with pytest.raises(ValueError, match=error_msg):
+        with pytest.raises(Error, match=error_msg):
             instance._fit(data)
 
     def test__transform(self):
@@ -792,7 +755,7 @@ class TestPseudoAnonymizedFaker:
             - pandas.Series with values that are not within the ``_mapping_dict``.
 
         Side Effects:
-            - Raises a ``ValueError``.
+            - Raises a ``Error``.
         """
         # Setup
         instance = PseudoAnonymizedFaker()
@@ -810,10 +773,10 @@ class TestPseudoAnonymizedFaker:
             'new data.'
         )
 
-        with pytest.raises(ValueError, match=error_msg_short):
+        with pytest.raises(Error, match=error_msg_short):
             instance._transform(pd.Series([1, 2, 3]))
 
-        with pytest.raises(ValueError, match=error_msg_long):
+        with pytest.raises(Error, match=error_msg_long):
             instance._transform(pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
 
     def test__reverse_transform(self):
