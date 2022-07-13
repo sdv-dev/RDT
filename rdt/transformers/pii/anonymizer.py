@@ -236,7 +236,6 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             List of localized providers to use instead of the global provider.
     """
 
-    MAX_ATTEMPTS_FOR_UNIQUE_VALUES = 10
     OUTPUT_SDTYPES = {'value': 'categorical'}
     NEXT_TRANSFORMER = {
         'value': LabelEncoder(add_noise=True)
