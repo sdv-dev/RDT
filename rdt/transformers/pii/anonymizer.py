@@ -2,7 +2,6 @@
 
 import importlib
 import inspect
-import logging
 import warnings
 from copy import deepcopy
 
@@ -13,8 +12,6 @@ from rdt.errors import Error
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.categorical import LabelEncoder
 from rdt.transformers.null import NullTransformer
-
-LOGGER = logging.getLogger(__name__)
 
 
 class AnonymizedFaker(BaseTransformer):
@@ -243,7 +240,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
 
     def __getstate__(self):
         """Return a dictionary representation of the instance and warn the user when pickling."""
-        LOGGER.warning((
+        warnings.warn((
             'You are saving the mapping information, which includes the original data. '
             'Sharing this object with others will also give them access to the original data '
             'used with this transformer.'

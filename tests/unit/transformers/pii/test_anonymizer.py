@@ -1,6 +1,5 @@
 """Test Personal Identifiable Information Transformer using Faker."""
 
-import logging
 import pickle
 import re
 import tempfile
@@ -517,10 +516,10 @@ class TestAnonymizedFaker:
 class TestPseudoAnonymizedFaker:
     """Test class for ``PseudoAnonymizedFaker``."""
 
-    def test___getstate__(self):
+    @patch('rdt.transformers.pii.anonymizer.warnings')
+    def test___getstate__(self, mock_warnings):
         """Test that when pickling the warning message is being triggered."""
         # Setup
-        anonymizer_logger = logging.getLogger('rdt.transformers.pii.anonymizer')
         instance = PseudoAnonymizedFaker()
 
         expected_warning_msg = (
@@ -530,11 +529,10 @@ class TestPseudoAnonymizedFaker:
         )
 
         # Run / Assert
-        with patch.object(anonymizer_logger, 'warning') as mock_logger:
-            with tempfile.TemporaryFile() as tmp:
-                pickle.dump(instance, tmp)
+        with tempfile.TemporaryFile() as tmp:
+            pickle.dump(instance, tmp)
 
-            mock_logger.assert_called_once_with(expected_warning_msg)
+        mock_warnings.warn.assert_called_once_with(expected_warning_msg)
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
@@ -564,7 +562,6 @@ class TestPseudoAnonymizedFaker:
         # Assert
         assert instance._mapping_dict == {}
         assert instance._reverse_mapping_dict == {}
-        assert instance._label_encoder is None
 
         # Assert Super Attrs
         assert instance.provider_name == 'BaseProvider'
@@ -614,7 +611,6 @@ class TestPseudoAnonymizedFaker:
         # Assert
         assert instance._mapping_dict == {}
         assert instance._reverse_mapping_dict == {}
-        assert instance._label_encoder is None
         mock_check_provider_function.assert_called_once_with('credit_card', 'credit_card_full')
         assert instance.provider_name == 'credit_card'
         assert instance.function_name == 'credit_card_full'
@@ -682,11 +678,11 @@ class TestPseudoAnonymizedFaker:
         assert instance._mapping_dict == {'a': 1, 'b': 2, 'c': 3}
         assert instance._reverse_mapping_dict == {1: 'a', 2: 'b', 3: 'c'}
 
-    def test__fit_multiple_iterations_raises_an_error(self):
+    def test__fit_not_enough_unique_values_in_faker_function(self):
         """Test the ``_fit`` method.
 
         Test that when calling the ``_fit`` method and the ``instance._function`` is not
-        generating enough valid values raises a ``Error``.
+        generating enough unique values raises an ``Error``.
 
         Setup:
             -Instance of ``PseudoAnonymizedFaker``.
@@ -782,11 +778,13 @@ class TestPseudoAnonymizedFaker:
     def test__reverse_transform(self):
         """Test the ``_reverse_transform`` method.
 
-        Test that the ``_reverse_transform``  method uses the ``instance._label_encoder`` to
-        reverse transform the input data.
+        Test that the ``_reverse_transform`` returns the input data.
 
         Setup:
             - instance of ``PseudoAnonymizedFaker``.
+
+        Input:
+            - pd.Series
 
         Output:
             - The input data.
