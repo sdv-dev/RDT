@@ -22,7 +22,7 @@ install_requires = [
     'psutil>=5.7,<6',
     'scikit-learn>=0.24,<2',
     'pyyaml>=5.4.1,<6',
-    'Faker>=3.0.0,<10',
+    'Faker>=10',
 ]
 
 copulas_requires = [
