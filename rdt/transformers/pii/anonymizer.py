@@ -62,7 +62,7 @@ class AnonymizedFaker(BaseTransformer):
         """
         try:
             module = getattr(faker.providers, provider_name)
-            if provider_name == 'BaseProvider':
+            if provider_name.lower() == 'baseprovider':
                 getattr(module, function_name)
 
             else:
@@ -255,11 +255,12 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             function_kwargs=function_kwargs,
             locales=locales,
         )
-
-        self.faker = self.faker.unique
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
-        self._label_encoder = None
+
+    def _function(self):
+        """Return a callable ``faker`` function."""
+        return getattr(self.faker.unique, self.function_name)(**self.function_kwargs)
 
     def get_mapping(self):
         """Return the mapping dictionary."""
@@ -294,10 +295,9 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
     def _transform(self, columns_data):
         """Replace each category with a numerical representation.
 
-        Map the input ``columns_data`` using the previously generated values for each one, then
-        use a ``LabelEncoder`` with ``add_noise=True`` to generate the numerical representation
-        for each one. If the  ``columns_data`` contain unknown values, a ``Error`` will be
-        raised with the unknown categories.
+        Map the input ``columns_data`` using the previously generated values for each one.
+        If the  ``columns_data`` contain unknown values, a ``Error`` will be raised with the
+        unknown categories.
 
         Args:
             data (pandas.Series):
