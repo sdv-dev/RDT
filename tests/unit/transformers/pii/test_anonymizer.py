@@ -1,5 +1,8 @@
 """Test Personal Identifiable Information Transformer using Faker."""
 
+import pickle
+import re
+import tempfile
 from unittest.mock import Mock, call, patch
 
 import numpy as np
@@ -8,7 +11,7 @@ import pytest
 
 from rdt.errors import Error
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.pii.anonymizer import AnonymizedFaker
+from rdt.transformers.pii.anonymizer import AnonymizedFaker, PseudoAnonymizedFaker
 
 
 class TestAnonymizedFaker:
@@ -508,3 +511,292 @@ class TestAnonymizedFaker:
         )
 
         assert res == expected_res
+
+
+class TestPseudoAnonymizedFaker:
+    """Test class for ``PseudoAnonymizedFaker``."""
+
+    @patch('rdt.transformers.pii.anonymizer.warnings')
+    def test___getstate__(self, mock_warnings):
+        """Test that when pickling the warning message is being triggered."""
+        # Setup
+        instance = PseudoAnonymizedFaker()
+
+        expected_warning_msg = (
+            'You are saving the mapping information, which includes the original data. '
+            'Sharing this object with others will also give them access to the original data '
+            'used with this transformer.'
+        )
+
+        # Run / Assert
+        with tempfile.TemporaryFile() as tmp:
+            pickle.dump(instance, tmp)
+
+        mock_warnings.warn.assert_called_once_with(expected_warning_msg)
+
+    @patch('rdt.transformers.pii.anonymizer.faker')
+    @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
+    def test___init__super_attrs(self, mock_check_provider_function, mock_faker):
+        """Test that initializing an instance is calling properly the ``super`` class.
+
+        Mock:
+            - ``check_provider_function`` mock and assert that this is being called with
+              ``BaseProvider`` and ``lexify``.
+            - ``faker`` mock to ensure that is being called with ``None`` as locales
+              and that the ``lexify`` from the instance is being assigned to the ``_function``.
+
+        Side effects:
+            - the ``instance.provider_name`` is ``BaseProvider``.
+            - the ``instance.function_name`` is ``lexify``.
+            - the ``instance.locales`` is ``None``.
+            - the ``instance.function_kwargs`` is an empty ``dict``.
+            - the ``instance.missing_value_replacement`` is ``None``.
+            - the ``instance.model_missing_values`` is ``False``
+            - ``check_provider_function`` has been called once with ``BaseProvider`` and
+              ``lexify``.
+            - the ``instance._function`` is ``instance.faker.lexify``.
+        """
+        # Run
+        instance = PseudoAnonymizedFaker()
+
+        # Assert
+        assert instance._mapping_dict == {}
+        assert instance._reverse_mapping_dict == {}
+
+        # Assert Super Attrs
+        assert instance.provider_name == 'BaseProvider'
+        assert instance.function_name == 'lexify'
+        assert instance.function_kwargs == {}
+        assert instance.missing_value_replacement is None
+        assert not instance.model_missing_values
+        assert instance.locales is None
+        assert mock_faker.Faker.called_once_with(None)
+
+    @patch('rdt.transformers.pii.anonymizer.faker')
+    @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
+    def test___init__custom(self, mock_check_provider_function, mock_faker):
+        """Test the instantiation of the transformer with custom parameters.
+
+        Test that the transformer can be instantiated with a custom provider and function, and
+        this is being assigned properly.
+
+        Mock:
+            - ``check_provider_function`` mock and assert that this is being called with
+              ``CreditCard`` and ``credit_card_full``.
+            - ``faker`` mock to ensure that is being called with ``['en_US', 'fr_FR']`` as locales
+              and that the ``credit_card_full`` from the instance is being assigned to the
+              ``_function``.
+
+        Side effects:
+            - the ``instance.provider_name`` is ``CreditCard``.
+            - the ``instance.function_name`` is ``credit_card_full``.
+            - the ``instance.locales`` is ``['en_US', 'fr_FR']``.
+            - the ``instance.function_kwargs`` is ``{'type': 'visa'}``.
+            - the ``instance.missing_value_replacement`` is ``None``.
+            - the ``instance.model_missing_values`` is ``False``
+            - ``check_provider_function`` has been called once with ``CreditCard`` and
+              ``credit_card_full``.
+            - the ``instance._function`` is ``instance.faker.credit_card_full``.
+        """
+        # Run
+        instance = PseudoAnonymizedFaker(
+            provider_name='credit_card',
+            function_name='credit_card_full',
+            function_kwargs={
+                'type': 'visa'
+            },
+            locales=['en_US', 'fr_FR']
+        )
+
+        # Assert
+        assert instance._mapping_dict == {}
+        assert instance._reverse_mapping_dict == {}
+        mock_check_provider_function.assert_called_once_with('credit_card', 'credit_card_full')
+        assert instance.provider_name == 'credit_card'
+        assert instance.function_name == 'credit_card_full'
+        assert instance.function_kwargs == {'type': 'visa'}
+        assert instance.missing_value_replacement is None
+        assert not instance.model_missing_values
+        assert instance.locales == ['en_US', 'fr_FR']
+        assert mock_faker.Faker.called_once_with(['en_US', 'fr_FR'])
+
+    def test_get_mapping(self):
+        """Test the ``get_mapping`` method.
+
+        Validate that the ``get_mapping`` method return a ``deepcopy``  of the
+        ``instance._mapping_dict``.
+
+        Setup:
+            - Instance of ``PseudoAnonymizedFaker``.
+            - ``instance._mapping_dict`` to contain a dictionary.
+
+        Output:
+            - A deepcopy of the ``instance._mapping_dict``.
+        """
+        # Setup
+        instance = PseudoAnonymizedFaker()
+        instance._mapping_dict = {'a': 'b'}
+
+        # Run
+        result = instance.get_mapping()
+
+        # Assert
+        assert result == {'a': 'b'}
+        assert id(result) != id(instance._mapping_dict)
+
+    def test__fit(self):
+        """Test the ``_fit`` method.
+
+        Test that when calling the ``_fit`` method we are populating the ``instance._mapping_dict``
+        with unique values and the ``instance._reverse_mapping_dict`` with those as well.
+
+        Setup:
+            -Instance of ``PseudoAnonymizedFaker``.
+
+        Input:
+            - ``pandas.Series`` representing a column.
+
+        Mock:
+            - Mock the ``instance._function`` to return controlled values.
+
+        Side Effects:
+            - ``instance._mapping_dict`` has been populated with the input unique data as keys and
+              ``_function`` returned values as values.
+            - ``instance._reverse_mapping_dict`` contains the ``_function`` returned values as keys
+              and the input data as values.
+        """
+        # Setup
+        instance = PseudoAnonymizedFaker()
+        instance._function = Mock()
+        instance._function.side_effect = [1, 2, 3]
+        data = pd.Series(['a', 'b', 'c'])
+
+        # Run
+        instance._fit(data)
+
+        # Assert
+        assert instance._mapping_dict == {'a': 1, 'b': 2, 'c': 3}
+        assert instance._reverse_mapping_dict == {1: 'a', 2: 'b', 3: 'c'}
+
+    def test__fit_not_enough_unique_values_in_faker_function(self):
+        """Test the ``_fit`` method.
+
+        Test that when calling the ``_fit`` method and the ``instance._function`` is not
+        generating enough unique values raises an ``Error``.
+
+        Setup:
+            -Instance of ``PseudoAnonymizedFaker``.
+
+        Input:
+            - ``pandas.Series`` representing a column.
+
+        Mock:
+            - Mock the ``instance._function`` to return only 1 value.
+
+        Side Effect:
+            - Raises an ``Error``.
+        """
+        # Setup
+        instance = PseudoAnonymizedFaker('misc', 'boolean')
+        data = pd.Series(['a', 'b', 'c', 'd'])
+
+        # Run / Assert
+        error_msg = (
+            'The Faker function you specified is not able to generate '
+            '4 unique values. Please use a different '
+            'Faker function for this column.'
+        )
+        with pytest.raises(Error, match=error_msg):
+            instance._fit(data)
+
+    def test__transform(self):
+        """Test the ``_transform`` method.
+
+        Test that when ``_transform`` is being performed and no new values are present, the data
+        is being mapped to the ``instance._mapping_dict``.
+
+        Setup:
+            - Instance of ``PseudoAnonymizedTransformer``.
+            - ``_mapping_dict`` to the original data.
+
+        Input:
+            - pandas.Series with some data to be mapped.
+
+        Output:
+            - The ``pandas.Series`` with the ``mapped_data``.
+        """
+        # Setup
+        instance = PseudoAnonymizedFaker()
+        instance._mapping_dict = {'a': 'z', 'b': 'y', 'c': 'x'}
+        instance.columns = ['col']
+
+        data = pd.Series(['a', 'b', 'c'], name='col')
+
+        # Run
+        result = instance._transform(data)
+
+        # Assert
+        pd.testing.assert_series_equal(result, pd.Series(['z', 'y', 'x'], name='col'))
+
+    def test__transform_with_new_values(self):
+        """Test the ``_transform`` method.
+
+        Test that when new data is being passed to the ``_transform``, this raises an error.
+
+        Setup:
+            - Instance of ``PseudoAnonymizedTransformer``.
+            - ``_mapping_dict`` to the original data.
+
+        Input:
+            - pandas.Series with values that are not within the ``_mapping_dict``.
+
+        Side Effects:
+            - Raises a ``Error``.
+        """
+        # Setup
+        instance = PseudoAnonymizedFaker()
+        instance._mapping_dict = {'a': 'z', 'b': 'y', 'c': 'x'}
+
+        # Assert / Run
+        error_msg_short = re.escape(
+            'The data you are transforming has new, unexpected values '
+            '(1, 2, 3). Please fit the transformer again using this '
+            'new data.'
+        )
+        error_msg_long = re.escape(
+            'The data you are transforming has new, unexpected values '
+            '(1, 2, 3, 4, 5 and 5 more). Please fit the transformer again using this '
+            'new data.'
+        )
+
+        with pytest.raises(Error, match=error_msg_short):
+            instance._transform(pd.Series([1, 2, 3]))
+
+        with pytest.raises(Error, match=error_msg_long):
+            instance._transform(pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
+
+    def test__reverse_transform(self):
+        """Test the ``_reverse_transform`` method.
+
+        Test that the ``_reverse_transform`` returns the input data.
+
+        Setup:
+            - instance of ``PseudoAnonymizedFaker``.
+
+        Input:
+            - pd.Series
+
+        Output:
+            - The input data.
+        """
+        # Setup
+        instance = PseudoAnonymizedFaker()
+        instance.columns = ['col']
+
+        data = pd.Series(['a', 'b', 'c'], name='col')
+
+        # Run
+        reverse_transformed = instance._reverse_transform(data)
+
+        # Assert
+        pd.testing.assert_series_equal(reverse_transformed, pd.Series(['a', 'b', 'c'], name='col'))

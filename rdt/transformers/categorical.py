@@ -429,7 +429,7 @@ class LabelEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'categorical'
-    OUTPUT_SDTYPES = {'value': 'integer'}
+    OUTPUT_SDTYPES = {'value': 'float'}
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True

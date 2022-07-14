@@ -10,6 +10,7 @@ import numpy as np
 
 from rdt.errors import Error
 from rdt.transformers.base import BaseTransformer
+from rdt.transformers.categorical import LabelEncoder
 from rdt.transformers.null import NullTransformer
 
 
@@ -46,6 +47,7 @@ class AnonymizedFaker(BaseTransformer):
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = False
     INPUT_SDTYPE = 'pii'
+    OUTPUT_SDTYPES = {}
     null_transformer = None
 
     @staticmethod
@@ -60,7 +62,7 @@ class AnonymizedFaker(BaseTransformer):
         """
         try:
             module = getattr(faker.providers, provider_name)
-            if provider_name == 'BaseProvider':
+            if provider_name.lower() == 'baseprovider':
                 getattr(module, function_name)
 
             else:
@@ -124,7 +126,7 @@ class AnonymizedFaker(BaseTransformer):
             dict:
                 Mapping from the transformed column names to supported sdtypes.
         """
-        output_sdtypes = {}
+        output_sdtypes = self.OUTPUT_SDTYPES
         if self.null_transformer and self.null_transformer.models_missing_values():
             output_sdtypes['is_null'] = 'float'
 
@@ -209,3 +211,134 @@ class AnonymizedFaker(BaseTransformer):
 
         args_string = ', '.join(custom_args)
         return f'{class_name}({args_string})'
+
+
+class PseudoAnonymizedFaker(AnonymizedFaker):
+    """Pseudo-anonymization Transformer using Faker.
+
+    This transformer anonymizes values that can be traced back to the original input by using
+    a mapping. The transformer will generate a mapping with the previously specified
+    ``Faker`` provider and ``function``.
+
+    Args:
+        provider_name (str):
+            The name of the provider in ``Faker``. If ``None`` the ``BaseProvider`` is used.
+            Defaults to ``None``.
+        function_name (str):
+            The name of the function to use within the ``faker.provider``. Defaults to
+            ``lexify``.
+        function_kwargs (dict):
+            Keyword args to pass into the ``function_name`` when being called.
+        locales (list):
+            List of localized providers to use instead of the global provider.
+    """
+
+    OUTPUT_SDTYPES = {'value': 'categorical'}
+    NEXT_TRANSFORMER = {
+        'value': LabelEncoder(add_noise=True)
+    }
+
+    def __getstate__(self):
+        """Return a dictionary representation of the instance and warn the user when pickling."""
+        warnings.warn((
+            'You are saving the mapping information, which includes the original data. '
+            'Sharing this object with others will also give them access to the original data '
+            'used with this transformer.'
+        ))
+
+        return self.__dict__
+
+    def __init__(self, provider_name=None, function_name=None, function_kwargs=None, locales=None):
+        super().__init__(
+            provider_name=provider_name,
+            function_name=function_name,
+            function_kwargs=function_kwargs,
+            locales=locales,
+        )
+        self._mapping_dict = {}
+        self._reverse_mapping_dict = {}
+
+    def _function(self):
+        """Return a callable ``faker`` function."""
+        return getattr(self.faker.unique, self.function_name)(**self.function_kwargs)
+
+    def get_mapping(self):
+        """Return the mapping dictionary."""
+        return deepcopy(self._mapping_dict)
+
+    def _fit(self, columns_data):
+        """Fit the transformer to the data.
+
+        Generate a ``_mapping_dict`` and a ``_reverse_mapping_dict`` for each
+        value in the provided ``columns_data`` using the ``Faker`` provider and
+        ``function``.
+
+        Args:
+            data (pandas.Series):
+                Data to fit the transformer to.
+        """
+        unique_values = columns_data[columns_data.notna()].unique()
+        unique_data_length = len(unique_values)
+        try:
+            generated_values = [self._function() for _ in range(unique_data_length)]
+        except faker.exceptions.UniquenessException as exception:
+            raise Error(
+                'The Faker function you specified is not able to generate '
+                f'{unique_data_length} unique values. Please use a different '
+                'Faker function for this column.'
+            ) from exception
+
+        generated_values = list(set(generated_values))
+        self._mapping_dict = dict(zip(unique_values, generated_values))
+        self._reverse_mapping_dict = dict(zip(generated_values, unique_values))
+
+    def _transform(self, columns_data):
+        """Replace each category with a numerical representation.
+
+        Map the input ``columns_data`` using the previously generated values for each one.
+        If the  ``columns_data`` contain unknown values, a ``Error`` will be raised with the
+        unknown categories.
+
+        Args:
+            data (pandas.Series):
+                Data to transform.
+
+        Returns:
+            pd.Series
+        """
+        unique_values = columns_data[columns_data.notna()].unique()
+        new_values = list(set(unique_values) - set(self._mapping_dict))
+        if new_values:
+            new_values = [str(value) for value in new_values]
+            if len(new_values) < 5:
+                new_values = ', '.join(new_values)
+                error_msg = (
+                    'The data you are transforming has new, unexpected values '
+                    f'({new_values}). Please fit the transformer again using this '
+                    'new data.'
+                )
+            else:
+                diff = len(new_values) - 5
+                new_values = ', '.join(new_values[:5])
+                error_msg = (
+                    'The data you are transforming has new, unexpected values '
+                    f'({new_values} and {diff} more). Please fit the transformer again '
+                    'using this new data.'
+                )
+
+            raise Error(error_msg)
+
+        mapped_data = columns_data.map(self._mapping_dict)
+        return mapped_data
+
+    def _reverse_transform(self, columns_data):
+        """Return the input data.
+
+        Args:
+            data (pd.Series or numpy.ndarray):
+                Data to revert.
+
+        Returns:
+            pandas.Series
+        """
+        return columns_data
