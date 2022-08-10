@@ -692,3 +692,43 @@ def test_reverse_transform_subset():
     # Assert
     expected = pd.DataFrame({'col1': [1, 2]})
     pd.testing.assert_frame_equal(reverse_transformed, expected)
+
+
+def test_hyper_transformer_with_supported_sdtypes():
+    """Test the ``HyperTransformer`` that supports multiple ``sdtypes`` for a ``Transformer``.
+
+    Test that the ``HyperTransformer`` works with ``get_supported_sdtypes`` allowing us
+    to asign different transformer to a ``sdtype``. For example, a ``FrequencyEncoder`` to
+    a ``boolean`` sdtype.
+
+    Setup:
+        - Dataframe with multiple datatypes.
+        - Instance of ``HyperTransformer``.
+        - Update the transformer for ``boolean`` sdtype to ``FrequencyEncoder()``.
+
+    Run:
+        - Run end to end the ``hypertransformer``.
+
+    Assert:
+        - Assert that the ``FerquencyEncoder`` is used for the ``boolean`` data.
+    """
+    # Setup
+    data = pd.DataFrame({
+        'user': ['John', 'Doe', 'John Doe', 'Doe John'],
+        'id': list(range(4)),
+        'subscribed': [True, False, True, False]
+    })
+
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.update_transformers_by_sdtype(
+        sdtype='boolean',
+        transformer=FrequencyEncoder(add_noise=True)
+    )
+
+    # Run
+    transformed = ht.fit_transform(data)
+    ht.reverse_transform(transformed)
+
+    for transformer in ht.get_config()['transformers'].values():
+        assert not isinstance(transformer, BinaryEncoder)
