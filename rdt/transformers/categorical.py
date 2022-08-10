@@ -34,7 +34,7 @@ class FrequencyEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'categorical'
-    SUPPORTED_SDTYPES = ['categorical', 'boolean', 'numerical', 'datetime']
+    SUPPORTED_SDTYPES = ['categorical', 'boolean']
     OUTPUT_SDTYPES = {'value': 'float'}
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
@@ -264,7 +264,7 @@ class OneHotEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'categorical'
-    SUPPORTED_SDTYPES = ['categorical', 'boolean', 'numerical', 'datetime']
+    SUPPORTED_SDTYPES = ['categorical', 'boolean']
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
 
@@ -431,7 +431,7 @@ class LabelEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'categorical'
-    SUPPORTED_SDTYPES = ['categorical', 'boolean', 'numerical', 'datetime']
+    SUPPORTED_SDTYPES = ['categorical', 'boolean']
     OUTPUT_SDTYPES = {'value': 'float'}
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
