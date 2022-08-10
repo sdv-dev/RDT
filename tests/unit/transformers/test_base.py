@@ -59,6 +59,52 @@ class TestBaseTransformer:
         # Assert
         assert input_sdtype == 'categorical'
 
+    def test_get_supported_sdtypes_supported_sdtypes(self):
+        """Test the ``get_supported_sdtypes`` method.
+
+        This method should return a list with the value defined in the ``SUPPORTED_SDTYPES``
+        of the child classes or a list containing the ``INPUT_SDTYPE`` of the child class.
+
+        Setup:
+            - create a ``Dummy`` class which inherits from the ``BaseTransformer``,
+            containing a ``SUPPORTED_SDTYPES`` attribute.
+
+        Output:
+            - the list stored in the ``SUPPORTED_SDTYPES`` attribute.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            SUPPORTED_SDTYPES = ['categorical', 'boolean']
+
+        # Run
+        supported_sdtypes = Dummy.get_supported_sdtypes()
+
+        # Assert
+        assert supported_sdtypes == ['categorical', 'boolean']
+
+    def test_get_supported_sdtypes_no_supported_sdtypes_provided(self):
+        """Test the ``get_supported_sdtypes`` method.
+
+        This method should return a list with the value defined in the ``SUPPORTED_SDTYPES``
+        of the child classes or a list containing the ``INPUT_SDTYPE`` of the child class.
+
+        Setup:
+            - create a ``Dummy`` class which inherits from the ``BaseTransformer``,
+            containing a ``INPUT_SDTYPE`` attribute.
+
+        Output:
+            - A list with the ``INPUT_SDTYPE`` value inside.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            INPUT_SDTYPE = 'categorical'
+
+        # Run
+        supported_sdtypes = Dummy.get_supported_sdtypes()
+
+        # Assert
+        assert supported_sdtypes == ['categorical']
+
     def test__add_prefix_none(self):
         """Test the ``_add_prefix`` method when passed a ``None``.
 

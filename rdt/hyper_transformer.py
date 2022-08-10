@@ -329,7 +329,7 @@ class HyperTransformer:
         if not isinstance(transformer, BaseTransformer) and transformer is not None:
             raise Error('Invalid transformer. Please input an rdt transformer object.')
 
-        if transformer is not None and transformer.get_input_sdtype() != sdtype:
+        if transformer is not None and sdtype not in transformer.get_supported_sdtypes():
             raise Error("The transformer you've assigned is incompatible with the sdtype.")
 
         for field, field_sdtype in self.field_sdtypes.items():
@@ -391,7 +391,7 @@ class HyperTransformer:
         for column_name, transformer in column_name_to_transformer.items():
             if transformer is not None:
                 current_sdtype = self.field_sdtypes.get(column_name)
-                if current_sdtype and current_sdtype != transformer.get_input_sdtype():
+                if current_sdtype and current_sdtype not in transformer.get_supported_sdtypes():
                     incompatible_sdtypes.append(column_name)
 
             self.field_transformers[column_name] = transformer

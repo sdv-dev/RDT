@@ -14,6 +14,7 @@ class BaseTransformer:
     """
 
     INPUT_SDTYPE = None
+    SUPPORTED_SDTYPES = None
     OUTPUT_SDTYPES = None
     DETERMINISTIC_TRANSFORM = None
     DETERMINISTIC_REVERSE = None
@@ -50,6 +51,16 @@ class BaseTransformer:
                 Accepted input sdtype of the transformer.
         """
         return cls.INPUT_SDTYPE
+
+    @classmethod
+    def get_supported_sdtypes(cls):
+        """Return the supported sdtypes by the transformer.
+
+        Returns:
+            list:
+                Accepted input sdtypes of the transformer.
+        """
+        return cls.SUPPORTED_SDTYPES or [cls.INPUT_SDTYPE]
 
     def _add_prefix(self, dictionary):
         if not dictionary:
