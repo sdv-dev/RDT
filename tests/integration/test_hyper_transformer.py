@@ -156,14 +156,14 @@ def test_hypertransformer_default_inputs():
 
     # Assert
     expected_datetimes = [
-        1.263069e+18,
-        1.264982e+18,
-        1.262304e+18,
-        1.262304e+18,
         1.262304e+18,
         1.264982e+18,
         1.262304e+18,
-        1.262304e+18
+        1.262304e+18,
+        1.262304e+18,
+        1.264982e+18,
+        1.262304e+18,
+        1.262304e+18,
     ]
     expected_transformed = pd.DataFrame({
         'integer.value': [1., 2., 1., 3., 1., 4., 2., 3.],
@@ -176,7 +176,7 @@ def test_hypertransformer_default_inputs():
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
     reversed_datetimes = pd.to_datetime([
-        '2010-01-09 20:34:17.142857216',
+        '2010-01-01',
         '2010-02-01',
         '2010-01-01',
         '2010-01-01',
