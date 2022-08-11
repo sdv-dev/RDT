@@ -127,13 +127,24 @@ class FrequencyEncoder(BaseTransformer):
         self.dtype = data.dtype
         self.intervals, self.means, self.starts = self._get_intervals(data)
 
+    def _clip_noised_transform(self, result, start, end):
+        """Clip transformed values.
+
+        Used to ensure the noise added to transformed values doesn't make it
+        go out of the bounds of a given category.
+
+        The upper bound must be slightly lower than ``end``
+        so it doesn't get treated as the next category.
+        """
+        return result.clip(start, end - 1e-9)
+
     def _transform_by_category(self, data):
         """Transform the data by iterating over the different categories."""
         result = np.empty(shape=(len(data), ), dtype=float)
 
         # loop over categories
         for category, values in self.intervals.items():
-            mean, std = values[2:]
+            start, end, mean, std = values
             if category is np.nan:
                 mask = data.isna()
             else:
@@ -141,6 +152,7 @@ class FrequencyEncoder(BaseTransformer):
 
             if self.add_noise:
                 result[mask] = norm.rvs(mean, std, size=mask.sum())
+                result[mask] = self._clip_noised_transform(result[mask], start, end)
             else:
                 result[mask] = mean
 
@@ -151,10 +163,11 @@ class FrequencyEncoder(BaseTransformer):
         if pd.isna(category):
             category = np.nan
 
-        mean, std = self.intervals[category][2:]
+        start, end, mean, std = self.intervals[category]
 
         if self.add_noise:
-            return norm.rvs(mean, std)
+            result = norm.rvs(mean, std)
+            return self._clip_noised_transform(result, start, end)
 
         return mean
 
