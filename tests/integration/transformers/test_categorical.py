@@ -196,7 +196,8 @@ def test_frequency_encoder_mixed():
 
     # run
     transformer.fit(data, column)
-    reverse = transformer.reverse_transform(transformer.transform(data))
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
 
     # assert
     pd.testing.assert_frame_equal(data, reverse)

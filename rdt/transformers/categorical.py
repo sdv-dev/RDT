@@ -43,7 +43,6 @@ class FrequencyEncoder(BaseTransformer):
     starts = None
     means = None
     dtype = None
-    _get_category_from_index = None
 
     def __setstate__(self, state):
         """Replace any ``null`` key by the actual ``np.nan`` instance."""
@@ -195,15 +194,15 @@ class FrequencyEncoder(BaseTransformer):
     def _reverse_transform_by_matrix(self, data):
         """Reverse transform the data with matrix operations."""
         num_rows = len(data)
-        num_categories = len(self.means)
+        num_categories = len(self.starts)
 
         data = np.broadcast_to(data, (num_categories, num_rows)).T
-        means = np.broadcast_to(self.means, (num_rows, num_categories))
-        diffs = np.abs(data - means)
-        indexes = np.argmin(diffs, axis=1)
+        starts = np.broadcast_to(self.starts.index, (num_rows, num_categories))
+        diffs = (data >= starts)[:, ::-1]
+        indexes = num_categories - np.argmax(diffs, axis=1) - 1
 
-        self._get_category_from_index = list(self.means.index).__getitem__
-        return pd.Series(indexes).apply(self._get_category_from_index).astype(self.dtype)
+        get_category_from_index = list(self.starts['category']).__getitem__
+        return pd.Series(indexes).apply(get_category_from_index).astype(self.dtype)
 
     def _reverse_transform_by_category(self, data):
         """Reverse transform the data by iterating over all the categories."""

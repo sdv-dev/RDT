@@ -589,13 +589,13 @@ class TestFrequencyEncoder:
 
     @patch('psutil.virtual_memory')
     def test__reverse_transform_by_matrix(self, psutil_mock):
-        """Test the _reverse_transform_by_matrix method with numerical data
+        """Test the _reverse_transform_by_matrix method with numerical data.
 
         Expect that the transformed data is correctly reverse transformed.
 
         Setup:
             The categorical transformer is instantiated with 4 categories and means. Also patch
-            the `psutil.virtual_memory` function to return a large enough `available_memory`.
+            the ``psutil.virtual_memory`` function to return a large enough ``available_memory``.
         Input:
             - transformed data with 4 rows
         Ouptut:
@@ -606,7 +606,7 @@ class TestFrequencyEncoder:
         transformed = pd.Series([0.875, 0.625, 0.375, 0.125])
 
         transformer = FrequencyEncoder()
-        transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1])
+        transformer.starts = pd.DataFrame({'category': [4, 3, 2, 1]}, index=[0., 0.25, 0.5, 0.75])
         transformer.dtype = data.dtype
 
         virtual_memory = Mock()
