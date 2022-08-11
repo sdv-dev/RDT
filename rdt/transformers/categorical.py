@@ -136,7 +136,7 @@ class FrequencyEncoder(BaseTransformer):
         The upper bound must be slightly lower than ``end``
         so it doesn't get treated as the next category.
         """
-        return result.clip(start, end - 1e-9)
+        return np.clip(result, start, end - 1e-9)
 
     def _transform_by_category(self, data):
         """Transform the data by iterating over the different categories."""

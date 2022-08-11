@@ -265,6 +265,30 @@ def test_frequency_encoder_mixed_more_rows(psutil_mock):
     pd.testing.assert_frame_equal(transform_data, reverse)
 
 
+def test_frequency_encoder_noise():
+    """Test the FrequencyEncoder with ``add_noise``.
+
+    Ensure that the FrequencyEncoder can fit, transform, and reverse
+    transform when ``add_noise = True``.
+
+    Input:
+        - Many rows of int data
+    Output:
+        - The reverse transformed data
+    """
+    # setup
+    data = pd.DataFrame(np.random.choice(a=range(100), size=10000), columns=['column_name'])
+    column = 'column_name'
+    transformer = FrequencyEncoder(add_noise=True)
+
+    # run
+    transformer.fit(data, column)
+    reverse = transformer.reverse_transform(transformer.transform(data))
+
+    # assert
+    pd.testing.assert_frame_equal(data, reverse)
+
+
 def test_one_hot_numerical_nans():
     """Ensure OneHotEncoder works on numerical + nan only columns."""
 
