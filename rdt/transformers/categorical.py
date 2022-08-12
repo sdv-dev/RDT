@@ -66,15 +66,6 @@ class FrequencyEncoder(BaseTransformer):
         """
         return not self.add_noise
 
-    def is_composition_identity(self):
-        """Return whether composition of transform and reverse transform produces the input data.
-
-        Returns:
-            bool:
-                Whether or not transforming and then reverse transforming returns the input data.
-        """
-        return self.COMPOSITION_IS_IDENTITY and not self.add_noise
-
     @staticmethod
     def _get_intervals(data):
         """Compute intervals for each categorical value.
