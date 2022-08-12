@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from copulas import univariate
+import re
 
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
@@ -190,6 +191,81 @@ class TestFloatFormatter(TestCase):
         output = FloatFormatter._learn_rounding_digits(data)
 
         assert output is None
+    
+    def test__validate_values_within_bounds(self):
+        """Test the ``_validate_values_within_bounds`` method.
+        
+        If all values are correctly bounded, it shouldn't do anything.
+
+        Setup:
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set.
+        Input:
+            - a Dataframe.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.5, None, 2.5],
+            'b': [0, 10, 2.5]
+        })
+        transformer = FloatFormatter()
+        transformer.computer_representation = 'UInt8'
+
+        # Run
+        transformer._validate_values_within_bounds(data)
+
+    def test__validate_values_within_bounds_under_minimum(self):
+        """Test the ``_validate_values_within_bounds`` method.
+        
+        Expected to crash if a value is under the bound.
+
+        Setup:
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set.
+        Input:
+            - a Dataframe.
+        Side Effect:
+            - raise ``ValueError``.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [-1.5, None, 2.5],
+            'b': [-3, 10, 2.5]
+        })
+        transformer = FloatFormatter()
+        transformer.computer_representation = 'UInt8'
+
+        # Run / Assert
+        err_msg = re.escape(
+            "The minimum value in column 'a' is -1.5. All values represented by 'UInt8'"  # also check whether it's an int?
+            ' must be in the range [0, 255].'
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            transformer._validate_values_within_bounds(data)
+    
+    def test__validate_values_within_bounds_over_maximum(self):
+        """Test the ``_validate_values_within_bounds`` method.
+        
+        Expected to crash if a value is over the bound.
+
+        Setup:
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set.
+        Input:
+            - a Dataframe.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1.5, None, 255],
+            'b': [1.5, 10, 256]
+        })
+        transformer = FloatFormatter()
+        transformer.computer_representation = 'UInt8'
+
+        # Run / Assert
+        err_msg = re.escape(
+            "The maximum value in column 'b' is 256.0. All values represented by 'UInt8'"
+            ' must be in the range [0, 255].'
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            transformer._validate_values_within_bounds(data)
 
     def test__fit(self):
         """Test the ``_fit`` method.
@@ -207,12 +283,14 @@ class TestFloatFormatter(TestCase):
         Side effect:
             - it sets the ``null_transformer.missing_value_replacement``.
             - it sets the ``_dtype``.
+            - it calls ``_validate_values_within_bounds``.
         """
         # Setup
         data = pd.Series([1.5, None, 2.5])
         transformer = FloatFormatter(
             missing_value_replacement='missing_value_replacement'
         )
+        transformer._validate_values_within_bounds = Mock()
 
         # Run
         transformer._fit(data)
@@ -221,6 +299,7 @@ class TestFloatFormatter(TestCase):
         expected = 'missing_value_replacement'
         assert transformer.null_transformer._missing_value_replacement == expected
         assert transformer._dtype == float
+        transformer._validate_values_within_bounds.assert_called_once_with(data)
 
     def test__fit_learn_rounding_scheme_false(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``False``.
@@ -417,12 +496,14 @@ class TestFloatFormatter(TestCase):
         # Setup
         data = pd.Series([1, 2, 3])
         transformer = FloatFormatter()
+        transformer._validate_values_within_bounds = Mock()
         transformer.null_transformer = Mock()
 
         # Run
         transformer._transform(data)
 
         # Assert
+        transformer._validate_values_within_bounds.assert_called_once_with(data)
         assert transformer.null_transformer.transform.call_count == 1
 
     def test__reverse_transform_learn_rounding_scheme_false(self):

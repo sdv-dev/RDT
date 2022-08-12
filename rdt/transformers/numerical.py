@@ -122,12 +122,12 @@ class FloatFormatter(BaseTransformer):
         column = values.index[0]
         value = values[column]
         raise ValueError(
-            f"The {bound_type} value in column {column} is {value}."
-            f" All values represented by {self.computer_representation}"
-            f" must be in the range [{min_bound, max_bound}]."
+            f"The {bound_type} value in column '{column}' is {value}."
+            f" All values represented by '{self.computer_representation}'"
+            f" must be in the range [{min_bound}, {max_bound}]."
         )
 
-    def _validate_min_max_values(self, data):
+    def _validate_values_within_bounds(self, data):
         if self.computer_representation != 'Float':
             min_value = data.min()
             max_value = data.max()
@@ -147,7 +147,7 @@ class FloatFormatter(BaseTransformer):
             data (pandas.Series):
                 Data to fit.
         """
-        self._validate_min_max_values(data)
+        self._validate_values_within_bounds(data)
         self._dtype = data.dtype
 
         if self.enforce_min_max_values:
@@ -176,7 +176,7 @@ class FloatFormatter(BaseTransformer):
         Returns:
             numpy.ndarray
         """
-        self._validate_min_max_values(data)
+        self._validate_values_within_bounds(data)
         data = data.astype(np.float64)
         return self.null_transformer.transform(data)
 
