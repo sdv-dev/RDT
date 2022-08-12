@@ -202,11 +202,11 @@ class FrequencyEncoder(BaseTransformer):
 
         data = np.broadcast_to(data, (num_categories, num_rows)).T
         starts = np.broadcast_to(self.starts.index, (num_rows, num_categories))
-        diffs = (data >= starts)[:, ::-1]
-        indexes = num_categories - np.argmax(diffs, axis=1) - 1
+        is_data_greater_than_starts = (data >= starts)[:, ::-1]
+        interval_indexes = num_categories - np.argmax(is_data_greater_than_starts, axis=1) - 1
 
         get_category_from_index = list(self.starts['category']).__getitem__
-        return pd.Series(indexes).apply(get_category_from_index).astype(self.dtype)
+        return pd.Series(interval_indexes).apply(get_category_from_index).astype(self.dtype)
 
     def _reverse_transform_by_category(self, data):
         """Reverse transform the data by iterating over all the categories."""
