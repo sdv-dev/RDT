@@ -13,6 +13,16 @@ from rdt.transformers.null import NullTransformer
 
 EPSILON = np.finfo(np.float32).eps
 MAX_DECIMALS = sys.float_info.dig - 1
+INTEGER_BOUNDS = {
+    'Int8': (-2**7, 2**7 - 1),
+    'Int16': (-2**15, 2**15 - 1),
+    'Int32': (-2**31, 2**31 - 1),
+    'Int64': (-2**63, 2**63 - 1),
+    'UInt8': (0, 2**8 - 1),
+    'UInt16': (0, 2**16 - 1),
+    'UInt32': (0, 2**32 - 1),
+    'UInt64': (0, 2**64 - 1),
+}
 
 
 class FloatFormatter(BaseTransformer):
@@ -41,6 +51,10 @@ class FloatFormatter(BaseTransformer):
         enforce_min_max_values (bool):
             Whether or not to clip the data returned by ``reverse_transform`` to the min and
             max values seen during ``fit``. Defaults to ``False``.
+        computer_representation (dtype):
+            Accepts ``'Int8'``, ``'Int16'``, ``'Int32'``, ``'Int64'``, ``'UInt8'``, ``'UInt16'``,
+            ``'UInt32'``, ``'UInt64'``, ``'Float'``.
+            Defaults to ``'Float'``.
     """
 
     INPUT_SDTYPE = 'numerical'
@@ -56,11 +70,13 @@ class FloatFormatter(BaseTransformer):
     _max_value = None
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
-                 learn_rounding_scheme=False, enforce_min_max_values=False):
+                 learn_rounding_scheme=False, enforce_min_max_values=False,
+                 computer_representation='Float'):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
         self.learn_rounding_scheme = learn_rounding_scheme
         self.enforce_min_max_values = enforce_min_max_values
+        self.computer_representation = computer_representation
 
     def get_output_sdtypes(self):
         """Return the output sdtypes supported by the transformer.
@@ -101,6 +117,28 @@ class FloatFormatter(BaseTransformer):
                         return decimal
 
         return None
+    
+    def _raise_out_of_bounds_error(self, values, bound_type, min_bound, max_bound):
+        column = values.index[0]
+        value = values[column]
+        raise ValueError(
+            f"The {bound_type} value in column {column} is {value}."
+            f" All values represented by {self.computer_representation}"
+            f" must be in the range [{min_bound, max_bound}]."
+        )
+
+    def _validate_min_max_values(self, data):
+        if self.computer_representation != 'Float':
+            min_value = data.min()
+            max_value = data.max()
+            min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
+            low_values = min_value[min_value < min_bound]
+            if not low_values.empty:
+                self._raise_out_of_bounds_error(low_values, 'minimum', min_bound, max_bound)
+
+            high_values = max_value[max_value > max_bound]
+            if not high_values.empty:
+                self._raise_out_of_bounds_error(high_values, 'maximum', min_bound, max_bound)
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -109,7 +147,9 @@ class FloatFormatter(BaseTransformer):
             data (pandas.Series):
                 Data to fit.
         """
+        self._validate_min_max_values(data)
         self._dtype = data.dtype
+
         if self.enforce_min_max_values:
             self._min_value = data.min()
             self._max_value = data.max()
@@ -136,6 +176,8 @@ class FloatFormatter(BaseTransformer):
         Returns:
             numpy.ndarray
         """
+        self._validate_min_max_values(data)
+        data = data.astype(np.float64)
         return self.null_transformer.transform(data)
 
     def _reverse_transform(self, data):
@@ -156,6 +198,8 @@ class FloatFormatter(BaseTransformer):
 
         if self.enforce_min_max_values:
             data = data.clip(self._min_value, self._max_value)
+        else:
+            data = data
 
         is_integer = np.dtype(self._dtype).kind == 'i'
         if self.learn_rounding_scheme or is_integer:
