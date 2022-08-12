@@ -117,14 +117,14 @@ class FloatFormatter(BaseTransformer):
                         return decimal
 
         return None
-    
+
     def _raise_out_of_bounds_error(self, values, bound_type, min_bound, max_bound):
         column = values.index[0]
         value = values[column]
         raise ValueError(
             f"The {bound_type} value in column '{column}' is {value}."
             f" All values represented by '{self.computer_representation}'"
-            f" must be in the range [{min_bound}, {max_bound}]."
+            f' must be in the range [{min_bound}, {max_bound}].'
         )
 
     def _validate_values_within_bounds(self, data):
@@ -198,8 +198,10 @@ class FloatFormatter(BaseTransformer):
 
         if self.enforce_min_max_values:
             data = data.clip(self._min_value, self._max_value)
-        else:
-            data = data
+
+        if self.computer_representation != 'Float':
+            min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
+            data = data.clip(min_bound, max_bound)
 
         is_integer = np.dtype(self._dtype).kind == 'i'
         if self.learn_rounding_scheme or is_integer:

@@ -1,3 +1,4 @@
+import re
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -6,7 +7,6 @@ import numpy as np
 import pandas as pd
 import pytest
 from copulas import univariate
-import re
 
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
@@ -191,10 +191,10 @@ class TestFloatFormatter(TestCase):
         output = FloatFormatter._learn_rounding_digits(data)
 
         assert output is None
-    
+
     def test__validate_values_within_bounds(self):
         """Test the ``_validate_values_within_bounds`` method.
-        
+
         If all values are correctly bounded, it shouldn't do anything.
 
         Setup:
@@ -215,7 +215,7 @@ class TestFloatFormatter(TestCase):
 
     def test__validate_values_within_bounds_under_minimum(self):
         """Test the ``_validate_values_within_bounds`` method.
-        
+
         Expected to crash if a value is under the bound.
 
         Setup:
@@ -235,15 +235,15 @@ class TestFloatFormatter(TestCase):
 
         # Run / Assert
         err_msg = re.escape(
-            "The minimum value in column 'a' is -1.5. All values represented by 'UInt8'"  # also check whether it's an int?
+            "The minimum value in column 'a' is -1.5. All values represented by 'UInt8'"
             ' must be in the range [0, 255].'
         )
         with pytest.raises(ValueError, match=err_msg):
             transformer._validate_values_within_bounds(data)
-    
+
     def test__validate_values_within_bounds_over_maximum(self):
         """Test the ``_validate_values_within_bounds`` method.
-        
+
         Expected to crash if a value is over the bound.
 
         Setup:
@@ -788,6 +788,28 @@ class TestFloatFormatter(TestCase):
         null_transformer_calls = transformer.null_transformer.reverse_transform.mock_calls
         np.testing.assert_array_equal(null_transformer_calls[0][1][0], data)
         np.testing.assert_array_equal(result, expected_data)
+
+    def test__reverse_transform_enforce_computer_representation(self):
+        """Test ``_reverse_transform`` with ``computer_representation`` set to ``Int8``.
+
+        The ``_reverse_transform`` method should clip any values out of bounds.
+
+        Input:
+        - Array with values above the max and below the min
+        Output:
+        - Array with out of bound values clipped to min and max
+        """
+        # Setup
+        data = np.array([-np.inf, np.nan, -5000, -301, -100, 0, 125, 401, np.inf])
+
+        # Run
+        transformer = FloatFormatter(computer_representation='Int8')
+        result = transformer._reverse_transform(data)
+
+        # Asserts
+        np.testing.assert_array_equal(
+            result, np.array([-128, np.nan, -128, -128, -100, 0, 125, 127, 127])
+        )
 
 
 class TestGaussianNormalizer:
