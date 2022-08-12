@@ -118,27 +118,32 @@ class FloatFormatter(BaseTransformer):
 
         return None
 
-    def _raise_out_of_bounds_error(self, values, bound_type, min_bound, max_bound):
-        column = values.index[0]
-        value = values[column]
+    def _raise_out_of_bounds_error(self, value, name, bound_type, min_bound, max_bound):
         raise ValueError(
-            f"The {bound_type} value in column '{column}' is {value}."
+            f"The {bound_type} value in column '{name}' is {value}."
             f" All values represented by '{self.computer_representation}'"
             f' must be in the range [{min_bound}, {max_bound}].'
         )
 
     def _validate_values_within_bounds(self, data):
         if self.computer_representation != 'Float':
+            fractions = data[~data.isna() & data % 1 != 0]
+            if not fractions.empty:
+                raise ValueError(
+                    f"The column '{data.name}' contains float values {fractions.tolist()}. "
+                    f"All values represented by '{self.computer_representation}' must be integers."
+                )
+
             min_value = data.min()
             max_value = data.max()
             min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
-            low_values = min_value[min_value < min_bound]
-            if not low_values.empty:
-                self._raise_out_of_bounds_error(low_values, 'minimum', min_bound, max_bound)
+            if min_value < min_bound:
+                self._raise_out_of_bounds_error(
+                    min_value, data.name, 'minimum', min_bound, max_bound)
 
-            high_values = max_value[max_value > max_bound]
-            if not high_values.empty:
-                self._raise_out_of_bounds_error(high_values, 'maximum', min_bound, max_bound)
+            if max_value > max_bound:
+                self._raise_out_of_bounds_error(
+                    max_value, data.name, 'maximum', min_bound, max_bound)
 
     def _fit(self, data):
         """Fit the transformer to the data.

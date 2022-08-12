@@ -198,15 +198,12 @@ class TestFloatFormatter(TestCase):
         If all values are correctly bounded, it shouldn't do anything.
 
         Setup:
-            - instantiate ``FloatFormatter`` with ``computer_representation`` set.
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set to an int.
         Input:
             - a Dataframe.
         """
         # Setup
-        data = pd.DataFrame({
-            'a': [1.5, None, 2.5],
-            'b': [0, 10, 2.5]
-        })
+        data = pd.Series([15, None, 25])
         transformer = FloatFormatter()
         transformer.computer_representation = 'UInt8'
 
@@ -219,23 +216,20 @@ class TestFloatFormatter(TestCase):
         Expected to crash if a value is under the bound.
 
         Setup:
-            - instantiate ``FloatFormatter`` with ``computer_representation`` set.
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set to an int.
         Input:
             - a Dataframe.
         Side Effect:
             - raise ``ValueError``.
         """
         # Setup
-        data = pd.DataFrame({
-            'a': [-1.5, None, 2.5],
-            'b': [-3, 10, 2.5]
-        })
+        data = pd.Series([-15, None, 0], name='a')
         transformer = FloatFormatter()
         transformer.computer_representation = 'UInt8'
 
         # Run / Assert
         err_msg = re.escape(
-            "The minimum value in column 'a' is -1.5. All values represented by 'UInt8'"
+            "The minimum value in column 'a' is -15.0. All values represented by 'UInt8'"
             ' must be in the range [0, 255].'
         )
         with pytest.raises(ValueError, match=err_msg):
@@ -247,22 +241,42 @@ class TestFloatFormatter(TestCase):
         Expected to crash if a value is over the bound.
 
         Setup:
-            - instantiate ``FloatFormatter`` with ``computer_representation`` set.
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set to an int.
         Input:
             - a Dataframe.
         """
         # Setup
-        data = pd.DataFrame({
-            'a': [1.5, None, 255],
-            'b': [1.5, 10, 256]
-        })
+        data = pd.Series([255, None, 256], name='a')
         transformer = FloatFormatter()
         transformer.computer_representation = 'UInt8'
 
         # Run / Assert
         err_msg = re.escape(
-            "The maximum value in column 'b' is 256.0. All values represented by 'UInt8'"
+            "The maximum value in column 'a' is 256.0. All values represented by 'UInt8'"
             ' must be in the range [0, 255].'
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            transformer._validate_values_within_bounds(data)
+
+    def test__validate_values_within_bounds_floats(self):
+        """Test the ``_validate_values_within_bounds`` method.
+
+        Expected to crash if float values are passed when ``computer_representation`` is an int.
+
+        Setup:
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set to an int.
+        Input:
+            - a Dataframe.
+        """
+        # Setup
+        data = pd.Series([249.2, None, 250.0, 10.2], name='a')
+        transformer = FloatFormatter()
+        transformer.computer_representation = 'UInt8'
+
+        # Run / Assert
+        err_msg = re.escape(
+            "The column 'a' contains float values [249.2, 10.2]."
+            " All values represented by 'UInt8' must be integers."
         )
         with pytest.raises(ValueError, match=err_msg):
             transformer._validate_values_within_bounds(data)
