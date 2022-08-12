@@ -66,27 +66,6 @@ class TestFrequencyEncoder:
         # Assert
         assert output is False
 
-    def test_is_composition_identity(self):
-        """Test the ``is_composition_identity`` method.
-
-        Since ``COMPOSITION_IS_IDENTITY`` is True, just validates that the method
-        returns the opposite boolean value of the ``add_noise`` parameter.
-
-        Setup:
-            - initialize a ``FrequencyEncoder`` with ``add_noise = True``.
-
-        Output:
-            - the boolean value which is the opposite of ``add_noise``.
-        """
-        # Setup
-        transformer = FrequencyEncoder(add_noise=True)
-
-        # Run
-        output = transformer.is_composition_identity()
-
-        # Assert
-        assert output is False
-
     def test__get_intervals(self):
         """Test the ``_get_intervals`` method.
 
