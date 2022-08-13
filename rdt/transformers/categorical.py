@@ -44,7 +44,6 @@ class FrequencyEncoder(BaseTransformer):
     starts = None
     means = None
     dtype = None
-    _get_category_from_index = None
 
     def __setstate__(self, state):
         """Replace any ``null`` key by the actual ``np.nan`` instance."""
@@ -67,15 +66,6 @@ class FrequencyEncoder(BaseTransformer):
                 Whether or not the transform is deterministic.
         """
         return not self.add_noise
-
-    def is_composition_identity(self):
-        """Return whether composition of transform and reverse transform produces the input data.
-
-        Returns:
-            bool:
-                Whether or not transforming and then reverse transforming returns the input data.
-        """
-        return self.COMPOSITION_IS_IDENTITY and not self.add_noise
 
     @staticmethod
     def _get_intervals(data):
@@ -129,13 +119,24 @@ class FrequencyEncoder(BaseTransformer):
         self.dtype = data.dtype
         self.intervals, self.means, self.starts = self._get_intervals(data)
 
+    def _clip_noised_transform(self, result, start, end):
+        """Clip transformed values.
+
+        Used to ensure the noise added to transformed values doesn't make it
+        go out of the bounds of a given category.
+
+        The upper bound must be slightly lower than ``end``
+        so it doesn't get treated as the next category.
+        """
+        return np.clip(result, start, end - 1e-9)
+
     def _transform_by_category(self, data):
         """Transform the data by iterating over the different categories."""
         result = np.empty(shape=(len(data), ), dtype=float)
 
         # loop over categories
         for category, values in self.intervals.items():
-            mean, std = values[2:]
+            start, end, mean, std = values
             if category is np.nan:
                 mask = data.isna()
             else:
@@ -143,6 +144,7 @@ class FrequencyEncoder(BaseTransformer):
 
             if self.add_noise:
                 result[mask] = norm.rvs(mean, std, size=mask.sum())
+                result[mask] = self._clip_noised_transform(result[mask], start, end)
             else:
                 result[mask] = mean
 
@@ -153,10 +155,11 @@ class FrequencyEncoder(BaseTransformer):
         if pd.isna(category):
             category = np.nan
 
-        mean, std = self.intervals[category][2:]
+        start, end, mean, std = self.intervals[category]
 
         if self.add_noise:
-            return norm.rvs(mean, std)
+            result = norm.rvs(mean, std)
+            return self._clip_noised_transform(result, start, end)
 
         return mean
 
@@ -196,15 +199,15 @@ class FrequencyEncoder(BaseTransformer):
     def _reverse_transform_by_matrix(self, data):
         """Reverse transform the data with matrix operations."""
         num_rows = len(data)
-        num_categories = len(self.means)
+        num_categories = len(self.starts)
 
         data = np.broadcast_to(data, (num_categories, num_rows)).T
-        means = np.broadcast_to(self.means, (num_rows, num_categories))
-        diffs = np.abs(data - means)
-        indexes = np.argmin(diffs, axis=1)
+        starts = np.broadcast_to(self.starts.index, (num_rows, num_categories))
+        is_data_greater_than_starts = (data >= starts)[:, ::-1]
+        interval_indexes = num_categories - np.argmax(is_data_greater_than_starts, axis=1) - 1
 
-        self._get_category_from_index = list(self.means.index).__getitem__
-        return pd.Series(indexes).apply(self._get_category_from_index).astype(self.dtype)
+        get_category_from_index = list(self.starts['category']).__getitem__
+        return pd.Series(interval_indexes).apply(get_category_from_index).astype(self.dtype)
 
     def _reverse_transform_by_category(self, data):
         """Reverse transform the data by iterating over all the categories."""
