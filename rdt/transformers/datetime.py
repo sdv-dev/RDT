@@ -1,6 +1,7 @@
 """Transformer for datetime data."""
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_datetime64_dtype
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 from rdt.transformers.base import BaseTransformer
@@ -160,7 +161,7 @@ class UnixTimestampEncoder(BaseTransformer):
         if self.datetime_format:
             if self._dtype == 'object':
                 datetime_data = datetime_data.dt.strftime(self.datetime_format)
-            elif 'datetime' in self._dtype.name:
+            elif is_datetime64_dtype(self._dtype):
                 datetime_data = pd.to_datetime(datetime_data.dt.strftime(self.datetime_format))
 
         return datetime_data
