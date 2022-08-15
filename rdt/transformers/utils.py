@@ -5,7 +5,7 @@ import string
 
 import numpy as np
 
-import sre_parse  # isort:skip noqa:C0411
+import sre_parse  # isort:skip
 
 
 def _literal(character, max_repeat):
