@@ -1,6 +1,7 @@
 """Transformer for datetime data."""
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_datetime64_dtype
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 from rdt.transformers.base import BaseTransformer
@@ -43,6 +44,7 @@ class UnixTimestampEncoder(BaseTransformer):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
         self.datetime_format = datetime_format
+        self._dtype = None
 
     def is_composition_identity(self):
         """Return whether composition of transform and reverse transform produces the input data.
@@ -117,7 +119,8 @@ class UnixTimestampEncoder(BaseTransformer):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
-        if self.datetime_format is None and data.dtype == 'object':
+        self._dtype = data.dtype
+        if self.datetime_format is None:
             self.datetime_format = _guess_datetime_format_for_array(data.to_numpy())
 
         transformed = self._transform_helper(data)
@@ -156,7 +159,10 @@ class UnixTimestampEncoder(BaseTransformer):
             datetime_data = pd.Series(datetime_data)
 
         if self.datetime_format:
-            datetime_data = datetime_data.dt.strftime(self.datetime_format)
+            if self._dtype == 'object':
+                datetime_data = datetime_data.dt.strftime(self.datetime_format)
+            elif is_datetime64_dtype(self._dtype):
+                datetime_data = pd.to_datetime(datetime_data.dt.strftime(self.datetime_format))
 
         return datetime_data
 
