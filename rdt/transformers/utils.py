@@ -5,7 +5,9 @@ import string
 
 import numpy as np
 
+# pylint: disable=import-error
 import sre_parse  # isort:skip
+# pylint: enable=import-error
 
 
 def _literal(character, max_repeat):
