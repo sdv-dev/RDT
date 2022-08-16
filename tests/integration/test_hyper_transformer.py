@@ -88,7 +88,7 @@ def get_transformed_data():
         1.262304e+18
     ]
     return pd.DataFrame({
-        'integer.value': [1, 2, 1, 3, 1, 4, 2, 3],
+        'integer.value': [1., 2., 1., 3., 1., 4., 2., 3.],
         'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
         'categorical.value': [0.3125, 0.3125, .8125, 0.8125, 0.3125, 0.8125, 0.3125, 0.3125],
         'bool.value': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
@@ -166,7 +166,7 @@ def test_hypertransformer_default_inputs():
         1.262304e+18,
     ]
     expected_transformed = pd.DataFrame({
-        'integer.value': [1, 2, 1, 3, 1, 4, 2, 3],
+        'integer.value': [1., 2., 1., 3., 1., 4., 2., 3.],
         'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
         'categorical.value': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
         'bool.value': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
@@ -362,7 +362,8 @@ def test_multiple_fits_different_data():
     reverse2 = ht.reverse_transform(transformed2)
 
     # Assert
-    expected_transformed = pd.DataFrame({'col2.value': [1, 2, 3], 'col1.value': [1.0, 0.0, 0.0]})
+    expected_transformed = pd.DataFrame(
+        {'col2.value': [1., 2., 3.], 'col1.value': [1.0, 0.0, 0.0]})
     pd.testing.assert_frame_equal(transformed1, expected_transformed)
     pd.testing.assert_frame_equal(transformed2, expected_transformed)
     pd.testing.assert_frame_equal(reverse1, new_data)
@@ -390,7 +391,8 @@ def test_multiple_fits_different_columns():
     reverse2 = ht.reverse_transform(transformed2)
 
     # Assert
-    expected_transformed = pd.DataFrame({'col3.value': [1, 2, 3], 'col4.value': [1.0, 0.0, 0.0]})
+    expected_transformed = pd.DataFrame(
+        {'col3.value': [1., 2., 3.], 'col4.value': [1.0, 0.0, 0.0]})
     pd.testing.assert_frame_equal(transformed1, expected_transformed)
     pd.testing.assert_frame_equal(transformed2, expected_transformed)
     pd.testing.assert_frame_equal(reverse1, new_data)
@@ -661,7 +663,7 @@ def test_transform_subset():
     transformed = ht.transform_subset(subset)
 
     # Assert
-    expected = pd.DataFrame({'col1.value': [1, 2]})
+    expected = pd.DataFrame({'col1.value': [1., 2.]})
     pd.testing.assert_frame_equal(transformed, expected)
 
 

@@ -1,3 +1,4 @@
+import re
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -191,6 +192,95 @@ class TestFloatFormatter(TestCase):
 
         assert output is None
 
+    def test__validate_values_within_bounds(self):
+        """Test the ``_validate_values_within_bounds`` method.
+
+        If all values are correctly bounded, it shouldn't do anything.
+
+        Setup:
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set to an int.
+        Input:
+            - a Dataframe.
+        """
+        # Setup
+        data = pd.Series([15, None, 25])
+        transformer = FloatFormatter()
+        transformer.computer_representation = 'UInt8'
+
+        # Run
+        transformer._validate_values_within_bounds(data)
+
+    def test__validate_values_within_bounds_under_minimum(self):
+        """Test the ``_validate_values_within_bounds`` method.
+
+        Expected to crash if a value is under the bound.
+
+        Setup:
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set to an int.
+        Input:
+            - a Dataframe.
+        Side Effect:
+            - raise ``ValueError``.
+        """
+        # Setup
+        data = pd.Series([-15, None, 0], name='a')
+        transformer = FloatFormatter()
+        transformer.computer_representation = 'UInt8'
+
+        # Run / Assert
+        err_msg = re.escape(
+            "The minimum value in column 'a' is -15.0. All values represented by 'UInt8'"
+            ' must be in the range [0, 255].'
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            transformer._validate_values_within_bounds(data)
+
+    def test__validate_values_within_bounds_over_maximum(self):
+        """Test the ``_validate_values_within_bounds`` method.
+
+        Expected to crash if a value is over the bound.
+
+        Setup:
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set to an int.
+        Input:
+            - a Dataframe.
+        """
+        # Setup
+        data = pd.Series([255, None, 256], name='a')
+        transformer = FloatFormatter()
+        transformer.computer_representation = 'UInt8'
+
+        # Run / Assert
+        err_msg = re.escape(
+            "The maximum value in column 'a' is 256.0. All values represented by 'UInt8'"
+            ' must be in the range [0, 255].'
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            transformer._validate_values_within_bounds(data)
+
+    def test__validate_values_within_bounds_floats(self):
+        """Test the ``_validate_values_within_bounds`` method.
+
+        Expected to crash if float values are passed when ``computer_representation`` is an int.
+
+        Setup:
+            - instantiate ``FloatFormatter`` with ``computer_representation`` set to an int.
+        Input:
+            - a Dataframe.
+        """
+        # Setup
+        data = pd.Series([249.2, None, 250.0, 10.2], name='a')
+        transformer = FloatFormatter()
+        transformer.computer_representation = 'UInt8'
+
+        # Run / Assert
+        err_msg = re.escape(
+            "The column 'a' contains float values [249.2, 10.2]."
+            " All values represented by 'UInt8' must be integers."
+        )
+        with pytest.raises(ValueError, match=err_msg):
+            transformer._validate_values_within_bounds(data)
+
     def test__fit(self):
         """Test the ``_fit`` method.
 
@@ -207,12 +297,14 @@ class TestFloatFormatter(TestCase):
         Side effect:
             - it sets the ``null_transformer.missing_value_replacement``.
             - it sets the ``_dtype``.
+            - it calls ``_validate_values_within_bounds``.
         """
         # Setup
         data = pd.Series([1.5, None, 2.5])
         transformer = FloatFormatter(
             missing_value_replacement='missing_value_replacement'
         )
+        transformer._validate_values_within_bounds = Mock()
 
         # Run
         transformer._fit(data)
@@ -221,6 +313,7 @@ class TestFloatFormatter(TestCase):
         expected = 'missing_value_replacement'
         assert transformer.null_transformer._missing_value_replacement == expected
         assert transformer._dtype == float
+        transformer._validate_values_within_bounds.assert_called_once_with(data)
 
     def test__fit_learn_rounding_scheme_false(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``False``.
@@ -417,12 +510,14 @@ class TestFloatFormatter(TestCase):
         # Setup
         data = pd.Series([1, 2, 3])
         transformer = FloatFormatter()
+        transformer._validate_values_within_bounds = Mock()
         transformer.null_transformer = Mock()
 
         # Run
         transformer._transform(data)
 
         # Assert
+        transformer._validate_values_within_bounds.assert_called_once_with(data)
         assert transformer.null_transformer.transform.call_count == 1
 
     def test__reverse_transform_learn_rounding_scheme_false(self):
@@ -707,6 +802,28 @@ class TestFloatFormatter(TestCase):
         null_transformer_calls = transformer.null_transformer.reverse_transform.mock_calls
         np.testing.assert_array_equal(null_transformer_calls[0][1][0], data)
         np.testing.assert_array_equal(result, expected_data)
+
+    def test__reverse_transform_enforce_computer_representation(self):
+        """Test ``_reverse_transform`` with ``computer_representation`` set to ``Int8``.
+
+        The ``_reverse_transform`` method should clip any values out of bounds.
+
+        Input:
+        - Array with values above the max and below the min
+        Output:
+        - Array with out of bound values clipped to min and max
+        """
+        # Setup
+        data = np.array([-np.inf, np.nan, -5000, -301, -100, 0, 125, 401, np.inf])
+
+        # Run
+        transformer = FloatFormatter(computer_representation='Int8')
+        result = transformer._reverse_transform(data)
+
+        # Asserts
+        np.testing.assert_array_equal(
+            result, np.array([-128, np.nan, -128, -128, -100, 0, 125, 127, 127])
+        )
 
 
 class TestGaussianNormalizer:

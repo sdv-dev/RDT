@@ -226,7 +226,7 @@ class BaseTransformer:
         raise NotImplementedError()
 
     def fit(self, data, column):
-        """Fit the transformer to a `column` of the `data`.
+        """Fit the transformer to a ``column`` of the ``data``.
 
         Args:
             data (pandas.DataFrame):
