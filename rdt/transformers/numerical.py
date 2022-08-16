@@ -201,21 +201,11 @@ class FloatFormatter(BaseTransformer):
         if self.missing_value_replacement is not None:
             data = self.null_transformer.reverse_transform(data)
 
-        # If computer_represenation and enforce_min_max_values were both passed, clip according
-        # to the intersection of their bounds. Otherwise, clip only the passed parameter.
-        if self.computer_representation != 'Float':
-            min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
-            if self.enforce_min_max_values:
-                data = data.clip(
-                    max(self._min_value, min_bound),
-                    min(self._max_value, max_bound)
-                )
-
-            else:
-                data = data.clip(min_bound, max_bound)
-
-        elif self.enforce_min_max_values:
+        if self.enforce_min_max_values:
             data = data.clip(self._min_value, self._max_value)
+        elif self.computer_representation != 'Float':
+            min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
+            data = data.clip(min_bound, max_bound)
 
         is_integer = np.dtype(self._dtype).kind == 'i'
         if self.learn_rounding_scheme or is_integer:
