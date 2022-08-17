@@ -5,7 +5,7 @@
 
 __author__ = """MIT Data To AI Lab"""
 __email__ = 'dailabmit@gmail.com'
-__version__ = '1.2.0.dev1'
+__version__ = '1.2.0.dev2'
 
 import numpy as np
 import pandas as pd
