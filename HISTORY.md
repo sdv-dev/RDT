@@ -1,5 +1,28 @@
 # History
 
+## 1.2.0 - 2022-8-17
+
+This release adds a new transformer called the `PseudoAnonymizedFaker`. This transformer enables the pseudo-anonymization of your data by mapping all of a column's original values to fake values that get returned after being reverse transformed. The mapping can be accessed using the `get_mapping` method.
+
+Additionally, this release enables the `HyperTransformer` to use categorical transformers on boolean columns. It also introduces a new parameter called `computer_representation` to the `FloatFormatter` that will allow for values to be clipped to certain bounds based on the computer type used for a numerical column.
+
+Finally, this release patches a bug that caused unpredicatable results from the `reverse_transform` method of the `FrequencyEncoder` when `add_noise` is enabled, and a separate bug that returned the wrong datetime format during the `reverse_transform` of the `UnixTimestampEncoder`.
+
+### New Features
+
+* Add PseudoAnonymizedFaker transformer - Issue [#517](https://github.com/sdv-dev/RDT/issues/517) by @pvk-developer
+* Boolean columns should be able to use any of the categorical transformers - Issue[#527](https://github.com/sdv-dev/RDT/issues/527) by @pvk-developer
+* Update FloatFormatter with parameters for the computer representation - Issue[#521](https://github.com/sdv-dev/RDT/issues/521) by @fealho
+
+### Bugs
+
+* Unpredictable results for FrequencyEncoder(add_noise=True) - Issue [#528](https://github.com/sdv-dev/RDT/issues/528) by @fealho
+* Inconsistency in date format after reverse transform - Issue [#515](https://github.com/sdv-dev/RDT/issues/515) by @pvk-developer
+
+### Internal
+
+* Performance Tests update - Issue [#524](https://github.com/sdv-dev/RDT/issues/524) by @pvk-developer
+
 ## 1.1.0 - 2022-6-9
 
 This release adds multiple new transformers: the `CustomLabelEncoder` and the `RegexGenerator`. The `CustomLabelEncoder` works similarly 
