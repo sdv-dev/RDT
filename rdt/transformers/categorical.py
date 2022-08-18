@@ -35,7 +35,7 @@ class FrequencyEncoder(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
-    OUTPUT_SDTYPES = {'value': 'float'}
+    OUTPUT_SDTYPES = {None: 'float'}
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
 
@@ -435,7 +435,7 @@ class LabelEncoder(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
-    OUTPUT_SDTYPES = {'value': 'float'}
+    OUTPUT_SDTYPES = {None: 'float'}
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True

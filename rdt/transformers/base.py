@@ -68,7 +68,10 @@ class BaseTransformer:
 
         output = {}
         for output_columns, output_sdtype in dictionary.items():
-            output[f'{self.column_prefix}.{output_columns}'] = output_sdtype
+            if output_columns:
+                output[f'{self.column_prefix}.{output_columns}'] = output_sdtype
+            else:
+                output[str(self.column_prefix)] = output_sdtype
 
         return output
 
@@ -186,10 +189,11 @@ class BaseTransformer:
         self.output_columns = list(self.get_output_sdtypes().keys())
 
         # make sure none of the generated `output_columns` exists in the data
-        data_columns = set(data.columns)
-        while data_columns & set(self.output_columns):
-            self.column_prefix += '#'
-            self.output_columns = list(self.get_output_sdtypes().keys())
+        if len(self.columns) > 1:
+            data_columns = set(data.columns)
+            while data_columns & set(self.output_columns):
+                self.column_prefix += '#'
+                self.output_columns = list(self.get_output_sdtypes().keys())
 
     def __repr__(self):
         """Represent initialization of transformer as text.
