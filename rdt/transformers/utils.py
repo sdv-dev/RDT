@@ -1,10 +1,11 @@
 """Tools to generate strings from regular expressions."""
 
 import re
-import sre_parse
 import string
 
 import numpy as np
+
+import sre_parse  # isort:skip
 
 
 def _literal(character, max_repeat):
@@ -42,7 +43,7 @@ def _max_repeat(options, max_repeat):
         max_ = max_repeat
 
     option, args = options[0]
-    generator, size = _GENERATORS[option](args, max_repeat)
+    _, size = _GENERATORS[option](args, max_repeat)
 
     generators = []
     sizes = []

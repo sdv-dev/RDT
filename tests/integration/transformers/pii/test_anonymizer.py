@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from rdt.transformers.pii import AnonymizedFaker
+from rdt.transformers.pii import AnonymizedFaker, PseudoAnonymizedFaker
 
 
 def test_anonymizedfaker():
@@ -103,3 +103,63 @@ def test_anonymizedfaker_custom_provider_with_nans():
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     assert len(reverse_transform['cc']) == 5
     assert reverse_transform['cc'].isna().sum() == 1
+
+
+def test_pseudoanonymizedfaker():
+    """End to end test with the default settings of the ``PseudoAnonymizedFaker``."""
+    data = pd.DataFrame({
+        'animals': ['cat', 'dog', 'parrot', 'monkey']
+    })
+
+    instance = PseudoAnonymizedFaker()
+
+    transformed = instance.fit_transform(data, 'animals')
+    reverse_transformed = instance.reverse_transform(transformed)
+
+    assert transformed.columns == ['animals.value']
+    pd.testing.assert_series_equal(
+        reverse_transformed['animals'].map(instance._reverse_mapping_dict),
+        data['animals']
+    )
+    assert set(reverse_transformed['animals']).intersection(set(instance._mapping_dict)) == set()
+    assert len(reverse_transformed) == len(transformed) == 4
+
+
+def test_pseudoanonymizedfaker_with_nans():
+    """End to end test with the default settings of the ``PseudoAnonymizedFaker`` and ``nans``."""
+    data = pd.DataFrame({
+        'animals': ['cat', 'dog', np.nan, 'monkey']
+    })
+
+    instance = PseudoAnonymizedFaker()
+
+    transformed = instance.fit_transform(data, 'animals')
+    reverse_transformed = instance.reverse_transform(transformed)
+
+    assert transformed.columns == ['animals.value']
+    pd.testing.assert_series_equal(
+        reverse_transformed['animals'].map(instance._reverse_mapping_dict),
+        data['animals']
+    )
+    assert set(reverse_transformed['animals']).intersection(set(instance._mapping_dict)) == set()
+    assert len(reverse_transformed) == len(transformed) == 4
+
+
+def test_pseudoanonymizedfaker_with_custom_provider():
+    """End to end test with custom settings of the ``PseudoAnonymizedFaker``."""
+    data = pd.DataFrame({
+        'animals': ['cat', 'dog', np.nan, 'monkey']
+    })
+
+    instance = PseudoAnonymizedFaker('credit_card', 'credit_card_number')
+
+    transformed = instance.fit_transform(data, 'animals')
+    reverse_transformed = instance.reverse_transform(transformed)
+
+    assert transformed.columns == ['animals.value']
+    pd.testing.assert_series_equal(
+        reverse_transformed['animals'].map(instance._reverse_mapping_dict),
+        data['animals']
+    )
+    assert set(reverse_transformed['animals']).intersection(set(instance._mapping_dict)) == set()
+    assert len(reverse_transformed) == len(transformed) == 4

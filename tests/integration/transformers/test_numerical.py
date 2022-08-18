@@ -68,6 +68,20 @@ class TestFloatFormatter:
         reverse = nt.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
+    def test_computer_representation(self):
+        data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
+        column = 'a'
+
+        nt = FloatFormatter(computer_representation='Int8')
+        nt.fit(data, column)
+        transformed = nt.transform(data)
+
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (5, 1)
+
+        reverse = nt.reverse_transform(transformed)
+        assert list(reverse['a']) == [1, 2, 1, 2, 1]
+
 
 class TestGaussianNormalizer:
 
