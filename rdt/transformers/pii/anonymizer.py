@@ -234,9 +234,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
     """
 
     OUTPUT_SDTYPES = {None: 'categorical'}
-    NEXT_TRANSFORMER = {
-        'value': LabelEncoder(add_noise=True)
-    }
+    NEXT_TRANSFORMER = {None: LabelEncoder(add_noise=True)}
 
     def __getstate__(self):
         """Return a dictionary representation of the instance and warn the user when pickling."""
