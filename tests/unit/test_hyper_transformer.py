@@ -461,7 +461,7 @@ class TestHyperTransformer(TestCase):
             'col1': "FloatFormatter(missing_value_replacement='mean')",
             'col2': 'FrequencyEncoder()',
             'col3': "BinaryEncoder(missing_value_replacement='mode')",
-            'col4': "UnixTimestampEncoder(missing_value_replacement='mode')",
+            'col4': "UnixTimestampEncoder(missing_value_replacement='mean')",
             'col5': "FloatFormatter(missing_value_replacement='mean')"
         }
 
@@ -481,7 +481,7 @@ class TestHyperTransformer(TestCase):
             '        "col1": FloatFormatter(missing_value_replacement=\'mean\'),',
             '        "col2": FrequencyEncoder(),',
             '        "col3": BinaryEncoder(missing_value_replacement=\'mode\'),',
-            '        "col4": UnixTimestampEncoder(missing_value_replacement=\'mode\'),',
+            '        "col4": UnixTimestampEncoder(missing_value_replacement=\'mean\'),',
             '        "col5": FloatFormatter(missing_value_replacement=\'mean\')',
             '    }',
             '}',

@@ -121,7 +121,8 @@ class UnixTimestampEncoder(BaseTransformer):
         """
         self._dtype = data.dtype
         if self.datetime_format is None:
-            self.datetime_format = _guess_datetime_format_for_array(data.to_numpy())
+            datetime_array = data.astype(str).to_numpy()
+            self.datetime_format = _guess_datetime_format_for_array(datetime_array)
 
         transformed = self._transform_helper(data)
         self.null_transformer = NullTransformer(
