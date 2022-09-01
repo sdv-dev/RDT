@@ -162,7 +162,7 @@ class UnixTimestampEncoder(BaseTransformer):
         if self.datetime_format:
             if self._dtype == 'object':
                 datetime_data = datetime_data.dt.strftime(self.datetime_format)
-            elif is_datetime64_dtype(self._dtype):
+            elif is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
                 datetime_data = pd.to_datetime(datetime_data.dt.strftime(self.datetime_format))
 
         return datetime_data

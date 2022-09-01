@@ -21,12 +21,10 @@ TRANSFORMER_ARGS = {
     },
     'UnixTimestampEncoder': {
         'missing_value_replacement': 'mean',
-        'datetime_format': False,
         'model_missing_values': True
     },
     'OptimizedTimestampEncoder': {
         'missing_value_replacement': 'mean',
-        'datetime_format': False,
         'model_missing_values': True
     },
     'FloatFormatter': {
