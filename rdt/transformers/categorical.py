@@ -119,7 +119,8 @@ class FrequencyEncoder(BaseTransformer):
         self.dtype = data.dtype
         self.intervals, self.means, self.starts = self._get_intervals(data)
 
-    def _clip_noised_transform(self, result, start, end):
+    @staticmethod
+    def _clip_noised_transform(result, start, end):
         """Clip transformed values.
 
         Used to ensure the noise added to transformed values doesn't make it
