@@ -440,6 +440,31 @@ class TestUnixTimestampEncoder:
         expected = pd.Series(pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01']))
         pd.testing.assert_series_equal(output, expected)
 
+    def test__reverse_transform_datetime_format_dtype_is_datetime(self):
+        """Test the ``_reverse_transform`` method returns the correct datetime format.
+
+        Setup:
+            - Set the instance to have a different ``datetime_format``.
+
+        Input:
+            - a numpy array of integers.
+
+        Output:
+            - a pandas ``Series`` of the datetimes in the right format.
+        """
+        # Setup
+        ute = UnixTimestampEncoder(missing_value_replacement=None)
+        ute.datetime_format = '%b %d, %Y'
+        transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
+        ute._dtype = np.dtype('<M8[ns]')
+
+        # Run
+        output = ute._reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series(pd.to_datetime(['Jan 01, 2020', 'Feb 01, 2020', 'Mar 01, 2020']))
+        pd.testing.assert_series_equal(output, expected)
+
     def test__reverse_transform_datetime_format(self):
         """Test the ``_reverse_transform`` method returns the correct datetime format.
 
@@ -456,6 +481,7 @@ class TestUnixTimestampEncoder:
         ute = UnixTimestampEncoder(missing_value_replacement=None)
         ute.datetime_format = '%b %d, %Y'
         transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
+        ute._dtype = 'object'
 
         # Run
         output = ute._reverse_transform(transformed)
@@ -480,6 +506,7 @@ class TestUnixTimestampEncoder:
         ute = UnixTimestampEncoder(missing_value_replacement=None)
         ute.datetime_format = '%b %-d, %Y'
         transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
+        ute._dtype = 'object'
 
         # Run
         output = ute._reverse_transform(transformed)
