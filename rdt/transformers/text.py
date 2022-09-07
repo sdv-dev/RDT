@@ -3,6 +3,7 @@ import warnings
 
 import numpy as np
 
+from rdt.errors import Error
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.utils import strings_from_regex
@@ -36,9 +37,10 @@ class RegexGenerator(BaseTransformer):
     null_transformer = None
 
     def __init__(self, regex_format='[A-Za-z]{5}', missing_value_replacement=None,
-                 model_missing_values=False):
+                 model_missing_values=False, enforce_uniqueness=False):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
+        self.enforce_uniqueness = enforce_uniqueness
         self.regex_format = regex_format
         self.data_length = None
 
@@ -103,6 +105,12 @@ class RegexGenerator(BaseTransformer):
             sample_size = self.data_length
 
         generator, size = strings_from_regex(self.regex_format)
+        if self.enforce_uniqueness and sample_size > size:
+            raise Error(
+                f'The regex is not able to generate {sample_size} unique values. '
+                f"Please use a different regex for column ('{self.get_input_column()}')."
+            )
+
         if sample_size > size:
             warnings.warn(
                 f"The data has {sample_size} rows but the regex for '{self.get_input_column()}' "
@@ -110,7 +118,7 @@ class RegexGenerator(BaseTransformer):
                 f"'{self.get_input_column()}' may be repeated."
             )
 
-        if size > sample_size:
+        if size >= sample_size:
             reverse_transformed = np.array([
                 next(generator)
                 for _ in range(sample_size)

@@ -73,13 +73,14 @@ class TestAnonymizedFaker:
         with pytest.raises(Error, match=expected_message):
             AnonymizedFaker.check_provider_function('TestProvider', 'TestFunction')
 
-    def test__function(self):
+    def test__function_enforce_uniqueness_false(self):
         """Test that `_function`.
 
         The method `_function` should return a call from the `instance.faker.provider.<function>`.
 
         Mock:
             - Instance of 'AnonymizedFaker'.
+            - Instance ``enforce_uniqueness`` set to `False`
             - Faker instance.
             - A function for the faker instance.
 
@@ -92,8 +93,12 @@ class TestAnonymizedFaker:
         """
         # setup
         instance = Mock()
+        instance.enforce_uniqueness = False
         function = Mock()
+        unique_function = Mock()
         function.return_value = 1
+
+        instance.faker.unique.number = unique_function
         instance.faker.number = function
         instance.function_name = 'number'
         instance.function_kwargs = {'type': 'int'}
@@ -102,7 +107,47 @@ class TestAnonymizedFaker:
         result = AnonymizedFaker._function(instance)
 
         # Assert
+        unique_function.assert_not_called()
         function.assert_called_once_with(type='int')
+        assert result == 1
+
+    def test__function_enforce_uniqueness_true(self):
+        """Test that ``_function``.
+
+        The method ``_function`` should return a call from the
+        ``instance.faker.provider.<function>``.
+
+        Mock:
+            - Instance of 'AnonymizedFaker'.
+            - Instance ``enforce_uniqueness`` set to ``True``
+            - Faker instance.
+            - A function for the faker instance.
+
+        Output:
+            - Return value of mocked function.
+
+        Side Effects:
+            - The returned function, when called, has to call the ``faker.unique.<function_name>``
+              function with the provided kwargs.
+        """
+        # setup
+        instance = Mock()
+        instance.enforce_uniqueness = True
+        function = Mock()
+        unique_function = Mock()
+        unique_function.return_value = 1
+
+        instance.faker.unique.number = unique_function
+        instance.faker.number = function
+        instance.function_name = 'number'
+        instance.function_kwargs = {'type': 'int'}
+
+        # Run
+        result = AnonymizedFaker._function(instance)
+
+        # Assert
+        function.assert_not_called()
+        unique_function.assert_called_once_with(type='int')
         assert result == 1
 
     @patch('rdt.transformers.pii.anonymizer.importlib')
@@ -172,6 +217,7 @@ class TestAnonymizedFaker:
         assert not instance.model_missing_values
         assert instance.locales is None
         assert mock_faker.Faker.called_once_with(None)
+        assert instance.enforce_uniqueness is False
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
@@ -206,7 +252,8 @@ class TestAnonymizedFaker:
             function_kwargs={
                 'type': 'visa'
             },
-            locales=['en_US', 'fr_FR']
+            locales=['en_US', 'fr_FR'],
+            enforce_uniqueness=True
         )
 
         # Assert
@@ -218,6 +265,7 @@ class TestAnonymizedFaker:
         assert not instance.model_missing_values
         assert instance.locales == ['en_US', 'fr_FR']
         assert mock_faker.Faker.called_once_with(['en_US', 'fr_FR'])
+        assert instance.enforce_uniqueness
 
     def test___init__no_function_name(self):
         """Test the instantiation of the transformer with custom parameters.
@@ -475,6 +523,35 @@ class TestAnonymizedFaker:
 
         expected_function_calls = [call(), call(), call()]
         assert function.call_args_list == expected_function_calls
+
+    def test__reverse_transform_not_enough_unique_values(self):
+        """Test the ``_reverse_transform`` method.
+
+        Test that when calling the ``_reverse_transform`` method and the ``instance._function`` is
+        not generating enough unique values raises an ``Error``.
+
+        Setup:
+            -Instance of ``AnonymizedFaker``.
+
+        Input:
+            - ``pandas.Series`` representing a column.
+
+        Side Effect:
+            - Raises an ``Error``.
+        """
+        # Setup
+        instance = AnonymizedFaker('misc', 'boolean', enforce_uniqueness=True)
+        data = pd.Series(['a', 'b', 'c', 'd'])
+        instance.columns = ['a']
+
+        # Run / Assert
+        error_msg = re.escape(
+            'The Faker function you specified is not able to generate 4 unique '
+            'values. Please use a different Faker function for column '
+            "('a')."
+        )
+        with pytest.raises(Error, match=error_msg):
+            instance._reverse_transform(data)
 
     def test___repr__default(self):
         """Test the ``__repr__`` method.
