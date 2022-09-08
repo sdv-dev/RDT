@@ -42,6 +42,10 @@ class AnonymizedFaker(BaseTransformer):
             will be created only if there are null values. If ``True``, create the new column if
             there are null values. If ``False``, do not create the new column even if there
             are null values. Defaults to ``False``.
+        enforce_uniqueness (bool):
+            Whether or not to ensure that the new anonymized data is all unique. If it isn't
+            possible to create the requested number of rows, then an ``Error`` will be raised.
+            Defaults to ``False``.
     """
 
     DETERMINISTIC_TRANSFORM = False
@@ -246,7 +250,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
     """
 
     OUTPUT_SDTYPES = {'value': 'categorical'}
-    NEXT_TRANSFORMER = {
+    NEXT_TRANSFORMERS = {
         'value': LabelEncoder(add_noise=True)
     }
 
