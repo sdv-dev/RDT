@@ -74,9 +74,10 @@ class TestAnonymizedFaker:
             AnonymizedFaker.check_provider_function('TestProvider', 'TestFunction')
 
     def test__function_enforce_uniqueness_false(self):
-        """Test that `_function`.
+        """Test that ``_function`` does not use ``faker.unique``.
 
-        The method `_function` should return a call from the `instance.faker.provider.<function>`.
+        The method ``_function`` should return a call from the
+        ``instance.faker.provider.<function>``.
 
         Mock:
             - Instance of 'AnonymizedFaker'.
@@ -112,10 +113,10 @@ class TestAnonymizedFaker:
         assert result == 1
 
     def test__function_enforce_uniqueness_true(self):
-        """Test that ``_function``.
+        """Test that ``_function`` uses the ``faker.unique``.
 
         The method ``_function`` should return a call from the
-        ``instance.faker.provider.<function>``.
+        ``instance.faker.unique.<function>``.
 
         Mock:
             - Instance of 'AnonymizedFaker'.
@@ -547,8 +548,7 @@ class TestAnonymizedFaker:
         # Run / Assert
         error_msg = re.escape(
             'The Faker function you specified is not able to generate 4 unique '
-            'values. Please use a different Faker function for column '
-            "('a')."
+            "values. Please use a different Faker function for column ('a')."
         )
         with pytest.raises(Error, match=error_msg):
             instance._reverse_transform(data)
