@@ -3,6 +3,7 @@ import abc
 import inspect
 
 import pandas as pd
+import numpy as np
 
 
 class BaseTransformer:
@@ -173,6 +174,17 @@ class BaseTransformer:
             ``pandas.DataFrame`` with the new columns added.
         """
         if columns is not None:
+            '''
+            repeated_columns = set(column_names).intersection(set(data.columns))
+            if repeated_columns:
+                if isinstance(columns, pd.DataFrame):
+                    data[list(repeated_columns)] = columns[list(repeated_columns)]
+                if isinstance(columns, np.ndarray):
+                    indexes = [column_names.index(i) for i in repeated_columns]
+                    data[list(repeated_columns)] = columns[:, indexes]
+                    column_names = list(set(column_names) - repeated_columns)
+                    columns = np.delete(columns, indexes, axis=1)
+            '''
             if isinstance(columns, (pd.DataFrame, pd.Series)):
                 columns.index = data.index
 
@@ -180,6 +192,7 @@ class BaseTransformer:
                 data[column_names[0]] = columns
             else:
                 new_data = pd.DataFrame(columns, columns=column_names)
+                data = data.drop('integer', axis=1) # overwrite existing columns
                 data = pd.concat([data, new_data.set_index(data.index)], axis=1)
 
         return data
@@ -282,9 +295,9 @@ class BaseTransformer:
 
         data = self._add_columns_to_data(data, transformed_data, self.output_columns)
         if drop:
-            data = data.drop(self.columns, axis=1)
+            #list(set(self.columns) - set(self.output_columns)
+            data = data.drop(list(set(self.columns) - set(self.output_columns)), axis=1)
 
-        print(data)
         return data
 
     def fit_transform(self, data, column):

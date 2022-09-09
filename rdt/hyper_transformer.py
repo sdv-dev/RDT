@@ -751,7 +751,7 @@ class HyperTransformer:
 
         data = data.copy()
         for transformer in self._transformers_sequence:
-            data = transformer.transform(data, drop=False)
+            data = transformer.transform(data)
 
         transformed_columns = self._subset(self._output_columns, data.columns)
         return data.reindex(columns=transformed_columns)
@@ -819,7 +819,7 @@ class HyperTransformer:
             )
 
         for transformer in reversed(self._transformers_sequence):
-            data = transformer.reverse_transform(data, drop=False)
+            data = transformer.reverse_transform(data)
 
         reversed_columns = self._subset(self._input_columns, data.columns)
 

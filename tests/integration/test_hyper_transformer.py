@@ -743,3 +743,5 @@ if __name__ == '__main__':
     ht.set_config(config)
     ht.fit(data)
     transformed = ht.transform(data)
+    print(transformed)
+    print(ht.reverse_transform(transformed))
