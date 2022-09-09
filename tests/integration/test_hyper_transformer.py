@@ -731,27 +731,15 @@ def test_hyper_transformer_with_supported_sdtypes():
     for transformer in ht.get_config()['transformers'].values():
         assert not isinstance(transformer, BinaryEncoder)
 
-if __name__ == '__main__':
-    datetimes = pd.to_datetime([
-        np.nan,
-        '2010-02-01',
-        '2010-01-01',
-        '2010-01-01',
-        '2010-01-01',
-        '2010-02-01',
-        '2010-01-01',
-        '2010-01-01',
-    ])
-    data = pd.DataFrame({
-        'integer_': [1, 2, 1, 3, 1, 4, 2, 3],
-        'float_': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
-        'categorical_': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
-        'bool_': [False, np.nan, False, True, False, np.nan, True, False],
-        'datetime_': datetimes,
-        'names_': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
-    }, index=TEST_DATA_INDEX)
 
-    # Run
+if __name__ == '__main__':
     ht = HyperTransformer()
+    data = pd.DataFrame({'integer': [1, np.nan]})
     ht.detect_initial_config(data)
+    config = {
+        "sdtypes": {"integer": "numerical"},
+        "transformers": {"integer": FloatFormatter(model_missing_values=True)}
+    }
+    ht.set_config(config)
     ht.fit(data)
+    transformed = ht.transform(data)

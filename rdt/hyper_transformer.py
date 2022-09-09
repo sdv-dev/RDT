@@ -524,7 +524,7 @@ class HyperTransformer:
             else:
                 final_outputs.append(output)
 
-        return sorted(final_outputs, reverse=True)
+        return sorted(set(final_outputs), reverse=True)
 
     def _get_transformer_tree_yaml(self):
         """Return yaml representation of transformers tree.
@@ -720,10 +720,9 @@ class HyperTransformer:
         self._input_columns = list(data.columns)
         for field in self._input_columns:
             data = self._fit_field_transformer(data, field, self.field_transformers[field])
-        
 
         self._validate_all_fields_fitted()
-        
+
         self._fitted = True
         self._modified_config = False
         self._sort_output_columns()
@@ -851,4 +850,3 @@ class HyperTransformer:
                 reversed data.
         """
         return self._reverse_transform(data, prevent_subset=True)
-

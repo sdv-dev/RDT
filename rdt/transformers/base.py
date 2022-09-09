@@ -284,6 +284,7 @@ class BaseTransformer:
         if drop:
             data = data.drop(self.columns, axis=1)
 
+        print(data)
         return data
 
     def fit_transform(self, data, column):
