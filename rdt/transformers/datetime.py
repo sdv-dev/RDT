@@ -106,7 +106,7 @@ class UnixTimestampEncoder(BaseTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        if self.missing_value_replacement is not None:
+        if self.model_missing_values or self.missing_value_replacement is not None:
             data = self.null_transformer.reverse_transform(data)
 
         data = np.round(data.astype(np.float64))
