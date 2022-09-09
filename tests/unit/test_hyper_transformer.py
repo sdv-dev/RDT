@@ -1585,6 +1585,64 @@ class TestHyperTransformer(TestCase):
         bool_transformer.reverse_transform.assert_called_once()
         datetime_transformer.reverse_transform.assert_called_once()
 
+    def test_reverse_transform_subset_with_generators(self):
+        """Test the ``reverse_transform`` method.
+
+        Tests that ``reverse_transform`` loops through the ``_transformers_sequence``
+        in reverse order and calls ``transformer.reverse_transform`` if they have
+        ``output_columns``.
+
+        Setup:
+            - The ``_transformers_sequence`` will be hardcoded with a list
+              of transformer mocks and one of them is a ``generator``
+              (does not have ``output_columns``).
+            - The ``_output_columns`` will be hardcoded.
+            - The ``_input_columns`` will be hardcoded.
+
+        Input:
+            - A DataFrame of multiple sdtypes.
+
+        Output:
+            - The reverse transformed DataFrame with the correct columns dropped.
+
+        Side Effects:
+            - Only the transformers with ``get_output_columns`` will be called.
+        """
+        # Setup
+        int_transformer = Mock()
+        float_transformer = Mock()
+        generator_transformer = Mock()
+        int_transformer.get_output_columns.return_value = ['integer.out.value']
+        float_transformer.get_output_columns.return_value = ['float.value']
+        generator_transformer.get_output_columns.return_value = []
+
+        reverse_transformed_data = self.get_transformed_data()
+        float_transformer.reverse_transform = lambda x, drop: x
+        int_transformer.reverse_transform.return_value = reverse_transformed_data
+
+        data = self.get_transformed_data(True)
+
+        ht = HyperTransformer()
+        ht._validate_config_exists = Mock()
+        ht._validate_config_exists.return_value = True
+        ht._fitted = True
+        ht._transformers_sequence = [
+            int_transformer,
+            float_transformer,
+            generator_transformer
+        ]
+        ht._output_columns = list(data.columns)
+        expected = self.get_data()
+        ht._input_columns = list(expected.columns)
+
+        # Run
+        reverse_transformed = ht.reverse_transform_subset(data)
+
+        # Assert
+        pd.testing.assert_frame_equal(reverse_transformed, expected)
+        int_transformer.reverse_transform.assert_called_once()
+        generator_transformer.reverse_transform.assert_not_called()
+
     def test_reverse_transform_raises_error_no_config(self):
         """Test that ``reverse_transform`` raises an error.
 
@@ -1691,9 +1749,9 @@ class TestHyperTransformer(TestCase):
         data = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
 
         # Run / Assert
-        expected_msg = (
-            'There are unexpected columns in the data you are trying to transform. You must '
-            'provide a transformed dataset with all the columns from the original data.'
+        expected_msg = re.escape(
+            'There are unexpected column names in the data you are trying to transform. '
+            "A reverse transform is not defined for ['col2']."
         )
         with pytest.raises(Error, match=expected_msg):
             ht.reverse_transform(data)
