@@ -109,20 +109,21 @@ class RegexGenerator(BaseTransformer):
             sample_size = self.data_length
 
         generator, size = strings_from_regex(self.regex_format)
-        if self.enforce_uniqueness and sample_size > size:
-            raise Error(
-                f'The regex is not able to generate {sample_size} unique values. '
-                f"Please use a different regex for column ('{self.get_input_column()}')."
-            )
 
         if sample_size > size:
+            if self.enforce_uniqueness:
+                raise Error(
+                    f'The regex is not able to generate {sample_size} unique values. '
+                    f"Please use a different regex for column ('{self.get_input_column()}')."
+                )
+
             warnings.warn(
                 f"The data has {sample_size} rows but the regex for '{self.get_input_column()}' "
                 f'can only create {size} unique values. Some values in '
                 f"'{self.get_input_column()}' may be repeated."
             )
 
-        if size >= sample_size:
+        if size > sample_size:
             reverse_transformed = np.array([
                 next(generator)
                 for _ in range(sample_size)
