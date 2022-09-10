@@ -333,7 +333,7 @@ class TestAnonymizedFaker:
             - Initialize a ``AnonymizedFaker`` transformer.
 
         Input:
-            - ``pd.Series`` with three values.
+            - ``None``.
 
         Output:
             - the output a ``numpy.array`` with the generated values from
@@ -381,6 +381,38 @@ class TestAnonymizedFaker:
         )
         with pytest.raises(Error, match=error_msg):
             instance._reverse_transform(data)
+            
+    def test__reverse_transform_size_is_length_of_data(self):
+        """Test the ``_reverse_transform`` method.
+
+        Validate that the ``_reverse_transform`` method calls the ``instance._function`` with
+        the ``instance.function_kwargs`` the ``len(data)`` amount of times.
+
+        Setup:
+            - Initialize a ``AnonymizedFaker`` transformer.
+
+        Input:
+            - ``pd.Series`` with three values.
+
+        Output:
+            - the output a ``numpy.array`` with the generated values from
+              ``instance._function``.
+        """
+        # Setup
+        instance = AnonymizedFaker()
+        data = pd.Series([1, 2, 3])
+        instance.data_length = 0
+        function = Mock()
+        function.side_effect = ['a', 'b', 'c']
+
+        instance._function = function
+
+        # Run
+        result = instance._reverse_transform(data)
+
+        # Assert
+        assert function.call_args_list == [call(), call(), call()]
+        np.testing.assert_array_equal(result, np.array(['a', 'b', 'c']))
 
     def test___repr__default(self):
         """Test the ``__repr__`` method.
