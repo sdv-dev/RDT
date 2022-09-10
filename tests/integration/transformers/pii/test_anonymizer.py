@@ -58,18 +58,17 @@ def test_anonymizedfaker_with_nans():
         'username': ['a', np.nan, 'c', 'd', 'e']
     })
 
-    instance = AnonymizedFaker(model_missing_values=True)
+    instance = AnonymizedFaker()
     transformed = instance.fit_transform(data, 'username')
     reverse_transform = instance.reverse_transform(transformed)
 
     expected_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
-        'username.is_null': [0.0, 1.0, 0.0, 0.0, 0.0]
     })
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     assert len(reverse_transform['username']) == 5
-    assert reverse_transform['username'].isna().sum() == 1
+    assert reverse_transform['username'].isna().sum() == 0
 
 
 def test_anonymizedfaker_custom_provider_with_nans():
@@ -89,7 +88,6 @@ def test_anonymizedfaker_custom_provider_with_nans():
     instance = AnonymizedFaker(
         'credit_card',
         'credit_card_number',
-        model_missing_values=True
     )
     transformed = instance.fit_transform(data, 'cc')
     reverse_transform = instance.reverse_transform(transformed)
@@ -97,12 +95,11 @@ def test_anonymizedfaker_custom_provider_with_nans():
     expected_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
         'username': ['a', 'b', 'c', 'd', 'e'],
-        'cc.is_null': [0.0, 1.0, 0.0, 0.0, 0.0]
     })
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     assert len(reverse_transform['cc']) == 5
-    assert reverse_transform['cc'].isna().sum() == 1
+    assert reverse_transform['cc'].isna().sum() == 0
 
 
 def test_pseudoanonymizedfaker():
