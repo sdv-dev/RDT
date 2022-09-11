@@ -39,12 +39,6 @@ TRANSFORMER_ARGS = {
     'ClusterBasedNormalizer': {
         'model_missing_values': True
     },
-    'AnonymizedFaker': {
-        'model_missing_values': True
-    },
-    'RegexGenerator': {
-        'model_missing_values': True
-    },
 }
 
 
