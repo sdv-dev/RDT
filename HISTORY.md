@@ -1,5 +1,37 @@
 # History
 
+## 1.2.1 - 2022-9-12
+
+This release fixes a bug that caused the `UnixTimestampEncoder` to return data with the incorrect datetime format. It also fixes a bug that caused the null column
+not to be reverse transformed when using the `UnixTimestampEncoder` when the `missing_value_replacement` was not set.
+
+### Bugs
+
+* Inconsistency in date format after reverse transform - Issue [#515](https://github.com/sdv-dev/RDT/issues/515) by @pvk-developer
+* Fix calling null_transformer with model_missing_values. - PR [#550](https://github.com/sdv-dev/RDT/pull/550) by @pvk-developer
+
+## 1.2.0 - 2022-8-17
+
+This release adds a new transformer called the `PseudoAnonymizedFaker`. This transformer enables the pseudo-anonymization of your data by mapping all of a column's original values to fake values that get returned during the reverse transformation process. Each original value is always mapped to the same fake value.
+
+Additionally, this release enables the `HyperTransformer` to use categorical transformers on boolean columns. It also introduces a new parameter called `computer_representation` to the `FloatFormatter` that will allow for values to be clipped to certain bounds based on the computer type used for a numerical column.
+
+Finally, this release patches a bug that caused unpredicatable results from the `reverse_transform` method of the `FrequencyEncoder` when `add_noise` is enabled.
+
+### New Features
+
+* Add PseudoAnonymizedFaker transformer - Issue [#517](https://github.com/sdv-dev/RDT/issues/517) by @pvk-developer
+* Boolean columns should be able to use any of the categorical transformers - Issue[#527](https://github.com/sdv-dev/RDT/issues/527) by @pvk-developer
+* Update FloatFormatter with parameters for the computer representation - Issue[#521](https://github.com/sdv-dev/RDT/issues/521) by @fealho
+
+### Bugs
+
+* Unpredictable results for FrequencyEncoder(add_noise=True) - Issue [#528](https://github.com/sdv-dev/RDT/issues/528) by @fealho
+
+### Internal
+
+* Performance Tests update - Issue [#524](https://github.com/sdv-dev/RDT/issues/524) by @pvk-developer
+
 ## 1.1.0 - 2022-6-9
 
 This release adds multiple new transformers: the `CustomLabelEncoder` and the `RegexGenerator`. The `CustomLabelEncoder` works similarly 
