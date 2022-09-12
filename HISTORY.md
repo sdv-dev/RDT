@@ -1,5 +1,15 @@
 # History
 
+## 1.2.1 - 2022-9-12
+
+This release fixes a bug that caused the `UnixTimestampEncoder` to return data with the incorrect datetime format. It also fixes a bug that caused the null column
+not to be reverse transformed when using the `UnixTimestampEncoder` when the `missing_value_replacement` was not set.
+
+### Bugs
+
+* Inconsistency in date format after reverse transform - Issue [#515](https://github.com/sdv-dev/RDT/issues/515) by @pvk-developer
+* Fix calling null_transformer with model_missing_values. - PR [#550](https://github.com/sdv-dev/RDT/pull/550) by @pvk-developer
+
 ## 1.2.0 - 2022-8-17
 
 This release adds a new transformer called the `PseudoAnonymizedFaker`. This transformer enables the pseudo-anonymization of your data by mapping all of a column's original values to fake values that get returned during the reverse transformation process. Each original value is always mapped to the same fake value.
