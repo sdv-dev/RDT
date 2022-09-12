@@ -1718,8 +1718,7 @@ class TestHyperTransformer(TestCase):
 
         # Run / Assert
         expected_msg = (
-            'There are unexpected columns in the data you are trying to transform. You must '
-            'provide a transformed dataset with all the columns from the original data.'
+            'You must provide a transformed dataset with all the columns from the original data.'
         )
         with pytest.raises(Error, match=expected_msg):
             ht.reverse_transform(data)

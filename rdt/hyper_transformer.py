@@ -809,7 +809,6 @@ class HyperTransformer:
             is_subset = contained and len(data.columns) < len(self._output_columns)
             if is_subset:
                 raise Error(
-                    'There are unexpected columns in the data you are trying to transform. '
                     'You must provide a transformed dataset with all the columns from the '
                     'original data.'
                 )
