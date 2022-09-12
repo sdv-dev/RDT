@@ -5,11 +5,13 @@ import warnings
 from collections import defaultdict
 from copy import deepcopy
 
+import pandas as pd
 import yaml
 
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
-    BaseTransformer, get_default_transformer, get_transformer_instance, get_transformers_by_type)
+    BaseTransformer, get_default_transformer, get_generator_transformers, get_transformer_instance,
+    get_transformers_by_type)
 
 
 class Config(dict):
@@ -791,6 +793,52 @@ class HyperTransformer:
         """
         self.fit(data)
         return self.transform(data)
+
+    def create_anonymized_columns(self, num_rows, column_names):
+        """Create the anonymized columns for this ``HyperTransformer``.
+
+        Generate the anonymized and text based columns that use regex expressions.
+
+        Args:
+            num_rows (int):
+                Number of rows to be created. Must be an integer greater than 0.
+            column_names (list):
+                List of column names to be created.
+
+        Returns:
+            pandas.DataFrame:
+                A data frame with the newly generated columns of the size ``num_rows``.
+        """
+        if not self._fitted or self._modified_config:
+            raise NotFittedError(self._NOT_FIT_MESSAGE)
+
+        if not isinstance(num_rows, int) or num_rows <= 0:
+            raise Error("Parameter 'num_rows' must be an integer greater than 0.")
+
+        unknown_columns = self._subset(column_names, self._input_columns, not_in=True)
+        if unknown_columns:
+            raise Error(
+                f"Unknown column name {unknown_columns}. Use 'get_config()' to see a "
+                'list of valid column names.'
+            )
+
+        transformers = []
+        for column_name in column_names:
+            transformer = self._transformers_tree.get(column_name, {}).get('transformer')
+            if not isinstance(transformer, get_generator_transformers()):
+                raise Error(
+                    f"Column '{column_name}' cannot be anonymized. All columns must be assigned "
+                    "to 'AnonymizedFaker', 'RegexGenerator' or other ``generator``. Use "
+                    "'get_config()' to see the current transformer assignments."
+                )
+
+            transformers.append(transformer)
+
+        data = pd.DataFrame(index=range(num_rows))
+        for transformer in transformers:
+            data = transformer.reverse_transform(data)
+
+        return data
 
     def _reverse_transform(self, data, prevent_subset):
         self._validate_config_exists()

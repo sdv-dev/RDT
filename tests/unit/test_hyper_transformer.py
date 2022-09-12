@@ -12,8 +12,8 @@ import pytest
 from rdt import HyperTransformer
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
-    BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer, LabelEncoder,
-    OneHotEncoder, UnixTimestampEncoder)
+    AnonymizedFaker, BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer,
+    LabelEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder)
 
 
 class TestHyperTransformer(TestCase):
@@ -1528,6 +1528,195 @@ class TestHyperTransformer(TestCase):
             transformer.transform.call_args[0][0],
             expect_call_args_transform
         )
+
+    def test_create_anonymized_columns(self):
+        """Test ``create_anonymized_columns``.
+
+        Test that ``create_anonymized_columns`` calls the expected transformers and generates
+        new data.
+
+        Setup:
+            - Instance of ``HyperTransformer``.
+
+        Mock:
+            - Mock a transformer to return a ``dataframe``.
+            - Mock ``instance._transformers_tree`` to return the transformer.
+
+        Input:
+            - ``num_rows`` 10.
+            - ``column_names`` a list with two columns.
+
+        Output:
+            - Dataframe with newly generated data from the return values of the transformers.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        instance._modified_config = False
+        instance._subset.return_value = False
+
+        random_element = AnonymizedFaker(
+            function_name='random_element',
+            function_kwargs={'elements': ['a']}
+        )
+        random_element.columns = ['random_element']
+        random_element.output_columns = []
+
+        regex_id = RegexGenerator(regex_format='id_[0-9]')
+        regex_id.columns = ['id']
+        regex_id.output_columns = []
+
+        instance._transformers_tree = {
+            'id': {'transformer': regex_id},
+            'random_element': {'transformer': random_element}
+        }
+
+        # Run
+        output = HyperTransformer.create_anonymized_columns(
+            instance,
+            num_rows=5,
+            column_names=['id', 'random_element']
+        )
+
+        # Assert
+        expected_output = pd.DataFrame({
+            'id': ['id_0', 'id_1', 'id_2', 'id_3', 'id_4'],
+            'random_element': ['a', 'a', 'a', 'a', 'a']
+        })
+        pd.testing.assert_frame_equal(output, expected_output)
+
+    def test_create_anonymized_columns_not_fitted(self):
+        """Test ``create_anonymized_columns`` when the ``HyperTransformer`` is not fitted.
+
+        Expecting an error to be raised if the ``HyperTransformer`` is not fitted.
+
+        Setup:
+            - An instance of ``HyperTransformer`` without being fitted.
+
+        Expected behavior:
+            - ``NotFittedError`` is raised.
+        """
+        # Setup
+        ht = HyperTransformer()
+
+        # Run / Assert
+        error_msg = re.escape(
+            'The HyperTransformer is not ready to use. Please fit your data first using '
+            "'fit' or 'fit_transform'."
+        )
+        with pytest.raises(NotFittedError, match=error_msg):
+            ht.create_anonymized_columns(num_rows=10, column_names=['a'])
+
+    def test_create_anonymized_columns_num_rows_error(self):
+        """Test ``create_anonymized_columns``.
+
+        Test the ``create_anonymized_columns`` with ``num_rows`` being a string or a number
+        below or equal to ``0``.
+
+        Setup:
+            - Instance of ``HyperTransformer``.
+
+        Mock:
+            - Mock the instance to represent a fitted state.
+
+        Input:
+            - ``num_rows`` being a string, ``column_names`` to be ``['a']``.
+            - ``num_rows`` being a 0, ``column_names`` to be ``['a']``.
+            - ``num_rows`` being a negative number, ``column_names`` to be ``['a']``.
+
+        Expected behavior:
+            - ``Error`` is raised.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        instance._modified_config = False
+
+        # Run / Assert
+        error_msg = re.escape("Parameter 'num_rows' must be an integer greater than 0.")
+        with pytest.raises(Error, match=error_msg):
+            HyperTransformer.create_anonymized_columns(instance, num_rows='a', column_names=['a'])
+
+        with pytest.raises(Error, match=error_msg):
+            HyperTransformer.create_anonymized_columns(instance, num_rows=0, column_names=['a'])
+
+        with pytest.raises(Error, match=error_msg):
+            HyperTransformer.create_anonymized_columns(instance, num_rows=-1, column_names=['a'])
+
+    def test_create_anonymized_columns_invalid_columns(self):
+        """Test ``create_anonymized_columns``.
+
+        Test the ``create_anonymized_columns`` with ``column_names`` being unknown to the
+        ``HyperTransformer``.
+
+        Setup:
+            - Instance of ``HyperTransformer``.
+
+        Mock:
+            - Mock the instance to represent a fitted state.
+
+        Input:
+            - ``num_rows`` being a number.
+            - ``column_names`` being a list of strings that do not represent a column in the
+              ``HyperTransformer``.
+
+        Expected behavior:
+            - ``Error`` is raised.
+        """
+        # Setup
+        instance = HyperTransformer()
+        instance._fitted = True
+        instance._modified_config = False
+        instance._input_columns = ['cc', 'user_id']
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Unknown column name ['credit_card', 'id']. Use 'get_config()' to see "
+            'a list of valid column names.'
+        )
+        with pytest.raises(Error, match=error_msg):
+            instance.create_anonymized_columns(num_rows=10, column_names=['credit_card', 'id'])
+
+    def test_create_anonymized_columns_invalid_transformers(self):
+        """Test ``create_anonymized_columǹs`` with transformers that do not generate data.
+
+        Test that an error is being raised when a transformer is not a generator.
+
+        Setup:
+            - Instance of ``HyperTransformer``.
+
+        Mock:
+            - Mock the instance to represent a fitted state.
+
+        Input:
+            - ``num_rows`` being a number.
+            - ``column_names`` being a list of strings.
+
+        Expected behavior:
+            - ``Error`` is raised.
+        """
+        instance = Mock()
+        instance._fitted = True
+        instance._modified_config = False
+        instance._subset.return_value = False
+
+        instance._transformers_tree = {
+            'datetime': {'transformer': object()},
+            'random_element': {'transformer': object()}
+        }
+
+        # Run / Assert
+        error_msg = re.escape(
+            "Column 'datetime' cannot be anonymized. All columns must be assigned to "
+            "'AnonymizedFaker', 'RegexGenerator' or other ``generator``. Use "
+            "'get_config()' to see the current transformer assignments."
+        )
+        with pytest.raises(Error, match=error_msg):
+            HyperTransformer.create_anonymized_columns(
+                instance,
+                num_rows=5,
+                column_names=['datetime', 'random_element']
+            )
 
     def test_reverse_transform(self):
         """Test the ``reverse_transform`` method.
