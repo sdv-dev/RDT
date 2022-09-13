@@ -191,7 +191,7 @@ def get_generator_transformers():
     """
     generators = []
     for _, transformer in TRANSFORMERS.items():
-        if not transformer.OUTPUT_SDTYPES:
+        if transformer.IS_GENERATOR:
             generators.append(transformer)
 
     return tuple(generators)

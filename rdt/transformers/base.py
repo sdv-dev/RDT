@@ -19,6 +19,7 @@ class BaseTransformer:
     DETERMINISTIC_TRANSFORM = None
     DETERMINISTIC_REVERSE = None
     COMPOSITION_IS_IDENTITY = None
+    IS_GENERATOR = None
     NEXT_TRANSFORMERS = None
 
     columns = None

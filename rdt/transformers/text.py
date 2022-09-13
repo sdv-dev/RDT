@@ -25,6 +25,7 @@ class RegexGenerator(BaseTransformer):
 
     DETERMINISTIC_TRANSFORM = False
     DETERMINISTIC_REVERSE = False
+    IS_GENERATOR = True
     INPUT_SDTYPE = 'text'
     OUTPUT_SDTYPES = {}
 
