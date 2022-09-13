@@ -798,24 +798,29 @@ class HyperTransformer:
             raise NotFittedError(self._NOT_FIT_MESSAGE)
 
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
-        if prevent_subset:
-            contained = all(column in self._output_columns for column in data.columns)
-            is_subset = contained and len(data.columns) < len(self._output_columns)
-            if unknown_columns or is_subset:
-                raise Error(
-                    'There are unexpected columns in the data you are trying to transform. '
-                    'You must provide a transformed dataset with all the columns from the '
-                    'original data.'
-                )
-
-        elif unknown_columns:
+        if unknown_columns:
             raise Error(
                 'There are unexpected column names in the data you are trying to transform. '
                 f'A reverse transform is not defined for {unknown_columns}.'
             )
 
-        for transformer in reversed(self._transformers_sequence):
-            data = transformer.reverse_transform(data, drop=False)
+        if prevent_subset:
+            contained = all(column in self._output_columns for column in data.columns)
+            is_subset = contained and len(data.columns) < len(self._output_columns)
+            if is_subset:
+                raise Error(
+                    'You must provide a transformed dataset with all the columns from the '
+                    'original data.'
+                )
+
+            for transformer in reversed(self._transformers_sequence):
+                data = transformer.reverse_transform(data, drop=False)
+
+        else:
+            for transformer in reversed(self._transformers_sequence):
+                output_columns = transformer.get_output_columns()
+                if output_columns and set(output_columns).issubset(data.columns):
+                    data = transformer.reverse_transform(data, drop=False)
 
         reversed_columns = self._subset(self._input_columns, data.columns)
 

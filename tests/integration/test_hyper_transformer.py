@@ -8,11 +8,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt import HyperTransformer
+from rdt import HyperTransformer, get_demo
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
-    DEFAULT_TRANSFORMERS, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
-    OneHotEncoder, UnixTimestampEncoder, get_default_transformer, get_default_transformers)
+    DEFAULT_TRANSFORMERS, AnonymizedFaker, BaseTransformer, BinaryEncoder, FloatFormatter,
+    FrequencyEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder, get_default_transformer,
+    get_default_transformers)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -734,3 +735,57 @@ def test_hyper_transformer_with_supported_sdtypes():
 
     for transformer in ht.get_config()['transformers'].values():
         assert not isinstance(transformer, BinaryEncoder)
+
+
+def test_hyper_transformer_reverse_transform_subset_and_generators():
+    """Test the ``HyperTransformer`` with ``reverse_transform_subset``.
+
+    Test that when calling ``reverse_transform_subset`` and there are ``generators`` like
+    ``AnonymizedFaker`` or ``RegexGenerator`` those are not being used in the ``subset``, and
+    also any other transformer which can't transform the given columns.
+
+    Setup:
+        - DataFrame with multiple datatypes.
+        - Instance of HyperTransformer.
+        - Add ``pii`` using ``AnonymizedFaker`` and ``RegexGenerator``.
+
+    Run:
+        - Use ``fit_transform`` then ``revese_transform_subsample``.
+
+    Assert:
+        - Assert that the ``reverse_transformed`` data does not contain any additional columns
+          but the expected one.
+    """
+    # Setup
+    customers = get_demo()
+    customers['id'] = ['ID_a', 'ID_b', 'ID_c', 'ID_d', 'ID_e']
+
+    # Create a config
+    ht = HyperTransformer()
+    ht.detect_initial_config(customers)
+
+    # credit_card and id are pii and text columns
+    ht.update_sdtypes({
+        'credit_card': 'pii',
+        'id': 'text'
+    })
+
+    ht.update_transformers({
+        'credit_card': AnonymizedFaker(),
+        'id': RegexGenerator(regex_format='id_[a-z]')
+    })
+
+    # Run
+    ht.fit(customers)
+    transformed = ht.transform(customers)
+    reverse_transformed = ht.reverse_transform_subset(transformed[['last_login.value']])
+
+    # Assert
+    expected_transformed_columns = [
+        'last_login.value',
+        'email_optin.value',
+        'age.value',
+        'dollars_spent.value'
+    ]
+    assert all(expected_transformed_columns == transformed.columns)
+    assert reverse_transformed.columns == ['last_login']
