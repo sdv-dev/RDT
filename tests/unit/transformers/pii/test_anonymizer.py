@@ -381,7 +381,7 @@ class TestAnonymizedFaker:
         )
         with pytest.raises(Error, match=error_msg):
             instance._reverse_transform(data)
-            
+
     def test__reverse_transform_size_is_length_of_data(self):
         """Test the ``_reverse_transform`` method.
 
