@@ -223,3 +223,34 @@ class TestRegexGenerator:
         # Assert
         expected_result = np.array(['A', 'B', 'C', 'D'])
         np.testing.assert_array_equal(result, expected_result)
+
+    @patch('rdt.transformers.text.strings_from_regex')
+    def test__reverse_transform_not_enough_unique_values(self, mock_strings_from_regex):
+        """Test the ``_reverse_transform`` method.
+        Validate that the ``_reverse_transform`` method calls the ``strings_from_regex``
+        function using the ``instance.regex_format`` and then generates the
+        ``instance.data_length`` number of data.
+        Setup:
+            - Initialize a ``RegexGenerator`` instance with ``enforce_uniqueness`` to ``True``.
+            - Set ``data_length`` to 6.
+            - Initialize a generator.
+        Mock:
+            - Mock the ``strings_from_regex`` function to return a generator and a size of 2.
+        Side Effects:
+            - An ``Error`` is being raised as not enough unique values can be generated.
+        """
+        # Setup
+        instance = RegexGenerator('[A-Z]', enforce_uniqueness=True)
+        instance.data_length = 6
+        generator = AsciiGenerator(5)
+        mock_strings_from_regex.return_value = (generator, 2)
+        instance.columns = ['a']
+        columns_data = pd.Series()
+
+        # Assert
+        error_msg = re.escape(
+            'The regex is not able to generate 6 unique values. Please use a different regex '
+            "for column ('a')."
+        )
+        with pytest.raises(Error, match=error_msg):
+            instance._reverse_transform(columns_data)
