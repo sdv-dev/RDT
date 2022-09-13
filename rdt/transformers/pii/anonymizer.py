@@ -42,6 +42,10 @@ class AnonymizedFaker(BaseTransformer):
             will be created only if there are null values. If ``True``, create the new column if
             there are null values. If ``False``, do not create the new column even if there
             are null values. Defaults to ``False``.
+        enforce_uniqueness (bool):
+            Whether or not to ensure that the new anonymized data is all unique. If it isn't
+            possible to create the requested number of rows, then an ``Error`` will be raised.
+            Defaults to ``False``.
     """
 
     DETERMINISTIC_TRANSFORM = False
@@ -94,8 +98,10 @@ class AnonymizedFaker(BaseTransformer):
             )
 
     def __init__(self, provider_name=None, function_name=None, function_kwargs=None,
-                 locales=None, missing_value_replacement=None, model_missing_values=False):
+                 locales=None, missing_value_replacement=None,
+                 model_missing_values=False, enforce_uniqueness=False):
         self.data_length = None
+        self.enforce_uniqueness = enforce_uniqueness
         self.provider_name = provider_name if provider_name else 'BaseProvider'
         if self.provider_name != 'BaseProvider' and function_name is None:
             raise Error(
@@ -117,6 +123,9 @@ class AnonymizedFaker(BaseTransformer):
 
     def _function(self):
         """Return a callable ``faker`` function."""
+        if self.enforce_uniqueness:
+            return getattr(self.faker.unique, self.function_name)(**self.function_kwargs)
+
         return getattr(self.faker, self.function_name)(**self.function_kwargs)
 
     def get_output_sdtypes(self):
@@ -179,10 +188,17 @@ class AnonymizedFaker(BaseTransformer):
         else:
             sample_size = self.data_length
 
-        reverse_transformed = np.array([
-            self._function()
-            for _ in range(sample_size)
-        ], dtype=object)
+        try:
+            reverse_transformed = np.array([
+                self._function()
+                for _ in range(sample_size)
+            ], dtype=object)
+        except faker.exceptions.UniquenessException as exception:
+            raise Error(
+                f'The Faker function you specified is not able to generate {sample_size} unique '
+                'values. Please use a different Faker function for column '
+                f"('{self.get_input_column()}')."
+            ) from exception
 
         if self.null_transformer.models_missing_values():
             reverse_transformed = np.column_stack((reverse_transformed, data))
@@ -234,7 +250,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
     """
 
     OUTPUT_SDTYPES = {'value': 'categorical'}
-    NEXT_TRANSFORMER = {
+    NEXT_TRANSFORMERS = {
         'value': LabelEncoder(add_noise=True)
     }
 
@@ -254,13 +270,10 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             function_name=function_name,
             function_kwargs=function_kwargs,
             locales=locales,
+            enforce_uniqueness=True
         )
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
-
-    def _function(self):
-        """Return a callable ``faker`` function."""
-        return getattr(self.faker.unique, self.function_name)(**self.function_kwargs)
 
     def get_mapping(self):
         """Return the mapping dictionary."""
