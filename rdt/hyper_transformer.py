@@ -10,8 +10,7 @@ import yaml
 
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
-    BaseTransformer, get_default_transformer, get_generator_transformers, get_transformer_instance,
-    get_transformers_by_type)
+    BaseTransformer, get_default_transformer, get_transformer_instance, get_transformers_by_type)
 
 
 class Config(dict):
@@ -707,6 +706,10 @@ class HyperTransformer:
                 'values.'
             )
 
+    def _validate_fitted(self):
+        if not self._fitted or self._modified_config:
+            raise NotFittedError(self._NOT_FIT_MESSAGE)
+
     def fit(self, data):
         """Fit the transformers to the data.
 
@@ -727,8 +730,7 @@ class HyperTransformer:
 
     def _transform(self, data, prevent_subset):
         self._validate_config_exists()
-        if not self._fitted or self._modified_config:
-            raise NotFittedError(self._NOT_FIT_MESSAGE)
+        self._validate_fitted()
 
         unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
         if prevent_subset:
@@ -809,8 +811,7 @@ class HyperTransformer:
             pandas.DataFrame:
                 A data frame with the newly generated columns of the size ``num_rows``.
         """
-        if not self._fitted or self._modified_config:
-            raise NotFittedError(self._NOT_FIT_MESSAGE)
+        self._validate_fitted()
 
         if not isinstance(num_rows, int) or num_rows <= 0:
             raise Error("Parameter 'num_rows' must be an integer greater than 0.")
@@ -825,7 +826,7 @@ class HyperTransformer:
         transformers = []
         for column_name in column_names:
             transformer = self._transformers_tree.get(column_name, {}).get('transformer')
-            if not isinstance(transformer, get_generator_transformers()):
+            if not transformer.is_generator():
                 raise Error(
                     f"Column '{column_name}' cannot be anonymized. All columns must be assigned "
                     "to 'AnonymizedFaker', 'RegexGenerator' or other ``generator``. Use "
@@ -842,8 +843,7 @@ class HyperTransformer:
 
     def _reverse_transform(self, data, prevent_subset):
         self._validate_config_exists()
-        if not self._fitted or self._modified_config:
-            raise NotFittedError(self._NOT_FIT_MESSAGE)
+        self._validate_fitted()
 
         unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
         if prevent_subset:

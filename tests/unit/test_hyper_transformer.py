@@ -1701,8 +1701,8 @@ class TestHyperTransformer(TestCase):
         instance._subset.return_value = False
 
         instance._transformers_tree = {
-            'datetime': {'transformer': object()},
-            'random_element': {'transformer': object()}
+            'datetime': {'transformer': FloatFormatter()},
+            'random_element': {'transformer': FloatFormatter()}
         }
 
         # Run / Assert

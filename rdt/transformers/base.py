@@ -109,6 +109,15 @@ class BaseTransformer:
         """
         return self.COMPOSITION_IS_IDENTITY
 
+    def is_generator(self):
+        """Return whether this transformer generates new data or not.
+
+        Returns:
+            bool:
+                Whether this transformer generates new data or not.
+        """
+        return bool(self.IS_GENERATOR)
+
     def get_next_transformers(self):
         """Return the suggested next transformer to be used for each column.
 

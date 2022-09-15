@@ -180,18 +180,3 @@ def get_default_transformer(sdtype):
     """
     default_transformers = get_default_transformers()
     return default_transformers[sdtype]
-
-
-@lru_cache()
-def get_generator_transformers():
-    """Get transformers that generate data.
-
-    Returns:
-        tuple of transformers that generate data.
-    """
-    generators = []
-    for _, transformer in TRANSFORMERS.items():
-        if transformer.IS_GENERATOR:
-            generators.append(transformer)
-
-    return tuple(generators)
