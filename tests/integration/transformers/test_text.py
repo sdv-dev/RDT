@@ -58,18 +58,17 @@ def test_regexgenerator_with_nans():
         'username': ['a', np.nan, 'c', 'd', 'e']
     })
 
-    instance = RegexGenerator('[A-Z]', model_missing_values=True)
+    instance = RegexGenerator('[A-Z]')
     transformed = instance.fit_transform(data, 'username')
     reverse_transform = instance.reverse_transform(transformed)
 
     expected_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
-        'username.is_null': [0.0, 1.0, 0.0, 0.0, 0.0]
     })
 
     expected_reverse_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
-        'username': ['A', np.nan, 'C', 'D', 'E'],
+        'username': ['A', 'B', 'C', 'D', 'E'],
     })
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
@@ -83,18 +82,17 @@ def test_regexgenerator_data_length_bigger_than_regex():
         'username': ['a', np.nan, 'c', 'd', 'e']
     })
 
-    instance = RegexGenerator('[a-b]', model_missing_values=True)
+    instance = RegexGenerator('[a-b]')
     transformed = instance.fit_transform(data, 'username')
     reverse_transform = instance.reverse_transform(transformed)
 
     expected_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
-        'username.is_null': [0.0, 1.0, 0.0, 0.0, 0.0]
     })
 
     expected_reverse_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
-        'username': ['a', np.nan, 'a', 'b', 'a'],
+        'username': ['a', 'b', 'a', 'b', 'a'],
     })
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
@@ -108,7 +106,7 @@ def test_regexgenerator_input_data_bigger_than_data_length():
         'username': ['a', 'b', 'c', 'd', 'e']
     })
 
-    instance = RegexGenerator('[a-b]', model_missing_values=True)
+    instance = RegexGenerator('[a-b]')
     instance.fit(data, 'username')
 
     transformed = pd.DataFrame({

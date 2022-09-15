@@ -401,6 +401,30 @@ class TestBaseTransformer:
         # Assert
         assert output is True
 
+    def test_is_generator(self):
+        """Test the ``is_generator`` method.
+
+        Validate that this method properly returns the ``IS_GENERATOR`` attribute.
+
+        Setup:
+            - create a ``Dummy`` class which inherits from the ``BaseTransformer``, where
+            ``IS_GENERATOR`` is set to ``True``.
+
+        Output:
+            - the boolean value stored in ``COMPOSITION_IS_IDENTITY``.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            IS_GENERATOR = True
+
+        dummy_transformer = Dummy()
+
+        # Run
+        output = dummy_transformer.is_generator()
+
+        # Assert
+        assert output is True
+
     def test_get_next_transformers(self):
         """Test the ``get_next_transformers`` method.
 
