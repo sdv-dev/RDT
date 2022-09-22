@@ -99,13 +99,6 @@ class HyperTransformer:
     _TRANSFORMERS_TO_CLASS = {
         class_.__name__: class_ for class_ in BaseTransformer.get_subclasses()
     }
-    _EXPECTED_KWARGS = {
-        'numerical': frozenset(['representation']),
-        'datetime': frozenset(['datetime_format']),
-        'categorical': frozenset(['order', 'order_by']),
-        'boolean': frozenset([]),
-        'text': frozenset(['regex_format']),
-    }
 
     @staticmethod
     def _user_message(text, prefix=None):
