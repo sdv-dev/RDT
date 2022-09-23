@@ -2065,40 +2065,6 @@ class TestHyperTransformer(TestCase):
         }
         assert ht.field_transformers == expected_field_transformers
 
-    def test_update_transformers_by_sdtype_with_transformer_as_none(self):
-        """Test ``update_transformers_by_sdtype`` with ``transformer`` as ``None``.
-
-        Ensure that ``update_transformers_by_sdtype`` works with ``transformer`` as ``None``.
-
-        Setup:
-            - HyperTransformer instance with ``field_transformers`` and ``field-data_types``.
-
-        Side Effects:
-            - HyperTransformer's ``field_transformers`` are upated with the ``None`` value.
-        """
-        # Setup
-        ht = HyperTransformer()
-        ff = FloatFormatter()
-        ht.field_transformers = {
-            'categorical_column': FrequencyEncoder(),
-            'numerical_column': ff,
-        }
-        ht.field_sdtypes = {
-            'categorical_column': 'categorical',
-            'numerical_column': 'numerical',
-
-        }
-
-        # Run
-        ht.update_transformers_by_sdtype('categorical', None)
-
-        # Assert
-        expected_field_transformers = {
-            'categorical_column': None,
-            'numerical_column': ff,
-        }
-        assert ht.field_transformers == expected_field_transformers
-
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_by_sdtype_field_sdtypes_fitted(self, mock_warnings):
         """Test ``update_transformers_by_sdtype`` if ``HyperTransformer`` has aleady been fit.
@@ -2114,7 +2080,7 @@ class TestHyperTransformer(TestCase):
             - Warnings from the HyperTransformer.
 
         Side Effects:
-            - HyperTransformer's ``field_transformers`` are upated with the input data.
+            - HyperTransformer's ``field_transformers`` are updated with the input data.
         """
         # Setup
         ht = HyperTransformer()
@@ -2127,25 +2093,23 @@ class TestHyperTransformer(TestCase):
         ht.update_transformers_by_sdtype('categorical', transformer)
 
         # Assert
-        expected_warnings_msg = (
-            'For this change to take effect, please refit your data using '
-            "'fit' or 'fit_transform'."
-        )
+        expected_warnings_msgs = [
+            call(
+                'For this change to take effect, please refit your data using '
+                "'fit' or 'fit_transform'."
+            ),
+            call(
+                "The 'transformer' parameter will no longer be supported in future "
+                "versions of the RDT. Please use the 'transformer_name' and "
+                "'transformer_parameters' parameters instead.", DeprecationWarning
+            )
+        ]
 
-        mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
+        mock_warnings.warn.assert_has_calls(expected_warnings_msgs)
         assert ht.field_transformers == {'categorical_column': transformer}
 
     def test_update_transformers_by_sdtype_unsupported_sdtype_raises_error(self):
-        """Test ``update_transformers_by_sdtype`` with an unsupported sdtype.
-
-        An error should be raised.
-
-        Setup:
-            - HyperTransformer instance with ``field_transformers`` and ``field-data_types``.
-
-        Side Effects:
-            - Error is raised with a message about invalid sdtypes and premium sdtypes.
-        """
+        """Passing an incorrect ``sdtype`` should raise an error."""
         # Setup
         ht = HyperTransformer()
         ht.field_transformers = {
@@ -2158,12 +2122,9 @@ class TestHyperTransformer(TestCase):
         }
 
         # Run / Assert
-        expected_msg = (
-            'Invalid sdtype. If you are trying to use a premium sdtype, contact info@sdv.dev '
-            'about RDT Add-Ons.'
-        )
+        expected_msg = "Invalid transformer name 'LabelEncoder' for the 'fake_type' sdtype."
         with pytest.raises(Error, match=expected_msg):
-            ht.update_transformers_by_sdtype('fake_type', Mock())
+            ht.update_transformers_by_sdtype('fake_type', transformer_name='LabelEncoder')
 
     def test_update_transformers_by_sdtype_bad_transformer_raises_error(self):
         """Test ``update_transformers_by_sdtype`` with an object that isn't a transformer instance.
@@ -2214,6 +2175,155 @@ class TestHyperTransformer(TestCase):
         expected_msg = "The transformer you've assigned is incompatible with the sdtype."
         with pytest.raises(Error, match=expected_msg):
             ht.update_transformers_by_sdtype('categorical', FloatFormatter())
+
+    def test_update_transformers_by_sdtype_with_transformer_none_transformer_name_none(self):
+        """When ``transformer_name`` and ``transformer`` are both ``None``, it should crash."""
+        # Setup
+        ht = HyperTransformer()
+        ht.field_sdtypes = {'doest matter'}
+
+        # Run and Assert
+        err_msg = "Missing required parameter 'transformer_name'."
+        with pytest.raises(Error, match=err_msg):
+            ht.update_transformers_by_sdtype('categorical', None, None, None)
+
+    def test_update_transformers_by_sdtype_incorrect_transformer_name(self):
+        """When ``transformer_name`` is not a valid transformer, it should crash."""
+        # Setup
+        ht = HyperTransformer()
+        ht.field_sdtypes = {'doesnt matter'}
+
+        # Run and Assert
+        err_msg = "Invalid transformer name 'Transformer' for the 'categorical' sdtype."
+        with pytest.raises(Error, match=err_msg):
+            ht.update_transformers_by_sdtype('categorical', transformer_name='Transformer')
+
+    def test_update_transformers_by_sdtype_incorrect_sdtype_for_transformer(self):
+        """When ``sdtype`` is not valid for the transformer, it should crash."""
+        # Setup
+        ht = HyperTransformer()
+        ht.field_sdtypes = {'doesnt matter'}
+
+        # Run and Assert
+        err_msg = "Invalid transformer name 'LabelEncoder' for the 'numerical' sdtype."
+        with pytest.raises(Error, match=err_msg):
+            ht.update_transformers_by_sdtype('numerical', transformer_name='LabelEncoder')
+
+    def test_update_transformers_by_sdtype_incorrect_sdtype(self):
+        """When ``sdtype`` is invalid, it should crash."""
+        # Setup
+        ht = HyperTransformer()
+        ht.field_sdtypes = {'doesnt matter'}
+
+        # Run and Assert
+        err_msg = "Invalid transformer name 'LabelEncoder' for the 'bla' sdtype."
+        with pytest.raises(Error, match=err_msg):
+            ht.update_transformers_by_sdtype('bla', transformer_name='LabelEncoder')
+
+    def test_update_transformers_by_sdtype_incorrect_transformer_parameters(self):
+        """When ``transformer_parameters`` has invalid values, it should crash."""
+        # Setup
+        ht = HyperTransformer()
+        ht.field_sdtypes = {'doesnt matter'}
+
+        # Run and Assert
+        err_msg = re.escape("Invalid parameters ('false', 'order') for the 'LabelEncoder'.")
+        with pytest.raises(Error, match=err_msg):
+            ht.update_transformers_by_sdtype(
+                'categorical', transformer_name='LabelEncoder',
+                transformer_parameters={'order_by': [], 'order': [], 'false': []}
+            )
+
+    def test_update_transformers_by_sdtype_transformer_name(self):
+        """Test setting ``transformer_name`` to a transformer works.
+
+        Expect the ``field_transformers`` to be updated with an instance of the passed
+        ``transformer_name``.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ff = FloatFormatter()
+        ht.field_transformers = {
+            'categorical_column': FrequencyEncoder(),
+            'numerical_column': ff,
+        }
+        ht.field_sdtypes = {
+            'categorical_column': 'categorical',
+            'numerical_column': 'numerical',
+        }
+
+        # Run
+        ht.update_transformers_by_sdtype('categorical', transformer_name='LabelEncoder')
+
+        # Assert
+        assert len(ht.field_transformers) == 2
+        assert ht.field_transformers['numerical_column'] == ff
+        assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
+
+    @patch('rdt.hyper_transformer.warnings')
+    def test_update_transformers_by_sdtype_transformer_name_and_transformer(self, mock_warning):
+        """Test setting ``transformer_name`` ignores ``transformer`` parameter.
+
+        Expect the ``transformer`` parameter to be ignored, a warning to be raised,
+        and the ``field_transformers`` to be updated with an instance of the passed
+        ``transformer_name`` like normal.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ff = FloatFormatter()
+        ht.field_transformers = {
+            'categorical_column': FrequencyEncoder(),
+            'numerical_column': ff,
+        }
+        ht.field_sdtypes = {
+            'categorical_column': 'categorical',
+            'numerical_column': 'numerical',
+        }
+
+        # Run
+        ht.update_transformers_by_sdtype(
+            'categorical', transformer='doesnt matter', transformer_name='LabelEncoder')
+
+        # Assert
+        expected_msg = (
+            "The 'transformer' parameter will no longer be supported in future versions "
+            "of the RDT. Using the 'transformer_name' parameter instead."
+        )
+        mock_warning.warn.assert_called_once_with(expected_msg, DeprecationWarning)
+        assert len(ht.field_transformers) == 2
+        assert ht.field_transformers['numerical_column'] == ff
+        assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
+
+    def test_update_transformers_by_sdtype_with_transformer_name_transformer_parameters(self):
+        """Test setting ``transformer_name`` and ``transformer_parameters`` works.
+
+        Expect the `field_transformers`` to be updated with an instance of the passed
+        ``transformer_name`` with parameters set by ``transformer_parameters`.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ff = FloatFormatter()
+        ht.field_transformers = {
+            'categorical_column': FrequencyEncoder(),
+            'numerical_column': ff,
+        }
+        ht.field_sdtypes = {
+            'categorical_column': 'categorical',
+            'numerical_column': 'numerical',
+        }
+
+        # Run
+        ht.update_transformers_by_sdtype(
+            'categorical',
+            transformer_name='LabelEncoder',
+            transformer_parameters={'order_by': 'alphabetical'}
+        )
+
+        # Assert
+        assert len(ht.field_transformers) == 2
+        assert ht.field_transformers['numerical_column'] == ff
+        assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
+        assert ht.field_transformers['categorical_column'].order_by == 'alphabetical'
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_fitted(self, mock_warnings):

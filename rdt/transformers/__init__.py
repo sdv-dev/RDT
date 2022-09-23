@@ -94,6 +94,21 @@ DEFAULT_TRANSFORMERS = {
 }
 
 
+@lru_cache()
+def get_class_by_transformer_name():
+    """Return a transformer class from a transformer name.
+
+    Args:
+        transformer_name (str):
+            Transformer name ('LabelEncoder', 'FloatFormatter', etc).
+
+    Returns:
+        BaseTransformer:
+            BaseTransformer subclass class object.
+    """
+    return {class_.__name__: class_ for class_ in BaseTransformer.get_subclasses()}
+
+
 def get_transformer_class(transformer):
     """Return a ``transformer`` class from a ``str``.
 
