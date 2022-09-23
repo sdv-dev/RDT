@@ -207,7 +207,7 @@ class FrequencyEncoder(BaseTransformer):
         is_data_greater_than_starts = (data >= starts)[:, ::-1]
         interval_indexes = num_categories - np.argmax(is_data_greater_than_starts, axis=1) - 1
 
-        get_category_from_index = list(self.starts['category']).__getitem__  # pylint:disable=E1136
+        get_category_from_index = list(self.starts.category).__getitem__
         return pd.Series(interval_indexes).apply(get_category_from_index).astype(self.dtype)
 
     def _reverse_transform_by_category(self, data):
@@ -328,8 +328,8 @@ class OneHotEncoder(BaseTransformer):
         """
         data = self._prepare_data(data)
 
-        null = pd.isna(data)
-        self._uniques = list(pd.unique(data[~null]))  # pylint: disable=E1130
+        null = pd.isna(data).to_numpy()
+        self._uniques = list(pd.unique(data[~null]))
         self._dummy_na = null.any()
         self._num_dummies = len(self._uniques)
         self._indexer = list(range(self._num_dummies))

@@ -2123,7 +2123,7 @@ class TestHyperTransformer(TestCase):
 
         # Run / Assert
         expected_msg = "Invalid transformer name 'LabelEncoder' for the 'fake_type' sdtype."
-        with pytest.raises(ValueError, match=expected_msg):
+        with pytest.raises(Error, match=expected_msg):
             ht.update_transformers_by_sdtype('fake_type', transformer_name='LabelEncoder')
 
     def test_update_transformers_by_sdtype_bad_transformer_raises_error(self):
@@ -2184,7 +2184,7 @@ class TestHyperTransformer(TestCase):
 
         # Run and Assert
         err_msg = "Missing required parameter 'transformer_name'."
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(Error, match=err_msg):
             ht.update_transformers_by_sdtype('categorical', None, None, None)
 
     def test_update_transformers_by_sdtype_incorrect_transformer_name(self):
@@ -2195,7 +2195,7 @@ class TestHyperTransformer(TestCase):
 
         # Run and Assert
         err_msg = "Invalid transformer name 'Transformer' for the 'categorical' sdtype."
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(Error, match=err_msg):
             ht.update_transformers_by_sdtype('categorical', transformer_name='Transformer')
 
     def test_update_transformers_by_sdtype_incorrect_sdtype_for_transformer(self):
@@ -2206,7 +2206,7 @@ class TestHyperTransformer(TestCase):
 
         # Run and Assert
         err_msg = "Invalid transformer name 'LabelEncoder' for the 'numerical' sdtype."
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(Error, match=err_msg):
             ht.update_transformers_by_sdtype('numerical', transformer_name='LabelEncoder')
 
     def test_update_transformers_by_sdtype_incorrect_sdtype(self):
@@ -2217,7 +2217,7 @@ class TestHyperTransformer(TestCase):
 
         # Run and Assert
         err_msg = "Invalid transformer name 'LabelEncoder' for the 'bla' sdtype."
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(Error, match=err_msg):
             ht.update_transformers_by_sdtype('bla', transformer_name='LabelEncoder')
 
     def test_update_transformers_by_sdtype_incorrect_transformer_parameters(self):
@@ -2228,7 +2228,7 @@ class TestHyperTransformer(TestCase):
 
         # Run and Assert
         err_msg = re.escape("Invalid parameters ('false', 'order') for the 'LabelEncoder'.")
-        with pytest.raises(ValueError, match=err_msg):
+        with pytest.raises(Error, match=err_msg):
             ht.update_transformers_by_sdtype(
                 'categorical', transformer_name='LabelEncoder',
                 transformer_parameters={'order_by': [], 'order': [], 'false': []}

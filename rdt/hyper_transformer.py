@@ -11,7 +11,8 @@ import yaml
 
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
-    BaseTransformer, get_default_transformer, get_transformer_instance, get_transformers_by_type)
+    BaseTransformer, get_class_by_transformer_name, get_default_transformer,
+    get_transformer_instance, get_transformers_by_type)
 
 
 class Config(dict):
@@ -96,9 +97,6 @@ class HyperTransformer:
         'The HyperTransformer is not ready to use. Please fit your data first using '
         "'fit' or 'fit_transform'."
     )
-    _TRANSFORMERS_TO_CLASS = {
-        class_.__name__: class_ for class_ in BaseTransformer.get_subclasses()
-    }
 
     @staticmethod
     def _user_message(text, prefix=None):
@@ -314,7 +312,7 @@ class HyperTransformer:
 
         if transformer_name is None:
             if transformer is None:
-                raise ValueError("Missing required parameter 'transformer_name'.")
+                raise Error("Missing required parameter 'transformer_name'.")
 
             if not isinstance(transformer, BaseTransformer):
                 raise Error('Invalid transformer. Please input an rdt transformer object.')
@@ -323,22 +321,22 @@ class HyperTransformer:
                 raise Error("The transformer you've assigned is incompatible with the sdtype.")
 
         else:
-            if transformer_name not in self._TRANSFORMERS_TO_CLASS or sdtype not in \
-                    self._TRANSFORMERS_TO_CLASS[transformer_name].get_supported_sdtypes():
-                raise ValueError(
+            if transformer_name not in get_class_by_transformer_name() or sdtype not in \
+                    get_class_by_transformer_name()[transformer_name].get_supported_sdtypes():
+                raise Error(
                     f"Invalid transformer name '{transformer_name}' for the '{sdtype}' sdtype.")
 
             if transformer_parameters is not None:
-                transformer = self._TRANSFORMERS_TO_CLASS[transformer_name]
+                transformer = get_class_by_transformer_name()[transformer_name]
                 valid = inspect.signature(transformer).parameters
                 invalid_parameters = {arg for arg in transformer_parameters if arg not in valid}
                 if invalid_parameters:
-                    raise ValueError(
+                    raise Error(
                         f'Invalid parameters {tuple(sorted(invalid_parameters))} '
                         f"for the '{transformer_name}'."
                     )
 
-    def _warnings_update_transformers_by_sdtype(self, transformer, transformer_name):
+    def _warn_update_transformers_by_sdtype(self, transformer, transformer_name):
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
@@ -378,16 +376,16 @@ class HyperTransformer:
         """
         self._validate_update_transformers_by_sdtype(
             sdtype, transformer, transformer_name, transformer_parameters)
-        self._warnings_update_transformers_by_sdtype(transformer, transformer_name)
+        self._warn_update_transformers_by_sdtype(transformer, transformer_name)
 
         transformer_instance = transformer
         if transformer_name is not None:
             if transformer_parameters is not None:
                 transformer_instance = \
-                    self._TRANSFORMERS_TO_CLASS[transformer_name](**transformer_parameters)
+                    get_class_by_transformer_name()[transformer_name](**transformer_parameters)
 
             else:
-                transformer_instance = self._TRANSFORMERS_TO_CLASS[transformer_name]()
+                transformer_instance = get_class_by_transformer_name()[transformer_name]()
 
         for field, field_sdtype in self.field_sdtypes.items():
             if field_sdtype == sdtype:
