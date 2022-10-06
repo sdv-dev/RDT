@@ -2436,7 +2436,7 @@ class TestHyperTransformer(TestCase):
         instance = HyperTransformer()
         instance._fitted = False
         mock_transformer = Mock()
-        mock_transformer.get_input_sdtype.return_value = 'datetime'
+        mock_transformer.get_supported_sdtype.return_value = ['datetime']
         column_name_to_transformer = {
             'my_column': mock_transformer
         }

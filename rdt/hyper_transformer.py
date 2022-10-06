@@ -39,37 +39,6 @@ class HyperTransformer:
 
     The ``HyperTransformer`` class contains a collection of ``transformers`` that can be
     used to transform and reverse transform one or more columns at once.
-
-    Example:
-        Create a simple ``HyperTransformer`` instance that will decide which transformers
-        to use based on the fit data ``dtypes``.
-
-        >>> ht = HyperTransformer()
-
-        Create a ``HyperTransformer`` passing a dict mapping fields to sdtypes.
-
-        >>> field_sdtypes = {
-        ...     'a': 'categorical',
-        ...     'b': 'numerical'
-        ... }
-        >>> ht = HyperTransformer(field_sdtypes=field_sdtypes)
-
-        Create a ``HyperTransformer`` passing a ``field_transformers`` dict.
-        (Note: The transformers used in this example may not exist and are just used
-        to illustrate the different way that a transformer can be defined for a field).
-
-        >>> field_transformers = {
-        ...     'email': EmailTransformer(),
-        ...     'email.domain': EmailDomainTransformer(),
-        ... }
-        >>> ht = HyperTransformer(field_transformers=field_transformers)
-
-        Create a ``HyperTransformer`` passing a dict mapping sdtypes to transformers.
-        >>> default_sdtype_transformers = {
-        ...     'categorical': LabelEncoder(),
-        ...     'numerical': FloatFormatter()
-        ... }
-        >>> ht = HyperTransformer(default_sdtype_transformers=default_sdtype_transformers)
     """
 
     # pylint: disable=too-many-instance-attributes
@@ -264,9 +233,8 @@ class HyperTransformer:
         mismatched_columns = []
         for column_name, transformer in transformers.items():
             if transformer is not None:
-                input_sdtype = transformer.get_input_sdtype()
                 sdtype = sdtypes.get(column_name)
-                if input_sdtype != sdtype:
+                if sdtype not in transformer.get_supported_sdtypes():
                     mismatched_columns.append(column_name)
 
         if mismatched_columns:
@@ -412,7 +380,11 @@ class HyperTransformer:
         for column, sdtype in column_name_to_sdtype.items():
             if self.field_sdtypes.get(column) != sdtype:
                 current_transformer = self.field_transformers.get(column)
-                if not current_transformer or current_transformer.get_input_sdtype() != sdtype:
+                supported_sdtypes = []
+                if current_transformer:
+                    supported_sdtypes = current_transformer.get_supported_sdtypes()
+
+                if sdtype not in supported_sdtypes:
                     transformers_to_update[column] = get_default_transformer(sdtype)
 
         self.field_sdtypes.update(column_name_to_sdtype)
