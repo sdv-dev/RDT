@@ -7,3 +7,7 @@ class NotFittedError(Exception):
 
 class Error(Exception):
     """Error to raise when ``HyperTransformer`` produces a controlled error message."""
+
+
+class InvalidSdtypeForTransformerError(Exception):
+    """Error to raise when the sdtype is not supported by the transformer."""

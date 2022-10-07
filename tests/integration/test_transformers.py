@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
+from rdt.errors import InvalidSdtypeForTransformerError
 from rdt.performance.datasets import BaseDatasetGenerator
 from rdt.transformers import BaseTransformer
 
@@ -255,7 +256,11 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
         }
 
     hypertransformer.detect_initial_config(input_data)
-    hypertransformer.update_transformers(field_transformers)
+    try:
+        hypertransformer.update_transformers(field_transformers)
+    except InvalidSdtypeForTransformerError:
+        pass
+
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)
