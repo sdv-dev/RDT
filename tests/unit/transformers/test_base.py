@@ -245,9 +245,7 @@ class TestBaseTransformer:
         # Setup
         class Dummy(BaseTransformer):
             column_prefix = 'column_name'
-            OUTPUT_SDTYPES = {
-                'value': 'numerical'
-            }
+            OUTPUT_SDTYPES = {None: 'numerical'}
 
         dummy_transformer = Dummy()
 
@@ -255,9 +253,7 @@ class TestBaseTransformer:
         output = dummy_transformer.get_output_sdtypes()
 
         # Assert
-        expected = {
-            'column_name.value': 'numerical'
-        }
+        expected = {'column_name': 'numerical'}
         assert output == expected
 
     def test_get_output_sdtypes_none(self):
@@ -861,7 +857,7 @@ class TestBaseTransformer:
         class Dummy(BaseTransformer):
             columns = ['a', 'b']
             OUTPUT_SDTYPES = {
-                'value': 'numerical',
+                None: 'numerical',
                 'is_null': 'float'
             }
 
@@ -872,7 +868,7 @@ class TestBaseTransformer:
 
         # Assert
         assert dummy_transformer.column_prefix == 'a#b'
-        assert dummy_transformer.output_columns == ['a#b.value', 'a#b.is_null']
+        assert dummy_transformer.output_columns == ['a#b', 'a#b.is_null']
 
     def test__build_output_columns_generated_already_exist(self):
         """Test the ``_build_output_columns`` method.
@@ -906,7 +902,7 @@ class TestBaseTransformer:
 
         class Dummy(BaseTransformer):
             OUTPUT_SDTYPES = {
-                'value': 'numerical',
+                None: 'numerical',
                 'is_null': 'float'
             }
             columns = ['a', 'b']
@@ -916,8 +912,8 @@ class TestBaseTransformer:
         dummy_transformer._build_output_columns(data)
 
         # Assert
-        assert dummy_transformer.column_prefix == 'a#b#'
-        assert dummy_transformer.output_columns == ['a#b#.value', 'a#b#.is_null']
+        assert dummy_transformer.column_prefix == 'a#b'
+        assert dummy_transformer.output_columns == ['a#b', 'a#b.is_null']
 
     def test__fit_raises_error(self):
         """Test ``_fit`` raises ``NotImplementedError``."""
@@ -968,7 +964,7 @@ class TestBaseTransformer:
 
         class Dummy(BaseTransformer):
             OUTPUT_SDTYPES = {
-                'value': 'categorical',
+                None: 'categorical',
                 'is_null': 'float'
             }
 
@@ -985,7 +981,7 @@ class TestBaseTransformer:
         assert dummy_transformer.columns == ['a']
         pd.testing.assert_series_equal(dummy_transformer._passed_data, expected_data)
         assert dummy_transformer.column_prefix == 'a'
-        assert dummy_transformer.output_columns == ['a.value', 'a.is_null']
+        assert dummy_transformer.output_columns == ['a', 'a.is_null']
 
     def test__transform_raises_error(self):
         """Test ``_transform`` raises ``NotImplementedError``."""

@@ -198,8 +198,8 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             List of localized providers to use instead of the global provider.
     """
 
-    OUTPUT_SDTYPES = {'value': 'categorical'}
-    NEXT_TRANSFORMERS = {
+    OUTPUT_SDTYPES = {None: 'categorical'}
+    NEXT_TRANSFORMER = {
         'value': LabelEncoder(add_noise=True)
     }
 

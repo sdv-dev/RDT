@@ -19,9 +19,7 @@ from rdt.transformers import (
 class DummyTransformerNumerical(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
-    OUTPUT_SDTYPES = {
-        'value': 'float'
-    }
+    OUTPUT_SDTYPES = {None: 'float'}
 
     def _fit(self, data):
         pass
@@ -36,9 +34,7 @@ class DummyTransformerNumerical(BaseTransformer):
 class DummyTransformerNotMLReady(BaseTransformer):
 
     INPUT_SDTYPE = 'datetime'
-    OUTPUT_SDTYPES = {
-        'value': 'categorical',
-    }
+    OUTPUT_SDTYPES = {None: 'categorical'}
 
     def _fit(self, data):
         pass
