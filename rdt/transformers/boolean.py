@@ -45,9 +45,7 @@ class BinaryEncoder(BaseTransformer):
             dict:
                 Mapping from the transformed column names to the produced sdtypes.
         """
-        output_sdtypes = {
-            'value': 'float',
-        }
+        output_sdtypes = {None: 'float'}
         if self.null_transformer and self.null_transformer.models_missing_values():
             output_sdtypes['is_null'] = 'float'
 

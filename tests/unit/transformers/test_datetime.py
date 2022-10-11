@@ -89,7 +89,7 @@ class TestUnixTimestampEncoder:
         method to the following dictionary of output sdtypes:
 
         output_sdtypes = {
-            'value': 'float',
+            None: 'float',
             'is_null': 'float'
         }
 

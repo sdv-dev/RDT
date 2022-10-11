@@ -1,6 +1,7 @@
 """Hyper transformer module."""
 
 import inspect
+import copy
 import json
 import warnings
 from collections import defaultdict
@@ -567,12 +568,14 @@ class HyperTransformer:
             raise NotFittedError
 
         final_outputs = []
-        outputs = self._transformers_tree[field].get('outputs', []).copy()
+        transformers_tree = copy.deepcopy(self._transformers_tree)
+        outputs = transformers_tree[field].get('outputs', []).copy()
         while len(outputs) > 0:
             output = outputs.pop()
-            transformer = self._transformers_tree.get(output, {}).get('transformer')
-            if output in self._transformers_tree and transformer:
-                outputs.extend(self._transformers_tree[output].get('outputs', []))
+            transformer = transformers_tree.get(output, {}).get('transformer')
+            if output in transformers_tree and transformer:
+                outputs.extend(transformers_tree[output].get('outputs', []))
+                transformers_tree.pop(output)
             else:
                 final_outputs.append(output)
 
@@ -776,8 +779,10 @@ class HyperTransformer:
         self._input_columns = list(data.columns)
         for field in self._input_columns:
             data = self._fit_field_transformer(data, field, self.field_transformers[field])
+        
 
         self._validate_all_fields_fitted()
+        
         self._fitted = True
         self._modified_config = False
         self._sort_output_columns()
@@ -953,3 +958,4 @@ class HyperTransformer:
                 reversed data.
         """
         return self._reverse_transform(data, prevent_subset=True)
+

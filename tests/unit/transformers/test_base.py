@@ -439,9 +439,7 @@ class TestBaseTransformer:
         # Setup
         class Dummy(BaseTransformer):
             column_prefix = 'column_name'
-            NEXT_TRANSFORMERS = {
-                'value': 'NullTransformer'
-            }
+            NEXT_TRANSFORMERS = {None: 'NullTransformer'}
 
         dummy_transformer = Dummy()
 

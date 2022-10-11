@@ -85,12 +85,12 @@ def get_transformed_data():
         1.262304e+18
     ]
     return pd.DataFrame({
-        'integer.value': [1., 2., 1., 3., 1., 4., 2., 3.],
-        'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
-        'categorical.value': [0.3125, 0.3125, .8125, 0.8125, 0.3125, 0.8125, 0.3125, 0.3125],
-        'bool.value': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
-        'datetime.value': datetimes,
-        'names.value': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
+        'integer': [1., 2., 1., 3., 1., 4., 2., 3.],
+        'float': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
+        'categorical': [0.3125, 0.3125, .8125, 0.8125, 0.3125, 0.8125, 0.3125, 0.3125],
+        'bool': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+        'datetime': datetimes,
+        'names': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
     }, index=TEST_DATA_INDEX)
 
 
@@ -163,12 +163,12 @@ def test_hypertransformer_default_inputs():
         1.262304e+18
     ]
     expected_transformed = pd.DataFrame({
-        'integer.value': [1., 2., 1., 3., 1., 4., 2., 3.],
-        'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
-        'categorical.value': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
-        'bool.value': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
-        'datetime.value': expected_datetimes,
-        'names.value': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
+        'integer': [1., 2., 1., 3., 1., 4., 2., 3.],
+        'float': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
+        'categorical': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
+        'bool': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+        'datetime': expected_datetimes,
+        'names': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
     }, index=TEST_DATA_INDEX)
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
@@ -197,17 +197,17 @@ def test_hypertransformer_default_inputs():
             assert pd.isna(actual) or expected == actual
 
     assert isinstance(ht._transformers_tree['integer']['transformer'], FloatFormatter)
-    assert ht._transformers_tree['integer']['outputs'] == ['integer.value']
+    assert ht._transformers_tree['integer']['outputs'] == ['integer']
     assert isinstance(ht._transformers_tree['float']['transformer'], FloatFormatter)
-    assert ht._transformers_tree['float']['outputs'] == ['float.value']
+    assert ht._transformers_tree['float']['outputs'] == ['float']
     assert isinstance(ht._transformers_tree['categorical']['transformer'], FrequencyEncoder)
-    assert ht._transformers_tree['categorical']['outputs'] == ['categorical.value']
+    assert ht._transformers_tree['categorical']['outputs'] == ['categorical']
     assert isinstance(ht._transformers_tree['bool']['transformer'], BinaryEncoder)
-    assert ht._transformers_tree['bool']['outputs'] == ['bool.value']
+    assert ht._transformers_tree['bool']['outputs'] == ['bool']
     assert isinstance(ht._transformers_tree['datetime']['transformer'], UnixTimestampEncoder)
-    assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value']
+    assert ht._transformers_tree['datetime']['outputs'] == ['datetime']
     assert isinstance(ht._transformers_tree['names']['transformer'], FrequencyEncoder)
-    assert ht._transformers_tree['names']['outputs'] == ['names.value']
+    assert ht._transformers_tree['names']['outputs'] == ['names']
 
     get_default_transformers.cache_clear()
     get_default_transformer.cache_clear()
@@ -265,7 +265,7 @@ def test_hypertransformer_field_transformers():
 
     # Assert
     expected_transformed = get_transformed_data()
-    rename = {'datetime.value': 'datetime.value.value'}
+    rename = {'datetime': 'datetime.value'}
     expected_transformed = expected_transformed.rename(columns=rename)
     transformed_datetimes = [0.8125, 0.8125, 0.3125, 0.3125, 0.3125, 0.8125, 0.3125, 0.3125]
     expected_transformed['datetime.value.value'] = transformed_datetimes
@@ -360,7 +360,7 @@ def test_multiple_fits_different_data():
 
     # Assert
     expected_transformed = pd.DataFrame(
-        {'col2.value': [1., 2., 3.], 'col1.value': [1.0, 0.0, 0.0]})
+        {'col2': [1., 2., 3.], 'col1': [1.0, 0.0, 0.0]})
     pd.testing.assert_frame_equal(transformed1, expected_transformed)
     pd.testing.assert_frame_equal(transformed2, expected_transformed)
     pd.testing.assert_frame_equal(reverse1, new_data)
@@ -389,7 +389,7 @@ def test_multiple_fits_different_columns():
 
     # Assert
     expected_transformed = pd.DataFrame(
-        {'col3.value': [1., 2., 3.], 'col4.value': [1.0, 0.0, 0.0]})
+        {'col3': [1., 2., 3.], 'col4': [1.0, 0.0, 0.0]})
     pd.testing.assert_frame_equal(transformed1, expected_transformed)
     pd.testing.assert_frame_equal(transformed2, expected_transformed)
     pd.testing.assert_frame_equal(reverse1, new_data)
@@ -660,7 +660,7 @@ def test_transform_subset():
     transformed = ht.transform_subset(subset)
 
     # Assert
-    expected = pd.DataFrame({'col1.value': [1., 2.]})
+    expected = pd.DataFrame({'col1': [1., 2.]})
     pd.testing.assert_frame_equal(transformed, expected)
 
 
@@ -680,7 +680,7 @@ def test_reverse_transform_subset():
     """
     # Setup
     data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
-    subset = pd.DataFrame({'col1.value': [1, 2]})
+    subset = pd.DataFrame({'col1': [1, 2]})
     ht = HyperTransformer()
     ht.detect_initial_config(data)
     ht.fit(data)
