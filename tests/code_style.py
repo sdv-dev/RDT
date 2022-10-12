@@ -76,7 +76,7 @@ def validate_transformer_addon(transformer):
                 module_py = True
             elif document.match('config.json'):
                 config_json_exist = True
-                _validate_config_json(document, transformer.__name__)
+                _validate_config_json(document, transformer.get_name())
 
         assert init_file_exist, 'Missing __init__.py file within the addon folder.'
         assert config_json_exist, 'Missing the config.json file within the addon folder.'
@@ -85,7 +85,7 @@ def validate_transformer_addon(transformer):
 
 def validate_transformer_importable_from_parent_module(transformer):
     """Validate wheter the transformer can be imported from the parent module."""
-    name = transformer.__name__
+    name = transformer.get_name()
     module = getattr(transformer, '__module__', '')
     module = module.rsplit('.', 1)[0]
     imported_transformer = getattr(importlib.import_module(module), name, None)
@@ -156,7 +156,7 @@ def validate_test_names(transformer):
     test_file = get_test_location(transformer)
     module = _load_module_from_path(test_file)
 
-    test_class = getattr(module, f'Test{transformer.__name__}', None)
+    test_class = getattr(module, f'Test{transformer.get_name()}', None)
     assert test_class is not None, 'The expected test class was not found.'
 
     test_functions = inspect.getmembers(test_class, predicate=inspect.isfunction)

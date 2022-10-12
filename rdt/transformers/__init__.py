@@ -75,7 +75,7 @@ def get_transformer_name(transformer):
             The path of the transformer.
     """
     if inspect.isclass(transformer):
-        return transformer.__module__ + '.' + transformer.__name__
+        return transformer.__module__ + '.' + transformer.get_name()
 
     raise ValueError(f'The transformer {transformer} must be passed as a class.')
 
@@ -106,7 +106,7 @@ def get_class_by_transformer_name():
         BaseTransformer:
             BaseTransformer subclass class object.
     """
-    return {class_.__name__: class_ for class_ in BaseTransformer.get_subclasses()}
+    return {class_.get_name(): class_ for class_ in BaseTransformer.get_subclasses()}
 
 
 def get_transformer_class(transformer):

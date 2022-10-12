@@ -9,5 +9,5 @@ class Error(Exception):
     """Error to raise when ``HyperTransformer`` produces a controlled error message."""
 
 
-class InvalidSdtypeForTransformerError(Exception):
-    """Error to raise when the sdtype is not supported by the transformer."""
+class SynthesizerInputError(Exception):
+    """Error to raise when invalid parameters are used to set up the synthesizer."""

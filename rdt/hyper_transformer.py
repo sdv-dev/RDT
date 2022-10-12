@@ -9,7 +9,7 @@ from copy import deepcopy
 import pandas as pd
 import yaml
 
-from rdt.errors import Error, InvalidSdtypeForTransformerError, NotFittedError
+from rdt.errors import Error, SynthesizerInputError, NotFittedError
 from rdt.transformers import (
     BaseTransformer, get_class_by_transformer_name, get_default_transformer,
     get_transformer_instance, get_transformers_by_type)
@@ -446,9 +446,9 @@ class HyperTransformer:
             if transformer is not None:
                 current_sdtype = self.field_sdtypes.get(column_name)
                 if current_sdtype and current_sdtype not in transformer.get_supported_sdtypes():
-                    raise InvalidSdtypeForTransformerError(
+                    raise SynthesizerInputError(
                         f"Column '{column_name}' is a {current_sdtype} column, which is "
-                        f"incompatible with the '{type(transformer).__name__}' transformer."
+                        f"incompatible with the '{transformer.get_name()}' transformer."
                     )
 
             self.field_transformers[column_name] = transformer
@@ -599,7 +599,7 @@ class HyperTransformer:
         """
         modified_tree = deepcopy(self._transformers_tree)
         for field in modified_tree:
-            class_name = modified_tree[field]['transformer'].__class__.__name__
+            class_name = modified_tree[field]['transformer'].__class__.get_name()
             modified_tree[field]['transformer'] = class_name
 
         return yaml.safe_dump(dict(modified_tree))
