@@ -789,3 +789,20 @@ def test_hyper_transformer_reverse_transform_subset_and_generators():
     ]
     assert all(expected_transformed_columns == transformed.columns)
     assert reverse_transformed.columns == ['last_login']
+
+
+def test_set_config_with_supported_sdtypes():
+    """Test when setting config with an sdtype that is supported by the transformer."""
+    # Setup
+    config = {
+        'transformers': {
+            'boolean_col': FrequencyEncoder(add_noise=True),
+        },
+        'sdtypes': {
+            'boolean_col': 'boolean'
+        }
+    }
+    ht = HyperTransformer()
+
+    # Run and Assert
+    ht.set_config(config)
