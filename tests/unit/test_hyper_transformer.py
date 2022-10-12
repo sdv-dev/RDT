@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
-from rdt.errors import Error, SynthesizerInputError, NotFittedError
+from rdt.errors import Error, NotFittedError, SynthesizerInputError
 from rdt.transformers import (
     AnonymizedFaker, BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer,
     LabelEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder)

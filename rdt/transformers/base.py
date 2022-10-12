@@ -29,7 +29,7 @@ class BaseTransformer:
     @classmethod
     def get_name(cls):
         """Return transformer name.
-        
+
         Returns:
             str:
                 Transformer name.

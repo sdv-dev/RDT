@@ -9,7 +9,7 @@ from copy import deepcopy
 import pandas as pd
 import yaml
 
-from rdt.errors import Error, SynthesizerInputError, NotFittedError
+from rdt.errors import Error, NotFittedError, SynthesizerInputError
 from rdt.transformers import (
     BaseTransformer, get_class_by_transformer_name, get_default_transformer,
     get_transformer_instance, get_transformers_by_type)
