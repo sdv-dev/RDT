@@ -1,5 +1,6 @@
 from rdt.transformers.pii.utils import get_provider_name, is_faker_function
 
+
 def test_get_provider_name():
     """Test the ``get_provider_name`` method.
 
