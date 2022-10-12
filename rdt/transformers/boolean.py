@@ -37,6 +37,10 @@ class BinaryEncoder(BaseTransformer):
     def __init__(self, missing_value_replacement=None, model_missing_values=False):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
+        self._next_transformers = {
+            'value': None,
+            'is_null': None
+        }
 
     def get_output_sdtypes(self):
         """Return the output sdtypes returned by this transformer.

@@ -105,6 +105,11 @@ class AnonymizedFaker(BaseTransformer):
         if self.locales:
             self._check_locales()
 
+        self._next_transformers = {
+            'value': None,
+            'is_null': None
+        }
+
     def _function(self):
         """Return a callable ``faker`` function."""
         if self.enforce_uniqueness:
@@ -199,9 +204,6 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
     """
 
     OUTPUT_SDTYPES = {'value': 'categorical'}
-    NEXT_TRANSFORMERS = {
-        'value': LabelEncoder(add_noise=True)
-    }
 
     def __getstate__(self):
         """Return a dictionary representation of the instance and warn the user when pickling."""
@@ -223,6 +225,9 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         )
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
+        self._next_transformers = {
+            'value': LabelEncoder(add_noise=True)
+        }
 
     def get_mapping(self):
         """Return the mapping dictionary."""

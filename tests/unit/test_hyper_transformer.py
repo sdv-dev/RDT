@@ -12,8 +12,8 @@ import pytest
 from rdt import HyperTransformer
 from rdt.errors import Error, NotFittedError, TransformerInputError
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer,
-    LabelEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder)
+    AnonymizedFaker, BinaryEncoder, FloatFormatter, FrequencyEncoder, LabelEncoder, RegexGenerator,
+    UnixTimestampEncoder)
 
 
 class TestHyperTransformer(TestCase):
@@ -228,136 +228,6 @@ class TestHyperTransformer(TestCase):
         }
         assert multi_column_fields == expected
 
-    def test__get_next_transformer_field_transformer(self):
-        """Test the ``_get_next_transformer method.
-
-        This tests that if the transformer is defined in the
-        ``instance.field_transformers`` dict, then it is returned
-        even if the output sdtype is final.
-
-        Setup:
-            - field_transformers is given a transformer for the
-            output field.
-            - _default_sdtype_transformers will be given a different transformer
-            for the output sdtype of the output field.
-
-        Input:
-            - An output field name in field_transformers.
-            - Output sdtype  is numerical.
-            - next_transformers is None.
-
-        Output:
-            - The transformer defined in field_transformers.
-        """
-        # Setup
-        transformer = FloatFormatter()
-        ht = HyperTransformer()
-        ht.field_transformers = {'a.out': transformer}
-        ht._default_sdtype_transformers = {'numerical': GaussianNormalizer()}
-
-        # Run
-        next_transformer = ht._get_next_transformer('a.out', 'numerical', None)
-
-        # Assert
-        assert next_transformer == transformer
-
-    def test__get_next_transformer_final_output_sdtype(self):
-        """Test the ``_get_next_transformer method.
-
-        This tests that if the transformer is not defined in the
-        ``instance.field_transformers`` dict and its output sdtype
-        is in ``instance._transform_output_sdtypes``, then ``None``
-        is returned.
-
-        Setup:
-            - _default_sdtype_transformers will be given a transformer
-            for the output sdtype of the output field.
-
-        Input:
-            - An output field name in field_transformers.
-            - Output sdtype  is numerical.
-            - next_transformers is None.
-
-        Output:
-            - None.
-        """
-        # Setup
-        ht = HyperTransformer()
-        ht._default_sdtype_transformers = {'numerical': GaussianNormalizer()}
-
-        # Run
-        next_transformer = ht._get_next_transformer('a.out', 'numerical', None)
-
-        # Assert
-        assert next_transformer is None
-
-    def test__get_next_transformer_next_transformers(self):
-        """Test the ``_get_next_transformer method.
-
-        This tests that if the transformer is not defined in the
-        ``instance.field_transformers`` dict and its output sdtype
-        is not in ``instance._transform_output_sdtypes`` and the
-        ``next_transformers`` dict has a transformer for the output
-        field, then it is used.
-
-        Setup:
-            - _default_sdtype_transformers will be given a transformer
-            for the output sdtype of the output field.
-
-        Input:
-            - An output field name in field_transformers.
-            - Output sdtype  is categorical.
-            - next_transformers is has a transformer defined
-            for the output field.
-
-        Output:
-            - The transformer defined in next_transformers.
-        """
-        # Setup
-        transformer = FrequencyEncoder()
-        ht = HyperTransformer()
-        ht._default_sdtype_transformers = {'categorical': OneHotEncoder()}
-        next_transformers = {'a.out': transformer}
-
-        # Run
-        next_transformer = ht._get_next_transformer('a.out', 'categorical', next_transformers)
-
-        # Assert
-        assert next_transformer == transformer
-
-    @patch('rdt.transformers.get_default_transformer')
-    def test__get_next_transformer_default_transformer(self, mock):
-        """Test the ``_get_next_transformer method.
-
-        This tests that if the transformer is not defined in the
-        ``instance.field_transformers`` dict or ``next_transformers``
-        and its output sdtype is not in ``instance._transform_output_sdtypes``
-        then the default_transformer is used.
-
-        Setup:
-            - A mock is used for ``get_default_transformer``.
-
-        Input:
-            - An output field name in field_transformers.
-            - Output sdtype  is categorical.
-            - next_transformers is None.
-
-        Output:
-            - The default transformer.
-        """
-        # Setup
-        transformer = FrequencyEncoder(add_noise=True)
-        mock.return_value = transformer
-        ht = HyperTransformer()
-        ht._default_sdtype_transformers = {'categorical': OneHotEncoder()}
-
-        # Run
-        next_transformer = ht._get_next_transformer('a.out', 'categorical', None)
-
-        # Assert
-        assert isinstance(next_transformer, FrequencyEncoder)
-        assert next_transformer.add_noise is False
-
     @patch('rdt.hyper_transformer.get_default_transformer')
     def test__learn_config(self, get_default_transformer_mock):
         """Test the ``_learn_config_method.
@@ -526,13 +396,17 @@ class TestHyperTransformer(TestCase):
             'a.out2': 'numerical'
         }
         transformer1.get_next_transformers.return_value = {
-            'a.out1': transformer2
+            'a.out1': transformer2,
+            'a.out2': None
         }
         transformer1.transform.return_value = transformed_data1
         transformer2.get_output_sdtypes.return_value = {
             'a.out1.value': 'numerical'
         }
-        transformer2.get_next_transformers.return_value = None
+        transformer2.get_next_transformers.return_value = {
+            'a.out1.value': None,
+            'a.out1.is_null': None
+        }
         get_transformer_instance_mock.side_effect = [
             transformer1,
             transformer2,
@@ -540,12 +414,6 @@ class TestHyperTransformer(TestCase):
             None
         ]
         ht = HyperTransformer()
-        ht._get_next_transformer = Mock()
-        ht._get_next_transformer.side_effect = [
-            transformer2,
-            None,
-            None
-        ]
 
         # Run
         out = ht._fit_field_transformer(data, 'a', transformer1)
@@ -564,72 +432,6 @@ class TestHyperTransformer(TestCase):
             'a': {'transformer': transformer1, 'outputs': ['a.out1', 'a.out2']},
             'a.out1': {'transformer': transformer2, 'outputs': ['a.out1.value']}
         }
-
-    @patch('rdt.hyper_transformer.get_transformer_instance')
-    def test__fit_field_transformer_multi_column_field_not_ready(
-        self,
-        get_transformer_instance_mock
-    ):
-        """Test the ``_fit_field_transformer`` method.
-
-        This tests that the ``_fit_field_transformer`` behaves as expected.
-        If the column is part of a multi-column field, and the other columns
-        aren't present in the data, then it should not fit the next transformer.
-        It should however, transform the data.
-
-        Setup:
-            - A mock for ``get_transformer_instance``.
-            - A mock for the transformer returned by ``get_transformer_instance``.
-            The ``get_output_sdtypes`` method will return one output that is part of
-            a multi-column field.
-            - A mock for ``_multi_column_fields`` to return the multi-column field.
-
-        Input:
-            - A DataFrame with two columns.
-            - A column name to fit the transformer to.
-            - A transformer.
-
-        Output:
-            - A DataFrame with columns that result from transforming the
-            outputs of the original transformer.
-        """
-        # Setup
-        data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6]
-        })
-        transformed_data1 = pd.DataFrame({
-            'a.out1': ['1', '2', '3'],
-            'b': [4, 5, 6]
-        })
-        transformer1 = Mock()
-        transformer2 = Mock()
-        transformer1.get_output_sdtypes.return_value = {
-            'a.out1': 'categorical'
-        }
-        transformer1.get_next_transformers.return_value = None
-        transformer1.transform.return_value = transformed_data1
-        get_transformer_instance_mock.side_effect = [transformer1]
-        ht = HyperTransformer()
-        ht._get_next_transformer = Mock()
-        ht._get_next_transformer.side_effect = [transformer2]
-        ht._multi_column_fields = Mock()
-        ht._multi_column_fields.get.return_value = ('a.out1', 'b.out1')
-
-        # Run
-        out = ht._fit_field_transformer(data, 'a', transformer1)
-
-        # Assert
-        expected = pd.DataFrame({
-            'a.out1': ['1', '2', '3'],
-            'b': [4, 5, 6]
-        })
-        assert ht._output_columns == []
-        pd.testing.assert_frame_equal(out, expected)
-        transformer1.fit.assert_called_once()
-        transformer1.transform.assert_called_once_with(data)
-        transformer2.fit.assert_not_called()
-        assert ht._transformers_sequence == [transformer1]
 
     def test__fit_field_transformer_transformer_is_none(self):
         """Test the ``_fit_field_transformer`` method.

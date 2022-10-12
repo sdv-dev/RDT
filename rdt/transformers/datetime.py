@@ -45,6 +45,10 @@ class UnixTimestampEncoder(BaseTransformer):
         self.model_missing_values = model_missing_values
         self.datetime_format = datetime_format
         self._dtype = None
+        self._next_transformers = {
+            'value': None,
+            'is_null': None
+        }
 
     def is_composition_identity(self):
         """Return whether composition of transform and reverse transform produces the input data.

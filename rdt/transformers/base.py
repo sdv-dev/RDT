@@ -20,11 +20,11 @@ class BaseTransformer:
     DETERMINISTIC_REVERSE = None
     COMPOSITION_IS_IDENTITY = None
     IS_GENERATOR = None
-    NEXT_TRANSFORMERS = None
 
     columns = None
     column_prefix = None
     output_columns = None
+    _next_transformers = {}
 
     @classmethod
     def get_name(cls):
@@ -78,8 +78,8 @@ class BaseTransformer:
             return {}
 
         output = {}
-        for output_columns, output_sdtype in dictionary.items():
-            output[f'{self.column_prefix}.{output_columns}'] = output_sdtype
+        for output_columns, output_value in dictionary.items():
+            output[f'{self.column_prefix}.{output_columns}'] = output_value
 
         return output
 
@@ -135,7 +135,7 @@ class BaseTransformer:
             dict:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
-        return self._add_prefix(self.NEXT_TRANSFORMERS)
+        return self._add_prefix(self._next_transformers)
 
     def get_input_column(self):
         """Return input column name for transformer.

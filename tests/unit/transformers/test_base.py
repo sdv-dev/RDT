@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from rdt.transformers.base import BaseTransformer
+from rdt.transformers.null import NullTransformer
 
 
 class TestBaseTransformer:
@@ -441,11 +442,13 @@ class TestBaseTransformer:
             added to the beginning of the keys.
         """
         # Setup
+        transformer = NullTransformer()
+
         class Dummy(BaseTransformer):
             column_prefix = 'column_name'
-            NEXT_TRANSFORMERS = {
-                'value': 'NullTransformer'
-            }
+
+            def __init__(self):
+                self._next_transformers = {'value': transformer}
 
         dummy_transformer = Dummy()
 
@@ -453,10 +456,7 @@ class TestBaseTransformer:
         output = dummy_transformer.get_next_transformers()
 
         # Assert
-        expected = {
-            'column_name.value': 'NullTransformer'
-        }
-        assert output == expected
+        assert output == {'column_name.value': transformer}
 
     def test__store_columns_list(self):
         """Test the ``_store_columns`` method when passed a list.

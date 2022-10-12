@@ -40,6 +40,9 @@ class DummyTransformerNotMLReady(BaseTransformer):
         'value': 'categorical',
     }
 
+    def __init__(self):
+        self._next_transformers = {'value': FrequencyEncoder()}
+
     def _fit(self, data):
         pass
 

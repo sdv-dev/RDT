@@ -32,6 +32,10 @@ class NullTransformer():
     def __init__(self, missing_value_replacement=None, model_missing_values=False):
         self._missing_value_replacement = missing_value_replacement
         self._model_missing_values = model_missing_values
+        self._next_transformers = {
+            'value': None,
+            'is_null': None
+        }
 
     def models_missing_values(self):
         """Indicate whether this transformer creates a null column on transform.
