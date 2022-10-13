@@ -254,8 +254,15 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
             TEST_COL: transformer_class
         }
 
-    hypertransformer.detect_initial_config(input_data)
-    hypertransformer.update_transformers(field_transformers)
+    sdtypes = {}
+    for field, transformer in field_transformers.items():
+        sdtypes[field] = transformer.get_supported_sdtypes()[0]
+
+    config = {
+        'sdtypes': sdtypes,
+        'transformers': field_transformers
+    }
+    hypertransformer.set_config(config)
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)

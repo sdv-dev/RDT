@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
-from rdt.errors import Error, NotFittedError
+from rdt.errors import Error, NotFittedError, TransformerInputError
 from rdt.transformers import (
     AnonymizedFaker, BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer,
     LabelEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder)
@@ -2484,16 +2484,15 @@ class TestHyperTransformer(TestCase):
             'my_column': transformer
         }
 
-        # Run
-        instance.update_transformers(column_name_to_transformer)
-
-        # Assert
-        expected_call = (
-            "Some transformers you've assigned are not compatible with the sdtypes. "
-            f"Use 'update_sdtypes' to update: {'my_column'}"
+        # Run and Assert
+        err_msg = re.escape(
+            "Column 'my_column' is a categorical column, which is incompatible "
+            "with the 'BinaryEncoder' transformer."
         )
+        with pytest.raises(TransformerInputError, match=err_msg):
+            instance.update_transformers(column_name_to_transformer)
 
-        assert mock_warnings.called_once_with(expected_call)
+        assert mock_warnings.called_once_with(err_msg)
         instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
 
     def test_update_transformers_transformer_is_none(self):

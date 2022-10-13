@@ -82,7 +82,7 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
         pandas.DataFrame:
             The performance test results.
     """
-    transformer_args = TRANSFORMER_ARGS.get(transformer.__name__, {})
+    transformer_args = TRANSFORMER_ARGS.get(transformer.get_name(), {})
     transformer_instance = transformer(**transformer_args)
 
     sizes = _get_dataset_sizes(dataset_generator.SDTYPE)
@@ -102,7 +102,7 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
             performance['Number of fit rows'] = fit_size
             performance['Number of transform rows'] = transform_size
             performance['Dataset'] = dataset_generator.__name__
-            performance['Transformer'] = f'{transformer.__module__ }.{transformer.__name__}'
+            performance['Transformer'] = f'{transformer.__module__ }.{transformer.get_name()}'
 
         out.append(performance)
 

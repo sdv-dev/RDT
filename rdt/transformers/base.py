@@ -27,6 +27,16 @@ class BaseTransformer:
     output_columns = None
 
     @classmethod
+    def get_name(cls):
+        """Return transformer name.
+
+        Returns:
+            str:
+                Transformer name.
+        """
+        return cls.__name__
+
+    @classmethod
     def get_subclasses(cls):
         """Recursively find subclasses of this Baseline.
 
@@ -208,7 +218,7 @@ class BaseTransformer:
             str:
                 The name of the transformer followed by any non-default parameters.
         """
-        class_name = self.__class__.__name__
+        class_name = self.__class__.get_name()
         custom_args = []
         args = inspect.getfullargspec(self.__init__)
         keys = args.args[1:]

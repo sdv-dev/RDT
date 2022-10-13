@@ -161,7 +161,7 @@ class AnonymizedFaker(BaseTransformer):
             str:
                 The name of the transformer followed by any non-default parameters.
         """
-        class_name = self.__class__.__name__
+        class_name = self.__class__.get_name()
         custom_args = []
         args = inspect.getfullargspec(self.__init__)
         keys = args.args[1:]

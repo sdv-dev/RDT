@@ -7,3 +7,7 @@ class NotFittedError(Exception):
 
 class Error(Exception):
     """Error to raise when ``HyperTransformer`` produces a controlled error message."""
+
+
+class TransformerInputError(Exception):
+    """Error to raise when ``HyperTransformer`` receives incorrect input."""

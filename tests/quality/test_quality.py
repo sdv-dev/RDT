@@ -101,7 +101,7 @@ def get_transformer_regression_scores(data, sdtype, dataset_name, transformers, 
             transformed_features = transformed_features[~nans]
             score = get_regression_score(transformed_features, target)
             row = pd.Series({
-                'transformer_name': transformer.__name__,
+                'transformer_name': transformer.get_name(),
                 'dataset_name': dataset_name,
                 'column': column,
                 'score': score
