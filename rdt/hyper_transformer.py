@@ -9,7 +9,7 @@ from copy import deepcopy
 import pandas as pd
 import yaml
 
-from rdt.errors import Error, NotFittedError, SynthesizerInputError
+from rdt.errors import Error, NotFittedError, TransformerInputError
 from rdt.transformers import (
     BaseTransformer, get_class_by_transformer_name, get_default_transformer,
     get_transformer_instance, get_transformers_by_type)
@@ -446,7 +446,7 @@ class HyperTransformer:
             if transformer is not None:
                 current_sdtype = self.field_sdtypes.get(column_name)
                 if current_sdtype and current_sdtype not in transformer.get_supported_sdtypes():
-                    raise SynthesizerInputError(
+                    raise TransformerInputError(
                         f"Column '{column_name}' is a {current_sdtype} column, which is "
                         f"incompatible with the '{transformer.get_name()}' transformer."
                     )

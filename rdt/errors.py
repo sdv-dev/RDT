@@ -9,5 +9,5 @@ class Error(Exception):
     """Error to raise when ``HyperTransformer`` produces a controlled error message."""
 
 
-class SynthesizerInputError(Exception):
-    """Error to raise when invalid parameters are used to set up the synthesizer."""
+class TransformerInputError(Exception):
+    """Error to raise when ``HyperTransformer`` receives incorrect input."""

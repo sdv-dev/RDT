@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
-from rdt.errors import Error, NotFittedError, SynthesizerInputError
+from rdt.errors import Error, NotFittedError, TransformerInputError
 from rdt.transformers import (
     AnonymizedFaker, BinaryEncoder, FloatFormatter, FrequencyEncoder, GaussianNormalizer,
     LabelEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder)
@@ -2489,7 +2489,7 @@ class TestHyperTransformer(TestCase):
             "Column 'my_column' is a categorical column, which is incompatible "
             "with the 'BinaryEncoder' transformer."
         )
-        with pytest.raises(SynthesizerInputError, match=err_msg):
+        with pytest.raises(TransformerInputError, match=err_msg):
             instance.update_transformers(column_name_to_transformer)
 
         assert mock_warnings.called_once_with(err_msg)

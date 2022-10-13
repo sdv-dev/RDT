@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer
-from rdt.errors import SynthesizerInputError
 from rdt.performance.datasets import BaseDatasetGenerator
 from rdt.transformers import BaseTransformer
 
@@ -255,12 +254,16 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
             TEST_COL: transformer_class
         }
 
-    hypertransformer.detect_initial_config(input_data)
-    try:
-        hypertransformer.update_transformers(field_transformers)
-    except SynthesizerInputError:
-        pass
+    sdtypes = {}
+    for field, transformer in field_transformers.items():
+        sdtypes[field] = transformer.get_supported_sdtypes()[0]
 
+    config = {
+        'sdtypes': sdtypes,
+        'transformers': field_transformers
+    }
+    hypertransformer.detect_initial_config(input_data)
+    hypertransformer.set_config(config)
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)
