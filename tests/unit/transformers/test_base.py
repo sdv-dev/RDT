@@ -430,15 +430,15 @@ class TestBaseTransformer:
         """Test the ``get_next_transformers`` method.
 
         Validate that the ``_add_prefix`` method is properly applied to the value stored in the
-        ``NEXT_TRANSFORMERS`` attribute.
+        ``_next_transformers`` attribute.
 
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer`` where:
                 - ``column_prefix`` is set to a string.
-                - ``NEXT_TRANSFORMERS`` is set to dictionary.
+                - ``_next_transformers`` is set to dictionary.
 
         Output:
-            - the dictionary set in ``NEXT_TRANSFORMERS`` with the ``column_prefix`` string
+            - the dictionary set in ``_next_transformers`` with the ``column_prefix`` string
             added to the beginning of the keys.
         """
         # Setup

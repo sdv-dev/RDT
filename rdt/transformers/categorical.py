@@ -57,10 +57,7 @@ class FrequencyEncoder(BaseTransformer):
 
     def __init__(self, add_noise=False):
         self.add_noise = add_noise
-        self._next_transformers = {
-            'value': None,
-            'is_null': None
-        }
+        self._next_transformers = {'value': None}
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -321,6 +318,17 @@ class OneHotEncoder(BaseTransformer):
 
         return self._add_prefix(output_sdtypes)
 
+    def get_next_transformers(self):
+        """Return the suggested next transformer to be used for each column.
+
+        Returns:
+            dict:
+                Mapping from transformed column names to the transformers to apply to each column.
+        """
+        next_transformers = {f'value{i}': None for i in range(len(self.dummies))}
+
+        return self._add_prefix(next_transformers)
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -344,8 +352,6 @@ class OneHotEncoder(BaseTransformer):
 
         if self._dummy_na:
             self.dummies.append(np.nan)
-
-        self._next_transformers = {f'value{i}': None for i in range(len(self.dummies))}
 
     def _transform_helper(self, data):
         if self._dummy_encoded:
@@ -459,10 +465,7 @@ class LabelEncoder(BaseTransformer):
             )
 
         self.order_by = order_by
-        self._next_transformers = {
-            'value': None,
-            'is_null': None
-        }
+        self._next_transformers = {'value': None}
 
     def _order_categories(self, unique_data):
         if self.order_by == 'alphabetical':

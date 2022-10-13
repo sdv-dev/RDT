@@ -45,6 +45,7 @@ class TestFrequencyEncoder:
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
+        assert transformer._next_transformers == {'value': None}
 
     def test_is_transform_deterministic(self):
         """Test the ``is_transform_deterministic`` method.
@@ -878,6 +879,11 @@ class TestOneHotEncoder:
 
         # Assert
         np.testing.assert_array_equal(ohe.dummies, ['a', 2, 'c'])
+        ohe._next_transformers == {
+            'value0': None,
+            'value1': None,
+            'value2': None
+        }
 
     def test__fit_dummies_nans(self):
         """Test the ``_fit`` method without nans.
@@ -1505,6 +1511,7 @@ class TestLabelEncoder:
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
         assert transformer.order_by == 'alphabetical'
+        assert transformer._next_transformers == {'value': None}
 
     def test___init___bad_order_by(self):
         """Test that the ``__init__`` raises error if ``order_by`` is a bad value.

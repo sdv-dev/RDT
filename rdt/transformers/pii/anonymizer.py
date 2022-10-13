@@ -99,16 +99,12 @@ class AnonymizedFaker(BaseTransformer):
         self.function_name = function_name if function_name else 'lexify'
         self.function_kwargs = deepcopy(function_kwargs) if function_kwargs else {}
         self.check_provider_function(self.provider_name, self.function_name)
+        self._next_transformers = {None: None}
 
         self.locales = locales
         self.faker = faker.Faker(locales)
         if self.locales:
             self._check_locales()
-
-        self._next_transformers = {
-            'value': None,
-            'is_null': None
-        }
 
     def _function(self):
         """Return a callable ``faker`` function."""

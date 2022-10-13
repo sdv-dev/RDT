@@ -37,10 +37,6 @@ class BinaryEncoder(BaseTransformer):
     def __init__(self, missing_value_replacement=None, model_missing_values=False):
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
-        self._next_transformers = {
-            'value': None,
-            'is_null': None
-        }
 
     def get_output_sdtypes(self):
         """Return the output sdtypes returned by this transformer.
@@ -49,13 +45,24 @@ class BinaryEncoder(BaseTransformer):
             dict:
                 Mapping from the transformed column names to the produced sdtypes.
         """
-        output_sdtypes = {
-            'value': 'float',
-        }
+        output_sdtypes = {'value': 'float'}
         if self.null_transformer and self.null_transformer.models_missing_values():
             output_sdtypes['is_null'] = 'float'
 
         return self._add_prefix(output_sdtypes)
+
+    def get_next_transformers(self):
+        """Return the suggested next transformer to be used for each column.
+
+        Returns:
+            dict:
+                Mapping from transformed column names to the transformers to apply to each column.
+        """
+        next_transformers = {'value': None}
+        if self.null_transformer and self.null_transformer.models_missing_values():
+            next_transformers['is_null'] = None
+
+        return self._add_prefix(next_transformers)
 
     def _fit(self, data):
         """Fit the transformer to the data.
