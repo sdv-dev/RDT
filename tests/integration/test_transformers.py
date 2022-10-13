@@ -262,7 +262,6 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
         'sdtypes': sdtypes,
         'transformers': field_transformers
     }
-    hypertransformer.detect_initial_config(input_data)
     hypertransformer.set_config(config)
     hypertransformer.fit(input_data)
 
