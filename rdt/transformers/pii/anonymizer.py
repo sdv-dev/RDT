@@ -221,9 +221,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         )
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
-        self._next_transformers = {
-            'value': LabelEncoder(add_noise=True)
-        }
+        self._next_transformers = {'value': LabelEncoder(add_noise=True)}
 
     def get_mapping(self):
         """Return the mapping dictionary."""

@@ -77,6 +77,7 @@ class FloatFormatter(BaseTransformer):
         self.learn_rounding_scheme = learn_rounding_scheme
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
+        self._next_transformers = {'value': None}
 
     def get_output_sdtypes(self):
         """Return the output sdtypes supported by the transformer.
@@ -90,19 +91,6 @@ class FloatFormatter(BaseTransformer):
             output_sdtypes['is_null'] = 'float'
 
         return self._add_prefix(output_sdtypes)
-
-    def get_next_transformers(self):
-        """Return the suggested next transformer to be used for each column.
-
-        Returns:
-            dict:
-                Mapping from transformed column names to the transformers to apply to each column.
-        """
-        next_transformers = {'value': None}
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            next_transformers['is_null'] = None
-
-        return self._add_prefix(next_transformers)
 
     def is_composition_identity(self):
         """Return whether composition of transform and reverse transform produces the input data.
@@ -178,6 +166,9 @@ class FloatFormatter(BaseTransformer):
             self.model_missing_values
         )
         self.null_transformer.fit(data)
+
+        if self.null_transformer and self.null_transformer.models_missing_values():
+            self._next_transformers['is_null'] = None
 
     def _transform(self, data):
         """Transform numerical data.
@@ -441,8 +432,7 @@ class ClusterBasedNormalizer(FloatFormatter):
         self.weight_threshold = weight_threshold
         self._next_transformers = {
             'normalized': None,
-            'component': None,
-            'is_null': None
+            'component': None
         }
 
     def get_output_sdtypes(self):
@@ -460,22 +450,6 @@ class ClusterBasedNormalizer(FloatFormatter):
             output_sdtypes['is_null'] = 'float'
 
         return self._add_prefix(output_sdtypes)
-
-    def get_next_transformers(self):
-        """Return the suggested next transformer to be used for each column.
-
-        Returns:
-            dict:
-                Mapping from transformed column names to the transformers to apply to each column.
-        """
-        next_transformers = {
-            'normalized': None,
-            'component': None
-        }
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            next_transformers['is_null'] = None
-
-        return self._add_prefix(next_transformers)
 
     def _fit(self, data):
         """Fit the transformer to the data.

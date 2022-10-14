@@ -24,7 +24,6 @@ class BaseTransformer:
     columns = None
     column_prefix = None
     output_columns = None
-    _next_transformers = {}
 
     @classmethod
     def get_name(cls):

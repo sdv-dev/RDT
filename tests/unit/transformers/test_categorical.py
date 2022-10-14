@@ -45,7 +45,6 @@ class TestFrequencyEncoder:
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
-        assert transformer._next_transformers == {'value': None}
 
     def test_is_transform_deterministic(self):
         """Test the ``is_transform_deterministic`` method.
@@ -1511,7 +1510,6 @@ class TestLabelEncoder:
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
         assert transformer.order_by == 'alphabetical'
-        assert transformer._next_transformers == {'value': None}
 
     def test___init___bad_order_by(self):
         """Test that the ``__init__`` raises error if ``order_by`` is a bad value.

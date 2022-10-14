@@ -19,10 +19,6 @@ class TestBinaryEncoder(TestCase):
         error_message = 'Unexpected missing_value_replacement'
         assert transformer.missing_value_replacement is None, error_message
         assert not transformer.model_missing_values, 'model_missing_values is False by default'
-        assert transformer._next_transformers == {
-            'value': None,
-            'is_null': None
-        }
 
     def test_get_output_sdtypes_model_missing_values_column_created(self):
         """Test the ``get_output_sdtypes`` method when a null column is created.

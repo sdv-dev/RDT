@@ -45,6 +45,7 @@ class UnixTimestampEncoder(BaseTransformer):
         self.model_missing_values = model_missing_values
         self.datetime_format = datetime_format
         self._dtype = None
+        self._next_transformers = {'value': None}
 
     def is_composition_identity(self):
         """Return whether composition of transform and reverse transform produces the input data.
@@ -72,19 +73,6 @@ class UnixTimestampEncoder(BaseTransformer):
             output_sdtypes['is_null'] = 'float'
 
         return self._add_prefix(output_sdtypes)
-
-    def get_next_transformers(self):
-        """Return the suggested next transformer to be used for each column.
-
-        Returns:
-            dict:
-                Mapping from transformed column names to the transformers to apply to each column.
-        """
-        next_transformers = {'value': None}
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            next_transformers['is_null'] = None
-
-        return self._add_prefix(next_transformers)
 
     def _convert_to_datetime(self, data):
         if data.dtype == 'object':
@@ -143,6 +131,9 @@ class UnixTimestampEncoder(BaseTransformer):
             self.model_missing_values
         )
         self.null_transformer.fit(transformed)
+
+        if self.null_transformer and self.null_transformer.models_missing_values():
+            self._next_transformers['is_null'] = None
 
     def _transform(self, data):
         """Transform datetime values to float values.
