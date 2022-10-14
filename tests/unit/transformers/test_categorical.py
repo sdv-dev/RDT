@@ -214,6 +214,8 @@ class TestFrequencyEncoder:
         pd.testing.assert_series_equal(transformer.means, expected_means)
         pd.testing.assert_frame_equal(transformer.starts, expected_starts)
 
+        assert transformer._next_transformers == {'value': None}
+
     def test__get_value_add_noise_false(self):
         # Setup
         transformer = FrequencyEncoder(add_noise=False)
@@ -878,11 +880,7 @@ class TestOneHotEncoder:
 
         # Assert
         np.testing.assert_array_equal(ohe.dummies, ['a', 2, 'c'])
-        ohe._next_transformers == {
-            'value0': None,
-            'value1': None,
-            'value2': None
-        }
+        assert ohe._next_transformers == {'value0': None, 'value1': None, 'value2': None}
 
     def test__fit_dummies_nans(self):
         """Test the ``_fit`` method without nans.
@@ -902,6 +900,9 @@ class TestOneHotEncoder:
 
         # Assert
         np.testing.assert_array_equal(ohe.dummies, ['a', 2, 'c', np.nan])
+        assert ohe._next_transformers == {
+            'value0': None, 'value1': None, 'value2': None, 'value3': None
+        }
 
     def test__fit_no_nans(self):
         """Test the ``_fit`` method without nans.
@@ -926,6 +927,7 @@ class TestOneHotEncoder:
         np.testing.assert_array_equal(ohe._uniques, ['a', 'b', 'c'])
         assert ohe._dummy_encoded
         assert not ohe._dummy_na
+        assert ohe._next_transformers == {'value0': None, 'value1': None, 'value2': None}
 
     def test__fit_no_nans_numeric(self):
         """Test the ``_fit`` method without nans.
@@ -950,6 +952,7 @@ class TestOneHotEncoder:
         np.testing.assert_array_equal(ohe._uniques, [1, 2, 3])
         assert not ohe._dummy_encoded
         assert not ohe._dummy_na
+        assert ohe._next_transformers == {'value0': None, 'value1': None, 'value2': None}
 
     def test__fit_nans(self):
         """Test the ``_fit`` method with nans.
@@ -974,6 +977,7 @@ class TestOneHotEncoder:
         np.testing.assert_array_equal(ohe._uniques, ['a', 'b'])
         assert ohe._dummy_encoded
         assert ohe._dummy_na
+        assert ohe._next_transformers == {'value0': None, 'value1': None, 'value2': None}
 
     def test__fit_nans_numeric(self):
         """Test the ``_fit`` method with nans.
@@ -998,6 +1002,7 @@ class TestOneHotEncoder:
         np.testing.assert_array_equal(ohe._uniques, [1, 2])
         assert not ohe._dummy_encoded
         assert ohe._dummy_na
+        assert ohe._next_transformers == {'value0': None, 'value1': None, 'value2': None}
 
     def test__fit_single(self):
         # Setup
@@ -1009,6 +1014,7 @@ class TestOneHotEncoder:
 
         # Assert
         np.testing.assert_array_equal(ohe.dummies, ['a'])
+        assert ohe._next_transformers == {'value0': None}
 
     def test__transform_no_nan(self):
         """Test the ``_transform`` method without nans.
@@ -1694,6 +1700,7 @@ class TestLabelEncoder:
         # Assert
         assert transformer.values_to_categories == {0: 1, 1: 2, 2: 3}
         assert transformer.categories_to_values == {1: 0, 2: 1, 3: 2}
+        assert transformer._next_transformers == {'value': None}
 
     def test__transform(self):
         """Test the ``_transform`` method.
@@ -1889,6 +1896,8 @@ class TestCustomLabelEncoder:
 
         for key, value in transformer.categories_to_values.items():
             assert value == expected_categories_to_values.get(key) or pd.isna(key)
+
+        assert transformer._next_transformers == {'value': None}
 
     def test__fit_error(self):
         """Test the ``_fit`` method checks that data is in ``self.order``.

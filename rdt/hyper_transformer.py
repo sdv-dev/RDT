@@ -669,7 +669,6 @@ class HyperTransformer:
             self._transformers_tree[field]['outputs'] = list(output_sdtypes)
             for output_name in output_sdtypes:
                 output_field = self._multi_column_fields.get(output_name, output_name)
-                print(next_transformers)
                 next_transformer = next_transformers[output_field]
                 if next_transformer and self._field_in_data(output_field, data):
                     self._fit_field_transformer(data, output_field, next_transformer)
