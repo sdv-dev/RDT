@@ -3164,3 +3164,65 @@ class TestHyperTransformer(TestCase):
             'outputs:\n  - field1.out2.value\n  transformer: FloatFormatter\nfield2:\n  '
             'outputs:\n  - field2.value\n  transformer: FrequencyEncoder\n'
         )
+
+    @patch('rdt.hyper_transformer.get_transformer_instance')
+    def test__fit_field_transformer_multi_column_field_not_ready(
+        self,
+        get_transformer_instance_mock
+    ):
+        """Test the ``_fit_field_transformer`` method.
+        This tests that the ``_fit_field_transformer`` behaves as expected.
+        If the column is part of a multi-column field, and the other columns
+        aren't present in the data, then it should not fit the next transformer.
+        It should however, transform the data.
+        Setup:
+            - A mock for ``get_transformer_instance``.
+            - A mock for the transformer returned by ``get_transformer_instance``.
+            The ``get_output_sdtypes`` method will return one output that is part of
+            a multi-column field.
+            - A mock for ``_multi_column_fields`` to return the multi-column field.
+        Input:
+            - A DataFrame with two columns.
+            - A column name to fit the transformer to.
+            - A transformer.
+        Output:
+            - A DataFrame with columns that result from transforming the
+            outputs of the original transformer.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': [4, 5, 6]
+        })
+        transformed_data1 = pd.DataFrame({
+            'a.out1': ['1', '2', '3'],
+            'b': [4, 5, 6]
+        })
+        transformer1 = Mock()
+        transformer2 = Mock()
+        transformer1.get_output_sdtypes.return_value = {
+            'a.out1': 'categorical'
+        }
+        transformer1.get_next_transformers.return_value = {('a.out1', 'b.out1'): transformer2}
+        transformer1.transform.return_value = transformed_data1
+        get_transformer_instance_mock.side_effect = [transformer1]
+        ht = HyperTransformer()
+        ht._get_next_transformer = Mock()
+        ht._get_next_transformer.side_effect = [transformer2]
+        ht._multi_column_fields = Mock()
+        ht._multi_column_fields.get.return_value = ('a.out1', 'b.out1')
+
+        # Run
+        out = ht._fit_field_transformer(data, 'a', transformer1)
+
+        # Assert
+        expected = pd.DataFrame({
+            'a.out1': ['1', '2', '3'],
+            'b': [4, 5, 6]
+        })
+        assert ht._output_columns == []
+        pd.testing.assert_frame_equal(out, expected)
+        transformer1.fit.assert_called_once()
+        transformer1.transform.assert_called_once_with(data)
+        transformer2.fit.assert_not_called()
+        assert ht._transformers_sequence == [transformer1]

@@ -57,7 +57,6 @@ class FrequencyEncoder(BaseTransformer):
 
     def __init__(self, add_noise=False):
         self.add_noise = add_noise
-        self._next_transformers = {'value': None}
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -342,8 +341,6 @@ class OneHotEncoder(BaseTransformer):
         if self._dummy_na:
             self.dummies.append(np.nan)
 
-        self._next_transformers = {f'value{i}': None for i in range(len(self.dummies))}
-
     def _transform_helper(self, data):
         if self._dummy_encoded:
             coder = self._indexer
@@ -456,7 +453,6 @@ class LabelEncoder(BaseTransformer):
             )
 
         self.order_by = order_by
-        self._next_transformers = {'value': None}
 
     def _order_categories(self, unique_data):
         if self.order_by == 'alphabetical':

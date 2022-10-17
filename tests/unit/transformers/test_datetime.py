@@ -372,7 +372,6 @@ class TestUnixTimestampEncoder:
 
         # Assert
         transformer._transform_helper.assert_called_once()
-        assert transformer._next_transformers == {'value': None}
 
     @patch('rdt.transformers.datetime._guess_datetime_format_for_array')
     def test__fit_calls_guess_datetime_format(self, mock__guess_datetime_format_for_array):
@@ -394,19 +393,6 @@ class TestUnixTimestampEncoder:
             np.array(['2020-02-01', '2020-03-01'])
         )
         assert transformer.datetime_format == '%Y-%m-%d'
-        assert transformer._next_transformers == {'value': None}
-
-    def test__fit_nans(self):
-        """Test with  ``model_missing_values=True``."""
-        # Setup
-        data = pd.Series(['2020-02-01', np.nan])
-        transformer = UnixTimestampEncoder(model_missing_values=True)
-
-        # Run
-        transformer._fit(data)
-
-        # Assert
-        assert transformer._next_transformers == {'value': None, 'is_null': None}
 
     def test__transform(self):
         """Test the ``_transform`` method for numpy arrays.

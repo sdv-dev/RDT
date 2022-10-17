@@ -314,7 +314,6 @@ class TestFloatFormatter(TestCase):
         assert transformer.null_transformer._missing_value_replacement == expected
         assert transformer._dtype == float
         transformer._validate_values_within_bounds.assert_called_once_with(data)
-        assert transformer._next_transformers == {'value': None}
 
     def test__fit_learn_rounding_scheme_false(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``False``.
@@ -339,7 +338,6 @@ class TestFloatFormatter(TestCase):
 
         # Asserts
         assert transformer._rounding_digits is None
-        assert transformer._next_transformers == {'value': None}
 
     def test__fit_learn_rounding_scheme_true(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
@@ -365,7 +363,6 @@ class TestFloatFormatter(TestCase):
 
         # Asserts
         assert transformer._rounding_digits == 4
-        assert transformer._next_transformers == {'value': None}
 
     def test__fit_learn_rounding_scheme_true_max_decimals(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
@@ -393,7 +390,6 @@ class TestFloatFormatter(TestCase):
 
         # Asserts
         assert transformer._rounding_digits is None
-        assert transformer._next_transformers == {'value': None}
 
     def test__fit_learn_rounding_scheme_true_inf(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
@@ -420,7 +416,6 @@ class TestFloatFormatter(TestCase):
 
         # Asserts
         assert transformer._rounding_digits is None
-        assert transformer._next_transformers == {'value': None}
 
     def test__fit_learn_rounding_scheme_true_max_zero(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
@@ -445,7 +440,6 @@ class TestFloatFormatter(TestCase):
 
         # Asserts
         assert transformer._rounding_digits is None
-        assert transformer._next_transformers == {'value': None}
 
     def test__fit_enforce_min_max_values_false(self):
         """Test ``_fit`` with ``enforce_min_max_values`` set to ``False``.
@@ -472,7 +466,6 @@ class TestFloatFormatter(TestCase):
         # Asserts
         assert transformer._min_value is None
         assert transformer._max_value is None
-        assert transformer._next_transformers == {'value': None}
 
     def test__fit_enforce_min_max_values_true(self):
         """Test ``_fit`` with ``enforce_min_max_values`` set to ``True``.
@@ -498,19 +491,6 @@ class TestFloatFormatter(TestCase):
         # Asserts
         assert transformer._min_value == -5000
         assert transformer._max_value == 4000
-        assert transformer._next_transformers == {'value': None}
-
-    def test__fit_nans(self):
-        """Test ``_fit`` with ``model_missing_values=True``."""
-        # Setup
-        data = pd.Series([-100, -5000, 0, None, 100, 4000])
-        transformer = FloatFormatter(model_missing_values=True)
-
-        # Run
-        transformer._fit(data)
-
-        # Assert
-        assert transformer._next_transformers == {'value': None, 'is_null': None}
 
     def test__transform(self):
         """Test the ``_transform`` method.
@@ -1046,7 +1026,6 @@ class TestGaussianNormalizer:
             call_value[0][0],
             np.array([0.0, 0.5, 1.0])
         )
-        assert ct._next_transformers == {'value': None}
 
     def test__fit_model_missing_values(self):
         """Test the ``_fit`` method.
@@ -1079,7 +1058,6 @@ class TestGaussianNormalizer:
             call_value[0][0],
             np.array([0.0, 0.5, 1.0])
         )
-        assert ct._next_transformers == {'value': None, 'is_null': None}
 
     @patch('rdt.transformers.numerical.warnings')
     def test__fit_catch_warnings(self, mock_warnings):
@@ -1359,7 +1337,6 @@ class TestClusterBasedNormalizer(TestCase):
         # Asserts
         assert transformer._bgm_transformer == bgm_instance
         assert transformer.valid_component_indicator.sum() == 2
-        assert transformer._next_transformers == {'normalized': None, 'component': None}
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     def test__fit_missing_value_replacement(self, mock_bgm):
@@ -1401,9 +1378,6 @@ class TestClusterBasedNormalizer(TestCase):
         assert transformer._bgm_transformer == bgm_instance
         assert transformer.valid_component_indicator.sum() == 2
         assert transformer.null_transformer.models_missing_values()
-        assert transformer._next_transformers == {
-            'normalized': None, 'component': None, 'is_null': None
-        }
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     @patch('rdt.transformers.numerical.warnings')

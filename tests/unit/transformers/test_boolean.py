@@ -69,7 +69,6 @@ class TestBinaryEncoder(TestCase):
         # Asserts
         error_msg = 'Unexpected fill value'
         assert transformer.null_transformer._missing_value_replacement is None, error_msg
-        assert transformer._next_transformers == {'value': None}
 
     def test__fit_missing_value_replacement_not_ignore(self):
         """Test _fit missing_value_replacement not equal to ignore"""
@@ -83,7 +82,6 @@ class TestBinaryEncoder(TestCase):
         # Asserts
         error_msg = 'Unexpected fill value'
         assert transformer.null_transformer._missing_value_replacement == 0, error_msg
-        assert transformer._next_transformers == {'value': None}
 
     def test__fit_array(self):
         """Test _fit with numpy.array"""
@@ -97,19 +95,6 @@ class TestBinaryEncoder(TestCase):
         # Asserts
         error_msg = 'Unexpected fill value'
         assert transformer.null_transformer._missing_value_replacement == 0, error_msg
-        assert transformer._next_transformers == {'value': None}
-
-    def test__fit_nans(self):
-        """Test when ``model_missing_values=True``."""
-        # Setup
-        data = pd.Series([False, np.nan])
-
-        # Run
-        transformer = BinaryEncoder(model_missing_values=True)
-        transformer._fit(data)
-
-        # Assert
-        assert transformer._next_transformers == {'value': None, 'is_null': None}
 
     def test__transform_series(self):
         """Test transform pandas.Series"""

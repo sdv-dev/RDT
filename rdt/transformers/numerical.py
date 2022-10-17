@@ -77,7 +77,6 @@ class FloatFormatter(BaseTransformer):
         self.learn_rounding_scheme = learn_rounding_scheme
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
-        self._next_transformers = {'value': None}
 
     def get_output_sdtypes(self):
         """Return the output sdtypes supported by the transformer.
@@ -166,9 +165,6 @@ class FloatFormatter(BaseTransformer):
             self.model_missing_values
         )
         self.null_transformer.fit(data)
-
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            self._next_transformers['is_null'] = None
 
     def _transform(self, data):
         """Transform numerical data.
@@ -430,10 +426,6 @@ class ClusterBasedNormalizer(FloatFormatter):
         )
         self.max_clusters = max_clusters
         self.weight_threshold = weight_threshold
-        self._next_transformers = {
-            'normalized': None,
-            'component': None
-        }
 
     def get_output_sdtypes(self):
         """Return the output sdtypes supported by the transformer.

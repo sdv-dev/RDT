@@ -135,7 +135,7 @@ class BaseTransformer:
             dict:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
-        return self._add_prefix(self._next_transformers)
+        return self._add_prefix(self._get_next_transformers())
 
     def get_input_column(self):
         """Return input column name for transformer.
@@ -154,6 +154,12 @@ class BaseTransformer:
                 Names of columns created during ``transform``.
         """
         return list(self.get_output_sdtypes())
+
+    def _get_next_transformers(self):
+        if not isinstance(self._next_transformers, dict):
+            return {key.split('.')[-1]: None for key in self.get_output_columns()}
+
+        return self._next_transformers
 
     def _store_columns(self, columns, data):
         if isinstance(columns, tuple) and columns not in data:
