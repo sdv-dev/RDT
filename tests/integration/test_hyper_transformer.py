@@ -805,6 +805,8 @@ def test_set_config_with_supported_sdtypes():
 
     # Run and Assert
     ht.set_config(config)
+
+
 def test_hyper_transformer_chained_transformers():
     """Test when a transformer is chained to another transformer.
 
