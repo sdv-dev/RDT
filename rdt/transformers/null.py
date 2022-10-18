@@ -5,6 +5,8 @@ import logging
 import numpy as np
 import pandas as pd
 
+from rdt.errors import TransformerInputError
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -52,9 +54,20 @@ class NullTransformer():
         Return:
             object:
                 The fill value that needs to be used.
+
+        Raise:
+            TransformerInputError:
+                Error raised when data only contains nans and ``_missing_value_replacement``
+                is set to 'mean' or  'mode'.
         """
         if self._missing_value_replacement is None:
             return None
+
+        if self._missing_value_replacement in {'mean', 'mode'} and pd.isna(data).all():
+            raise TransformerInputError(
+                f"'missing_value_replacement' cannot be set to '{self._missing_value_replacement}'"
+                ' when the provided data only contains NaNs.'
+            )
 
         if self._missing_value_replacement == 'mean':
             return data.mean()
