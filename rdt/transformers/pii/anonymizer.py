@@ -98,7 +98,7 @@ class AnonymizedFaker(BaseTransformer):
         self.function_name = function_name if function_name else 'lexify'
         self.function_kwargs = deepcopy(function_kwargs) if function_kwargs else {}
         self.check_provider_function(self.provider_name, self.function_name)
-        self.output_properties = {None: {'transformer': None}}
+        self.output_properties = {None: {'next_transformer': None}}
 
         self.locales = locales
         self.faker = faker.Faker(locales)
@@ -219,7 +219,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
         self.output_properties = {
-            'value': {'sdtype': 'categorical', 'transformer': LabelEncoder(add_noise=True)}
+            'value': {'sdtype': 'categorical', 'next_transformer': LabelEncoder(add_noise=True)}
         }
 
     def get_mapping(self):

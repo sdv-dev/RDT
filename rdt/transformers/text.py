@@ -32,7 +32,7 @@ class RegexGenerator(BaseTransformer):
         self.enforce_uniqueness = enforce_uniqueness
         self.regex_format = regex_format
         self.data_length = None
-        self.output_properties = {None: {'transformer': None}}
+        self.output_properties = {None: {'next_transformer': None}}
 
     def _fit(self, data):
         """Fit the transformer to the data.

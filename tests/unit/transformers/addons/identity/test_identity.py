@@ -31,9 +31,9 @@ class TestIdentityTransformer(TestCase):
 
         # assert
         expected_output_properties = {
-            'a': {'sdtype': None, 'transformer': None},
-            'b': {'sdtype': None, 'transformer': None},
-            'c': {'sdtype': None, 'transformer': None},
+            'a': {'next_transformer': None},
+            'b': {'next_transformer': None},
+            'c': {'next_transformer': None},
         }
 
         assert instance.output_properties == expected_output_properties

@@ -353,7 +353,7 @@ class TestBaseTransformer:
             column_prefix = 'column_name'
 
             def __init__(self):
-                self.output_properties = {'value': {'transformer': transformer}}
+                self.output_properties = {'value': {'next_transformer': transformer}}
 
         dummy_transformer = Dummy()
 

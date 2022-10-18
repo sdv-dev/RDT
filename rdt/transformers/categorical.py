@@ -331,7 +331,7 @@ class OneHotEncoder(BaseTransformer):
             self.dummies.append(np.nan)
 
         self.output_properties = {
-            f'value{i}': {'sdtype': 'float', 'transformer': None}
+            f'value{i}': {'sdtype': 'float', 'next_transformer': None}
             for i in range(len(self.dummies))
         }
 

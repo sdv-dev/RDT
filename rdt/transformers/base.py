@@ -25,7 +25,7 @@ class BaseTransformer:
     output_columns = None
 
     def __init__(self):
-        self.output_properties = {'value': {'sdtype': 'float', 'transformer': None}}
+        self.output_properties = {'value': {'sdtype': 'float', 'next_transformer': None}}
 
     @classmethod
     def get_name(cls):
@@ -103,7 +103,7 @@ class BaseTransformer:
             dict:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
-        return self._add_prefix('transformer')
+        return self._add_prefix('next_transformer')
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.

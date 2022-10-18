@@ -154,7 +154,7 @@ class FloatFormatter(BaseTransformer):
         )
         self.null_transformer.fit(data)
         if self.null_transformer.models_missing_values():
-            self.output_properties['is_null'] = {'sdtype': 'float', 'transformer': None}
+            self.output_properties['is_null'] = {'sdtype': 'float', 'next_transformer': None}
 
     def _transform(self, data):
         """Transform numerical data.
@@ -417,8 +417,8 @@ class ClusterBasedNormalizer(FloatFormatter):
         self.max_clusters = max_clusters
         self.weight_threshold = weight_threshold
         self.output_properties = {
-            'normalized': {'sdtype': 'float', 'transformer': None},
-            'component': {'sdtype': 'categorical', 'transformer': None},
+            'normalized': {'sdtype': 'float', 'next_transformer': None},
+            'component': {'sdtype': 'categorical', 'next_transformer': None},
         }
 
     def _fit(self, data):

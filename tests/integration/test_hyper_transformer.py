@@ -36,7 +36,7 @@ class DummyTransformerNotMLReady(BaseTransformer):
 
     def __init__(self):
         self.output_properties = {
-            'value': {'sdtype': 'datetime', 'transformer': FrequencyEncoder()}
+            'value': {'sdtype': 'datetime', 'next_transformer': FrequencyEncoder()}
         }
 
     def _fit(self, data):

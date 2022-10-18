@@ -52,7 +52,7 @@ class BinaryEncoder(BaseTransformer):
         )
         self.null_transformer.fit(data)
         if self.null_transformer.models_missing_values():
-            self.output_properties['is_null'] = {'sdtype': 'float', 'transformer': None}
+            self.output_properties['is_null'] = {'sdtype': 'float', 'next_transformer': None}
 
     def _transform(self, data):
         """Transform boolean to float.
