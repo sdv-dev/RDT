@@ -74,16 +74,16 @@ class BaseTransformer:
         """
         return cls.SUPPORTED_SDTYPES or [cls.INPUT_SDTYPE]
 
-    def _add_prefix(self, sdtype_or_transformer):
+    def _get_output_to_property(self, property_):
         output = {}
         for output_column, properties in self.output_properties.items():
             # if 'sdtype' is not in the dict, ignore the column
-            if sdtype_or_transformer not in properties:
+            if property_ not in properties:
                 continue
             if output_column is None:
-                output[f'{self.column_prefix}'] = properties[sdtype_or_transformer]
+                output[f'{self.column_prefix}'] = properties[property_]
             else:
-                output[f'{self.column_prefix}.{output_column}'] = properties[sdtype_or_transformer]
+                output[f'{self.column_prefix}.{output_column}'] = properties[property_]
 
         return output
 
@@ -94,7 +94,7 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to the produced sdtypes.
         """
-        return self._add_prefix('sdtype')
+        return self._get_output_to_property('sdtype')
 
     def get_next_transformers(self):
         """Return the suggested next transformer to be used for each column.
@@ -103,7 +103,7 @@ class BaseTransformer:
             dict:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
-        return self._add_prefix('next_transformer')
+        return self._get_output_to_property('next_transformer')
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -157,7 +157,7 @@ class BaseTransformer:
             list:
                 Names of columns created during ``transform``.
         """
-        return list(self._add_prefix('sdtype'))
+        return list(self._get_output_to_property('sdtype'))
 
     def _store_columns(self, columns, data):
         if isinstance(columns, tuple) and columns not in data:

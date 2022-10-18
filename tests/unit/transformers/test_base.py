@@ -105,6 +105,23 @@ class TestBaseTransformer:
         # Assert
         assert supported_sdtypes == ['categorical']
 
+    def test__get_output_to_property(self):
+        """Test method adds the column_prefix to output_properties and reformats it."""
+        # Setup
+        transformer = BaseTransformer()
+        transformer.column_prefix = 'abc'
+        transformer.output_properties = {
+            'col': {'sdtype': 'float', 'next_transformer': None},
+            'ignore': {'next_transformer': None},
+            None: {'sdtype': 'categorical', 'next_transformer': None}
+        }
+
+        # Run
+        output = transformer._get_output_to_property('sdtype')
+
+        # Assert
+        assert output == {'abc.col': 'float', 'abc': 'categorical'}
+
     def test___repr___no_parameters(self):
         """Test that the ``__str__`` method returns the class name.
 

@@ -166,7 +166,7 @@ Since the ``country_code`` may or may not be present, we can overwrite the
         if self.has_country_code:
             output_sdtypes['country_code'] = 'categorical'
 
-        return self._add_prefix(output_sdtypes)
+        return self._get_output_to_property(output_sdtypes)
 
     def get_next_transformers(self):
         next_transformers = {
@@ -176,11 +176,11 @@ Since the ``country_code`` may or may not be present, we can overwrite the
         if self.has_country_code:
             next_transformers['country_code'] = 'FrequencyEncoder'
         
-        return self._add_prefix(next_transformers)
+        return self._get_output_to_property(next_transformers)
 
-``_add_prefix`` is a private method that prepends the ``column_prefix`` attributes to every key
-in a dictionary. Now that we have this information, we can write the ``_transform`` and
-``_reverse_transform`` methods.
+``_get_output_to_property`` is a private method that prepends the ``column_prefix`` attributes
+to every key in a dictionary. Now that we have this information, we can write the ``_transform``
+and ``_reverse_transform`` methods.
 
 .. code-block:: Python
 
@@ -227,7 +227,7 @@ handles that for us. Let's view the complete class below.
             if self.has_country_code:
                 output_sdtypes['country_code'] = 'categorical'
 
-            return self._add_prefix(output_sdtypes)
+            return self._get_output_to_property(output_sdtypes)
 
         def get_next_transformers(self):
             next_transformers = {
@@ -237,7 +237,7 @@ handles that for us. Let's view the complete class below.
             if self.has_country_code:
                 next_transformers['country_code'] = 'FrequencyEncoder'
 
-            return self._add_prefix(next_transformers)
+            return self._get_output_to_property(next_transformers)
         
         def _transform(self, data):
             return data.str.split('-', expand=True)
