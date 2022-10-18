@@ -805,3 +805,44 @@ def test_set_config_with_supported_sdtypes():
 
     # Run and Assert
     ht.set_config(config)
+def test_hyper_transformer_chained_transformers():
+    """Test when a transformer is chained to another transformer.
+
+    When the specified transformer indicates a next transformer, they should each be applied in
+    order during the transform step, and then reversed during the reverse_transform.
+    """
+    # Setup
+    class DoublingTransformer(BaseTransformer):
+        INPUT_SDTYPE = 'numerical'
+
+        def _fit(self, data):
+            ...
+
+        def _transform(self, data):
+            return data * 2
+
+        def _reverse_transform(self, data):
+            return data / 2
+
+    transformer3 = DoublingTransformer()
+    transformer2 = DoublingTransformer()
+    transformer2.output_properties['value']['next_transformer'] = transformer3
+    transformer1 = DoublingTransformer()
+    transformer1.output_properties['value']['next_transformer'] = transformer2
+
+    ht = HyperTransformer()
+    data = pd.DataFrame({'col': [1., 2, -1, 3, 1]})
+
+    # Run and Assert
+    ht.set_config({
+        'sdtypes': {'col': 'numerical'},
+        'transformers': {'col': transformer1}
+    })
+    ht.fit(data)
+
+    transformed = ht.transform(data)
+    expected_transform = pd.DataFrame({'col.value.value.value': [8., 16, -8, 24, 8]})
+    pd.testing.assert_frame_equal(transformed, expected_transform)
+
+    reverse_transformed = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(reverse_transformed, data)
