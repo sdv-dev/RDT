@@ -213,6 +213,9 @@ class TestFrequencyEncoder:
         assert transformer.intervals == expected_intervals
         pd.testing.assert_series_equal(transformer.means, expected_means)
         pd.testing.assert_frame_equal(transformer.starts, expected_starts)
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__get_value_add_noise_false(self):
         # Setup
@@ -821,27 +824,6 @@ class TestOneHotEncoder:
         expected = pd.Series(['a', 'b', 'c'])
         np.testing.assert_array_equal(out, expected)
 
-    def test_get_output_sdtypes(self):
-        """Test the ``get_output_sdtypes`` method.
-
-        Expected to return a dictionary of column_prefix + output_properties keys mapping to
-        the output_properties sdtypes.
-        """
-        # Setup
-        transformer = OneHotEncoder()
-        transformer.column_prefix = 'abc'
-
-        # Run
-        transformer._fit(pd.Series([1, 2]))
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'abc.value0': 'float',
-            'abc.value1': 'float'
-        }
-        assert output == expected
-
     def test__fit_dummies_no_nans(self):
         """Test the ``_fit`` method without nans.
 
@@ -880,6 +862,12 @@ class TestOneHotEncoder:
 
         # Assert
         np.testing.assert_array_equal(ohe.dummies, ['a', 2, 'c', np.nan])
+        assert ohe.output_properties == {
+            'value0': {'sdtype': 'float', 'next_transformer': None},
+            'value1': {'sdtype': 'float', 'next_transformer': None},
+            'value2': {'sdtype': 'float', 'next_transformer': None},
+            'value3': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__fit_no_nans(self):
         """Test the ``_fit`` method without nans.
@@ -1672,6 +1660,9 @@ class TestLabelEncoder:
         # Assert
         assert transformer.values_to_categories == {0: 1, 1: 2, 2: 3}
         assert transformer.categories_to_values == {1: 0, 2: 1, 3: 2}
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__transform(self):
         """Test the ``_transform`` method.

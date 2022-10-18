@@ -188,6 +188,25 @@ class TestBaseTransformer:
         # Assert
         assert output == {'column_name.value': 'numerical'}
 
+    def test_get_next_transformers(self):
+        """Test the column_prefix gets added to all columns in output_properties."""
+        # Setup
+        transformer = NullTransformer()
+
+        class Dummy(BaseTransformer):
+            column_prefix = 'column_name'
+
+            def __init__(self):
+                self.output_properties = {'value': {'next_transformer': transformer}}
+
+        dummy_transformer = Dummy()
+
+        # Run
+        output = dummy_transformer.get_next_transformers()
+
+        # Assert
+        assert output == {'column_name.value': transformer}
+
     def test_get_input_columns(self):
         """Test the ``get_input_columns method.
 
@@ -339,29 +358,6 @@ class TestBaseTransformer:
 
         # Assert
         assert output is True
-
-    def test_get_next_transformers(self):
-        """Test the ``get_next_transformers`` method.
-
-        Expected to return a dictionary of column_prefix + output_properties keys mapping to
-        the output_properties transformers.
-        """
-        # Setup
-        transformer = NullTransformer()
-
-        class Dummy(BaseTransformer):
-            column_prefix = 'column_name'
-
-            def __init__(self):
-                self.output_properties = {'value': {'next_transformer': transformer}}
-
-        dummy_transformer = Dummy()
-
-        # Run
-        output = dummy_transformer.get_next_transformers()
-
-        # Assert
-        assert output == {'column_name.value': transformer}
 
     def test__store_columns_list(self):
         """Test the ``_store_columns`` method when passed a list.

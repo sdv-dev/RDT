@@ -19,27 +19,6 @@ class TestBinaryEncoder(TestCase):
         assert transformer.missing_value_replacement is None, error_message
         assert not transformer.model_missing_values, 'model_missing_values is False by default'
 
-    def test_get_output_sdtypes(self):
-        """Test the ``get_output_sdtypes`` method when a null column is created.
-
-        Expected to return a dictionary of column_prefix + output_properties keys mapping to
-        the output_properties sdtypes.
-        """
-        # Setup
-        transformer = BinaryEncoder(model_missing_values=True)
-        transformer.column_prefix = 'abc'
-
-        # Run
-        transformer._fit(pd.Series([np.nan]))
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'abc.value': 'float',
-            'abc.is_null': 'float'
-        }
-        assert output == expected
-
     def test__fit_missing_value_replacement_ignore(self):
         """Test _fit missing_value_replacement equal to ignore"""
         # Setup
@@ -52,6 +31,9 @@ class TestBinaryEncoder(TestCase):
         # Asserts
         error_msg = 'Unexpected fill value'
         assert transformer.null_transformer._missing_value_replacement is None, error_msg
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__fit_missing_value_replacement_not_ignore(self):
         """Test _fit missing_value_replacement not equal to ignore"""
@@ -78,6 +60,21 @@ class TestBinaryEncoder(TestCase):
         # Asserts
         error_msg = 'Unexpected fill value'
         assert transformer.null_transformer._missing_value_replacement == 0, error_msg
+
+    def test__fit_model_missing_values(self):
+        """Test output_properties contains 'is_null' column when model_missing_values=True."""
+        # Setup
+        transformer = BinaryEncoder(model_missing_values=True)
+        data = pd.Series([True, np.nan])
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__transform_series(self):
         """Test transform pandas.Series"""

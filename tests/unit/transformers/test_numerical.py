@@ -24,27 +24,6 @@ class TestFloatFormatter(TestCase):
         assert nt.missing_value_replacement == 'mode'
         assert nt.model_missing_values is False
 
-    def test_get_output_sdtypes_model_missing_values_column_created(self):
-        """Test the ``get_output_sdtypes`` method when a null column is created.
-
-        Expected to return a dictionary of column_prefix + output_properties keys mapping to
-        the output_properties sdtypes.
-        """
-        # Setup
-        transformer = FloatFormatter(model_missing_values=True)
-        transformer.column_prefix = 'a#b'
-
-        # Run
-        transformer._fit(pd.Series([np.nan]))
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'a#b.value': 'float',
-            'a#b.is_null': 'float'
-        }
-        assert output == expected
-
     def test_is_composition_identity_null_transformer_true(self):
         """Test the ``is_composition_identity`` method with a ``null_transformer``.
 
@@ -297,7 +276,13 @@ class TestFloatFormatter(TestCase):
         expected = 'missing_value_replacement'
         assert transformer.null_transformer._missing_value_replacement == expected
         assert transformer._dtype == float
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None}
+        }
         transformer._validate_values_within_bounds.assert_called_once_with(data)
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__fit_learn_rounding_scheme_false(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``False``.
@@ -475,6 +460,21 @@ class TestFloatFormatter(TestCase):
         # Asserts
         assert transformer._min_value == -5000
         assert transformer._max_value == 4000
+
+    def test__fit_model_missing_values(self):
+        """Test output_properties contains 'is_null' column when model_missing_values=True."""
+        # Setup
+        transformer = FloatFormatter(model_missing_values=True)
+        data = pd.Series([1, np.nan])
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__transform(self):
         """Test the ``_transform`` method.
@@ -1010,6 +1010,9 @@ class TestGaussianNormalizer:
             call_value[0][0],
             np.array([0.0, 0.5, 1.0])
         )
+        assert ct.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__fit_model_missing_values(self):
         """Test the ``_fit`` method.
@@ -1042,6 +1045,10 @@ class TestGaussianNormalizer:
             call_value[0][0],
             np.array([0.0, 0.5, 1.0])
         )
+        assert ct.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     @patch('rdt.transformers.numerical.warnings')
     def test__fit_catch_warnings(self, mock_warnings):
@@ -1252,28 +1259,6 @@ class TestGaussianNormalizer:
 
 class TestClusterBasedNormalizer(TestCase):
 
-    def test_get_output_sdtypes_model_missing_values_column_created(self):
-        """Test the ``get_output_sdtypes`` method when a null column is created.
-
-        Expected to return a dictionary of column_prefix + output_properties keys mapping to
-        the output_properties sdtypes.
-        """
-        # Setup
-        transformer = ClusterBasedNormalizer(model_missing_values=True)
-        transformer.column_prefix = 'abc'
-
-        # Run
-        transformer._fit(pd.Series([1, np.nan] * 5))
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'abc.normalized': 'float',
-            'abc.component': 'categorical',
-            'abc.is_null': 'float'
-        }
-        assert output == expected
-
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     def test__fit(self, mock_bgm):
         """Test ``_fit``.
@@ -1305,6 +1290,10 @@ class TestClusterBasedNormalizer(TestCase):
         # Asserts
         assert transformer._bgm_transformer == bgm_instance
         assert transformer.valid_component_indicator.sum() == 2
+        assert transformer.output_properties == {
+            'normalized': {'sdtype': 'float', 'next_transformer': None},
+            'component': {'sdtype': 'categorical', 'next_transformer': None}
+        }
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     def test__fit_missing_value_replacement(self, mock_bgm):
@@ -1346,6 +1335,11 @@ class TestClusterBasedNormalizer(TestCase):
         assert transformer._bgm_transformer == bgm_instance
         assert transformer.valid_component_indicator.sum() == 2
         assert transformer.null_transformer.models_missing_values()
+        assert transformer.output_properties == {
+            'normalized': {'sdtype': 'float', 'next_transformer': None},
+            'component': {'sdtype': 'categorical', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     @patch('rdt.transformers.numerical.warnings')
