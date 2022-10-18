@@ -824,32 +824,15 @@ class TestOneHotEncoder:
     def test_get_output_sdtypes(self):
         """Test the ``get_output_sdtypes`` method.
 
-        Validate that the ``_add_prefix`` method is properly applied to the ``output_sdtypes``
-        dictionary. For this class, the ``output_sdtypes`` dictionary is described as:
-
-        {
-            'value1': 'float',
-            'value2': 'float',
-            ...
-        }
-
-        The number of items in the dictionary is defined by the ``dummies`` attribute.
-
-        Setup:
-            - initialize a ``OneHotEncoder`` and set:
-                - the ``dummies`` attribute to a list.
-                - the ``column_prefix`` attribute to a string.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with ``self.column_prefix``
-            added to the beginning of the keys of the ``output_sdtypes`` dictionary.
+        Expected to return a dictionary of column_prefix + output_properties keys mapping to
+        the output_properties sdtypes.
         """
         # Setup
         transformer = OneHotEncoder()
         transformer.column_prefix = 'abc'
-        transformer.dummies = [1, 2]
 
         # Run
+        transformer._fit(pd.Series([1, 2]))
         output = transformer.get_output_sdtypes()
 
         # Assert

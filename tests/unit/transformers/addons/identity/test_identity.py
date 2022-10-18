@@ -30,13 +30,13 @@ class TestIdentityTransformer(TestCase):
         IdentityTransformer._fit(instance, data)
 
         # assert
-        expected_output_sdtypes = {
-            'a': None,
-            'b': None,
-            'c': None,
+        expected_output_properties = {
+            'a': {'sdtype': None, 'transformer': None},
+            'b': {'sdtype': None, 'transformer': None},
+            'c': {'sdtype': None, 'transformer': None},
         }
 
-        assert instance.OUTPUT_SDTYPES == expected_output_sdtypes
+        assert instance.output_properties == expected_output_properties
 
     def test__transform(self):
         """Test ``IdentityTransformer._transform`` function.

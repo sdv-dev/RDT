@@ -35,7 +35,6 @@ class FrequencyEncoder(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
-    OUTPUT_SDTYPES = {'value': 'float'}
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
 
@@ -56,6 +55,7 @@ class FrequencyEncoder(BaseTransformer):
         self.__dict__ = state
 
     def __init__(self, add_noise=False):
+        super().__init__()
         self.add_noise = add_noise
 
     def is_transform_deterministic(self):
@@ -306,17 +306,6 @@ class OneHotEncoder(BaseTransformer):
 
         return data
 
-    def get_output_sdtypes(self):
-        """Return the output sdtypes produced by this transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to the produced sdtypes.
-        """
-        output_sdtypes = {f'value{i}': 'float' for i in range(len(self.dummies))}
-
-        return self._add_prefix(output_sdtypes)
-
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -340,6 +329,11 @@ class OneHotEncoder(BaseTransformer):
 
         if self._dummy_na:
             self.dummies.append(np.nan)
+
+        self.output_properties = {
+            f'value{i}': {'sdtype': 'float', 'transformer': None}
+            for i in range(len(self.dummies))
+        }
 
     def _transform_helper(self, data):
         if self._dummy_encoded:
@@ -436,7 +430,6 @@ class LabelEncoder(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
-    OUTPUT_SDTYPES = {'value': 'float'}
     DETERMINISTIC_TRANSFORM = True
     DETERMINISTIC_REVERSE = True
     COMPOSITION_IS_IDENTITY = True
@@ -445,6 +438,7 @@ class LabelEncoder(BaseTransformer):
     categories_to_values = None
 
     def __init__(self, add_noise=False, order_by=None):
+        super().__init__()
         self.add_noise = add_noise
         if order_by not in [None, 'alphabetical', 'numerical_value']:
             raise Error(

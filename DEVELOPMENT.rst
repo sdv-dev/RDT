@@ -34,7 +34,6 @@ its subclasses is to take data of a certain sdtype, and convert it into machine 
 data. To enable transformers to do this, the ``BaseTransformer`` has the following attributes:
 
 * ``INPUT_SDTYPE`` (str) - The input sdtype for the transformer.
-* ``OUTPUT_SDTYPES`` (dict) - Dictionary mapping transformed column names to their sdtypes.
 * ``DETERMINISTIC_TRANSFORM`` (bool) - Whether or not calling ``transform`` yields a deterministic
   output.
 * ``DETERMINISTIC_REVERSE`` (bool) - Whether or not calling ``reverse_transform`` yields a
@@ -42,9 +41,8 @@ data. To enable transformers to do this, the ``BaseTransformer`` has the followi
 * ``COMPOSITION_IS_IDENTITY`` (bool) - Whether or not calling ``transform`` and then
   ``reverse_transform`` back to back yields data identical to the ``transform`` input (the original
   data).
-* ``NEXT_TRANSFORMERS`` (dict) - Dictionary mapping transformed column names to Transformer class names
-  to use on them. This is optional. It can also be partially defined, meaning that some transformed
-  columns can have an entry in the dict, but not all of them need to.
+* ``output_properties`` (dict) - Dictionary mapping transformed column names to a dictionary describing
+  its ``sdtype`` and ``next_transformer``.
 * ``columns`` (list) - List of column names that the transformer will transform. Set during ``fit``.
 * ``output_columns`` (list) - List of column names in the output from calling ``transform``. Set
   during ``fit``.
@@ -56,8 +54,8 @@ It also has the following default methods, which the ``Transformer`` subclasses 
 necessary:
 
 * ``get_output_sdtypes()`` - Returns the name of the columns that the transform method creates. By
-  default this will be the ``OUTPUT_SDTYPES`` dictionary with the column names prepended with the
-  ``column_prefix`` with a dot (`.`) as the separator.
+  default this will be the ``sdtype`` property of the ``output_properties`` dictionary with the column
+  names prepended with the ``column_prefix`` with a dot (`.`) as the separator.
 * ``is_transform_deterministic()`` - Returns a boolean indicating whether the output of the
   ``transform`` method is deterministic. By default this is the value of the
   ``DETERMINISTIC_TRANSFORM`` attribute.

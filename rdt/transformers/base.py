@@ -15,7 +15,6 @@ class BaseTransformer:
 
     INPUT_SDTYPE = None
     SUPPORTED_SDTYPES = None
-    OUTPUT_SDTYPES = None
     DETERMINISTIC_TRANSFORM = None
     DETERMINISTIC_REVERSE = None
     COMPOSITION_IS_IDENTITY = None
@@ -24,7 +23,9 @@ class BaseTransformer:
     columns = None
     column_prefix = None
     output_columns = None
-    _next_transformers = None
+
+    def __init__(self):
+        self.output_properties = {'value': {'sdtype': 'float', 'transformer': None}}
 
     @classmethod
     def get_name(cls):
@@ -73,13 +74,16 @@ class BaseTransformer:
         """
         return cls.SUPPORTED_SDTYPES or [cls.INPUT_SDTYPE]
 
-    def _add_prefix(self, dictionary):
-        if not dictionary:
-            return {}
-
+    def _add_prefix(self, sdtype_or_transformer):
         output = {}
-        for output_columns, output_value in dictionary.items():
-            output[f'{self.column_prefix}.{output_columns}'] = output_value
+        for output_column, properties in self.output_properties.items():
+            # if 'sdtype' is not in the dict, ignore the column
+            if sdtype_or_transformer not in properties:
+                continue
+            if output_column is None:
+                output[f'{self.column_prefix}'] = properties[sdtype_or_transformer]
+            else:
+                output[f'{self.column_prefix}.{output_column}'] = properties[sdtype_or_transformer]
 
         return output
 
@@ -90,7 +94,16 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to the produced sdtypes.
         """
-        return self._add_prefix(self.OUTPUT_SDTYPES)
+        return self._add_prefix('sdtype')
+
+    def get_next_transformers(self):
+        """Return the suggested next transformer to be used for each column.
+
+        Returns:
+            dict:
+                Mapping from transformed column names to the transformers to apply to each column.
+        """
+        return self._add_prefix('transformer')
 
     def is_transform_deterministic(self):
         """Return whether the transform is deterministic.
@@ -128,15 +141,6 @@ class BaseTransformer:
         """
         return bool(self.IS_GENERATOR)
 
-    def get_next_transformers(self):
-        """Return the suggested next transformer to be used for each column.
-
-        Returns:
-            dict:
-                Mapping from transformed column names to the transformers to apply to each column.
-        """
-        return self._add_prefix(self._get_next_transformers())
-
     def get_input_column(self):
         """Return input column name for transformer.
 
@@ -153,13 +157,7 @@ class BaseTransformer:
             list:
                 Names of columns created during ``transform``.
         """
-        return list(self.get_output_sdtypes())
-
-    def _get_next_transformers(self):
-        if not isinstance(self._next_transformers, dict):
-            return {key.split('.')[-1]: None for key in self.get_output_columns()}
-
-        return self._next_transformers
+        return list(self._add_prefix('sdtype'))
 
     def _store_columns(self, columns, data):
         if isinstance(columns, tuple) and columns not in data:
@@ -209,13 +207,13 @@ class BaseTransformer:
 
     def _build_output_columns(self, data):
         self.column_prefix = '#'.join(self.columns)
-        self.output_columns = list(self.get_output_sdtypes().keys())
+        self.output_columns = self.get_output_columns()
 
         # make sure none of the generated `output_columns` exists in the data
         data_columns = set(data.columns)
         while data_columns & set(self.output_columns):
             self.column_prefix += '#'
-            self.output_columns = list(self.get_output_sdtypes().keys())
+            self.output_columns = self.get_output_columns()
 
     def __repr__(self):
         """Represent initialization of transformer as text.

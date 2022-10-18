@@ -24,34 +24,18 @@ class TestFloatFormatter(TestCase):
         assert nt.missing_value_replacement == 'mode'
         assert nt.model_missing_values is False
 
-    def test_get_output_sdtypes(self):
+    def test_get_output_sdtypes_model_missing_values_column_created(self):
         """Test the ``get_output_sdtypes`` method when a null column is created.
 
-        When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output sdtypes:
-
-        output_sdtypes = {
-            'value': 'float',
-            'is_null': 'float'
-        }
-
-        Setup:
-            - initialize a ``FloatFormatter`` transformer which:
-                - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self.model_missing_values`` is True.
-                - sets ``self.column_prefix`` to a string.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with the ``self.column_prefix``
-            added to the beginning of the keys.
+        Expected to return a dictionary of column_prefix + output_properties keys mapping to
+        the output_properties sdtypes.
         """
         # Setup
-        transformer = FloatFormatter()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-        transformer.null_transformer._model_missing_values = True
+        transformer = FloatFormatter(model_missing_values=True)
         transformer.column_prefix = 'a#b'
 
         # Run
+        transformer._fit(pd.Series([np.nan]))
         output = transformer.get_output_sdtypes()
 
         # Assert
@@ -1271,31 +1255,15 @@ class TestClusterBasedNormalizer(TestCase):
     def test_get_output_sdtypes_model_missing_values_column_created(self):
         """Test the ``get_output_sdtypes`` method when a null column is created.
 
-        When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output sdtypes:
-
-        output_sdtypes = {
-            'value': 'float',
-            'is_null': 'float'
-        }
-
-        Setup:
-            - initialize a ``FloatFormatter`` transformer which:
-                - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self._model_missing_values`` is True.
-                - sets ``self.column_prefix`` to a string.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with ``self.column_prefix``
-            added to the beginning of the keys.
+        Expected to return a dictionary of column_prefix + output_properties keys mapping to
+        the output_properties sdtypes.
         """
         # Setup
-        transformer = ClusterBasedNormalizer()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-        transformer.null_transformer._model_missing_values = True
+        transformer = ClusterBasedNormalizer(model_missing_values=True)
         transformer.column_prefix = 'abc'
 
         # Run
+        transformer._fit(pd.Series([1, np.nan] * 5))
         output = transformer.get_output_sdtypes()
 
         # Assert

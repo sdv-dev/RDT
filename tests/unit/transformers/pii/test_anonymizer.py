@@ -10,7 +10,6 @@ import pandas as pd
 import pytest
 
 from rdt.errors import Error
-from rdt.transformers.categorical import LabelEncoder
 from rdt.transformers.pii.anonymizer import AnonymizedFaker, PseudoAnonymizedFaker
 
 
@@ -299,7 +298,6 @@ class TestAnonymizedFaker:
 
         # Assert
         assert transformer.data_length == 3
-        assert transformer._next_transformers == {None: None}
 
     def test__transform(self):
         """Test the ``_transform`` method.
@@ -605,9 +603,6 @@ class TestPseudoAnonymizedFaker:
         # Assert
         assert instance._mapping_dict == {'a': 1, 'b': 2, 'c': 3}
         assert instance._reverse_mapping_dict == {1: 'a', 2: 'b', 3: 'c'}
-        assert len(instance._next_transformers)
-        assert isinstance(instance._next_transformers['value'], LabelEncoder)
-        assert instance._next_transformers['value'].add_noise is True
 
     def test__fit_not_enough_unique_values_in_faker_function(self):
         """Test the ``_fit`` method.

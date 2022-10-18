@@ -19,9 +19,6 @@ from rdt.transformers import (
 class DummyTransformerNumerical(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
-    OUTPUT_SDTYPES = {
-        'value': 'float'
-    }
 
     def _fit(self, data):
         pass
@@ -36,12 +33,11 @@ class DummyTransformerNumerical(BaseTransformer):
 class DummyTransformerNotMLReady(BaseTransformer):
 
     INPUT_SDTYPE = 'datetime'
-    OUTPUT_SDTYPES = {
-        'value': 'categorical',
-    }
 
     def __init__(self):
-        self._next_transformers = {'value': FrequencyEncoder()}
+        self.output_properties = {
+            'value': {'sdtype': 'datetime', 'transformer': FrequencyEncoder()}
+        }
 
     def _fit(self, data):
         pass

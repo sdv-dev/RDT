@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers import BinaryEncoder
-from rdt.transformers.null import NullTransformer
 
 
 class TestBinaryEncoder(TestCase):
@@ -20,34 +19,18 @@ class TestBinaryEncoder(TestCase):
         assert transformer.missing_value_replacement is None, error_message
         assert not transformer.model_missing_values, 'model_missing_values is False by default'
 
-    def test_get_output_sdtypes_model_missing_values_column_created(self):
+    def test_get_output_sdtypes(self):
         """Test the ``get_output_sdtypes`` method when a null column is created.
 
-        When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output sdtypes:
-
-        output_sdtypes = {
-            'value': 'float',
-            'is_null': 'float'
-        }
-
-        Setup:
-            - initialize a ``BinaryEncoder`` transformer which:
-                - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self._model_missing_values`` is True.
-                - sets ``self.column_prefix`` to a string.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with ``self.column_prefix``
-            added to the beginning of the keys.
+        Expected to return a dictionary of column_prefix + output_properties keys mapping to
+        the output_properties sdtypes.
         """
         # Setup
-        transformer = BinaryEncoder()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-        transformer.null_transformer._model_missing_values = True
+        transformer = BinaryEncoder(model_missing_values=True)
         transformer.column_prefix = 'abc'
 
         # Run
+        transformer._fit(pd.Series([np.nan]))
         output = transformer.get_output_sdtypes()
 
         # Assert
