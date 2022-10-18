@@ -3207,8 +3207,6 @@ class TestHyperTransformer(TestCase):
         transformer1.transform.return_value = transformed_data1
         get_transformer_instance_mock.side_effect = [transformer1]
         ht = HyperTransformer()
-        ht._get_next_transformer = Mock()
-        ht._get_next_transformer.side_effect = [transformer2]
         ht._multi_column_fields = Mock()
         ht._multi_column_fields.get.return_value = ('a.out1', 'b.out1')
 

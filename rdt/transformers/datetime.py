@@ -41,7 +41,7 @@ class UnixTimestampEncoder(BaseTransformer):
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
                  datetime_format=None):
-        self.output_properties = {'value': {'sdtype': 'float', 'next_transformer': None}}
+        super().__init__()
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
         self.datetime_format = datetime_format
