@@ -10,4 +10,4 @@ class Error(Exception):
 
 
 class TransformerInputError(Exception):
-    """Error to raise when ``HyperTransformer`` receives incorrect input."""
+    """Error to raise when ``HyperTransformer`` receives an incorrect input."""
