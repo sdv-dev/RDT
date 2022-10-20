@@ -31,9 +31,6 @@ def test_dummy_transformer_series_output():
     class DummyTransformer(BaseTransformer):
 
         INPUT_SDTYPE = 'boolean'
-        OUTPUT_SDTYPES = {
-            'value': 'float'
-        }
 
         def _fit(self, data):
             pass
@@ -89,10 +86,12 @@ def test_dummy_transformer_dataframe_output():
     class DummyTransformer(BaseTransformer):
 
         INPUT_SDTYPE = 'boolean'
-        OUTPUT_SDTYPES = {
-            'value': 'float',
-            'null': 'float'
-        }
+
+        def __init__(self):
+            self.output_properties = {
+                'value': {'sdtype': 'float'},
+                'null': {'sdtype': 'float'},
+            }
 
         def _fit(self, data):
             pass

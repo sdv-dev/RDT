@@ -82,43 +82,6 @@ class TestUnixTimestampEncoder:
         # Assert
         assert output is True
 
-    def test_get_output_sdtypes(self):
-        """Test the ``get_output_sdtypes`` method when a null column is created.
-
-        When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output sdtypes:
-
-        output_sdtypes = {
-            'value': 'float',
-            'is_null': 'float'
-        }
-
-        Setup:
-            - initialize a ``UnixTimestampEncoder`` transformer which:
-                - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self._model_missing_values`` is True.
-                - sets ``self.column_prefix`` to a column name.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with the ``self.column_prefix``
-            added to the beginning of the keys.
-        """
-        # Setup
-        transformer = UnixTimestampEncoder()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-        transformer.null_transformer._model_missing_values = True
-        transformer.column_prefix = 'a#b'
-
-        # Run
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'a#b.value': 'float',
-            'a#b.is_null': 'float'
-        }
-        assert output == expected
-
     def test__convert_to_datetime(self):
         """Test the ``_convert_to_datetime`` method.
 
@@ -372,6 +335,9 @@ class TestUnixTimestampEncoder:
 
         # Assert
         transformer._transform_helper.assert_called_once()
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     @patch('rdt.transformers.datetime._guess_datetime_format_for_array')
     def test__fit_calls_guess_datetime_format(self, mock__guess_datetime_format_for_array):
@@ -393,6 +359,21 @@ class TestUnixTimestampEncoder:
             np.array(['2020-02-01', '2020-03-01'])
         )
         assert transformer.datetime_format == '%Y-%m-%d'
+
+    def test__fit_model_missing_values(self):
+        """Test output_properties contains 'is_null' column when model_missing_values=True."""
+        # Setup
+        transformer = UnixTimestampEncoder(model_missing_values=True)
+        data = pd.Series(['2020-02-01', np.nan])
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__transform(self):
         """Test the ``_transform`` method for numpy arrays.

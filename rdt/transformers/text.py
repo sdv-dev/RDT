@@ -27,12 +27,12 @@ class RegexGenerator(BaseTransformer):
     DETERMINISTIC_REVERSE = False
     IS_GENERATOR = True
     INPUT_SDTYPE = 'text'
-    OUTPUT_SDTYPES = {}
 
     def __init__(self, regex_format='[A-Za-z]{5}', enforce_uniqueness=False):
         self.enforce_uniqueness = enforce_uniqueness
         self.regex_format = regex_format
         self.data_length = None
+        self.output_properties = {None: {'next_transformer': None}}
 
     def _fit(self, data):
         """Fit the transformer to the data.

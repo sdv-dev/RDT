@@ -633,19 +633,6 @@ class HyperTransformer:
         self._user_message('Config:')
         self._user_message(config)
 
-    def _get_next_transformer(self, output_field, output_sdtype, next_transformers):
-        next_transformer = None
-        if output_field in self.field_transformers:
-            next_transformer = self.field_transformers[output_field]
-
-        elif output_sdtype not in self._valid_output_sdtypes:
-            if next_transformers is not None and output_field in next_transformers:
-                next_transformer = next_transformers[output_field]
-            else:
-                next_transformer = get_default_transformer(output_sdtype)
-
-        return next_transformer
-
     def _fit_field_transformer(self, data, field, transformer):
         """Fit a transformer to its corresponding field.
 
@@ -680,14 +667,11 @@ class HyperTransformer:
             next_transformers = transformer.get_next_transformers()
             self._transformers_tree[field]['transformer'] = transformer
             self._transformers_tree[field]['outputs'] = list(output_sdtypes)
-            for (output_name, output_sdtype) in output_sdtypes.items():
+            for output_name in output_sdtypes:
                 output_field = self._multi_column_fields.get(output_name, output_name)
-                next_transformer = self._get_next_transformer(
-                    output_field, output_sdtype, next_transformers)
-
-                if next_transformer:
-                    if self._field_in_data(output_field, data):
-                        self._fit_field_transformer(data, output_field, next_transformer)
+                next_transformer = next_transformers[output_field]
+                if next_transformer and self._field_in_data(output_field, data):
+                    self._fit_field_transformer(data, output_field, next_transformer)
 
         return data
 

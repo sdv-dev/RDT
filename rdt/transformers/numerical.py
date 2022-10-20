@@ -72,26 +72,12 @@ class FloatFormatter(BaseTransformer):
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
                  learn_rounding_scheme=False, enforce_min_max_values=False,
                  computer_representation='Float'):
+        super().__init__()
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
         self.learn_rounding_scheme = learn_rounding_scheme
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
-
-    def get_output_sdtypes(self):
-        """Return the output sdtypes supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported sdtypes.
-        """
-        output_sdtypes = {
-            'value': 'float',
-        }
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            output_sdtypes['is_null'] = 'float'
-
-        return self._add_prefix(output_sdtypes)
 
     def is_composition_identity(self):
         """Return whether composition of transform and reverse transform produces the input data.
@@ -167,6 +153,8 @@ class FloatFormatter(BaseTransformer):
             self.model_missing_values
         )
         self.null_transformer.fit(data)
+        if self.null_transformer.models_missing_values():
+            self.output_properties['is_null'] = {'sdtype': 'float', 'next_transformer': None}
 
     def _transform(self, data):
         """Transform numerical data.
@@ -428,22 +416,10 @@ class ClusterBasedNormalizer(FloatFormatter):
         )
         self.max_clusters = max_clusters
         self.weight_threshold = weight_threshold
-
-    def get_output_sdtypes(self):
-        """Return the output sdtypes supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported sdtypes.
-        """
-        output_sdtypes = {
-            'normalized': 'float',
-            'component': 'categorical'
+        self.output_properties = {
+            'normalized': {'sdtype': 'float', 'next_transformer': None},
+            'component': {'sdtype': 'categorical', 'next_transformer': None},
         }
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            output_sdtypes['is_null'] = 'float'
-
-        return self._add_prefix(output_sdtypes)
 
     def _fit(self, data):
         """Fit the transformer to the data.

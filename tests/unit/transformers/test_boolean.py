@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers import BinaryEncoder
-from rdt.transformers.null import NullTransformer
 
 
 class TestBinaryEncoder(TestCase):
@@ -20,43 +19,6 @@ class TestBinaryEncoder(TestCase):
         assert transformer.missing_value_replacement is None, error_message
         assert not transformer.model_missing_values, 'model_missing_values is False by default'
 
-    def test_get_output_sdtypes_model_missing_values_column_created(self):
-        """Test the ``get_output_sdtypes`` method when a null column is created.
-
-        When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output sdtypes:
-
-        output_sdtypes = {
-            'value': 'float',
-            'is_null': 'float'
-        }
-
-        Setup:
-            - initialize a ``BinaryEncoder`` transformer which:
-                - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self._model_missing_values`` is True.
-                - sets ``self.column_prefix`` to a string.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with ``self.column_prefix``
-            added to the beginning of the keys.
-        """
-        # Setup
-        transformer = BinaryEncoder()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-        transformer.null_transformer._model_missing_values = True
-        transformer.column_prefix = 'abc'
-
-        # Run
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'abc.value': 'float',
-            'abc.is_null': 'float'
-        }
-        assert output == expected
-
     def test__fit_missing_value_replacement_ignore(self):
         """Test _fit missing_value_replacement equal to ignore"""
         # Setup
@@ -69,6 +31,9 @@ class TestBinaryEncoder(TestCase):
         # Asserts
         error_msg = 'Unexpected fill value'
         assert transformer.null_transformer._missing_value_replacement is None, error_msg
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__fit_missing_value_replacement_not_ignore(self):
         """Test _fit missing_value_replacement not equal to ignore"""
@@ -96,6 +61,21 @@ class TestBinaryEncoder(TestCase):
         error_msg = 'Unexpected fill value'
         assert transformer.null_transformer._missing_value_replacement == 0, error_msg
 
+    def test__fit_model_missing_values(self):
+        """Test output_properties contains 'is_null' column when model_missing_values=True."""
+        # Setup
+        transformer = BinaryEncoder(model_missing_values=True)
+        data = pd.Series([True, np.nan])
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
+
     def test__transform_series(self):
         """Test transform pandas.Series"""
         # Setup
@@ -103,7 +83,6 @@ class TestBinaryEncoder(TestCase):
 
         # Run
         transformer = Mock()
-
         BinaryEncoder._transform(transformer, data)
 
         # Asserts
@@ -124,7 +103,6 @@ class TestBinaryEncoder(TestCase):
 
         # Run
         transformer = Mock()
-
         BinaryEncoder._transform(transformer, data)
 
         # Asserts

@@ -40,7 +40,6 @@ class AnonymizedFaker(BaseTransformer):
     DETERMINISTIC_REVERSE = False
     IS_GENERATOR = True
     INPUT_SDTYPE = 'pii'
-    OUTPUT_SDTYPES = {}
 
     @staticmethod
     def check_provider_function(provider_name, function_name):
@@ -99,6 +98,7 @@ class AnonymizedFaker(BaseTransformer):
         self.function_name = function_name if function_name else 'lexify'
         self.function_kwargs = deepcopy(function_kwargs) if function_kwargs else {}
         self.check_provider_function(self.provider_name, self.function_name)
+        self.output_properties = {None: {'next_transformer': None}}
 
         self.locales = locales
         self.faker = faker.Faker(locales)
@@ -133,7 +133,7 @@ class AnonymizedFaker(BaseTransformer):
                 Data to transform.
 
         Returns:
-            pandas.Series
+            np.array
         """
         if data is not None and len(data):
             sample_size = len(data)
@@ -198,11 +198,6 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             List of localized providers to use instead of the global provider.
     """
 
-    OUTPUT_SDTYPES = {'value': 'categorical'}
-    NEXT_TRANSFORMERS = {
-        'value': LabelEncoder(add_noise=True)
-    }
-
     def __getstate__(self):
         """Return a dictionary representation of the instance and warn the user when pickling."""
         warnings.warn((
@@ -223,6 +218,9 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         )
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
+        self.output_properties = {
+            'value': {'sdtype': 'categorical', 'next_transformer': LabelEncoder(add_noise=True)}
+        }
 
     def get_mapping(self):
         """Return the mapping dictionary."""

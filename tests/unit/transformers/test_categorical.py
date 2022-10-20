@@ -213,6 +213,9 @@ class TestFrequencyEncoder:
         assert transformer.intervals == expected_intervals
         pd.testing.assert_series_equal(transformer.means, expected_means)
         pd.testing.assert_frame_equal(transformer.starts, expected_starts)
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__get_value_add_noise_false(self):
         # Setup
@@ -821,44 +824,6 @@ class TestOneHotEncoder:
         expected = pd.Series(['a', 'b', 'c'])
         np.testing.assert_array_equal(out, expected)
 
-    def test_get_output_sdtypes(self):
-        """Test the ``get_output_sdtypes`` method.
-
-        Validate that the ``_add_prefix`` method is properly applied to the ``output_sdtypes``
-        dictionary. For this class, the ``output_sdtypes`` dictionary is described as:
-
-        {
-            'value1': 'float',
-            'value2': 'float',
-            ...
-        }
-
-        The number of items in the dictionary is defined by the ``dummies`` attribute.
-
-        Setup:
-            - initialize a ``OneHotEncoder`` and set:
-                - the ``dummies`` attribute to a list.
-                - the ``column_prefix`` attribute to a string.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with ``self.column_prefix``
-            added to the beginning of the keys of the ``output_sdtypes`` dictionary.
-        """
-        # Setup
-        transformer = OneHotEncoder()
-        transformer.column_prefix = 'abc'
-        transformer.dummies = [1, 2]
-
-        # Run
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'abc.value0': 'float',
-            'abc.value1': 'float'
-        }
-        assert output == expected
-
     def test__fit_dummies_no_nans(self):
         """Test the ``_fit`` method without nans.
 
@@ -897,6 +862,12 @@ class TestOneHotEncoder:
 
         # Assert
         np.testing.assert_array_equal(ohe.dummies, ['a', 2, 'c', np.nan])
+        assert ohe.output_properties == {
+            'value0': {'sdtype': 'float', 'next_transformer': None},
+            'value1': {'sdtype': 'float', 'next_transformer': None},
+            'value2': {'sdtype': 'float', 'next_transformer': None},
+            'value3': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__fit_no_nans(self):
         """Test the ``_fit`` method without nans.
@@ -1689,6 +1660,9 @@ class TestLabelEncoder:
         # Assert
         assert transformer.values_to_categories == {0: 1, 1: 2, 2: 3}
         assert transformer.categories_to_values == {1: 0, 2: 1, 3: 2}
+        assert transformer.output_properties == {
+            'value': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__transform(self):
         """Test the ``_transform`` method.

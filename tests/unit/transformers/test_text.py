@@ -95,6 +95,7 @@ class TestRegexGenerator:
 
         # Assert
         assert instance.data_length == 3
+        assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__transform(self):
         """Test the ``_transform`` method.

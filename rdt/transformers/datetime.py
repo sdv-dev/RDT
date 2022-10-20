@@ -41,6 +41,7 @@ class UnixTimestampEncoder(BaseTransformer):
 
     def __init__(self, missing_value_replacement=None, model_missing_values=False,
                  datetime_format=None):
+        super().__init__()
         self.missing_value_replacement = missing_value_replacement
         self.model_missing_values = model_missing_values
         self.datetime_format = datetime_format
@@ -57,21 +58,6 @@ class UnixTimestampEncoder(BaseTransformer):
             return False
 
         return self.COMPOSITION_IS_IDENTITY
-
-    def get_output_sdtypes(self):
-        """Return the output sdtypes supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported sdtypes.
-        """
-        output_sdtypes = {
-            'value': 'float',
-        }
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            output_sdtypes['is_null'] = 'float'
-
-        return self._add_prefix(output_sdtypes)
 
     def _convert_to_datetime(self, data):
         if data.dtype == 'object':
@@ -130,6 +116,8 @@ class UnixTimestampEncoder(BaseTransformer):
             self.model_missing_values
         )
         self.null_transformer.fit(transformed)
+        if self.null_transformer.models_missing_values():
+            self.output_properties['is_null'] = {'sdtype': 'float', 'next_transformer': None}
 
     def _transform(self, data):
         """Transform datetime values to float values.

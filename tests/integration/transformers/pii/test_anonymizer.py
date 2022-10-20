@@ -14,8 +14,8 @@ def test_anonymizedfaker():
 
     instance = AnonymizedFaker()
     transformed = instance.fit_transform(data, 'username')
-    reverse_transform = instance.reverse_transform(transformed)
 
+    reverse_transform = instance.reverse_transform(transformed)
     expected_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5]
     })
