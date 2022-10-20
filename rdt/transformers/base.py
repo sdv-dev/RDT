@@ -25,7 +25,7 @@ class BaseTransformer:
     output_columns = None
 
     def __init__(self):
-        self.output_properties = {'value': {'sdtype': 'float', 'next_transformer': None}}
+        self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
 
     @classmethod
     def get_name(cls):
@@ -209,7 +209,11 @@ class BaseTransformer:
         self.column_prefix = '#'.join(self.columns)
         self.output_columns = self.get_output_columns()
 
-        # make sure none of the generated `output_columns` exists in the data
+        # it's fine for the generated column name to be the same as the original
+        if self.column_prefix in self.output_columns:
+            return
+
+        # but they can't be the same as other column names in the data
         data_columns = set(data.columns)
         while data_columns & set(self.output_columns):
             self.column_prefix += '#'

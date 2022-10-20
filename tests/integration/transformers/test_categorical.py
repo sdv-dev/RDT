@@ -310,7 +310,7 @@ def test_label_numerical_2d_array():
 
     transformer = LabelEncoder()
     transformer.fit(data, column)
-    transformed = pd.DataFrame([0., 1., 2., 3.], columns=['column_name.value'])
+    transformed = pd.DataFrame([0., 1., 2., 3.], columns=['column_name'])
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
@@ -347,7 +347,7 @@ def test_label_encoder_order_by_numerical():
     transformed = transformer.transform(data)
     reverse = transformer.reverse_transform(transformed)
 
-    expected = pd.DataFrame([2, 5, 1, 4, 3, 0], columns=['column_name.value'])
+    expected = pd.DataFrame([2, 5, 1, 4, 3, 0], columns=['column_name'])
     pd.testing.assert_frame_equal(transformed, expected)
     pd.testing.assert_frame_equal(reverse, data)
 
@@ -369,7 +369,7 @@ def test_label_encoder_order_by_alphabetical():
     transformed = transformer.transform(data)
     reverse = transformer.reverse_transform(transformed)
 
-    expected = pd.DataFrame([1, 3, 4, 2, 0], columns=['column_name.value'])
+    expected = pd.DataFrame([1, 3, 4, 2, 0], columns=['column_name'])
     pd.testing.assert_frame_equal(transformed, expected)
     pd.testing.assert_frame_equal(reverse, data)
 
@@ -392,7 +392,7 @@ def test_custom_label_encoder():
     transformed = transformer.transform(data)
     reverse = transformer.reverse_transform(transformed)
 
-    expected = pd.DataFrame([2, 3, 1, 4, 0], columns=['column_name.value'])
+    expected = pd.DataFrame([2, 3, 1, 4, 0], columns=['column_name'])
     pd.testing.assert_frame_equal(transformed, expected)
     pd.testing.assert_frame_equal(reverse, data)
 
@@ -415,6 +415,6 @@ def test_custom_label_encoder_nans():
     transformed = transformer.transform(data)
     reverse = transformer.reverse_transform(transformed)
 
-    expected = pd.DataFrame([2, 3, 1, 4, 0, 4], columns=['column_name.value'])
+    expected = pd.DataFrame([2, 3, 1, 4, 0, 4], columns=['column_name'])
     pd.testing.assert_frame_equal(transformed, expected)
     pd.testing.assert_frame_equal(reverse, data)

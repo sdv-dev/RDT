@@ -394,9 +394,9 @@ class TestHyperTransformer(TestCase):
             'a.out2': None
         }
         transformer1.transform.return_value = transformed_data1
-        transformer2.get_output_columns.return_value = ['a.out1.value']
+        transformer2.get_output_columns.return_value = ['a.out1']
         transformer2.get_next_transformers.return_value = {
-            'a.out1.value': None,
+            'a.out1': None,
             'a.out1.is_null': None
         }
         transformer2.transform.return_value = transformed_data1
@@ -866,11 +866,11 @@ class TestHyperTransformer(TestCase):
             'bool': [False, False, True, False],
             'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01']),
             'integer.out': ['1', '2', '1', '3'],
-            'integer.out.value': [1, 2, 1, 3],
-            'float.value': [0.1, 0.2, 0.1, 0.1],
-            'categorical.value': [0.375, 0.375, 0.875, 0.375],
-            'bool.value': [0.0, 0.0, 1.0, 0.0],
-            'datetime.value': [
+            'integer.out': [1, 2, 1, 3],
+            'float': [0.1, 0.2, 0.1, 0.1],
+            'categorical': [0.375, 0.375, 0.875, 0.375],
+            'bool': [0.0, 0.0, 1.0, 0.0],
+            'datetime': [
                 1.2649824e+18,
                 1.262304e+18,
                 1.2649824e+18,
@@ -1550,8 +1550,8 @@ class TestHyperTransformer(TestCase):
         int_transformer = Mock()
         float_transformer = Mock()
         generator_transformer = Mock()
-        int_transformer.get_output_columns.return_value = ['integer.out.value']
-        float_transformer.get_output_columns.return_value = ['float.value']
+        int_transformer.get_output_columns.return_value = ['integer.out']
+        float_transformer.get_output_columns.return_value = ['float']
         generator_transformer.get_output_columns.return_value = []
 
         reverse_transformed_data = self.get_transformed_data()
@@ -1712,7 +1712,7 @@ class TestHyperTransformer(TestCase):
         ht._validate_detect_config_called.return_value = True
         ht._fitted = True
         ht._reverse_transform = Mock()
-        data = pd.DataFrame({'col1.value': [1, 2]})
+        data = pd.DataFrame({'col1': [1, 2]})
 
         # Run
         ht.reverse_transform_subset(data)

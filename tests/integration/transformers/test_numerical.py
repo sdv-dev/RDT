@@ -96,8 +96,8 @@ class TestGaussianNormalizer:
         assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (1000, 1)
 
-        np.testing.assert_almost_equal(transformed['a.value'].mean(), 0, decimal=1)
-        np.testing.assert_almost_equal(transformed['a.value'].std(), 1, decimal=1)
+        np.testing.assert_almost_equal(transformed['a'].mean(), 0, decimal=1)
+        np.testing.assert_almost_equal(transformed['a'].std(), 1, decimal=1)
 
         reverse = ct.reverse_transform(transformed)
 

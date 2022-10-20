@@ -32,7 +32,7 @@ class TestBinaryEncoder(TestCase):
         error_msg = 'Unexpected fill value'
         assert transformer.null_transformer._missing_value_replacement is None, error_msg
         assert transformer.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None},
+            None: {'sdtype': 'float', 'next_transformer': None},
         }
 
     def test__fit_missing_value_replacement_not_ignore(self):
@@ -72,7 +72,7 @@ class TestBinaryEncoder(TestCase):
 
         # Assert
         assert transformer.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None},
+            None: {'sdtype': 'float', 'next_transformer': None},
             'is_null': {'sdtype': 'float', 'next_transformer': None},
         }
 

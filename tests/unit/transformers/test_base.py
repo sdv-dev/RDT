@@ -195,7 +195,7 @@ class TestBaseTransformer:
             column_prefix = 'column_name'
 
             def __init__(self):
-                self.output_properties = {'value': {'sdtype': 'numerical'}}
+                self.output_properties = {None: {'sdtype': 'numerical'}}
 
         dummy_transformer = Dummy()
 
@@ -203,7 +203,7 @@ class TestBaseTransformer:
         output = dummy_transformer.get_output_sdtypes()
 
         # Assert
-        assert output == {'column_name.value': 'numerical'}
+        assert output == {'column_name': 'numerical'}
 
     def test_get_next_transformers(self):
         """Test the column_prefix gets added to all columns in output_properties."""
@@ -214,7 +214,7 @@ class TestBaseTransformer:
             column_prefix = 'column_name'
 
             def __init__(self):
-                self.output_properties = {'value': {'next_transformer': transformer}}
+                self.output_properties = {None: {'next_transformer': transformer}}
 
         dummy_transformer = Dummy()
 
@@ -222,7 +222,7 @@ class TestBaseTransformer:
         output = dummy_transformer.get_next_transformers()
 
         # Assert
-        assert output == {'column_name.value': transformer}
+        assert output == {'column_name': transformer}
 
     def test_get_input_columns(self):
         """Test the ``get_input_columns method.
@@ -780,7 +780,7 @@ class TestBaseTransformer:
 
             def __init__(self):
                 self.output_properties = {
-                    'value': {'sdtype': 'numerical'},
+                    None: {'sdtype': 'numerical'},
                     'is_null': {'sdtype': 'float'}
                 }
 
@@ -791,7 +791,7 @@ class TestBaseTransformer:
 
         # Assert
         assert dummy_transformer.column_prefix == 'a#b'
-        assert dummy_transformer.output_columns == ['a#b.value', 'a#b.is_null']
+        assert dummy_transformer.output_columns == ['a#b', 'a#b.is_null']
 
     def test__build_output_columns_generated_already_exist(self):
         """Test the ``_build_output_columns`` method.
@@ -807,7 +807,7 @@ class TestBaseTransformer:
 
         Input:
             - a dataframe where the generated column name already exists
-            (e.g. ['a', 'b', 'a#b.value']).
+            (e.g. ['a', 'b', 'a#b']).
 
         Side effect:
             - ``self.column_prefix`` should be set to the elements stored in ``self.columns``
@@ -818,14 +818,14 @@ class TestBaseTransformer:
         # Setup
         data = pd.DataFrame({
             'a': [1, 2, 3],
-            'a#b.value': [4, 5, 6],
+            'a#b': [4, 5, 6],
             'b': [7, 8, 9]
         })
 
         class Dummy(BaseTransformer):
             def __init__(self):
                 self.output_properties = {
-                    'value': {'sdtype': 'numerical'},
+                    None: {'sdtype': 'numerical'},
                     'is_null': {'sdtype': 'float'}
                 }
             columns = ['a', 'b']
@@ -836,7 +836,7 @@ class TestBaseTransformer:
 
         # Assert
         assert dummy_transformer.column_prefix == 'a#b#'
-        assert dummy_transformer.output_columns == ['a#b#.value', 'a#b#.is_null']
+        assert dummy_transformer.output_columns == ['a#b#', 'a#b#.is_null']
 
     def test__fit_raises_error(self):
         """Test ``_fit`` raises ``NotImplementedError``."""
@@ -887,7 +887,7 @@ class TestBaseTransformer:
         class Dummy(BaseTransformer):
             def __init__(self):
                 self.output_properties = {
-                    'value': {'sdtype': 'categorical'},
+                    None: {'sdtype': 'categorical'},
                     'is_null': {'sdtype': 'float'}
                 }
 
@@ -904,7 +904,7 @@ class TestBaseTransformer:
         assert dummy_transformer.columns == ['a']
         pd.testing.assert_series_equal(dummy_transformer._passed_data, expected_data)
         assert dummy_transformer.column_prefix == 'a'
-        assert dummy_transformer.output_columns == ['a.value', 'a.is_null']
+        assert dummy_transformer.output_columns == ['a', 'a.is_null']
 
     def test__transform_raises_error(self):
         """Test ``_transform`` raises ``NotImplementedError``."""
@@ -988,7 +988,7 @@ class TestBaseTransformer:
 
         class Dummy(BaseTransformer):
             columns = ['a', 'b']
-            output_columns = ['a#b.value']
+            output_columns = ['a#b']
 
             def _transform(self, data):
                 self._passed_data = data.copy()
@@ -1010,7 +1010,7 @@ class TestBaseTransformer:
             'a': [1, 2, 3],
             'b': [4, 5, 6],
             'c': [7, 8, 9],
-            'a#b.value': [0.0, 0.0, 0.0],
+            'a#b': [0.0, 0.0, 0.0],
         })
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)
 
@@ -1046,7 +1046,7 @@ class TestBaseTransformer:
 
         class Dummy(BaseTransformer):
             columns = ['a', 'b']
-            output_columns = ['a#b.value']
+            output_columns = ['a#b']
 
             def _transform(self, data):
                 self._passed_data = data.copy()
@@ -1066,7 +1066,7 @@ class TestBaseTransformer:
 
         expected_transformed = pd.DataFrame({
             'c': [7, 8, 9],
-            'a#b.value': [0.0, 0.0, 0.0],
+            'a#b': [0.0, 0.0, 0.0],
         })
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)
 
@@ -1111,9 +1111,9 @@ class TestBaseTransformer:
 
         # Setup
         data = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-            'c.value': [7, 8, 9]
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9]
         })
         transformer = BaseTransformer()
 
@@ -1139,13 +1139,13 @@ class TestBaseTransformer:
         """
         # Setup
         data = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-            'c.value': [7, 8, 9]
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9]
         })
 
         class Dummy(BaseTransformer):
-            output_columns = ['a.value', 'b.value', 'd.value']
+            output_columns = ['a', 'b', 'd']
 
         dummy_transformer = Dummy()
 
@@ -1179,14 +1179,14 @@ class TestBaseTransformer:
         """
         # Setup
         data = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-            'c.value': [7, 8, 9]
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9]
         })
 
         class Dummy(BaseTransformer):
             columns = ['a', 'b']
-            output_columns = ['a.value', 'b.value']
+            output_columns = ['a', 'b']
 
             def _reverse_transform(self, data):
                 self._passed_data = data.copy()
@@ -1198,15 +1198,15 @@ class TestBaseTransformer:
 
         # Assert
         expected_passed = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
         })
         pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
 
         expected_transformed = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-            'c.value': [7, 8, 9],
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9],
             'a': [0.0, 0.0, 0.0],
             'b': [0.0, 0.0, 0.0]
         })
@@ -1239,14 +1239,14 @@ class TestBaseTransformer:
         """
         # Setup
         data = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-            'c.value': [7, 8, 9]
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9]
         })
 
         class Dummy(BaseTransformer):
             columns = ['a', 'b']
-            output_columns = ['a.value', 'b.value']
+            output_columns = ['a', 'b']
 
             def _reverse_transform(self, data):
                 self._passed_data = data.copy()
@@ -1258,13 +1258,13 @@ class TestBaseTransformer:
 
         # Assert
         expected_passed = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
         })
         pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
 
         expected_transformed = pd.DataFrame({
-            'c.value': [7, 8, 9],
+            'c': [7, 8, 9],
             'a': [0.0, 0.0, 0.0],
             'b': [0.0, 0.0, 0.0],
         })

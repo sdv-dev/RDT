@@ -277,11 +277,11 @@ class TestFloatFormatter(TestCase):
         assert transformer.null_transformer._missing_value_replacement == expected
         assert transformer._dtype == float
         assert transformer.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None}
+            None: {'sdtype': 'float', 'next_transformer': None}
         }
         transformer._validate_values_within_bounds.assert_called_once_with(data)
         assert transformer.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None},
+            None: {'sdtype': 'float', 'next_transformer': None},
         }
 
     def test__fit_learn_rounding_scheme_false(self):
@@ -472,7 +472,7 @@ class TestFloatFormatter(TestCase):
 
         # Assert
         assert transformer.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None},
+            None: {'sdtype': 'float', 'next_transformer': None},
             'is_null': {'sdtype': 'float', 'next_transformer': None},
         }
 
@@ -1011,7 +1011,7 @@ class TestGaussianNormalizer:
             np.array([0.0, 0.5, 1.0])
         )
         assert ct.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None},
+            None: {'sdtype': 'float', 'next_transformer': None},
         }
 
     def test__fit_model_missing_values(self):
@@ -1046,7 +1046,7 @@ class TestGaussianNormalizer:
             np.array([0.0, 0.5, 1.0])
         )
         assert ct.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None},
+            None: {'sdtype': 'float', 'next_transformer': None},
             'is_null': {'sdtype': 'float', 'next_transformer': None},
         }
 
