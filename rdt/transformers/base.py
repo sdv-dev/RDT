@@ -209,6 +209,10 @@ class BaseTransformer:
         self.column_prefix = '#'.join(self.columns)
         self.output_columns = self.get_output_columns()
 
+        # it's fine for the generated column name to be the same as the original
+        if self.column_prefix in self.output_columns:
+            return
+
         # but they can't be the same as other column names in the data
         data_columns = set(data.columns)
         while data_columns & set(self.output_columns):

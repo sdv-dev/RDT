@@ -129,5 +129,7 @@ def test_dummy_transformer_dataframe_output():
         'bool': [1., 0., 1., -1.],
         'bool.null': [0., 0., 0., 1.]
     })
+    print(expected_transform)
+    print(transformed)
     pd.testing.assert_frame_equal(expected_transform, transformed)
     pd.testing.assert_frame_equal(reverse, data)
