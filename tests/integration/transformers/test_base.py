@@ -113,15 +113,12 @@ def test_dummy_transformer_dataframe_output():
             output.iloc[data[self.output_columns[1]] == 1] = np.nan
 
             return output
+    
+    data = pd.DataFrame({'bool': [True, False, True, np.nan]})
+    transformer = DummyTransformer()
 
     # Run
-    data = pd.DataFrame({
-        'bool': [True, False, True, np.nan]
-    })
-
-    transformer = DummyTransformer()
     transformed = transformer.fit_transform(data, 'bool')
-
     reverse = transformer.reverse_transform(transformed)
 
     # Assert
@@ -129,7 +126,5 @@ def test_dummy_transformer_dataframe_output():
         'bool': [1., 0., 1., -1.],
         'bool.null': [0., 0., 0., 1.]
     })
-    print(expected_transform)
-    print(transformed)
     pd.testing.assert_frame_equal(expected_transform, transformed)
     pd.testing.assert_frame_equal(reverse, data)
