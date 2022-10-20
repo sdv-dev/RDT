@@ -53,7 +53,7 @@ def test_dummy_transformer_series_output():
 
     # Assert
     expected_transform = pd.DataFrame({
-        'bool.value': [1., 0., 1., 0.]
+        'bool': [1., 0., 1., 0.]
     })
     pd.testing.assert_frame_equal(expected_transform, transformed)
     pd.testing.assert_frame_equal(reverse, data)
@@ -89,7 +89,7 @@ def test_dummy_transformer_dataframe_output():
 
         def __init__(self):
             self.output_properties = {
-                'value': {'sdtype': 'float'},
+                None: {'sdtype': 'float'},
                 'null': {'sdtype': 'float'},
             }
 
@@ -126,7 +126,7 @@ def test_dummy_transformer_dataframe_output():
 
     # Assert
     expected_transform = pd.DataFrame({
-        'bool.value': [1., 0., 1., -1.],
+        'bool': [1., 0., 1., -1.],
         'bool.null': [0., 0., 0., 1.]
     })
     pd.testing.assert_frame_equal(expected_transform, transformed)

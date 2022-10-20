@@ -219,7 +219,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
         self.output_properties = {
-            'value': {'sdtype': 'categorical', 'next_transformer': LabelEncoder(add_noise=True)}
+            None: {'sdtype': 'categorical', 'next_transformer': LabelEncoder(add_noise=True)}
         }
 
     def get_mapping(self):

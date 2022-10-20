@@ -401,10 +401,10 @@ class TestHyperTransformer(TestCase):
         }
         transformer1.transform.return_value = transformed_data1
         transformer2.get_output_sdtypes.return_value = {
-            'a.out1.value': 'numerical'
+            'a.out1': 'numerical'
         }
         transformer2.get_next_transformers.return_value = {
-            'a.out1.value': None,
+            'a.out1': None,
             'a.out1.is_null': None
         }
         get_transformer_instance_mock.side_effect = [
@@ -430,7 +430,7 @@ class TestHyperTransformer(TestCase):
         assert ht._transformers_sequence == [transformer1, transformer2]
         assert ht._transformers_tree == {
             'a': {'transformer': transformer1, 'outputs': ['a.out1', 'a.out2']},
-            'a.out1': {'transformer': transformer2, 'outputs': ['a.out1.value']}
+            'a.out1': {'transformer': transformer2, 'outputs': ['a.out1']}
         }
 
     def test__fit_field_transformer_transformer_is_none(self):
@@ -515,7 +515,7 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ht._get_final_output_columns = Mock()
         ht._get_final_output_columns.side_effect = [
-            ['a.is_null'], ['b.value', 'b.is_null'], ['c.value']
+            ['a.is_null'], ['b', 'b.is_null'], ['c']
         ]
         ht._input_columns = ['a', 'b', 'c']
 
@@ -523,7 +523,7 @@ class TestHyperTransformer(TestCase):
         ht._sort_output_columns()
 
         # Assert
-        assert ht._output_columns == ['a.is_null', 'b.value', 'b.is_null', 'c.value']
+        assert ht._output_columns == ['a.is_null', 'b', 'b.is_null', 'c']
 
     def test__validate_config(self):
         """Test the ``_validate_config`` method.
@@ -916,11 +916,11 @@ class TestHyperTransformer(TestCase):
             'bool': [False, False, True, False],
             'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01']),
             'integer.out': ['1', '2', '1', '3'],
-            'integer.out.value': [1, 2, 1, 3],
-            'float.value': [0.1, 0.2, 0.1, 0.1],
-            'categorical.value': [0.375, 0.375, 0.875, 0.375],
-            'bool.value': [0.0, 0.0, 1.0, 0.0],
-            'datetime.value': [
+            'integer.out': [1, 2, 1, 3],
+            'float': [0.1, 0.2, 0.1, 0.1],
+            'categorical': [0.375, 0.375, 0.875, 0.375],
+            'bool': [0.0, 0.0, 1.0, 0.0],
+            'datetime': [
                 1.2649824e+18,
                 1.262304e+18,
                 1.2649824e+18,
@@ -1603,8 +1603,8 @@ class TestHyperTransformer(TestCase):
         int_transformer = Mock()
         float_transformer = Mock()
         generator_transformer = Mock()
-        int_transformer.get_output_columns.return_value = ['integer.out.value']
-        float_transformer.get_output_columns.return_value = ['float.value']
+        int_transformer.get_output_columns.return_value = ['integer.out']
+        float_transformer.get_output_columns.return_value = ['float']
         generator_transformer.get_output_columns.return_value = []
 
         reverse_transformed_data = self.get_transformed_data()
@@ -1765,7 +1765,7 @@ class TestHyperTransformer(TestCase):
         ht._validate_detect_config_called.return_value = True
         ht._fitted = True
         ht._reverse_transform = Mock()
-        data = pd.DataFrame({'col1.value': [1, 2]})
+        data = pd.DataFrame({'col1': [1, 2]})
 
         # Run
         ht.reverse_transform_subset(data)
@@ -2935,8 +2935,8 @@ class TestHyperTransformer(TestCase):
         transformer3 = Mock()
         ht._transformers_tree = {
             'field': {'transformer': transformer1, 'outputs': ['field.out1', 'field.out2']},
-            'field.out1': {'transformer': transformer2, 'outputs': ['field.out1.value']},
-            'field.out2': {'transformer': transformer3, 'outputs': ['field.out2.value']}
+            'field.out1': {'transformer': transformer2, 'outputs': ['field.out1']},
+            'field.out2': {'transformer': transformer3, 'outputs': ['field.out2']}
         }
         ht._fitted = True
 
@@ -2994,9 +2994,9 @@ class TestHyperTransformer(TestCase):
         transformer4 = Mock()
         ht._transformers_tree = {
             'field1': {'transformer': transformer1, 'outputs': ['field1.out1', 'field1.out2']},
-            'field1.out1': {'transformer': transformer2, 'outputs': ['field1.out1.value']},
-            'field1.out2': {'transformer': transformer3, 'outputs': ['field1.out2.value']},
-            'field2': {'transformer': transformer4, 'outputs': ['field2.value']}
+            'field1.out1': {'transformer': transformer2, 'outputs': ['field1.out1']},
+            'field1.out2': {'transformer': transformer3, 'outputs': ['field1.out2']},
+            'field2': {'transformer': transformer4, 'outputs': ['field2']}
         }
         ht._fitted = True
 
@@ -3052,7 +3052,7 @@ class TestHyperTransformer(TestCase):
             },
             'field1.out1': {
                 'transformer': transformer,
-                'outputs': ['field1.out1.value']
+                'outputs': ['field1.out1']
             },
             'field1.out2': {
                 'transformer': transformer,
@@ -3060,15 +3060,15 @@ class TestHyperTransformer(TestCase):
             },
             'field1.out2.out1': {
                 'transformer': transformer,
-                'outputs': ['field1.out2.out1.value']
+                'outputs': ['field1.out2.out1']
             },
             'field1.out2.out2': {
                 'transformer': transformer,
-                'outputs': ['field1.out2.out2.value']
+                'outputs': ['field1.out2.out2']
             },
             'field2': {
                 'transformer': transformer,
-                'outputs': ['field2.value']
+                'outputs': ['field2']
             }
         }
         ht._fitted = True
@@ -3077,7 +3077,7 @@ class TestHyperTransformer(TestCase):
         outputs = ht._get_final_output_columns('field1')
 
         # Assert
-        assert outputs == ['field1.out2.out2.value', 'field1.out2.out1.value', 'field1.out1.value']
+        assert outputs == ['field1.out2.out2', 'field1.out2.out1', 'field1.out1']
 
     def test__get_final_output_columns_transformer_is_none(self):
         """Test the ``_get_final_output_columns`` method.
@@ -3143,13 +3143,13 @@ class TestHyperTransformer(TestCase):
             },
             'field1.out1': {
                 'transformer': FloatFormatter(),
-                'outputs': ['field1.out1.value']
+                'outputs': ['field1.out1']
             },
             'field1.out2': {
                 'transformer': FloatFormatter(),
-                'outputs': ['field1.out2.value']
+                'outputs': ['field1.out2']
             },
-            'field2': {'transformer': FrequencyEncoder(), 'outputs': ['field2.value']}
+            'field2': {'transformer': FrequencyEncoder(), 'outputs': ['field2']}
         })
         ht._fitted = True
 

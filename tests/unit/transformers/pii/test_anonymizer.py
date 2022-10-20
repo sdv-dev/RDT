@@ -605,11 +605,11 @@ class TestPseudoAnonymizedFaker:
         # Assert
         assert instance._mapping_dict == {'a': 1, 'b': 2, 'c': 3}
         assert instance._reverse_mapping_dict == {1: 'a', 2: 'b', 3: 'c'}
-        assert list(instance.output_properties) == ['value']
-        assert list(instance.output_properties['value']) == ['sdtype', 'next_transformer']
-        assert instance.output_properties['value']['sdtype'] == 'categorical'
+        assert list(instance.output_properties) == [None]
+        assert list(instance.output_properties[None]) == ['sdtype', 'next_transformer']
+        assert instance.output_properties[None]['sdtype'] == 'categorical'
 
-        transformer = instance.output_properties['value']['next_transformer']
+        transformer = instance.output_properties[None]['next_transformer']
         assert isinstance(transformer, LabelEncoder)
         assert transformer.add_noise is True
 
