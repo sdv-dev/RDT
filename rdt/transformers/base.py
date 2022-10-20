@@ -3,6 +3,7 @@ import abc
 import inspect
 
 import pandas as pd
+import numpy as np
 
 
 class BaseTransformer:
@@ -179,7 +180,7 @@ class BaseTransformer:
         return data[columns].copy()
 
     @staticmethod
-    def _add_columns_to_data(data, columns, column_names):
+    def _add_columns_to_data(data, transformed_data, transformed_names, drop_columns):
         """Add new columns to a ``pandas.DataFrame``.
 
         Args:
@@ -193,16 +194,26 @@ class BaseTransformer:
         Returns:
             ``pandas.DataFrame`` with the new columns added.
         """
-        if columns is not None:
-            if isinstance(columns, (pd.DataFrame, pd.Series)):
-                columns.index = data.index
-
-            if len(columns.shape) == 1:
-                data[column_names[0]] = columns
-            else:
-                new_data = pd.DataFrame(columns, columns=column_names)
-                data = pd.concat([data, new_data.set_index(data.index)], axis=1)
-
+        print(type(transformed_data))
+        if isinstance(transformed_data, pd.Series):
+            transformed_data = pd.DataFrame(transformed_data, columns=transformed_names)
+        
+        # transformed columns which didn't change their names
+        repeated_columns = list(set(transformed_names).intersection(set(data.columns)))
+        if repeated_columns:
+            data[repeated_columns] = transformed_data[repeated_columns]
+    
+        # columns which changed their name
+        transformed_names = list(set(transformed_names) - set(repeated_columns))
+        if transformed_names:
+            transformed_data.index = data.index
+            new_data = pd.DataFrame(transformed_data, columns=transformed_names)
+            data = pd.concat([data, new_data.set_index(data.index)], axis=1)
+        
+        # drop original columns
+        original_columns = set(drop_columns) - set(repeated_columns) - set(transformed_names)
+        data = data.drop(original_columns, axis=1)
+        
         return data
 
     def _build_output_columns(self, data):
@@ -211,7 +222,7 @@ class BaseTransformer:
 
         # it's fine for the generated column name to be the same as the original
         if self.column_prefix in self.output_columns:
-            return
+            return  # NOTE: double check this logic
 
         # but they can't be the same as other column names in the data
         data_columns = set(data.columns)
@@ -303,10 +314,8 @@ class BaseTransformer:
 
         columns_data = self._get_columns_data(data, self.columns)
         transformed_data = self._transform(columns_data)
-
-        data = self._add_columns_to_data(data, transformed_data, self.output_columns)
-        if drop:
-            data = data.drop(self.columns, axis=1)
+        print(type(transformed_data))
+        data = self._add_columns_to_data(data, transformed_data, self.output_columns, data.columns)
 
         return data
 
@@ -360,9 +369,6 @@ class BaseTransformer:
 
         columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
-
-        data = self._add_columns_to_data(data, reversed_data, self.columns)
-        if drop:
-            data = data.drop(self.output_columns, axis=1)
+        data = self._add_columns_to_data(data, reversed_data, self.columns, self.output_columns)
 
         return data
