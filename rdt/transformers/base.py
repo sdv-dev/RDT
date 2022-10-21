@@ -180,7 +180,7 @@ class BaseTransformer:
         return data[columns].copy()
 
     @staticmethod
-    def _add_columns_to_data(data, transformed_data, transformed_names, drop_columns):
+    def _update_data(data, transformed_data, transformed_names, columns_to_drop, drop):
         """Add new columns to a ``pandas.DataFrame``.
 
         Args:
@@ -194,8 +194,7 @@ class BaseTransformer:
         Returns:
             ``pandas.DataFrame`` with the new columns added.
         """
-        print(type(transformed_data))
-        if isinstance(transformed_data, pd.Series):
+        if isinstance(transformed_data, (pd.Series, np.ndarray)):
             transformed_data = pd.DataFrame(transformed_data, columns=transformed_names)
         
         # transformed columns which didn't change their names
@@ -204,31 +203,50 @@ class BaseTransformer:
             data[repeated_columns] = transformed_data[repeated_columns]
     
         # columns which changed their name
-        transformed_names = list(set(transformed_names) - set(repeated_columns))
+        transformed_names = [name for name in transformed_names if name not in repeated_columns]
         if transformed_names:
             transformed_data.index = data.index
             new_data = pd.DataFrame(transformed_data, columns=transformed_names)
             data = pd.concat([data, new_data.set_index(data.index)], axis=1)
         
-        # drop original columns
-        original_columns = set(drop_columns) - set(repeated_columns) - set(transformed_names)
-        data = data.drop(original_columns, axis=1)
-        
+        # drop columns which weren't transformed
+        if drop:
+            columns_to_drop = set(columns_to_drop) - set(repeated_columns) - set(transformed_names) # TODO: delete second set
+            data = data.drop(columns_to_drop, axis=1)
+
         return data
 
     def _build_output_columns(self, data):
         self.column_prefix = '#'.join(self.columns)
         self.output_columns = self.get_output_columns()
 
+        """
+        # TODO: the logic seems sound, just improve the implementation, and
         # it's fine for the generated column name to be the same as the original
-        if self.column_prefix in self.output_columns:
-            return  # NOTE: double check this logic
+        inplace_columns = []
+        output_cols = set(self.output_columns)
+        for i in self.output_columns:
+            if i in self.columns:
+                inplace_columns.append(i)
+                output_cols.remove(i)
 
         # but they can't be the same as other column names in the data
-        data_columns = set(data.columns)
-        while data_columns & set(self.output_columns):
-            self.column_prefix += '#'
-            self.output_columns = self.get_output_columns()
+        similar = output_cols.intersection(data.columns)
+        while similar:
+            output_cols = output_cols - similar
+            output_cols.update({f'{i}#' for i in similar})
+            similar = output_cols.intersection(data.columns)
+        
+        self.output_columns = list(output_cols) + inplace_columns
+        """
+        for i in range(len(self.output_columns)):
+            if self.output_columns[i] in self.columns:
+                continue
+            while self.output_columns[i] in data.columns:
+                self.output_columns[i] += '#'
+
+
+
 
     def __repr__(self):
         """Represent initialization of transformer as text.
@@ -314,8 +332,7 @@ class BaseTransformer:
 
         columns_data = self._get_columns_data(data, self.columns)
         transformed_data = self._transform(columns_data)
-        print(type(transformed_data))
-        data = self._add_columns_to_data(data, transformed_data, self.output_columns, data.columns)
+        data = self._update_data(data, transformed_data, self.output_columns, self.columns, drop)
 
         return data
 
@@ -369,6 +386,6 @@ class BaseTransformer:
 
         columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
-        data = self._add_columns_to_data(data, reversed_data, self.columns, self.output_columns)
+        data = self._update_data(data, reversed_data, self.columns, self.output_columns, drop)
 
         return data

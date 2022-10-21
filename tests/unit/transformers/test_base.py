@@ -576,7 +576,7 @@ class TestBaseTransformer:
         expected = pd.Series([4, 5, 6], name='b')
         pd.testing.assert_series_equal(columns_data, expected)
 
-    def test__add_columns_to_data_series(self):
+    def test__update_data_series(self):
         """Test the ``_add_columns_to_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
@@ -600,7 +600,7 @@ class TestBaseTransformer:
         columns_data = pd.Series([7, 8, 9], name='c')
 
         # Run
-        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
+        result = BaseTransformer._update_data(data, columns_data, columns, None, False)
 
         # Assert
         expected = pd.DataFrame({
@@ -610,7 +610,7 @@ class TestBaseTransformer:
         }, index=[2, 0, 1])
         pd.testing.assert_frame_equal(result, expected)
 
-    def test__add_columns_to_data_dataframe(self):
+    def test__update_data_dataframe(self):
         """Test the ``_add_columns_to_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
@@ -637,7 +637,7 @@ class TestBaseTransformer:
         })
 
         # Run
-        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
+        result = BaseTransformer._update_data(data, columns_data, columns, None, False)
 
         # Assert
         expected = pd.DataFrame({
@@ -672,7 +672,7 @@ class TestBaseTransformer:
         columns_data = np.array([7, 8, 9], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
+        result = BaseTransformer._update_data(data, columns_data, columns, None, False)
 
         # Assert
         expected = pd.DataFrame({
@@ -709,7 +709,7 @@ class TestBaseTransformer:
         ], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
+        result = BaseTransformer._update_data(data, columns_data, columns, None, False)
 
         # Assert
         expected = pd.DataFrame({
@@ -736,11 +736,11 @@ class TestBaseTransformer:
             'a': [1, 2, 3],
             'b': [4, 5, 6]
         }, index=[2, 0, 1])
-        columns = ['c']
+        columns = []
         columns_data = None
 
         # Run
-        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
+        result = BaseTransformer._update_data(data, columns_data, columns, None, False)
 
         # Assert
         expected = pd.DataFrame({
@@ -819,7 +819,10 @@ class TestBaseTransformer:
         data = pd.DataFrame({
             'a': [1, 2, 3],
             'a#b': [4, 5, 6],
-            'b': [7, 8, 9]
+            'b': [7, 8, 9],
+            'a#b.is_null': [0, 0, 0],
+            'a#b.is_null#': [0, 0, 0],
+
         })
 
         class Dummy(BaseTransformer):
@@ -835,8 +838,8 @@ class TestBaseTransformer:
         dummy_transformer._build_output_columns(data)
 
         # Assert
-        assert dummy_transformer.column_prefix == 'a#b#'
-        assert dummy_transformer.output_columns == ['a#b#', 'a#b#.is_null']
+        assert dummy_transformer.column_prefix == 'a#b'
+        assert dummy_transformer.output_columns == ['a#b#', 'a#b.is_null##']
 
     def test__fit_raises_error(self):
         """Test ``_fit`` raises ``NotImplementedError``."""
@@ -1213,40 +1216,32 @@ class TestBaseTransformer:
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)
 
     def test_reverse_transform_drop_true(self):
-        """Test the ``reverse_transform`` method when ``drop=False``.
+        """Test the ``reverse_transform`` method when ``drop=True``.
 
         Validate that the ``reverse_transform`` method calls ``self._reverse_transform``
         with the correct data and that the transformed data matches the transformed dummy data
         (i.e. the original data with an added column containing zeros and the transformed columns
         dropped).
 
-        Setup:
-            - create a dummy class which inherits from the ``BaseTransformer``, which defines:
-                - ``columns`` as a list of columns from the data.
-                - a ``_reverse_transform`` method which stores the passed data to
-                ``self._passed_data`` and transforms the passed data to a numpy array
-                containing zeros.
-
-        Input:
-            - a dataframe.
-
         Output:
-            - the transformed data.
-
-        Side effects:
-            - ``self._reverse_transform`` should be called with the correct data
-            and should store it in ``self._passed_data``.
+            For the test shown below, the resulting output columns should be ordered as 'a', 'c', 'b'.
+                - 'a' should be first because it's present in both Dummy.columns and Dummy.output_columns,
+                and the transformation of columns which keeps the same name happen inplace. Since 'a' was
+                already the first column in the passed data, it will continue as such. 
+                - 'c' comes second because it's the first non-transformed column to appear.
+                - 'b' is last because it was a transformed column. All transformed columns
+                are appended at the end of the dataframe, in the order given by Dummy.columns.
         """
         # Setup
         data = pd.DataFrame({
             'a': [1, 2, 3],
-            'b': [4, 5, 6],
+            'b.is_null': [4, 5, 6],
             'c': [7, 8, 9]
         })
 
         class Dummy(BaseTransformer):
             columns = ['a', 'b']
-            output_columns = ['a', 'b']
+            output_columns = ['a', 'b.is_null']
 
             def _reverse_transform(self, data):
                 self._passed_data = data.copy()
@@ -1259,13 +1254,13 @@ class TestBaseTransformer:
         # Assert
         expected_passed = pd.DataFrame({
             'a': [1, 2, 3],
-            'b': [4, 5, 6],
+            'b.is_null': [4, 5, 6],
         })
         pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
 
         expected_transformed = pd.DataFrame({
-            'c': [7, 8, 9],
             'a': [0.0, 0.0, 0.0],
+            'c': [7, 8, 9],
             'b': [0.0, 0.0, 0.0],
         })
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)
