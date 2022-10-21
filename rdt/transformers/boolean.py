@@ -65,7 +65,7 @@ class BinaryEncoder(BaseTransformer):
                 Data to transform.
 
         Returns
-            pandas.DataFrame or pandas.Series
+            np.ndarray
         """
         data = pd.to_numeric(data, errors='coerce')
         return self.null_transformer.transform(data).astype(float)
