@@ -1,14 +1,53 @@
 
-from rdt.transformers.base import BaseTransformer
+from rdt.hyper_transformer import HyperTransformer
 import pandas as pd
 import numpy as np
+from rdt.transformers.base import BaseTransformer
+from rdt.transformers.categorical import FrequencyEncoder
 
-from rdt.transformers.text import RegexGenerator
+from rdt.transformers.numerical import FloatFormatter
+
 data = pd.DataFrame({
-    'id': [1, 2, 3, 4, 5],
-    'username': ['a', 'b', 'c', 'd', 'e']
+    'integer': [1, 2, 1],
+    'categorical': ['a', 'b', 'a']
 })
 
-instance = RegexGenerator()
-transformed = instance.fit_transform(data, 'id')
-reverse_transform = instance.reverse_transform(transformed)
+class DoublingTransformer(BaseTransformer):
+    INPUT_SDTYPE = 'numerical'
+    def _fit(self, data):
+        self.output_properties = {
+            None: {'sdtype': 'float', 'next_transformer': FloatFormatter()},
+            'is_null': {'sdtype': 'float', 'next_transformer': FloatFormatter()}
+        }
+
+    def _transform(self, data):
+        return data * 2
+
+    def _reverse_transform(self, data):
+        return data / 2
+
+class DoublingTransformer2(BaseTransformer):
+    INPUT_SDTYPE = 'categorical'
+    def _fit(self, data):
+        self.output_properties = {
+            None: {'sdtype': 'categorical', 'next_transformer': FrequencyEncoder()}
+        }
+
+    def _transform(self, data):
+        return data * 2
+
+    def _reverse_transform(self, data):
+        return pd.Series([i[0] for i in data])
+
+
+# Run
+ht = HyperTransformer()
+ht.set_config({
+    'sdtypes': {'integer': 'numerical', 'categorical': 'categorical'},
+    'transformers': {'integer': DoublingTransformer(), 'categorical': DoublingTransformer2()}
+})
+ht.fit(data)
+transformed = ht.transform(data)
+print(transformed)
+reverse_transformed = ht.reverse_transform(transformed)
+print(reverse_transformed)
