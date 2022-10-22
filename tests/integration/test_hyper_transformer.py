@@ -199,19 +199,6 @@ def test_hypertransformer_default_inputs():
             actual = reverse_transformed.iloc[row, column]
             assert pd.isna(actual) or expected == actual
 
-    assert isinstance(ht._transformers_tree['integer']['transformer'], FloatFormatter)
-    assert ht._transformers_tree['integer']['outputs'] == ['integer.value']
-    assert isinstance(ht._transformers_tree['float']['transformer'], FloatFormatter)
-    assert ht._transformers_tree['float']['outputs'] == ['float.value']
-    assert isinstance(ht._transformers_tree['categorical']['transformer'], FrequencyEncoder)
-    assert ht._transformers_tree['categorical']['outputs'] == ['categorical.value']
-    assert isinstance(ht._transformers_tree['bool']['transformer'], BinaryEncoder)
-    assert ht._transformers_tree['bool']['outputs'] == ['bool.value']
-    assert isinstance(ht._transformers_tree['datetime']['transformer'], UnixTimestampEncoder)
-    assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value']
-    assert isinstance(ht._transformers_tree['names']['transformer'], FrequencyEncoder)
-    assert ht._transformers_tree['names']['outputs'] == ['names.value']
-
     get_default_transformers.cache_clear()
     get_default_transformer.cache_clear()
 
