@@ -514,38 +514,6 @@ class HyperTransformer:
 
         return next_transformers
 
-    def _get_final_output_columns(self, field):
-        """Return list of all final output columns related to a field.
-
-        The ``HyperTransformer`` will figure out which transformers to use on a field during
-        ``transform``. If the outputs are not of an acceptable sdtype, they will also go
-        through transformations. This method finds all the output columns that are of an
-        acceptable final sdtype that originated from the specified field.
-
-        Args:
-            field (str or tuple):
-                String representing a column name or a tuple of multiple column names.
-
-        Returns:
-            list:
-                List of output column names that were created as a by-product of the specified
-                field.
-        """
-        if not self._fitted:
-            raise NotFittedError
-
-        final_outputs = []
-        outputs = self._transformers_tree[field].get('outputs', []).copy()
-        while len(outputs) > 0:
-            output = outputs.pop()
-            transformer = self._transformers_tree.get(output, {}).get('transformer')
-            if output in self._transformers_tree and transformer:
-                outputs.extend(self._transformers_tree[output].get('outputs', []))
-            else:
-                final_outputs.append(output)
-
-        return sorted(final_outputs, reverse=True)
-
     def _get_transformer_tree_yaml(self):
         """Return yaml representation of transformers tree.
 
@@ -651,6 +619,9 @@ class HyperTransformer:
             transformer (Transformer):
                 Instance of transformer class that will fit the data.
         """
+        if field not in self._output_columns:
+            self._output_columns.append(field)
+
         if transformer is None:
             self._add_field_to_set(field, self._fitted_fields)
             self._transformers_tree[field]['transformer'] = None
@@ -663,11 +634,11 @@ class HyperTransformer:
             self._transformers_sequence.append(transformer)
             data = transformer.transform(data)
 
-            output_sdtypes = transformer.get_output_sdtypes()
+            output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()
             self._transformers_tree[field]['transformer'] = transformer
-            self._transformers_tree[field]['outputs'] = list(output_sdtypes)
-            for output_name in output_sdtypes:
+            self._transformers_tree[field]['outputs'] = output_columns
+            for output_name in output_columns:
                 output_field = self._multi_column_fields.get(output_name, output_name)
                 next_transformer = next_transformers[output_field]
                 if next_transformer and self._field_in_data(output_field, data):
@@ -682,12 +653,6 @@ class HyperTransformer:
                 'The following fields were specified in the input arguments but not '
                 f'found in the data: {non_fitted_fields}'
             )
-
-    def _sort_output_columns(self):
-        """Sort ``_output_columns`` to follow the same order as the ``_input_columns``."""
-        for input_column in self._input_columns:
-            output_columns = self._get_final_output_columns(input_column)
-            self._output_columns.extend(output_columns)
 
     def _validate_config_exists(self):
         if len(self.field_sdtypes) == 0 and len(self.field_transformers) == 0:
@@ -732,7 +697,6 @@ class HyperTransformer:
         self._validate_all_fields_fitted()
         self._fitted = True
         self._modified_config = False
-        self._sort_output_columns()
 
     def _transform(self, data, prevent_subset):
         self._validate_config_exists()
