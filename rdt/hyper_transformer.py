@@ -134,7 +134,6 @@ class HyperTransformer:
         self._fitted_fields = set()
         self._fitted = False
         self._modified_config = False
-        self._transformers_tree = defaultdict(dict)
 
     @staticmethod
     def _field_in_data(field, data):
@@ -477,73 +476,6 @@ class HyperTransformer:
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
-    def _get_transformer(self, field):
-        """Get the transformer instance used for a field.
-
-        Args:
-            field (str or tuple):
-                String representing a column name or a tuple of multiple column names.
-
-        Returns:
-            Transformer:
-                Transformer instance used on the specified field during ``transform``.
-        """
-        if not self._fitted:
-            raise NotFittedError
-
-        return self._transformers_tree[field].get('transformer', None)
-
-    def _get_output_transformers(self, field):
-        """Return dict mapping output columns of field to transformers used on them.
-
-        Args:
-            field (str or tuple):
-                String representing a column name or a tuple of multiple column names.
-
-        Returns:
-            dict:
-                Dictionary mapping the output names of the columns created after transforming the
-                specified field, to the transformer instances used on them.
-        """
-        if not self._fitted:
-            raise NotFittedError
-
-        next_transformers = {}
-        for output in self._transformers_tree[field].get('outputs', []):
-            next_transformers[output] = self._transformers_tree[output].get('transformer', None)
-
-        return next_transformers
-
-    def _get_transformer_tree_yaml(self):
-        """Return yaml representation of transformers tree.
-
-        After running ``fit``, a sequence of transformers is created to run each original column
-        through. The sequence can be thought of as a tree, where each node is a field and the
-        transformer used on it, and each neighbor is an output from that transformer. This method
-        returns a YAML representation of this tree.
-
-        Returns:
-            string:
-                YAML object representing the tree of transformers created during ``fit``. It has
-                the following form:
-
-                field1:
-                    transformer: ExampleTransformer instance
-                    outputs: [field1.out1, field1.out2]
-                field1.out1:
-                    transformer: FrequencyEncoder instance
-                    outputs: [field1.out1.value]
-                field1.out2:
-                    transformer: FrequencyEncoder instance
-                    outputs: [field1.out2.value]
-        """
-        modified_tree = deepcopy(self._transformers_tree)
-        for field in modified_tree:
-            class_name = modified_tree[field]['transformer'].__class__.get_name()
-            modified_tree[field]['transformer'] = class_name
-
-        return yaml.safe_dump(dict(modified_tree))
-
     def _set_field_sdtype(self, data, field):
         clean_data = data[field].dropna()
         kind = clean_data.infer_objects().dtype.kind
@@ -555,7 +487,6 @@ class HyperTransformer:
         self._output_columns = []
         self._fitted_fields.clear()
         self._fitted = False
-        self._transformers_tree = defaultdict(dict)
 
     def _learn_config(self, data):
         """Unfit the HyperTransformer and learn the sdtypes and transformers of the data."""
@@ -622,26 +553,22 @@ class HyperTransformer:
         if field not in self._output_columns:
             self._output_columns.append(field)
 
-        if transformer is None:
+        if transformer is None:  # TODO: delete
             self._add_field_to_set(field, self._fitted_fields)
-            self._transformers_tree[field]['transformer'] = None
-            self._transformers_tree[field]['outputs'] = [field]
 
         else:
-            transformer = get_transformer_instance(transformer)
+            transformer = get_transformer_instance(transformer)  # TODO: delete
             transformer.fit(data, field)
             self._add_field_to_set(field, self._fitted_fields)
             self._transformers_sequence.append(transformer)
-            data = transformer.transform(data)
+            data = transformer.transform(data)  # TODO: only pass data[[field]], no need to pass everything (although check tuple case)
 
             output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()
-            self._transformers_tree[field]['transformer'] = transformer
-            self._transformers_tree[field]['outputs'] = output_columns
             for output_name in output_columns:
                 output_field = self._multi_column_fields.get(output_name, output_name)
                 next_transformer = next_transformers[output_field]
-                if next_transformer and self._field_in_data(output_field, data):
+                if next_transformer and self._field_in_data(output_field, data):  # TODO: why is field_in_data needed?
                     self._fit_field_transformer(data, output_field, next_transformer)
 
         return data
@@ -795,7 +722,7 @@ class HyperTransformer:
 
         transformers = []
         for column_name in column_names:
-            transformer = self._transformers_tree.get(column_name, {}).get('transformer')
+            transformer = self.field_transformers.get(column_name, {})
             if not transformer.is_generator():
                 raise Error(
                     f"Column '{column_name}' cannot be anonymized. All columns must be assigned "
