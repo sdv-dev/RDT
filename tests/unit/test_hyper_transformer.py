@@ -403,8 +403,6 @@ class TestHyperTransformer(TestCase):
         get_transformer_instance_mock.side_effect = [
             transformer1,
             transformer2,
-            None,
-            None
         ]
         ht = HyperTransformer()
 
@@ -1582,7 +1580,6 @@ class TestHyperTransformer(TestCase):
         reverse_transformed = ht.reverse_transform_subset(data)
 
         # Assert
-        print(reverse_transformed)
         pd.testing.assert_frame_equal(reverse_transformed, expected)
         int_transformer.reverse_transform.assert_called_once()
         generator_transformer.reverse_transform.assert_not_called()
@@ -2918,7 +2915,6 @@ class TestHyperTransformer(TestCase):
             'a.out1': ['1', '2', '3'],
             'b': [4, 5, 6]
         })
-        # assert ht._output_columns == [] TODO: why is this assert here?
         pd.testing.assert_frame_equal(out, expected)
         transformer1.fit.assert_called_once()
         transformer1.transform.assert_called_once_with(data)
