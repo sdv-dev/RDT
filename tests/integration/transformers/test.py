@@ -1,10 +1,9 @@
 
-from rdt.hyper_transformer import HyperTransformer
 import pandas as pd
-import numpy as np
+
+from rdt.hyper_transformer import HyperTransformer
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.categorical import FrequencyEncoder
-
 from rdt.transformers.numerical import FloatFormatter
 
 data = pd.DataFrame({
@@ -12,8 +11,10 @@ data = pd.DataFrame({
     'categorical': ['a', 'b', 'a']
 })
 
+
 class DoublingTransformer(BaseTransformer):
     INPUT_SDTYPE = 'numerical'
+
     def _fit(self, data):
         self.output_properties = {
             None: {'sdtype': 'float', 'next_transformer': FloatFormatter()},
@@ -26,8 +27,10 @@ class DoublingTransformer(BaseTransformer):
     def _reverse_transform(self, data):
         return data / 2
 
+
 class DoublingTransformer2(BaseTransformer):
     INPUT_SDTYPE = 'categorical'
+
     def _fit(self, data):
         self.output_properties = {
             None: {'sdtype': 'categorical', 'next_transformer': FrequencyEncoder()}

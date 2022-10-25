@@ -3,11 +3,8 @@
 import inspect
 import json
 import warnings
-from collections import defaultdict
-from copy import deepcopy
 
 import pandas as pd
-import yaml
 
 from rdt.errors import Error, NotFittedError, TransformerInputError
 from rdt.transformers import (
@@ -550,28 +547,28 @@ class HyperTransformer:
             transformer (Transformer):
                 Instance of transformer class that will fit the data.
         """
-        if field not in self._output_columns:
-            self._output_columns.append(field)
-
-        if transformer is None:  # TODO: delete
+        if transformer is None:
             self._add_field_to_set(field, self._fitted_fields)
+            if field not in self._output_columns:
+                self._output_columns.append(field)
 
         else:
+            # self._add_field_to_set(field, self._fitted_fields) TODO: not sure if this is needed
             transformer = get_transformer_instance(transformer)  # TODO: delete
             transformer.fit(data, field)
-            self._add_field_to_set(field, self._fitted_fields)
             self._transformers_sequence.append(transformer)
-            data = transformer.transform(data)  # TODO: only pass data[[field]], no need to pass everything (although check tuple case)
+            # TODO: only pass data[[field]], no need to pass everything (although check tuple case)
+            data = transformer.transform(data)
 
             output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()
             for output_name in output_columns:
                 output_field = self._multi_column_fields.get(output_name, output_name)
                 next_transformer = next_transformers[output_field]
-                if next_transformer and self._field_in_data(output_field, data):  # TODO: why is field_in_data needed?
+                if self._field_in_data(output_field, data):  # TODO: why is field_in_data needed?
                     self._fit_field_transformer(data, output_field, next_transformer)
 
-        return data
+        return data  # TODO: I think this is not even necessary, since all the operations are inplace
 
     def _validate_all_fields_fitted(self):
         non_fitted_fields = self._specified_fields.difference(self._fitted_fields)

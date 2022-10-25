@@ -12,7 +12,7 @@ from rdt import HyperTransformer, get_demo
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, AnonymizedFaker, BaseTransformer, BinaryEncoder, FloatFormatter,
-    FrequencyEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder, get_default_transformer,
+    FrequencyEncoder, OneHotEncoder, RegexGenerator, get_default_transformer,
     get_default_transformers)
 
 
