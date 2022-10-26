@@ -400,10 +400,7 @@ class TestHyperTransformer(TestCase):
             'a.out1.is_null': None
         }
         transformer2.transform.return_value = transformed_data1
-        get_transformer_instance_mock.side_effect = [
-            transformer1,
-            transformer2,
-        ]
+        get_transformer_instance_mock.side_effect = [transformer1, transformer2]
         ht = HyperTransformer()
 
         # Run

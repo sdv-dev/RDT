@@ -535,8 +535,7 @@ class HyperTransformer:
         This method fits a transformer to the specified field which can be a column
         name or tuple of column names. If the transformer outputs fields that aren't
         ML ready, then this method recursively fits transformers to their outputs until
-        they are. This method keeps track of which fields are temporarily created by
-        transformers as well as which fields will be part of the final output from ``transform``.
+        they are.
 
         Args:
             data (pandas.DataFrame):
@@ -553,10 +552,9 @@ class HyperTransformer:
                 self._output_columns.append(field)
 
         else:
-            transformer = get_transformer_instance(transformer)  # NOTE: delete
+            transformer = get_transformer_instance(transformer)
             transformer.fit(data, field)
             self._transformers_sequence.append(transformer)
-            # NOTE: only pass data[[field]], no need to pass everything (although check tuple case)
             data = transformer.transform(data)
 
             output_columns = transformer.get_output_columns()
@@ -564,8 +562,11 @@ class HyperTransformer:
             for output_name in output_columns:
                 output_field = self._multi_column_fields.get(output_name, output_name)
                 next_transformer = next_transformers[output_field]
-                if self._field_in_data(output_field, data):  # NOTE: delete
-                    self._fit_field_transformer(data, output_field, next_transformer)
+
+                # If the column is part of a multi-column field, and at least one column
+                # isn't present in the data, then it should not fit the next transformer
+                if self._field_in_data(output_field, data):
+                    data = self._fit_field_transformer(data, output_field, next_transformer)
 
         return data
 
