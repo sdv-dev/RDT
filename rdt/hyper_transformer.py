@@ -548,8 +548,7 @@ class HyperTransformer:
         """
         if transformer is None:
             self._add_field_to_set(field, self._fitted_fields)
-            if field not in self._output_columns:
-                self._output_columns.append(field)
+            self._output_columns.append(field)
 
         else:
             transformer = get_transformer_instance(transformer)
@@ -719,7 +718,7 @@ class HyperTransformer:
 
         transformers = []
         for column_name in column_names:
-            transformer = self.field_transformers.get(column_name, {})
+            transformer = self.field_transformers.get(column_name)
             if not transformer.is_generator():
                 raise Error(
                     f"Column '{column_name}' cannot be anonymized. All columns must be assigned "
