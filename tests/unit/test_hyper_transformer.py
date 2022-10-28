@@ -1,7 +1,6 @@
 import contextlib
 import io
 import re
-from collections import defaultdict
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
 
@@ -149,7 +148,6 @@ class TestHyperTransformer(TestCase):
         assert ht._fitted_fields == set()
         assert ht._fitted is False
         assert ht._modified_config is False
-        assert ht._transformers_tree == defaultdict(dict)
         multi_column_mock.assert_called_once()
         validation_mock.assert_called_once()
 
@@ -186,7 +184,6 @@ class TestHyperTransformer(TestCase):
         assert ht._fitted_fields == set()
         assert ht._output_columns == []
         assert ht._input_columns == []
-        assert ht._transformers_tree == {}
 
     def test__create_multi_column_fields(self):
         """Test the ``_create_multi_column_fields`` method.
@@ -391,28 +388,19 @@ class TestHyperTransformer(TestCase):
         })
         transformer1 = Mock()
         transformer2 = Mock()
-        transformer1.get_output_sdtypes.return_value = {
-            'a.out1': 'categorical',
-            'a.out2': 'numerical'
-        }
+        transformer1.get_output_columns.return_value = ['a.out1', 'a.out2']
         transformer1.get_next_transformers.return_value = {
             'a.out1': transformer2,
             'a.out2': None
         }
         transformer1.transform.return_value = transformed_data1
-        transformer2.get_output_sdtypes.return_value = {
-            'a.out1.value': 'numerical'
-        }
+        transformer2.get_output_columns.return_value = ['a.out1.value']
         transformer2.get_next_transformers.return_value = {
             'a.out1.value': None,
             'a.out1.is_null': None
         }
-        get_transformer_instance_mock.side_effect = [
-            transformer1,
-            transformer2,
-            None,
-            None
-        ]
+        transformer2.transform.return_value = transformed_data1
+        get_transformer_instance_mock.side_effect = [transformer1, transformer2]
         ht = HyperTransformer()
 
         # Run
@@ -428,10 +416,6 @@ class TestHyperTransformer(TestCase):
         transformer1.transform.assert_called_once_with(data)
         transformer2.fit.assert_called_once()
         assert ht._transformers_sequence == [transformer1, transformer2]
-        assert ht._transformers_tree == {
-            'a': {'transformer': transformer1, 'outputs': ['a.out1', 'a.out2']},
-            'a.out1': {'transformer': transformer2, 'outputs': ['a.out1.value']}
-        }
 
     def test__fit_field_transformer_transformer_is_none(self):
         """Test the ``_fit_field_transformer`` method.
@@ -453,8 +437,6 @@ class TestHyperTransformer(TestCase):
 
         Side Effects:
             - ``ht._transformers_sequence`` has not been updated.
-            - ``ht._transformers_tree`` contains the ``column`` with a ``transformer`` as ``None``
-              and ``outputs`` is the name of the column.
         """
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3]})
@@ -466,9 +448,6 @@ class TestHyperTransformer(TestCase):
         # Assert
         pd.testing.assert_frame_equal(out, data)
         assert ht._transformers_sequence == []
-        assert ht._transformers_tree == {
-            'a': {'transformer': None, 'outputs': ['a']},
-        }
 
     @patch('rdt.hyper_transformer.warnings')
     def test__validate_all_fields_fitted(self, warnings_mock):
@@ -495,35 +474,6 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         warnings_mock.warn.assert_called_once()
-
-    def test__sort_output_columns(self):
-        """Test the ``_sort_output_columns`` method.
-
-        Assert the method correctly sorts the ``_output_columns`` attribute
-        according to ``_input_columns``.
-
-        Setup:
-            - Initialize the ``HyperTransformer`` with:
-                - A mock for the ``_get_final_output_columns`` method, with ``side_effect``
-                set to the lists of generated output columns for each input column.
-                - A list of columns names for ``_input_columns``.
-
-        Expected behavior:
-            - ``_output_columns`` should be sorted according to the ``_input_columns``.
-        """
-        # Setup
-        ht = HyperTransformer()
-        ht._get_final_output_columns = Mock()
-        ht._get_final_output_columns.side_effect = [
-            ['a.is_null'], ['b.value', 'b.is_null'], ['c.value']
-        ]
-        ht._input_columns = ['a', 'b', 'c']
-
-        # Run
-        ht._sort_output_columns()
-
-        # Assert
-        assert ht._output_columns == ['a.is_null', 'b.value', 'b.is_null', 'c.value']
 
     def test__validate_config(self):
         """Test the ``_validate_config`` method.
@@ -1054,7 +1004,6 @@ class TestHyperTransformer(TestCase):
         ht._field_in_set = Mock()
         ht._field_in_set.side_effect = [True, True, False, False, False]
         ht._validate_all_fields_fitted = Mock()
-        ht._sort_output_columns = Mock()
         ht._validate_detect_config_called = Mock()
         ht._unfit = Mock()
 
@@ -1070,7 +1019,6 @@ class TestHyperTransformer(TestCase):
             call(data, 'datetime', datetime_transformer)
         ]
         ht._validate_all_fields_fitted.assert_called_once()
-        ht._sort_output_columns.assert_called_once()
         ht._validate_detect_config_called.assert_called_once()
         ht._unfit.assert_called_once()
 
@@ -1342,7 +1290,6 @@ class TestHyperTransformer(TestCase):
 
         Mock:
             - Mock a transformer to return a ``dataframe``.
-            - Mock ``instance._transformers_tree`` to return the transformer.
 
         Input:
             - ``num_rows`` 10.
@@ -1368,9 +1315,9 @@ class TestHyperTransformer(TestCase):
         regex_id.columns = ['id']
         regex_id.output_columns = []
 
-        instance._transformers_tree = {
-            'id': {'transformer': regex_id},
-            'random_element': {'transformer': random_element}
+        instance.field_transformers = {
+            'id': regex_id,
+            'random_element': random_element
         }
 
         # Run
@@ -1502,9 +1449,9 @@ class TestHyperTransformer(TestCase):
         instance._modified_config = False
         instance._subset.return_value = False
 
-        instance._transformers_tree = {
-            'datetime': {'transformer': FloatFormatter()},
-            'random_element': {'transformer': FloatFormatter()}
+        instance.field_transformers = {
+            'datetime': FloatFormatter(),
+            'random_element': FloatFormatter()
         }
 
         # Run / Assert
@@ -2912,269 +2859,18 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(Error, match=error_msg):
             ht.remove_transformers_by_sdtype('phone_number')
 
-    def test__get_transformer(self):
-        """Test the ``_get_transformer`` method.
-
-        The method should return the transformer instance stored for the field in the
-        ``_transformers_tree``.
-
-        Setup:
-            - Set the ``_transformers_tree`` to have values for a few fields.
-            - Set ``_fitted`` to ``True``.
-
-        Input:
-            - Each field name.
-
-        Output:
-            - The transformer instance used for each field.
-        """
-        # Setup
-        ht = HyperTransformer()
-        transformer1 = Mock()
-        transformer2 = Mock()
-        transformer3 = Mock()
-        ht._transformers_tree = {
-            'field': {'transformer': transformer1, 'outputs': ['field.out1', 'field.out2']},
-            'field.out1': {'transformer': transformer2, 'outputs': ['field.out1.value']},
-            'field.out2': {'transformer': transformer3, 'outputs': ['field.out2.value']}
-        }
-        ht._fitted = True
-
-        # Run
-        out1 = ht._get_transformer('field')
-        out2 = ht._get_transformer('field.out1')
-        out3 = ht._get_transformer('field.out2')
-
-        # Assert
-        assert out1 == transformer1
-        assert out2 == transformer2
-        assert out3 == transformer3
-
-    def test__get_transformer_raises_error_if_not_fitted(self):
-        """Test that ``_get_transformer`` raises ``NotFittedError``.
-
-        If the ``HyperTransformer`` hasn't been fitted, a ``NotFittedError`` should be raised.
-
-        Setup:
-            - Set ``_fitted`` to ``False``.
-
-        Expected behavior:
-            - ``NotFittedError`` is raised.
-        """
-        # Setup
-        ht = HyperTransformer()
-        transformer1 = Mock()
-        ht._transformers_tree = {
-            'field1': {'transformer': transformer1, 'outputs': ['field1.out1', 'field1.out2']}
-        }
-        ht._fitted = False
-
-        # Run / Assert
-        with pytest.raises(NotFittedError):
-            ht._get_transformer('field1')
-
-    def test__get_output_transformers(self):
-        """Test the ``_get_output_transformers`` method.
-
-        The method should return a dict mapping each output column created from
-        transforming the specified field, to the transformers to be used on them.
-
-        Setup:
-            - Set the ``_transformers_tree`` to have values for a few fields.
-            - Set ``_fitted`` to ``False``.
-
-        Output:
-            - Dict mapping the outputs of the specified field to the transformers used on them.
-        """
-        # Setup
-        ht = HyperTransformer()
-        transformer1 = Mock()
-        transformer2 = Mock()
-        transformer3 = Mock()
-        transformer4 = Mock()
-        ht._transformers_tree = {
-            'field1': {'transformer': transformer1, 'outputs': ['field1.out1', 'field1.out2']},
-            'field1.out1': {'transformer': transformer2, 'outputs': ['field1.out1.value']},
-            'field1.out2': {'transformer': transformer3, 'outputs': ['field1.out2.value']},
-            'field2': {'transformer': transformer4, 'outputs': ['field2.value']}
-        }
-        ht._fitted = True
-
-        # Run
-        output_transformers = ht._get_output_transformers('field1')
-
-        # Assert
-        assert output_transformers == {
-            'field1.out1': transformer2,
-            'field1.out2': transformer3
-        }
-
-    def test__get_output_transformers_raises_error_if_not_fitted(self):
-        """Test that the ``_get_output_transformers`` raises ``NotFittedError``.
-
-        If the ``HyperTransformer`` hasn't been fitted, a ``NotFittedError`` should be raised.
-
-        Setup:
-            - Set ``_fitted`` to ``False``.
-
-        Expected behavior:
-            - ``NotFittedError`` is raised.
-        """
-        # Setup
-        ht = HyperTransformer()
-        ht._fitted = False
-
-        # Run / Assert
-        with pytest.raises(NotFittedError):
-            ht._get_output_transformers('field')
-
-    def test__get_final_output_columns(self):
-        """Test the ``_get_final_output_columns`` method.
-
-        The method should traverse the tree starting at the provided field and return a list of
-        all final column names (leaf nodes) that are descedants of that field.
-
-        Setup:
-            - Set the ``_transformers_tree`` to have some fields with multiple generations
-            of descendants.
-            - Set ``_fitted`` to ``False``.
-
-        Output:
-            - List of all column nodes with the specified field as an ancestor.
-        """
-        # Setup
-        ht = HyperTransformer()
-        transformer = Mock()
-        ht._transformers_tree = {
-            'field1': {
-                'transformer': transformer,
-                'outputs': ['field1.out1', 'field1.out2']
-            },
-            'field1.out1': {
-                'transformer': transformer,
-                'outputs': ['field1.out1.value']
-            },
-            'field1.out2': {
-                'transformer': transformer,
-                'outputs': ['field1.out2.out1', 'field1.out2.out2']
-            },
-            'field1.out2.out1': {
-                'transformer': transformer,
-                'outputs': ['field1.out2.out1.value']
-            },
-            'field1.out2.out2': {
-                'transformer': transformer,
-                'outputs': ['field1.out2.out2.value']
-            },
-            'field2': {
-                'transformer': transformer,
-                'outputs': ['field2.value']
-            }
-        }
-        ht._fitted = True
-
-        # Run
-        outputs = ht._get_final_output_columns('field1')
-
-        # Assert
-        assert outputs == ['field1.out2.out2.value', 'field1.out2.out1.value', 'field1.out1.value']
-
-    def test__get_final_output_columns_transformer_is_none(self):
-        """Test the ``_get_final_output_columns`` method.
-
-        Setup:
-            - Set the ``_transformers_tree`` to have a field with a ``transformer`` as ``None``.
-
-        Output:
-            - List of the ``outputs`` that has been specified in the ``_transformers_tree``.
-        """
-        # Setup
-        ht = HyperTransformer()
-        ht._transformers_tree = {
-            'field1': {
-                'transformer': None,
-                'outputs': ['field1']
-            }
-        }
-        ht._fitted = True
-
-        # Run
-        outputs = ht._get_final_output_columns('field1')
-
-        # Assert
-        assert outputs == ['field1']
-
-    def test__get_final_output_columns_raises_error_if_not_fitted(self):
-        """Test that the ``_get_final_output_columns`` raises ``NotFittedError``.
-
-        If the ``HyperTransformer`` hasn't been fitted, a ``NotFittedError`` should be raised.
-
-        Setup:
-            - Set ``_fitted`` to ``False``.
-
-        Expected behavior:
-            - ``NotFittedError`` is raised.
-        """
-        # Setup
-        ht = HyperTransformer()
-        ht._fitted = False
-
-        # Run / Assert
-        with pytest.raises(NotFittedError):
-            ht._get_final_output_columns('field')
-
-    def test__get_transformer_tree_yaml(self):
-        """Test the ``_get_transformer_tree_yaml`` method.
-
-        The method should return a YAML representation of the tree.
-
-        Setup:
-            - Set the ``_transformers_tree`` to have values for a few fields.
-
-        Output:
-            - YAML object rrepresenting tree.
-        """
-        # Setup
-        ht = HyperTransformer()
-        ht._transformers_tree = defaultdict(dict, {
-            'field1': {
-                'transformer': FrequencyEncoder(),
-                'outputs': ['field1.out1', 'field1.out2']
-            },
-            'field1.out1': {
-                'transformer': FloatFormatter(),
-                'outputs': ['field1.out1.value']
-            },
-            'field1.out2': {
-                'transformer': FloatFormatter(),
-                'outputs': ['field1.out2.value']
-            },
-            'field2': {'transformer': FrequencyEncoder(), 'outputs': ['field2.value']}
-        })
-        ht._fitted = True
-
-        # Run
-        tree_yaml = ht._get_transformer_tree_yaml()
-
-        # Assert
-        assert tree_yaml == (
-            'field1:\n  outputs:\n  - field1.out1\n  - field1.out2\n  '
-            'transformer: FrequencyEncoder\nfield1.out1:\n  outputs:\n  - '
-            'field1.out1.value\n  transformer: FloatFormatter\nfield1.out2:\n  '
-            'outputs:\n  - field1.out2.value\n  transformer: FloatFormatter\nfield2:\n  '
-            'outputs:\n  - field2.value\n  transformer: FrequencyEncoder\n'
-        )
-
     @patch('rdt.hyper_transformer.get_transformer_instance')
     def test__fit_field_transformer_multi_column_field_not_ready(
         self,
         get_transformer_instance_mock
     ):
         """Test the ``_fit_field_transformer`` method.
+
         This tests that the ``_fit_field_transformer`` behaves as expected.
         If the column is part of a multi-column field, and the other columns
         aren't present in the data, then it should not fit the next transformer.
         It should however, transform the data.
+
         Setup:
             - A mock for ``get_transformer_instance``.
             - A mock for the transformer returned by ``get_transformer_instance``.
@@ -3200,9 +2896,7 @@ class TestHyperTransformer(TestCase):
         })
         transformer1 = Mock()
         transformer2 = Mock()
-        transformer1.get_output_sdtypes.return_value = {
-            'a.out1': 'categorical'
-        }
+        transformer1.get_output_columns.return_value = ['a.out1']
         transformer1.get_next_transformers.return_value = {('a.out1', 'b.out1'): transformer2}
         transformer1.transform.return_value = transformed_data1
         get_transformer_instance_mock.side_effect = [transformer1]
@@ -3218,7 +2912,6 @@ class TestHyperTransformer(TestCase):
             'a.out1': ['1', '2', '3'],
             'b': [4, 5, 6]
         })
-        assert ht._output_columns == []
         pd.testing.assert_frame_equal(out, expected)
         transformer1.fit.assert_called_once()
         transformer1.transform.assert_called_once_with(data)

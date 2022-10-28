@@ -12,8 +12,9 @@ from rdt import HyperTransformer, get_demo
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
     DEFAULT_TRANSFORMERS, AnonymizedFaker, BaseTransformer, BinaryEncoder, FloatFormatter,
-    FrequencyEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder, get_default_transformer,
+    FrequencyEncoder, OneHotEncoder, RegexGenerator, get_default_transformer,
     get_default_transformers)
+from rdt.transformers.datetime import UnixTimestampEncoder
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -104,7 +105,7 @@ def get_reversed_data():
 
 
 DETERMINISTIC_DEFAULT_TRANSFORMERS = deepcopy(DEFAULT_TRANSFORMERS)
-DETERMINISTIC_DEFAULT_TRANSFORMERS['categorical'] = FrequencyEncoder
+DETERMINISTIC_DEFAULT_TRANSFORMERS['categorical'] = FrequencyEncoder()
 
 
 @patch('rdt.transformers.DEFAULT_TRANSFORMERS', DETERMINISTIC_DEFAULT_TRANSFORMERS)
@@ -199,18 +200,18 @@ def test_hypertransformer_default_inputs():
             actual = reverse_transformed.iloc[row, column]
             assert pd.isna(actual) or expected == actual
 
-    assert isinstance(ht._transformers_tree['integer']['transformer'], FloatFormatter)
-    assert ht._transformers_tree['integer']['outputs'] == ['integer.value']
-    assert isinstance(ht._transformers_tree['float']['transformer'], FloatFormatter)
-    assert ht._transformers_tree['float']['outputs'] == ['float.value']
-    assert isinstance(ht._transformers_tree['categorical']['transformer'], FrequencyEncoder)
-    assert ht._transformers_tree['categorical']['outputs'] == ['categorical.value']
-    assert isinstance(ht._transformers_tree['bool']['transformer'], BinaryEncoder)
-    assert ht._transformers_tree['bool']['outputs'] == ['bool.value']
-    assert isinstance(ht._transformers_tree['datetime']['transformer'], UnixTimestampEncoder)
-    assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value']
-    assert isinstance(ht._transformers_tree['names']['transformer'], FrequencyEncoder)
-    assert ht._transformers_tree['names']['outputs'] == ['names.value']
+    assert isinstance(ht.field_transformers['integer'], FloatFormatter)
+    # assert ht.field_transformers['integer'].get_output_columns() == ['integer.value']  noqa
+    assert isinstance(ht.field_transformers['float'], FloatFormatter)
+    # assert ht.field_transformers['float'].get_output_columns() == ['float.value']  noqa
+    assert isinstance(ht.field_transformers['categorical'], FrequencyEncoder)
+    # assert ht.field_transformers['categorical'].get_output_columns() == ['categorical.value  noqa
+    assert isinstance(ht.field_transformers['bool'], BinaryEncoder)
+    # assert ht.field_transformers['bool'].get_output_columns() == ['bool.value']  noqa
+    assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
+    # assert ht.field_transformers['datetime'].get_output_columns() == ['datetime.value']  noqa
+    assert isinstance(ht.field_transformers['names'], FrequencyEncoder)
+    # assert ht.field_transformers['names'].get_output_columns() == ['names.value']  noqa
 
     get_default_transformers.cache_clear()
     get_default_transformer.cache_clear()

@@ -3,11 +3,8 @@
 import inspect
 import json
 import warnings
-from collections import defaultdict
-from copy import deepcopy
 
 import pandas as pd
-import yaml
 
 from rdt.errors import Error, NotFittedError, TransformerInputError
 from rdt.transformers import (
@@ -134,7 +131,6 @@ class HyperTransformer:
         self._fitted_fields = set()
         self._fitted = False
         self._modified_config = False
-        self._transformers_tree = defaultdict(dict)
 
     @staticmethod
     def _field_in_data(field, data):
@@ -477,105 +473,6 @@ class HyperTransformer:
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
-    def _get_transformer(self, field):
-        """Get the transformer instance used for a field.
-
-        Args:
-            field (str or tuple):
-                String representing a column name or a tuple of multiple column names.
-
-        Returns:
-            Transformer:
-                Transformer instance used on the specified field during ``transform``.
-        """
-        if not self._fitted:
-            raise NotFittedError
-
-        return self._transformers_tree[field].get('transformer', None)
-
-    def _get_output_transformers(self, field):
-        """Return dict mapping output columns of field to transformers used on them.
-
-        Args:
-            field (str or tuple):
-                String representing a column name or a tuple of multiple column names.
-
-        Returns:
-            dict:
-                Dictionary mapping the output names of the columns created after transforming the
-                specified field, to the transformer instances used on them.
-        """
-        if not self._fitted:
-            raise NotFittedError
-
-        next_transformers = {}
-        for output in self._transformers_tree[field].get('outputs', []):
-            next_transformers[output] = self._transformers_tree[output].get('transformer', None)
-
-        return next_transformers
-
-    def _get_final_output_columns(self, field):
-        """Return list of all final output columns related to a field.
-
-        The ``HyperTransformer`` will figure out which transformers to use on a field during
-        ``transform``. If the outputs are not of an acceptable sdtype, they will also go
-        through transformations. This method finds all the output columns that are of an
-        acceptable final sdtype that originated from the specified field.
-
-        Args:
-            field (str or tuple):
-                String representing a column name or a tuple of multiple column names.
-
-        Returns:
-            list:
-                List of output column names that were created as a by-product of the specified
-                field.
-        """
-        if not self._fitted:
-            raise NotFittedError
-
-        final_outputs = []
-        outputs = self._transformers_tree[field].get('outputs', []).copy()
-        while len(outputs) > 0:
-            output = outputs.pop()
-            transformer = self._transformers_tree.get(output, {}).get('transformer')
-            if output in self._transformers_tree and transformer:
-                outputs.extend(self._transformers_tree[output].get('outputs', []))
-            else:
-                final_outputs.append(output)
-
-        return sorted(final_outputs, reverse=True)
-
-    def _get_transformer_tree_yaml(self):
-        """Return yaml representation of transformers tree.
-
-        After running ``fit``, a sequence of transformers is created to run each original column
-        through. The sequence can be thought of as a tree, where each node is a field and the
-        transformer used on it, and each neighbor is an output from that transformer. This method
-        returns a YAML representation of this tree.
-
-        Returns:
-            string:
-                YAML object representing the tree of transformers created during ``fit``. It has
-                the following form:
-
-                field1:
-                    transformer: ExampleTransformer instance
-                    outputs: [field1.out1, field1.out2]
-                field1.out1:
-                    transformer: FrequencyEncoder instance
-                    outputs: [field1.out1.value]
-                field1.out2:
-                    transformer: FrequencyEncoder instance
-                    outputs: [field1.out2.value]
-        """
-        modified_tree = deepcopy(self._transformers_tree)
-        for field in modified_tree:
-            class_name = modified_tree[field]['transformer'].__class__.get_name()
-            modified_tree[field]['transformer'] = class_name
-
-        return yaml.safe_dump(dict(modified_tree))
-
     def _set_field_sdtype(self, data, field):
         clean_data = data[field].dropna()
         kind = clean_data.infer_objects().dtype.kind
@@ -587,7 +484,6 @@ class HyperTransformer:
         self._output_columns = []
         self._fitted_fields.clear()
         self._fitted = False
-        self._transformers_tree = defaultdict(dict)
 
     def _learn_config(self, data):
         """Unfit the HyperTransformer and learn the sdtypes and transformers of the data."""
@@ -639,8 +535,7 @@ class HyperTransformer:
         This method fits a transformer to the specified field which can be a column
         name or tuple of column names. If the transformer outputs fields that aren't
         ML ready, then this method recursively fits transformers to their outputs until
-        they are. This method keeps track of which fields are temporarily created by
-        transformers as well as which fields will be part of the final output from ``transform``.
+        they are.
 
         Args:
             data (pandas.DataFrame):
@@ -653,25 +548,24 @@ class HyperTransformer:
         """
         if transformer is None:
             self._add_field_to_set(field, self._fitted_fields)
-            self._transformers_tree[field]['transformer'] = None
-            self._transformers_tree[field]['outputs'] = [field]
+            self._output_columns.append(field)
 
         else:
             transformer = get_transformer_instance(transformer)
             transformer.fit(data, field)
-            self._add_field_to_set(field, self._fitted_fields)
             self._transformers_sequence.append(transformer)
             data = transformer.transform(data)
 
-            output_sdtypes = transformer.get_output_sdtypes()
+            output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()
-            self._transformers_tree[field]['transformer'] = transformer
-            self._transformers_tree[field]['outputs'] = list(output_sdtypes)
-            for output_name in output_sdtypes:
+            for output_name in output_columns:
                 output_field = self._multi_column_fields.get(output_name, output_name)
                 next_transformer = next_transformers[output_field]
-                if next_transformer and self._field_in_data(output_field, data):
-                    self._fit_field_transformer(data, output_field, next_transformer)
+
+                # If the column is part of a multi-column field, and at least one column
+                # isn't present in the data, then it should not fit the next transformer
+                if self._field_in_data(output_field, data):
+                    data = self._fit_field_transformer(data, output_field, next_transformer)
 
         return data
 
@@ -682,12 +576,6 @@ class HyperTransformer:
                 'The following fields were specified in the input arguments but not '
                 f'found in the data: {non_fitted_fields}'
             )
-
-    def _sort_output_columns(self):
-        """Sort ``_output_columns`` to follow the same order as the ``_input_columns``."""
-        for input_column in self._input_columns:
-            output_columns = self._get_final_output_columns(input_column)
-            self._output_columns.extend(output_columns)
 
     def _validate_config_exists(self):
         if len(self.field_sdtypes) == 0 and len(self.field_transformers) == 0:
@@ -732,7 +620,6 @@ class HyperTransformer:
         self._validate_all_fields_fitted()
         self._fitted = True
         self._modified_config = False
-        self._sort_output_columns()
 
     def _transform(self, data, prevent_subset):
         self._validate_config_exists()
@@ -831,7 +718,7 @@ class HyperTransformer:
 
         transformers = []
         for column_name in column_names:
-            transformer = self._transformers_tree.get(column_name, {}).get('transformer')
+            transformer = self.field_transformers.get(column_name)
             if not transformer.is_generator():
                 raise Error(
                     f"Column '{column_name}' cannot be anonymized. All columns must be assigned "
