@@ -269,10 +269,8 @@ def test_hypertransformer_field_transformers():
 
     # Assert
     expected_transformed = get_transformed_data()
-    rename = {'datetime': 'datetime.value'}
-    expected_transformed = expected_transformed.rename(columns=rename)
     transformed_datetimes = [0.8125, 0.8125, 0.3125, 0.3125, 0.3125, 0.8125, 0.3125, 0.3125]
-    expected_transformed['datetime.value'] = transformed_datetimes
+    expected_transformed['datetime'] = transformed_datetimes
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
     expected_reversed = get_reversed_data()
@@ -844,7 +842,7 @@ def test_hyper_transformer_chained_transformers():
     ht.fit(data)
 
     transformed = ht.transform(data)
-    expected_transform = pd.DataFrame({'col.value.value': [8., 16, -8, 24, 8]})
+    expected_transform = pd.DataFrame({'col': [8., 16, -8, 24, 8]})
     pd.testing.assert_frame_equal(transformed, expected_transform)
 
     reverse_transformed = ht.reverse_transform(transformed)

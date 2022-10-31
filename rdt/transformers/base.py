@@ -212,13 +212,12 @@ class BaseTransformer:
         self.column_prefix = '#'.join(self.columns)
         self.output_columns = self.get_output_columns()
 
-        for i in range(len(self.output_columns)):
-            if self.output_columns[i] in self.columns:
-                continue
-            if self.output_columns[i] in data.columns:  # TODO: should be while (or actualy change output_cols somewhere else)
-                self.column_prefix += '#'
-                self.output_columns = self.get_output_columns()
-                i=-1
+        # make sure none of the generated `output_columns` exists in the data
+        output_columns = set(self.output_columns) - set(self.columns)
+        while set(output_columns) & set(data.columns):
+            self.column_prefix += '#'
+            self.output_columns = self.get_output_columns()
+            output_columns = set(self.output_columns) - set(self.columns)
 
     def __repr__(self):
         """Represent initialization of transformer as text.

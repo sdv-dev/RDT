@@ -1475,8 +1475,7 @@ class TestHyperTransformer(TestCase):
         bool_transformer = Mock()
         datetime_transformer = Mock()
         data = self.get_transformed_data()
-        reverse_transformed_data = self.get_transformed_data()
-        int_transformer.reverse_transform.return_value = reverse_transformed_data
+        int_transformer.reverse_transform.return_value = data
         ht = HyperTransformer()
         ht._validate_config_exists = Mock()
         ht._validate_config_exists.return_value = True
@@ -1490,14 +1489,13 @@ class TestHyperTransformer(TestCase):
             datetime_transformer
         ]
         ht._output_columns = list(data.columns)
-        expected = self.get_data()
-        ht._input_columns = list(expected.columns)
+        ht._input_columns = list(data.columns)
 
         # Run
         reverse_transformed = ht.reverse_transform(data)
 
         # Assert
-        pd.testing.assert_frame_equal(reverse_transformed, expected)
+        pd.testing.assert_frame_equal(reverse_transformed, data)
         int_transformer.reverse_transform.assert_called_once()
         int_out_transformer.reverse_transform.assert_called_once()
         float_transformer.reverse_transform.assert_called_once()
@@ -1540,8 +1538,6 @@ class TestHyperTransformer(TestCase):
         float_transformer.reverse_transform = lambda x: x
         int_transformer.reverse_transform.return_value = reverse_transformed_data
 
-        data = self.get_transformed_data()
-
         ht = HyperTransformer()
         ht._validate_config_exists = Mock()
         ht._validate_config_exists.return_value = True
@@ -1551,16 +1547,14 @@ class TestHyperTransformer(TestCase):
             float_transformer,
             generator_transformer
         ]
-        ht._output_columns = list(data.columns)
-        expected = self.get_data()
-        ht._input_columns = list(expected.columns)
+        ht._output_columns = list(reverse_transformed_data.columns)
+        ht._input_columns = list(reverse_transformed_data.columns)
 
         # Run
-        reverse_transformed = ht.reverse_transform_subset(data)
+        reverse_transformed = ht.reverse_transform_subset(reverse_transformed_data)
 
         # Assert
-        print(reverse_transformed, expected)
-        pd.testing.assert_frame_equal(reverse_transformed, expected)
+        pd.testing.assert_frame_equal(reverse_transformed, reverse_transformed_data)
         int_transformer.reverse_transform.assert_called_once()
         generator_transformer.reverse_transform.assert_not_called()
 

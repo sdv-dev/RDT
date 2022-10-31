@@ -820,8 +820,8 @@ class TestBaseTransformer:
             'a': [1, 2, 3],
             'a#b': [4, 5, 6],
             'b': [7, 8, 9],
-            'a#b.is_null': [0, 0, 0],
-            'a#b.is_null#': [0, 0, 0],
+            'a#b#.is_null': [0, 0, 0],
+            'a#b#.is_null#': [0, 0, 0],
 
         })
 
@@ -838,8 +838,8 @@ class TestBaseTransformer:
         dummy_transformer._build_output_columns(data)
 
         # Assert
-        assert dummy_transformer.column_prefix == 'a#b'
-        assert dummy_transformer.output_columns == ['a#b#', 'a#b.is_null##']
+        assert dummy_transformer.column_prefix == 'a#b##'
+        assert dummy_transformer.output_columns == ['a#b##', 'a#b##.is_null']
 
     def test__fit_raises_error(self):
         """Test ``_fit`` raises ``NotImplementedError``."""
