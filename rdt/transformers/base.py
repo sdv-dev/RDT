@@ -180,7 +180,7 @@ class BaseTransformer:
         return data[columns].copy()
 
     @staticmethod
-    def _update_data(data, transformed_data, transformed_names, columns_to_drop, drop):
+    def _update_data(data, transformed_data, transformed_names, columns_to_drop):
         """Add new columns to a ``pandas.DataFrame``.
 
         Args:
@@ -197,20 +197,22 @@ class BaseTransformer:
         if isinstance(transformed_data, (pd.Series, np.ndarray)):
             transformed_data = pd.DataFrame(transformed_data, columns=transformed_names)
         
+        if transformed_data is not None:
+            transformed_data.index = data.index
+
         # transformed columns which didn't change their names
         repeated_columns = list(set(transformed_names).intersection(set(data.columns)))
-        if repeated_columns:
-            data[repeated_columns] = transformed_data[repeated_columns]
-    
+        for repeated in repeated_columns:
+            data[repeated] = transformed_data[repeated]
+
         # columns which changed their name
         transformed_names = [name for name in transformed_names if name not in repeated_columns]
         if transformed_names:
-            transformed_data.index = data.index
             new_data = pd.DataFrame(transformed_data, columns=transformed_names)
             data = pd.concat([data, new_data.set_index(data.index)], axis=1)
         
         # drop columns which weren't transformed
-        if drop:
+        if columns_to_drop:
             columns_to_drop = set(columns_to_drop) - set(repeated_columns) - set(transformed_names) # TODO: delete second set
             data = data.drop(columns_to_drop, axis=1)
 
@@ -238,15 +240,19 @@ class BaseTransformer:
             similar = output_cols.intersection(data.columns)
         
         self.output_columns = list(output_cols) + inplace_columns
+        
+        # make sure none of the generated `output_columns` exists in the data
+        data_columns = set(data.columns)
+        while data_columns & set(self.output_columns):
+            self.column_prefix += '#'
+            self.output_columns = self.get_output_columns()
         """
         for i in range(len(self.output_columns)):
             if self.output_columns[i] in self.columns:
                 continue
-            while self.output_columns[i] in data.columns:
-                self.output_columns[i] += '#'
-
-
-
+            if self.output_columns[i] in data.columns:  # TODO: should be while (or actualy change output_cols somewhere else)
+                self.column_prefix += '#'
+                self.output_columns = self.get_output_columns()
 
     def __repr__(self):
         """Represent initialization of transformer as text.
@@ -311,14 +317,12 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def transform(self, data, drop=True):
+    def transform(self, data):
         """Transform the `self.columns` of the `data`.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            drop (bool):
-                Whether or not to drop original columns.
 
         Returns:
             pd.DataFrame:
@@ -329,10 +333,9 @@ class BaseTransformer:
             return data
 
         data = data.copy()
-
         columns_data = self._get_columns_data(data, self.columns)
         transformed_data = self._transform(columns_data)
-        data = self._update_data(data, transformed_data, self.output_columns, self.columns, drop)
+        data = self._update_data(data, transformed_data, self.output_columns, self.columns)
 
         return data
 
@@ -365,14 +368,12 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def reverse_transform(self, data, drop=True):
+    def reverse_transform(self, data):
         """Revert the transformations to the original values.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            drop (bool):
-                Whether or not to drop derived columns.
 
         Returns:
             pandas.DataFrame:
@@ -386,6 +387,6 @@ class BaseTransformer:
 
         columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
-        data = self._update_data(data, reversed_data, self.columns, self.output_columns, drop)
+        data = self._update_data(data, reversed_data, self.columns, self.output_columns)
 
         return data

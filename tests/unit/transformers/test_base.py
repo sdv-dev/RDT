@@ -600,7 +600,7 @@ class TestBaseTransformer:
         columns_data = pd.Series([7, 8, 9], name='c')
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns, None, False)
+        result = BaseTransformer._update_data(data, columns_data, columns, None)
 
         # Assert
         expected = pd.DataFrame({
@@ -637,7 +637,7 @@ class TestBaseTransformer:
         })
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns, None, False)
+        result = BaseTransformer._update_data(data, columns_data, columns, None)
 
         # Assert
         expected = pd.DataFrame({
@@ -672,7 +672,7 @@ class TestBaseTransformer:
         columns_data = np.array([7, 8, 9], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns, None, False)
+        result = BaseTransformer._update_data(data, columns_data, columns, None)
 
         # Assert
         expected = pd.DataFrame({
@@ -709,7 +709,7 @@ class TestBaseTransformer:
         ], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns, None, False)
+        result = BaseTransformer._update_data(data, columns_data, columns, None)
 
         # Assert
         expected = pd.DataFrame({
@@ -740,7 +740,7 @@ class TestBaseTransformer:
         columns_data = None
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns, None, False)
+        result = BaseTransformer._update_data(data, columns_data, columns, None)
 
         # Assert
         expected = pd.DataFrame({
@@ -958,67 +958,8 @@ class TestBaseTransformer:
         # Assert
         pd.testing.assert_frame_equal(transformed_data, data)
 
-    def test_transform_drop_false(self):
-        """Test the ``transform`` method when ``drop=False``.
-
-        Validate that the ``transform`` method calls ``self._transform`` with the correct
-        data and that the transformed data matches the transformed dummy data (i.e. the original
-        data with an added column containing zeros).
-
-        Setup:
-            - create a dummy class which inherits from the ``BaseTransformer``, which defines:
-                - ``columns`` as a list of columns from the data.
-                - a ``_transform`` method which stores the passed data to ``self._passed_data``
-                and transforms the passed data to a numpy array containing zeros.
-
-        Input:
-            - a dataframe.
-            - drop = False.
-
-        Output:
-            - the transformed data.
-
-        Side effects:
-            - ``self._transform`` should be called with the correct data
-            and should store it in ``self._passed_data``.
-        """
-        # Setup
-        data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9]
-        })
-
-        class Dummy(BaseTransformer):
-            columns = ['a', 'b']
-            output_columns = ['a#b']
-
-            def _transform(self, data):
-                self._passed_data = data.copy()
-                return np.zeros(len(data))
-
-        dummy_transformer = Dummy()
-
-        # Run
-        transformed_data = dummy_transformer.transform(data, drop=False)
-
-        # Assert
-        expected_passed = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-        })
-        pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
-
-        expected_transformed = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#b': [0.0, 0.0, 0.0],
-        })
-        pd.testing.assert_frame_equal(transformed_data, expected_transformed)
-
     def test_transform_drop_true(self):
-        """Test the ``transform`` method when ``drop=True``.
+        """Test the ``transform``.
 
         Validate that the ``transform`` method calls ``self._transform`` with the correct
         data and that the transformed data matches the transformed dummy data (i.e. the original
@@ -1158,65 +1099,8 @@ class TestBaseTransformer:
         # Assert
         pd.testing.assert_frame_equal(transformed_data, data)
 
-    def test_reverse_transform_drop_false(self):
-        """Test the ``reverse_transform`` method when ``drop=True``.
-
-        Validate that the ``reverse_transform`` method calls ``self._reverse_transform``
-        with the correct data and that the transformed data matches the transformed dummy data
-        (i.e. the original data with an added column containing zeros).
-
-        Setup:
-            - set ``self.output_columns`` to a list of columns from the data.
-            - set ``self.columns`` to the output column names.
-            - mock ``self._reverse_transform`` and return some dummy data.
-
-        Input:
-            - a dataframe.
-
-        Output:
-            - the transformed data.
-
-        Side effects:
-            - ``self._reverse_transform`` should be called with the correct data
-            and should store it in ``self._passed_data``.
-        """
-        # Setup
-        data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9]
-        })
-
-        class Dummy(BaseTransformer):
-            columns = ['a', 'b']
-            output_columns = ['a', 'b']
-
-            def _reverse_transform(self, data):
-                self._passed_data = data.copy()
-                return np.zeros((len(data), 2))
-
-        # Run
-        dummy_transformer = Dummy()
-        transformed_data = dummy_transformer.reverse_transform(data, drop=False)
-
-        # Assert
-        expected_passed = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-        })
-        pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
-
-        expected_transformed = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a': [0.0, 0.0, 0.0],
-            'b': [0.0, 0.0, 0.0]
-        })
-        pd.testing.assert_frame_equal(transformed_data, expected_transformed)
-
-    def test_reverse_transform_drop_true(self):
-        """Test the ``reverse_transform`` method when ``drop=True``.
+    def test_reverse_transform(self):
+        """Test the ``reverse_transform`` method.
 
         Validate that the ``reverse_transform`` method calls ``self._reverse_transform``
         with the correct data and that the transformed data matches the transformed dummy data

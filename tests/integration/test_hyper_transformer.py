@@ -104,7 +104,7 @@ def get_reversed_data():
     return data
 
 
-DETERMINISTIC_DEFAULT_TRANSFORMERS = deepcopy(DEFAULT_TRANSFORMERS)
+DETERMINISTIC_DEFAULT_TRANSFORMERS = deepcopy(DEFAULT_TRANSFORMERS)  # TODO: delete this
 DETERMINISTIC_DEFAULT_TRANSFORMERS['categorical'] = FrequencyEncoder()
 
 

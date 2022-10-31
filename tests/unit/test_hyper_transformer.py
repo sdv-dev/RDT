@@ -1515,6 +1515,8 @@ class TestHyperTransformer(TestCase):
         reverse_transformed = ht.reverse_transform(data)
 
         # Assert
+        print(reverse_transformed)
+        print(expected)
         pd.testing.assert_frame_equal(reverse_transformed, expected)
         int_transformer.reverse_transform.assert_called_once()
         int_out_transformer.reverse_transform.assert_called_once()
