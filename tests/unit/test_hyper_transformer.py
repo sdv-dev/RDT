@@ -858,14 +858,8 @@ class TestHyperTransformer(TestCase):
             'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01'])
         })
 
-    def get_transformed_data(self, drop=False):
-        data = pd.DataFrame({
-            'integer': [1, 2, 1, 3],
-            'float': [0.1, 0.2, 0.1, 0.1],
-            'categorical': ['a', 'a', 'b', 'a'],
-            'bool': [False, False, True, False],
-            'datetime': pd.to_datetime(['2010-02-01', '2010-01-01', '2010-02-01', '2010-01-01']),
-            'integer.out': ['1', '2', '1', '3'],
+    def get_transformed_data(self):
+        return pd.DataFrame({
             'integer.out': [1, 2, 1, 3],
             'float': [0.1, 0.2, 0.1, 0.1],
             'categorical': [0.375, 0.375, 0.875, 0.375],
@@ -877,18 +871,6 @@ class TestHyperTransformer(TestCase):
                 1.262304e+18
             ]
         })
-
-        if drop:
-            return data.drop([
-                'integer',
-                'float',
-                'categorical',
-                'bool',
-                'datetime',
-                'integer.out'
-            ], axis=1)
-
-        return data
 
     def test__validate_detect_config_called(self):
         """Test the ``_validate_detect_config_called`` method.
@@ -1066,7 +1048,7 @@ class TestHyperTransformer(TestCase):
         ]
         ht.field_sdtypes = {'col1': 'categorical'}
         ht._input_columns = list(data.columns)
-        expected = self.get_transformed_data(True)
+        expected = self.get_transformed_data()
         ht._output_columns = list(expected.columns)
 
         # Run
@@ -1492,7 +1474,7 @@ class TestHyperTransformer(TestCase):
         categorical_transformer = Mock()
         bool_transformer = Mock()
         datetime_transformer = Mock()
-        data = self.get_transformed_data(True)
+        data = self.get_transformed_data()
         reverse_transformed_data = self.get_transformed_data()
         int_transformer.reverse_transform.return_value = reverse_transformed_data
         ht = HyperTransformer()
@@ -1515,8 +1497,6 @@ class TestHyperTransformer(TestCase):
         reverse_transformed = ht.reverse_transform(data)
 
         # Assert
-        print(reverse_transformed)
-        print(expected)
         pd.testing.assert_frame_equal(reverse_transformed, expected)
         int_transformer.reverse_transform.assert_called_once()
         int_out_transformer.reverse_transform.assert_called_once()
@@ -1557,10 +1537,10 @@ class TestHyperTransformer(TestCase):
         generator_transformer.get_output_columns.return_value = []
 
         reverse_transformed_data = self.get_transformed_data()
-        float_transformer.reverse_transform = lambda x, drop: x
+        float_transformer.reverse_transform = lambda x: x
         int_transformer.reverse_transform.return_value = reverse_transformed_data
 
-        data = self.get_transformed_data(True)
+        data = self.get_transformed_data()
 
         ht = HyperTransformer()
         ht._validate_config_exists = Mock()
@@ -1579,6 +1559,7 @@ class TestHyperTransformer(TestCase):
         reverse_transformed = ht.reverse_transform_subset(data)
 
         # Assert
+        print(reverse_transformed, expected)
         pd.testing.assert_frame_equal(reverse_transformed, expected)
         int_transformer.reverse_transform.assert_called_once()
         generator_transformer.reverse_transform.assert_not_called()

@@ -600,7 +600,7 @@ class TestBaseTransformer:
         columns_data = pd.Series([7, 8, 9], name='c')
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns, None)
+        result = BaseTransformer._update_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -637,7 +637,7 @@ class TestBaseTransformer:
         })
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns, None)
+        result = BaseTransformer._update_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -672,7 +672,7 @@ class TestBaseTransformer:
         columns_data = np.array([7, 8, 9], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns, None)
+        result = BaseTransformer._update_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -709,7 +709,7 @@ class TestBaseTransformer:
         ], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns, None)
+        result = BaseTransformer._update_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -740,7 +740,7 @@ class TestBaseTransformer:
         columns_data = None
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns, None)
+        result = BaseTransformer._update_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
