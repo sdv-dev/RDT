@@ -835,3 +835,104 @@ def test_hyper_transformer_chained_transformers():
 
     reverse_transformed = ht.reverse_transform(transformed)
     pd.testing.assert_frame_equal(reverse_transformed, data)
+
+
+def test_hyper_transformer_chained_transformers2():
+    """Test when a transformer is chained to another transformer.
+
+    When the specified transformer indicates a next transformer, they should each be applied in
+    order during the transform step, and then reversed during the reverse_transform.
+    """
+    # Setup
+    class AB(BaseTransformer):
+        INPUT_SDTYPE = 'categorical'
+
+        def _fit(self, data):
+            self.output_properties = {
+                None: {'sdtype': 'categorical', 'next_transformer': None},
+                'a': {'sdtype': 'categorical', 'next_transformer': CD()},
+                'b': {'sdtype': 'categorical', 'next_transformer': None},
+            }
+
+        def _transform(self, data):
+            new_data = pd.DataFrame({f'{self.column_prefix}': data})
+            new_data[f'{self.column_prefix}.a'] = data + 'a'
+            new_data[f'{self.column_prefix}.b'] = data + 'b'
+            return new_data
+
+        def _reverse_transform(self, data):
+            new_data = pd.DataFrame()
+            new_data[f'{self.column_prefix}'] = data[f'{self.column_prefix}.a'].str[:-1]
+            return new_data
+
+    class CD(BaseTransformer):
+        INPUT_SDTYPE = 'categorical'
+
+        def _fit(self, data):
+            self.output_properties = {
+                'c': {'sdtype': 'categorical', 'next_transformer': None},
+                'd': {'sdtype': 'categorical', 'next_transformer': E()}
+            }
+
+        def _transform(self, data):
+            new_data = pd.DataFrame()
+            new_data[f'{self.column_prefix}.c'] = data + 'c'
+            new_data[f'{self.column_prefix}.d'] = data + 'd'
+            return new_data
+
+        def _reverse_transform(self, data):
+            new_data = pd.DataFrame()
+            new_data[f'{self.column_prefix}'] = data[f'{self.column_prefix}.c'].str[:-1]
+            return new_data
+
+    class E(BaseTransformer):
+        INPUT_SDTYPE = 'categorical'
+
+        def _fit(self, data):
+            self.output_properties = {
+                None: {'sdtype': 'categorical', 'next_transformer': None},
+                'e': {'sdtype': 'categorical', 'next_transformer': None}
+            }
+
+        def _transform(self, data):
+            new_data = pd.DataFrame({f'{self.column_prefix}': data})
+            new_data[f'{self.column_prefix}.e'] = data + 'e'
+            return new_data
+
+        def _reverse_transform(self, data):
+            new_data = pd.DataFrame()
+            new_data[f'{self.column_prefix}'] = data[f'{self.column_prefix}.e'].str[:-1]
+            return new_data
+
+    ht = HyperTransformer()
+    data = pd.DataFrame({
+        'col': ['a', 'b', 'c'],
+        'col.a': ['1', '2', '3'],
+        'col#': ['_', '_', '_']
+    })
+
+    # Run and Assert
+    ht.set_config({
+        'sdtypes': {'col': 'categorical', 'col.a': 'categorical', 'col#': 'categorical'},
+        'transformers': {'col': AB(), 'col.a': AB(), 'col#': E()}
+    })
+    ht.fit(data)
+    transformed = ht.transform(data)
+    expected = pd.DataFrame({
+        'col##': ['a', 'b', 'c'],
+        'col##.a.c': ['aac', 'bac', 'cac'],
+        'col##.a.d': ['aad', 'bad', 'cad'],
+        'col##.a.d.e': ['aade', 'bade', 'cade'],
+        'col##.b': ['ab', 'bb', 'cb'],
+        'col.a': ['1', '2', '3'],
+        'col.a.a.c': ['1ac', '2ac', '3ac'],
+        'col.a.a.d': ['1ad', '2ad', '3ad'],
+        'col.a.a.d.e': ['1ade', '2ade', '3ade'],
+        'col.a.b': ['1b', '2b', '3b'],
+        'col#': ['_', '_', '_'],
+        'col#.e': ['_e', '_e', '_e'],
+    })
+    pd.testing.assert_frame_equal(transformed, expected)
+
+    reverse_transformed = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(reverse_transformed, data)

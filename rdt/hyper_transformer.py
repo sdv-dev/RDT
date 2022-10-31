@@ -556,7 +556,6 @@ class HyperTransformer:
             self._transformers_sequence.append(transformer)
             data = transformer.transform(data)
 
-            # get_output_columns returns the standard ones, not the fitted cols
             output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()
             for output_name in output_columns:

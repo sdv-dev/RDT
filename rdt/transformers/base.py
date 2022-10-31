@@ -180,15 +180,15 @@ class BaseTransformer:
         return data[columns].copy()
 
     @staticmethod
-    def _update_data(data, transformed_data, transformed_names):
+    def _add_columns_to_data(data, transformed_data, transformed_names):
         """Add new columns to a ``pandas.DataFrame``.
 
         Args:
             - data (pd.DataFrame):
                 The ``pandas.DataFrame`` to which the new columns have to be added.
-            - columns (pd.DataFrame, pd.Series, np.ndarray):
+            - transformed_data (pd.DataFrame, pd.Series, np.ndarray):
                 The data of the new columns to be added.
-            - column_names (list, np.ndarray):
+            - transformed_names (list, np.ndarray):
                 The names of the new columns to be added.
 
         Returns:
@@ -198,12 +198,9 @@ class BaseTransformer:
             transformed_data = pd.DataFrame(transformed_data, columns=transformed_names)
 
         if transformed_names:
-            transformed_data.index = data.index
-            new_cols = {}
-            for data_col, col_name in zip(transformed_data, transformed_names):
-                new_cols[data_col] = col_name
-
-            transformed_data = transformed_data.rename(columns=new_cols)
+            # When '#' is added to the column_prefix of a transformer
+            # the columns of transformed_data and transformed_names don't match
+            transformed_data.columns = transformed_names
             data = pd.concat([data, transformed_data.set_index(data.index)], axis=1)
 
         return data
@@ -212,7 +209,8 @@ class BaseTransformer:
         self.column_prefix = '#'.join(self.columns)
         self.output_columns = self.get_output_columns()
 
-        # make sure none of the generated `output_columns` exists in the data
+        # make sure none of the generated `output_columns` exists in the data,
+        # except when a column generates another with the same name
         output_columns = set(self.output_columns) - set(self.columns)
         while set(output_columns) & set(data.columns):
             self.column_prefix += '#'
@@ -301,7 +299,7 @@ class BaseTransformer:
         columns_data = self._get_columns_data(data, self.columns)
         transformed_data = self._transform(columns_data)
         data = data.drop(self.columns, axis=1)
-        data = self._update_data(data, transformed_data, self.output_columns)
+        data = self._add_columns_to_data(data, transformed_data, self.output_columns)
 
         return data
 
@@ -354,6 +352,6 @@ class BaseTransformer:
         columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
         data = data.drop(self.output_columns, axis=1)
-        data = self._update_data(data, reversed_data, self.columns)
+        data = self._add_columns_to_data(data, reversed_data, self.columns)
 
         return data

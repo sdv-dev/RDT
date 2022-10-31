@@ -576,7 +576,7 @@ class TestBaseTransformer:
         expected = pd.Series([4, 5, 6], name='b')
         pd.testing.assert_series_equal(columns_data, expected)
 
-    def test__update_data_series(self):
+    def test__add_columns_to_data_series(self):
         """Test the ``_add_columns_to_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
@@ -600,7 +600,7 @@ class TestBaseTransformer:
         columns_data = pd.Series([7, 8, 9], name='c')
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns)
+        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -610,7 +610,7 @@ class TestBaseTransformer:
         }, index=[2, 0, 1])
         pd.testing.assert_frame_equal(result, expected)
 
-    def test__update_data_dataframe(self):
+    def test__add_columns_to_data_dataframe(self):
         """Test the ``_add_columns_to_data`` method.
 
         The method should not reorder the rows from the ``columns_data``
@@ -637,7 +637,7 @@ class TestBaseTransformer:
         })
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns)
+        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -672,7 +672,7 @@ class TestBaseTransformer:
         columns_data = np.array([7, 8, 9], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns)
+        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -709,7 +709,7 @@ class TestBaseTransformer:
         ], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns)
+        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
@@ -740,7 +740,7 @@ class TestBaseTransformer:
         columns_data = None
 
         # Run
-        result = BaseTransformer._update_data(data, columns_data, columns)
+        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame({
