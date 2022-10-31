@@ -1143,8 +1143,9 @@ class TestBaseTransformer:
         pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
 
         expected_transformed = pd.DataFrame({
-            'a': [0.0, 0.0, 0.0],
             'c': [7, 8, 9],
+            'a': [0.0, 0.0, 0.0],
             'b': [0.0, 0.0, 0.0],
         })
+        print(transformed_data)
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)

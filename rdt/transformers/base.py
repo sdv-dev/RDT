@@ -196,25 +196,17 @@ class BaseTransformer:
         """
         if isinstance(transformed_data, (pd.Series, np.ndarray)):
             transformed_data = pd.DataFrame(transformed_data, columns=transformed_names)
-        
-        if transformed_data is not None:
-            transformed_data.index = data.index
 
-        # transformed columns which didn't change their names
-        repeated_columns = list(set(transformed_names).intersection(set(data.columns)))
-        for repeated in repeated_columns:
-            data[repeated] = transformed_data[repeated]
-
-        # columns which changed their name
-        transformed_names = [name for name in transformed_names if name not in repeated_columns]
-        if transformed_names:
-            new_data = pd.DataFrame(transformed_data, columns=transformed_names)
-            data = pd.concat([data, new_data.set_index(data.index)], axis=1)
-        
         # drop columns which weren't transformed
         if columns_to_drop:
-            columns_to_drop = set(columns_to_drop) - set(repeated_columns) - set(transformed_names) # TODO: delete second set
             data = data.drop(columns_to_drop, axis=1)
+
+        if transformed_names:
+            transformed_data.index = data.index
+            for data_col, col_name in zip(transformed_data, transformed_names):
+                transformed_data = transformed_data.rename(columns={data_col: col_name})
+
+            data = pd.concat([data, transformed_data.set_index(data.index)], axis=1)
 
         return data
 
@@ -222,37 +214,13 @@ class BaseTransformer:
         self.column_prefix = '#'.join(self.columns)
         self.output_columns = self.get_output_columns()
 
-        """
-        # TODO: the logic seems sound, just improve the implementation, and
-        # it's fine for the generated column name to be the same as the original
-        inplace_columns = []
-        output_cols = set(self.output_columns)
-        for i in self.output_columns:
-            if i in self.columns:
-                inplace_columns.append(i)
-                output_cols.remove(i)
-
-        # but they can't be the same as other column names in the data
-        similar = output_cols.intersection(data.columns)
-        while similar:
-            output_cols = output_cols - similar
-            output_cols.update({f'{i}#' for i in similar})
-            similar = output_cols.intersection(data.columns)
-        
-        self.output_columns = list(output_cols) + inplace_columns
-        
-        # make sure none of the generated `output_columns` exists in the data
-        data_columns = set(data.columns)
-        while data_columns & set(self.output_columns):
-            self.column_prefix += '#'
-            self.output_columns = self.get_output_columns()
-        """
         for i in range(len(self.output_columns)):
             if self.output_columns[i] in self.columns:
                 continue
             if self.output_columns[i] in data.columns:  # TODO: should be while (or actualy change output_cols somewhere else)
                 self.column_prefix += '#'
                 self.output_columns = self.get_output_columns()
+                i=-1
 
     def __repr__(self):
         """Represent initialization of transformer as text.
