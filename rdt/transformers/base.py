@@ -2,8 +2,8 @@
 import abc
 import inspect
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 class BaseTransformer:
@@ -202,7 +202,7 @@ class BaseTransformer:
             new_cols = {}
             for data_col, col_name in zip(transformed_data, transformed_names):
                 new_cols[data_col] = col_name
-            
+
             transformed_data = transformed_data.rename(columns=new_cols)
             data = pd.concat([data, transformed_data.set_index(data.index)], axis=1)
 

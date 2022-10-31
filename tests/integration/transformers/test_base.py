@@ -113,7 +113,7 @@ def test_dummy_transformer_dataframe_output():
             output.iloc[data[self.output_columns[1]] == 1] = np.nan
 
             return output
-    
+
     data = pd.DataFrame({'bool': [True, False, True, np.nan]})
     transformer = DummyTransformer()
 

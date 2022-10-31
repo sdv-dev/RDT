@@ -1106,15 +1106,6 @@ class TestBaseTransformer:
         with the correct data and that the transformed data matches the transformed dummy data
         (i.e. the original data with an added column containing zeros and the transformed columns
         dropped).
-
-        Output:
-            For the test shown below, the resulting output columns should be ordered as 'a', 'c', 'b'.
-                - 'a' should be first because it's present in both Dummy.columns and Dummy.output_columns,
-                and the transformation of columns which keeps the same name happen inplace. Since 'a' was
-                already the first column in the passed data, it will continue as such. 
-                - 'c' comes second because it's the first non-transformed column to appear.
-                - 'b' is last because it was a transformed column. All transformed columns
-                are appended at the end of the dataframe, in the order given by Dummy.columns.
         """
         # Setup
         data = pd.DataFrame({
@@ -1147,5 +1138,4 @@ class TestBaseTransformer:
             'a': [0.0, 0.0, 0.0],
             'b': [0.0, 0.0, 0.0],
         })
-        print(transformed_data)
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)

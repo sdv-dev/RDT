@@ -1,8 +1,6 @@
 """Integration tests for the HyperTransformer."""
 
 import re
-from copy import deepcopy
-from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -11,9 +9,8 @@ import pytest
 from rdt import HyperTransformer, get_demo
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
-    DEFAULT_TRANSFORMERS, AnonymizedFaker, BaseTransformer, BinaryEncoder, FloatFormatter,
-    FrequencyEncoder, OneHotEncoder, RegexGenerator, get_default_transformer,
-    get_default_transformers)
+    AnonymizedFaker, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
+    OneHotEncoder, RegexGenerator, get_default_transformer, get_default_transformers)
 from rdt.transformers.datetime import UnixTimestampEncoder
 
 
@@ -104,21 +101,12 @@ def get_reversed_data():
     return data
 
 
-DETERMINISTIC_DEFAULT_TRANSFORMERS = deepcopy(DEFAULT_TRANSFORMERS)  # TODO: delete this
-DETERMINISTIC_DEFAULT_TRANSFORMERS['categorical'] = FrequencyEncoder()
-
-
-@patch('rdt.transformers.DEFAULT_TRANSFORMERS', DETERMINISTIC_DEFAULT_TRANSFORMERS)
 def test_hypertransformer_default_inputs():
     """Test the HyperTransformer with default parameters.
 
     This tests that if default parameters are provided to the HyperTransformer,
     the ``default_transformers`` method will be used to determine which
     transformers to use for each field.
-
-    Setup:
-        - Patch the ``DEFAULT_TRANSFORMERS`` to use the ``FrequencyEncoder``
-        for categorical sdtypes, so that the output is predictable.
 
     Input:
         - A dataframe with every sdtype.
