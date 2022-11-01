@@ -186,8 +186,7 @@ class FloatFormatter(BaseTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        if self.missing_value_replacement is not None:
-            data = self.null_transformer.reverse_transform(data)
+        data = self.null_transformer.reverse_transform(data)
 
         if self.enforce_min_max_values:
             data = data.clip(self._min_value, self._max_value)

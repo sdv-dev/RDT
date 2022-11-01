@@ -136,6 +136,9 @@ class NullTransformer():
         Returns:
             pandas.Series
         """
+        if not (self._model_missing_values or self._missing_value_replacement):
+            return data
+
         data = data.copy()
         if self._model_missing_values:
             if self.nulls:

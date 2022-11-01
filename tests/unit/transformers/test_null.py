@@ -1,7 +1,6 @@
 """Unit tests for the NullTransformer."""
 
 import re
-from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -514,40 +513,6 @@ class TestNullTransformer:
 
         # Assert
         expected_output = pd.Series([0.0, 0.2, 0.4, 0.6, 0.8])
-        pd.testing.assert_series_equal(expected_output, output)
-
-    @patch('rdt.transformers.null.np.random')
-    def test_reverse_transform__model_missing_values_false_nulls_true(self, random_mock):
-        """Test reverse_transform when _model_missing_values is False and nulls.
-
-        When _model_missing_values is False and the nulls attribute, a ``_null_percentage``
-        of values should randomly be replaced with ``np.nan``.
-
-        Setup:
-            - NullTransformer instance with _model_missing_values set to False and nulls
-              attribute set to True.
-            - A mock for ``np.random``.
-
-        Input:
-            - 1d numpy array with variate float values.
-
-        Expected Output:
-            - pd.Series containing the same data as input, with the random values
-            replaced with ``np.nan``.
-        """
-        # Setup
-        transformer = NullTransformer()
-        transformer._model_missing_values = False
-        transformer.nulls = True
-        transformer._null_percentage = 0.5
-        input_data = np.array([0.0, 0.2, 0.4, 0.6])
-        random_mock.random.return_value = np.array([1, 1, 0, 1])
-
-        # Run
-        output = transformer.reverse_transform(input_data)
-
-        # Assert
-        expected_output = pd.Series([0.0, 0.2, np.nan, 0.6])
         pd.testing.assert_series_equal(expected_output, output)
 
     def test_reverse_transform__model_missing_values_false_nulls_false(self):
