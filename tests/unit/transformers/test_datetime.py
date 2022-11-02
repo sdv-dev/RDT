@@ -453,6 +453,20 @@ class TestUnixTimestampEncoder:
         expected = pd.Series(pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01']))
         pd.testing.assert_series_equal(output, expected)
 
+    def test__reverse_transform_series(self):
+        """Test when input is a Series."""
+        # Setup
+        ute = UnixTimestampEncoder()
+        transformed = pd.Series([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
+        ute.null_transformer = NullTransformer('mean')
+
+        # Run
+        output = ute._reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series(pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01']))
+        pd.testing.assert_series_equal(output, expected)
+
     def test__reverse_transform_datetime_format_dtype_is_datetime(self):
         """Test the ``_reverse_transform`` method returns the correct datetime format.
 

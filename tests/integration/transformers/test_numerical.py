@@ -52,7 +52,7 @@ class TestFloatFormatter:
 
         reverse = nt.reverse_transform(transformed)
         assert len(reverse) == 6
-        assert reverse['a'][5] == 1.4
+        assert reverse['a'][5] in {np.nan, 1.4}
         for value in reverse['a'][:5]:
             assert value in {1, 2, np.nan}
 

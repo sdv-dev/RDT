@@ -126,6 +126,21 @@ class TestBinaryEncoder(TestCase):
         reverse_transform_call_count = transformer.null_transformer.reverse_transform.call_count
         assert reverse_transform_call_count == expect_call_count, error_msg
 
+    def test__reverse_transform_series(self):
+        """Test when data is a Series."""
+        # Setup
+        data = pd.Series([1., 0., 1.])
+
+        # Run
+        transformer = Mock()
+        transformer.null_transformer.reverse_transform.return_value = data
+        result = BinaryEncoder._reverse_transform(transformer, data)
+
+        # Asserts
+        expected = np.array([True, False, True])
+        assert isinstance(result, pd.Series)
+        np.testing.assert_equal(result.array, expected)
+
     def test__reverse_transform_not_null_values(self):
         """Test _reverse_transform not null values correctly"""
         # Setup
