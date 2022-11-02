@@ -11,7 +11,7 @@ class TestBinaryEncoder:
 
         Ensure that the BinaryEncoder can fit, transform, and reverse transform on boolean data
         with Nones. Expect that the reverse transformed data is the same as the input, but None
-        becomes nan and the False/nan values can be interchanged. 
+        becomes nan and the False/nan values can be interchanged.
 
         Also ensures that the intermediate transformed data is unchanged after reversing.
 

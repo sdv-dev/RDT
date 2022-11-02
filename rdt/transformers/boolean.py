@@ -1,6 +1,5 @@
 """Transformer for boolean data."""
 
-import warnings
 import numpy as np
 import pandas as pd
 

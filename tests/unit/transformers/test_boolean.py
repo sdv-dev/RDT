@@ -16,7 +16,7 @@ class TestBinaryEncoder(TestCase):
 
         # Asserts
         error_message = 'Unexpected missing_value_replacement'
-        assert transformer.missing_value_replacement is 'mode', error_message
+        assert transformer.missing_value_replacement == 'mode', error_message
         assert not transformer.model_missing_values, 'model_missing_values is False by default'
 
     def test__fit_missing_value_replacement_not_ignore(self):
