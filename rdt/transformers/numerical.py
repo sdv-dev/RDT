@@ -389,6 +389,9 @@ class ClusterBasedNormalizer(FloatFormatter):
             The minimum value a component weight can take to be considered a valid component.
             ``weights_`` under this value will be ignored.
             Defaults to 0.005.
+        seed (int):
+            Random seed to use for the model. It is passed to the ``random_state`` argument of
+            sklearn`s ``BayesianGaussianMixture`` class. Default to ``None``.
 
     Attributes:
         _bgm_transformer:
@@ -407,7 +410,8 @@ class ClusterBasedNormalizer(FloatFormatter):
     valid_component_indicator = None
 
     def __init__(self, model_missing_values=False, learn_rounding_scheme=False,
-                 enforce_min_max_values=False, max_clusters=10, weight_threshold=0.005):
+                 enforce_min_max_values=False, max_clusters=10, weight_threshold=0.005,
+                 seed=None):
         super().__init__(
             missing_value_replacement='mean',
             model_missing_values=model_missing_values,
@@ -416,6 +420,7 @@ class ClusterBasedNormalizer(FloatFormatter):
         )
         self.max_clusters = max_clusters
         self.weight_threshold = weight_threshold
+        self.seed = seed
         self.output_properties = {
             'normalized': {'sdtype': 'float', 'next_transformer': None},
             'component': {'sdtype': 'categorical', 'next_transformer': None},
@@ -432,7 +437,8 @@ class ClusterBasedNormalizer(FloatFormatter):
             n_components=self.max_clusters,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,
-            n_init=1
+            n_init=1,
+            random_state=self.seed,
         )
 
         super()._fit(data)
