@@ -20,23 +20,12 @@ TRANSFORMER_ARGS = {
         'model_missing_values': True
     },
     'UnixTimestampEncoder': {
-        'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
     'OptimizedTimestampEncoder': {
-        'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
     'FloatFormatter': {
-        'missing_value_replacement': 'mean',
-        'model_missing_values': True
-    },
-    'NumericalRoundedBoundedTransformer': {
-        'missing_value_replacement': 'mean',
-        'model_missing_values': True
-    },
-    'NumericalBoundedTransformer': {
-        'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
     'GaussianNormalizer': {

@@ -29,6 +29,16 @@ class BaseTransformer:
     def __init__(self):
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
 
+    def _set_missing_value_replacement(self, default, missing_value_replacement):
+        if missing_value_replacement is None:
+            warnings.warn(
+                "Setting 'missing_value_replacement' to 'None' is no longer supported. "
+                f"Imputing with the '{default}' instead.", DeprecationWarning
+            )
+            self.missing_value_replacement = default
+        else:
+            self.missing_value_replacement = missing_value_replacement
+
     @classmethod
     def get_name(cls):
         """Return transformer name.
@@ -357,7 +367,6 @@ class BaseTransformer:
             return data
 
         data = data.copy()
-
         columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
         data = data.drop(self.output_columns, axis=1)

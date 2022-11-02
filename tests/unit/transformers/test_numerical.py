@@ -518,9 +518,10 @@ class TestFloatFormatter(TestCase):
         data = np.random.random(10)
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer.learn_rounding_scheme = False
         transformer._rounding_digits = None
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -541,9 +542,10 @@ class TestFloatFormatter(TestCase):
         data = np.array([0., 1.2, 3.45, 6.789])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer._rounding_digits = None
         transformer._dtype = np.int64
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -572,7 +574,7 @@ class TestFloatFormatter(TestCase):
         data = pd.DataFrame(data, columns=['a', 'b'])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement='mean')
+        transformer = FloatFormatter()
         null_transformer = Mock()
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
@@ -606,7 +608,7 @@ class TestFloatFormatter(TestCase):
         ])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement='mean')
+        transformer = FloatFormatter()
         null_transformer = Mock()
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
@@ -635,9 +637,10 @@ class TestFloatFormatter(TestCase):
         data = np.array([1.1111, 2.2222, 3.3333, 4.44444, 5.555555])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer.learn_rounding_scheme = True
         transformer._rounding_digits = 2
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -661,10 +664,11 @@ class TestFloatFormatter(TestCase):
         data = np.array([2000.0, 120.0, 3100.0, 40100.0])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer._dtype = int
         transformer.learn_rounding_scheme = True
         transformer._rounding_digits = -3
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -689,9 +693,10 @@ class TestFloatFormatter(TestCase):
         data = np.array([2000.0, 120.0, 3100.0, 40100.0])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer.learn_rounding_scheme = True
         transformer._rounding_digits = -3
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -715,9 +720,10 @@ class TestFloatFormatter(TestCase):
         data = np.array([2000.554, 120.2, 3101, 4010])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer.learn_rounding_scheme = True
         transformer._rounding_digits = 0
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -739,10 +745,11 @@ class TestFloatFormatter(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer.enforce_min_max_values = True
         transformer._max_value = 400
         transformer._min_value = -300
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Asserts
@@ -802,6 +809,7 @@ class TestFloatFormatter(TestCase):
 
         # Run
         transformer = FloatFormatter(computer_representation='Int8')
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Asserts

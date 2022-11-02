@@ -1,5 +1,6 @@
 """Transformer for boolean data."""
 
+import warnings
 import numpy as np
 import pandas as pd
 
@@ -16,10 +17,9 @@ class BinaryEncoder(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        missing_value_replacement (object or None):
-            Indicate what to do with the null values. If an object is given, replace them
-            with the given value. If the string ``'mode'`` is given, replace them with the
-            most common value. If ``None`` is given, do not replace them.
+        missing_value_replacement (object):
+            Indicate what to replace the null values with. If the string ``'mode'`` is given,
+            replace them with the most common value.
             Defaults to ``None``.
         model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not. The column
@@ -34,9 +34,9 @@ class BinaryEncoder(BaseTransformer):
 
     null_transformer = None
 
-    def __init__(self, missing_value_replacement=None, model_missing_values=False):
+    def __init__(self, missing_value_replacement='mode', model_missing_values=False):
         super().__init__()
-        self.missing_value_replacement = missing_value_replacement
+        self._set_missing_value_replacement('mode', missing_value_replacement)
         self.model_missing_values = model_missing_values
 
     def _fit(self, data):
@@ -84,9 +84,7 @@ class BinaryEncoder(BaseTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        if self.missing_value_replacement is not None:
-            data = self.null_transformer.reverse_transform(data)
-
+        data = self.null_transformer.reverse_transform(data)
         if isinstance(data, np.ndarray):
             if data.ndim == 2:
                 data = data[:, 0]

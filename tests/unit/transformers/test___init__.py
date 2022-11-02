@@ -94,7 +94,7 @@ def test_get_transformer_instance_instance():
     returned = get_transformer_instance(transformer)
 
     assert isinstance(returned, BinaryEncoder)
-    assert returned.missing_value_replacement is None
+    assert returned.missing_value_replacement is 'mode'
 
 
 def test_get_transformer_instance_str():

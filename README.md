@@ -132,11 +132,11 @@ Config:
         "dollars_spent": "numerical"
     },
     "transformers": {
-        "last_login": "UnixTimestampEncoder(missing_value_replacement='mean')",
-        "email_optin": "BinaryEncoder(missing_value_replacement='mode')",
+        "last_login": "UnixTimestampEncoder()",
+        "email_optin": "BinaryEncoder()",
         "credit_card": "FrequencyEncoder()",
-        "age": "FloatFormatter(missing_value_replacement='mean')",
-        "dollars_spent": "FloatFormatter(missing_value_replacement='mean')"
+        "age": "FloatFormatter()",
+        "dollars_spent": "FloatFormatter()"
     }
 }
 ```
