@@ -837,7 +837,7 @@ def test_hyper_transformer_chained_transformers():
     pd.testing.assert_frame_equal(reverse_transformed, data)
 
 
-def test_hyper_transformer_chained_transformers2():
+def test_hyper_transformer_chained_transformers_various_transformers():
     """Test when a transformer is chained to another transformer.
 
     When the specified transformer indicates a next transformer, they should each be applied in
