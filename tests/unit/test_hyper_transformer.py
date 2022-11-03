@@ -14,6 +14,7 @@ from rdt.transformers import (
     AnonymizedFaker, BinaryEncoder, FloatFormatter, FrequencyEncoder, LabelEncoder, RegexGenerator,
     UnixTimestampEncoder)
 from rdt.transformers.base import BaseTransformer
+from rdt.transformers.numerical import ClusterBasedNormalizer
 
 
 class TestHyperTransformer(TestCase):
@@ -247,22 +248,16 @@ class TestHyperTransformer(TestCase):
             - The appropriate ``sdtypes`` and ``transformers`` should be found.
         """
         # Setup
-        int_transformer = Mock()
-        float_transformer = Mock()
-        categorical_transformer = Mock()
-        bool_transformer = Mock()
-        datetime_transformer = Mock()
-
         data = self.get_data()
         field_transformers = {
-            'integer': int_transformer,
-            'float': float_transformer,
+            'integer': FloatFormatter(),
+            'float': ClusterBasedNormalizer(),
         }
         default_sdtype_transformers = {
-            'boolean': bool_transformer,
-            'categorical': categorical_transformer
+            'boolean': BinaryEncoder(),
+            'categorical': FrequencyEncoder()
         }
-        get_default_transformer_mock.return_value = datetime_transformer
+        get_default_transformer_mock.return_value = UnixTimestampEncoder()
         ht = HyperTransformer()
         ht.field_transformers = field_transformers
         ht.field_sdtypes = {'datetime': 'datetime'}
@@ -280,13 +275,12 @@ class TestHyperTransformer(TestCase):
             'categorical': 'categorical',
             'datetime': 'datetime'
         }
-        assert ht.field_transformers == {
-            'integer': int_transformer,
-            'float': float_transformer,
-            'categorical': categorical_transformer,
-            'bool': bool_transformer,
-            'datetime': datetime_transformer
-        }
+
+        assert isinstance(ht.field_transformers['integer'], FloatFormatter)
+        assert isinstance(ht.field_transformers['float'], ClusterBasedNormalizer)
+        assert isinstance(ht.field_transformers['categorical'], FrequencyEncoder)
+        assert isinstance(ht.field_transformers['bool'], BinaryEncoder)
+        assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
         ht._unfit.assert_called_once()
 
     def test_detect_initial_config(self):

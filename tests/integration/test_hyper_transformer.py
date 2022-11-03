@@ -139,10 +139,8 @@ def test_hypertransformer_default_inputs():
     # Run
     ht = HyperTransformer()
     ht.detect_initial_config(data)
-    print(ht.get_config())
     ht.fit(data)
     transformed = ht.transform(data)
-    print(transformed)
     reverse_transformed = ht.reverse_transform(transformed)
 
     # Assert
@@ -240,10 +238,10 @@ def test_hypertransformer_field_transformers():
         'transformers': {
             'integer': FloatFormatter(missing_value_replacement='mean'),
             'float': FloatFormatter(missing_value_replacement='mean'),
-            'categorical': FrequencyEncoder,
+            'categorical': FrequencyEncoder(),
             'bool': BinaryEncoder(missing_value_replacement='mode'),
-            'datetime': DummyTransformerNotMLReady,
-            'names': FrequencyEncoder
+            'datetime': DummyTransformerNotMLReady(),
+            'names': FrequencyEncoder()
         }
     }
 
@@ -401,7 +399,7 @@ def test_multiple_fits_with_set_config():
     ht.detect_initial_config(data)
     ht.set_config(config={
         'sdtypes': {'integer': 'categorical'},
-        'transformers': {'integer': FrequencyEncoder}
+        'transformers': {'integer': FrequencyEncoder()}
     })
     ht.fit(data)
     transformed1 = ht.transform(data)
