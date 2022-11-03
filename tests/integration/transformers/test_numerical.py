@@ -54,7 +54,7 @@ class TestFloatFormatter:
         assert len(reverse) == 6
         assert reverse['a'][5] in {np.nan, 1.4}
         for value in reverse['a'][:5]:
-            assert value in {1, 2, np.nan}
+            assert value in {1, 2} or np.isnan(value)
 
     def test_computer_representation(self):
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])

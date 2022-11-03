@@ -280,78 +280,6 @@ class TestBaseTransformer:
         expected = ['column_name.out1', 'column_name.out2']
         assert output == expected
 
-    def test_is_transform_deterministic(self):
-        """Test the ``is_transform_deterministic`` method.
-
-        Validate that this method properly returns the ``DETERMINISTIC_TRANSFORM`` attribute.
-
-        Setup:
-            - create a ``Dummy`` class which inherits from the ``BaseTransformer``, where
-            ``DETERMINISTIC_TRANSFORM`` is set to True.
-
-        Output:
-            - the boolean value stored in ``DETERMINISTIC_TRANSFORM``.
-        """
-        # Setup
-        class Dummy(BaseTransformer):
-            DETERMINISTIC_TRANSFORM = True
-
-        dummy_transformer = Dummy()
-
-        # Run
-        output = dummy_transformer.is_transform_deterministic()
-
-        # Assert
-        assert output is True
-
-    def test_is_reverse_deterministic(self):
-        """Test the ``is_reverse_deterministic`` method.
-
-        Validate that this method properly returns the ``DETERMINISTIC_REVERSE`` attribute.
-
-        Setup:
-            - create a ``Dummy`` class which inherits from the ``BaseTransformer``, where
-            ``DETERMINISTIC_REVERSE`` is set to True.
-
-        Output:
-            - the boolean value stored in ``DETERMINISTIC_REVERSE``.
-        """
-        # Setup
-        class Dummy(BaseTransformer):
-            DETERMINISTIC_REVERSE = True
-
-        dummy_transformer = Dummy()
-
-        # Run
-        output = dummy_transformer.is_reverse_deterministic()
-
-        # Assert
-        assert output is True
-
-    def test_is_composition_identity(self):
-        """Test the ``is_composition_identity`` method.
-
-        Validate that this method properly returns the ``COMPOSITION_IS_IDENTITY`` attribute.
-
-        Setup:
-            - create a ``Dummy`` class which inherits from the ``BaseTransformer``, where
-            ``COMPOSITION_IS_IDENTITY`` is set to True.
-
-        Output:
-            - the boolean value stored in ``COMPOSITION_IS_IDENTITY``.
-        """
-        # Setup
-        class Dummy(BaseTransformer):
-            COMPOSITION_IS_IDENTITY = True
-
-        dummy_transformer = Dummy()
-
-        # Run
-        output = dummy_transformer.is_composition_identity()
-
-        # Assert
-        assert output is True
-
     def test_is_generator(self):
         """Test the ``is_generator`` method.
 
@@ -362,7 +290,7 @@ class TestBaseTransformer:
             ``IS_GENERATOR`` is set to ``True``.
 
         Output:
-            - the boolean value stored in ``COMPOSITION_IS_IDENTITY``.
+            - the boolean value stored in ``IS_GENERATOR``.
         """
         # Setup
         class Dummy(BaseTransformer):

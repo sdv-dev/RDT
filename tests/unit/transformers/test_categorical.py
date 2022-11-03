@@ -46,26 +46,6 @@ class TestFrequencyEncoder:
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
 
-    def test_is_transform_deterministic(self):
-        """Test the ``is_transform_deterministic`` method.
-
-        Validate the method returns the opposite boolean value of the ``add_noise`` parameter.
-
-        Setup:
-            - initialize a ``FrequencyEncoder`` with ``add_noise = True``.
-
-        Output:
-            - the boolean value which is the opposite of ``add_noise``.
-        """
-        # Setup
-        transformer = FrequencyEncoder(add_noise=True)
-
-        # Run
-        output = transformer.is_transform_deterministic()
-
-        # Assert
-        assert output is False
-
     def test__get_intervals(self):
         """Test the ``_get_intervals`` method.
 

@@ -58,10 +58,6 @@ class FloatFormatter(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'numerical'
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
-
     null_transformer = None
     missing_value_replacement = None
     _dtype = None
@@ -78,18 +74,6 @@ class FloatFormatter(BaseTransformer):
         self.learn_rounding_scheme = learn_rounding_scheme
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
-
-    def is_composition_identity(self):
-        """Return whether composition of transform and reverse transform produces the input data.
-
-        Returns:
-            bool:
-                Whether or not transforming and then reverse transforming returns the input data.
-        """
-        if self.null_transformer and not self.null_transformer.models_missing_values():
-            return False
-
-        return self.COMPOSITION_IS_IDENTITY
 
     @staticmethod
     def _learn_rounding_digits(data):
@@ -247,7 +231,6 @@ class GaussianNormalizer(FloatFormatter):
     """
 
     _univariate = None
-    COMPOSITION_IS_IDENTITY = False
 
     def __init__(self, model_missing_values=False, learn_rounding_scheme=False,
                  enforce_min_max_values=False, distribution='truncated_gaussian'):
@@ -396,10 +379,6 @@ class ClusterBasedNormalizer(FloatFormatter):
     """
 
     STD_MULTIPLIER = 4
-    DETERMINISTIC_TRANSFORM = False
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = False
-
     _bgm_transformer = None
     valid_component_indicator = None
 

@@ -36,52 +36,6 @@ class TestUnixTimestampEncoder:
         assert transformer.model_missing_values is True
         assert transformer.datetime_format == '%M-%d-%Y'
 
-    def test_is_composition_identity_null_transformer_true(self):
-        """Test the ``is_composition_identity`` method with a ``null_transformer``.
-
-        When the attribute ``null_transformer`` is not None and a null column is not created,
-        this method should simply return False.
-
-        Setup:
-            - initialize a ``UnixTimestampEncoder`` transformer which sets
-            ``self.null_transformer`` to a ``NullTransformer``.
-
-        Output:
-            - False.
-        """
-        # Setup
-        transformer = UnixTimestampEncoder()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-
-        # Run
-        output = transformer.is_composition_identity()
-
-        # Assert
-        assert output is False
-
-    def test_is_composition_identity_null_transformer_false(self):
-        """Test the ``is_composition_identity`` method without a ``null_transformer``.
-
-        When the attribute ``null_transformer`` is None, this method should return
-        the value stored in the ``COMPOSITION_IS_IDENTITY`` attribute.
-
-        Setup:
-            - initialize a ``UnixTimestampEncoder`` transformer which sets
-            ``self.null_transformer`` to None.
-
-        Output:
-            - the value stored in ``self.COMPOSITION_IS_IDENTITY``.
-        """
-        # Setup
-        transformer = UnixTimestampEncoder()
-        transformer.null_transformer = None
-
-        # Run
-        output = transformer.is_composition_identity()
-
-        # Assert
-        assert output is True
-
     def test__convert_to_datetime(self):
         """Test the ``_convert_to_datetime`` method.
 

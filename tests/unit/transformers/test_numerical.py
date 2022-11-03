@@ -24,53 +24,6 @@ class TestFloatFormatter(TestCase):
         assert nt.missing_value_replacement == 'mode'
         assert nt.model_missing_values is False
 
-    def test_is_composition_identity_null_transformer_true(self):
-        """Test the ``is_composition_identity`` method with a ``null_transformer``.
-
-        When the attribute ``null_transformer`` is not None and a null column is not created,
-        this method should simply return False.
-
-        Setup:
-            - initialize a ``FloatFormatter`` transformer which sets
-            ``self.null_transformer`` to a ``NullTransformer`` where
-            ``self.model_missing_values`` is False.
-
-        Output:
-            - False
-        """
-        # Setup
-        transformer = FloatFormatter()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-
-        # Run
-        output = transformer.is_composition_identity()
-
-        # Assert
-        assert output is False
-
-    def test_is_composition_identity_null_transformer_false(self):
-        """Test the ``is_composition_identity`` method without a ``null_transformer``.
-
-        When the attribute ``null_transformer`` is None, this method should return
-        the value stored in the ``COMPOSITION_IS_IDENTITY`` attribute.
-
-        Setup:
-            - initialize a ``FloatFormatter`` transformer which sets
-            ``self.null_transformer`` to None.
-
-        Output:
-            - the value stored in ``self.COMPOSITION_IS_IDENTITY``.
-        """
-        # Setup
-        transformer = FloatFormatter()
-        transformer.null_transformer = None
-
-        # Run
-        output = transformer.is_composition_identity()
-
-        # Assert
-        assert output is True
-
     def test__learn_rounding_digits_more_than_15_decimals(self):
         """Test the _learn_rounding_digits method with more than 15 decimals.
 

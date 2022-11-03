@@ -35,7 +35,7 @@ class TestBinaryEncoder:
         np.testing.assert_array_equal(unchanged_transformed, transformed)
         assert reverse['bool'][0] in {True, np.nan}
         for value in reverse['bool'][1:]:
-            assert value in {False, np.nan}
+            assert value is False or np.isnan(value)
 
     def test_boolean_missing_value_replacement_mode(self):
         """Test BinaryEncoder when `missing_value_replacement` is set to 'mode'.

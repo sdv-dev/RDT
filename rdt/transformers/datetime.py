@@ -32,10 +32,6 @@ class UnixTimestampEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'datetime'
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
-
     null_transformer = None
 
     def __init__(self, missing_value_replacement='mean', model_missing_values=False,
@@ -45,18 +41,6 @@ class UnixTimestampEncoder(BaseTransformer):
         self.model_missing_values = model_missing_values
         self.datetime_format = datetime_format
         self._dtype = None
-
-    def is_composition_identity(self):
-        """Return whether composition of transform and reverse transform produces the input data.
-
-        Returns:
-            bool:
-                Whether or not transforming and then reverse transforming returns the input data.
-        """
-        if self.null_transformer and not self.null_transformer.models_missing_values():
-            return False
-
-        return self.COMPOSITION_IS_IDENTITY
 
     def _convert_to_datetime(self, data):
         if data.dtype == 'object':

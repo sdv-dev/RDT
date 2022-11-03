@@ -17,9 +17,6 @@ class BaseTransformer:
 
     INPUT_SDTYPE = None
     SUPPORTED_SDTYPES = None
-    DETERMINISTIC_TRANSFORM = None
-    DETERMINISTIC_REVERSE = None
-    COMPOSITION_IS_IDENTITY = None
     IS_GENERATOR = None
 
     columns = None
@@ -117,33 +114,6 @@ class BaseTransformer:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
         return self._get_output_to_property('next_transformer')
-
-    def is_transform_deterministic(self):
-        """Return whether the transform is deterministic.
-
-        Returns:
-            bool:
-                Whether or not the transform is deterministic.
-        """
-        return self.DETERMINISTIC_TRANSFORM
-
-    def is_reverse_deterministic(self):
-        """Return whether the reverse transform is deterministic.
-
-        Returns:
-            bool:
-                Whether or not the reverse transform is deterministic.
-        """
-        return self.DETERMINISTIC_REVERSE
-
-    def is_composition_identity(self):
-        """Return whether composition of transform and reverse transform produces the input data.
-
-        Returns:
-            bool:
-                Whether or not transforming and then reverse transforming returns the input data.
-        """
-        return self.COMPOSITION_IS_IDENTITY
 
     def is_generator(self):
         """Return whether this transformer generates new data or not.

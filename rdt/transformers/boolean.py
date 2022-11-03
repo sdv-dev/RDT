@@ -28,9 +28,6 @@ class BinaryEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'boolean'
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-
     null_transformer = None
 
     def __init__(self, missing_value_replacement='mode', model_missing_values=False):
