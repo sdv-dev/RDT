@@ -294,8 +294,6 @@ for each transformer that validate the following checks:
 2. At least one Dataset Generator exists for the Transformer sdtype.
 3. The Transformer can transform data and produces outputs of the indicated sdtypes.
 4. The Transformer can reverse transform the data it produces, recovering the original sdtype.
-   If ``is_composite_identity``, we expect that the reverse transformed data is equal to the
-   original data.
 5. The HyperTransformer is able to use the Transformer and produce float values.
 6. The HyperTransformer is able to reverse the data that has previously transformed,
    and restore the original sdtype.
