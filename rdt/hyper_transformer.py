@@ -555,6 +555,8 @@ class HyperTransformer:
             transformer.fit(data, field)
             self._transformers_sequence.append(transformer)
             data = transformer.transform(data)
+            if field in self._input_columns:
+                self.field_transformers[field] = transformer
 
             output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()

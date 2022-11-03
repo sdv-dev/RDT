@@ -1132,6 +1132,20 @@ class TestHyperTransformer(TestCase):
         bool_transformer.transform.assert_called_once()
         datetime_transformer.transform.assert_called_once()
 
+    def test_fit_updates_field_transformers(self):
+        """Test it updates the  ``field_transformers`` dict."""
+        # Setup
+        ht = HyperTransformer()
+        data = pd.DataFrame({'col': [1, 2, 3]})
+
+        # Run
+        ht.set_config(
+            {'sdtypes': {'col': 'numerical'}, 'transformers': {'col': FloatFormatter()}})
+        ht.fit(data)
+
+        # Assert
+        assert ht.get_config()['transformers']['col'].get_output_columns() == ['col']
+
     def test_transform_raises_error_no_config(self):
         """Test that ``transform`` raises an error.
 
