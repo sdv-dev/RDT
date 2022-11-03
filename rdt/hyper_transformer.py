@@ -10,7 +10,7 @@ import pandas as pd
 from rdt.errors import Error, NotFittedError, TransformerInputError
 from rdt.transformers import (
     BaseTransformer, get_class_by_transformer_name, get_default_transformer,
-    get_transformer_instance, get_transformers_by_type)
+    get_transformers_by_type)
 
 
 class Config(dict):
@@ -172,11 +172,8 @@ class HyperTransformer:
         """
         invalid_transformers_columns = []
         for column_name, transformer in column_name_to_transformer.items():
-            if transformer is not None:
-                try:
-                    get_transformer_instance(transformer)
-                except (ValueError, AttributeError):
-                    invalid_transformers_columns.append(column_name)
+            if transformer and not isinstance(transformer, BaseTransformer):
+                invalid_transformers_columns.append(column_name)
 
         if invalid_transformers_columns:
             raise Error(
@@ -399,7 +396,7 @@ class HyperTransformer:
 
         Args:
             column_name_to_transformer(dict):
-                Dict mapping column names to transformers to be used for that column.
+                Dict mapping column names to transformer instances.
         """
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)

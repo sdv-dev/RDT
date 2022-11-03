@@ -431,7 +431,7 @@ def test_multiple_detect_configs_with_set_config():
 
     ht.set_config(config={
         'sdtypes': {'integers': 'categorical'},
-        'transformers': {'integers': FrequencyEncoder}
+        'transformers': {'integers': FrequencyEncoder()}
     })
 
     ht.detect_initial_config(data)
