@@ -1,5 +1,6 @@
 """Hyper transformer module."""
 
+from copy import deepcopy
 import inspect
 import json
 import warnings
@@ -494,9 +495,9 @@ class HyperTransformer:
             if field not in self.field_transformers:
                 sdtype = self.field_sdtypes[field]
                 if sdtype in self._default_sdtype_transformers:
-                    self.field_transformers[field] = self._default_sdtype_transformers[sdtype]
+                    self.field_transformers[field] = deepcopy(self._default_sdtype_transformers[sdtype])
                 else:
-                    self.field_transformers[field] = get_default_transformer(sdtype)
+                    self.field_transformers[field] = deepcopy(get_default_transformer(sdtype))
 
     def detect_initial_config(self, data):
         """Print the configuration of the data.
@@ -551,12 +552,10 @@ class HyperTransformer:
             self._output_columns.append(field)
 
         else:
-            transformer = get_transformer_instance(transformer)
+            #transformer = get_transformer_instance(transformer)
             transformer.fit(data, field)
             self._transformers_sequence.append(transformer)
             data = transformer.transform(data)
-            if field in self._input_columns:
-                self.field_transformers[field] = transformer
 
             output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()

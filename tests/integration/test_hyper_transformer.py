@@ -139,8 +139,10 @@ def test_hypertransformer_default_inputs():
     # Run
     ht = HyperTransformer()
     ht.detect_initial_config(data)
+    print(ht.get_config())
     ht.fit(data)
     transformed = ht.transform(data)
+    print(transformed)
     reverse_transformed = ht.reverse_transform(transformed)
 
     # Assert
