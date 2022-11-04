@@ -1056,7 +1056,7 @@ class TestHyperTransformer(TestCase):
             ht.fit(data)
 
     def test_fit_warns_columns_in_data(self):
-        """Test it warns when transformers generat columns which already exist in the data."""
+        """Test it warns when transformers generate columns which already exist in the data."""
         # Setup
         ht = HyperTransformer()
         data = pd.DataFrame({'col': [1, np.nan, 3], 'col.is_null': [1, 2, 3]})
