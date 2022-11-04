@@ -936,3 +936,49 @@ def test_hyper_transformer_chained_transformers_various_transformers():
 
     reverse_transformed = ht.reverse_transform(transformed)
     pd.testing.assert_frame_equal(reverse_transformed, data)
+
+
+def test_hyper_transformer_field_transformer_correctly_set():
+    """Test field_transformers is correctly set through various methods."""
+    # Setup
+    ht = HyperTransformer()
+    data = pd.DataFrame({'col': ['a', 'b', 'c']})
+
+    # getting detected transformers should give the actual transformer
+    ht.detect_initial_config(data)
+    transformer = ht.get_config()['transformers']['col']
+    transformer.new_attribute = 'abc'
+    assert ht.get_config()['transformers']['col'].new_attribute == 'abc'
+
+    # the actual transformer should be fitted
+    ht.fit(data)
+    transformer.new_attribute2 = '123'
+    assert ht.get_config()['transformers']['col'].new_attribute == 'abc'
+    assert ht.get_config()['transformers']['col'].new_attribute2 == '123'
+
+    # if a transformer was set, it should use the provided instance
+    fe = FrequencyEncoder()
+    ht.set_config({'sdtypes': {'col': 'categorical'}, 'transformers': {'col': fe}})
+    ht.fit(data)
+    transformer = ht.get_config()['transformers']['col']
+    assert transformer is fe
+
+    # the three cases below make sure any form of acess to the field_transformers
+    # correctly accesses and stores the actual transformers
+    fe = FrequencyEncoder()
+    ht.update_transformers({'col': fe})
+    ht.fit(data)
+    transformer = ht.get_config()['transformers']['col']
+    assert transformer is fe
+
+    ht.update_transformers_by_sdtype('categorical', transformer_name='FrequencyEncoder')
+    transformer = ht.get_config()['transformers']['col']
+    transformer.new_attribute3 = 'abc'
+    ht.fit(data)
+    assert ht.get_config()['transformers']['col'].new_attribute3 == 'abc'
+
+    ht.update_sdtypes({'col': 'text'})
+    transformer = ht.get_config()['transformers']['col']
+    transformer.new_attribute3 = 'abc'
+    ht.fit(data)
+    assert ht.get_config()['transformers']['col'].new_attribute3 == 'abc'
