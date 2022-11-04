@@ -214,7 +214,7 @@ class TestFrequencyEncoder:
         pd.testing.assert_series_equal(transformer.means, expected_means)
         pd.testing.assert_frame_equal(transformer.starts, expected_starts)
         assert transformer.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None},
+            None: {'sdtype': 'float', 'next_transformer': None},
         }
 
     def test__get_value_add_noise_false(self):
@@ -1661,7 +1661,7 @@ class TestLabelEncoder:
         assert transformer.values_to_categories == {0: 1, 1: 2, 2: 3}
         assert transformer.categories_to_values == {1: 0, 2: 1, 3: 2}
         assert transformer.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None},
+            None: {'sdtype': 'float', 'next_transformer': None},
         }
 
     def test__transform(self):

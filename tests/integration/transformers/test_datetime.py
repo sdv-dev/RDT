@@ -23,7 +23,7 @@ class TestUnixTimestampEncoder:
 
         # Asserts
         expected_transformed = pd.DataFrame({
-            'column.value': [3.500064e+17, 845510400000000000, -145497600000000000]
+            'column': [3.500064e+17, 845510400000000000, -145497600000000000]
         })
 
         pd.testing.assert_frame_equal(expected_transformed, transformed)
@@ -40,7 +40,7 @@ class TestUnixTimestampEncoder:
 
         # Asserts
         expect_transformed = pd.DataFrame({
-            'column.value': [3.500064e+17, 845510400000000000, -145497600000000000]
+            'column': [3.500064e+17, 845510400000000000, -145497600000000000]
         })
         pd.testing.assert_frame_equal(expect_transformed, transformed)
         pd.testing.assert_frame_equal(reverted, data)
@@ -64,6 +64,6 @@ class TestOptimizedTimestampEncoder:
         reverted = ote.reverse_transform(transformed)
 
         # Asserts
-        expect_transformed = pd.DataFrame({'column.value': [4051.0, 9786.0, -1684.0]})
+        expect_transformed = pd.DataFrame({'column': [4051.0, 9786.0, -1684.0]})
         pd.testing.assert_frame_equal(expect_transformed, transformed)
         pd.testing.assert_frame_equal(reverted, data)

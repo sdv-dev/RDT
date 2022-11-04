@@ -336,7 +336,7 @@ class TestUnixTimestampEncoder:
         # Assert
         transformer._transform_helper.assert_called_once()
         assert transformer.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None},
+            None: {'sdtype': 'float', 'next_transformer': None},
         }
 
     @patch('rdt.transformers.datetime._guess_datetime_format_for_array')
@@ -371,7 +371,7 @@ class TestUnixTimestampEncoder:
 
         # Assert
         assert transformer.output_properties == {
-            'value': {'sdtype': 'float', 'next_transformer': None},
+            None: {'sdtype': 'float', 'next_transformer': None},
             'is_null': {'sdtype': 'float', 'next_transformer': None},
         }
 

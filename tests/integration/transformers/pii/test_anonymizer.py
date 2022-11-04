@@ -113,7 +113,7 @@ def test_pseudoanonymizedfaker():
     transformed = instance.fit_transform(data, 'animals')
     reverse_transformed = instance.reverse_transform(transformed)
 
-    assert transformed.columns == ['animals.value']
+    assert transformed.columns == ['animals']
     pd.testing.assert_series_equal(
         reverse_transformed['animals'].map(instance._reverse_mapping_dict),
         data['animals']
@@ -133,7 +133,7 @@ def test_pseudoanonymizedfaker_with_nans():
     transformed = instance.fit_transform(data, 'animals')
     reverse_transformed = instance.reverse_transform(transformed)
 
-    assert transformed.columns == ['animals.value']
+    assert transformed.columns == ['animals']
     pd.testing.assert_series_equal(
         reverse_transformed['animals'].map(instance._reverse_mapping_dict),
         data['animals']
@@ -153,7 +153,7 @@ def test_pseudoanonymizedfaker_with_custom_provider():
     transformed = instance.fit_transform(data, 'animals')
     reverse_transformed = instance.reverse_transform(transformed)
 
-    assert transformed.columns == ['animals.value']
+    assert transformed.columns == ['animals']
     pd.testing.assert_series_equal(
         reverse_transformed['animals'].map(instance._reverse_mapping_dict),
         data['animals']

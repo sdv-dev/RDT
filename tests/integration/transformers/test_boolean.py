@@ -108,7 +108,7 @@ class TestBinaryEncoder:
 
         # Assert
         expected_transformed = pd.DataFrame({
-            'bool.value': [1., 1., 1., 0.],
+            'bool': [1., 1., 1., 0.],
             'bool.is_null': [0., 0., 1., 0.]
         })
         pd.testing.assert_frame_equal(transformed, expected_transformed)
