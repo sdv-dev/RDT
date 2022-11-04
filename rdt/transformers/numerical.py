@@ -34,11 +34,11 @@ class FloatFormatter(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        missing_value_replacement (object or None):
-            Indicate what to do with the null values. If an integer or float is given,
-            replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
-            given, replace them with the corresponding aggregation. If ``None`` is given,
-            do not replace them. Defaults to ``None``.
+        missing_value_replacement (object):
+            Indicate what to replace the null values with. If an integer or float is given,
+            replace them with the given value. If the strings ``'mean'`` or ``'mode'``
+            are given, replace them with the corresponding aggregation.
+            Defaults to ``mean``.
         model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not. The column
             will be created only if there are null values. If ``True``, create the new column if
@@ -58,10 +58,6 @@ class FloatFormatter(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'numerical'
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
-
     null_transformer = None
     missing_value_replacement = None
     _dtype = None
@@ -69,27 +65,15 @@ class FloatFormatter(BaseTransformer):
     _min_value = None
     _max_value = None
 
-    def __init__(self, missing_value_replacement=None, model_missing_values=False,
+    def __init__(self, missing_value_replacement='mean', model_missing_values=False,
                  learn_rounding_scheme=False, enforce_min_max_values=False,
                  computer_representation='Float'):
         super().__init__()
-        self.missing_value_replacement = missing_value_replacement
+        self._set_missing_value_replacement('mean', missing_value_replacement)
         self.model_missing_values = model_missing_values
         self.learn_rounding_scheme = learn_rounding_scheme
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
-
-    def is_composition_identity(self):
-        """Return whether composition of transform and reverse transform produces the input data.
-
-        Returns:
-            bool:
-                Whether or not transforming and then reverse transforming returns the input data.
-        """
-        if self.null_transformer and not self.null_transformer.models_missing_values():
-            return False
-
-        return self.COMPOSITION_IS_IDENTITY
 
     @staticmethod
     def _learn_rounding_digits(data):
@@ -186,9 +170,7 @@ class FloatFormatter(BaseTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        if self.missing_value_replacement is not None:
-            data = self.null_transformer.reverse_transform(data)
-
+        data = self.null_transformer.reverse_transform(data)
         if self.enforce_min_max_values:
             data = data.clip(self._min_value, self._max_value)
         elif self.computer_representation != 'Float':
@@ -249,12 +231,10 @@ class GaussianNormalizer(FloatFormatter):
     """
 
     _univariate = None
-    COMPOSITION_IS_IDENTITY = False
 
     def __init__(self, model_missing_values=False, learn_rounding_scheme=False,
                  enforce_min_max_values=False, distribution='truncated_gaussian'):
         super().__init__(
-            missing_value_replacement='mean',
             model_missing_values=model_missing_values,
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values
@@ -399,17 +379,12 @@ class ClusterBasedNormalizer(FloatFormatter):
     """
 
     STD_MULTIPLIER = 4
-    DETERMINISTIC_TRANSFORM = False
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = False
-
     _bgm_transformer = None
     valid_component_indicator = None
 
     def __init__(self, model_missing_values=False, learn_rounding_scheme=False,
                  enforce_min_max_values=False, max_clusters=10, weight_threshold=0.005):
         super().__init__(
-            missing_value_replacement='mean',
             model_missing_values=model_missing_values,
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values

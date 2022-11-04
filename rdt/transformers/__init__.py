@@ -87,10 +87,10 @@ TRANSFORMERS = {
 
 
 DEFAULT_TRANSFORMERS = {
-    'numerical': FloatFormatter(missing_value_replacement='mean'),
+    'numerical': FloatFormatter(),
     'categorical': FrequencyEncoder(),
-    'boolean': BinaryEncoder(missing_value_replacement='mode'),
-    'datetime': UnixTimestampEncoder(missing_value_replacement='mean'),
+    'boolean': BinaryEncoder(),
+    'datetime': UnixTimestampEncoder(),
 }
 
 

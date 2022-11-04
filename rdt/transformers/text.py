@@ -23,8 +23,6 @@ class RegexGenerator(BaseTransformer):
             Defaults to ``False``.
     """
 
-    DETERMINISTIC_TRANSFORM = False
-    DETERMINISTIC_REVERSE = False
     IS_GENERATOR = True
     INPUT_SDTYPE = 'text'
 

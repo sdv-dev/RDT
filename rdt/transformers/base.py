@@ -17,17 +17,25 @@ class BaseTransformer:
 
     INPUT_SDTYPE = None
     SUPPORTED_SDTYPES = None
-    DETERMINISTIC_TRANSFORM = None
-    DETERMINISTIC_REVERSE = None
-    COMPOSITION_IS_IDENTITY = None
     IS_GENERATOR = None
 
     columns = None
     column_prefix = None
     output_columns = None
+    missing_value_replacement = None
 
     def __init__(self):
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
+
+    def _set_missing_value_replacement(self, default, missing_value_replacement):
+        if missing_value_replacement is None:
+            warnings.warn(
+                "Setting 'missing_value_replacement' to 'None' is no longer supported. "
+                f"Imputing with the '{default}' instead.", DeprecationWarning
+            )
+            self.missing_value_replacement = default
+        else:
+            self.missing_value_replacement = missing_value_replacement
 
     @classmethod
     def get_name(cls):
@@ -106,33 +114,6 @@ class BaseTransformer:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
         return self._get_output_to_property('next_transformer')
-
-    def is_transform_deterministic(self):
-        """Return whether the transform is deterministic.
-
-        Returns:
-            bool:
-                Whether or not the transform is deterministic.
-        """
-        return self.DETERMINISTIC_TRANSFORM
-
-    def is_reverse_deterministic(self):
-        """Return whether the reverse transform is deterministic.
-
-        Returns:
-            bool:
-                Whether or not the reverse transform is deterministic.
-        """
-        return self.DETERMINISTIC_REVERSE
-
-    def is_composition_identity(self):
-        """Return whether composition of transform and reverse transform produces the input data.
-
-        Returns:
-            bool:
-                Whether or not transforming and then reverse transforming returns the input data.
-        """
-        return self.COMPOSITION_IS_IDENTITY
 
     def is_generator(self):
         """Return whether this transformer generates new data or not.
@@ -357,7 +338,6 @@ class BaseTransformer:
             return data
 
         data = data.copy()
-
         columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
         data = data.drop(self.output_columns, axis=1)

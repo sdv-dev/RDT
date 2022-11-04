@@ -25,21 +25,6 @@ class TestFloatFormatter:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
-    def test_not_model_missing_values(self):
-        data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
-        column = 'a'
-
-        nt = FloatFormatter(model_missing_values=False)
-        nt.fit(data, column)
-        transformed = nt.transform(data)
-
-        assert isinstance(transformed, pd.DataFrame)
-        assert transformed.shape == (6, 1)
-
-        reverse = nt.reverse_transform(transformed)
-
-        np.testing.assert_array_almost_equal(reverse, data, decimal=2)
-
     def test_int(self):
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
         column = 'a'
@@ -66,7 +51,10 @@ class TestFloatFormatter:
         assert transformed.shape == (6, 1)
 
         reverse = nt.reverse_transform(transformed)
-        np.testing.assert_array_almost_equal(reverse, data, decimal=2)
+        assert len(reverse) == 6
+        assert reverse['a'][5] == 1.4 or np.isnan(reverse['a'][5])
+        for value in reverse['a'][:5]:
+            assert value in {1, 2} or np.isnan(value)
 
     def test_computer_representation(self):
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])

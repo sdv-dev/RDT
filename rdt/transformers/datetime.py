@@ -17,11 +17,10 @@ class UnixTimestampEncoder(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        missing_value_replacement (object or None):
-            Indicate what to do with the null values. If an object is given, replace them
-            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
-            them with the corresponding aggregation. If ``None`` is given, do not replace them.
-            Defaults to ``None``.
+        missing_value_replacement (object):
+            Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
+            are given, replace them with the corresponding aggregation.
+            Defaults to ``mean``.
         model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not. The column
             will be created only if there are null values. If ``True``, create the new column if
@@ -33,31 +32,15 @@ class UnixTimestampEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'datetime'
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
-
     null_transformer = None
 
-    def __init__(self, missing_value_replacement=None, model_missing_values=False,
+    def __init__(self, missing_value_replacement='mean', model_missing_values=False,
                  datetime_format=None):
         super().__init__()
-        self.missing_value_replacement = missing_value_replacement
+        self._set_missing_value_replacement('mean', missing_value_replacement)
         self.model_missing_values = model_missing_values
         self.datetime_format = datetime_format
         self._dtype = None
-
-    def is_composition_identity(self):
-        """Return whether composition of transform and reverse transform produces the input data.
-
-        Returns:
-            bool:
-                Whether or not transforming and then reverse transforming returns the input data.
-        """
-        if self.null_transformer and not self.null_transformer.models_missing_values():
-            return False
-
-        return self.COMPOSITION_IS_IDENTITY
 
     def _convert_to_datetime(self, data):
         if data.dtype == 'object':
@@ -92,9 +75,7 @@ class UnixTimestampEncoder(BaseTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        if self.model_missing_values or self.missing_value_replacement is not None:
-            data = self.null_transformer.reverse_transform(data)
-
+        data = self.null_transformer.reverse_transform(data)
         data = np.round(data.astype(np.float64))
         return data
 
@@ -144,9 +125,6 @@ class UnixTimestampEncoder(BaseTransformer):
         """
         data = self._reverse_transform_helper(data)
         datetime_data = pd.to_datetime(data)
-        if not isinstance(datetime_data, pd.Series):
-            datetime_data = pd.Series(datetime_data)
-
         if self.datetime_format:
             if self._dtype == 'object':
                 datetime_data = datetime_data.dt.strftime(self.datetime_format)
@@ -170,11 +148,10 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
     This class behaves exactly as the ``UnixTimestampEncoder`` except with the optimization.
 
     Args:
-        missing_value_replacement (object or None):
-            Indicate what to do with the null values. If an object is given, replace them
-            with the given value. If the strings ``'mean'`` or ``'mode'`` are given, replace
-            them with the corresponding aggregation. If ``None`` is given, do not replace them.
-            Defaults to ``None``.
+        missing_value_replacement (object):
+            Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
+            are given, replace them with the corresponding aggregation.
+            Defaults to ``mean``.
         model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not. The column
             will be created only if there are null values. If ``True``, create the new column if

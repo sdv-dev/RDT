@@ -36,8 +36,6 @@ class AnonymizedFaker(BaseTransformer):
             Defaults to ``False``.
     """
 
-    DETERMINISTIC_TRANSFORM = False
-    DETERMINISTIC_REVERSE = False
     IS_GENERATOR = True
     INPUT_SDTYPE = 'pii'
 

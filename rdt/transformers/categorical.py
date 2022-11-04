@@ -35,9 +35,6 @@ class FrequencyEncoder(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
-
     mapping = None
     intervals = None
     starts = None
@@ -57,15 +54,6 @@ class FrequencyEncoder(BaseTransformer):
     def __init__(self, add_noise=False):
         super().__init__()
         self.add_noise = add_noise
-
-    def is_transform_deterministic(self):
-        """Return whether the transform is deterministic.
-
-        Returns:
-            bool:
-                Whether or not the transform is deterministic.
-        """
-        return not self.add_noise
 
     @staticmethod
     def _get_intervals(data):
@@ -268,10 +256,6 @@ class OneHotEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'categorical'
-    SUPPORTED_SDTYPES = ['categorical', 'boolean']
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-
     dummies = None
     _dummy_na = None
     _num_dummies = None
@@ -430,10 +414,6 @@ class LabelEncoder(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
-
     values_to_categories = None
     categories_to_values = None
 

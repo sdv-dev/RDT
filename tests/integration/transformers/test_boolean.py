@@ -9,9 +9,11 @@ class TestBinaryEncoder:
     def test_boolean_some_nans(self):
         """Test BinaryEncoder on input with some nan values.
 
-        Ensure that the BinaryEncoder can fit, transform, and reverse
-        transform on boolean data with Nones. Expect that the reverse
-        transformed data is the same as the input.
+        Ensure that the BinaryEncoder can fit, transform, and reverse transform on boolean data
+        with Nones. Expect that the reverse transformed data is the same as the input, but None
+        becomes nan and the False/nan values can be interchanged.
+
+        Also ensures that the intermediate transformed data is unchanged after reversing.
 
         Input:
             - boolean data with None values
@@ -26,62 +28,14 @@ class TestBinaryEncoder:
         # Run
         transformer.fit(data, column)
         transformed = transformer.transform(data)
-        reverse = transformer.reverse_transform(transformed)
-
-        # Assert
-        pd.testing.assert_frame_equal(reverse, data)
-
-    def test_boolean_all_nans(self):
-        """Test BinaryEncoder on input with all nan values.
-
-        Ensure that the BinaryEncoder can fit, transform, and reverse
-        transform on boolean data with all Nones. Expect that the reverse
-        transformed data is the same as the input.
-
-        Input:
-            - 4 rows of all None values
-        Output:
-            - The reversed transformed data
-        """
-        # Setup
-        data = pd.DataFrame([None, None, None, None], columns=['bool'])
-        column = 'bool'
-        transformer = BinaryEncoder()
-
-        # Run
-        transformer.fit(data, column)
-        transformed = transformer.transform(data)
-        reverse = transformer.reverse_transform(transformed)
-
-        # Assert
-        pd.testing.assert_frame_equal(reverse, data)
-
-    def test_boolean_input_unchanged(self):
-        """Test BinaryEncoder doesn't affect transformed data.
-
-        Ensure that the intermediate transformed data is unchanged after reverse transforming.
-
-        Input:
-            - boolean data
-        Output:
-            - The reversed transformed data
-        Side effects:
-            - The intermediate transformed data is unchanged.
-        """
-        # Setup
-        data = pd.DataFrame([True, False, None, False], columns=['bool'])
-        column = 'bool'
-        transformer = BinaryEncoder()
-
-        # Run
-        transformer.fit(data, column)
-        transformed = transformer.transform(data)
         unchanged_transformed = transformed.copy()
         reverse = transformer.reverse_transform(transformed)
 
         # Assert
-        pd.testing.assert_frame_equal(reverse, data)
         np.testing.assert_array_equal(unchanged_transformed, transformed)
+        assert reverse['bool'][0] in {True, np.nan}
+        for value in reverse['bool'][1:]:
+            assert value is False or np.isnan(value)
 
     def test_boolean_missing_value_replacement_mode(self):
         """Test BinaryEncoder when `missing_value_replacement` is set to 'mode'.

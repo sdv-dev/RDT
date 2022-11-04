@@ -34,13 +34,6 @@ its subclasses is to take data of a certain sdtype, and convert it into machine 
 data. To enable transformers to do this, the ``BaseTransformer`` has the following attributes:
 
 * ``INPUT_SDTYPE`` (str) - The input sdtype for the transformer.
-* ``DETERMINISTIC_TRANSFORM`` (bool) - Whether or not calling ``transform`` yields a deterministic
-  output.
-* ``DETERMINISTIC_REVERSE`` (bool) - Whether or not calling ``reverse_transform`` yields a
-  deterministic output.
-* ``COMPOSITION_IS_IDENTITY`` (bool) - Whether or not calling ``transform`` and then
-  ``reverse_transform`` back to back yields data identical to the ``transform`` input (the original
-  data).
 * ``output_properties`` (dict) - Dictionary mapping transformed column names to a dictionary describing
   its ``sdtype`` and ``next_transformer``.
 * ``columns`` (list) - List of column names that the transformer will transform. Set during ``fit``.
@@ -56,15 +49,6 @@ necessary:
 * ``get_output_sdtypes()`` - Returns the name of the columns that the transform method creates. By
   default this will be the ``sdtype`` property of the ``output_properties`` dictionary with the column
   names prepended with the ``column_prefix`` with a dot (`.`) as the separator.
-* ``is_transform_deterministic()`` - Returns a boolean indicating whether the output of the
-  ``transform`` method is deterministic. By default this is the value of the
-  ``DETERMINISTIC_TRANSFORM`` attribute.
-* ``is_reverse_deterministic()`` - Returns a boolean indicating whether the output of the
-  ``reverse_transform`` method is deterministic. By default this is the value of the
-  ``DETERMINISTIC_REVERSE`` attribute.
-* ``is_composition_identity()`` - Returns a boolean indicating whether the output of calling
-  ``transform`` and then ``reverse_transform`` on the transformed output is deterministic. By
-  default this is the ``COMPOSITION_IS_IDENTITY`` attribute.
 * ``get_next_transformers()`` - Returns a dictionary mapping the names of the columns that the
   ``transform`` method creates to the next transformer to use for those columns. By default this
   will be the ``NEXT_TRANSFORMERS`` dictionary with the keys prepended with the ``column_prefix``
@@ -137,9 +121,6 @@ Let's start by setting the necessary attributes and writing the ``__init__`` met
     class USPhoneNumberTransformer(BaseTransformer):
 
         INPUT_SDTYPE = 'phone_number'
-        DETERMINISTIC_TRANSFORM = True
-        DETERMINISTIC_REVERSE = True
-        COMPOSITION_IS_IDENTITY = True
 
         def __init__(self):
             self.has_country_code = None
@@ -207,9 +188,6 @@ handles that for us. Let's view the complete class below.
     class USPhoneNumberTransformer(BaseTransformer):
 
         INPUT_SDTYPE = 'phone_number'
-        DETERMINISTIC_TRANSFORM = True
-        DETERMINISTIC_REVERSE = True
-        COMPOSITION_IS_IDENTITY = True
 
         def __init__(self):
             self.has_country_code = None
