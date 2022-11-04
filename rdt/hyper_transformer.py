@@ -358,6 +358,8 @@ class HyperTransformer:
     def update_sdtypes(self, column_name_to_sdtype):
         """Update the ``sdtypes`` for each specified column name.
 
+        The method may also update ``field_transformers`` to match the new sdtypes.
+
         Args:
             column_name_to_sdtype(dict):
                 Dict mapping column names to ``sdtypes`` for that column.
@@ -367,7 +369,6 @@ class HyperTransformer:
 
         update_columns = column_name_to_sdtype.keys()
         self._validate_update_columns(update_columns)
-
         self._validate_sdtypes(column_name_to_sdtype)
 
         transformers_to_update = {}
@@ -379,7 +380,7 @@ class HyperTransformer:
                     supported_sdtypes = current_transformer.get_supported_sdtypes()
 
                 if sdtype not in supported_sdtypes:
-                    transformers_to_update[column] = get_default_transformer(sdtype)
+                    transformers_to_update[column] = deepcopy(get_default_transformer(sdtype))
 
         self.field_sdtypes.update(column_name_to_sdtype)
         self.field_transformers.update(transformers_to_update)
