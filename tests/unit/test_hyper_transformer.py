@@ -1842,10 +1842,9 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
-        ff = FloatFormatter()
         ht.field_transformers = {
             'categorical_column': FrequencyEncoder(),
-            'numerical_column': ff,
+            'numerical_column': FloatFormatter(),
         }
         ht.field_sdtypes = {
             'categorical_column': 'categorical',
@@ -1858,11 +1857,8 @@ class TestHyperTransformer(TestCase):
         ht.update_transformers_by_sdtype('categorical', transformer)
 
         # Assert
-        expected_field_transformers = {
-            'categorical_column': transformer,
-            'numerical_column': ff,
-        }
-        assert ht.field_transformers == expected_field_transformers
+        assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
+        assert isinstance(ht.field_transformers['numerical_column'], FloatFormatter)
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_by_sdtype_field_sdtypes_fitted(self, mock_warnings):
@@ -1905,7 +1901,7 @@ class TestHyperTransformer(TestCase):
         ]
 
         mock_warnings.warn.assert_has_calls(expected_warnings_msgs)
-        assert ht.field_transformers == {'categorical_column': transformer}
+        assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
 
     def test_update_transformers_by_sdtype_unsupported_sdtype_raises_error(self):
         """Passing an incorrect ``sdtype`` should raise an error."""

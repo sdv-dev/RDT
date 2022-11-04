@@ -351,7 +351,7 @@ class HyperTransformer:
 
         for field, field_sdtype in self.field_sdtypes.items():
             if field_sdtype == sdtype:
-                self.field_transformers[field] = transformer_instance
+                self.field_transformers[field] = deepcopy(transformer_instance)
 
         self._modified_config = True
 
