@@ -66,6 +66,15 @@ def test_get_transformer_class_transformer_path():
     assert returned == BinaryEncoder
 
 
+def test_get_transformer_class_partial_path():
+    """Test with non fully specified path."""
+    # Run
+    returned = get_transformer_class('rdt.transformers.BinaryEncoder')
+
+    # Assert
+    assert returned == BinaryEncoder
+
+
 def test_get_transformer_class_transformer_path_addon():
     """Test the ``get_transformer_class`` method.
 

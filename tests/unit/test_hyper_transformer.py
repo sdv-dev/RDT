@@ -2590,7 +2590,7 @@ class TestHyperTransformer(TestCase):
         instance._fitted = False
         instance._user_message = Mock()
         instance.field_sdtypes = {'a': 'categorical'}
-        transformer_mock = Mock()
+        transformer_mock = FloatFormatter()
         default_mock.return_value = transformer_mock
         column_name_to_sdtype = {
             'a': 'numerical'
@@ -2606,7 +2606,7 @@ class TestHyperTransformer(TestCase):
         )
         mock_warnings.warn.assert_not_called()
         assert instance.field_sdtypes == {'a': 'numerical'}
-        assert instance.field_transformers == {'a': transformer_mock}
+        assert isinstance(instance.field_transformers['a'], FloatFormatter)
         instance._user_message.assert_called_once_with(user_message, 'Info')
 
     @patch('rdt.hyper_transformer.warnings')
