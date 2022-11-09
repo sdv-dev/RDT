@@ -35,6 +35,79 @@ class AsciiGenerator:
 class TestRegexGenerator:
     """Test class for ``RegexGenerator``."""
 
+    def test___getstate__(self):
+        """Test that ``__getstate__`` returns a dictionary without the generator."""
+        # Setup
+        instance = RegexGenerator()
+        instance.reset_anonymization()
+
+        # Run
+        state = instance.__getstate__()
+
+        # Assert
+        assert state == {
+            'data_length': None,
+            'enforce_uniqueness': False,
+            'generated': 0,
+            'generator_size': 380204032,
+            'output_properties': {None: {'next_transformer': None}},
+            'regex_format': '[A-Za-z]{5}'
+        }
+
+    @patch('rdt.transformers.text.strings_from_regex')
+    def test___setstate__generated_and_generator_size(self, mock_strings_from_regex):
+        """Test that ``__setstate__`` will initialize a generator and wind it forward."""
+        # Setup
+        state = {
+            'data_length': None,
+            'enforce_uniqueness': False,
+            'generated': 10,
+            'generator_size': 380204032,
+            'output_properties': {None: {'next_transformer': None}},
+            'regex_format': '[A-Za-z]{5}'
+        }
+        generator = AsciiGenerator()
+        mock_strings_from_regex.return_value = (generator, 26)
+        instance = RegexGenerator()
+
+        # Run
+        instance.__setstate__(state)
+
+        # Assert
+        assert next(generator) == 'K'
+        assert instance.generated == 10
+        assert instance.generator_size == 380204032
+        mock_strings_from_regex.assert_called_once_with('[A-Za-z]{5}')
+
+    @patch('rdt.transformers.text.strings_from_regex')
+    def test___setstate__(self, mock_strings_from_regex):
+        """Test that ``__setstate__`` will initialize a generator but not forward it.
+
+        When ``generated`` is ``None`` and ``generator_size`` is ``None`` this will be assigned
+        the ``0`` and the ``generator_size`` respectively.
+        """
+        # Setup
+        state = {
+            'data_length': None,
+            'enforce_uniqueness': False,
+            'generated': None,
+            'generator_size': None,
+            'output_properties': {None: {'next_transformer': None}},
+            'regex_format': '[A-Za-z]{5}'
+        }
+        generator = AsciiGenerator()
+        mock_strings_from_regex.return_value = (generator, 26)
+        instance = RegexGenerator()
+
+        # Run
+        instance.__setstate__(state)
+
+        # Assert
+        assert next(generator) == 'A'
+        assert instance.generated == 0
+        assert instance.generator_size == 26
+        mock_strings_from_regex.assert_called_once_with('[A-Za-z]{5}')
+
     def test___init__default(self):
         """Test the default instantiation of the transformer.
 
