@@ -1,3 +1,5 @@
+import pickle
+
 import numpy as np
 import pandas as pd
 
@@ -196,3 +198,25 @@ def test_regexgenerator_called_multiple_times_enforce_uniqueness():
     })
     pd.testing.assert_frame_equal(first_reverse_transform, expected_first_reverse_transform)
     pd.testing.assert_frame_equal(second_reverse_transform, expected_second_reverse_transform)
+
+
+def test_regexgenerator_pickled(tmpdir):
+    """Test that ensures that ``RegexGenerator`` can be pickled."""
+    data = pd.DataFrame({
+        'id': [1, 2, 3, 4, 5],
+        'username': ['a', 'b', 'c', 'd', 'e']
+    })
+
+    instance = RegexGenerator()
+    transformed = instance.fit_transform(data, 'id')
+    instance.reverse_transform(transformed)
+
+    # Pickle
+    with open(tmpdir / 'file.pkl', 'wb') as f:
+        pickle.dump(instance, f)
+
+    with open(tmpdir / 'file.pkl', 'rb') as f:
+        loaded = pickle.load(f)
+
+    # Assert
+    assert next(instance.generator) == next(loaded.generator)

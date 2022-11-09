@@ -26,6 +26,29 @@ class RegexGenerator(BaseTransformer):
     IS_GENERATOR = True
     INPUT_SDTYPE = 'text'
 
+    def __getstate__(self):
+        """Remove the generator when pickling."""
+        state = self.__dict__.copy()
+        state.pop('generator')
+        return state
+
+    def __setstate__(self, state):
+        """Set the generator when pickling."""
+        generator_size = state.get('generator_size')
+        generated = state.get('generated')
+        generator, size = strings_from_regex(state.get('regex_format'))
+        if generator_size is None:
+            state['generator_size'] = size
+        if generated is None:
+            state['generated'] = 0
+
+        if generated:
+            for _ in range(generated):
+                next(generator)
+
+        state['generator'] = generator
+        self.__dict__ = state
+
     def __init__(self, regex_format='[A-Za-z]{5}', enforce_uniqueness=False):
         self.output_properties = {None: {'next_transformer': None}}
         self.enforce_uniqueness = enforce_uniqueness
