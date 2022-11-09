@@ -1,7 +1,10 @@
+import re
 
 import numpy as np
 import pandas as pd
+import pytest
 
+from rdt.errors import Error
 from rdt.transformers.pii import AnonymizedFaker, PseudoAnonymizedFaker
 
 
@@ -100,6 +103,35 @@ def test_anonymizedfaker_custom_provider_with_nans():
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     assert len(reverse_transform['cc']) == 5
     assert reverse_transform['cc'].isna().sum() == 0
+
+
+def test_anonymizedfaker_enforce_uniqueness():
+    """Test that ``AnonymizedFaker`` works with uniqueness.
+
+    Also ensure that when we call ``reset_anonymization`` the generator will be able to
+    create values again.
+    """
+    data = pd.DataFrame({
+        'job': np.arange(637)
+    })
+
+    instance = AnonymizedFaker('job', 'job', enforce_uniqueness=True)
+    transformed = instance.fit_transform(data, 'job')
+    reverse_transform = instance.reverse_transform(transformed)
+
+    # Assert
+    assert len(reverse_transform['job'].unique()) == 637
+
+    error_msg = re.escape(
+        'The Faker function you specified is not able to generate 637 unique '
+        'values. Please use a different Faker function for column '
+        "('job')."
+    )
+    with pytest.raises(Error, match=error_msg):
+        instance.reverse_transform(transformed)
+
+    instance.reset_anonymization()
+    instance.reverse_transform(transformed)
 
 
 def test_pseudoanonymizedfaker():

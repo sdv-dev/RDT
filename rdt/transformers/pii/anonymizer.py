@@ -99,9 +99,13 @@ class AnonymizedFaker(BaseTransformer):
         self.output_properties = {None: {'next_transformer': None}}
 
         self.locales = locales
-        self.faker = faker.Faker(locales)
+        self.faker = faker.Faker(self.locales)
         if self.locales:
             self._check_locales()
+
+    def reset_anonymization(self):
+        """Create a new ``Faker`` instance."""
+        self.faker = faker.Faker(self.locales)
 
     def _function(self):
         """Return a callable ``faker`` function."""
