@@ -27,10 +27,18 @@ class RegexGenerator(BaseTransformer):
     INPUT_SDTYPE = 'text'
 
     def __init__(self, regex_format='[A-Za-z]{5}', enforce_uniqueness=False):
+        self.output_properties = {None: {'next_transformer': None}}
         self.enforce_uniqueness = enforce_uniqueness
         self.regex_format = regex_format
         self.data_length = None
-        self.output_properties = {None: {'next_transformer': None}}
+        self.generator = None
+        self.generator_size = None
+        self.generated = None
+
+    def reset_anonymization(self):
+        """Create a new generator and reset the generated values counter."""
+        self.generator, self.generator_size = strings_from_regex(self.regex_format)
+        self.generated = 0
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -39,6 +47,7 @@ class RegexGenerator(BaseTransformer):
             data (pandas.Series):
                 Data to fit to.
         """
+        self.reset_anonymization()
         self.data_length = len(data)
 
     def _transform(self, _data):
@@ -60,9 +69,7 @@ class RegexGenerator(BaseTransformer):
         else:
             sample_size = self.data_length
 
-        generator, size = strings_from_regex(self.regex_format)
-
-        if sample_size > size:
+        if sample_size > self.generator_size:
             if self.enforce_uniqueness:
                 raise Error(
                     f'The regex is not able to generate {sample_size} unique values. '
@@ -71,22 +78,37 @@ class RegexGenerator(BaseTransformer):
 
             warnings.warn(
                 f"The data has {sample_size} rows but the regex for '{self.get_input_column()}' "
-                f'can only create {size} unique values. Some values in '
+                f'can only create {self.generator_size} unique values. Some values in '
                 f"'{self.get_input_column()}' may be repeated."
             )
 
-        if size > sample_size:
+        remaining = self.generator_size - self.generated
+        if sample_size > self.generator_size - self.generated:
+            if self.enforce_uniqueness:
+                raise Error(
+                    f'The regex generator is not able to generate {sample_size} new unique '
+                    f'values (only {remaining} unique value left). Please use '
+                    "'reset_anonymization' in order to restart the generator."
+                )
+
+            self.reset_anonymization()
+            remaining = self.generator_size
+
+        if remaining >= sample_size:
             reverse_transformed = np.array([
-                next(generator)
+                next(self.generator)
                 for _ in range(sample_size)
             ], dtype=object)
 
+            self.generated += sample_size
+
         else:
-            generated_values = list(generator)
+            self.generated = self.generator_size
+            generated_values = list(self.generator)
             reverse_transformed = []
             while len(reverse_transformed) < sample_size:
-                remaining = sample_size - len(reverse_transformed)
-                reverse_transformed.extend(generated_values[:remaining])
+                remaining_samples = sample_size - len(reverse_transformed)
+                reverse_transformed.extend(generated_values[:remaining_samples])
 
             reverse_transformed = np.array(reverse_transformed, dtype=object)
 
