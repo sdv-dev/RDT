@@ -1334,6 +1334,39 @@ class TestHyperTransformer(TestCase):
             expect_call_args_transform
         )
 
+    def test_reset_anonymization(self):
+        """Test ``reset_anonymization``.
+
+        Test that ``reset_anonymization`` calls the expected transformers and their
+        ``reset_anonymization`` method.
+        """
+        # Setup
+        instance = Mock()
+        instance._fitted = True
+        instance._modified_config = False
+        instance._subset.return_value = False
+
+        transformer_id = Mock()
+        transformer_id.is_generator.return_value = True
+        transformer_random_element = Mock()
+        transformer_random_element.is_generator.return_value = True
+        transformer_name = Mock()
+        transformer_name.is_generator.return_value = False
+
+        instance.field_transformers = {
+            'id': transformer_id,
+            'random_element': transformer_random_element,
+            'name': transformer_name
+        }
+
+        # Run
+        HyperTransformer.reset_anonymization(instance)
+
+        # Assert
+        transformer_id.reset_anonymization.assert_called_once_with()
+        transformer_random_element.reset_anonymization.assert_called_once_with()
+        transformer_name.reset_anonymization.assert_not_called()
+
     def test_create_anonymized_columns(self):
         """Test ``create_anonymized_columns``.
 
