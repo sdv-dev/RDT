@@ -1400,6 +1400,7 @@ class TestHyperTransformer(TestCase):
         random_element.output_columns = []
 
         regex_id = RegexGenerator(regex_format='id_[0-9]')
+        regex_id.reset_anonymization()
         regex_id.columns = ['id']
         regex_id.output_columns = []
 

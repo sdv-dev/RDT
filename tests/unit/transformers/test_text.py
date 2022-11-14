@@ -2,7 +2,7 @@
 
 import re
 from string import ascii_uppercase
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -34,6 +34,79 @@ class AsciiGenerator:
 
 class TestRegexGenerator:
     """Test class for ``RegexGenerator``."""
+
+    def test___getstate__(self):
+        """Test that ``__getstate__`` returns a dictionary without the generator."""
+        # Setup
+        instance = RegexGenerator()
+        instance.reset_anonymization()
+
+        # Run
+        state = instance.__getstate__()
+
+        # Assert
+        assert state == {
+            'data_length': None,
+            'enforce_uniqueness': False,
+            'generated': 0,
+            'generator_size': 380204032,
+            'output_properties': {None: {'next_transformer': None}},
+            'regex_format': '[A-Za-z]{5}'
+        }
+
+    @patch('rdt.transformers.text.strings_from_regex')
+    def test___setstate__generated_and_generator_size(self, mock_strings_from_regex):
+        """Test that ``__setstate__`` will initialize a generator and wind it forward."""
+        # Setup
+        state = {
+            'data_length': None,
+            'enforce_uniqueness': False,
+            'generated': 10,
+            'generator_size': 380204032,
+            'output_properties': {None: {'next_transformer': None}},
+            'regex_format': '[A-Za-z]{5}'
+        }
+        generator = AsciiGenerator()
+        mock_strings_from_regex.return_value = (generator, 26)
+        instance = RegexGenerator()
+
+        # Run
+        instance.__setstate__(state)
+
+        # Assert
+        assert next(generator) == 'K'
+        assert instance.generated == 10
+        assert instance.generator_size == 380204032
+        mock_strings_from_regex.assert_called_once_with('[A-Za-z]{5}')
+
+    @patch('rdt.transformers.text.strings_from_regex')
+    def test___setstate__(self, mock_strings_from_regex):
+        """Test that ``__setstate__`` will initialize a generator but not forward it.
+
+        When ``generated`` is ``None`` and ``generator_size`` is ``None`` this will be assigned
+        the ``0`` and the ``generator_size`` respectively.
+        """
+        # Setup
+        state = {
+            'data_length': None,
+            'enforce_uniqueness': False,
+            'generated': None,
+            'generator_size': None,
+            'output_properties': {None: {'next_transformer': None}},
+            'regex_format': '[A-Za-z]{5}'
+        }
+        generator = AsciiGenerator()
+        mock_strings_from_regex.return_value = (generator, 26)
+        instance = RegexGenerator()
+
+        # Run
+        instance.__setstate__(state)
+
+        # Assert
+        assert next(generator) == 'A'
+        assert instance.generated == 0
+        assert instance.generator_size == 26
+        mock_strings_from_regex.assert_called_once_with('[A-Za-z]{5}')
 
     def test___init__default(self):
         """Test the default instantiation of the transformer.
@@ -71,6 +144,27 @@ class TestRegexGenerator:
         assert instance.data_length is None
         assert instance.regex_format == '[0-9]'
         assert instance.enforce_uniqueness
+
+    @patch('rdt.transformers.text.strings_from_regex')
+    def test_reset_anonymization(self, mock_strings_from_regex):
+        """Test that this method creates a new generator.
+
+        This method should create a new ``instance.generator``, ``instance.generator_size`` and
+        restart the ``instance.generated`` values to 0.
+        """
+        # Setup
+        generator = AsciiGenerator(5)
+        mock_strings_from_regex.return_value = (generator, 2)
+        instance = RegexGenerator()
+
+        # Run
+        instance.reset_anonymization()
+
+        # Assert
+        assert instance.generator == generator
+        assert instance.generator_size == 2
+        assert instance.generated == 0
+        mock_strings_from_regex.assert_called_once_with('[A-Za-z]{5}')
 
     def test__fit(self):
         """Test the ``_fit`` method.
@@ -121,22 +215,17 @@ class TestRegexGenerator:
         # Assert
         assert result is None
 
-    @patch('rdt.transformers.text.strings_from_regex')
-    def test__reverse_transform_generator_size_bigger_than_data_length(self,
-                                                                       mock_strings_from_regex):
+    def test__reverse_transform_generator_size_bigger_than_data_length(self):
         """Test the ``_reverse_transform`` method.
 
-        Validate that the ``_reverse_transform`` method calls the ``strings_from_regex``
-        function using the ``instance.regex_format`` and then generates the
-        ``instance.data_length`` number of data.
+        Validate that the ``_reverse_transform`` method uses the ``instance.generator``
+        to generate the ``instance.data_length`` number of data.
 
         Setup:
             - Initialize a ``RegexGenerator`` instance.
             - Set ``data_length`` to 3.
             - Initialize a generator.
-
-        Mock:
-            - Mock the ``strings_from_regex`` function to return a generator and a size of 5.
+            - Set a generator, generator size and generated values.
 
         Output:
             - A ``numpy.array`` with the first three letters from the generator.
@@ -146,7 +235,9 @@ class TestRegexGenerator:
         columns_data = pd.Series()
         instance.data_length = 3
         generator = AsciiGenerator(max_size=5)
-        mock_strings_from_regex.return_value = (generator, 5)
+        instance.generator = generator
+        instance.generator_size = 5
+        instance.generated = 0
 
         # Run
         result = instance._reverse_transform(columns_data)
@@ -154,33 +245,31 @@ class TestRegexGenerator:
         # Assert
         np.testing.assert_array_equal(result, np.array(['A', 'B', 'C']))
 
-    @patch('rdt.transformers.text.strings_from_regex')
-    def test__reverse_transform_generator_size_smaller_than_data_length(self,
-                                                                        mock_strings_from_regex):
+    def test__reverse_transform_generator_size_smaller_than_data_length(self):
         """Test the ``_reverse_transform`` method.
 
-        Validate that the ``_reverse_transform`` method calls the ``strings_from_regex``
-        function using the ``instance.regex_format`` and then generates the
-        ``instance.data_length`` number of data.
+        Validate that the ``_reverse_transform`` method uses the ``instance.generator``
+        to generate the ``instance.data_length`` number of data when ``enforce_uniqueness`` is
+        ``False`` but the data to be created is bigger.
 
         Setup:
             - Initialize a ``RegexGenerator`` instance.
             - Set ``data_length`` to 11.
             - Initialize a generator.
 
-        Mock:
-            - Mock the ``strings_from_regex`` function to return a generator and a size of 5.
-
         Output:
             - A ``numpy.array`` with the first five letters from the generator repeated.
         """
         # Setup
-        instance = RegexGenerator('[A-Z]')
+        instance = RegexGenerator('[A-Z]', enforce_uniqueness=False)
         columns_data = pd.Series()
+        instance.reset_anonymization = Mock()
         instance.data_length = 11
         generator = AsciiGenerator(5)
-        mock_strings_from_regex.return_value = (generator, 5)
         instance.columns = ['a']
+        instance.generator = generator
+        instance.generator_size = 5
+        instance.generated = 0
 
         # Run
         result = instance._reverse_transform(columns_data)
@@ -189,13 +278,12 @@ class TestRegexGenerator:
         expected_result = np.array(['A', 'B', 'C', 'D', 'E', 'A', 'B', 'C', 'D', 'E', 'A'])
         np.testing.assert_array_equal(result, expected_result)
 
-    @patch('rdt.transformers.text.strings_from_regex')
-    def test__reverse_transform_generator_size_of_input_data(self, mock_strings_from_regex):
+    def test__reverse_transform_generator_size_of_input_data(self):
         """Test the ``_reverse_transform`` method.
 
-        Validate that the ``_reverse_transform`` method calls the ``strings_from_regex``
-        function using the ``instance.regex_format`` and then generates the
-        ``instance.data_length`` number of data.
+        Validate that the ``_reverse_transform`` method uses the ``instance.generator``
+        to generate the ``instance.data_length`` number of data when ``enforce_uniqueness`` is
+        ``False`` but the data to be created is bigger.
 
         Setup:
             - Initialize a ``RegexGenerator`` instance.
@@ -204,8 +292,6 @@ class TestRegexGenerator:
 
         Input:
             - ``pandas.Series`` with a length of ``4``.
-        Mock:
-            - Mock the ``strings_from_regex`` function to return a generator and a size of 5.
 
         Output:
             - A ``numpy.array`` with the first five letters from the generator repeated.
@@ -215,7 +301,9 @@ class TestRegexGenerator:
         columns_data = pd.Series([1, 2, 3, 4])
         instance.data_length = 2
         generator = AsciiGenerator(5)
-        mock_strings_from_regex.return_value = (generator, 5)
+        instance.generator = generator
+        instance.generator_size = 5
+        instance.generated = 0
         instance.columns = ['a']
 
         # Run
@@ -224,19 +312,20 @@ class TestRegexGenerator:
         # Assert
         expected_result = np.array(['A', 'B', 'C', 'D'])
         np.testing.assert_array_equal(result, expected_result)
+        assert instance.generated == 4
 
-    @patch('rdt.transformers.text.strings_from_regex')
-    def test__reverse_transform_not_enough_unique_values(self, mock_strings_from_regex):
+    def test__reverse_transform_not_enough_unique_values(self):
         """Test the ``_reverse_transform`` method.
+
         Validate that the ``_reverse_transform`` method calls the ``strings_from_regex``
         function using the ``instance.regex_format`` and then generates the
         ``instance.data_length`` number of data.
+
         Setup:
             - Initialize a ``RegexGenerator`` instance with ``enforce_uniqueness`` to ``True``.
             - Set ``data_length`` to 6.
             - Initialize a generator.
-        Mock:
-            - Mock the ``strings_from_regex`` function to return a generator and a size of 2.
+
         Side Effects:
             - An ``Error`` is being raised as not enough unique values can be generated.
         """
@@ -244,7 +333,9 @@ class TestRegexGenerator:
         instance = RegexGenerator('[A-Z]', enforce_uniqueness=True)
         instance.data_length = 6
         generator = AsciiGenerator(5)
-        mock_strings_from_regex.return_value = (generator, 2)
+        instance.generator = generator
+        instance.generator_size = 5
+        instance.generated = 0
         instance.columns = ['a']
         columns_data = pd.Series()
 
@@ -252,6 +343,31 @@ class TestRegexGenerator:
         error_msg = re.escape(
             'The regex is not able to generate 6 unique values. Please use a different regex '
             "for column ('a')."
+        )
+        with pytest.raises(Error, match=error_msg):
+            instance._reverse_transform(columns_data)
+
+    def test__reverse_transform_enforce_uniqueness_not_enough_remaining(self):
+        """Test the case when ``_reverse_transform`` can't generate enough new values.
+
+        Validate that an ``Error`` is being raised stating that not enough new values can be
+        generated and that the user can use ``reset_anonymization`` in order to restart the
+        generator.
+        """
+        # Setup
+        instance = RegexGenerator('[A-Z]', enforce_uniqueness=True)
+        instance.data_length = 6
+        generator = AsciiGenerator(10)
+        instance.generator = generator
+        instance.generator_size = 10
+        instance.generated = 9
+        instance.columns = ['a']
+        columns_data = pd.Series()
+
+        # Assert
+        error_msg = re.escape(
+            'The regex generator is not able to generate 6 new unique values (only 1 unique '
+            "value left). Please use 'reset_anonymization' in order to restart the generator."
         )
         with pytest.raises(Error, match=error_msg):
             instance._reverse_transform(columns_data)
