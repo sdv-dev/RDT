@@ -40,13 +40,6 @@ CHECK_DETAILS = {
             'original sdtype.'
         ),
     ),
-    '_validate_composition': (
-        'Composition is Identity',
-        (
-            'Transforming data and reversing it recovers the original data, if composition is '
-            'identity is specified.'
-        ),
-    ),
     '_validate_hypertransformer_transformed_data': (
         'Hypertransformer can transform',
         'The HyperTransformer is able to use the Transformer and produce float values.',

@@ -3,13 +3,14 @@
 import inspect
 import json
 import warnings
+from copy import deepcopy
 
 import pandas as pd
 
 from rdt.errors import Error, NotFittedError, TransformerInputError
 from rdt.transformers import (
     BaseTransformer, get_class_by_transformer_name, get_default_transformer,
-    get_transformer_instance, get_transformers_by_type)
+    get_transformers_by_type)
 
 
 class Config(dict):
@@ -171,11 +172,8 @@ class HyperTransformer:
         """
         invalid_transformers_columns = []
         for column_name, transformer in column_name_to_transformer.items():
-            if transformer is not None:
-                try:
-                    get_transformer_instance(transformer)
-                except (ValueError, AttributeError):
-                    invalid_transformers_columns.append(column_name)
+            if transformer and not isinstance(transformer, BaseTransformer):
+                invalid_transformers_columns.append(column_name)
 
         if invalid_transformers_columns:
             raise Error(
@@ -353,12 +351,14 @@ class HyperTransformer:
 
         for field, field_sdtype in self.field_sdtypes.items():
             if field_sdtype == sdtype:
-                self.field_transformers[field] = transformer_instance
+                self.field_transformers[field] = deepcopy(transformer_instance)
 
         self._modified_config = True
 
     def update_sdtypes(self, column_name_to_sdtype):
         """Update the ``sdtypes`` for each specified column name.
+
+        The method may also update ``field_transformers`` to match the new sdtypes.
 
         Args:
             column_name_to_sdtype(dict):
@@ -369,7 +369,6 @@ class HyperTransformer:
 
         update_columns = column_name_to_sdtype.keys()
         self._validate_update_columns(update_columns)
-
         self._validate_sdtypes(column_name_to_sdtype)
 
         transformers_to_update = {}
@@ -381,7 +380,7 @@ class HyperTransformer:
                     supported_sdtypes = current_transformer.get_supported_sdtypes()
 
                 if sdtype not in supported_sdtypes:
-                    transformers_to_update[column] = get_default_transformer(sdtype)
+                    transformers_to_update[column] = deepcopy(get_default_transformer(sdtype))
 
         self.field_sdtypes.update(column_name_to_sdtype)
         self.field_transformers.update(transformers_to_update)
@@ -398,7 +397,7 @@ class HyperTransformer:
 
         Args:
             column_name_to_transformer(dict):
-                Dict mapping column names to transformers to be used for that column.
+                Dict mapping column names to transformer instances.
         """
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
@@ -494,9 +493,10 @@ class HyperTransformer:
             if field not in self.field_transformers:
                 sdtype = self.field_sdtypes[field]
                 if sdtype in self._default_sdtype_transformers:
-                    self.field_transformers[field] = self._default_sdtype_transformers[sdtype]
+                    self.field_transformers[field] = deepcopy(
+                        self._default_sdtype_transformers[sdtype])
                 else:
-                    self.field_transformers[field] = get_default_transformer(sdtype)
+                    self.field_transformers[field] = deepcopy(get_default_transformer(sdtype))
 
     def detect_initial_config(self, data):
         """Print the configuration of the data.
@@ -551,7 +551,6 @@ class HyperTransformer:
             self._output_columns.append(field)
 
         else:
-            transformer = get_transformer_instance(transformer)
             transformer.fit(data, field)
             self._transformers_sequence.append(transformer)
             data = transformer.transform(data)

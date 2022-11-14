@@ -251,10 +251,8 @@ class BaseTransformer:
                 Column name. Must be present in the data.
         """
         self._store_columns(column, data)
-
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
-
         self._build_output_columns(data)
 
     def _transform(self, columns_data):

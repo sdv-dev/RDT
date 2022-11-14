@@ -14,6 +14,7 @@ from rdt.transformers import (
     AnonymizedFaker, BinaryEncoder, FloatFormatter, FrequencyEncoder, LabelEncoder, RegexGenerator,
     UnixTimestampEncoder)
 from rdt.transformers.base import BaseTransformer
+from rdt.transformers.numerical import ClusterBasedNormalizer
 
 
 class TestHyperTransformer(TestCase):
@@ -247,22 +248,16 @@ class TestHyperTransformer(TestCase):
             - The appropriate ``sdtypes`` and ``transformers`` should be found.
         """
         # Setup
-        int_transformer = Mock()
-        float_transformer = Mock()
-        categorical_transformer = Mock()
-        bool_transformer = Mock()
-        datetime_transformer = Mock()
-
         data = self.get_data()
         field_transformers = {
-            'integer': int_transformer,
-            'float': float_transformer,
+            'integer': FloatFormatter(),
+            'float': ClusterBasedNormalizer(),
         }
         default_sdtype_transformers = {
-            'boolean': bool_transformer,
-            'categorical': categorical_transformer
+            'boolean': BinaryEncoder(),
+            'categorical': FrequencyEncoder()
         }
-        get_default_transformer_mock.return_value = datetime_transformer
+        get_default_transformer_mock.return_value = UnixTimestampEncoder()
         ht = HyperTransformer()
         ht.field_transformers = field_transformers
         ht.field_sdtypes = {'datetime': 'datetime'}
@@ -280,13 +275,12 @@ class TestHyperTransformer(TestCase):
             'categorical': 'categorical',
             'datetime': 'datetime'
         }
-        assert ht.field_transformers == {
-            'integer': int_transformer,
-            'float': float_transformer,
-            'categorical': categorical_transformer,
-            'bool': bool_transformer,
-            'datetime': datetime_transformer
-        }
+
+        assert isinstance(ht.field_transformers['integer'], FloatFormatter)
+        assert isinstance(ht.field_transformers['float'], ClusterBasedNormalizer)
+        assert isinstance(ht.field_transformers['categorical'], FrequencyEncoder)
+        assert isinstance(ht.field_transformers['bool'], BinaryEncoder)
+        assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
         ht._unfit.assert_called_once()
 
     def test_detect_initial_config(self):
@@ -357,8 +351,7 @@ class TestHyperTransformer(TestCase):
         ))
         assert output == expected_output
 
-    @patch('rdt.hyper_transformer.get_transformer_instance')
-    def test__fit_field_transformer(self, get_transformer_instance_mock):
+    def test__fit_field_transformer(self):
         """Test the ``_fit_field_transformer`` method.
 
         This tests that the ``_fit_field_transformer`` behaves as expected.
@@ -367,8 +360,6 @@ class TestHyperTransformer(TestCase):
         itself recursively if it can.
 
         Setup:
-            - A mock for ``get_transformer_instance``.
-            - A mock for the transformer returned by ``get_transformer_instance``.
             The ``get_output_sdtypes`` method will return two outputs, one that
             is ML ready and one that isn't.
 
@@ -401,7 +392,6 @@ class TestHyperTransformer(TestCase):
             'a.out1.is_null': None
         }
         transformer2.transform.return_value = transformed_data1
-        get_transformer_instance_mock.side_effect = [transformer1, transformer2]
         ht = HyperTransformer()
 
         # Run
@@ -1132,6 +1122,20 @@ class TestHyperTransformer(TestCase):
         bool_transformer.transform.assert_called_once()
         datetime_transformer.transform.assert_called_once()
 
+    def test_fit_updates_field_transformers(self):
+        """Test it updates the  ``field_transformers`` dict with the actual instance."""
+        # Setup
+        ht = HyperTransformer()
+        data = pd.DataFrame({'col': [1, 2, 3]})
+        ff = FloatFormatter()
+
+        # Run
+        ht.set_config({'sdtypes': {'col': 'numerical'}, 'transformers': {'col': ff}})
+        ht.fit(data)
+
+        # Assert
+        assert ht.get_config()['transformers']['col'] == ff
+
     def test_transform_raises_error_no_config(self):
         """Test that ``transform`` raises an error.
 
@@ -1838,10 +1842,9 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
-        ff = FloatFormatter()
         ht.field_transformers = {
             'categorical_column': FrequencyEncoder(),
-            'numerical_column': ff,
+            'numerical_column': FloatFormatter(),
         }
         ht.field_sdtypes = {
             'categorical_column': 'categorical',
@@ -1854,11 +1857,8 @@ class TestHyperTransformer(TestCase):
         ht.update_transformers_by_sdtype('categorical', transformer)
 
         # Assert
-        expected_field_transformers = {
-            'categorical_column': transformer,
-            'numerical_column': ff,
-        }
-        assert ht.field_transformers == expected_field_transformers
+        assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
+        assert isinstance(ht.field_transformers['numerical_column'], FloatFormatter)
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_by_sdtype_field_sdtypes_fitted(self, mock_warnings):
@@ -1901,7 +1901,7 @@ class TestHyperTransformer(TestCase):
         ]
 
         mock_warnings.warn.assert_has_calls(expected_warnings_msgs)
-        assert ht.field_transformers == {'categorical_column': transformer}
+        assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
 
     def test_update_transformers_by_sdtype_unsupported_sdtype_raises_error(self):
         """Passing an incorrect ``sdtype`` should raise an error."""
@@ -2586,7 +2586,7 @@ class TestHyperTransformer(TestCase):
         instance._fitted = False
         instance._user_message = Mock()
         instance.field_sdtypes = {'a': 'categorical'}
-        transformer_mock = Mock()
+        transformer_mock = FloatFormatter()
         default_mock.return_value = transformer_mock
         column_name_to_sdtype = {
             'a': 'numerical'
@@ -2602,7 +2602,7 @@ class TestHyperTransformer(TestCase):
         )
         mock_warnings.warn.assert_not_called()
         assert instance.field_sdtypes == {'a': 'numerical'}
-        assert instance.field_transformers == {'a': transformer_mock}
+        assert isinstance(instance.field_transformers['a'], FloatFormatter)
         instance._user_message.assert_called_once_with(user_message, 'Info')
 
     @patch('rdt.hyper_transformer.warnings')
@@ -2905,11 +2905,7 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(Error, match=error_msg):
             ht.remove_transformers_by_sdtype('phone_number')
 
-    @patch('rdt.hyper_transformer.get_transformer_instance')
-    def test__fit_field_transformer_multi_column_field_not_ready(
-        self,
-        get_transformer_instance_mock
-    ):
+    def test__fit_field_transformer_multi_column_field_not_ready(self,):
         """Test the ``_fit_field_transformer`` method.
 
         This tests that the ``_fit_field_transformer`` behaves as expected.
@@ -2918,8 +2914,6 @@ class TestHyperTransformer(TestCase):
         It should however, transform the data.
 
         Setup:
-            - A mock for ``get_transformer_instance``.
-            - A mock for the transformer returned by ``get_transformer_instance``.
             The ``get_output_sdtypes`` method will return one output that is part of
             a multi-column field.
             - A mock for ``_multi_column_fields`` to return the multi-column field.
@@ -2945,7 +2939,6 @@ class TestHyperTransformer(TestCase):
         transformer1.get_output_columns.return_value = ['a.out1']
         transformer1.get_next_transformers.return_value = {('a.out1', 'b.out1'): transformer2}
         transformer1.transform.return_value = transformed_data1
-        get_transformer_instance_mock.side_effect = [transformer1]
         ht = HyperTransformer()
         ht._multi_column_fields = Mock()
         ht._multi_column_fields.get.return_value = ('a.out1', 'b.out1')

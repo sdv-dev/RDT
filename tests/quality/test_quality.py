@@ -70,7 +70,7 @@ def get_transformer_regression_scores(data, sdtype, dataset_name, transformers, 
         dataset_name (string):
             The name of the dataset.
         transformers (list):
-            List of transformer instances.
+            List of transformer classes.
         metadata (dict):
             Dictionary containing metadata for the table.
 
@@ -95,7 +95,8 @@ def get_transformer_regression_scores(data, sdtype, dataset_name, transformers, 
         for transformer in transformers:
             ht = HyperTransformer()
             ht.detect_initial_config(features)
-            ht.update_transformers_by_sdtype(sdtype=sdtype, transformer=transformer())
+            ht.update_transformers_by_sdtype(
+                sdtype=sdtype, transformer_name=transformer.get_name())
             ht.fit(features)
             transformed_features = ht.transform(features).to_numpy()
             transformed_features = transformed_features[~nans]

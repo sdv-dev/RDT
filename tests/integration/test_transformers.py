@@ -207,7 +207,7 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
 
     else:
         field_transformers = {
-            TEST_COL: transformer_class
+            TEST_COL: transformer_class()
         }
 
     sdtypes = {}
