@@ -2,6 +2,7 @@
 
 import inspect
 import json
+import logging
 import warnings
 from copy import deepcopy
 
@@ -11,6 +12,8 @@ from rdt.errors import Error, NotFittedError, TransformerInputError
 from rdt.transformers import (
     BaseTransformer, get_class_by_transformer_name, get_default_transformer,
     get_transformers_by_type)
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Config(dict):
@@ -64,19 +67,6 @@ class HyperTransformer:
         'The HyperTransformer is not ready to use. Please fit your data first using '
         "'fit' or 'fit_transform'."
     )
-
-    @staticmethod
-    def _user_message(text, prefix=None):
-        """Print a text with an optional prefix to the user.
-
-        Args:
-            text (str):
-                Text to print.
-            prefix (str or None):
-                A prefix to add to the front of the text before printing.
-        """
-        message = f'{prefix}: {text}' if prefix else text
-        print(message)  # noqa: T001
 
     @staticmethod
     def _add_field_to_set(field, field_set):
@@ -384,10 +374,11 @@ class HyperTransformer:
 
         self.field_sdtypes.update(column_name_to_sdtype)
         self.field_transformers.update(transformers_to_update)
-        self._user_message(
+        LOGGER.info(
             'The transformers for these columns may change based on the new sdtype.\n'
             "Use 'get_config()' to verify the transformers.", 'Info'
         )
+
         self._modified_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
@@ -516,18 +507,18 @@ class HyperTransformer:
         self.field_transformers = {}
 
         # Set the sdtypes and transformers of all fields to their defaults
+        LOGGER.info('Detecting a new config from the data ... SUCCESS')
         self._learn_config(data)
 
-        self._user_message('Detecting a new config from the data ... SUCCESS')
-        self._user_message('Setting the new config ... SUCCESS')
+        LOGGER.info('Setting the new config ... SUCCESS')
 
         config = Config({
             'sdtypes': self.field_sdtypes,
             'transformers': self.field_transformers
         })
 
-        self._user_message('Config:')
-        self._user_message(config)
+        LOGGER.info('Config:')
+        LOGGER.info(config)
 
     def _fit_field_transformer(self, data, field, transformer):
         """Fit a transformer to its corresponding field.
