@@ -168,7 +168,7 @@ class HyperTransformer:
         if invalid_transformers_columns:
             raise Error(
                 f'Invalid transformers for columns: {invalid_transformers_columns}. '
-                'Please assign an rdt transformer object to each column name.'
+                'Please assign an rdt transformer instance to each column name.'
             )
 
     @staticmethod
@@ -376,7 +376,7 @@ class HyperTransformer:
         self.field_transformers.update(transformers_to_update)
         LOGGER.info(
             'The transformers for these columns may change based on the new sdtype.\n'
-            "Use 'get_config()' to verify the transformers.", 'Info'
+            "Use 'get_config()' to verify the transformers."
         )
 
         self._modified_config = True
@@ -518,7 +518,7 @@ class HyperTransformer:
         })
 
         LOGGER.info('Config:')
-        LOGGER.info(config)
+        LOGGER.info(str(config))
 
     def _fit_field_transformer(self, data, field, transformer):
         """Fit a transformer to its corresponding field.

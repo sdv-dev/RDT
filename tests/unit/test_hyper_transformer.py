@@ -1,5 +1,3 @@
-import contextlib
-import io
 import re
 from unittest import TestCase
 from unittest.mock import Mock, call, patch
@@ -18,38 +16,6 @@ from rdt.transformers.numerical import ClusterBasedNormalizer
 
 
 class TestHyperTransformer(TestCase):
-
-    @patch('rdt.hyper_transformer.print')
-    def test__user_message_no_prefix(self, mock_print):
-        """Test that the ``_user_message`` function prints a message.
-
-        Mock:
-            - Mock print function.
-
-        Side Effects:
-            - Print has been called once with message.
-        """
-        # Run
-        HyperTransformer._user_message('My message.')
-
-        # Assert
-        mock_print.assert_called_once_with('My message.')
-
-    @patch('rdt.hyper_transformer.print')
-    def test__user_message_with_prefix(self, mock_print):
-        """Test that the ``_user_message`` function prints a message with prefix.
-
-        Mock:
-            - Mock print function.
-
-        Side Effects:
-            - Print has been called once with the prefix followed by the message.
-        """
-        # Run
-        HyperTransformer._user_message('My tip.', 'Tip')
-
-        # Assert
-        mock_print.assert_called_once_with('Tip: My tip.')
 
     def test__add_field_to_set_string(self):
         """Test the ``_add_field_to_set`` method.
@@ -283,11 +249,12 @@ class TestHyperTransformer(TestCase):
         assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
         ht._unfit.assert_called_once()
 
-    def test_detect_initial_config(self):
+    @patch('rdt.hyper_transformer.LOGGER')
+    def test_detect_initial_config(self, logger_mock):
         """Test the ``detect_initial_config`` method.
 
         This tests that ``field_sdtypes`` and ``field_transformers`` are correctly set,
-        ``_config_detected`` is set to True, and that the appropriate configuration is printed.
+        ``_config_detected`` is set to True, and that the configuration is logged.
 
         Input:
             - A DataFrame.
@@ -303,11 +270,7 @@ class TestHyperTransformer(TestCase):
         })
 
         # Run
-        f_out = io.StringIO()
-        with contextlib.redirect_stdout(f_out):
-            ht.detect_initial_config(data)
-
-        output = f_out.getvalue()
+        ht.detect_initial_config(data)
 
         # Assert
         assert ht.field_sdtypes == {
@@ -327,10 +290,7 @@ class TestHyperTransformer(TestCase):
             'col5': 'FloatFormatter()'
         }
 
-        expected_output = '\n'.join((
-            'Detecting a new config from the data ... SUCCESS',
-            'Setting the new config ... SUCCESS',
-            'Config:',
+        expected_config = '\n'.join((
             '{',
             '    "sdtypes": {',
             '        "col1": "numerical",',
@@ -346,10 +306,14 @@ class TestHyperTransformer(TestCase):
             '        "col4": UnixTimestampEncoder(),',
             '        "col5": FloatFormatter()',
             '    }',
-            '}',
-            ''
+            '}'
         ))
-        assert output == expected_output
+        logger_mock.info.assert_has_calls([
+            call('Detecting a new config from the data ... SUCCESS'),
+            call('Setting the new config ... SUCCESS'),
+            call('Config:'),
+            call(expected_config)
+        ])
 
     def test__fit_field_transformer(self):
         """Test the ``_fit_field_transformer`` method.
@@ -696,7 +660,7 @@ class TestHyperTransformer(TestCase):
         # Run / Assert
         error_msg = re.escape(
             "Invalid transformers for columns: ['column2']. "
-            'Please assign an rdt transformer object to each column name.'
+            'Please assign an rdt transformer instance to each column name.'
         )
         with pytest.raises(Error, match=error_msg):
             HyperTransformer._validate_config(config)
@@ -2400,8 +2364,9 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(Error, match=expected_msg):
             instance.update_transformers(column_name_to_transformer)
 
+    @patch('rdt.hyper_transformer.LOGGER')
     @patch('rdt.hyper_transformer.warnings')
-    def test_update_sdtypes_fitted(self, mock_warnings):
+    def test_update_sdtypes_fitted(self, mock_warnings, mock_logger):
         """Test ``update_sdtypes``.
 
         Ensure that the method properly updates ``self.field_sdtypes`` and prints the
@@ -2416,7 +2381,7 @@ class TestHyperTransformer(TestCase):
 
         Mock:
             - Patch the ``warnings`` module.
-            - Mock the instance ``_user_message`` to ensure that has been called.
+            - Patch the logger.
 
         Side Effects:
             - ``self.field_sdtypes`` has been updated.
@@ -2427,7 +2392,6 @@ class TestHyperTransformer(TestCase):
         instance.field_transformers = {'a': FrequencyEncoder, 'b': FloatFormatter}
         instance.field_sdtypes = {'my_column': 'categorical'}
         instance._fitted = True
-        instance._user_message = Mock()
         column_name_to_sdtype = {
             'my_column': 'numerical'
         }
@@ -2447,10 +2411,11 @@ class TestHyperTransformer(TestCase):
 
         mock_warnings.warn.assert_called_once_with(expected_message)
         assert instance.field_sdtypes == {'my_column': 'numerical'}
-        instance._user_message.assert_called_once_with(user_message, 'Info')
+        mock_logger.info.assert_called_once_with(user_message)
 
+    @patch('rdt.hyper_transformer.LOGGER')
     @patch('rdt.hyper_transformer.warnings')
-    def test_update_sdtypes_not_fitted(self, mock_warnings):
+    def test_update_sdtypes_not_fitted(self, mock_warnings, mock_logger):
         """Test ``update_sdtypes``.
 
         Ensure that the method properly updates the ``self.field_sdtypes`` and prints the
@@ -2469,12 +2434,11 @@ class TestHyperTransformer(TestCase):
         Side Effects:
             - ``self.field_sdtypes`` has been updated.
             - No warning should be raised.
-            - User message should be printed.
+            - User message should be logged.
         """
         # Setup
         instance = HyperTransformer()
         instance._fitted = False
-        instance._user_message = Mock()
         instance.field_sdtypes = {'my_column': 'categorical'}
         column_name_to_sdtype = {
             'my_column': 'numerical'
@@ -2490,7 +2454,7 @@ class TestHyperTransformer(TestCase):
         )
         mock_warnings.warn.assert_not_called()
         assert instance.field_sdtypes == {'my_column': 'numerical'}
-        instance._user_message.assert_called_once_with(user_message, 'Info')
+        mock_logger.info.assert_called_once_with(user_message)
 
     def test_update_sdtypes_no_field_sdtypes(self):
         """Test ``update_sdtypes``.
@@ -2590,9 +2554,10 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(Error, match=expected_message):
             instance.update_sdtypes(column_name_to_sdtype)
 
+    @patch('rdt.hyper_transformer.LOGGER')
     @patch('rdt.hyper_transformer.get_default_transformer')
     @patch('rdt.hyper_transformer.warnings')
-    def test_update_sdtypes_different_sdtype(self, mock_warnings, default_mock):
+    def test_update_sdtypes_different_sdtype(self, mock_warnings, default_mock, mock_logger):
         """Test ``update_sdtypes``.
 
         Ensure that the method properly updates the ``self.field_sdtypes`` and changes the
@@ -2613,12 +2578,11 @@ class TestHyperTransformer(TestCase):
             - ``self.field_sdtypes`` has been updated.
             - ``self.field_transformers`` has been updated.
             - No warning should be raised.
-            - User message should be printed.
+            - User message should be logged.
         """
         # Setup
         instance = HyperTransformer()
         instance._fitted = False
-        instance._user_message = Mock()
         instance.field_sdtypes = {'a': 'categorical'}
         transformer_mock = FloatFormatter()
         default_mock.return_value = transformer_mock
@@ -2637,10 +2601,11 @@ class TestHyperTransformer(TestCase):
         mock_warnings.warn.assert_not_called()
         assert instance.field_sdtypes == {'a': 'numerical'}
         assert isinstance(instance.field_transformers['a'], FloatFormatter)
-        instance._user_message.assert_called_once_with(user_message, 'Info')
+        mock_logger.info.assert_called_once_with(user_message)
 
+    @patch('rdt.hyper_transformer.LOGGER')
     @patch('rdt.hyper_transformer.warnings')
-    def test_update_sdtypes_different_sdtype_transformer_provided(self, mock_warnings):
+    def test_update_sdtypes_different_sdtype_than_transformer(self, mock_warnings, mock_logger):
         """Test ``update_sdtypes``.
 
         Ensure that the method properly updates the ``self.field_sdtypes`` but doesn't change
@@ -2662,12 +2627,11 @@ class TestHyperTransformer(TestCase):
             - ``self.field_sdtypes`` has been updated.
             - ``self.field_transformers`` should not be updated.
             - No warning should be raised.
-            - User message should be printed.
+            - User message should be logged.
         """
         # Setup
         instance = HyperTransformer()
         instance._fitted = False
-        instance._user_message = Mock()
         instance.field_sdtypes = {'a': 'categorical'}
         transformer = FloatFormatter()
         instance.field_transformers = {'a': transformer}
@@ -2686,7 +2650,7 @@ class TestHyperTransformer(TestCase):
         mock_warnings.warn.assert_not_called()
         assert instance.field_sdtypes == {'a': 'numerical'}
         assert instance.field_transformers == {'a': transformer}
-        instance._user_message.assert_called_once_with(user_message, 'Info')
+        mock_logger.info.assert_called_once_with(user_message)
 
     def test__validate_update_columns(self):
         """Test ``_validate_update_columns``.
@@ -2737,7 +2701,7 @@ class TestHyperTransformer(TestCase):
         # Run / Assert
         error_msg = re.escape(
             "Invalid transformers for columns: ['col2']. "
-            'Please assign an rdt transformer object to each column name.'
+            'Please assign an rdt transformer instance to each column name.'
         )
         with pytest.raises(Error, match=error_msg):
             instance._validate_transformers(column_name_to_transformer)
