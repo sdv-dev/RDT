@@ -28,6 +28,6 @@ jobs:
       run: invoke check-dependencies
     - name: Run Unit tests
       run: invoke unit
-    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.8
+    - if: matrix.os == 'ubuntu-20.04' && matrix.python-version == 3.8
       name: Upload codecov report
       uses: codecov/codecov-action@v2
