@@ -112,7 +112,7 @@ def test_anonymizedfaker_enforce_uniqueness():
     create values again.
     """
     data = pd.DataFrame({
-        'job': np.arange(637)
+        'job': np.arange(500)
     })
 
     instance = AnonymizedFaker('job', 'job', enforce_uniqueness=True)
@@ -120,10 +120,10 @@ def test_anonymizedfaker_enforce_uniqueness():
     reverse_transform = instance.reverse_transform(transformed)
 
     # Assert
-    assert len(reverse_transform['job'].unique()) == 637
+    assert len(reverse_transform['job'].unique()) == 500
 
     error_msg = re.escape(
-        'The Faker function you specified is not able to generate 637 unique '
+        'The Faker function you specified is not able to generate 500 unique '
         'values. Please use a different Faker function for column '
         "('job')."
     )
