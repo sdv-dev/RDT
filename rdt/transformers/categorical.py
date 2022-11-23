@@ -256,6 +256,7 @@ class OneHotEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'categorical'
+    SUPPORTED_SDTYPES = ['categorical', 'boolean']
     dummies = None
     _dummy_na = None
     _num_dummies = None
