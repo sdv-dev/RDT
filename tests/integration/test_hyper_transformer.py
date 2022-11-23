@@ -10,7 +10,7 @@ from rdt import HyperTransformer, get_demo
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
     AnonymizedFaker, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
-    OneHotEncoder, RegexGenerator, get_default_transformer, get_default_transformers)
+    LabelEncoder, OneHotEncoder, RegexGenerator, get_default_transformer, get_default_transformers)
 from rdt.transformers.datetime import UnixTimestampEncoder
 
 
@@ -284,6 +284,28 @@ def test_single_category():
 
     # Assert
     pd.testing.assert_frame_equal(data, reverse)
+
+
+def test_categorical_encoders_with_booleans():
+    """Test that categorical encoders support boolean values."""
+    # Setup
+    config = {
+        'sdtypes': {
+            'email_confirmed': 'boolean',
+            'subscribed': 'boolean',
+            'paid': 'boolean',
+        },
+        'transformers': {
+            'email_confirmed': FrequencyEncoder(),
+            'subscribed': OneHotEncoder(),
+            'paid': LabelEncoder(),
+        }
+    }
+
+    ht = HyperTransformer()
+
+    # Run and Assert
+    ht.set_config(config)
 
 
 def test_dtype_category():
