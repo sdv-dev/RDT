@@ -1894,7 +1894,7 @@ class TestHyperTransformer(TestCase):
             call(
                 "The 'transformer' parameter will no longer be supported in future "
                 "versions of the RDT. Please use the 'transformer_name' and "
-                "'transformer_parameters' parameters instead.", DeprecationWarning
+                "'transformer_parameters' parameters instead.", FutureWarning
             )
         ]
 
