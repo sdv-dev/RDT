@@ -31,7 +31,7 @@ class BaseTransformer:
         if missing_value_replacement is None:
             warnings.warn(
                 "Setting 'missing_value_replacement' to 'None' is no longer supported. "
-                f"Imputing with the '{default}' instead.", DeprecationWarning
+                f"Imputing with the '{default}' instead.", FutureWarning
             )
             self.missing_value_replacement = default
         else:

@@ -297,14 +297,14 @@ class HyperTransformer:
                 warnings.warn(
                     "The 'transformer' parameter will no longer be supported in future versions "
                     "of the RDT. Using the 'transformer_name' parameter instead.",
-                    DeprecationWarning
+                    FutureWarning
                 )
 
         else:
             warnings.warn(
                 "The 'transformer' parameter will no longer be supported in future versions "
                 "of the RDT. Please use the 'transformer_name' and 'transformer_parameters' "
-                'parameters instead.', DeprecationWarning
+                'parameters instead.', FutureWarning
             )
 
     def update_transformers_by_sdtype(
