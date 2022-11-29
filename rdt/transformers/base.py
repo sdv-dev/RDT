@@ -11,6 +11,7 @@ import pandas as pd
 @contextlib.contextmanager
 def set_random_states(random_states, method_name, set_model_random_state):
     """Context manager for managing the random state.
+
     Args:
         random_state (int or tuple):
             The random seed or a tuple of (numpy.random.RandomState, torch.Generator).
@@ -35,6 +36,7 @@ def set_random_states(random_states, method_name, set_model_random_state):
 
 def random_state(function):
     """Set the random state before calling the function.
+
     Args:
         function (Callable):
             The function to wrap around.
@@ -43,10 +45,9 @@ def random_state(function):
         if self.random_states is None:
             return function(self, *args, **kwargs)
 
-        else:
-            method_name = function.__name__
-            with set_random_states(self.random_states, method_name, self.set_random_state):
-                return function(self, *args, **kwargs)
+        method_name = function.__name__
+        with set_random_states(self.random_states, method_name, self.set_random_state):
+            return function(self, *args, **kwargs)
 
     return wrapper
 
@@ -79,12 +80,20 @@ class BaseTransformer:
             'reverse_transform': np.random.RandomState(seed=self.INITIAL_REVERSE_TRANSFORM_STATE)
         }
 
-    def set_random_state(self, random_state, method_name):
+    def set_random_state(self, state, method_name):
+        """Set the random state for a transformer.
+
+        Args:
+            state (numpy.random.RandomState):
+                The numpy random state to set.
+            method_name (str):
+                The method to set it for.
+        """
         if method_name not in self.random_states:
             raise ValueError(
                 "'method_name' must be one of 'fit', 'transform' or 'reverse_transform'"
             )
-        self.random_states[method_name] = random_state
+        self.random_states[method_name] = state
 
     def _set_missing_value_replacement(self, default, missing_value_replacement):
         if missing_value_replacement is None:
