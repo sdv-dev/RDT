@@ -1,10 +1,54 @@
 """BaseTransformer module."""
 import abc
+import contextlib
 import inspect
 import warnings
 
 import numpy as np
 import pandas as pd
+
+
+@contextlib.contextmanager
+def set_random_states(random_states, method_name, set_model_random_state):
+    """Context manager for managing the random state.
+    Args:
+        random_state (int or tuple):
+            The random seed or a tuple of (numpy.random.RandomState, torch.Generator).
+        set_model_random_state (function):
+            Function to set the random state on the model.
+    """
+    original_np_state = np.random.get_state()
+
+    random_np_state = random_states[method_name]
+
+    np.random.set_state(random_np_state.get_state())
+
+    try:
+        yield
+    finally:
+        current_np_state = np.random.RandomState()
+        current_np_state.set_state(np.random.get_state())
+        set_model_random_state(current_np_state, method_name)
+
+        np.random.set_state(original_np_state)
+
+
+def random_state(function):
+    """Set the random state before calling the function.
+    Args:
+        function (Callable):
+            The function to wrap around.
+    """
+    def wrapper(self, *args, **kwargs):
+        if self.random_states is None:
+            return function(self, *args, **kwargs)
+
+        else:
+            method_name = function.__name__
+            with set_random_states(self.random_states, method_name, self.set_random_state):
+                return function(self, *args, **kwargs)
+
+    return wrapper
 
 
 class BaseTransformer:
@@ -18,6 +62,9 @@ class BaseTransformer:
     INPUT_SDTYPE = None
     SUPPORTED_SDTYPES = None
     IS_GENERATOR = None
+    INITIAL_FIT_STATE = 21
+    INITIAL_TRANSFORM_STATE = 80
+    INITIAL_REVERSE_TRANSFORM_STATE = 130
 
     columns = None
     column_prefix = None
@@ -26,6 +73,18 @@ class BaseTransformer:
 
     def __init__(self):
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
+        self.random_states = {
+            'fit': np.random.RandomState(seed=self.INITIAL_FIT_STATE),
+            'transform': np.random.RandomState(seed=self.INITIAL_REVERSE_TRANSFORM_STATE),
+            'reverse_transform': np.random.RandomState(seed=self.INITIAL_REVERSE_TRANSFORM_STATE)
+        }
+
+    def set_random_state(self, random_state, method_name):
+        if method_name not in self.random_states:
+            raise ValueError(
+                "'method_name' must be one of 'fit', 'transform' or 'reverse_transform'"
+            )
+        self.random_states[method_name] = random_state
 
     def _set_missing_value_replacement(self, default, missing_value_replacement):
         if missing_value_replacement is None:
@@ -241,6 +300,7 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
+    @random_state
     def fit(self, data, column):
         """Fit the transformer to a ``column`` of the ``data``.
 
@@ -268,6 +328,7 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
+    @random_state
     def transform(self, data):
         """Transform the `self.columns` of the `data`.
 
@@ -320,6 +381,7 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
+    @random_state
     def reverse_transform(self, data):
         """Revert the transformations to the original values.
 

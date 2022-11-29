@@ -407,7 +407,8 @@ class ClusterBasedNormalizer(FloatFormatter):
             n_components=self.max_clusters,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,
-            n_init=1
+            n_init=1,
+            random_state=self.random_states['fit'].get_state()[1][0]
         )
 
         super()._fit(data)
