@@ -1894,7 +1894,7 @@ class TestHyperTransformer(TestCase):
             call(
                 "The 'transformer' parameter will no longer be supported in future "
                 "versions of the RDT. Please use the 'transformer_name' and "
-                "'transformer_parameters' parameters instead.", DeprecationWarning
+                "'transformer_parameters' parameters instead.", FutureWarning
             )
         ]
 
@@ -2082,7 +2082,7 @@ class TestHyperTransformer(TestCase):
             "The 'transformer' parameter will no longer be supported in future versions "
             "of the RDT. Using the 'transformer_name' parameter instead."
         )
-        mock_warning.warn.assert_called_once_with(expected_msg, DeprecationWarning)
+        mock_warning.warn.assert_called_once_with(expected_msg, FutureWarning)
         assert len(ht.field_transformers) == 2
         assert ht.field_transformers['numerical_column'] == ff
         assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
