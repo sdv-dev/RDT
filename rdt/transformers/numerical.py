@@ -403,12 +403,13 @@ class ClusterBasedNormalizer(FloatFormatter):
             data (pandas.Series):
                 Data to fit to.
         """
+        current_random_seed = self.random_states['fit'].get_state()[1][0]
         self._bgm_transformer = BayesianGaussianMixture(
             n_components=self.max_clusters,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,
             n_init=1,
-            random_state=self.random_states['fit'].get_state()[1][0]
+            random_state=current_random_seed
         )
 
         super()._fit(data)

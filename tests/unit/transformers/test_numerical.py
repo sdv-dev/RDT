@@ -1243,6 +1243,9 @@ class TestClusterBasedNormalizer(TestCase):
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
         transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
+        mock_state = Mock()
+        transformer.random_states['fit'] = mock_state
+        mock_state.get_state.return_value = [None, [0]]
         data = pd.Series(np.random.random(size=100))
 
         # Run
@@ -1255,6 +1258,13 @@ class TestClusterBasedNormalizer(TestCase):
             'normalized': {'sdtype': 'float', 'next_transformer': None},
             'component': {'sdtype': 'categorical', 'next_transformer': None}
         }
+        mock_bgm.assert_called_once_with(
+            n_components=10,
+            weight_concentration_prior_type='dirichlet_process',
+            weight_concentration_prior=0.001,
+            n_init=1,
+            random_state=0
+        )
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     def test__fit_missing_value_replacement(self, mock_bgm):

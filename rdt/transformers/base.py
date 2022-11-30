@@ -19,9 +19,7 @@ def set_random_states(random_states, method_name, set_model_random_state):
             Function to set the random state on the model.
     """
     original_np_state = np.random.get_state()
-
     random_np_state = random_states[method_name]
-
     np.random.set_state(random_np_state.get_state())
 
     try:
@@ -93,8 +91,9 @@ class BaseTransformer:
             raise ValueError(
                 "'method_name' must be one of 'fit', 'transform' or 'reverse_transform'"
             )
+
         self.random_states[method_name] = state
-    
+
     def reset_randomization(self):
         """Reset the random state for ``reverse_transform``."""
         self.set_random_state(self.INITIAL_REVERSE_TRANSFORM_STATE, 'reverse_transform')
