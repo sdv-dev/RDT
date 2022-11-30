@@ -679,11 +679,14 @@ class HyperTransformer:
         self.fit(data)
         return self.transform(data)
 
-    def reset_anonymization(self):
+    def reset_randomization(self):
         """Reset the generators for the anonymized columns."""
         for transformer in self.field_transformers.values():
             if transformer.is_generator():
                 transformer.reset_anonymization()
+            else:
+                initial_state = transformer.INITIAL_REVERSE_TRANSFORM_STATE
+                transformer.set_random_state(initial_state, 'reverse_transform')
 
     def create_anonymized_columns(self, num_rows, column_names):
         """Create the anonymized columns for this ``HyperTransformer``.
