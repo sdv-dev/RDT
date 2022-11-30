@@ -113,6 +113,19 @@ class TestBaseTransformer:
         with pytest.raises(ValueError, match=expected_message):
             transformer.set_random_state(new_state, 'fake_method')
 
+    def test_reset_randomization(self):
+        """Test that the random seed for ``reverse_transform`` is reset."""
+        # Setup
+        transformer = BaseTransformer()
+        transformer.random_states['reverse_transform'] = None
+
+        # Run
+        transformer.reset_randomization()
+
+        # Assert
+        expected_state = transformer.INITIAL_REVERSE_TRANSFORM_STATE
+        assert transformer.random_states['reverse_transform'] == expected_state
+
     def test_get_subclasses(self):
         """Test the ``get_subclasses`` method.
 

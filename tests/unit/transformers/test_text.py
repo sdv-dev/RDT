@@ -148,8 +148,9 @@ class TestRegexGenerator:
         assert instance.regex_format == '[0-9]'
         assert instance.enforce_uniqueness
 
+    @patch('rdt.transformers.text.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.text.strings_from_regex')
-    def test_reset_randomization(self, mock_strings_from_regex):
+    def test_reset_randomization(self, mock_strings_from_regex, mock_base_reset):
         """Test that this method creates a new generator.
 
         This method should create a new ``instance.generator``, ``instance.generator_size`` and
@@ -168,6 +169,7 @@ class TestRegexGenerator:
         assert instance.generator_size == 2
         assert instance.generated == 0
         mock_strings_from_regex.assert_called_once_with('[A-Za-z]{5}')
+        mock_base_reset.assert_called_once()
 
     def test__fit(self):
         """Test the ``_fit`` method.
