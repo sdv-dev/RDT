@@ -106,7 +106,7 @@ class AnonymizedFaker(BaseTransformer):
         if self.locales:
             self._check_locales()
 
-    def reset_anonymization(self):
+    def reset_randomization(self):
         """Create a new ``Faker`` instance."""
         self.faker = faker.Faker(self.locales)
         self.faker.seed_instance(self.INITIAL_SEED)

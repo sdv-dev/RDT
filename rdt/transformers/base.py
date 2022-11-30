@@ -94,6 +94,10 @@ class BaseTransformer:
                 "'method_name' must be one of 'fit', 'transform' or 'reverse_transform'"
             )
         self.random_states[method_name] = state
+    
+    def reset_randomization(self):
+        """Reset the random state for ``reverse_transform``."""
+        self.set_random_state(self.INITIAL_REVERSE_TRANSFORM_STATE, 'reverse_transform')
 
     def _set_missing_value_replacement(self, default, missing_value_replacement):
         if missing_value_replacement is None:

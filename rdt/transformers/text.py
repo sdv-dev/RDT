@@ -58,7 +58,7 @@ class RegexGenerator(BaseTransformer):
         self.generator_size = None
         self.generated = None
 
-    def reset_anonymization(self):
+    def reset_randomization(self):
         """Create a new generator and reset the generated values counter."""
         self.generator, self.generator_size = strings_from_regex(self.regex_format)
         self.generated = 0
@@ -70,7 +70,7 @@ class RegexGenerator(BaseTransformer):
             data (pandas.Series):
                 Data to fit to.
         """
-        self.reset_anonymization()
+        self.reset_randomization()
         self.data_length = len(data)
 
     def _transform(self, _data):
@@ -111,10 +111,10 @@ class RegexGenerator(BaseTransformer):
                 raise Error(
                     f'The regex generator is not able to generate {sample_size} new unique '
                     f'values (only {remaining} unique value left). Please use '
-                    "'reset_anonymization' in order to restart the generator."
+                    "'reset_randomization' in order to restart the generator."
                 )
 
-            self.reset_anonymization()
+            self.reset_randomization()
             remaining = self.generator_size
 
         if remaining >= sample_size:

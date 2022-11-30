@@ -39,7 +39,7 @@ class TestRegexGenerator:
         """Test that ``__getstate__`` returns a dictionary without the generator."""
         # Setup
         instance = RegexGenerator()
-        instance.reset_anonymization()
+        instance.reset_randomization()
 
         # Run
         state = instance.__getstate__()
@@ -146,7 +146,7 @@ class TestRegexGenerator:
         assert instance.enforce_uniqueness
 
     @patch('rdt.transformers.text.strings_from_regex')
-    def test_reset_anonymization(self, mock_strings_from_regex):
+    def test_reset_randomization(self, mock_strings_from_regex):
         """Test that this method creates a new generator.
 
         This method should create a new ``instance.generator``, ``instance.generator_size`` and
@@ -158,7 +158,7 @@ class TestRegexGenerator:
         instance = RegexGenerator()
 
         # Run
-        instance.reset_anonymization()
+        instance.reset_randomization()
 
         # Assert
         assert instance.generator == generator
@@ -263,7 +263,7 @@ class TestRegexGenerator:
         # Setup
         instance = RegexGenerator('[A-Z]', enforce_uniqueness=False)
         columns_data = pd.Series()
-        instance.reset_anonymization = Mock()
+        instance.reset_randomization = Mock()
         instance.data_length = 11
         generator = AsciiGenerator(5)
         instance.columns = ['a']
@@ -351,7 +351,7 @@ class TestRegexGenerator:
         """Test the case when ``_reverse_transform`` can't generate enough new values.
 
         Validate that an ``Error`` is being raised stating that not enough new values can be
-        generated and that the user can use ``reset_anonymization`` in order to restart the
+        generated and that the user can use ``reset_randomization`` in order to restart the
         generator.
         """
         # Setup
@@ -367,7 +367,7 @@ class TestRegexGenerator:
         # Assert
         error_msg = re.escape(
             'The regex generator is not able to generate 6 new unique values (only 1 unique '
-            "value left). Please use 'reset_anonymization' in order to restart the generator."
+            "value left). Please use 'reset_randomization' in order to restart the generator."
         )
         with pytest.raises(Error, match=error_msg):
             instance._reverse_transform(columns_data)

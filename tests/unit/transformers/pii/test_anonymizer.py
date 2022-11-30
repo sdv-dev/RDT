@@ -277,14 +277,14 @@ class TestAnonymizedFaker:
             AnonymizedFaker(provider_name='credit_card', locales=['en_US', 'fr_FR'])
 
     @patch('rdt.transformers.pii.anonymizer.faker')
-    def test_reset_anonymization(self, mock_faker):
+    def test_reset_randomization(self, mock_faker):
         """Test that this function creates a new faker instance."""
         # Setup
         instance = Mock()
         instance.locales = ['en_US']
 
         # Run
-        AnonymizedFaker.reset_anonymization(instance)
+        AnonymizedFaker.reset_randomization(instance)
 
         # Assert
         assert mock_faker.Faker.called_once_with(['en_US'])
