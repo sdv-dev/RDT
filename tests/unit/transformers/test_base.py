@@ -817,6 +817,7 @@ class TestBaseTransformer:
 
         class Dummy(BaseTransformer):
             def __init__(self):
+                super().__init__()
                 self.output_properties = {
                     None: {'sdtype': 'categorical'},
                     'is_null': {'sdtype': 'float'}

@@ -971,6 +971,7 @@ class TestHyperTransformer(TestCase):
             INPUT_SDTYPE = 'numerical'
 
             def __init__(self):
+                super().__init__()
                 self.output_properties = {'is_null': {'sdtype': 'float', 'next_transformer': None}}
 
             def _fit(self, _):
@@ -983,6 +984,7 @@ class TestHyperTransformer(TestCase):
             INPUT_SDTYPE = 'numerical'
 
             def __init__(self):
+                super().__init__()
                 self.output_properties = {
                     'is_null': {'sdtype': 'float', 'next_transformer': None},
                     None: {'sdtype': 'float', 'next_transformer': DummyTransformer2()}
@@ -1329,7 +1331,7 @@ class TestHyperTransformer(TestCase):
         # Assert
         transformer_id.reset_randomization.assert_called_once_with()
         transformer_random_element.reset_randomization.assert_called_once_with()
-        transformer_name.reset_randomization.assert_not_called()
+        transformer_name.reset_randomization.assert_called_once_with()
 
     def test_create_anonymized_columns(self):
         """Test ``create_anonymized_columns``.

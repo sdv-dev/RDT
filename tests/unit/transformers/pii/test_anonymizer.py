@@ -280,7 +280,7 @@ class TestAnonymizedFaker:
     def test_reset_randomization(self, mock_faker):
         """Test that this function creates a new faker instance."""
         # Setup
-        instance = Mock()
+        instance = AnonymizedFaker()
         instance.locales = ['en_US']
 
         # Run

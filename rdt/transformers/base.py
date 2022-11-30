@@ -63,9 +63,9 @@ class BaseTransformer:
     INPUT_SDTYPE = None
     SUPPORTED_SDTYPES = None
     IS_GENERATOR = None
-    INITIAL_FIT_STATE = 21
-    INITIAL_TRANSFORM_STATE = 80
-    INITIAL_REVERSE_TRANSFORM_STATE = 130
+    INITIAL_FIT_STATE = np.random.RandomState(seed=21)
+    INITIAL_TRANSFORM_STATE = np.random.RandomState(seed=80)
+    INITIAL_REVERSE_TRANSFORM_STATE = np.random.RandomState(seed=130)
 
     columns = None
     column_prefix = None
@@ -75,9 +75,9 @@ class BaseTransformer:
     def __init__(self):
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
         self.random_states = {
-            'fit': np.random.RandomState(seed=self.INITIAL_FIT_STATE),
-            'transform': np.random.RandomState(seed=self.INITIAL_REVERSE_TRANSFORM_STATE),
-            'reverse_transform': np.random.RandomState(seed=self.INITIAL_REVERSE_TRANSFORM_STATE)
+            'fit': self.INITIAL_FIT_STATE,
+            'transform': self.INITIAL_REVERSE_TRANSFORM_STATE,
+            'reverse_transform': self.INITIAL_REVERSE_TRANSFORM_STATE
         }
 
     def set_random_state(self, state, method_name):

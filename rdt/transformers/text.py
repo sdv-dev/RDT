@@ -50,6 +50,7 @@ class RegexGenerator(BaseTransformer):
         self.__dict__ = state
 
     def __init__(self, regex_format='[A-Za-z]{5}', enforce_uniqueness=False):
+        super().__init__()
         self.output_properties = {None: {'next_transformer': None}}
         self.enforce_uniqueness = enforce_uniqueness
         self.regex_format = regex_format
@@ -60,6 +61,7 @@ class RegexGenerator(BaseTransformer):
 
     def reset_randomization(self):
         """Create a new generator and reset the generated values counter."""
+        super().reset_randomization()
         self.generator, self.generator_size = strings_from_regex(self.regex_format)
         self.generated = 0
 

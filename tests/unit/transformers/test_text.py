@@ -40,6 +40,8 @@ class TestRegexGenerator:
         # Setup
         instance = RegexGenerator()
         instance.reset_randomization()
+        mock_random_sates = Mock()
+        instance.random_states = mock_random_sates
 
         # Run
         state = instance.__getstate__()
@@ -51,7 +53,8 @@ class TestRegexGenerator:
             'generated': 0,
             'generator_size': 380204032,
             'output_properties': {None: {'next_transformer': None}},
-            'regex_format': '[A-Za-z]{5}'
+            'regex_format': '[A-Za-z]{5}',
+            'random_states': mock_random_sates
         }
 
     @patch('rdt.transformers.text.strings_from_regex')

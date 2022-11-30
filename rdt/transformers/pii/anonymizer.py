@@ -85,6 +85,7 @@ class AnonymizedFaker(BaseTransformer):
 
     def __init__(self, provider_name=None, function_name=None, function_kwargs=None,
                  locales=None, enforce_uniqueness=False):
+        super().__init__()
         self.data_length = None
         self.enforce_uniqueness = enforce_uniqueness
         self.provider_name = provider_name if provider_name else 'BaseProvider'
@@ -102,12 +103,12 @@ class AnonymizedFaker(BaseTransformer):
         self.locales = locales
         self.faker = faker.Faker(self.locales)
         self.faker.seed_instance(self.INITIAL_SEED)
-        self.random_states = None
         if self.locales:
             self._check_locales()
 
     def reset_randomization(self):
         """Create a new ``Faker`` instance."""
+        super().reset_randomization()
         self.faker = faker.Faker(self.locales)
         self.faker.seed_instance(self.INITIAL_SEED)
 
