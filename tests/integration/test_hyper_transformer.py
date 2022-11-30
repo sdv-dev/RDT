@@ -33,6 +33,7 @@ class DummyTransformerNotMLReady(BaseTransformer):
     INPUT_SDTYPE = 'datetime'
 
     def __init__(self):
+        super().__init__()
         self.output_properties = {
             None: {'sdtype': 'datetime', 'next_transformer': FrequencyEncoder()}
         }

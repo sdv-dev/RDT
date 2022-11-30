@@ -88,6 +88,7 @@ def test_dummy_transformer_dataframe_output():
         INPUT_SDTYPE = 'boolean'
 
         def __init__(self):
+            super().__init__()
             self.output_properties = {
                 None: {'sdtype': 'float'},
                 'null': {'sdtype': 'float'},
