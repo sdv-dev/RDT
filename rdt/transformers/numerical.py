@@ -396,6 +396,12 @@ class ClusterBasedNormalizer(FloatFormatter):
             'component': {'sdtype': 'categorical', 'next_transformer': None},
         }
 
+    def _get_current_random_seed(self):
+        if self.random_states:
+            return self.random_states['fit'].get_state()[1][0]
+
+        return 0
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -403,13 +409,12 @@ class ClusterBasedNormalizer(FloatFormatter):
             data (pandas.Series):
                 Data to fit to.
         """
-        current_random_seed = self.random_states['fit'].get_state()[1][0]
         self._bgm_transformer = BayesianGaussianMixture(
             n_components=self.max_clusters,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,
             n_init=1,
-            random_state=current_random_seed
+            random_state=self._get_current_random_seed()
         )
 
         super()._fit(data)

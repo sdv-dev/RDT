@@ -1220,6 +1220,18 @@ class TestGaussianNormalizer:
 
 class TestClusterBasedNormalizer(TestCase):
 
+    def test__get_current_random_seed_random_states_is_none(self):
+        """Test that the method returns 0 if ``instance.random_states`` is None."""
+        # Setup
+        transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
+        transformer.random_states = None
+
+        # Run
+        random_seed = transformer._get_current_random_seed()
+
+        # Assert
+        random_seed == 0
+
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     def test__fit(self, mock_bgm):
         """Test ``_fit``.

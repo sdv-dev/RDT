@@ -3,6 +3,7 @@ import abc
 import contextlib
 import inspect
 import warnings
+from functools import wraps
 
 import numpy as np
 import pandas as pd
@@ -39,6 +40,7 @@ def random_state(function):
         function (Callable):
             The function to wrap around.
     """
+    @wraps(function)
     def wrapper(self, *args, **kwargs):
         if self.random_states is None:
             return function(self, *args, **kwargs)
@@ -74,7 +76,7 @@ class BaseTransformer:
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
-            'transform': self.INITIAL_REVERSE_TRANSFORM_STATE,
+            'transform': self.INITIAL_TRANSFORM_STATE,
             'reverse_transform': self.INITIAL_REVERSE_TRANSFORM_STATE
         }
 

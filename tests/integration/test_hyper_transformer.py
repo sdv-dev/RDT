@@ -190,17 +190,11 @@ def test_hypertransformer_default_inputs():
             assert pd.isna(actual) or expected == actual
 
     assert isinstance(ht.field_transformers['integer'], FloatFormatter)
-    # assert ht.field_transformers['integer'].get_output_columns() == ['integer.value']  noqa
     assert isinstance(ht.field_transformers['float'], FloatFormatter)
-    # assert ht.field_transformers['float'].get_output_columns() == ['float.value']  noqa
     assert isinstance(ht.field_transformers['categorical'], FrequencyEncoder)
-    # assert ht.field_transformers['categorical'].get_output_columns() == ['categorical.value  noqa
     assert isinstance(ht.field_transformers['bool'], BinaryEncoder)
-    # assert ht.field_transformers['bool'].get_output_columns() == ['bool.value']  noqa
     assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
-    # assert ht.field_transformers['datetime'].get_output_columns() == ['datetime.value']  noqa
     assert isinstance(ht.field_transformers['names'], FrequencyEncoder)
-    # assert ht.field_transformers['names'].get_output_columns() == ['names.value']  noqa
 
     get_default_transformers.cache_clear()
     get_default_transformer.cache_clear()
