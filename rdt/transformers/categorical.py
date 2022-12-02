@@ -69,6 +69,24 @@ class FrequencyEncoder(BaseTransformer):
         """
         data = data.fillna(np.nan)
         frequencies = data.value_counts(dropna=False)
+        augmented_frequencies = frequencies.to_frame()
+        sortable_column_name = f'sortable_{frequencies.name}'
+        column_name = frequencies.name or 0
+
+        def tie_breaker(element):
+            data_new_index = data.reset_index(drop=True)
+            if pd.isna(element):
+                data_is_na = data_new_index.isna()
+                return data_is_na.loc[data_is_na is True].index[0]
+
+            return data_new_index.loc[data_new_index == element].index[0]
+
+        augmented_frequencies[sortable_column_name] = frequencies.index.map(tie_breaker)
+        augmented_frequencies = augmented_frequencies.sort_values(
+            [column_name, sortable_column_name],
+            ascending=[False, True]
+        )
+        sorted_frequencies = augmented_frequencies[column_name]
 
         start = 0
         end = 0
@@ -77,7 +95,7 @@ class FrequencyEncoder(BaseTransformer):
         intervals = {}
         means = []
         starts = []
-        for value, frequency in frequencies.items():
+        for value, frequency in sorted_frequencies.items():
             prob = frequency / elements
             end = start + prob
             mean = start + prob / 2
