@@ -132,7 +132,11 @@ class FrequencyEncoder(BaseTransformer):
                 mask = (data.to_numpy() == category)
 
             if self.add_noise:
-                result[mask] = norm.rvs(mean, std, size=mask.sum())
+                result[mask] = norm.rvs(
+                    mean, std,
+                    size=mask.sum(),
+                    random_state=self.random_states['transform']
+                )
                 result[mask] = self._clip_noised_transform(result[mask], start, end)
             else:
                 result[mask] = mean
@@ -147,7 +151,7 @@ class FrequencyEncoder(BaseTransformer):
         start, end, mean, std = self.intervals[category]
 
         if self.add_noise:
-            result = norm.rvs(mean, std)
+            result = norm.rvs(mean, std, random_state=self.random_states['transform'])
             return self._clip_noised_transform(result, start, end)
 
         return mean

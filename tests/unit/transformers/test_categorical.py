@@ -443,6 +443,8 @@ class TestFrequencyEncoder:
             2: (0.5, 0.75, 0.625, 0.041666666666666664),
             1: (0.75, 1.0, 0.875, 0.041666666666666664),
         }
+        transform_random_state_mock = Mock()
+        transformer.random_states['transform'] = transform_random_state_mock
 
         # Run
         transformed = transformer._transform_by_category(data)
@@ -451,10 +453,10 @@ class TestFrequencyEncoder:
         expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
         assert (transformed == expected).all()
         norm_mock.rvs.assert_has_calls([
-            call(0.125, 0.041666666666666664, size=0),
-            call(0.375, 0.041666666666666664, size=2),
-            call(0.625, 0.041666666666666664, size=1),
-            call(0.875, 0.041666666666666664, size=2),
+            call(0.125, 0.041666666666666664, size=0, random_state=transform_random_state_mock),
+            call(0.375, 0.041666666666666664, size=2, random_state=transform_random_state_mock),
+            call(0.625, 0.041666666666666664, size=1, random_state=transform_random_state_mock),
+            call(0.875, 0.041666666666666664, size=2, random_state=transform_random_state_mock),
         ])
 
     def test__transform_by_row_called(self):
