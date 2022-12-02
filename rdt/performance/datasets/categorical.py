@@ -408,7 +408,7 @@ class UniqueStringNaNsGenerator(CategoricalGenerator):
         """Return the expected threseholds."""
         return {
             'fit': {
-                'time': 0.0006,
+                'time': 0.001,
                 'memory': 1000.0
             },
             'transform': {
