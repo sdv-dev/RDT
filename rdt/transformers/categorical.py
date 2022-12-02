@@ -77,7 +77,7 @@ class FrequencyEncoder(BaseTransformer):
             data_new_index = data.reset_index(drop=True)
             if pd.isna(element):
                 data_is_na = data_new_index.isna()
-                return data_is_na.loc[data_is_na is True].index[0]
+                return data_is_na.loc[data_is_na == 1].index[0]
 
             return data_new_index.loc[data_new_index == element].index[0]
 
