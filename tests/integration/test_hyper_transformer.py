@@ -1006,7 +1006,8 @@ def _get_hyper_transformer_with_random_transformers(data):
     ht.detect_initial_config(data)
     ht.update_sdtypes({
         'credit_card': 'pii',
-        'name': 'text'
+        'name': 'text',
+        'signup_day': 'datetime'
     })
     ht.update_transformers({
         'credit_card': AnonymizedFaker('credit_card', 'credit_card_number'),
@@ -1037,8 +1038,8 @@ def test_hyper_transformer_reset_randomization():
         'credit_card': ['123456789', '987654321', '192837645', '918273465', '123789456'],
         'age': [18, 25, 54, 60, 31],
         'name': ['Bob', 'Jane', 'Jack', 'Jill', 'Joe'],
-        'signup_day': ['1/1/2020', '2/15/2012', '4/1/2019', '12/1/2008', '5/16/2016'],
-        'balance': [250, 5400, 150000, 320000, 91000],
+        'signup_day': ['1/1/2020', np.nan, '4/1/2019', '12/1/2008', '5/16/2016'],
+        'balance': [250, 5400, 150000, np.nan, 91000],
         'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
     })
     ht1 = _get_hyper_transformer_with_random_transformers(data)
@@ -1047,15 +1048,27 @@ def test_hyper_transformer_reset_randomization():
     # Test transforming multiple times with different transformers
     expected_first_transformed = pd.DataFrame({
         'age': [18.0, 25.0, 54.0, 60.0, 31.0],
-        'signup_day': [0.074116, 0.318475, 0.486767, 0.751235, 0.894331],
-        'balance.normalized': [-0.235802, -0.225063, 0.076467, 0.430962, -0.046564],
+        'signup_day': [1.577837e+18, 1.455840e+18, 1.554077e+18, 1.228090e+18, 1.463357e+18],
+        'balance.normalized': [
+            -2.693016e-01,
+            -2.467182e-01,
+            3.873711e-01,
+            9.571797e-17,
+            1.286486e-01
+        ],
         'balance.component': [0.0, 0, 0, 0, 0],
         'card_type': [0.264365, 0.419972, 0.718265, 0.882447, 0.312230]
     })
     expected_second_transformed = pd.DataFrame({
         'age': [18.0, 25.0, 54.0, 60.0, 31.0],
-        'signup_day': [0.085449, 0.211979, 0.500524, 0.700999, 0.902081],
-        'balance.normalized': [-0.235802, -0.225063, 0.076467, 0.430962, -0.046564],
+        'signup_day': [1.577837e+18, 1.455840e+18, 1.554077e+18, 1.228090e+18, 1.463357e+18],
+        'balance.normalized': [
+            -2.693016e-01,
+            -2.467182e-01,
+            3.873711e-01,
+            9.571797e-17,
+            1.286486e-01
+        ],
         'balance.component': [0.0, 0, 0, 0, 0],
         'card_type': [0.218388, 0.124182, 0.699287, 0.916727, 0.369621]
     })
@@ -1081,8 +1094,8 @@ def test_hyper_transformer_reset_randomization():
         ],
         'age': [18, 25, 54, 60, 31],
         'name': ['AAAAA', 'AAAAB', 'AAAAC', 'AAAAD', 'AAAAE'],
-        'signup_day': ['1/1/2020', '2/15/2012', '4/1/2019', '12/1/2008', '5/16/2016'],
-        'balance': [250, 5400, 150000, 320000, 91000],
+        'signup_day': [np.nan, '02/19/2016', '04/01/2019', np.nan, '05/16/2016'],
+        'balance': [np.nan, 5400, 150000, np.nan, 91000],
         'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
     })
     expected_second_reverse = pd.DataFrame({
@@ -1095,8 +1108,8 @@ def test_hyper_transformer_reset_randomization():
         ],
         'age': [18, 25, 54, 60, 31],
         'name': ['AAAAF', 'AAAAG', 'AAAAH', 'AAAAI', 'AAAAJ'],
-        'signup_day': ['1/1/2020', '2/15/2012', '4/1/2019', '12/1/2008', '5/16/2016'],
-        'balance': [250, 5400, 150000, 320000, 91000],
+        'signup_day': ['01/01/2020', '02/19/2016', np.nan, '12/01/2008', '05/16/2016'],
+        'balance': [250, 5400, np.nan, 61662.5, 91000],
         'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
     })
     first_reverse1 = ht1.reverse_transform(first_transformed1)
