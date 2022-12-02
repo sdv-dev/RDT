@@ -9,9 +9,9 @@ import pytest
 from rdt import HyperTransformer, get_demo
 from rdt.errors import Error, NotFittedError
 from rdt.transformers import (
-    AnonymizedFaker, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
-    LabelEncoder, OneHotEncoder, RegexGenerator, get_default_transformer, get_default_transformers)
-from rdt.transformers.datetime import UnixTimestampEncoder
+    AnonymizedFaker, BaseTransformer, BinaryEncoder, ClusterBasedNormalizer, FloatFormatter,
+    FrequencyEncoder, LabelEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder,
+    get_default_transformer, get_default_transformers)
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -999,3 +999,146 @@ def test_hyper_transformer_field_transformer_correctly_set():
     transformer.new_attribute3 = 'abc'
     ht.fit(data)
     assert ht.get_config()['transformers']['col'].new_attribute3 == 'abc'
+
+
+def _get_hyper_transformer_with_random_transformers(data):
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.update_sdtypes({
+        'credit_card': 'pii',
+        'name': 'text'
+    })
+    ht.update_transformers({
+        'credit_card': AnonymizedFaker('credit_card', 'credit_card_number'),
+        'balance': ClusterBasedNormalizer(max_clusters=3),
+        'name': RegexGenerator()
+    })
+    ht.update_transformers_by_sdtype(
+        'categorical',
+        transformer_name='FrequencyEncoder',
+        transformer_parameters={'add_noise': True}
+    )
+
+    return ht
+
+
+def test_hyper_transformer_reset_randomization():
+    """Test that the random seeds are properly set and reset.
+
+    If two separate ``HyperTransformer``s are fit, they should have the same parameters
+    and produce the same data when transforming. Successive transforming calls should
+    yield different results.
+
+    For reverse transforming, different values should be seen if randomization is involved
+    unless ``reset_randomization`` is called.
+    """
+    # Setup
+    data = pd.DataFrame({
+        'credit_card': ['123456789', '987654321', '192837645', '918273465', '123789456'],
+        'age': [18, 25, 54, 60, 31],
+        'name': ['Bob', 'Jane', 'Jack', 'Jill', 'Joe'],
+        'signup_day': ['1/1/2020', '2/15/2012', '4/1/2019', '12/1/2008', '5/16/2016'],
+        'balance': [250, 5400, 150000, 320000, 91000],
+        'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
+    })
+    ht1 = _get_hyper_transformer_with_random_transformers(data)
+    ht2 = _get_hyper_transformer_with_random_transformers(data)
+
+    # Test transforming multiple times with different transformers
+    expected_first_transformed = pd.DataFrame({
+        'age': [18.0, 25.0, 54.0, 60.0, 31.0],
+        'signup_day': [0.074116, 0.318475, 0.486767, 0.751235, 0.894331],
+        'balance.normalized': [-0.235802, -0.225063, 0.076467, 0.430962, -0.046564],
+        'balance.component': [0.0, 0, 0, 0, 0],
+        'card_type': [0.264365, 0.419972, 0.718265, 0.882447, 0.312230]
+    })
+    expected_second_transformed = pd.DataFrame({
+        'age': [18.0, 25.0, 54.0, 60.0, 31.0],
+        'signup_day': [0.085449, 0.211979, 0.500524, 0.700999, 0.902081],
+        'balance.normalized': [-0.235802, -0.225063, 0.076467, 0.430962, -0.046564],
+        'balance.component': [0.0, 0, 0, 0, 0],
+        'card_type': [0.218388, 0.124182, 0.699287, 0.916727, 0.369621]
+    })
+
+    ht1.fit(data)
+    first_transformed1 = ht1.transform(data)
+    ht2.fit(data)
+    first_transformed2 = ht2.transform(data)
+    second_transformed1 = ht1.transform(data)
+
+    pd.testing.assert_frame_equal(first_transformed1, expected_first_transformed)
+    pd.testing.assert_frame_equal(first_transformed2, expected_first_transformed)
+    pd.testing.assert_frame_equal(second_transformed1, expected_second_transformed)
+
+    # test reverse transforming multiple times with different tranformers
+    expected_first_reverse = pd.DataFrame({
+        'credit_card': [
+            '180090934066211',
+            '30083012986584',
+            '2290394691481974',
+            '4444812351068428276',
+            '4875851017747494'
+        ],
+        'age': [18, 25, 54, 60, 31],
+        'name': ['AAAAA', 'AAAAB', 'AAAAC', 'AAAAD', 'AAAAE'],
+        'signup_day': ['1/1/2020', '2/15/2012', '4/1/2019', '12/1/2008', '5/16/2016'],
+        'balance': [250, 5400, 150000, 320000, 91000],
+        'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
+    })
+    expected_second_reverse = pd.DataFrame({
+        'credit_card': [
+            '4228463375694866475',
+            '378224850315805',
+            '3568070297954787',
+            '4681503697026160',
+            '4490550771579'
+        ],
+        'age': [18, 25, 54, 60, 31],
+        'name': ['AAAAF', 'AAAAG', 'AAAAH', 'AAAAI', 'AAAAJ'],
+        'signup_day': ['1/1/2020', '2/15/2012', '4/1/2019', '12/1/2008', '5/16/2016'],
+        'balance': [250, 5400, 150000, 320000, 91000],
+        'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
+    })
+    first_reverse1 = ht1.reverse_transform(first_transformed1)
+    first_reverse2 = ht2.reverse_transform(first_transformed1)
+    second_reverse1 = ht1.reverse_transform(first_transformed1)
+
+    pd.testing.assert_frame_equal(first_reverse1, expected_first_reverse)
+    pd.testing.assert_frame_equal(first_reverse2, expected_first_reverse)
+    pd.testing.assert_frame_equal(expected_second_reverse, second_reverse1)
+
+    # Test resetting randomization
+    ht1.reset_randomization()
+
+    transformed_post_reset = ht1.reverse_transform(first_transformed1)
+    pd.testing.assert_frame_equal(transformed_post_reset, expected_first_reverse)
+
+
+def test_hyper_transformer_cluster_based_normalizer_randomization():
+    """Test that the ``ClusterBasedNormalizer`` handles randomization correctly.
+
+    If the ``ClusterBasedNormalizer`` transforms the same data multiple times,
+    it may yield different results due to randomness. However, if a new instance is created,
+    each matching call should yield the same results (ie. call 1 of the first transformer
+    should match call 1 of the second).
+    """
+    data = get_demo(100)
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.update_transformers({
+        'age': ClusterBasedNormalizer()
+    })
+    ht.fit(data)
+    transformed1 = ht.transform(data)
+    transformed2 = ht.transform(data)
+
+    assert any(transformed1['age.normalized'] != transformed2['age.normalized'])
+
+    ht2 = HyperTransformer()
+    ht2.detect_initial_config(data)
+    ht2.update_transformers({
+        'age': ClusterBasedNormalizer()
+    })
+    ht2.fit(data)
+
+    pd.testing.assert_frame_equal(transformed1, ht2.transform(data))
