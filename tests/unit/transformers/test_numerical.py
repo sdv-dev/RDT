@@ -32,13 +32,13 @@ class TestFloatFormatter(TestCase):
         Input:
         - An array that contains floats with more than 15 decimals.
         Output:
-        - None
+        - 14
         """
         data = np.random.random(size=10).round(20)
 
         output = FloatFormatter._learn_rounding_digits(data)
 
-        assert output is None
+        assert output == 14
 
     def test__learn_rounding_digits_less_than_15_decimals(self):
         """Test the _learn_rounding_digits method with less than 15 decimals.
@@ -298,7 +298,7 @@ class TestFloatFormatter(TestCase):
         Input:
         - Series with a value that has 15 decimals
         Side Effect:
-        - ``_rounding_digits`` is set to ``None``
+        - ``_rounding_digits`` is set to 14
         """
         # Setup
         data = pd.Series([0.000000000000001])
@@ -311,7 +311,7 @@ class TestFloatFormatter(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer._rounding_digits is None
+        assert transformer._rounding_digits == 14
 
     def test__fit_learn_rounding_scheme_true_inf(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
