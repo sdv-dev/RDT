@@ -14,10 +14,12 @@ def set_random_states(random_states, method_name, set_model_random_state):
     """Context manager for managing the random state.
 
     Args:
-        random_state (int or tuple):
-            The random seed or a tuple of (numpy.random.RandomState, torch.Generator).
+        random_states (dict):
+            Dictionary mapping each method to its current random state.
+        method_name (str):
+            Name of the method to set the random state for.
         set_model_random_state (function):
-            Function to set the random state on the model.
+            Function to set the random state for the method.
     """
     original_np_state = np.random.get_state()
     random_np_state = random_states[method_name]
@@ -91,7 +93,7 @@ class BaseTransformer:
         """
         if method_name not in self.random_states:
             raise ValueError(
-                "'method_name' must be one of 'fit', 'transform' or 'reverse_transform'"
+                "'method_name' must be one of 'fit', 'transform' or 'reverse_transform'."
             )
 
         self.random_states[method_name] = state
