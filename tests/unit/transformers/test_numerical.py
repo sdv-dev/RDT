@@ -27,16 +27,17 @@ class TestFloatFormatter(TestCase):
     def test__learn_rounding_digits_more_than_15_decimals(self):
         """Test the _learn_rounding_digits method with more than 15 decimals.
 
-        If the data has more than 15 decimals, None should be returned.
-
-        Input:
-        - An array that contains floats with more than 15 decimals.
-        Output:
-        - None
+        If the data has more than 15 decimals, return None and raise warning.
         """
-        data = np.random.random(size=10).round(20)
+        # Setup
+        data = pd.Series(np.random.random(size=10).round(20), name='col')
 
-        output = FloatFormatter._learn_rounding_digits(data)
+        # Run and Assert
+        warn_msg = (
+            "No rounding scheme detected for column 'col'. Synthetic data will not be rounded."
+        )
+        with pytest.warns(UserWarning, match=warn_msg):
+            output = FloatFormatter._learn_rounding_digits(data)
 
         assert output is None
 
@@ -52,7 +53,7 @@ class TestFloatFormatter(TestCase):
         Output:
         - 3
         """
-        data = np.array([10, 0., 0.1, 0.12, 0.123, np.nan])
+        data = pd.Series(np.array([10, 0., 0.1, 0.12, 0.123, np.nan]))
 
         output = FloatFormatter._learn_rounding_digits(data)
 
@@ -61,36 +62,31 @@ class TestFloatFormatter(TestCase):
     def test__learn_rounding_digits_negative_decimals_float(self):
         """Test the _learn_rounding_digits method with floats multiples of powers of 10.
 
-        If the data has all multiples of 10 the output should be None.
+        If the data has all multiples of 10 the output should be 0.
 
         Input:
-        - An array that contains floats that are multiples of powers of 10, 100 and 1000
-          and a NaN.
-        Output:
-        - None
+        - An array that contains floats that are multiples of powers of 10, 100 and 1000 and a NaN.
         """
-        data = np.array([1230., 12300., 123000., np.nan])
+        data = pd.Series(np.array([1230., 12300., 123000., np.nan]))
 
         output = FloatFormatter._learn_rounding_digits(data)
 
-        assert output is None
+        assert output == 0
 
     def test__learn_rounding_digits_negative_decimals_integer(self):
         """Test the _learn_rounding_digits method with integers multiples of powers of 10.
 
-        If the data has all multiples of 10 the output should be None.
+        If the data has all multiples of 10 the output should be 0.
 
         Input:
         - An array that contains integers that are multiples of powers of 10, 100 and 1000
           and a NaN.
-        Output:
-        - None
         """
-        data = np.array([1230, 12300, 123000, np.nan])
+        data = pd.Series(np.array([1230, 12300, 123000, np.nan]))
 
         output = FloatFormatter._learn_rounding_digits(data)
 
-        assert output is None
+        assert output == 0
 
     def test__learn_rounding_digits_all_missing_value_replacements(self):
         """Test the _learn_rounding_digits method with data that is all NaNs.
@@ -102,7 +98,7 @@ class TestFloatFormatter(TestCase):
         Output:
         - None
         """
-        data = np.array([np.nan, np.nan, np.nan, np.nan])
+        data = pd.Series(np.array([np.nan, np.nan, np.nan, np.nan]))
 
         output = FloatFormatter._learn_rounding_digits(data)
 
@@ -298,7 +294,7 @@ class TestFloatFormatter(TestCase):
         Input:
         - Series with a value that has 15 decimals
         Side Effect:
-        - ``_rounding_digits`` is set to ``None``
+        - ``_rounding_digits`` is set to None
         """
         # Setup
         data = pd.Series([0.000000000000001])
@@ -318,13 +314,13 @@ class TestFloatFormatter(TestCase):
 
         If the ``learn_rounding_scheme`` parameter is set to ``True``, and the data
         contains only integers or infinite values, ``_fit`` should learn
-        ``_rounding_digits`` to be None.
+        ``_rounding_digits`` to be 0.
 
 
         Input:
         - Series with ``np.inf`` as a value
         Side Effect:
-        - ``_rounding_digits`` is set to None
+        - ``_rounding_digits`` is set to 0
         """
         # Setup
         data = pd.Series([15000, 4000, 60000, np.inf])
@@ -337,18 +333,18 @@ class TestFloatFormatter(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer._rounding_digits is None
+        assert transformer._rounding_digits == 0
 
     def test__fit_learn_rounding_scheme_true_max_zero(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
 
         If the ``learn_rounding_scheme`` parameter is set to ``True``, and the max
-        in the data is 0, ``_fit`` should learn the ``_rounding_digits`` to be None.
+        in the data is 0, ``_fit`` should learn the ``_rounding_digits`` to be 0.
 
         Input:
         - Series with 0 as max value
         Side Effect:
-        - ``_rounding_digits`` is set to None
+        - ``_rounding_digits`` is set to 0
         """
         # Setup
         data = pd.Series([0, 0, 0])
@@ -361,7 +357,7 @@ class TestFloatFormatter(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer._rounding_digits is None
+        assert transformer._rounding_digits == 0
 
     def test__fit_enforce_min_max_values_false(self):
         """Test ``_fit`` with ``enforce_min_max_values`` set to ``False``.
