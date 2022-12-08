@@ -98,9 +98,7 @@ class FloatFormatter(BaseTransformer):
 
         # Can't round, not equal after MAX_DECIMALS digits of precision
         warnings.warn(
-            f"No rounding scheme detected for column '{name}'."
-            ' Synthetic data will not be rounded.'
-        )
+            f"No rounding scheme detected for column '{name}'. Data will not be rounded.")
         return None
 
     def _raise_out_of_bounds_error(self, value, name, bound_type, min_bound, max_bound):
