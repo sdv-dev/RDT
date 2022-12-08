@@ -1230,7 +1230,7 @@ class TestClusterBasedNormalizer(TestCase):
         random_seed = transformer._get_current_random_seed()
 
         # Assert
-        random_seed == 0
+        assert random_seed == 0
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     def test__fit(self, mock_bgm):

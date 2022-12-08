@@ -100,7 +100,7 @@ class TestBaseTransformer:
         transformer.set_random_state(new_state, 'fit')
 
         # Assert
-        transformer.random_states['fit'] == new_state
+        assert transformer.random_states['fit'] == new_state
 
     def test_set_random_state_bad_method_name(self):
         """Test that the method raises an error if the passed method is not recognized."""
