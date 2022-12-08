@@ -33,9 +33,7 @@ class TestFloatFormatter(TestCase):
         data = pd.Series(np.random.random(size=10).round(20), name='col')
 
         # Run and Assert
-        warn_msg = (
-            "No rounding scheme detected for column 'col'. Synthetic data will not be rounded."
-        )
+        warn_msg = "No rounding scheme detected for column 'col'. Data will not be rounded."
         with pytest.warns(UserWarning, match=warn_msg):
             output = FloatFormatter._learn_rounding_digits(data)
 
