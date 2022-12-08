@@ -411,6 +411,12 @@ class ClusterBasedNormalizer(FloatFormatter):
             'component': {'sdtype': 'categorical', 'next_transformer': None},
         }
 
+    def _get_current_random_seed(self):
+        if self.random_states:
+            return self.random_states['fit'].get_state()[1][0]
+
+        return 0
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -422,7 +428,8 @@ class ClusterBasedNormalizer(FloatFormatter):
             n_components=self.max_clusters,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,
-            n_init=1
+            n_init=1,
+            random_state=self._get_current_random_seed()
         )
 
         super()._fit(data)

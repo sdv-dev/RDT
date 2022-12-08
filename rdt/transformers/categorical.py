@@ -69,6 +69,24 @@ class FrequencyEncoder(BaseTransformer):
         """
         data = data.fillna(np.nan)
         frequencies = data.value_counts(dropna=False)
+        augmented_frequencies = frequencies.to_frame()
+        sortable_column_name = f'sortable_{frequencies.name}'
+        column_name = frequencies.name or 0
+        data_with_new_index = data.reset_index(drop=True)
+        data_is_na = data_with_new_index.isna()
+
+        def tie_breaker(element):
+            if pd.isna(element):
+                return data_is_na.loc[data_is_na == 1].index[0]
+
+            return data_with_new_index.loc[data_with_new_index == element].index[0]
+
+        augmented_frequencies[sortable_column_name] = frequencies.index.map(tie_breaker)
+        augmented_frequencies = augmented_frequencies.sort_values(
+            [column_name, sortable_column_name],
+            ascending=[False, True]
+        )
+        sorted_frequencies = augmented_frequencies[column_name]
 
         start = 0
         end = 0
@@ -77,7 +95,7 @@ class FrequencyEncoder(BaseTransformer):
         intervals = {}
         means = []
         starts = []
-        for value, frequency in frequencies.items():
+        for value, frequency in sorted_frequencies.items():
             prob = frequency / elements
             end = start + prob
             mean = start + prob / 2
@@ -132,7 +150,11 @@ class FrequencyEncoder(BaseTransformer):
                 mask = (data.to_numpy() == category)
 
             if self.add_noise:
-                result[mask] = norm.rvs(mean, std, size=mask.sum())
+                result[mask] = norm.rvs(
+                    mean, std,
+                    size=mask.sum(),
+                    random_state=self.random_states['transform']
+                )
                 result[mask] = self._clip_noised_transform(result[mask], start, end)
             else:
                 result[mask] = mean
@@ -147,7 +169,7 @@ class FrequencyEncoder(BaseTransformer):
         start, end, mean, std = self.intervals[category]
 
         if self.add_noise:
-            result = norm.rvs(mean, std)
+            result = norm.rvs(mean, std, random_state=self.random_states['transform'])
             return self._clip_noised_transform(result, start, end)
 
         return mean

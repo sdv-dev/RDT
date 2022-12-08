@@ -1,14 +1,130 @@
 import abc
-from unittest.mock import Mock
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from rdt.transformers import BaseTransformer, NullTransformer
+from rdt.transformers.base import random_state, set_random_states
+
+
+@patch('rdt.transformers.base.np')
+def test_set_random_states(mock_numpy):
+    """Test that the method updates the random states correctly.
+
+    The method should do the following steps:
+    1. Get the current numpy random state.
+    2. Store it.
+    3. Switch to the state for the provided function.
+    4. Call the provided function.
+    5. Set the numpy random state back to what it was.
+    """
+    # Setup
+    initial_state = Mock()
+    initial_state_value = Mock()
+    initial_state.get_state.return_value = initial_state_value
+    random_states = {'fit': initial_state}
+    my_function = Mock()
+    first_state = Mock()
+    second_state = Mock()
+    mock_numpy.random.get_state.side_effect = [first_state, second_state]
+
+    # Run
+    with set_random_states(random_states, 'fit', my_function):
+        pass
+
+    # Assert
+    mock_numpy.random.get_state.assert_called()
+    mock_numpy.random.set_state.assert_has_calls([
+        call(initial_state_value),
+        call(first_state)
+    ])
+    my_function.assert_called_once_with(mock_numpy.random.RandomState.return_value, 'fit')
+    mock_numpy.random.RandomState.return_value.set_state.assert_called_with(second_state)
+
+
+@patch('rdt.transformers.base.set_random_states')
+def test_random_state(mock_set_random_states):
+    """Test the random_state decorator calls the function and ``set_random_states``.
+
+    The method should create a function that will call ``set_random_states`` and then call
+    the passed function within that.
+    """
+    # Setup
+    my_function = Mock()
+    my_function.__name__ = 'name'
+    instance = Mock()
+    instance.random_states = {}
+    mock_set_random_state = Mock()
+    instance.set_random_state = mock_set_random_state
+
+    # Run
+    wrapped_function = random_state(my_function)
+    wrapped_function(instance)
+
+    # Assert
+    mock_set_random_states.assert_called_once_with({}, 'name', mock_set_random_state)
+    my_function.assert_called_once()
+
+
+@patch('rdt.transformers.base.set_random_states')
+def test_random_state_random_states_is_none(mock_set_random_states):
+    """Test the random_state decorator calls the function.
+
+    The method should just call the passed function and not ``set_random_states``.
+    """
+    # Setup
+    my_function = Mock()
+    instance = Mock()
+    instance.random_states = None
+
+    # Run
+    wrapped_function = random_state(my_function)
+    wrapped_function(instance)
+
+    # Assert
+    mock_set_random_states.assert_not_called()
+    my_function.assert_called_once()
 
 
 class TestBaseTransformer:
+
+    def test_set_random_state(self):
+        """Test that the method updates the random state for the correct method."""
+        # Setup
+        transformer = BaseTransformer()
+        new_state = Mock()
+
+        # Run
+        transformer.set_random_state(new_state, 'fit')
+
+        # Assert
+        assert transformer.random_states['fit'] == new_state
+
+    def test_set_random_state_bad_method_name(self):
+        """Test that the method raises an error if the passed method is not recognized."""
+        # Setup
+        transformer = BaseTransformer()
+        new_state = Mock()
+
+        # Run
+        expected_message = "'method_name' must be one of 'fit', 'transform' or 'reverse_transform'"
+        with pytest.raises(ValueError, match=expected_message):
+            transformer.set_random_state(new_state, 'fake_method')
+
+    def test_reset_randomization(self):
+        """Test that the random seed for ``reverse_transform`` is reset."""
+        # Setup
+        transformer = BaseTransformer()
+        transformer.random_states['reverse_transform'] = None
+
+        # Run
+        transformer.reset_randomization()
+
+        # Assert
+        expected_state = transformer.INITIAL_REVERSE_TRANSFORM_STATE
+        assert transformer.random_states['reverse_transform'] == expected_state
 
     def test_get_subclasses(self):
         """Test the ``get_subclasses`` method.
@@ -817,6 +933,7 @@ class TestBaseTransformer:
 
         class Dummy(BaseTransformer):
             def __init__(self):
+                super().__init__()
                 self.output_properties = {
                     None: {'sdtype': 'categorical'},
                     'is_null': {'sdtype': 'float'}

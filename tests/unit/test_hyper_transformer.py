@@ -971,6 +971,7 @@ class TestHyperTransformer(TestCase):
             INPUT_SDTYPE = 'numerical'
 
             def __init__(self):
+                super().__init__()
                 self.output_properties = {'is_null': {'sdtype': 'float', 'next_transformer': None}}
 
             def _fit(self, _):
@@ -983,6 +984,7 @@ class TestHyperTransformer(TestCase):
             INPUT_SDTYPE = 'numerical'
 
             def __init__(self):
+                super().__init__()
                 self.output_properties = {
                     'is_null': {'sdtype': 'float', 'next_transformer': None},
                     None: {'sdtype': 'float', 'next_transformer': DummyTransformer2()}
@@ -1298,11 +1300,11 @@ class TestHyperTransformer(TestCase):
             expect_call_args_transform
         )
 
-    def test_reset_anonymization(self):
-        """Test ``reset_anonymization``.
+    def test_reset_randomization(self):
+        """Test ``reset_randomization``.
 
-        Test that ``reset_anonymization`` calls the expected transformers and their
-        ``reset_anonymization`` method.
+        Test that ``reset_randomization`` calls the expected transformers and their
+        ``reset_randomization`` method.
         """
         # Setup
         instance = Mock()
@@ -1324,12 +1326,12 @@ class TestHyperTransformer(TestCase):
         }
 
         # Run
-        HyperTransformer.reset_anonymization(instance)
+        HyperTransformer.reset_randomization(instance)
 
         # Assert
-        transformer_id.reset_anonymization.assert_called_once_with()
-        transformer_random_element.reset_anonymization.assert_called_once_with()
-        transformer_name.reset_anonymization.assert_not_called()
+        transformer_id.reset_randomization.assert_called_once_with()
+        transformer_random_element.reset_randomization.assert_called_once_with()
+        transformer_name.reset_randomization.assert_called_once_with()
 
     def test_create_anonymized_columns(self):
         """Test ``create_anonymized_columns``.
@@ -1364,7 +1366,7 @@ class TestHyperTransformer(TestCase):
         random_element.output_columns = []
 
         regex_id = RegexGenerator(regex_format='id_[0-9]')
-        regex_id.reset_anonymization()
+        regex_id.reset_randomization()
         regex_id.columns = ['id']
         regex_id.output_columns = []
 

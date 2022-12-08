@@ -276,18 +276,20 @@ class TestAnonymizedFaker:
         with pytest.raises(Error, match=expected_message):
             AnonymizedFaker(provider_name='credit_card', locales=['en_US', 'fr_FR'])
 
+    @patch('rdt.transformers.pii.anonymizer.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.pii.anonymizer.faker')
-    def test_reset_anonymization(self, mock_faker):
+    def test_reset_randomization(self, mock_faker, mock_base_reset):
         """Test that this function creates a new faker instance."""
         # Setup
-        instance = Mock()
+        instance = AnonymizedFaker()
         instance.locales = ['en_US']
 
         # Run
-        AnonymizedFaker.reset_anonymization(instance)
+        AnonymizedFaker.reset_randomization(instance)
 
         # Assert
         assert mock_faker.Faker.called_once_with(['en_US'])
+        mock_base_reset.assert_called_once()
 
     def test__fit(self):
         """Test the ``_fit`` method.

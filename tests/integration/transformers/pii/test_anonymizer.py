@@ -108,7 +108,7 @@ def test_anonymizedfaker_custom_provider_with_nans():
 def test_anonymizedfaker_enforce_uniqueness():
     """Test that ``AnonymizedFaker`` works with uniqueness.
 
-    Also ensure that when we call ``reset_anonymization`` the generator will be able to
+    Also ensure that when we call ``reset_randomization`` the generator will be able to
     create values again.
     """
     data = pd.DataFrame({
@@ -130,7 +130,7 @@ def test_anonymizedfaker_enforce_uniqueness():
     with pytest.raises(Error, match=error_msg):
         instance.reverse_transform(transformed)
 
-    instance.reset_anonymization()
+    instance.reset_randomization()
     instance.reverse_transform(transformed)
 
 

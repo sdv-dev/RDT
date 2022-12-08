@@ -5,16 +5,10 @@ from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEn
 
 
 class TestUnixTimestampEncoder:
-    def setup_method(self):
-        self.random_state = np.random.get_state()
-        np.random.set_state(np.random.RandomState(7).get_state())
-
-    def teardown_method(self):
-        np.random.set_state(self.random_state)
-
     def test_unixtimestampencoder(self):
         ute = UnixTimestampEncoder(missing_value_replacement='mean')
         data = pd.DataFrame({'column': pd.to_datetime([None, '1996-10-17', '1965-05-23'])})
+        ute.set_random_state(np.random.RandomState(7), 'reverse_transform')
 
         # Run
         ute.fit(data, column='column')
@@ -32,6 +26,7 @@ class TestUnixTimestampEncoder:
     def test_unixtimestampencoder_different_format(self):
         ute = UnixTimestampEncoder(missing_value_replacement='mean', datetime_format='%b %d, %Y')
         data = pd.DataFrame({'column': [None, 'Oct 17, 1996', 'May 23, 1965']})
+        ute.set_random_state(np.random.RandomState(7), 'reverse_transform')
 
         # Run
         ute.fit(data, column='column')
@@ -47,15 +42,9 @@ class TestUnixTimestampEncoder:
 
 
 class TestOptimizedTimestampEncoder:
-    def setup_method(self):
-        self.random_state = np.random.get_state()
-        np.random.set_state(np.random.RandomState(7).get_state())
-
-    def teardown_method(self):
-        np.random.set_state(self.random_state)
-
     def test_optimizedtimestampencoder(self):
         ote = OptimizedTimestampEncoder(missing_value_replacement='mean')
+        ote.set_random_state(np.random.RandomState(7), 'reverse_transform')
         data = pd.DataFrame({'column': pd.to_datetime([None, '1996-10-17', '1965-05-23'])})
 
         # Run
