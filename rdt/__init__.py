@@ -4,7 +4,7 @@
 
 
 __author__ = 'DataCebo, Inc.'
-__email__ = 'info@sdv.dev',
+__email__ = 'info@sdv.dev'
 __version__ = '1.3.0.dev1'
 
 import numpy as np
