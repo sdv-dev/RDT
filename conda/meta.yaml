@@ -36,7 +36,7 @@ requirements:
 about:
   home: "https://github.com/sdv-dev/RDT"
   license: BUSL-1.1
-  license_file:
+  license_file: LICENSE
   summary: "Reversible Data Transforms"
   doc_url:
   dev_url:
