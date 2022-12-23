@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.errors import Error
+from rdt.errors import TransformerInputError, TransformerProcessingError
 from rdt.transformers.categorical import LabelEncoder
 from rdt.transformers.pii.anonymizer import AnonymizedFaker, PseudoAnonymizedFaker
 
@@ -70,7 +70,7 @@ class TestAnonymizedFaker:
         )
 
         # Run
-        with pytest.raises(Error, match=expected_message):
+        with pytest.raises(TransformerProcessingError, match=expected_message):
             AnonymizedFaker.check_provider_function('TestProvider', 'TestFunction')
 
     def test__function_enforce_uniqueness_false(self):
@@ -273,7 +273,7 @@ class TestAnonymizedFaker:
             'Please specify the function name to use from the '
             "'credit_card' provider."
         )
-        with pytest.raises(Error, match=expected_message):
+        with pytest.raises(TransformerInputError, match=expected_message):
             AnonymizedFaker(provider_name='credit_card', locales=['en_US', 'fr_FR'])
 
     @patch('rdt.transformers.pii.anonymizer.BaseTransformer.reset_randomization')
@@ -375,7 +375,7 @@ class TestAnonymizedFaker:
         """Test the ``_reverse_transform`` method.
 
         Test that when calling the ``_reverse_transform`` method and the ``instance._function`` is
-        not generating enough unique values raises an ``Error``.
+        not generating enough unique values raises an error.
 
         Setup:
             -Instance of ``AnonymizedFaker``.
@@ -384,7 +384,7 @@ class TestAnonymizedFaker:
             - ``pandas.Series`` representing a column.
 
         Side Effect:
-            - Raises an ``Error``.
+            - Raises an error.
         """
         # Setup
         instance = AnonymizedFaker('misc', 'boolean', enforce_uniqueness=True)
@@ -396,7 +396,7 @@ class TestAnonymizedFaker:
             'The Faker function you specified is not able to generate 4 unique '
             "values. Please use a different Faker function for column ('a')."
         )
-        with pytest.raises(Error, match=error_msg):
+        with pytest.raises(TransformerProcessingError, match=error_msg):
             instance._reverse_transform(data)
 
     def test__reverse_transform_size_is_length_of_data(self):
@@ -632,7 +632,7 @@ class TestPseudoAnonymizedFaker:
         """Test the ``_fit`` method.
 
         Test that when calling the ``_fit`` method and the ``instance._function`` is not
-        generating enough unique values raises an ``Error``.
+        generating enough unique values raises an error.
 
         Setup:
             -Instance of ``PseudoAnonymizedFaker``.
@@ -644,7 +644,7 @@ class TestPseudoAnonymizedFaker:
             - Mock the ``instance._function`` to return only 1 value.
 
         Side Effect:
-            - Raises an ``Error``.
+            - Raises an error.
         """
         # Setup
         instance = PseudoAnonymizedFaker('misc', 'boolean')
@@ -656,7 +656,7 @@ class TestPseudoAnonymizedFaker:
             '4 unique values. Please use a different '
             'Faker function for this column.'
         )
-        with pytest.raises(Error, match=error_msg):
+        with pytest.raises(TransformerProcessingError, match=error_msg):
             instance._fit(data)
 
     def test__transform(self):
@@ -701,7 +701,7 @@ class TestPseudoAnonymizedFaker:
             - pandas.Series with values that are not within the ``_mapping_dict``.
 
         Side Effects:
-            - Raises a ``Error``.
+            - Raises a error.
         """
         # Setup
         instance = PseudoAnonymizedFaker()
@@ -719,10 +719,10 @@ class TestPseudoAnonymizedFaker:
             'new data.'
         )
 
-        with pytest.raises(Error, match=error_msg_short):
+        with pytest.raises(TransformerProcessingError, match=error_msg_short):
             instance._transform(pd.Series([1, 2, 3]))
 
-        with pytest.raises(Error, match=error_msg_long):
+        with pytest.raises(TransformerProcessingError, match=error_msg_long):
             instance._transform(pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
 
     def test__reverse_transform(self):

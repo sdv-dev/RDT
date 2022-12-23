@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.errors import Error
+from rdt.errors import TransformerProcessingError
 from rdt.transformers.text import RegexGenerator
 
 
@@ -332,7 +332,7 @@ class TestRegexGenerator:
             - Initialize a generator.
 
         Side Effects:
-            - An ``Error`` is being raised as not enough unique values can be generated.
+            - An error is being raised as not enough unique values can be generated.
         """
         # Setup
         instance = RegexGenerator('[A-Z]', enforce_uniqueness=True)
@@ -349,13 +349,13 @@ class TestRegexGenerator:
             'The regex is not able to generate 6 unique values. Please use a different regex '
             "for column ('a')."
         )
-        with pytest.raises(Error, match=error_msg):
+        with pytest.raises(TransformerProcessingError, match=error_msg):
             instance._reverse_transform(columns_data)
 
     def test__reverse_transform_enforce_uniqueness_not_enough_remaining(self):
         """Test the case when ``_reverse_transform`` can't generate enough new values.
 
-        Validate that an ``Error`` is being raised stating that not enough new values can be
+        Validate that an error is being raised stating that not enough new values can be
         generated and that the user can use ``reset_randomization`` in order to restart the
         generator.
         """
@@ -374,5 +374,5 @@ class TestRegexGenerator:
             'The regex generator is not able to generate 6 new unique values (only 1 unique '
             "value left). Please use 'reset_randomization' in order to restart the generator."
         )
-        with pytest.raises(Error, match=error_msg):
+        with pytest.raises(TransformerProcessingError, match=error_msg):
             instance._reverse_transform(columns_data)

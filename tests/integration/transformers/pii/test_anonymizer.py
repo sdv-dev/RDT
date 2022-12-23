@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.errors import Error
+from rdt.errors import TransformerProcessingError
 from rdt.transformers.pii import AnonymizedFaker, PseudoAnonymizedFaker
 
 
@@ -127,7 +127,7 @@ def test_anonymizedfaker_enforce_uniqueness():
         'values. Please use a different Faker function for column '
         "('job')."
     )
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(TransformerProcessingError, match=error_msg):
         instance.reverse_transform(transformed)
 
     instance.reset_randomization()
