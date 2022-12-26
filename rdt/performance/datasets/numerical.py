@@ -64,7 +64,7 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
             },
             'reverse_transform': {
                 'time': 2e-05,
-                'memory': 300.0,
+                'memory': 315.0,
             }
         }
 
@@ -120,7 +120,7 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
             },
             'reverse_transform': {
                 'time': 2e-05,
-                'memory': 300.0,
+                'memory': 315.0,
             }
         }
 
@@ -238,7 +238,7 @@ class NormalNaNsGenerator(NumericalGenerator):
             },
             'reverse_transform': {
                 'time': 5e-05,
-                'memory': 300.0,
+                'memory': 315.0,
             }
         }
 
@@ -292,6 +292,6 @@ class BigNormalNaNsGenerator(NumericalGenerator):
             },
             'reverse_transform': {
                 'time': 2e-05,
-                'memory': 300.0,
+                'memory': 315.0,
             }
         }
