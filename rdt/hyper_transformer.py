@@ -682,7 +682,8 @@ class HyperTransformer:
     def reset_randomization(self):
         """Reset the generators for the anonymized columns."""
         for transformer in self.field_transformers.values():
-            transformer.reset_randomization()
+            if transformer:
+                transformer.reset_randomization()
 
     def create_anonymized_columns(self, num_rows, column_names):
         """Create the anonymized columns for this ``HyperTransformer``.
