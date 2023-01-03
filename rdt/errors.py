@@ -22,4 +22,4 @@ class TransformerInputError(Exception):
 
 
 class TransformerProcessingError(Exception):
-    """Error to raise when ."""
+    """Error to raise when transformer fails to complete some process (ie. anonymization)."""
