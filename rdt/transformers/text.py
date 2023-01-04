@@ -3,7 +3,7 @@ import warnings
 
 import numpy as np
 
-from rdt.errors import Error
+from rdt.errors import TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import strings_from_regex
 
@@ -19,7 +19,7 @@ class RegexGenerator(BaseTransformer):
             String representing the regex function.
         enforce_uniqueness (bool):
             Whether or not to ensure that the new generated data is all unique. If it isn't
-            possible to create the requested number of rows, then an ``Error`` will be raised.
+            possible to create the requested number of rows, then an error will be raised.
             Defaults to ``False``.
     """
 
@@ -96,7 +96,7 @@ class RegexGenerator(BaseTransformer):
 
         if sample_size > self.generator_size:
             if self.enforce_uniqueness:
-                raise Error(
+                raise TransformerProcessingError(
                     f'The regex is not able to generate {sample_size} unique values. '
                     f"Please use a different regex for column ('{self.get_input_column()}')."
                 )
@@ -110,7 +110,7 @@ class RegexGenerator(BaseTransformer):
         remaining = self.generator_size - self.generated
         if sample_size > self.generator_size - self.generated:
             if self.enforce_uniqueness:
-                raise Error(
+                raise TransformerProcessingError(
                     f'The regex generator is not able to generate {sample_size} new unique '
                     f'values (only {remaining} unique value left). Please use '
                     "'reset_randomization' in order to restart the generator."

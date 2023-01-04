@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from rdt import HyperTransformer, get_demo
-from rdt.errors import Error, NotFittedError
+from rdt.errors import ConfigNotSetError, InvalidConfigError, InvalidDataError, NotFittedError
 from rdt.transformers import (
     AnonymizedFaker, BaseTransformer, BinaryEncoder, ClusterBasedNormalizer, FloatFormatter,
     FrequencyEncoder, LabelEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder,
@@ -512,12 +512,12 @@ def test_multiple_detects():
 def test_transform_without_fit():
     """HyperTransformer should raise an error when transforming without fitting."""
     # Setup
-    data = pd.DataFrame()
+    data = pd.DataFrame({'column': [1, 2, 3]})
     ht = HyperTransformer()
     ht.detect_initial_config(data)
 
     # Run / Assert
-    with pytest.raises(Error):
+    with pytest.raises(NotFittedError):
         ht.transform(data)
 
 
@@ -536,7 +536,7 @@ def test_fit_data_different_than_detect():
         'values.'
     )
     ht.detect_initial_config(detect_data)
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(InvalidDataError, match=error_msg):
         ht.fit(data)
 
 
@@ -586,7 +586,7 @@ def test_transform_without_config():
         "it automatically from your data using 'detect_initial_config' prior to "
         'fitting your data.'
     )
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(ConfigNotSetError, match=error_msg):
         ht.transform(data)
 
 
@@ -604,7 +604,7 @@ def test_transform_unseen_columns():
         'The data you are trying to transform has different columns than the original data. '
         'Column names and their sdtypes must be the same.'
     )
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(InvalidDataError, match=error_msg):
         ht.transform(different_data)
 
 
@@ -621,7 +621,7 @@ def test_update_sdtypes_incorrect_columns():
         "Invalid column names: ['col3']. These columns do not exist in the "
         "config. Use 'set_config()' to write and set your entire config at once."
     )
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(InvalidConfigError, match=error_msg):
         ht.update_sdtypes(column_name_to_sdtype)
 
 
@@ -638,7 +638,7 @@ def test_update_sdtypes_incorrect_sdtype():
         "Invalid sdtypes: ['unexpected']. If you are trying to use a "
         'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
     )
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(InvalidConfigError, match=error_msg):
         ht.update_sdtypes(column_name_to_sdtype)
 
 

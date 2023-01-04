@@ -8,7 +8,7 @@ from copy import deepcopy
 import faker
 import numpy as np
 
-from rdt.errors import Error
+from rdt.errors import TransformerInputError, TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.categorical import LabelEncoder
 
@@ -32,7 +32,7 @@ class AnonymizedFaker(BaseTransformer):
             List of localized providers to use instead of the global provider.
         enforce_uniqueness (bool):
             Whether or not to ensure that the new anonymized data is all unique. If it isn't
-            possible to create the requested number of rows, then an ``Error`` will be raised.
+            possible to create the requested number of rows, then an error will be raised.
             Defaults to ``False``.
     """
 
@@ -60,7 +60,7 @@ class AnonymizedFaker(BaseTransformer):
                 getattr(provider, function_name)
 
         except AttributeError as exception:
-            raise Error(
+            raise TransformerProcessingError(
                 f"The '{provider_name}' module does not contain a function named "
                 f"'{function_name}'.\nRefer to the Faker docs to find the correct function: "
                 'https://faker.readthedocs.io/en/master/providers.html'
@@ -90,7 +90,7 @@ class AnonymizedFaker(BaseTransformer):
         self.enforce_uniqueness = enforce_uniqueness
         self.provider_name = provider_name if provider_name else 'BaseProvider'
         if self.provider_name != 'BaseProvider' and function_name is None:
-            raise Error(
+            raise TransformerInputError(
                 'Please specify the function name to use from the '
                 f"'{self.provider_name}' provider."
             )
@@ -153,7 +153,7 @@ class AnonymizedFaker(BaseTransformer):
                 for _ in range(sample_size)
             ], dtype=object)
         except faker.exceptions.UniquenessException as exception:
-            raise Error(
+            raise TransformerProcessingError(
                 f'The Faker function you specified is not able to generate {sample_size} unique '
                 'values. Please use a different Faker function for column '
                 f"('{self.get_input_column()}')."
@@ -249,7 +249,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         try:
             generated_values = [self._function() for _ in range(unique_data_length)]
         except faker.exceptions.UniquenessException as exception:
-            raise Error(
+            raise TransformerProcessingError(
                 'The Faker function you specified is not able to generate '
                 f'{unique_data_length} unique values. Please use a different '
                 'Faker function for this column.'
@@ -263,7 +263,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         """Replace each category with a numerical representation.
 
         Map the input ``columns_data`` using the previously generated values for each one.
-        If the  ``columns_data`` contain unknown values, a ``Error`` will be raised with the
+        If the  ``columns_data`` contain unknown values, an error will be raised with the
         unknown categories.
 
         Args:
@@ -293,7 +293,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
                     'using this new data.'
                 )
 
-            raise Error(error_msg)
+            raise TransformerProcessingError(error_msg)
 
         mapped_data = columns_data.map(self._mapping_dict)
         return mapped_data

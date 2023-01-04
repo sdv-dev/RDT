@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.errors import Error
+from rdt.errors import TransformerInputError
 from rdt.transformers.categorical import (
     CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder)
 
@@ -1473,7 +1473,7 @@ class TestLabelEncoder:
             "order_by must be one of the following values: None, 'numerical_value' or "
             "'alphabetical'"
         )
-        with pytest.raises(Error, match=message):
+        with pytest.raises(TransformerInputError, match=message):
             LabelEncoder(order_by='bad_value')
 
     def test__order_categories_alphabetical(self):
@@ -1542,7 +1542,7 @@ class TestLabelEncoder:
 
         # Run / Assert
         message = "The data must be of type string if order_by is 'alphabetical'."
-        with pytest.raises(Error, match=message):
+        with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
     def test__order_categories_numerical(self):
@@ -1588,7 +1588,7 @@ class TestLabelEncoder:
 
         # Run / Assert
         message = ("The data must be numerical if order_by is 'numerical_value'.")
-        with pytest.raises(Error, match=message):
+        with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
     def test__order_categories_numerical_different_dtype_error(self):
@@ -1612,7 +1612,7 @@ class TestLabelEncoder:
 
         # Run / Assert
         message = ("The data must be numerical if order_by is 'numerical_value'.")
-        with pytest.raises(Error, match=message):
+        with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
     def test__fit(self):
@@ -1865,5 +1865,5 @@ class TestCustomLabelEncoder:
             "Unknown categories '[3, 4]'. All possible categories must be defined in the "
             "'order' parameter."
         )
-        with pytest.raises(Error, match=message):
+        with pytest.raises(TransformerInputError, match=message):
             transformer._fit(data)

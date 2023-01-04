@@ -7,7 +7,7 @@ import pandas as pd
 import psutil
 from scipy.stats import norm
 
-from rdt.errors import Error
+from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
 
 
@@ -444,7 +444,7 @@ class LabelEncoder(BaseTransformer):
         super().__init__()
         self.add_noise = add_noise
         if order_by not in [None, 'alphabetical', 'numerical_value']:
-            raise Error(
+            raise TransformerInputError(
                 "order_by must be one of the following values: None, 'numerical_value' or "
                 "'alphabetical'"
             )
@@ -454,11 +454,15 @@ class LabelEncoder(BaseTransformer):
     def _order_categories(self, unique_data):
         if self.order_by == 'alphabetical':
             if unique_data.dtype.type not in [np.str_, np.object_]:
-                raise Error("The data must be of type string if order_by is 'alphabetical'.")
+                raise TransformerInputError(
+                    "The data must be of type string if order_by is 'alphabetical'."
+                )
 
         elif self.order_by == 'numerical_value':
             if not np.issubdtype(unique_data.dtype.type, np.number):
-                raise Error("The data must be numerical if order_by is 'numerical_value'.")
+                raise TransformerInputError(
+                    "The data must be numerical if order_by is 'numerical_value'."
+                )
 
         if self.order_by is not None:
             nans = pd.isna(unique_data)
@@ -576,7 +580,7 @@ class CustomLabelEncoder(LabelEncoder):
         data = data.fillna(np.nan)
         missing = list(data[~data.isin(self.order)].unique())
         if len(missing) > 0:
-            raise Error(
+            raise TransformerInputError(
                 f"Unknown categories '{missing}'. All possible categories must be defined in the "
                 "'order' parameter."
             )
