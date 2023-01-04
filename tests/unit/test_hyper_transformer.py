@@ -1322,7 +1322,8 @@ class TestHyperTransformer(TestCase):
         instance.field_transformers = {
             'id': transformer_id,
             'random_element': transformer_random_element,
-            'name': transformer_name
+            'name': transformer_name,
+            'label': None
         }
 
         # Run
