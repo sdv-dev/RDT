@@ -100,7 +100,7 @@ def install_minimum(c):
 
 
     versions.append(
-        'copulas @ git+https://github.com/sdv-dev/copulas.git@fix-pandas-versions'
+        'git+https://github.com/sdv-dev/copulas.git@fix-pandas-versions'
     )
     c.run(f'python -m pip install {" ".join(versions)}')
 
