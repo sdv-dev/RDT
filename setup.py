@@ -29,7 +29,7 @@ install_requires = [
 ]
 
 copulas_requires = [
-    'copulas>=0.7.1.dev0,<0.8',
+    'copulas @ git+https://github.com/sdv-dev/copulas.git@fix-pandas-versions'
 ]
 
 setup_requires = [

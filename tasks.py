@@ -80,20 +80,28 @@ def install_minimum(c):
                 continue
 
             line = line.strip()
-            if _validate_python_version(line):
-                requirement = re.match(r'[^>]*', line).group(0)
-                requirement = re.sub(r"""['",]""", '', requirement)
-                version = re.search(r'>=?[^(,|#)]*', line).group(0)
-                if version:
-                    version = re.sub(r'>=?', '==', version)
-                    version = re.sub(r"""['",]""", '', version)
-                    requirement += version
-                versions.append(requirement)
+            try:
+                if _validate_python_version(line):
+                    requirement = re.match(r'[^>]*', line).group(0)
+                    requirement = re.sub(r"""['",]""", '', requirement)
+                    version = re.search(r'>=?[^(,|#)]*', line).group(0)
+                    if version:
+                        version = re.sub(r'>=?', '==', version)
+                        version = re.sub(r"""['",]""", '', version)
+                        requirement += version
+                    versions.append(requirement)
+            except:
+                # Skipping because Copulas is a link
+                pass
 
         elif line.startswith('install_requires = [') or \
             line.startswith('copulas_requires = ['):
             started = True
 
+
+    versions.append(
+        'copulas @ git+https://github.com/sdv-dev/copulas.git@fix-pandas-versions'
+    )
     c.run(f'python -m pip install {" ".join(versions)}')
 
 
