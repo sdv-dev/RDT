@@ -15,18 +15,21 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
     history = history_file.read()
 
 install_requires = [
-    "numpy>=1.18.0,<1.20.0;python_version<'3.7'",
-    "numpy>=1.20.0,<2;python_version>='3.7'",
-    'pandas>=1.1.3,<2',
-    'scipy>=1.5.4,<1.8',
+    "numpy>=1.20.0,<2;python_version<'3.10'",
+    "numpy>=1.23.3,<2;python_version>='3.10'",
+    "pandas>=1.1.3,<2;python_version<'3.10'",
+    "pandas>=1.3.4,<2;python_version>='3.10' and python_version<'3.11'",
+    "pandas>=1.5.0,<2;python_version>='3.11'",
+    "scipy>=1.5.4,<2;python_version<'3.10'",
+    "scipy>=1.9.2,<2;python_version>='3.10'",
+    "scikit-learn>=0.24,<2;python_version<'3.10'",
+    "scikit-learn>=1.1.3,<2;python_version>='3.10'",
     'psutil>=5.7,<6',
-    'scikit-learn>=0.24,<2',
-    'pyyaml>=5.4.1,<6',
     'Faker>=10',
 ]
 
 copulas_requires = [
-    'copulas>=0.6.0,<0.7',
+    'copulas>=0.8.0,<0.9',
 ]
 
 setup_requires = [
@@ -108,10 +111,11 @@ setup(
         'License :: Free for non-commercial use',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
     ],
     description='Reversible Data Transforms',
@@ -131,7 +135,7 @@ setup(
         include=['rdt', 'rdt.*'],
         exclude=['rdt.transformers.addons.*']
     ),
-    python_requires='>=3.6,<3.10',
+    python_requires='>=3.7,<3.12',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
