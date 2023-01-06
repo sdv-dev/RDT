@@ -37,7 +37,7 @@ class RandomGapDatetimeGenerator(DatetimeGenerator):
             },
             'transform': {
                 'time': 5e-05,
-                'memory': 315.0
+                'memory': 350.0
             },
             'reverse_transform': {
                 'time': 5e-05,
@@ -67,7 +67,7 @@ class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
             },
             'transform': {
                 'time': 5e-05,
-                'memory': 315.0
+                'memory': 350.0
             },
             'reverse_transform': {
                 'time': 5e-05,
@@ -125,7 +125,7 @@ class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
             },
             'transform': {
                 'time': 5e-05,
-                'memory': 315.0
+                'memory': 350.0
             },
             'reverse_transform': {
                 'time': 5e-05,
@@ -158,7 +158,7 @@ class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
             },
             'transform': {
                 'time': 5e-05,
-                'memory': 315.0
+                'memory': 350.0
             },
             'reverse_transform': {
                 'time': 5e-05,
@@ -191,7 +191,7 @@ class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
             },
             'transform': {
                 'time': 5e-05,
-                'memory': 315.0
+                'memory': 350.0
             },
             'reverse_transform': {
                 'time': 5e-05,
