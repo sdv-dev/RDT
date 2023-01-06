@@ -29,7 +29,7 @@ install_requires = [
 ]
 
 copulas_requires = [
-    'copulas>=0.8.0.dev0,<0.9',
+    'copulas>=0.8.0,<0.9',
 ]
 
 setup_requires = [
