@@ -1808,6 +1808,35 @@ class TestCustomLabelEncoder:
         assert transformer.add_noise == 'add_noise_value'
         pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
 
+    def test___repr___default(self):
+        """Test that the ``__repr__`` method prints the custom order.
+
+        The order should be printed as <CUSTOM> instead of the actual order.
+        """
+        # Setup
+        transformer = CustomLabelEncoder(order=['VISA', 'AMEX', 'DISCOVER', None])
+
+        # Run
+        stringified_transformer = transformer.__repr__()
+
+        # Assert
+        assert stringified_transformer == 'CustomLabelEncoder(order=<CUSTOM>)'
+
+    def test___repr___add_noise_true(self):
+        """Test that the ``__repr__`` method prints the custom order with ``add_noise``.
+
+        The order should be printed as <CUSTOM> instead of the actual order. If ``add_noise``
+        is provided, it should be printed too.
+        """
+        # Setup
+        transformer = CustomLabelEncoder(order=['VISA', 'AMEX', 'DISCOVER', None], add_noise=True)
+
+        # Run
+        stringified_transformer = transformer.__repr__()
+
+        # Assert
+        assert stringified_transformer == 'CustomLabelEncoder(order=<CUSTOM>, add_noise=True)'
+
     def test__fit(self):
         """Test the ``_fit`` method.
 
