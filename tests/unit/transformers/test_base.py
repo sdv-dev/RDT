@@ -117,14 +117,20 @@ class TestBaseTransformer:
         """Test that the random seed for ``reverse_transform`` is reset."""
         # Setup
         transformer = BaseTransformer()
+        transformer.random_states['fit'] = 0
+        transformer.random_states['transform'] = 2
         transformer.random_states['reverse_transform'] = None
 
         # Run
         transformer.reset_randomization()
 
         # Assert
-        expected_state = transformer.INITIAL_REVERSE_TRANSFORM_STATE
-        assert transformer.random_states['reverse_transform'] == expected_state
+        fit_state = transformer.INITIAL_FIT_STATE
+        transform_state = transformer.INITIAL_TRANSFORM_STATE
+        reverse_transform_state = transformer.INITIAL_REVERSE_TRANSFORM_STATE
+        assert transformer.random_states['fit'] == fit_state
+        assert transformer.random_states['transform'] == transform_state
+        assert transformer.random_states['reverse_transform'] == reverse_transform_state
 
     def test_get_subclasses(self):
         """Test the ``get_subclasses`` method.

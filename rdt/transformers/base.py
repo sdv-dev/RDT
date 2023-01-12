@@ -100,6 +100,8 @@ class BaseTransformer:
 
     def reset_randomization(self):
         """Reset the random state for ``reverse_transform``."""
+        self.set_random_state(self.INITIAL_FIT_STATE, 'fit')
+        self.set_random_state(self.INITIAL_TRANSFORM_STATE, 'transform')
         self.set_random_state(self.INITIAL_REVERSE_TRANSFORM_STATE, 'reverse_transform')
 
     def _set_missing_value_replacement(self, default, missing_value_replacement):
