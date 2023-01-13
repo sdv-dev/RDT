@@ -566,6 +566,22 @@ class CustomLabelEncoder(LabelEncoder):
         self.order = pd.Series(order).fillna(np.nan)
         super().__init__(add_noise=add_noise)
 
+    def __repr__(self):
+        """Represent initialization of transformer as text.
+
+        Returns:
+            str:
+                The name of the transformer followed by any non-default parameters.
+        """
+        class_name = self.__class__.get_name()
+        custom_args = []
+        custom_args.append('order=<CUSTOM>')
+        if self.add_noise:
+            custom_args.append(f'add_noise={self.add_noise}')
+
+        args_string = ', '.join(custom_args)
+        return f'{class_name}({args_string})'
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
