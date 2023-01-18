@@ -6,7 +6,7 @@ This release makes changes to the way that individual transformers are stored in
 
 Additionally, the output of `reverse_tranform` no longer appends the `.value` suffix to every unnamed output column. Only output columns that are created from context extracted from the input columns will have suffixes (eg. `.normalized` in the `ClusterBasedNormalizer`).
 
-The `AnonymizedFaker` and `RegexGenerator` now have an `enforce_uniqueness` parameter, which controls whether the data returned by `reverse_transform` should be unique. The `HyperTranssformer` now has a method called `create_anonymized_columns` that can be used to generate columns that are matched with anonymizing transformers like `AnonymizedFaker` and `RegexGenerator`. The method can be used as follows:
+The `AnonymizedFaker` and `RegexGenerator` now have an `enforce_uniqueness` parameter, which controls whether the data returned by `reverse_transform` should be unique. The `HyperTransformer` now has a method called `create_anonymized_columns` that can be used to generate columns that are matched with anonymizing transformers like `AnonymizedFaker` and `RegexGenerator`. The method can be used as follows:
 `HyperTransformer.create_anonymized_columns(num_rows=5, column_names=['email_optin', 'credit_card'])`
 
 Another major change in this release is the ability to control randomization. Every time a `HyperTransformer` is initialized, its randomness will be reset to the same seed, and it will yield the same results for `reverse_transform` if given the same input. Every subsequent call to `reverse_transform` yields a different result. If a user desires to reset the seed, they can call `HyperTransformer.reset_randomization`.
