@@ -1,7 +1,6 @@
 import pytest
 
-from rdt.transformers import (
-    BinaryEncoder, get_transformer_class, get_transformer_instance, get_transformer_name)
+from rdt.transformers import BinaryEncoder, get_transformer_class, get_transformer_name
 from rdt.transformers.addons.identity.identity import IdentityTransformer
 
 
@@ -67,6 +66,15 @@ def test_get_transformer_class_transformer_path():
     assert returned == BinaryEncoder
 
 
+def test_get_transformer_class_partial_path():
+    """Test with non fully specified path."""
+    # Run
+    returned = get_transformer_class('rdt.transformers.BinaryEncoder')
+
+    # Assert
+    assert returned == BinaryEncoder
+
+
 def test_get_transformer_class_transformer_path_addon():
     """Test the ``get_transformer_class`` method.
 
@@ -86,36 +94,3 @@ def test_get_transformer_class_transformer_path_addon():
 
     # Assert
     assert returned == IdentityTransformer
-
-
-def test_get_transformer_instance_instance():
-    transformer = BinaryEncoder(missing_value_replacement=None)
-
-    returned = get_transformer_instance(transformer)
-
-    assert isinstance(returned, BinaryEncoder)
-    assert returned.missing_value_replacement is None
-
-
-def test_get_transformer_instance_str():
-    transformer = 'rdt.transformers.BinaryEncoder'
-
-    returned = get_transformer_instance(transformer)
-
-    assert isinstance(returned, BinaryEncoder)
-
-
-def test_get_transformer_instance_addon():
-    transformer = 'rdt.transformers.addons.identity.identity.IdentityTransformer'
-
-    returned = get_transformer_instance(transformer)
-
-    assert isinstance(returned, IdentityTransformer)
-
-
-def test_get_transformer_instance_class():
-    transformer = BinaryEncoder
-
-    returned = get_transformer_instance(transformer)
-
-    assert isinstance(returned, BinaryEncoder)

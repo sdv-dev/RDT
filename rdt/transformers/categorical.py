@@ -7,7 +7,7 @@ import pandas as pd
 import psutil
 from scipy.stats import norm
 
-from rdt.errors import Error
+from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
 
 
@@ -35,10 +35,6 @@ class FrequencyEncoder(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
-    OUTPUT_SDTYPES = {'value': 'float'}
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
-
     mapping = None
     intervals = None
     starts = None
@@ -56,16 +52,8 @@ class FrequencyEncoder(BaseTransformer):
         self.__dict__ = state
 
     def __init__(self, add_noise=False):
+        super().__init__()
         self.add_noise = add_noise
-
-    def is_transform_deterministic(self):
-        """Return whether the transform is deterministic.
-
-        Returns:
-            bool:
-                Whether or not the transform is deterministic.
-        """
-        return not self.add_noise
 
     @staticmethod
     def _get_intervals(data):
@@ -81,6 +69,24 @@ class FrequencyEncoder(BaseTransformer):
         """
         data = data.fillna(np.nan)
         frequencies = data.value_counts(dropna=False)
+        augmented_frequencies = frequencies.to_frame()
+        sortable_column_name = f'sortable_{frequencies.name}'
+        column_name = frequencies.name or 0
+        data_with_new_index = data.reset_index(drop=True)
+        data_is_na = data_with_new_index.isna()
+
+        def tie_breaker(element):
+            if pd.isna(element):
+                return data_is_na.loc[data_is_na == 1].index[0]
+
+            return data_with_new_index.loc[data_with_new_index == element].index[0]
+
+        augmented_frequencies[sortable_column_name] = frequencies.index.map(tie_breaker)
+        augmented_frequencies = augmented_frequencies.sort_values(
+            [column_name, sortable_column_name],
+            ascending=[False, True]
+        )
+        sorted_frequencies = augmented_frequencies[column_name]
 
         start = 0
         end = 0
@@ -89,7 +95,7 @@ class FrequencyEncoder(BaseTransformer):
         intervals = {}
         means = []
         starts = []
-        for value, frequency in frequencies.items():
+        for value, frequency in sorted_frequencies.items():
             prob = frequency / elements
             end = start + prob
             mean = start + prob / 2
@@ -144,7 +150,11 @@ class FrequencyEncoder(BaseTransformer):
                 mask = (data.to_numpy() == category)
 
             if self.add_noise:
-                result[mask] = norm.rvs(mean, std, size=mask.sum())
+                result[mask] = norm.rvs(
+                    mean, std,
+                    size=mask.sum(),
+                    random_state=self.random_states['transform']
+                )
                 result[mask] = self._clip_noised_transform(result[mask], start, end)
             else:
                 result[mask] = mean
@@ -159,7 +169,7 @@ class FrequencyEncoder(BaseTransformer):
         start, end, mean, std = self.intervals[category]
 
         if self.add_noise:
-            result = norm.rvs(mean, std)
+            result = norm.rvs(mean, std, random_state=self.random_states['transform'])
             return self._clip_noised_transform(result, start, end)
 
         return mean
@@ -207,7 +217,7 @@ class FrequencyEncoder(BaseTransformer):
         is_data_greater_than_starts = (data >= starts)[:, ::-1]
         interval_indexes = num_categories - np.argmax(is_data_greater_than_starts, axis=1) - 1
 
-        get_category_from_index = list(self.starts['category']).__getitem__
+        get_category_from_index = list(self.starts.category).__getitem__
         return pd.Series(interval_indexes).apply(get_category_from_index).astype(self.dtype)
 
     def _reverse_transform_by_category(self, data):
@@ -269,9 +279,6 @@ class OneHotEncoder(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-
     dummies = None
     _dummy_na = None
     _num_dummies = None
@@ -306,17 +313,6 @@ class OneHotEncoder(BaseTransformer):
 
         return data
 
-    def get_output_sdtypes(self):
-        """Return the output sdtypes produced by this transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to the produced sdtypes.
-        """
-        output_sdtypes = {f'value{i}': 'float' for i in range(len(self.dummies))}
-
-        return self._add_prefix(output_sdtypes)
-
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -328,7 +324,7 @@ class OneHotEncoder(BaseTransformer):
         """
         data = self._prepare_data(data)
 
-        null = pd.isna(data)
+        null = pd.isna(data).to_numpy()
         self._uniques = list(pd.unique(data[~null]))
         self._dummy_na = null.any()
         self._num_dummies = len(self._uniques)
@@ -340,6 +336,11 @@ class OneHotEncoder(BaseTransformer):
 
         if self._dummy_na:
             self.dummies.append(np.nan)
+
+        self.output_properties = {
+            f'value{i}': {'sdtype': 'float', 'next_transformer': None}
+            for i in range(len(self.dummies))
+        }
 
     def _transform_helper(self, data):
         if self._dummy_encoded:
@@ -436,18 +437,14 @@ class LabelEncoder(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
-    OUTPUT_SDTYPES = {'value': 'float'}
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-    COMPOSITION_IS_IDENTITY = True
-
     values_to_categories = None
     categories_to_values = None
 
     def __init__(self, add_noise=False, order_by=None):
+        super().__init__()
         self.add_noise = add_noise
         if order_by not in [None, 'alphabetical', 'numerical_value']:
-            raise Error(
+            raise TransformerInputError(
                 "order_by must be one of the following values: None, 'numerical_value' or "
                 "'alphabetical'"
             )
@@ -457,15 +454,19 @@ class LabelEncoder(BaseTransformer):
     def _order_categories(self, unique_data):
         if self.order_by == 'alphabetical':
             if unique_data.dtype.type not in [np.str_, np.object_]:
-                raise Error("The data must be of type string if order_by is 'alphabetical'.")
+                raise TransformerInputError(
+                    "The data must be of type string if order_by is 'alphabetical'."
+                )
 
         elif self.order_by == 'numerical_value':
             if not np.issubdtype(unique_data.dtype.type, np.number):
-                raise Error("The data must be numerical if order_by is 'numerical_value'.")
+                raise TransformerInputError(
+                    "The data must be numerical if order_by is 'numerical_value'."
+                )
 
         if self.order_by is not None:
             nans = pd.isna(unique_data)
-            unique_data = np.sort(unique_data[~nans])
+            unique_data = np.sort(unique_data[~nans])  # pylint: disable=E1130
             if nans.any():
                 unique_data = np.append(unique_data, [np.nan])
 
@@ -565,6 +566,22 @@ class CustomLabelEncoder(LabelEncoder):
         self.order = pd.Series(order).fillna(np.nan)
         super().__init__(add_noise=add_noise)
 
+    def __repr__(self):
+        """Represent initialization of transformer as text.
+
+        Returns:
+            str:
+                The name of the transformer followed by any non-default parameters.
+        """
+        class_name = self.__class__.get_name()
+        custom_args = []
+        custom_args.append('order=<CUSTOM>')
+        if self.add_noise:
+            custom_args.append(f'add_noise={self.add_noise}')
+
+        args_string = ', '.join(custom_args)
+        return f'{class_name}({args_string})'
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -579,7 +596,7 @@ class CustomLabelEncoder(LabelEncoder):
         data = data.fillna(np.nan)
         missing = list(data[~data.isin(self.order)].unique())
         if len(missing) > 0:
-            raise Error(
+            raise TransformerInputError(
                 f"Unknown categories '{missing}'. All possible categories must be defined in the "
                 "'order' parameter."
             )

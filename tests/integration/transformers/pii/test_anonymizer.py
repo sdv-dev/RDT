@@ -1,7 +1,10 @@
+import re
 
 import numpy as np
 import pandas as pd
+import pytest
 
+from rdt.errors import TransformerProcessingError
 from rdt.transformers.pii import AnonymizedFaker, PseudoAnonymizedFaker
 
 
@@ -14,8 +17,8 @@ def test_anonymizedfaker():
 
     instance = AnonymizedFaker()
     transformed = instance.fit_transform(data, 'username')
-    reverse_transform = instance.reverse_transform(transformed)
 
+    reverse_transform = instance.reverse_transform(transformed)
     expected_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5]
     })
@@ -58,18 +61,17 @@ def test_anonymizedfaker_with_nans():
         'username': ['a', np.nan, 'c', 'd', 'e']
     })
 
-    instance = AnonymizedFaker(model_missing_values=True)
+    instance = AnonymizedFaker()
     transformed = instance.fit_transform(data, 'username')
     reverse_transform = instance.reverse_transform(transformed)
 
     expected_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
-        'username.is_null': [0.0, 1.0, 0.0, 0.0, 0.0]
     })
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     assert len(reverse_transform['username']) == 5
-    assert reverse_transform['username'].isna().sum() == 1
+    assert reverse_transform['username'].isna().sum() == 0
 
 
 def test_anonymizedfaker_custom_provider_with_nans():
@@ -89,7 +91,6 @@ def test_anonymizedfaker_custom_provider_with_nans():
     instance = AnonymizedFaker(
         'credit_card',
         'credit_card_number',
-        model_missing_values=True
     )
     transformed = instance.fit_transform(data, 'cc')
     reverse_transform = instance.reverse_transform(transformed)
@@ -97,12 +98,40 @@ def test_anonymizedfaker_custom_provider_with_nans():
     expected_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
         'username': ['a', 'b', 'c', 'd', 'e'],
-        'cc.is_null': [0.0, 1.0, 0.0, 0.0, 0.0]
     })
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     assert len(reverse_transform['cc']) == 5
-    assert reverse_transform['cc'].isna().sum() == 1
+    assert reverse_transform['cc'].isna().sum() == 0
+
+
+def test_anonymizedfaker_enforce_uniqueness():
+    """Test that ``AnonymizedFaker`` works with uniqueness.
+
+    Also ensure that when we call ``reset_randomization`` the generator will be able to
+    create values again.
+    """
+    data = pd.DataFrame({
+        'job': np.arange(500)
+    })
+
+    instance = AnonymizedFaker('job', 'job', enforce_uniqueness=True)
+    transformed = instance.fit_transform(data, 'job')
+    reverse_transform = instance.reverse_transform(transformed)
+
+    # Assert
+    assert len(reverse_transform['job'].unique()) == 500
+
+    error_msg = re.escape(
+        'The Faker function you specified is not able to generate 500 unique '
+        'values. Please use a different Faker function for column '
+        "('job')."
+    )
+    with pytest.raises(TransformerProcessingError, match=error_msg):
+        instance.reverse_transform(transformed)
+
+    instance.reset_randomization()
+    instance.reverse_transform(transformed)
 
 
 def test_pseudoanonymizedfaker():
@@ -116,7 +145,7 @@ def test_pseudoanonymizedfaker():
     transformed = instance.fit_transform(data, 'animals')
     reverse_transformed = instance.reverse_transform(transformed)
 
-    assert transformed.columns == ['animals.value']
+    assert transformed.columns == ['animals']
     pd.testing.assert_series_equal(
         reverse_transformed['animals'].map(instance._reverse_mapping_dict),
         data['animals']
@@ -136,7 +165,7 @@ def test_pseudoanonymizedfaker_with_nans():
     transformed = instance.fit_transform(data, 'animals')
     reverse_transformed = instance.reverse_transform(transformed)
 
-    assert transformed.columns == ['animals.value']
+    assert transformed.columns == ['animals']
     pd.testing.assert_series_equal(
         reverse_transformed['animals'].map(instance._reverse_mapping_dict),
         data['animals']
@@ -156,7 +185,7 @@ def test_pseudoanonymizedfaker_with_custom_provider():
     transformed = instance.fit_transform(data, 'animals')
     reverse_transformed = instance.reverse_transform(transformed)
 
-    assert transformed.columns == ['animals.value']
+    assert transformed.columns == ['animals']
     pd.testing.assert_series_equal(
         reverse_transformed['animals'].map(instance._reverse_mapping_dict),
         data['animals']

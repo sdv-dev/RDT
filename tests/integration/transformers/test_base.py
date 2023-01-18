@@ -31,9 +31,6 @@ def test_dummy_transformer_series_output():
     class DummyTransformer(BaseTransformer):
 
         INPUT_SDTYPE = 'boolean'
-        OUTPUT_SDTYPES = {
-            'value': 'float'
-        }
 
         def _fit(self, data):
             pass
@@ -56,7 +53,7 @@ def test_dummy_transformer_series_output():
 
     # Assert
     expected_transform = pd.DataFrame({
-        'bool.value': [1., 0., 1., 0.]
+        'bool': [1., 0., 1., 0.]
     })
     pd.testing.assert_frame_equal(expected_transform, transformed)
     pd.testing.assert_frame_equal(reverse, data)
@@ -89,10 +86,13 @@ def test_dummy_transformer_dataframe_output():
     class DummyTransformer(BaseTransformer):
 
         INPUT_SDTYPE = 'boolean'
-        OUTPUT_SDTYPES = {
-            'value': 'float',
-            'null': 'float'
-        }
+
+        def __init__(self):
+            super().__init__()
+            self.output_properties = {
+                None: {'sdtype': 'float'},
+                'null': {'sdtype': 'float'},
+            }
 
         def _fit(self, data):
             pass
@@ -115,19 +115,16 @@ def test_dummy_transformer_dataframe_output():
 
             return output
 
-    # Run
-    data = pd.DataFrame({
-        'bool': [True, False, True, np.nan]
-    })
-
+    data = pd.DataFrame({'bool': [True, False, True, np.nan]})
     transformer = DummyTransformer()
-    transformed = transformer.fit_transform(data, 'bool')
 
+    # Run
+    transformed = transformer.fit_transform(data, 'bool')
     reverse = transformer.reverse_transform(transformed)
 
     # Assert
     expected_transform = pd.DataFrame({
-        'bool.value': [1., 0., 1., -1.],
+        'bool': [1., 0., 1., -1.],
         'bool.null': [0., 0., 0., 1.]
     })
     pd.testing.assert_frame_equal(expected_transform, transformed)

@@ -8,18 +8,16 @@ from copy import deepcopy
 import faker
 import numpy as np
 
-from rdt.errors import Error
+from rdt.errors import TransformerInputError, TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.categorical import LabelEncoder
-from rdt.transformers.null import NullTransformer
 
 
 class AnonymizedFaker(BaseTransformer):
     """Personal Identifiable Information Anonymizer using Faker.
 
     This transformer will drop a column and regenerate it with the previously specified
-    ``Faker`` provider and ``function``. The transformer will also be able to handle nulls
-    and regenerate null values if specified.
+    ``Faker`` provider and ``function``.
 
     Args:
         provider_name (str):
@@ -32,23 +30,15 @@ class AnonymizedFaker(BaseTransformer):
             Keyword args to pass into the ``function_name`` when being called.
         locales (list):
             List of localized providers to use instead of the global provider.
-        missing_value_replacement (object or None):
-            Indicate what to do with the null values. If an integer or float is given,
-            replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
-            given, replace them with the corresponding aggregation. If ``None`` is given,
-            do not replace them. Defaults to ``None``.
-        model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not. The column
-            will be created only if there are null values. If ``True``, create the new column if
-            there are null values. If ``False``, do not create the new column even if there
-            are null values. Defaults to ``False``.
+        enforce_uniqueness (bool):
+            Whether or not to ensure that the new anonymized data is all unique. If it isn't
+            possible to create the requested number of rows, then an error will be raised.
+            Defaults to ``False``.
     """
 
-    DETERMINISTIC_TRANSFORM = False
-    DETERMINISTIC_REVERSE = False
+    IS_GENERATOR = True
     INPUT_SDTYPE = 'pii'
-    OUTPUT_SDTYPES = {}
-    null_transformer = None
+    INITIAL_SEED = 30
 
     @staticmethod
     def check_provider_function(provider_name, function_name):
@@ -70,7 +60,7 @@ class AnonymizedFaker(BaseTransformer):
                 getattr(provider, function_name)
 
         except AttributeError as exception:
-            raise Error(
+            raise TransformerProcessingError(
                 f"The '{provider_name}' module does not contain a function named "
                 f"'{function_name}'.\nRefer to the Faker docs to find the correct function: "
                 'https://faker.readthedocs.io/en/master/providers.html'
@@ -94,11 +84,13 @@ class AnonymizedFaker(BaseTransformer):
             )
 
     def __init__(self, provider_name=None, function_name=None, function_kwargs=None,
-                 locales=None, missing_value_replacement=None, model_missing_values=False):
+                 locales=None, enforce_uniqueness=False):
+        super().__init__()
         self.data_length = None
+        self.enforce_uniqueness = enforce_uniqueness
         self.provider_name = provider_name if provider_name else 'BaseProvider'
         if self.provider_name != 'BaseProvider' and function_name is None:
-            raise Error(
+            raise TransformerInputError(
                 'Please specify the function name to use from the '
                 f"'{self.provider_name}' provider."
             )
@@ -106,31 +98,26 @@ class AnonymizedFaker(BaseTransformer):
         self.function_name = function_name if function_name else 'lexify'
         self.function_kwargs = deepcopy(function_kwargs) if function_kwargs else {}
         self.check_provider_function(self.provider_name, self.function_name)
-
-        self.missing_value_replacement = missing_value_replacement
-        self.model_missing_values = model_missing_values
+        self.output_properties = {None: {'next_transformer': None}}
 
         self.locales = locales
-        self.faker = faker.Faker(locales)
+        self.faker = faker.Faker(self.locales)
+        self.faker.seed_instance(self.INITIAL_SEED)
         if self.locales:
             self._check_locales()
 
+    def reset_randomization(self):
+        """Create a new ``Faker`` instance."""
+        super().reset_randomization()
+        self.faker = faker.Faker(self.locales)
+        self.faker.seed_instance(self.INITIAL_SEED)
+
     def _function(self):
         """Return a callable ``faker`` function."""
+        if self.enforce_uniqueness:
+            return getattr(self.faker.unique, self.function_name)(**self.function_kwargs)
+
         return getattr(self.faker, self.function_name)(**self.function_kwargs)
-
-    def get_output_sdtypes(self):
-        """Return the output sdtypes supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported sdtypes.
-        """
-        output_sdtypes = self.OUTPUT_SDTYPES
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            output_sdtypes['is_null'] = 'float'
-
-        return self._add_prefix(output_sdtypes)
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -139,29 +126,10 @@ class AnonymizedFaker(BaseTransformer):
             data (pandas.Series):
                 Data to fit to.
         """
-        self.null_transformer = NullTransformer(
-            self.missing_value_replacement,
-            self.model_missing_values
-        )
-        self.null_transformer.fit(data)
         self.data_length = len(data)
 
-    def _transform(self, data):
-        """Return ``null`` column if ``models_missing_values``.
-
-        Args:
-            data (pandas.Series):
-                Data to transform.
-
-        Returns:
-            (numpy.ndarray or None):
-                If ``self.model_missing_values`` is ``True`` then will return a ``numpy.ndarray``
-                indicating which values should be ``nan``, else will return ``None``. In both
-                scenarios the original column is being dropped.
-        """
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            return self.null_transformer.transform(data)[:, 1].astype(float)
-
+    def _transform(self, _data):
+        """Drop the input column by returning ``None``."""
         return None
 
     def _reverse_transform(self, data):
@@ -172,22 +140,26 @@ class AnonymizedFaker(BaseTransformer):
                 Data to transform.
 
         Returns:
-            pandas.Series
+            np.array
         """
         if data is not None and len(data):
             sample_size = len(data)
         else:
             sample_size = self.data_length
 
-        reverse_transformed = np.array([
-            self._function()
-            for _ in range(sample_size)
-        ], dtype=object)
+        try:
+            reverse_transformed = np.array([
+                self._function()
+                for _ in range(sample_size)
+            ], dtype=object)
+        except faker.exceptions.UniquenessException as exception:
+            raise TransformerProcessingError(
+                f'The Faker function you specified is not able to generate {sample_size} unique '
+                'values. Please use a different Faker function for column '
+                f"('{self.get_input_column()}')."
+            ) from exception
 
-        if self.null_transformer.models_missing_values():
-            reverse_transformed = np.column_stack((reverse_transformed, data))
-
-        return self.null_transformer.reverse_transform(reverse_transformed)
+        return reverse_transformed
 
     def __repr__(self):
         """Represent initialization of transformer as text.
@@ -196,7 +168,7 @@ class AnonymizedFaker(BaseTransformer):
             str:
                 The name of the transformer followed by any non-default parameters.
         """
-        class_name = self.__class__.__name__
+        class_name = self.__class__.get_name()
         custom_args = []
         args = inspect.getfullargspec(self.__init__)
         keys = args.args[1:]
@@ -233,11 +205,6 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             List of localized providers to use instead of the global provider.
     """
 
-    OUTPUT_SDTYPES = {'value': 'categorical'}
-    NEXT_TRANSFORMER = {
-        'value': LabelEncoder(add_noise=True)
-    }
-
     def __getstate__(self):
         """Return a dictionary representation of the instance and warn the user when pickling."""
         warnings.warn((
@@ -254,13 +221,13 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             function_name=function_name,
             function_kwargs=function_kwargs,
             locales=locales,
+            enforce_uniqueness=True
         )
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
-
-    def _function(self):
-        """Return a callable ``faker`` function."""
-        return getattr(self.faker.unique, self.function_name)(**self.function_kwargs)
+        self.output_properties = {
+            None: {'sdtype': 'categorical', 'next_transformer': LabelEncoder(add_noise=True)}
+        }
 
     def get_mapping(self):
         """Return the mapping dictionary."""
@@ -282,7 +249,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         try:
             generated_values = [self._function() for _ in range(unique_data_length)]
         except faker.exceptions.UniquenessException as exception:
-            raise Error(
+            raise TransformerProcessingError(
                 'The Faker function you specified is not able to generate '
                 f'{unique_data_length} unique values. Please use a different '
                 'Faker function for this column.'
@@ -296,7 +263,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         """Replace each category with a numerical representation.
 
         Map the input ``columns_data`` using the previously generated values for each one.
-        If the  ``columns_data`` contain unknown values, a ``Error`` will be raised with the
+        If the  ``columns_data`` contain unknown values, an error will be raised with the
         unknown categories.
 
         Args:
@@ -326,7 +293,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
                     'using this new data.'
                 )
 
-            raise Error(error_msg)
+            raise TransformerProcessingError(error_msg)
 
         mapped_data = columns_data.map(self._mapping_dict)
         return mapped_data

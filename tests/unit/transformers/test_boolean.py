@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers import BinaryEncoder
-from rdt.transformers.null import NullTransformer
 
 
 class TestBinaryEncoder(TestCase):
@@ -17,58 +16,8 @@ class TestBinaryEncoder(TestCase):
 
         # Asserts
         error_message = 'Unexpected missing_value_replacement'
-        assert transformer.missing_value_replacement is None, error_message
+        assert transformer.missing_value_replacement == 'mode', error_message
         assert not transformer.model_missing_values, 'model_missing_values is False by default'
-
-    def test_get_output_sdtypes_model_missing_values_column_created(self):
-        """Test the ``get_output_sdtypes`` method when a null column is created.
-
-        When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output sdtypes:
-
-        output_sdtypes = {
-            'value': 'float',
-            'is_null': 'float'
-        }
-
-        Setup:
-            - initialize a ``BinaryEncoder`` transformer which:
-                - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self._model_missing_values`` is True.
-                - sets ``self.column_prefix`` to a string.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with ``self.column_prefix``
-            added to the beginning of the keys.
-        """
-        # Setup
-        transformer = BinaryEncoder()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-        transformer.null_transformer._model_missing_values = True
-        transformer.column_prefix = 'abc'
-
-        # Run
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'abc.value': 'float',
-            'abc.is_null': 'float'
-        }
-        assert output == expected
-
-    def test__fit_missing_value_replacement_ignore(self):
-        """Test _fit missing_value_replacement equal to ignore"""
-        # Setup
-        data = pd.Series([False, True, True, False, True])
-
-        # Run
-        transformer = BinaryEncoder(missing_value_replacement=None)
-        transformer._fit(data)
-
-        # Asserts
-        error_msg = 'Unexpected fill value'
-        assert transformer.null_transformer._missing_value_replacement is None, error_msg
 
     def test__fit_missing_value_replacement_not_ignore(self):
         """Test _fit missing_value_replacement not equal to ignore"""
@@ -96,6 +45,21 @@ class TestBinaryEncoder(TestCase):
         error_msg = 'Unexpected fill value'
         assert transformer.null_transformer._missing_value_replacement == 0, error_msg
 
+    def test__fit_model_missing_values(self):
+        """Test output_properties contains 'is_null' column when model_missing_values=True."""
+        # Setup
+        transformer = BinaryEncoder(model_missing_values=True)
+        data = pd.Series([True, np.nan])
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.output_properties == {
+            None: {'sdtype': 'float', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
+
     def test__transform_series(self):
         """Test transform pandas.Series"""
         # Setup
@@ -103,7 +67,6 @@ class TestBinaryEncoder(TestCase):
 
         # Run
         transformer = Mock()
-
         BinaryEncoder._transform(transformer, data)
 
         # Asserts
@@ -124,7 +87,6 @@ class TestBinaryEncoder(TestCase):
 
         # Run
         transformer = Mock()
-
         BinaryEncoder._transform(transformer, data)
 
         # Asserts
@@ -137,29 +99,6 @@ class TestBinaryEncoder(TestCase):
             transformer.null_transformer.transform.call_args[0][0],
             expect_call_args
         )
-
-    def test__reverse_transform_missing_value_replacement_ignore(self):
-        """Test _reverse_transform with missing_value_replacement equal to ignore"""
-        # Setup
-        data = pd.Series([0.0, 1.0, 0.0, 1.0, 0.0])
-
-        # Run
-        transformer = Mock()
-        transformer.missing_value_replacement = None
-
-        result = BinaryEncoder._reverse_transform(transformer, data)
-
-        # Asserts
-        expect = np.array([False, True, False, True, False])
-        expect_call_count = 0
-
-        np.testing.assert_equal(result, expect)
-        error_msg = (
-            'NullTransformer.reverse_transform should not be called when'
-            'missing_value_replacement is ignore'
-        )
-        transformer_call_count = transformer.null_transformer.reverse_transform.call_count
-        assert transformer_call_count == expect_call_count, error_msg
 
     def test__reverse_transform_missing_value_replacement_not_ignore(self):
         """Test _reverse_transform with missing_value_replacement not equal to ignore"""
@@ -187,6 +126,21 @@ class TestBinaryEncoder(TestCase):
         reverse_transform_call_count = transformer.null_transformer.reverse_transform.call_count
         assert reverse_transform_call_count == expect_call_count, error_msg
 
+    def test__reverse_transform_series(self):
+        """Test when data is a Series."""
+        # Setup
+        data = pd.Series([1., 0., 1.])
+
+        # Run
+        transformer = Mock()
+        transformer.null_transformer.reverse_transform.return_value = data
+        result = BinaryEncoder._reverse_transform(transformer, data)
+
+        # Asserts
+        expected = np.array([True, False, True])
+        assert isinstance(result, pd.Series)
+        np.testing.assert_equal(result.array, expected)
+
     def test__reverse_transform_not_null_values(self):
         """Test _reverse_transform not null values correctly"""
         # Setup
@@ -194,7 +148,7 @@ class TestBinaryEncoder(TestCase):
 
         # Run
         transformer = Mock()
-        transformer.missing_value_replacement = None
+        transformer.null_transformer.reverse_transform.return_value = data
 
         result = BinaryEncoder._reverse_transform(transformer, data)
 
@@ -211,7 +165,7 @@ class TestBinaryEncoder(TestCase):
 
         # Run
         transformer = Mock()
-        transformer.missing_value_replacement = None
+        transformer.null_transformer.reverse_transform.return_value = data
 
         result = BinaryEncoder._reverse_transform(transformer, data)
 
@@ -235,7 +189,7 @@ class TestBinaryEncoder(TestCase):
         # Setup
         data = np.array([1.2, 0.32, 1.01])
         transformer = Mock()
-        transformer.missing_value_replacement = None
+        transformer.null_transformer.reverse_transform.return_value = data
 
         # Run
         result = BinaryEncoder._reverse_transform(transformer, data)
@@ -261,7 +215,7 @@ class TestBinaryEncoder(TestCase):
         # Setup
         data = np.array([1.9, -0.7, 1.01])
         transformer = Mock()
-        transformer.missing_value_replacement = None
+        transformer.null_transformer.reverse_transform.return_value = data
 
         # Run
         result = BinaryEncoder._reverse_transform(transformer, data)
@@ -290,7 +244,7 @@ class TestBinaryEncoder(TestCase):
         # Setup
         data = np.array([1.9, np.nan, 1.01])
         transformer = Mock()
-        transformer.missing_value_replacement = None
+        transformer.null_transformer.reverse_transform.return_value = data
 
         # Run
         result = BinaryEncoder._reverse_transform(transformer, data)

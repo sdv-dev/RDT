@@ -1,5 +1,50 @@
 # History
 
+## 1.3.0 - 2023-01-18
+
+This release makes changes to the way that individual transformers are stored in the `HyperTransformer`. When accessing the config via `HyperTransformer.get_config()`, the transformers listed in the config are now the actual transformer instances used during fitting and transforming. These instances can now be accessed and used to examine their properties post fitting. For example, you can now view the mapping for a `PseudoAnonymizedFaker` instance using `PseudoAnonymizedFaker.get_mapping()` on the instance retrieved from the config.
+
+Additionally, the output of `reverse_tranform` no longer appends the `.value` suffix to every unnamed output column. Only output columns that are created from context extracted from the input columns will have suffixes (eg. `.normalized` in the `ClusterBasedNormalizer`).
+
+The `AnonymizedFaker` and `RegexGenerator` now have an `enforce_uniqueness` parameter, which controls whether the data returned by `reverse_transform` should be unique. The `HyperTransformer` now has a method called `create_anonymized_columns` that can be used to generate columns that are matched with anonymizing transformers like `AnonymizedFaker` and `RegexGenerator`. The method can be used as follows:
+`HyperTransformer.create_anonymized_columns(num_rows=5, column_names=['email_optin', 'credit_card'])`
+
+Another major change in this release is the ability to control randomization. Every time a `HyperTransformer` is initialized, its randomness will be reset to the same seed, and it will yield the same results for `reverse_transform` if given the same input. Every subsequent call to `reverse_transform` yields a different result. If a user desires to reset the seed, they can call `HyperTransformer.reset_randomization`.
+
+Finally, this release adds support for Python 3.10 and drops support for 3.6.
+
+### Bugs
+
+* The reset_randomization should also apply to fit and transform - Issue [#608](https://github.com/sdv-dev/RDT/issues/608) by @amontanez24
+* Cannot print CustomLabelEncoder: ValueError - Issue [#607](https://github.com/sdv-dev/RDT/issues/607) by @amontanez24
+* Float formatter learn_rounding_scheme doesn't work on all digits - Issue [#556](https://github.com/sdv-dev/RDT/issues/556) by @fealho
+* Warnings not showing on update_transformers_by_sdtype - Issue [#582](https://github.com/sdv-dev/RDT/issues/582) by @amontanez24
+* OneHotEncoder doesn't work with boolean sdtype - Issue [#583](https://github.com/sdv-dev/RDT/issues/583) by @pvk-developer
+* Setting config on HyperTransformer does not read supported_sdtypes - Issue [#560](https://github.com/sdv-dev/RDT/issues/560) by @pvk-developer
+* https://github.com/sdv-dev/RDT/issues/545 - Issue [#545](https://github.com/sdv-dev/RDT/issues/545) by @pvk-developer
+* Add error to NullTransformer when data only contains nans - PR [#567](https://github.com/sdv-dev/RDT/pull/567) by @fealho
+* Update update_transformers validation - PR [#563](https://github.com/sdv-dev/RDT/pull/563) by @fealho
+
+### Maintenance
+
+* Support Python 3.10 - Issue [#593](https://github.com/sdv-dev/RDT/issues/593) by @pvk-developer
+* RDT 1.3 Package Maintenance Updates - Issue [#594](https://github.com/sdv-dev/RDT/issues/594) by @pvk-developer
+
+### New Features
+
+* Update errors - Issue [#599](https://github.com/sdv-dev/RDT/issues/599) by @amontanez24
+* Add ability to control randomness - Issue [#584](https://github.com/sdv-dev/RDT/issues/584) by @amontanez24
+* Printing and error improvements - Issue [#581](https://github.com/sdv-dev/RDT/issues/581) by @amontanez24
+* Make RegexGenerator not to reset itself - Issue [#558](https://github.com/sdv-dev/RDT/issues/558) by @pvk-developer
+* Add a reset_anonymization method - Issue [#559](https://github.com/sdv-dev/RDT/issues/559) by @pvk-developer
+* Don't copy instances of tranformer - Issue [#541](https://github.com/sdv-dev/RDT/issues/541) by @fealho
+* Remove '.value' suffix - Issue [#533](https://github.com/sdv-dev/RDT/issues/533) by @fealho
+* Change the NEXT_TRANSFORMERS logic - Issue [#557](https://github.com/sdv-dev/RDT/issues/557) by @fealho
+* Add utility functions to AnonymizedFaker - Issue [#561](https://github.com/sdv-dev/RDT/issues/561) by @pvk-developer
+* Update API for update_transformers_by_sdtype to be more explicit about instances vs. copies - Issue [#540](https://github.com/sdv-dev/RDT/issues/540) by @fealho
+* Add create_anonymized_columns method to anonymize data from scratch - Issue [#546](https://github.com/sdv-dev/RDT/issues/546) by @pvk-developer
+* Add parameter to AnonymizedFaker() and RegexGenerator() to generate only unique values - Issue [#542](https://github.com/sdv-dev/RDT/issues/542) by @pvk-developer
+
 ## 1.2.1 - 2022-9-12
 
 This release fixes a bug that caused the `UnixTimestampEncoder` to return data with the incorrect datetime format. It also fixes a bug that caused the null column

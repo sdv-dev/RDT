@@ -1,31 +1,37 @@
-<p align="left">
-  <a href="https://dai.lids.mit.edu">
-    <img width=15% src="https://dai.lids.mit.edu/wp-content/uploads/2018/06/Logo_DAI_highres.png" alt="DAI-Lab" />
-  </a>
-  <i>An Open Source Project from the <a href="https://dai.lids.mit.edu">Data to AI Lab, at MIT</a></i>
+<div align="center">
+<br/>
+<p align="center">
+    <i>This repository is part of <a href="https://sdv.dev">The Synthetic Data Vault Project</a>, a project from <a href="https://datacebo.com">DataCebo</a>.</i>
 </p>
 
-[![Development Status](https://img.shields.io/badge/Development%20Status-2%20--%20Pre--Alpha-yellow)](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
+[![Development Status](https://img.shields.io/badge/Development%20Status-3%20--%20Alpha-yellow)](https://pypi.org/search/?q=&o=&c=Development+Status+%3A%3A+3+-+Alpha)
 [![PyPi Shield](https://img.shields.io/pypi/v/RDT.svg)](https://pypi.python.org/pypi/RDT)
 [![Unit Tests](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml/badge.svg)](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
 [![Coverage Status](https://codecov.io/gh/sdv-dev/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/RDT)
+[![Slack](https://img.shields.io/badge/Community-Slack-blue?style=plastic&logo=slack)](https://bit.ly/sdv-slack-invite)
 
-<img align="center" width=40% src="https://user-images.githubusercontent.com/41479552/143879690-ff8e2022-7501-4909-b5ac-af23b36635a6.png">
+<div align="left">
+<br/>
+<p align="center">
+<a href="https://github.com/sdv-dev/RDT">
+<img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/master/docs/images/RDT-DataCebo.png"></img>
+</a>
+</p>
+</div>
 
-* Website: https://sdv.dev
-* Documentation: https://sdv.dev/SDV
-* Repository: https://github.com/sdv-dev/RDT
-* License: [MIT](https://github.com/sdv-dev/RDT/blob/master/LICENSE)
-* Development Status: [Pre-Alpha](https://pypi.org/search/?c=Development+Status+%3A%3A+2+-+Pre-Alpha)
+</div>
 
 # Overview
 
-**RDT** is a Python library used to transform data for data science libraries and preserve
-the transformations in order to revert them as needed.
+RDT (Reversible Data Transforms) is a Python library that transforms raw data into fully numerical
+data, ready for data science. The transforms are reversible, allowing you to convert from numerical
+data back into your original format.
+
+<img align="center" src="https://github.com/sdv-dev/SDV/blob/master/docs/images/rdt_main_tranformation.png"></img>
+
 
 # Addons
 
 **RDT** addons are families of transformers that are optionally installed to provide
 a wider range of transformers that can be optionally installed to the main package.
-

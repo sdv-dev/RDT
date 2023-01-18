@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.errors import Error
+from rdt.errors import TransformerInputError
 from rdt.transformers.categorical import (
     CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder)
 
@@ -45,26 +45,6 @@ class TestFrequencyEncoder:
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
-
-    def test_is_transform_deterministic(self):
-        """Test the ``is_transform_deterministic`` method.
-
-        Validate the method returns the opposite boolean value of the ``add_noise`` parameter.
-
-        Setup:
-            - initialize a ``FrequencyEncoder`` with ``add_noise = True``.
-
-        Output:
-            - the boolean value which is the opposite of ``add_noise``.
-        """
-        # Setup
-        transformer = FrequencyEncoder(add_noise=True)
-
-        # Run
-        output = transformer.is_transform_deterministic()
-
-        # Assert
-        assert output is False
 
     def test__get_intervals(self):
         """Test the ``_get_intervals`` method.
@@ -213,6 +193,9 @@ class TestFrequencyEncoder:
         assert transformer.intervals == expected_intervals
         pd.testing.assert_series_equal(transformer.means, expected_means)
         pd.testing.assert_frame_equal(transformer.starts, expected_starts)
+        assert transformer.output_properties == {
+            None: {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__get_value_add_noise_false(self):
         # Setup
@@ -460,6 +443,8 @@ class TestFrequencyEncoder:
             2: (0.5, 0.75, 0.625, 0.041666666666666664),
             1: (0.75, 1.0, 0.875, 0.041666666666666664),
         }
+        transform_random_state_mock = Mock()
+        transformer.random_states['transform'] = transform_random_state_mock
 
         # Run
         transformed = transformer._transform_by_category(data)
@@ -468,10 +453,10 @@ class TestFrequencyEncoder:
         expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
         assert (transformed == expected).all()
         norm_mock.rvs.assert_has_calls([
-            call(0.125, 0.041666666666666664, size=0),
-            call(0.375, 0.041666666666666664, size=2),
-            call(0.625, 0.041666666666666664, size=1),
-            call(0.875, 0.041666666666666664, size=2),
+            call(0.125, 0.041666666666666664, size=0, random_state=transform_random_state_mock),
+            call(0.375, 0.041666666666666664, size=2, random_state=transform_random_state_mock),
+            call(0.625, 0.041666666666666664, size=1, random_state=transform_random_state_mock),
+            call(0.875, 0.041666666666666664, size=2, random_state=transform_random_state_mock),
         ])
 
     def test__transform_by_row_called(self):
@@ -821,44 +806,6 @@ class TestOneHotEncoder:
         expected = pd.Series(['a', 'b', 'c'])
         np.testing.assert_array_equal(out, expected)
 
-    def test_get_output_sdtypes(self):
-        """Test the ``get_output_sdtypes`` method.
-
-        Validate that the ``_add_prefix`` method is properly applied to the ``output_sdtypes``
-        dictionary. For this class, the ``output_sdtypes`` dictionary is described as:
-
-        {
-            'value1': 'float',
-            'value2': 'float',
-            ...
-        }
-
-        The number of items in the dictionary is defined by the ``dummies`` attribute.
-
-        Setup:
-            - initialize a ``OneHotEncoder`` and set:
-                - the ``dummies`` attribute to a list.
-                - the ``column_prefix`` attribute to a string.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with ``self.column_prefix``
-            added to the beginning of the keys of the ``output_sdtypes`` dictionary.
-        """
-        # Setup
-        transformer = OneHotEncoder()
-        transformer.column_prefix = 'abc'
-        transformer.dummies = [1, 2]
-
-        # Run
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'abc.value0': 'float',
-            'abc.value1': 'float'
-        }
-        assert output == expected
-
     def test__fit_dummies_no_nans(self):
         """Test the ``_fit`` method without nans.
 
@@ -897,6 +844,12 @@ class TestOneHotEncoder:
 
         # Assert
         np.testing.assert_array_equal(ohe.dummies, ['a', 2, 'c', np.nan])
+        assert ohe.output_properties == {
+            'value0': {'sdtype': 'float', 'next_transformer': None},
+            'value1': {'sdtype': 'float', 'next_transformer': None},
+            'value2': {'sdtype': 'float', 'next_transformer': None},
+            'value3': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__fit_no_nans(self):
         """Test the ``_fit`` method without nans.
@@ -1520,7 +1473,7 @@ class TestLabelEncoder:
             "order_by must be one of the following values: None, 'numerical_value' or "
             "'alphabetical'"
         )
-        with pytest.raises(Error, match=message):
+        with pytest.raises(TransformerInputError, match=message):
             LabelEncoder(order_by='bad_value')
 
     def test__order_categories_alphabetical(self):
@@ -1589,7 +1542,7 @@ class TestLabelEncoder:
 
         # Run / Assert
         message = "The data must be of type string if order_by is 'alphabetical'."
-        with pytest.raises(Error, match=message):
+        with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
     def test__order_categories_numerical(self):
@@ -1635,7 +1588,7 @@ class TestLabelEncoder:
 
         # Run / Assert
         message = ("The data must be numerical if order_by is 'numerical_value'.")
-        with pytest.raises(Error, match=message):
+        with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
     def test__order_categories_numerical_different_dtype_error(self):
@@ -1659,7 +1612,7 @@ class TestLabelEncoder:
 
         # Run / Assert
         message = ("The data must be numerical if order_by is 'numerical_value'.")
-        with pytest.raises(Error, match=message):
+        with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
     def test__fit(self):
@@ -1689,6 +1642,9 @@ class TestLabelEncoder:
         # Assert
         assert transformer.values_to_categories == {0: 1, 1: 2, 2: 3}
         assert transformer.categories_to_values == {1: 0, 2: 1, 3: 2}
+        assert transformer.output_properties == {
+            None: {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__transform(self):
         """Test the ``_transform`` method.
@@ -1852,6 +1808,35 @@ class TestCustomLabelEncoder:
         assert transformer.add_noise == 'add_noise_value'
         pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
 
+    def test___repr___default(self):
+        """Test that the ``__repr__`` method prints the custom order.
+
+        The order should be printed as <CUSTOM> instead of the actual order.
+        """
+        # Setup
+        transformer = CustomLabelEncoder(order=['VISA', 'AMEX', 'DISCOVER', None])
+
+        # Run
+        stringified_transformer = transformer.__repr__()
+
+        # Assert
+        assert stringified_transformer == 'CustomLabelEncoder(order=<CUSTOM>)'
+
+    def test___repr___add_noise_true(self):
+        """Test that the ``__repr__`` method prints the custom order with ``add_noise``.
+
+        The order should be printed as <CUSTOM> instead of the actual order. If ``add_noise``
+        is provided, it should be printed too.
+        """
+        # Setup
+        transformer = CustomLabelEncoder(order=['VISA', 'AMEX', 'DISCOVER', None], add_noise=True)
+
+        # Run
+        stringified_transformer = transformer.__repr__()
+
+        # Assert
+        assert stringified_transformer == 'CustomLabelEncoder(order=<CUSTOM>, add_noise=True)'
+
     def test__fit(self):
         """Test the ``_fit`` method.
 
@@ -1909,5 +1894,5 @@ class TestCustomLabelEncoder:
             "Unknown categories '[3, 4]'. All possible categories must be defined in the "
             "'order' parameter."
         )
-        with pytest.raises(Error, match=message):
+        with pytest.raises(TransformerInputError, match=message):
             transformer._fit(data)

@@ -37,7 +37,6 @@ __all__ = [
     'PseudoAnonymizedFaker',
     'get_transformer_name',
     'get_transformer_class',
-    'get_transformer_instance',
     'get_transformers_by_type',
     'get_default_transformers',
     'get_default_transformer',
@@ -75,7 +74,7 @@ def get_transformer_name(transformer):
             The path of the transformer.
     """
     if inspect.isclass(transformer):
-        return transformer.__module__ + '.' + transformer.__name__
+        return transformer.__module__ + '.' + transformer.get_name()
 
     raise ValueError(f'The transformer {transformer} must be passed as a class.')
 
@@ -87,11 +86,26 @@ TRANSFORMERS = {
 
 
 DEFAULT_TRANSFORMERS = {
-    'numerical': FloatFormatter(missing_value_replacement='mean'),
+    'numerical': FloatFormatter(),
     'categorical': FrequencyEncoder(),
-    'boolean': BinaryEncoder(missing_value_replacement='mode'),
-    'datetime': UnixTimestampEncoder(missing_value_replacement='mean'),
+    'boolean': BinaryEncoder(),
+    'datetime': UnixTimestampEncoder(),
 }
+
+
+@lru_cache()
+def get_class_by_transformer_name():
+    """Return a transformer class from a transformer name.
+
+    Args:
+        transformer_name (str):
+            Transformer name ('LabelEncoder', 'FloatFormatter', etc).
+
+    Returns:
+        BaseTransformer:
+            BaseTransformer subclass class object.
+    """
+    return {class_.get_name(): class_ for class_ in BaseTransformer.get_subclasses()}
 
 
 def get_transformer_class(transformer):
@@ -110,29 +124,6 @@ def get_transformer_class(transformer):
 
     package, name = transformer.rsplit('.', 1)
     return getattr(importlib.import_module(package), name)
-
-
-def get_transformer_instance(transformer):
-    """Load a new instance of a ``Transformer``.
-
-    The ``transformer`` is expected to be the transformers path as a ``string``,
-    a transformer instance or a transformer type.
-
-    Args:
-        transformer (str or BaseTransformer):
-            String with the transformer path or instance of a BaseTransformer subclass.
-
-    Returns:
-        BaseTransformer:
-            BaseTransformer subclass instance.
-    """
-    if isinstance(transformer, BaseTransformer):
-        return deepcopy(transformer)
-
-    if inspect.isclass(transformer) and issubclass(transformer, BaseTransformer):
-        return transformer()
-
-    return get_transformer_class(transformer)()
 
 
 @lru_cache()

@@ -1,14 +1,136 @@
 import abc
-from unittest.mock import Mock
+from unittest.mock import Mock, call, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.base import BaseTransformer
+from rdt.transformers import BaseTransformer, NullTransformer
+from rdt.transformers.base import random_state, set_random_states
+
+
+@patch('rdt.transformers.base.np')
+def test_set_random_states(mock_numpy):
+    """Test that the method updates the random states correctly.
+
+    The method should do the following steps:
+    1. Get the current numpy random state.
+    2. Store it.
+    3. Switch to the state for the provided function.
+    4. Call the provided function.
+    5. Set the numpy random state back to what it was.
+    """
+    # Setup
+    initial_state = Mock()
+    initial_state_value = Mock()
+    initial_state.get_state.return_value = initial_state_value
+    random_states = {'fit': initial_state}
+    my_function = Mock()
+    first_state = Mock()
+    second_state = Mock()
+    mock_numpy.random.get_state.side_effect = [first_state, second_state]
+
+    # Run
+    with set_random_states(random_states, 'fit', my_function):
+        pass
+
+    # Assert
+    mock_numpy.random.get_state.assert_called()
+    mock_numpy.random.set_state.assert_has_calls([
+        call(initial_state_value),
+        call(first_state)
+    ])
+    my_function.assert_called_once_with(mock_numpy.random.RandomState.return_value, 'fit')
+    mock_numpy.random.RandomState.return_value.set_state.assert_called_with(second_state)
+
+
+@patch('rdt.transformers.base.set_random_states')
+def test_random_state(mock_set_random_states):
+    """Test the random_state decorator calls the function and ``set_random_states``.
+
+    The method should create a function that will call ``set_random_states`` and then call
+    the passed function within that.
+    """
+    # Setup
+    my_function = Mock()
+    my_function.__name__ = 'name'
+    instance = Mock()
+    instance.random_states = {}
+    mock_set_random_state = Mock()
+    instance.set_random_state = mock_set_random_state
+
+    # Run
+    wrapped_function = random_state(my_function)
+    wrapped_function(instance)
+
+    # Assert
+    mock_set_random_states.assert_called_once_with({}, 'name', mock_set_random_state)
+    my_function.assert_called_once()
+
+
+@patch('rdt.transformers.base.set_random_states')
+def test_random_state_random_states_is_none(mock_set_random_states):
+    """Test the random_state decorator calls the function.
+
+    The method should just call the passed function and not ``set_random_states``.
+    """
+    # Setup
+    my_function = Mock()
+    instance = Mock()
+    instance.random_states = None
+
+    # Run
+    wrapped_function = random_state(my_function)
+    wrapped_function(instance)
+
+    # Assert
+    mock_set_random_states.assert_not_called()
+    my_function.assert_called_once()
 
 
 class TestBaseTransformer:
+
+    def test_set_random_state(self):
+        """Test that the method updates the random state for the correct method."""
+        # Setup
+        transformer = BaseTransformer()
+        new_state = Mock()
+
+        # Run
+        transformer.set_random_state(new_state, 'fit')
+
+        # Assert
+        assert transformer.random_states['fit'] == new_state
+
+    def test_set_random_state_bad_method_name(self):
+        """Test that the method raises an error if the passed method is not recognized."""
+        # Setup
+        transformer = BaseTransformer()
+        new_state = Mock()
+
+        # Run
+        expected_message = "'method_name' must be one of 'fit', 'transform' or 'reverse_transform'"
+        with pytest.raises(ValueError, match=expected_message):
+            transformer.set_random_state(new_state, 'fake_method')
+
+    def test_reset_randomization(self):
+        """Test that the random seed for ``reverse_transform`` is reset."""
+        # Setup
+        transformer = BaseTransformer()
+        transformer.random_states['fit'] = 0
+        transformer.random_states['transform'] = 2
+        transformer.random_states['reverse_transform'] = None
+
+        # Run
+        transformer.reset_randomization()
+
+        # Assert
+        fit_state = transformer.INITIAL_FIT_STATE
+        transform_state = transformer.INITIAL_TRANSFORM_STATE
+        reverse_transform_state = transformer.INITIAL_REVERSE_TRANSFORM_STATE
+        assert transformer.random_states['fit'] == fit_state
+        assert transformer.random_states['transform'] == transform_state
+        assert transformer.random_states['reverse_transform'] == reverse_transform_state
 
     def test_get_subclasses(self):
         """Test the ``get_subclasses`` method.
@@ -105,61 +227,22 @@ class TestBaseTransformer:
         # Assert
         assert supported_sdtypes == ['categorical']
 
-    def test__add_prefix_none(self):
-        """Test the ``_add_prefix`` method when passed a ``None``.
-
-        The method should return ``None`` when ``None`` is passed as an argument.
-
-        Input:
-            - a None value.
-
-        Output:
-            - a None value.
-        """
+    def test__get_output_to_property(self):
+        """Test method adds the column_prefix to output_properties and reformats it."""
         # Setup
-        dictionary = None
-        base_transformer = BaseTransformer()
-
-        # Run
-        output = base_transformer._add_prefix(dictionary)
-
-        # Assert
-        assert output == {}
-
-    def test__add_prefix_dictionary(self):
-        """Test the ``_add_prefix`` method when passed a dictionary.
-
-        When passed a dictionary, the method should add ``column_prefix`` to the
-        beginning of the keys of the dictionary, separated by a dot.
-
-        Setup:
-            - set the ``column_prefix`` of the ``BaseTransformer`` to ``'column_name'``.
-
-        Input:
-            - a dictionary of strings to strings.
-
-        Output:
-            - the input dictionary with ``column_prefix`` added to the beginning of the keys.
-        """
-        # Setup
-        dictionary = {
-            'day': 'numerical',
-            'month': 'categorical',
-            'year': 'numerical'
-        }
         transformer = BaseTransformer()
-        transformer.column_prefix = 'column_name'
+        transformer.column_prefix = 'abc'
+        transformer.output_properties = {
+            'col': {'sdtype': 'float', 'next_transformer': None},
+            'ignore': {'next_transformer': None},
+            None: {'sdtype': 'categorical', 'next_transformer': None}
+        }
 
         # Run
-        output = transformer._add_prefix(dictionary)
+        output = transformer._get_output_to_property('sdtype')
 
         # Assert
-        expected = {
-            'column_name.day': 'numerical',
-            'column_name.month': 'categorical',
-            'column_name.year': 'numerical'
-        }
-        assert output == expected
+        assert output == {'abc.col': 'float', 'abc': 'categorical'}
 
     def test___repr___no_parameters(self):
         """Test that the ``__str__`` method returns the class name.
@@ -228,26 +311,13 @@ class TestBaseTransformer:
         assert text == "Dummy(param2='value', param3=True)"
 
     def test_get_output_sdtypes(self):
-        """Test the ``get_output_sdtypes`` method.
-
-        Validate that the ``_add_prefix`` method is properly applied to the value stored in the
-        ``OUTPUT_SDTYPES`` attribute.
-
-        Setup:
-            - create a ``Dummy`` class which inherits from the ``BaseTransformer`` where:
-                - ``column_prefix`` is set to ``'column_name'``.
-                - ``OUTPUT_SDTYPES`` is set to dictionary.
-
-        Output:
-            - the dictionary set in ``OUTPUT_SDTYPES`` with the ``column_prefix`` string
-            added to the beginning of the keys.
-        """
+        """Test the column_prefix gets added to all columns in output_properties."""
         # Setup
         class Dummy(BaseTransformer):
             column_prefix = 'column_name'
-            OUTPUT_SDTYPES = {
-                'value': 'numerical'
-            }
+
+            def __init__(self):
+                self.output_properties = {None: {'sdtype': 'numerical'}}
 
         dummy_transformer = Dummy()
 
@@ -255,25 +325,26 @@ class TestBaseTransformer:
         output = dummy_transformer.get_output_sdtypes()
 
         # Assert
-        expected = {
-            'column_name.value': 'numerical'
-        }
-        assert output == expected
+        assert output == {'column_name': 'numerical'}
 
-    def test_get_output_sdtypes_none(self):
-        """Test the ``get_output_sdtypes`` method.
+    def test_get_next_transformers(self):
+        """Test the column_prefix gets added to all columns in output_properties."""
+        # Setup
+        transformer = NullTransformer()
 
-        Validate that a dict is returned even if ``OUTPUT_SDTYPES`` attribute is None.
+        class Dummy(BaseTransformer):
+            column_prefix = 'column_name'
 
-        Output:
-            - An empty ``dict``.
-        """
+            def __init__(self):
+                self.output_properties = {None: {'next_transformer': transformer}}
+
+        dummy_transformer = Dummy()
+
         # Run
-        output = BaseTransformer().get_output_sdtypes()
+        output = dummy_transformer.get_next_transformers()
 
         # Assert
-        expected = {}
-        assert output == expected
+        assert output == {'column_name': transformer}
 
     def test_get_input_columns(self):
         """Test the ``get_input_columns method.
@@ -307,7 +378,7 @@ class TestBaseTransformer:
 
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer``
-            and sets the ``column_prefix`` and ``OUTPUT_SDTYPES`` attributes.
+            and sets the ``column_prefix`` and ``output_properties`` attributes.
 
         Output:
             - A list of each output name with the prefix prepended.
@@ -315,10 +386,12 @@ class TestBaseTransformer:
         # Setup
         class Dummy(BaseTransformer):
             column_prefix = 'column_name'
-            OUTPUT_SDTYPES = {
-                'out1': 'numerical',
-                'out2': 'categorical'
-            }
+
+            def __init__(self):
+                self.output_properties = {
+                    'out1': {'sdtype': 'numerical'},
+                    'out2': {'sdtype': 'float'}
+                }
 
         dummy_transformer = Dummy()
 
@@ -329,110 +402,29 @@ class TestBaseTransformer:
         expected = ['column_name.out1', 'column_name.out2']
         assert output == expected
 
-    def test_is_transform_deterministic(self):
-        """Test the ``is_transform_deterministic`` method.
+    def test_is_generator(self):
+        """Test the ``is_generator`` method.
 
-        Validate that this method properly returns the ``DETERMINISTIC_TRANSFORM`` attribute.
-
-        Setup:
-            - create a ``Dummy`` class which inherits from the ``BaseTransformer``, where
-            ``DETERMINISTIC_TRANSFORM`` is set to True.
-
-        Output:
-            - the boolean value stored in ``DETERMINISTIC_TRANSFORM``.
-        """
-        # Setup
-        class Dummy(BaseTransformer):
-            DETERMINISTIC_TRANSFORM = True
-
-        dummy_transformer = Dummy()
-
-        # Run
-        output = dummy_transformer.is_transform_deterministic()
-
-        # Assert
-        assert output is True
-
-    def test_is_reverse_deterministic(self):
-        """Test the ``is_reverse_deterministic`` method.
-
-        Validate that this method properly returns the ``DETERMINISTIC_REVERSE`` attribute.
+        Validate that this method properly returns the ``IS_GENERATOR`` attribute.
 
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer``, where
-            ``DETERMINISTIC_REVERSE`` is set to True.
+            ``IS_GENERATOR`` is set to ``True``.
 
         Output:
-            - the boolean value stored in ``DETERMINISTIC_REVERSE``.
+            - the boolean value stored in ``IS_GENERATOR``.
         """
         # Setup
         class Dummy(BaseTransformer):
-            DETERMINISTIC_REVERSE = True
+            IS_GENERATOR = True
 
         dummy_transformer = Dummy()
 
         # Run
-        output = dummy_transformer.is_reverse_deterministic()
+        output = dummy_transformer.is_generator()
 
         # Assert
         assert output is True
-
-    def test_is_composition_identity(self):
-        """Test the ``is_composition_identity`` method.
-
-        Validate that this method properly returns the ``COMPOSITION_IS_IDENTITY`` attribute.
-
-        Setup:
-            - create a ``Dummy`` class which inherits from the ``BaseTransformer``, where
-            ``COMPOSITION_IS_IDENTITY`` is set to True.
-
-        Output:
-            - the boolean value stored in ``COMPOSITION_IS_IDENTITY``.
-        """
-        # Setup
-        class Dummy(BaseTransformer):
-            COMPOSITION_IS_IDENTITY = True
-
-        dummy_transformer = Dummy()
-
-        # Run
-        output = dummy_transformer.is_composition_identity()
-
-        # Assert
-        assert output is True
-
-    def test_get_next_transformers(self):
-        """Test the ``get_next_transformers`` method.
-
-        Validate that the ``_add_prefix`` method is properly applied to the value stored in the
-        ``NEXT_TRANSFORMERS`` attribute.
-
-        Setup:
-            - create a ``Dummy`` class which inherits from the ``BaseTransformer`` where:
-                - ``column_prefix`` is set to a string.
-                - ``NEXT_TRANSFORMERS`` is set to dictionary.
-
-        Output:
-            - the dictionary set in ``NEXT_TRANSFORMERS`` with the ``column_prefix`` string
-            added to the beginning of the keys.
-        """
-        # Setup
-        class Dummy(BaseTransformer):
-            column_prefix = 'column_name'
-            NEXT_TRANSFORMERS = {
-                'value': 'NullTransformer'
-            }
-
-        dummy_transformer = Dummy()
-
-        # Run
-        output = dummy_transformer.get_next_transformers()
-
-        # Assert
-        expected = {
-            'column_name.value': 'NullTransformer'
-        }
-        assert output == expected
 
     def test__store_columns_list(self):
         """Test the ``_store_columns`` method when passed a list.
@@ -794,7 +786,7 @@ class TestBaseTransformer:
             'a': [1, 2, 3],
             'b': [4, 5, 6]
         }, index=[2, 0, 1])
-        columns = ['c']
+        columns = []
         columns_data = None
 
         # Run
@@ -816,7 +808,6 @@ class TestBaseTransformer:
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer`` where:
                 - ``columns`` is set to a list of columns from the data.
-                - ``OUTPUT_SDTYPES`` is set to a dictionary.
 
         Input:
             - a dataframe.
@@ -836,10 +827,12 @@ class TestBaseTransformer:
 
         class Dummy(BaseTransformer):
             columns = ['a', 'b']
-            OUTPUT_SDTYPES = {
-                'value': 'numerical',
-                'is_null': 'float'
-            }
+
+            def __init__(self):
+                self.output_properties = {
+                    None: {'sdtype': 'numerical'},
+                    'is_null': {'sdtype': 'float'}
+                }
 
         dummy_transformer = Dummy()
 
@@ -848,7 +841,7 @@ class TestBaseTransformer:
 
         # Assert
         assert dummy_transformer.column_prefix == 'a#b'
-        assert dummy_transformer.output_columns == ['a#b.value', 'a#b.is_null']
+        assert dummy_transformer.output_columns == ['a#b', 'a#b.is_null']
 
     def test__build_output_columns_generated_already_exist(self):
         """Test the ``_build_output_columns`` method.
@@ -861,11 +854,10 @@ class TestBaseTransformer:
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer`` where:
                 - ``columns`` is set to a list of columns from the data.
-                - ``OUTPUT_SDTYPES`` is set to a dictionary.
 
         Input:
             - a dataframe where the generated column name already exists
-            (e.g. ['a', 'b', 'a#b.value']).
+            (e.g. ['a', 'b', 'a#b']).
 
         Side effect:
             - ``self.column_prefix`` should be set to the elements stored in ``self.columns``
@@ -876,15 +868,19 @@ class TestBaseTransformer:
         # Setup
         data = pd.DataFrame({
             'a': [1, 2, 3],
-            'a#b.value': [4, 5, 6],
-            'b': [7, 8, 9]
+            'a#b': [4, 5, 6],
+            'b': [7, 8, 9],
+            'a#b#.is_null': [0, 0, 0],
+            'a#b#.is_null#': [0, 0, 0],
+
         })
 
         class Dummy(BaseTransformer):
-            OUTPUT_SDTYPES = {
-                'value': 'numerical',
-                'is_null': 'float'
-            }
+            def __init__(self):
+                self.output_properties = {
+                    None: {'sdtype': 'numerical'},
+                    'is_null': {'sdtype': 'float'}
+                }
             columns = ['a', 'b']
 
         # Run
@@ -892,8 +888,8 @@ class TestBaseTransformer:
         dummy_transformer._build_output_columns(data)
 
         # Assert
-        assert dummy_transformer.column_prefix == 'a#b#'
-        assert dummy_transformer.output_columns == ['a#b#.value', 'a#b#.is_null']
+        assert dummy_transformer.column_prefix == 'a#b##'
+        assert dummy_transformer.output_columns == ['a#b##', 'a#b##.is_null']
 
     def test__fit_raises_error(self):
         """Test ``_fit`` raises ``NotImplementedError``."""
@@ -920,7 +916,6 @@ class TestBaseTransformer:
 
         Setup:
             - create a dummy class which inherits from the ``BaseTransformer``, which defines:
-                - a ``OUTPUT_SDTYPES`` dictionary.
                 - a ``_fit`` method which simply stores the passed data to ``self._passed_data``.
 
         Input:
@@ -943,10 +938,12 @@ class TestBaseTransformer:
         column = 'a'
 
         class Dummy(BaseTransformer):
-            OUTPUT_SDTYPES = {
-                'value': 'categorical',
-                'is_null': 'float'
-            }
+            def __init__(self):
+                super().__init__()
+                self.output_properties = {
+                    None: {'sdtype': 'categorical'},
+                    'is_null': {'sdtype': 'float'}
+                }
 
             def _fit(self, data):
                 self._passed_data = data
@@ -961,7 +958,7 @@ class TestBaseTransformer:
         assert dummy_transformer.columns == ['a']
         pd.testing.assert_series_equal(dummy_transformer._passed_data, expected_data)
         assert dummy_transformer.column_prefix == 'a'
-        assert dummy_transformer.output_columns == ['a.value', 'a.is_null']
+        assert dummy_transformer.output_columns == ['a', 'a.is_null']
 
     def test__transform_raises_error(self):
         """Test ``_transform`` raises ``NotImplementedError``."""
@@ -1012,67 +1009,8 @@ class TestBaseTransformer:
         # Assert
         pd.testing.assert_frame_equal(transformed_data, data)
 
-    def test_transform_drop_false(self):
-        """Test the ``transform`` method when ``drop=False``.
-
-        Validate that the ``transform`` method calls ``self._transform`` with the correct
-        data and that the transformed data matches the transformed dummy data (i.e. the original
-        data with an added column containing zeros).
-
-        Setup:
-            - create a dummy class which inherits from the ``BaseTransformer``, which defines:
-                - ``columns`` as a list of columns from the data.
-                - a ``_transform`` method which stores the passed data to ``self._passed_data``
-                and transforms the passed data to a numpy array containing zeros.
-
-        Input:
-            - a dataframe.
-            - drop = False.
-
-        Output:
-            - the transformed data.
-
-        Side effects:
-            - ``self._transform`` should be called with the correct data
-            and should store it in ``self._passed_data``.
-        """
-        # Setup
-        data = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9]
-        })
-
-        class Dummy(BaseTransformer):
-            columns = ['a', 'b']
-            output_columns = ['a#b.value']
-
-            def _transform(self, data):
-                self._passed_data = data.copy()
-                return np.zeros(len(data))
-
-        dummy_transformer = Dummy()
-
-        # Run
-        transformed_data = dummy_transformer.transform(data, drop=False)
-
-        # Assert
-        expected_passed = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-        })
-        pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
-
-        expected_transformed = pd.DataFrame({
-            'a': [1, 2, 3],
-            'b': [4, 5, 6],
-            'c': [7, 8, 9],
-            'a#b.value': [0.0, 0.0, 0.0],
-        })
-        pd.testing.assert_frame_equal(transformed_data, expected_transformed)
-
     def test_transform_drop_true(self):
-        """Test the ``transform`` method when ``drop=True``.
+        """Test the ``transform``.
 
         Validate that the ``transform`` method calls ``self._transform`` with the correct
         data and that the transformed data matches the transformed dummy data (i.e. the original
@@ -1103,7 +1041,7 @@ class TestBaseTransformer:
 
         class Dummy(BaseTransformer):
             columns = ['a', 'b']
-            output_columns = ['a#b.value']
+            output_columns = ['a#b']
 
             def _transform(self, data):
                 self._passed_data = data.copy()
@@ -1123,7 +1061,7 @@ class TestBaseTransformer:
 
         expected_transformed = pd.DataFrame({
             'c': [7, 8, 9],
-            'a#b.value': [0.0, 0.0, 0.0],
+            'a#b': [0.0, 0.0, 0.0],
         })
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)
 
@@ -1168,9 +1106,9 @@ class TestBaseTransformer:
 
         # Setup
         data = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-            'c.value': [7, 8, 9]
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9]
         })
         transformer = BaseTransformer()
 
@@ -1196,13 +1134,13 @@ class TestBaseTransformer:
         """
         # Setup
         data = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-            'c.value': [7, 8, 9]
+            'a': [1, 2, 3],
+            'b': [4, 5, 6],
+            'c': [7, 8, 9]
         })
 
         class Dummy(BaseTransformer):
-            output_columns = ['a.value', 'b.value', 'd.value']
+            output_columns = ['a', 'b', 'd']
 
         dummy_transformer = Dummy()
 
@@ -1212,98 +1150,24 @@ class TestBaseTransformer:
         # Assert
         pd.testing.assert_frame_equal(transformed_data, data)
 
-    def test_reverse_transform_drop_false(self):
-        """Test the ``reverse_transform`` method when ``drop=True``.
-
-        Validate that the ``reverse_transform`` method calls ``self._reverse_transform``
-        with the correct data and that the transformed data matches the transformed dummy data
-        (i.e. the original data with an added column containing zeros).
-
-        Setup:
-            - set ``self.output_columns`` to a list of columns from the data.
-            - set ``self.columns`` to the output column names.
-            - mock ``self._reverse_transform`` and return some dummy data.
-
-        Input:
-            - a dataframe.
-
-        Output:
-            - the transformed data.
-
-        Side effects:
-            - ``self._reverse_transform`` should be called with the correct data
-            and should store it in ``self._passed_data``.
-        """
-        # Setup
-        data = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-            'c.value': [7, 8, 9]
-        })
-
-        class Dummy(BaseTransformer):
-            columns = ['a', 'b']
-            output_columns = ['a.value', 'b.value']
-
-            def _reverse_transform(self, data):
-                self._passed_data = data.copy()
-                return np.zeros((len(data), 2))
-
-        # Run
-        dummy_transformer = Dummy()
-        transformed_data = dummy_transformer.reverse_transform(data, drop=False)
-
-        # Assert
-        expected_passed = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-        })
-        pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
-
-        expected_transformed = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-            'c.value': [7, 8, 9],
-            'a': [0.0, 0.0, 0.0],
-            'b': [0.0, 0.0, 0.0]
-        })
-        pd.testing.assert_frame_equal(transformed_data, expected_transformed)
-
-    def test_reverse_transform_drop_true(self):
-        """Test the ``reverse_transform`` method when ``drop=False``.
+    def test_reverse_transform(self):
+        """Test the ``reverse_transform`` method.
 
         Validate that the ``reverse_transform`` method calls ``self._reverse_transform``
         with the correct data and that the transformed data matches the transformed dummy data
         (i.e. the original data with an added column containing zeros and the transformed columns
         dropped).
-
-        Setup:
-            - create a dummy class which inherits from the ``BaseTransformer``, which defines:
-                - ``columns`` as a list of columns from the data.
-                - a ``_reverse_transform`` method which stores the passed data to
-                ``self._passed_data`` and transforms the passed data to a numpy array
-                containing zeros.
-
-        Input:
-            - a dataframe.
-
-        Output:
-            - the transformed data.
-
-        Side effects:
-            - ``self._reverse_transform`` should be called with the correct data
-            and should store it in ``self._passed_data``.
         """
         # Setup
         data = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
-            'c.value': [7, 8, 9]
+            'a': [1, 2, 3],
+            'b.is_null': [4, 5, 6],
+            'c': [7, 8, 9]
         })
 
         class Dummy(BaseTransformer):
             columns = ['a', 'b']
-            output_columns = ['a.value', 'b.value']
+            output_columns = ['a', 'b.is_null']
 
             def _reverse_transform(self, data):
                 self._passed_data = data.copy()
@@ -1315,13 +1179,13 @@ class TestBaseTransformer:
 
         # Assert
         expected_passed = pd.DataFrame({
-            'a.value': [1, 2, 3],
-            'b.value': [4, 5, 6],
+            'a': [1, 2, 3],
+            'b.is_null': [4, 5, 6],
         })
         pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
 
         expected_transformed = pd.DataFrame({
-            'c.value': [7, 8, 9],
+            'c': [7, 8, 9],
             'a': [0.0, 0.0, 0.0],
             'b': [0.0, 0.0, 0.0],
         })

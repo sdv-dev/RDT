@@ -13,36 +13,19 @@ TRANSFORMER_ARGS = {
         'missing_value_replacement': -1,
         'model_missing_values': True
     },
-    'DatetimeTransformer': {
-        'missing_value_replacement': 'mean',
+    'UnixTimestampEncoder': {
         'model_missing_values': True
     },
-    'DatetimeRoundedTransformer': {
-        'missing_value_replacement': 'mean',
+    'OptimizedTimestampEncoder': {
         'model_missing_values': True
     },
     'FloatFormatter': {
-        'missing_value_replacement': 'mean',
-        'model_missing_values': True
-    },
-    'NumericalRoundedBoundedTransformer': {
-        'missing_value_replacement': 'mean',
-        'model_missing_values': True
-    },
-    'NumericalBoundedTransformer': {
-        'missing_value_replacement': 'mean',
         'model_missing_values': True
     },
     'GaussianNormalizer': {
         'model_missing_values': True
     },
     'ClusterBasedNormalizer': {
-        'model_missing_values': True
-    },
-    'AnonymizedFaker': {
-        'model_missing_values': True
-    },
-    'RegexGenerator': {
         'model_missing_values': True
     },
 }
@@ -88,7 +71,7 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
         pandas.DataFrame:
             The performance test results.
     """
-    transformer_args = TRANSFORMER_ARGS.get(transformer.__name__, {})
+    transformer_args = TRANSFORMER_ARGS.get(transformer.get_name(), {})
     transformer_instance = transformer(**transformer_args)
 
     sizes = _get_dataset_sizes(dataset_generator.SDTYPE)
@@ -108,7 +91,7 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
             performance['Number of fit rows'] = fit_size
             performance['Number of transform rows'] = transform_size
             performance['Dataset'] = dataset_generator.__name__
-            performance['Transformer'] = f'{transformer.__module__ }.{transformer.__name__}'
+            performance['Transformer'] = f'{transformer.__module__ }.{transformer.get_name()}'
 
         out.append(performance)
 

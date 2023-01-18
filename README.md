@@ -9,6 +9,7 @@
 [![Unit Tests](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml/badge.svg)](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
 [![Coverage Status](https://codecov.io/gh/sdv-dev/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/RDT)
+[![Slack](https://img.shields.io/badge/Community-Slack-blue?style=plastic&logo=slack)](https://bit.ly/sdv-slack-invite)
 
 <div align="left">
 <br/>
@@ -23,52 +24,27 @@
 
 # Overview
 
-**RDT** is a Python library used to transform data for data science libraries and preserve
-the transformations in order to revert them as needed.
+RDT (Reversible Data Transforms) is a Python library that transforms raw data into fully numerical
+data, ready for data science. The transforms are reversible, allowing you to convert from numerical
+data back into your original format.
 
-| Important Links                               |                                                                      |
-| --------------------------------------------- | -------------------------------------------------------------------- |
-| :computer: **[Website]**                      | Check out the SDV Website for more information about the project.    |
-| :orange_book: **[SDV Blog]**                  | Regular publshing of useful content about Synthetic Data Generation. |
-| :book: **[Documentation]**                    | Quickstarts, User and Development Guides, and API Reference.         |
-| :octocat: **[Repository]**                    | The link to the Github Repository of this library.                   |
-| :scroll: **[License]**                        | The entire ecosystem is published under the MIT License.             |
-| :keyboard: **[Development Status]**           | This software is in its Alpha stage.                                 |
-| [![][Slack Logo] **Community**][Community]    | Join our Slack Workspace for announcements and discussions.          |
-| [![][Google Colab Logo] **Tutorials**][Tutorials] | Run the RDT Tutorials in a notebook.                             |
+<img align="center" src="https://github.com/sdv-dev/SDV/blob/master/docs/images/rdt_main_tranformation.png"></img>
 
-[Website]: https://sdv.dev
-[SDV Blog]: https://sdv.dev/blog
-[Documentation]: https://docs.sdv.dev/rdt
-[Repository]: https://github.com/sdv-dev/RDT
-[License]: https://github.com/sdv-dev/RDT/blob/master/LICENSE
-[Development Status]: https://pypi.org/search/?q=&o=&c=Development+Status+%3A%3A+3+-+Alpha
-[Slack Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/slack.png
-[Community]: https://bit.ly/sdv-slack-invite
-[Google Colab Logo]: https://github.com/sdv-dev/SDV/blob/master/docs/images/google_colab.png
-[Tutorials]: https://colab.research.google.com/drive/1T_3XSPPOVILATsyRV9xjQPa0hvM1vnM-?usp=sharing
 
 # Install
 
-**RDT** is part of the **SDV** project and is automatically installed alongside it. For
-details about this process please visit the [SDV Installation Guide](
-https://sdv.dev/SDV/getting_started/install.html)
-
-Optionally, **RDT** can also be installed as a standalone library using the following commands:
-
-**Using `pip`:**
+Install **RDT** using ``pip``  or ``conda``. We recommend using a virtual environment to avoid
+conflicts with other software on your device.
 
 ```bash
 pip install rdt
 ```
 
-**Using `conda`:**
-
 ```bash
 conda install -c conda-forge rdt
 ```
 
-For more installation options please visit the [RDT installation Guide](INSTALL.md)
+For more information about using reversible data transformations, visit the [RDT Documentation](https://docs.sdv.dev/rdt).
 
 
 # Quickstart
@@ -86,8 +62,8 @@ from rdt import get_demo
 customers = get_demo()
 ```
 
-This dataset contains some randomly generated values that describes the customers of an online
-marketplace. 
+This dataset contains some randomly generated values that describe the customers of an online
+marketplace.
 
 ```
   last_login email_optin credit_card  age  dollars_spent
@@ -103,7 +79,7 @@ science.
 
 ## Creating the HyperTransformer & config
 
-The `HyperTransformer` is capable of transforming multi-column datasets.
+The ``HyperTransformer`` is capable of transforming multi-column datasets.
 
 ```python3
 from rdt import HyperTransformer
@@ -132,19 +108,20 @@ Config:
         "dollars_spent": "numerical"
     },
     "transformers": {
-        "last_login": "UnixTimestampEncoder(missing_value_replacement='mean')",
-        "email_optin": "BinaryEncoder(missing_value_replacement='mode')",
+        "last_login": "UnixTimestampEncoder()",
+        "email_optin": "BinaryEncoder()",
         "credit_card": "FrequencyEncoder()",
-        "age": "FloatFormatter(missing_value_replacement='mean')",
-        "dollars_spent": "FloatFormatter(missing_value_replacement='mean')"
+        "age": "FloatFormatter()",
+        "dollars_spent": "FloatFormatter()"
     }
 }
 ```
 
 The `sdtypes` dictionary describes the semantic data types of each of your columns and the
-`transformers` dictionary describes which transformer to use for each column.
+`transformers` dictionary describes which transformer to use for each column. You can customize the
+transformers and their settings. (See the [Transformers Glossary](https://docs.sdv.dev/rdt/transformers-glossary/browse-transformers) for more information).
 
-## Fitting & using the HyperTransformer 
+## Fitting & using the HyperTransformer
 
 The `HyperTransformer` references the config while learning the data during the `fit` stage.
 
@@ -168,8 +145,8 @@ transformed_data = ht.transform(customers)
 4      1.608595e+18                0.0                0.9         32                19.99
 ```
 
-The `HyperTransformer` applied the assigned transformer to each individual column. Each column now
-contains fully numerical data that you can use for your project!
+The ``HyperTransformer`` applied the assigned transformer to each individual column. Each column
+now contains fully numerical data that you can use for your project!
 
 When you're done with your project, you can also transform the data back to the original format
 using the `reverse_transform` method.
@@ -187,72 +164,10 @@ original_format_data = ht.reverse_transform(transformed_data)
 4 2020-12-22       False    DISCOVER   32          19.99
 ```
 
-## Transforming a single column
+# What's Next?
 
-It is also possible to transform a single column of a `pandas.DataFrame`. To do this,
-follow the following steps.
+To learn more about reversible data transformations, visit the [RDT Documentation](https://docs.sdv.dev/rdt).
 
-### Load the transformer
-
-In this example we will use the datetime column, so let's load a `UnixTimestampEncoder`.
-
-```python3
-from rdt.transformers import UnixTimestampEncoder
-
-transformer = UnixTimestampEncoder()
-```
-
-### Fit the Transformer
-
-Before being able to transform the data, we need the transformer to learn from it.
-
-We will do this by calling its `fit` method passing the column that we want to transform.
-
-```python3
-transformer.fit(customers, column='last_login')
-```
-
-### Transform the data
-
-Once the transformer is fitted, we can pass the data again to its `transform` method in order
-to get the transformed version of the data.
-
-```python3
-transformed = transformer.transform(customers)
-```
-
-The output will be a `pandas.DataFrame` similar to the input data, except with the original
-datetime column replaced with `last_login.value`.
-
-```
-  email_optin credit_card  age  dollars_spent  last_login.value
-0       False        VISA   29          99.99      1.624666e+18
-1       False        VISA   18            NaN      1.612915e+18
-2       False        AMEX   21           2.50               NaN
-3        True         NaN   45          25.00      1.601078e+18
-4         NaN    DISCOVER   32          19.99      1.608595e+18
-```
-
-### Revert the column transformation
-
-In order to revert the previous transformation, the transformed data can be passed to
-the `reverse_transform` method of the transformer:
-
-```python3
-reversed_data = transformer.reverse_transform(transformed)
-```
-
-The output will be a `pandas.DataFrame` containing the reverted values, which should be exactly
-like the original ones, except for the order of the columns.
-
-```
-  email_optin credit_card  age  dollars_spent last_login
-0       False        VISA   29          99.99 2021-06-26
-1       False        VISA   18            NaN 2021-02-10
-2       False        AMEX   21           2.50        NaT
-3        True         NaN   45          25.00 2020-09-26
-4         NaN    DISCOVER   32          19.99 2020-12-22
-```
 
 ---
 

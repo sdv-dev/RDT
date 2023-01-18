@@ -3,9 +3,9 @@
 """Top-level package for RDT."""
 
 
-__author__ = """MIT Data To AI Lab"""
-__email__ = 'dailabmit@gmail.com'
-__version__ = '1.2.1'
+__author__ = 'DataCebo, Inc.'
+__email__ = 'info@sdv.dev'
+__version__ = '1.3.0.dev3'
 
 import numpy as np
 import pandas as pd

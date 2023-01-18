@@ -40,13 +40,6 @@ CHECK_DETAILS = {
             'original sdtype.'
         ),
     ),
-    '_validate_composition': (
-        'Composition is Identity',
-        (
-            'Transforming data and reversing it recovers the original data, if composition is '
-            'identity is specified.'
-        ),
-    ),
     '_validate_hypertransformer_transformed_data': (
         'Hypertransformer can transform',
         'The HyperTransformer is able to use the Transformer and produce float values.',
@@ -89,7 +82,7 @@ def validate_transformer_integration(transformer):
     if isinstance(transformer, str):
         transformer = get_transformer_class(transformer)
 
-    print(f'Validating Integration Tests for transformer {transformer.__name__}\n')
+    print(f'Validating Integration Tests for transformer {transformer.get_name()}\n')
 
     steps = []
     validation_error = None
@@ -384,14 +377,14 @@ def validate_transformer_quality(transformer):
     if isinstance(transformer, str):
         transformer = get_transformer_class(transformer)
 
-    print(f'Validating Quality Tests for transformer {transformer.__name__}\n')
+    print(f'Validating Quality Tests for transformer {transformer.get_name()}\n')
 
     input_sdtype = transformer.get_input_sdtype()
     test_cases = get_test_cases({input_sdtype})
     regression_scores = get_regression_scores(test_cases, get_transformers_by_type())
     results = get_results_table(regression_scores)
 
-    transformer_results = results[results['transformer_name'] == transformer.__name__]
+    transformer_results = results[results['transformer_name'] == transformer.get_name()]
     transformer_results = transformer_results.drop('transformer_name', axis=1)
     transformer_results['Acceptable'] = False
     passing_relative_scores = transformer_results['score_relative_to_average'] > TEST_THRESHOLD
@@ -430,7 +423,7 @@ def validate_transformer_performance(transformer):
     if isinstance(transformer, str):
         transformer = get_transformer_class(transformer)
 
-    print(f'Validating Performance for transformer {transformer.__name__}\n')
+    print(f'Validating Performance for transformer {transformer.get_name()}\n')
 
     sdtype = transformer.get_input_sdtype()
     transformers = get_transformers_by_type().get(sdtype, [])
@@ -445,8 +438,8 @@ def validate_transformer_performance(transformer):
             results = pd.DataFrame({
                 'Value': performance.to_numpy(),
                 'Valid': valid,
-                'transformer': current_transformer.__name__,
-                'dataset': dataset_generator.__name__,
+                'transformer': current_transformer.get_name(),
+                'dataset': dataset_generator.get_name(),
             })
             results['Evaluation Metric'] = performance.index
             total_results = total_results.append(results)
@@ -456,10 +449,10 @@ def validate_transformer_performance(transformer):
     else:
         print('ERROR: One or more Performance Tests were NOT successful.')
 
-    other_results = total_results[total_results.transformer != transformer.__name__]
+    other_results = total_results[total_results.transformer != transformer.get_name()]
     average = other_results.groupby('Evaluation Metric')['Value'].mean()
 
-    total_results = total_results[total_results.transformer == transformer.__name__]
+    total_results = total_results[total_results.transformer == transformer.get_name()]
     final_results = total_results.groupby('Evaluation Metric').agg({
         'Value': 'mean',
         'Valid': 'any'

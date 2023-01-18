@@ -36,89 +36,6 @@ class TestUnixTimestampEncoder:
         assert transformer.model_missing_values is True
         assert transformer.datetime_format == '%M-%d-%Y'
 
-    def test_is_composition_identity_null_transformer_true(self):
-        """Test the ``is_composition_identity`` method with a ``null_transformer``.
-
-        When the attribute ``null_transformer`` is not None and a null column is not created,
-        this method should simply return False.
-
-        Setup:
-            - initialize a ``UnixTimestampEncoder`` transformer which sets
-            ``self.null_transformer`` to a ``NullTransformer``.
-
-        Output:
-            - False.
-        """
-        # Setup
-        transformer = UnixTimestampEncoder()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-
-        # Run
-        output = transformer.is_composition_identity()
-
-        # Assert
-        assert output is False
-
-    def test_is_composition_identity_null_transformer_false(self):
-        """Test the ``is_composition_identity`` method without a ``null_transformer``.
-
-        When the attribute ``null_transformer`` is None, this method should return
-        the value stored in the ``COMPOSITION_IS_IDENTITY`` attribute.
-
-        Setup:
-            - initialize a ``UnixTimestampEncoder`` transformer which sets
-            ``self.null_transformer`` to None.
-
-        Output:
-            - the value stored in ``self.COMPOSITION_IS_IDENTITY``.
-        """
-        # Setup
-        transformer = UnixTimestampEncoder()
-        transformer.null_transformer = None
-
-        # Run
-        output = transformer.is_composition_identity()
-
-        # Assert
-        assert output is True
-
-    def test_get_output_sdtypes(self):
-        """Test the ``get_output_sdtypes`` method when a null column is created.
-
-        When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output sdtypes:
-
-        output_sdtypes = {
-            'value': 'float',
-            'is_null': 'float'
-        }
-
-        Setup:
-            - initialize a ``UnixTimestampEncoder`` transformer which:
-                - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self._model_missing_values`` is True.
-                - sets ``self.column_prefix`` to a column name.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with the ``self.column_prefix``
-            added to the beginning of the keys.
-        """
-        # Setup
-        transformer = UnixTimestampEncoder()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-        transformer.null_transformer._model_missing_values = True
-        transformer.column_prefix = 'a#b'
-
-        # Run
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'a#b.value': 'float',
-            'a#b.is_null': 'float'
-        }
-        assert output == expected
-
     def test__convert_to_datetime(self):
         """Test the ``_convert_to_datetime`` method.
 
@@ -349,7 +266,7 @@ class TestUnixTimestampEncoder:
         transformer._fit(data)
 
         # Assert
-        null_transformer_mock.assert_called_once_with(None, False)
+        null_transformer_mock.assert_called_once_with('mean', False)
         assert null_transformer_mock.return_value.fit.call_count == 1
         np.testing.assert_allclose(
             null_transformer_mock.return_value.fit.call_args_list[0][0][0],
@@ -372,6 +289,9 @@ class TestUnixTimestampEncoder:
 
         # Assert
         transformer._transform_helper.assert_called_once()
+        assert transformer.output_properties == {
+            None: {'sdtype': 'float', 'next_transformer': None},
+        }
 
     @patch('rdt.transformers.datetime._guess_datetime_format_for_array')
     def test__fit_calls_guess_datetime_format(self, mock__guess_datetime_format_for_array):
@@ -393,6 +313,21 @@ class TestUnixTimestampEncoder:
             np.array(['2020-02-01', '2020-03-01'])
         )
         assert transformer.datetime_format == '%Y-%m-%d'
+
+    def test__fit_model_missing_values(self):
+        """Test output_properties contains 'is_null' column when model_missing_values=True."""
+        # Setup
+        transformer = UnixTimestampEncoder(model_missing_values=True)
+        data = pd.Series(['2020-02-01', np.nan])
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.output_properties == {
+            None: {'sdtype': 'float', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__transform(self):
         """Test the ``_transform`` method for numpy arrays.
@@ -440,6 +375,7 @@ class TestUnixTimestampEncoder:
         """
         # Setup
         ute = UnixTimestampEncoder()
+        ute.null_transformer = NullTransformer('mean')
 
         # Run
         output = ute._reverse_transform(pd.Series([None]))
@@ -460,8 +396,9 @@ class TestUnixTimestampEncoder:
             - a pandas ``DatetimeIndex`` of the correct datetimes.
         """
         # Setup
-        ute = UnixTimestampEncoder(missing_value_replacement=None)
+        ute = UnixTimestampEncoder()
         transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
+        ute.null_transformer = NullTransformer('mean')
 
         # Run
         output = ute._reverse_transform(transformed)
@@ -483,10 +420,11 @@ class TestUnixTimestampEncoder:
             - a pandas ``Series`` of the datetimes in the right format.
         """
         # Setup
-        ute = UnixTimestampEncoder(missing_value_replacement=None)
+        ute = UnixTimestampEncoder()
         ute.datetime_format = '%b %d, %Y'
         transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
         ute._dtype = np.dtype('<M8[ns]')
+        ute.null_transformer = NullTransformer('mean')
 
         # Run
         output = ute._reverse_transform(transformed)
@@ -508,10 +446,11 @@ class TestUnixTimestampEncoder:
             - a pandas ``Series`` of the datetimes in the right format.
         """
         # Setup
-        ute = UnixTimestampEncoder(missing_value_replacement=None)
+        ute = UnixTimestampEncoder()
         ute.datetime_format = '%b %d, %Y'
         transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
         ute._dtype = 'object'
+        ute.null_transformer = NullTransformer('mean')
 
         # Run
         output = ute._reverse_transform(transformed)
@@ -533,10 +472,11 @@ class TestUnixTimestampEncoder:
             - a pandas ``Series`` of the datetimes in the right format.
         """
         # Setup
-        ute = UnixTimestampEncoder(missing_value_replacement=None)
+        ute = UnixTimestampEncoder()
         ute.datetime_format = '%b %-d, %Y'
         transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
         ute._dtype = 'object'
+        ute.null_transformer = NullTransformer('mean')
 
         # Run
         output = ute._reverse_transform(transformed)

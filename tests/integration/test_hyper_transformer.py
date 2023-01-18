@@ -1,26 +1,22 @@
 """Integration tests for the HyperTransformer."""
 
 import re
-from copy import deepcopy
-from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from rdt import HyperTransformer
-from rdt.errors import Error, NotFittedError
+from rdt import HyperTransformer, get_demo
+from rdt.errors import ConfigNotSetError, InvalidConfigError, InvalidDataError, NotFittedError
 from rdt.transformers import (
-    DEFAULT_TRANSFORMERS, BaseTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
-    OneHotEncoder, UnixTimestampEncoder, get_default_transformer, get_default_transformers)
+    AnonymizedFaker, BaseTransformer, BinaryEncoder, ClusterBasedNormalizer, FloatFormatter,
+    FrequencyEncoder, LabelEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder,
+    get_default_transformer, get_default_transformers)
 
 
 class DummyTransformerNumerical(BaseTransformer):
 
     INPUT_SDTYPE = 'categorical'
-    OUTPUT_SDTYPES = {
-        'value': 'float'
-    }
 
     def _fit(self, data):
         pass
@@ -35,9 +31,12 @@ class DummyTransformerNumerical(BaseTransformer):
 class DummyTransformerNotMLReady(BaseTransformer):
 
     INPUT_SDTYPE = 'datetime'
-    OUTPUT_SDTYPES = {
-        'value': 'categorical',
-    }
+
+    def __init__(self):
+        super().__init__()
+        self.output_properties = {
+            None: {'sdtype': 'datetime', 'next_transformer': FrequencyEncoder()}
+        }
 
     def _fit(self, data):
         pass
@@ -88,12 +87,12 @@ def get_transformed_data():
         1.262304e+18
     ]
     return pd.DataFrame({
-        'integer.value': [1., 2., 1., 3., 1., 4., 2., 3.],
-        'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
-        'categorical.value': [0.3125, 0.3125, .8125, 0.8125, 0.3125, 0.8125, 0.3125, 0.3125],
-        'bool.value': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
-        'datetime.value': datetimes,
-        'names.value': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
+        'integer': [1., 2., 1., 3., 1., 4., 2., 3.],
+        'float': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
+        'categorical': [0.3125, 0.3125, .8125, 0.8125, 0.3125, 0.8125, 0.3125, 0.3125],
+        'bool': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+        'datetime': datetimes,
+        'names': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
     }, index=TEST_DATA_INDEX)
 
 
@@ -103,21 +102,12 @@ def get_reversed_data():
     return data
 
 
-DETERMINISTIC_DEFAULT_TRANSFORMERS = deepcopy(DEFAULT_TRANSFORMERS)
-DETERMINISTIC_DEFAULT_TRANSFORMERS['categorical'] = FrequencyEncoder
-
-
-@patch('rdt.transformers.DEFAULT_TRANSFORMERS', DETERMINISTIC_DEFAULT_TRANSFORMERS)
 def test_hypertransformer_default_inputs():
     """Test the HyperTransformer with default parameters.
 
     This tests that if default parameters are provided to the HyperTransformer,
     the ``default_transformers`` method will be used to determine which
     transformers to use for each field.
-
-    Setup:
-        - Patch the ``DEFAULT_TRANSFORMERS`` to use the ``FrequencyEncoder``
-        for categorical sdtypes, so that the output is predictable.
 
     Input:
         - A dataframe with every sdtype.
@@ -166,12 +156,12 @@ def test_hypertransformer_default_inputs():
         1.262304e+18
     ]
     expected_transformed = pd.DataFrame({
-        'integer.value': [1., 2., 1., 3., 1., 4., 2., 3.],
-        'float.value': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
-        'categorical.value': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
-        'bool.value': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
-        'datetime.value': expected_datetimes,
-        'names.value': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
+        'integer': [1., 2., 1., 3., 1., 4., 2., 3.],
+        'float': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
+        'categorical': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
+        'bool': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+        'datetime': expected_datetimes,
+        'names': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
     }, index=TEST_DATA_INDEX)
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
@@ -199,18 +189,12 @@ def test_hypertransformer_default_inputs():
             actual = reverse_transformed.iloc[row, column]
             assert pd.isna(actual) or expected == actual
 
-    assert isinstance(ht._transformers_tree['integer']['transformer'], FloatFormatter)
-    assert ht._transformers_tree['integer']['outputs'] == ['integer.value']
-    assert isinstance(ht._transformers_tree['float']['transformer'], FloatFormatter)
-    assert ht._transformers_tree['float']['outputs'] == ['float.value']
-    assert isinstance(ht._transformers_tree['categorical']['transformer'], FrequencyEncoder)
-    assert ht._transformers_tree['categorical']['outputs'] == ['categorical.value']
-    assert isinstance(ht._transformers_tree['bool']['transformer'], BinaryEncoder)
-    assert ht._transformers_tree['bool']['outputs'] == ['bool.value']
-    assert isinstance(ht._transformers_tree['datetime']['transformer'], UnixTimestampEncoder)
-    assert ht._transformers_tree['datetime']['outputs'] == ['datetime.value']
-    assert isinstance(ht._transformers_tree['names']['transformer'], FrequencyEncoder)
-    assert ht._transformers_tree['names']['outputs'] == ['names.value']
+    assert isinstance(ht.field_transformers['integer'], FloatFormatter)
+    assert isinstance(ht.field_transformers['float'], FloatFormatter)
+    assert isinstance(ht.field_transformers['categorical'], FrequencyEncoder)
+    assert isinstance(ht.field_transformers['bool'], BinaryEncoder)
+    assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
+    assert isinstance(ht.field_transformers['names'], FrequencyEncoder)
 
     get_default_transformers.cache_clear()
     get_default_transformer.cache_clear()
@@ -249,10 +233,10 @@ def test_hypertransformer_field_transformers():
         'transformers': {
             'integer': FloatFormatter(missing_value_replacement='mean'),
             'float': FloatFormatter(missing_value_replacement='mean'),
-            'categorical': FrequencyEncoder,
+            'categorical': FrequencyEncoder(),
             'bool': BinaryEncoder(missing_value_replacement='mode'),
-            'datetime': DummyTransformerNotMLReady,
-            'names': FrequencyEncoder
+            'datetime': DummyTransformerNotMLReady(),
+            'names': FrequencyEncoder()
         }
     }
 
@@ -268,10 +252,8 @@ def test_hypertransformer_field_transformers():
 
     # Assert
     expected_transformed = get_transformed_data()
-    rename = {'datetime.value': 'datetime.value.value'}
-    expected_transformed = expected_transformed.rename(columns=rename)
     transformed_datetimes = [0.8125, 0.8125, 0.3125, 0.3125, 0.3125, 0.8125, 0.3125, 0.3125]
-    expected_transformed['datetime.value.value'] = transformed_datetimes
+    expected_transformed['datetime'] = transformed_datetimes
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
     expected_reversed = get_reversed_data()
@@ -297,6 +279,28 @@ def test_single_category():
 
     # Assert
     pd.testing.assert_frame_equal(data, reverse)
+
+
+def test_categorical_encoders_with_booleans():
+    """Test that categorical encoders support boolean values."""
+    # Setup
+    config = {
+        'sdtypes': {
+            'email_confirmed': 'boolean',
+            'subscribed': 'boolean',
+            'paid': 'boolean',
+        },
+        'transformers': {
+            'email_confirmed': FrequencyEncoder(),
+            'subscribed': OneHotEncoder(),
+            'paid': LabelEncoder(),
+        }
+    }
+
+    ht = HyperTransformer()
+
+    # Run and Assert
+    ht.set_config(config)
 
 
 def test_dtype_category():
@@ -363,7 +367,7 @@ def test_multiple_fits_different_data():
 
     # Assert
     expected_transformed = pd.DataFrame(
-        {'col2.value': [1., 2., 3.], 'col1.value': [1.0, 0.0, 0.0]})
+        {'col2': [1., 2., 3.], 'col1': [1.0, 0.0, 0.0]})
     pd.testing.assert_frame_equal(transformed1, expected_transformed)
     pd.testing.assert_frame_equal(transformed2, expected_transformed)
     pd.testing.assert_frame_equal(reverse1, new_data)
@@ -392,7 +396,7 @@ def test_multiple_fits_different_columns():
 
     # Assert
     expected_transformed = pd.DataFrame(
-        {'col3.value': [1., 2., 3.], 'col4.value': [1.0, 0.0, 0.0]})
+        {'col3': [1., 2., 3.], 'col4': [1.0, 0.0, 0.0]})
     pd.testing.assert_frame_equal(transformed1, expected_transformed)
     pd.testing.assert_frame_equal(transformed2, expected_transformed)
     pd.testing.assert_frame_equal(reverse1, new_data)
@@ -412,7 +416,7 @@ def test_multiple_fits_with_set_config():
     ht.detect_initial_config(data)
     ht.set_config(config={
         'sdtypes': {'integer': 'categorical'},
-        'transformers': {'integer': FrequencyEncoder}
+        'transformers': {'integer': FrequencyEncoder()}
     })
     ht.fit(data)
     transformed1 = ht.transform(data)
@@ -444,7 +448,7 @@ def test_multiple_detect_configs_with_set_config():
 
     ht.set_config(config={
         'sdtypes': {'integers': 'categorical'},
-        'transformers': {'integers': FrequencyEncoder}
+        'transformers': {'integers': FrequencyEncoder()}
     })
 
     ht.detect_initial_config(data)
@@ -508,12 +512,12 @@ def test_multiple_detects():
 def test_transform_without_fit():
     """HyperTransformer should raise an error when transforming without fitting."""
     # Setup
-    data = pd.DataFrame()
+    data = pd.DataFrame({'column': [1, 2, 3]})
     ht = HyperTransformer()
     ht.detect_initial_config(data)
 
     # Run / Assert
-    with pytest.raises(Error):
+    with pytest.raises(NotFittedError):
         ht.transform(data)
 
 
@@ -532,7 +536,7 @@ def test_fit_data_different_than_detect():
         'values.'
     )
     ht.detect_initial_config(detect_data)
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(InvalidDataError, match=error_msg):
         ht.fit(data)
 
 
@@ -582,7 +586,7 @@ def test_transform_without_config():
         "it automatically from your data using 'detect_initial_config' prior to "
         'fitting your data.'
     )
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(ConfigNotSetError, match=error_msg):
         ht.transform(data)
 
 
@@ -600,7 +604,7 @@ def test_transform_unseen_columns():
         'The data you are trying to transform has different columns than the original data. '
         'Column names and their sdtypes must be the same.'
     )
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(InvalidDataError, match=error_msg):
         ht.transform(different_data)
 
 
@@ -617,7 +621,7 @@ def test_update_sdtypes_incorrect_columns():
         "Invalid column names: ['col3']. These columns do not exist in the "
         "config. Use 'set_config()' to write and set your entire config at once."
     )
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(InvalidConfigError, match=error_msg):
         ht.update_sdtypes(column_name_to_sdtype)
 
 
@@ -634,7 +638,7 @@ def test_update_sdtypes_incorrect_sdtype():
         "Invalid sdtypes: ['unexpected']. If you are trying to use a "
         'premium sdtype, contact info@sdv.dev about RDT Add-Ons.'
     )
-    with pytest.raises(Error, match=error_msg):
+    with pytest.raises(InvalidConfigError, match=error_msg):
         ht.update_sdtypes(column_name_to_sdtype)
 
 
@@ -663,7 +667,7 @@ def test_transform_subset():
     transformed = ht.transform_subset(subset)
 
     # Assert
-    expected = pd.DataFrame({'col1.value': [1., 2.]})
+    expected = pd.DataFrame({'col1': [1., 2.]})
     pd.testing.assert_frame_equal(transformed, expected)
 
 
@@ -683,7 +687,7 @@ def test_reverse_transform_subset():
     """
     # Setup
     data = pd.DataFrame({'col1': [1, 2], 'col2': ['a', 'b']})
-    subset = pd.DataFrame({'col1.value': [1, 2]})
+    subset = pd.DataFrame({'col1': [1, 2]})
     ht = HyperTransformer()
     ht.detect_initial_config(data)
     ht.fit(data)
@@ -734,3 +738,432 @@ def test_hyper_transformer_with_supported_sdtypes():
 
     for transformer in ht.get_config()['transformers'].values():
         assert not isinstance(transformer, BinaryEncoder)
+
+
+def test_hyper_transformer_reverse_transform_subset_and_generators():
+    """Test the ``HyperTransformer`` with ``reverse_transform_subset``.
+
+    Test that when calling ``reverse_transform_subset`` and there are ``generators`` like
+    ``AnonymizedFaker`` or ``RegexGenerator`` those are not being used in the ``subset``, and
+    also any other transformer which can't transform the given columns.
+
+    Setup:
+        - DataFrame with multiple datatypes.
+        - Instance of HyperTransformer.
+        - Add ``pii`` using ``AnonymizedFaker`` and ``RegexGenerator``.
+
+    Run:
+        - Use ``fit_transform`` then ``revese_transform_subsample``.
+
+    Assert:
+        - Assert that the ``reverse_transformed`` data does not contain any additional columns
+          but the expected one.
+    """
+    # Setup
+    customers = get_demo()
+    customers['id'] = ['ID_a', 'ID_b', 'ID_c', 'ID_d', 'ID_e']
+
+    # Create a config
+    ht = HyperTransformer()
+    ht.detect_initial_config(customers)
+
+    # credit_card and id are pii and text columns
+    ht.update_sdtypes({
+        'credit_card': 'pii',
+        'id': 'text'
+    })
+
+    ht.update_transformers({
+        'credit_card': AnonymizedFaker(),
+        'id': RegexGenerator(regex_format='id_[a-z]')
+    })
+
+    # Run
+    ht.fit(customers)
+    transformed = ht.transform(customers)
+    reverse_transformed = ht.reverse_transform_subset(transformed[['last_login']])
+
+    # Assert
+    expected_transformed_columns = [
+        'last_login',
+        'email_optin',
+        'age',
+        'dollars_spent'
+    ]
+    assert all(expected_transformed_columns == transformed.columns)
+    assert reverse_transformed.columns == ['last_login']
+
+
+def test_set_config_with_supported_sdtypes():
+    """Test when setting config with an sdtype that is supported by the transformer."""
+    # Setup
+    config = {
+        'transformers': {
+            'boolean_col': FrequencyEncoder(add_noise=True),
+        },
+        'sdtypes': {
+            'boolean_col': 'boolean'
+        }
+    }
+    ht = HyperTransformer()
+
+    # Run and Assert
+    ht.set_config(config)
+
+
+def test_hyper_transformer_chained_transformers():
+    """Test when a transformer is chained to another transformer.
+
+    When the specified transformer indicates a next transformer, they should each be applied in
+    order during the transform step, and then reversed during the reverse_transform.
+    """
+    # Setup
+    class DoublingTransformer(BaseTransformer):
+        INPUT_SDTYPE = 'numerical'
+
+        def _fit(self, data):
+            ...
+
+        def _transform(self, data):
+            return data * 2
+
+        def _reverse_transform(self, data):
+            return data / 2
+
+    transformer3 = DoublingTransformer()
+    transformer2 = DoublingTransformer()
+    transformer2.output_properties[None]['next_transformer'] = transformer3
+    transformer1 = DoublingTransformer()
+    transformer1.output_properties[None]['next_transformer'] = transformer2
+
+    ht = HyperTransformer()
+    data = pd.DataFrame({'col': [1., 2, -1, 3, 1]})
+
+    # Run and Assert
+    ht.set_config({
+        'sdtypes': {'col': 'numerical'},
+        'transformers': {'col': transformer1}
+    })
+    ht.fit(data)
+
+    transformed = ht.transform(data)
+    expected_transform = pd.DataFrame({'col': [8., 16, -8, 24, 8]})
+    pd.testing.assert_frame_equal(transformed, expected_transform)
+
+    reverse_transformed = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(reverse_transformed, data)
+
+
+def test_hyper_transformer_chained_transformers_various_transformers():
+    """Test when a transformer is chained to another transformer.
+
+    When the specified transformer indicates a next transformer, they should each be applied in
+    order during the transform step, and then reversed during the reverse_transform.
+    """
+    # Setup
+    class AB(BaseTransformer):
+        INPUT_SDTYPE = 'categorical'
+
+        def _fit(self, data):
+            self.output_properties = {
+                None: {'sdtype': 'categorical', 'next_transformer': None},
+                'a': {'sdtype': 'categorical', 'next_transformer': CD()},
+                'b': {'sdtype': 'categorical', 'next_transformer': None},
+            }
+
+        def _transform(self, data):
+            new_data = pd.DataFrame({f'{self.column_prefix}': data})
+            new_data[f'{self.column_prefix}.a'] = data + 'a'
+            new_data[f'{self.column_prefix}.b'] = data + 'b'
+            return new_data
+
+        def _reverse_transform(self, data):
+            new_data = pd.DataFrame()
+            new_data[f'{self.column_prefix}'] = data[f'{self.column_prefix}.a'].str[:-1]
+            return new_data
+
+    class CD(BaseTransformer):
+        INPUT_SDTYPE = 'categorical'
+
+        def _fit(self, data):
+            self.output_properties = {
+                'c': {'sdtype': 'categorical', 'next_transformer': None},
+                'd': {'sdtype': 'categorical', 'next_transformer': E()}
+            }
+
+        def _transform(self, data):
+            new_data = pd.DataFrame()
+            new_data[f'{self.column_prefix}.c'] = data + 'c'
+            new_data[f'{self.column_prefix}.d'] = data + 'd'
+            return new_data
+
+        def _reverse_transform(self, data):
+            new_data = pd.DataFrame()
+            new_data[f'{self.column_prefix}'] = data[f'{self.column_prefix}.c'].str[:-1]
+            return new_data
+
+    class E(BaseTransformer):
+        INPUT_SDTYPE = 'categorical'
+
+        def _fit(self, data):
+            self.output_properties = {
+                None: {'sdtype': 'categorical', 'next_transformer': None},
+                'e': {'sdtype': 'categorical', 'next_transformer': None}
+            }
+
+        def _transform(self, data):
+            new_data = pd.DataFrame({f'{self.column_prefix}': data})
+            new_data[f'{self.column_prefix}.e'] = data + 'e'
+            return new_data
+
+        def _reverse_transform(self, data):
+            new_data = pd.DataFrame()
+            new_data[f'{self.column_prefix}'] = data[f'{self.column_prefix}.e'].str[:-1]
+            return new_data
+
+    ht = HyperTransformer()
+    data = pd.DataFrame({
+        'col': ['a', 'b', 'c'],
+        'col.a': ['1', '2', '3'],
+        'col#': ['_', '_', '_']
+    })
+
+    # Run and Assert
+    ht.set_config({
+        'sdtypes': {'col': 'categorical', 'col.a': 'categorical', 'col#': 'categorical'},
+        'transformers': {'col': AB(), 'col.a': AB(), 'col#': E()}
+    })
+    ht.fit(data)
+    transformed = ht.transform(data)
+    expected = pd.DataFrame({
+        'col##': ['a', 'b', 'c'],
+        'col##.a.c': ['aac', 'bac', 'cac'],
+        'col##.a.d': ['aad', 'bad', 'cad'],
+        'col##.a.d.e': ['aade', 'bade', 'cade'],
+        'col##.b': ['ab', 'bb', 'cb'],
+        'col.a': ['1', '2', '3'],
+        'col.a.a.c': ['1ac', '2ac', '3ac'],
+        'col.a.a.d': ['1ad', '2ad', '3ad'],
+        'col.a.a.d.e': ['1ade', '2ade', '3ade'],
+        'col.a.b': ['1b', '2b', '3b'],
+        'col#': ['_', '_', '_'],
+        'col#.e': ['_e', '_e', '_e'],
+    })
+    pd.testing.assert_frame_equal(transformed, expected)
+
+    reverse_transformed = ht.reverse_transform(transformed)
+    pd.testing.assert_frame_equal(reverse_transformed, data)
+
+
+def test_hyper_transformer_field_transformer_correctly_set():
+    """Test field_transformers is correctly set through various methods."""
+    # Setup
+    ht = HyperTransformer()
+    data = pd.DataFrame({'col': ['a', 'b', 'c']})
+
+    # getting detected transformers should give the actual transformer
+    ht.detect_initial_config(data)
+    transformer = ht.get_config()['transformers']['col']
+    transformer.new_attribute = 'abc'
+    assert ht.get_config()['transformers']['col'].new_attribute == 'abc'
+
+    # the actual transformer should be fitted
+    ht.fit(data)
+    transformer.new_attribute2 = '123'
+    assert ht.get_config()['transformers']['col'].new_attribute == 'abc'
+    assert ht.get_config()['transformers']['col'].new_attribute2 == '123'
+
+    # if a transformer was set, it should use the provided instance
+    fe = FrequencyEncoder()
+    ht.set_config({'sdtypes': {'col': 'categorical'}, 'transformers': {'col': fe}})
+    ht.fit(data)
+    transformer = ht.get_config()['transformers']['col']
+    assert transformer is fe
+
+    # the three cases below make sure any form of acess to the field_transformers
+    # correctly accesses and stores the actual transformers
+    fe = FrequencyEncoder()
+    ht.update_transformers({'col': fe})
+    ht.fit(data)
+    transformer = ht.get_config()['transformers']['col']
+    assert transformer is fe
+
+    ht.update_transformers_by_sdtype('categorical', transformer_name='FrequencyEncoder')
+    transformer = ht.get_config()['transformers']['col']
+    transformer.new_attribute3 = 'abc'
+    ht.fit(data)
+    assert ht.get_config()['transformers']['col'].new_attribute3 == 'abc'
+
+    ht.update_sdtypes({'col': 'text'})
+    transformer = ht.get_config()['transformers']['col']
+    transformer.new_attribute3 = 'abc'
+    ht.fit(data)
+    assert ht.get_config()['transformers']['col'].new_attribute3 == 'abc'
+
+
+def _get_hyper_transformer_with_random_transformers(data):
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.update_sdtypes({
+        'credit_card': 'pii',
+        'name': 'text',
+        'signup_day': 'datetime'
+    })
+    ht.update_transformers({
+        'credit_card': AnonymizedFaker('credit_card', 'credit_card_number'),
+        'balance': ClusterBasedNormalizer(max_clusters=3),
+        'name': RegexGenerator()
+    })
+    ht.update_transformers_by_sdtype(
+        'categorical',
+        transformer_name='FrequencyEncoder',
+        transformer_parameters={'add_noise': True}
+    )
+
+    return ht
+
+
+def test_hyper_transformer_reset_randomization():
+    """Test that the random seeds are properly set and reset.
+
+    If two separate ``HyperTransformer``s are fit, they should have the same parameters
+    and produce the same data when transforming. Successive transforming calls should
+    yield different results.
+
+    For reverse transforming, different values should be seen if randomization is involved
+    unless ``reset_randomization`` is called.
+    """
+    # Setup
+    data = pd.DataFrame({
+        'credit_card': ['123456789', '987654321', '192837645', '918273465', '123789456'],
+        'age': [18, 25, 54, 60, 31],
+        'name': ['Bob', 'Jane', 'Jack', 'Jill', 'Joe'],
+        'signup_day': ['1/1/2020', np.nan, '4/1/2019', '12/1/2008', '5/16/2016'],
+        'balance': [250, 5400, 150000, np.nan, 91000],
+        'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
+    })
+    ht1 = _get_hyper_transformer_with_random_transformers(data)
+    ht2 = _get_hyper_transformer_with_random_transformers(data)
+
+    # Test transforming multiple times with different transformers
+    expected_first_transformed = pd.DataFrame({
+        'age': [18.0, 25.0, 54.0, 60.0, 31.0],
+        'signup_day': [1.577837e+18, 1.455840e+18, 1.554077e+18, 1.228090e+18, 1.463357e+18],
+        'balance.normalized': [
+            -2.693016e-01,
+            -2.467182e-01,
+            3.873711e-01,
+            9.571797e-17,
+            1.286486e-01
+        ],
+        'balance.component': [0.0, 0, 0, 0, 0],
+        'card_type': [
+            0.3273532539594452,
+            0.36028672438848,
+            0.665212975367718,
+            0.8806283675768456,
+            0.23386325679767678
+        ]
+    })
+    expected_second_transformed = pd.DataFrame({
+        'age': [18.0, 25.0, 54.0, 60.0, 31.0],
+        'signup_day': [1.577837e+18, 1.455840e+18, 1.554077e+18, 1.228090e+18, 1.463357e+18],
+        'balance.normalized': [
+            -2.693016e-01,
+            -2.467182e-01,
+            3.873711e-01,
+            9.571797e-17,
+            1.286486e-01
+        ],
+        'balance.component': [0.0, 0, 0, 0, 0],
+        'card_type': [
+            0.24748494176070168,
+            0.3886965582883772,
+            0.7408364277428201,
+            0.9194352110397322,
+            0.2293601452128275
+        ]
+    })
+
+    ht1.fit(data)
+    first_transformed1 = ht1.transform(data)
+    ht2.fit(data)
+    first_transformed2 = ht2.transform(data)
+    second_transformed1 = ht1.transform(data)
+
+    pd.testing.assert_frame_equal(first_transformed1, expected_first_transformed)
+    pd.testing.assert_frame_equal(first_transformed2, expected_first_transformed)
+    pd.testing.assert_frame_equal(second_transformed1, expected_second_transformed)
+
+    # test reverse transforming multiple times with different tranformers
+    expected_first_reverse = pd.DataFrame({
+        'credit_card': [
+            '180090934066211',
+            '30083012986584',
+            '2290394691481974',
+            '4444812351068428276',
+            '4875851017747494'
+        ],
+        'age': [18, 25, 54, 60, 31],
+        'name': ['AAAAA', 'AAAAB', 'AAAAC', 'AAAAD', 'AAAAE'],
+        'signup_day': [np.nan, '02/19/2016', '04/01/2019', np.nan, '05/16/2016'],
+        'balance': [np.nan, 5400, 150000, np.nan, 91000],
+        'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
+    })
+    expected_second_reverse = pd.DataFrame({
+        'credit_card': [
+            '4228463375694866475',
+            '378224850315805',
+            '3568070297954787',
+            '4681503697026160',
+            '4490550771579'
+        ],
+        'age': [18, 25, 54, 60, 31],
+        'name': ['AAAAF', 'AAAAG', 'AAAAH', 'AAAAI', 'AAAAJ'],
+        'signup_day': ['01/01/2020', '02/19/2016', np.nan, '12/01/2008', '05/16/2016'],
+        'balance': [250, 5400, np.nan, 61662.5, 91000],
+        'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
+    })
+    first_reverse1 = ht1.reverse_transform(first_transformed1)
+    first_reverse2 = ht2.reverse_transform(first_transformed1)
+    second_reverse1 = ht1.reverse_transform(first_transformed1)
+
+    pd.testing.assert_frame_equal(first_reverse1, expected_first_reverse)
+    pd.testing.assert_frame_equal(first_reverse2, expected_first_reverse)
+    pd.testing.assert_frame_equal(expected_second_reverse, second_reverse1)
+
+    # Test resetting randomization
+    ht1.reset_randomization()
+
+    transformed_post_reset = ht1.reverse_transform(first_transformed1)
+    pd.testing.assert_frame_equal(transformed_post_reset, expected_first_reverse)
+
+
+def test_hyper_transformer_cluster_based_normalizer_randomization():
+    """Test that the ``ClusterBasedNormalizer`` handles randomization correctly.
+
+    If the ``ClusterBasedNormalizer`` transforms the same data multiple times,
+    it may yield different results due to randomness. However, if a new instance is created,
+    each matching call should yield the same results (ie. call 1 of the first transformer
+    should match call 1 of the second).
+    """
+    data = get_demo(100)
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.update_transformers({
+        'age': ClusterBasedNormalizer()
+    })
+    ht.fit(data)
+    transformed1 = ht.transform(data)
+    transformed2 = ht.transform(data)
+
+    assert any(transformed1['age.normalized'] != transformed2['age.normalized'])
+
+    ht2 = HyperTransformer()
+    ht2.detect_initial_config(data)
+    ht2.update_transformers({
+        'age': ClusterBasedNormalizer()
+    })
+    ht2.fit(data)
+
+    pd.testing.assert_frame_equal(transformed1, ht2.transform(data))

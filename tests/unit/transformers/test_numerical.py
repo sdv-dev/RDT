@@ -24,103 +24,18 @@ class TestFloatFormatter(TestCase):
         assert nt.missing_value_replacement == 'mode'
         assert nt.model_missing_values is False
 
-    def test_get_output_sdtypes(self):
-        """Test the ``get_output_sdtypes`` method when a null column is created.
-
-        When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output sdtypes:
-
-        output_sdtypes = {
-            'value': 'float',
-            'is_null': 'float'
-        }
-
-        Setup:
-            - initialize a ``FloatFormatter`` transformer which:
-                - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self.model_missing_values`` is True.
-                - sets ``self.column_prefix`` to a string.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with the ``self.column_prefix``
-            added to the beginning of the keys.
-        """
-        # Setup
-        transformer = FloatFormatter()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-        transformer.null_transformer._model_missing_values = True
-        transformer.column_prefix = 'a#b'
-
-        # Run
-        output = transformer.get_output_sdtypes()
-
-        # Assert
-        expected = {
-            'a#b.value': 'float',
-            'a#b.is_null': 'float'
-        }
-        assert output == expected
-
-    def test_is_composition_identity_null_transformer_true(self):
-        """Test the ``is_composition_identity`` method with a ``null_transformer``.
-
-        When the attribute ``null_transformer`` is not None and a null column is not created,
-        this method should simply return False.
-
-        Setup:
-            - initialize a ``FloatFormatter`` transformer which sets
-            ``self.null_transformer`` to a ``NullTransformer`` where
-            ``self.model_missing_values`` is False.
-
-        Output:
-            - False
-        """
-        # Setup
-        transformer = FloatFormatter()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-
-        # Run
-        output = transformer.is_composition_identity()
-
-        # Assert
-        assert output is False
-
-    def test_is_composition_identity_null_transformer_false(self):
-        """Test the ``is_composition_identity`` method without a ``null_transformer``.
-
-        When the attribute ``null_transformer`` is None, this method should return
-        the value stored in the ``COMPOSITION_IS_IDENTITY`` attribute.
-
-        Setup:
-            - initialize a ``FloatFormatter`` transformer which sets
-            ``self.null_transformer`` to None.
-
-        Output:
-            - the value stored in ``self.COMPOSITION_IS_IDENTITY``.
-        """
-        # Setup
-        transformer = FloatFormatter()
-        transformer.null_transformer = None
-
-        # Run
-        output = transformer.is_composition_identity()
-
-        # Assert
-        assert output is True
-
     def test__learn_rounding_digits_more_than_15_decimals(self):
         """Test the _learn_rounding_digits method with more than 15 decimals.
 
-        If the data has more than 15 decimals, None should be returned.
-
-        Input:
-        - An array that contains floats with more than 15 decimals.
-        Output:
-        - None
+        If the data has more than 15 decimals, return None and raise warning.
         """
-        data = np.random.random(size=10).round(20)
+        # Setup
+        data = pd.Series(np.random.random(size=10).round(20), name='col')
 
-        output = FloatFormatter._learn_rounding_digits(data)
+        # Run and Assert
+        warn_msg = "No rounding scheme detected for column 'col'. Data will not be rounded."
+        with pytest.warns(UserWarning, match=warn_msg):
+            output = FloatFormatter._learn_rounding_digits(data)
 
         assert output is None
 
@@ -136,7 +51,7 @@ class TestFloatFormatter(TestCase):
         Output:
         - 3
         """
-        data = np.array([10, 0., 0.1, 0.12, 0.123, np.nan])
+        data = pd.Series(np.array([10, 0., 0.1, 0.12, 0.123, np.nan]))
 
         output = FloatFormatter._learn_rounding_digits(data)
 
@@ -145,36 +60,31 @@ class TestFloatFormatter(TestCase):
     def test__learn_rounding_digits_negative_decimals_float(self):
         """Test the _learn_rounding_digits method with floats multiples of powers of 10.
 
-        If the data has all multiples of 10 the output should be None.
+        If the data has all multiples of 10 the output should be 0.
 
         Input:
-        - An array that contains floats that are multiples of powers of 10, 100 and 1000
-          and a NaN.
-        Output:
-        - None
+        - An array that contains floats that are multiples of powers of 10, 100 and 1000 and a NaN.
         """
-        data = np.array([1230., 12300., 123000., np.nan])
+        data = pd.Series(np.array([1230., 12300., 123000., np.nan]))
 
         output = FloatFormatter._learn_rounding_digits(data)
 
-        assert output is None
+        assert output == 0
 
     def test__learn_rounding_digits_negative_decimals_integer(self):
         """Test the _learn_rounding_digits method with integers multiples of powers of 10.
 
-        If the data has all multiples of 10 the output should be None.
+        If the data has all multiples of 10 the output should be 0.
 
         Input:
         - An array that contains integers that are multiples of powers of 10, 100 and 1000
           and a NaN.
-        Output:
-        - None
         """
-        data = np.array([1230, 12300, 123000, np.nan])
+        data = pd.Series(np.array([1230, 12300, 123000, np.nan]))
 
         output = FloatFormatter._learn_rounding_digits(data)
 
-        assert output is None
+        assert output == 0
 
     def test__learn_rounding_digits_all_missing_value_replacements(self):
         """Test the _learn_rounding_digits method with data that is all NaNs.
@@ -186,7 +96,7 @@ class TestFloatFormatter(TestCase):
         Output:
         - None
         """
-        data = np.array([np.nan, np.nan, np.nan, np.nan])
+        data = pd.Series(np.array([np.nan, np.nan, np.nan, np.nan]))
 
         output = FloatFormatter._learn_rounding_digits(data)
 
@@ -313,7 +223,13 @@ class TestFloatFormatter(TestCase):
         expected = 'missing_value_replacement'
         assert transformer.null_transformer._missing_value_replacement == expected
         assert transformer._dtype == float
+        assert transformer.output_properties == {
+            None: {'sdtype': 'float', 'next_transformer': None}
+        }
         transformer._validate_values_within_bounds.assert_called_once_with(data)
+        assert transformer.output_properties == {
+            None: {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__fit_learn_rounding_scheme_false(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``False``.
@@ -376,7 +292,7 @@ class TestFloatFormatter(TestCase):
         Input:
         - Series with a value that has 15 decimals
         Side Effect:
-        - ``_rounding_digits`` is set to ``None``
+        - ``_rounding_digits`` is set to None
         """
         # Setup
         data = pd.Series([0.000000000000001])
@@ -396,13 +312,13 @@ class TestFloatFormatter(TestCase):
 
         If the ``learn_rounding_scheme`` parameter is set to ``True``, and the data
         contains only integers or infinite values, ``_fit`` should learn
-        ``_rounding_digits`` to be None.
+        ``_rounding_digits`` to be 0.
 
 
         Input:
         - Series with ``np.inf`` as a value
         Side Effect:
-        - ``_rounding_digits`` is set to None
+        - ``_rounding_digits`` is set to 0
         """
         # Setup
         data = pd.Series([15000, 4000, 60000, np.inf])
@@ -415,18 +331,18 @@ class TestFloatFormatter(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer._rounding_digits is None
+        assert transformer._rounding_digits == 0
 
     def test__fit_learn_rounding_scheme_true_max_zero(self):
         """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
 
         If the ``learn_rounding_scheme`` parameter is set to ``True``, and the max
-        in the data is 0, ``_fit`` should learn the ``_rounding_digits`` to be None.
+        in the data is 0, ``_fit`` should learn the ``_rounding_digits`` to be 0.
 
         Input:
         - Series with 0 as max value
         Side Effect:
-        - ``_rounding_digits`` is set to None
+        - ``_rounding_digits`` is set to 0
         """
         # Setup
         data = pd.Series([0, 0, 0])
@@ -439,7 +355,7 @@ class TestFloatFormatter(TestCase):
         transformer._fit(data)
 
         # Asserts
-        assert transformer._rounding_digits is None
+        assert transformer._rounding_digits == 0
 
     def test__fit_enforce_min_max_values_false(self):
         """Test ``_fit`` with ``enforce_min_max_values`` set to ``False``.
@@ -492,6 +408,21 @@ class TestFloatFormatter(TestCase):
         assert transformer._min_value == -5000
         assert transformer._max_value == 4000
 
+    def test__fit_model_missing_values(self):
+        """Test output_properties contains 'is_null' column when model_missing_values=True."""
+        # Setup
+        transformer = FloatFormatter(model_missing_values=True)
+        data = pd.Series([1, np.nan])
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.output_properties == {
+            None: {'sdtype': 'float', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
+
     def test__transform(self):
         """Test the ``_transform`` method.
 
@@ -534,9 +465,10 @@ class TestFloatFormatter(TestCase):
         data = np.random.random(10)
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer.learn_rounding_scheme = False
         transformer._rounding_digits = None
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -557,9 +489,10 @@ class TestFloatFormatter(TestCase):
         data = np.array([0., 1.2, 3.45, 6.789])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer._rounding_digits = None
         transformer._dtype = np.int64
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -588,7 +521,7 @@ class TestFloatFormatter(TestCase):
         data = pd.DataFrame(data, columns=['a', 'b'])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement='mean')
+        transformer = FloatFormatter()
         null_transformer = Mock()
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
@@ -622,7 +555,7 @@ class TestFloatFormatter(TestCase):
         ])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement='mean')
+        transformer = FloatFormatter()
         null_transformer = Mock()
         null_transformer.reverse_transform.return_value = np.array([0., 1.2, np.nan, 6.789])
         transformer.null_transformer = null_transformer
@@ -651,9 +584,10 @@ class TestFloatFormatter(TestCase):
         data = np.array([1.1111, 2.2222, 3.3333, 4.44444, 5.555555])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer.learn_rounding_scheme = True
         transformer._rounding_digits = 2
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -677,10 +611,11 @@ class TestFloatFormatter(TestCase):
         data = np.array([2000.0, 120.0, 3100.0, 40100.0])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer._dtype = int
         transformer.learn_rounding_scheme = True
         transformer._rounding_digits = -3
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -705,9 +640,10 @@ class TestFloatFormatter(TestCase):
         data = np.array([2000.0, 120.0, 3100.0, 40100.0])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer.learn_rounding_scheme = True
         transformer._rounding_digits = -3
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -731,9 +667,10 @@ class TestFloatFormatter(TestCase):
         data = np.array([2000.554, 120.2, 3101, 4010])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer.learn_rounding_scheme = True
         transformer._rounding_digits = 0
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Assert
@@ -755,10 +692,11 @@ class TestFloatFormatter(TestCase):
         data = np.array([-np.inf, -5000, -301, -250, 0, 125, 401, np.inf])
 
         # Run
-        transformer = FloatFormatter(missing_value_replacement=None)
+        transformer = FloatFormatter()
         transformer.enforce_min_max_values = True
         transformer._max_value = 400
         transformer._min_value = -300
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Asserts
@@ -818,6 +756,7 @@ class TestFloatFormatter(TestCase):
 
         # Run
         transformer = FloatFormatter(computer_representation='Int8')
+        transformer.null_transformer = NullTransformer('mean')
         result = transformer._reverse_transform(data)
 
         # Asserts
@@ -1026,6 +965,9 @@ class TestGaussianNormalizer:
             call_value[0][0],
             np.array([0.0, 0.5, 1.0])
         )
+        assert ct.output_properties == {
+            None: {'sdtype': 'float', 'next_transformer': None},
+        }
 
     def test__fit_model_missing_values(self):
         """Test the ``_fit`` method.
@@ -1058,6 +1000,10 @@ class TestGaussianNormalizer:
             call_value[0][0],
             np.array([0.0, 0.5, 1.0])
         )
+        assert ct.output_properties == {
+            None: {'sdtype': 'float', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     @patch('rdt.transformers.numerical.warnings')
     def test__fit_catch_warnings(self, mock_warnings):
@@ -1268,43 +1214,17 @@ class TestGaussianNormalizer:
 
 class TestClusterBasedNormalizer(TestCase):
 
-    def test_get_output_sdtypes_model_missing_values_column_created(self):
-        """Test the ``get_output_sdtypes`` method when a null column is created.
-
-        When a null column is created, this method should apply the ``_add_prefix``
-        method to the following dictionary of output sdtypes:
-
-        output_sdtypes = {
-            'value': 'float',
-            'is_null': 'float'
-        }
-
-        Setup:
-            - initialize a ``FloatFormatter`` transformer which:
-                - sets ``self.null_transformer`` to a ``NullTransformer`` where
-                ``self._model_missing_values`` is True.
-                - sets ``self.column_prefix`` to a string.
-
-        Output:
-            - the ``output_sdtypes`` dictionary, but with ``self.column_prefix``
-            added to the beginning of the keys.
-        """
+    def test__get_current_random_seed_random_states_is_none(self):
+        """Test that the method returns 0 if ``instance.random_states`` is None."""
         # Setup
-        transformer = ClusterBasedNormalizer()
-        transformer.null_transformer = NullTransformer(missing_value_replacement='fill')
-        transformer.null_transformer._model_missing_values = True
-        transformer.column_prefix = 'abc'
+        transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
+        transformer.random_states = None
 
         # Run
-        output = transformer.get_output_sdtypes()
+        random_seed = transformer._get_current_random_seed()
 
         # Assert
-        expected = {
-            'abc.normalized': 'float',
-            'abc.component': 'categorical',
-            'abc.is_null': 'float'
-        }
-        assert output == expected
+        assert random_seed == 0
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     def test__fit(self, mock_bgm):
@@ -1329,6 +1249,9 @@ class TestClusterBasedNormalizer(TestCase):
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
         transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
+        mock_state = Mock()
+        transformer.random_states['fit'] = mock_state
+        mock_state.get_state.return_value = [None, [0]]
         data = pd.Series(np.random.random(size=100))
 
         # Run
@@ -1337,6 +1260,17 @@ class TestClusterBasedNormalizer(TestCase):
         # Asserts
         assert transformer._bgm_transformer == bgm_instance
         assert transformer.valid_component_indicator.sum() == 2
+        assert transformer.output_properties == {
+            'normalized': {'sdtype': 'float', 'next_transformer': None},
+            'component': {'sdtype': 'categorical', 'next_transformer': None}
+        }
+        mock_bgm.assert_called_once_with(
+            n_components=10,
+            weight_concentration_prior_type='dirichlet_process',
+            weight_concentration_prior=0.001,
+            n_init=1,
+            random_state=0
+        )
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     def test__fit_missing_value_replacement(self, mock_bgm):
@@ -1378,6 +1312,11 @@ class TestClusterBasedNormalizer(TestCase):
         assert transformer._bgm_transformer == bgm_instance
         assert transformer.valid_component_indicator.sum() == 2
         assert transformer.null_transformer.models_missing_values()
+        assert transformer.output_properties == {
+            'normalized': {'sdtype': 'float', 'next_transformer': None},
+            'component': {'sdtype': 'categorical', 'next_transformer': None},
+            'is_null': {'sdtype': 'float', 'next_transformer': None},
+        }
 
     @patch('rdt.transformers.numerical.BayesianGaussianMixture')
     @patch('rdt.transformers.numerical.warnings')

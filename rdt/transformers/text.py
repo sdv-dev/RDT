@@ -3,8 +3,8 @@ import warnings
 
 import numpy as np
 
+from rdt.errors import TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.null import NullTransformer
 from rdt.transformers.utils import strings_from_regex
 
 
@@ -12,48 +12,58 @@ class RegexGenerator(BaseTransformer):
     """RegexGenerator transformer.
 
     This transformer will drop a column and regenerate it with the previously specified
-    ``regex`` format. The transformer will also be able to handle nulls and regenerate null values
-    if specified.
+    ``regex`` format.
 
     Args:
         regex (str):
             String representing the regex function.
-        missing_value_replacement (object or None):
-            Indicate what to do with the null values. If an integer or float is given,
-            replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are
-            given, replace them with the corresponding aggregation. If ``None`` is given,
-            do not replace them. Defaults to ``None``.
-        model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not. The column
-            will be created only if there are null values. If ``True``, create the new column if
-            there are null values. If ``False``, do not create the new column even if there
-            are null values. Defaults to ``False``.
+        enforce_uniqueness (bool):
+            Whether or not to ensure that the new generated data is all unique. If it isn't
+            possible to create the requested number of rows, then an error will be raised.
+            Defaults to ``False``.
     """
 
-    DETERMINISTIC_TRANSFORM = False
-    DETERMINISTIC_REVERSE = False
+    IS_GENERATOR = True
     INPUT_SDTYPE = 'text'
-    null_transformer = None
 
-    def __init__(self, regex_format='[A-Za-z]{5}', missing_value_replacement=None,
-                 model_missing_values=False):
-        self.missing_value_replacement = missing_value_replacement
-        self.model_missing_values = model_missing_values
+    def __getstate__(self):
+        """Remove the generator when pickling."""
+        state = self.__dict__.copy()
+        state.pop('generator')
+        return state
+
+    def __setstate__(self, state):
+        """Set the generator when pickling."""
+        generator_size = state.get('generator_size')
+        generated = state.get('generated')
+        generator, size = strings_from_regex(state.get('regex_format'))
+        if generator_size is None:
+            state['generator_size'] = size
+        if generated is None:
+            state['generated'] = 0
+
+        if generated:
+            for _ in range(generated):
+                next(generator)
+
+        state['generator'] = generator
+        self.__dict__ = state
+
+    def __init__(self, regex_format='[A-Za-z]{5}', enforce_uniqueness=False):
+        super().__init__()
+        self.output_properties = {None: {'next_transformer': None}}
+        self.enforce_uniqueness = enforce_uniqueness
         self.regex_format = regex_format
         self.data_length = None
+        self.generator = None
+        self.generator_size = None
+        self.generated = None
 
-    def get_output_sdtypes(self):
-        """Return the output sdtypes supported by the transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to supported sdtypes.
-        """
-        output_sdtypes = {}
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            output_sdtypes['is_null'] = 'float'
-
-        return self._add_prefix(output_sdtypes)
+    def reset_randomization(self):
+        """Create a new generator and reset the generated values counter."""
+        super().reset_randomization()
+        self.generator, self.generator_size = strings_from_regex(self.regex_format)
+        self.generated = 0
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -62,29 +72,11 @@ class RegexGenerator(BaseTransformer):
             data (pandas.Series):
                 Data to fit to.
         """
-        self.null_transformer = NullTransformer(
-            self.missing_value_replacement,
-            self.model_missing_values
-        )
-        self.null_transformer.fit(data)
+        self.reset_randomization()
         self.data_length = len(data)
 
-    def _transform(self, data):
-        """Return ``null`` column if ``models_missing_values``.
-
-        Args:
-            data (pandas.Series):
-                Data to transform.
-
-        Returns:
-            (numpy.ndarray or None):
-                If ``self.model_missing_values`` is ``True`` then will return a ``numpy.ndarray``
-                indicating which values should be ``nan``, else will return ``None``. In both
-                scenarios the original column is being dropped.
-        """
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            return self.null_transformer.transform(data)[:, 1].astype(float)
-
+    def _transform(self, _data):
+        """Drop the input column by returning ``None``."""
         return None
 
     def _reverse_transform(self, data):
@@ -102,30 +94,47 @@ class RegexGenerator(BaseTransformer):
         else:
             sample_size = self.data_length
 
-        generator, size = strings_from_regex(self.regex_format)
-        if sample_size > size:
+        if sample_size > self.generator_size:
+            if self.enforce_uniqueness:
+                raise TransformerProcessingError(
+                    f'The regex is not able to generate {sample_size} unique values. '
+                    f"Please use a different regex for column ('{self.get_input_column()}')."
+                )
+
             warnings.warn(
                 f"The data has {sample_size} rows but the regex for '{self.get_input_column()}' "
-                f'can only create {size} unique values. Some values in '
+                f'can only create {self.generator_size} unique values. Some values in '
                 f"'{self.get_input_column()}' may be repeated."
             )
 
-        if size > sample_size:
+        remaining = self.generator_size - self.generated
+        if sample_size > self.generator_size - self.generated:
+            if self.enforce_uniqueness:
+                raise TransformerProcessingError(
+                    f'The regex generator is not able to generate {sample_size} new unique '
+                    f'values (only {remaining} unique value left). Please use '
+                    "'reset_randomization' in order to restart the generator."
+                )
+
+            self.reset_randomization()
+            remaining = self.generator_size
+
+        if remaining >= sample_size:
             reverse_transformed = np.array([
-                next(generator)
+                next(self.generator)
                 for _ in range(sample_size)
             ], dtype=object)
 
+            self.generated += sample_size
+
         else:
-            generated_values = list(generator)
+            self.generated = self.generator_size
+            generated_values = list(self.generator)
             reverse_transformed = []
             while len(reverse_transformed) < sample_size:
-                remaining = sample_size - len(reverse_transformed)
-                reverse_transformed.extend(generated_values[:remaining])
+                remaining_samples = sample_size - len(reverse_transformed)
+                reverse_transformed.extend(generated_values[:remaining_samples])
 
             reverse_transformed = np.array(reverse_transformed, dtype=object)
 
-        if self.null_transformer.models_missing_values():
-            reverse_transformed = np.column_stack((reverse_transformed, data))
-
-        return self.null_transformer.reverse_transform(reverse_transformed)
+        return reverse_transformed

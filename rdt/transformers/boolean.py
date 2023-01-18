@@ -16,11 +16,10 @@ class BinaryEncoder(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        missing_value_replacement (object or None):
-            Indicate what to do with the null values. If an object is given, replace them
-            with the given value. If the string ``'mode'`` is given, replace them with the
-            most common value. If ``None`` is given, do not replace them.
-            Defaults to ``None``.
+        missing_value_replacement (object):
+            Indicate what to replace the null values with. If the string ``'mode'`` is given,
+            replace them with the most common value.
+            Defaults to ``mode``.
         model_missing_values (bool):
             Whether to create a new column to indicate which values were null or not. The column
             will be created only if there are null values. If ``True``, create the new column if
@@ -29,29 +28,12 @@ class BinaryEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'boolean'
-    DETERMINISTIC_TRANSFORM = True
-    DETERMINISTIC_REVERSE = True
-
     null_transformer = None
 
-    def __init__(self, missing_value_replacement=None, model_missing_values=False):
-        self.missing_value_replacement = missing_value_replacement
+    def __init__(self, missing_value_replacement='mode', model_missing_values=False):
+        super().__init__()
+        self._set_missing_value_replacement('mode', missing_value_replacement)
         self.model_missing_values = model_missing_values
-
-    def get_output_sdtypes(self):
-        """Return the output sdtypes returned by this transformer.
-
-        Returns:
-            dict:
-                Mapping from the transformed column names to the produced sdtypes.
-        """
-        output_sdtypes = {
-            'value': 'float',
-        }
-        if self.null_transformer and self.null_transformer.models_missing_values():
-            output_sdtypes['is_null'] = 'float'
-
-        return self._add_prefix(output_sdtypes)
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -65,6 +47,8 @@ class BinaryEncoder(BaseTransformer):
             self.model_missing_values
         )
         self.null_transformer.fit(data)
+        if self.null_transformer.models_missing_values():
+            self.output_properties['is_null'] = {'sdtype': 'float', 'next_transformer': None}
 
     def _transform(self, data):
         """Transform boolean to float.
@@ -77,7 +61,7 @@ class BinaryEncoder(BaseTransformer):
                 Data to transform.
 
         Returns
-            pandas.DataFrame or pandas.Series
+            np.ndarray
         """
         data = pd.to_numeric(data, errors='coerce')
         return self.null_transformer.transform(data).astype(float)
@@ -96,9 +80,7 @@ class BinaryEncoder(BaseTransformer):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
-        if self.missing_value_replacement is not None:
-            data = self.null_transformer.reverse_transform(data)
-
+        data = self.null_transformer.reverse_transform(data)
         if isinstance(data, np.ndarray):
             if data.ndim == 2:
                 data = data[:, 0]

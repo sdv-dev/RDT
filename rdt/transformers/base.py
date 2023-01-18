@@ -1,8 +1,57 @@
 """BaseTransformer module."""
 import abc
+import contextlib
 import inspect
+import warnings
+from functools import wraps
 
+import numpy as np
 import pandas as pd
+
+
+@contextlib.contextmanager
+def set_random_states(random_states, method_name, set_model_random_state):
+    """Context manager for managing the random state.
+
+    Args:
+        random_states (dict):
+            Dictionary mapping each method to its current random state.
+        method_name (str):
+            Name of the method to set the random state for.
+        set_model_random_state (function):
+            Function to set the random state for the method.
+    """
+    original_np_state = np.random.get_state()
+    random_np_state = random_states[method_name]
+    np.random.set_state(random_np_state.get_state())
+
+    try:
+        yield
+    finally:
+        current_np_state = np.random.RandomState()
+        current_np_state.set_state(np.random.get_state())
+        set_model_random_state(current_np_state, method_name)
+
+        np.random.set_state(original_np_state)
+
+
+def random_state(function):
+    """Set the random state before calling the function.
+
+    Args:
+        function (Callable):
+            The function to wrap around.
+    """
+    @wraps(function)
+    def wrapper(self, *args, **kwargs):
+        if self.random_states is None:
+            return function(self, *args, **kwargs)
+
+        method_name = function.__name__
+        with set_random_states(self.random_states, method_name, self.set_random_state):
+            return function(self, *args, **kwargs)
+
+    return wrapper
 
 
 class BaseTransformer:
@@ -15,15 +64,65 @@ class BaseTransformer:
 
     INPUT_SDTYPE = None
     SUPPORTED_SDTYPES = None
-    OUTPUT_SDTYPES = None
-    DETERMINISTIC_TRANSFORM = None
-    DETERMINISTIC_REVERSE = None
-    COMPOSITION_IS_IDENTITY = None
-    NEXT_TRANSFORMERS = None
+    IS_GENERATOR = None
+    INITIAL_FIT_STATE = np.random.RandomState(seed=21)
+    INITIAL_TRANSFORM_STATE = np.random.RandomState(seed=80)
+    INITIAL_REVERSE_TRANSFORM_STATE = np.random.RandomState(seed=130)
 
     columns = None
     column_prefix = None
     output_columns = None
+    missing_value_replacement = None
+
+    def __init__(self):
+        self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
+        self.random_states = {
+            'fit': self.INITIAL_FIT_STATE,
+            'transform': self.INITIAL_TRANSFORM_STATE,
+            'reverse_transform': self.INITIAL_REVERSE_TRANSFORM_STATE
+        }
+
+    def set_random_state(self, state, method_name):
+        """Set the random state for a transformer.
+
+        Args:
+            state (numpy.random.RandomState):
+                The numpy random state to set.
+            method_name (str):
+                The method to set it for.
+        """
+        if method_name not in self.random_states:
+            raise ValueError(
+                "'method_name' must be one of 'fit', 'transform' or 'reverse_transform'."
+            )
+
+        self.random_states[method_name] = state
+
+    def reset_randomization(self):
+        """Reset the random state for ``reverse_transform``."""
+        self.set_random_state(self.INITIAL_FIT_STATE, 'fit')
+        self.set_random_state(self.INITIAL_TRANSFORM_STATE, 'transform')
+        self.set_random_state(self.INITIAL_REVERSE_TRANSFORM_STATE, 'reverse_transform')
+
+    def _set_missing_value_replacement(self, default, missing_value_replacement):
+        if missing_value_replacement is None:
+            warnings.warn(
+                "Setting 'missing_value_replacement' to 'None' is no longer supported. "
+                f"Imputing with the '{default}' instead.", FutureWarning
+            )
+            self.missing_value_replacement = default
+        else:
+            self.missing_value_replacement = missing_value_replacement
+
+    @classmethod
+    def get_name(cls):
+        """Return transformer name.
+
+        Returns:
+            str:
+                Transformer name.
+        """
+        return cls.__name__
 
     @classmethod
     def get_subclasses(cls):
@@ -62,13 +161,16 @@ class BaseTransformer:
         """
         return cls.SUPPORTED_SDTYPES or [cls.INPUT_SDTYPE]
 
-    def _add_prefix(self, dictionary):
-        if not dictionary:
-            return {}
-
+    def _get_output_to_property(self, property_):
         output = {}
-        for output_columns, output_sdtype in dictionary.items():
-            output[f'{self.column_prefix}.{output_columns}'] = output_sdtype
+        for output_column, properties in self.output_properties.items():
+            # if 'sdtype' is not in the dict, ignore the column
+            if property_ not in properties:
+                continue
+            if output_column is None:
+                output[f'{self.column_prefix}'] = properties[property_]
+            else:
+                output[f'{self.column_prefix}.{output_column}'] = properties[property_]
 
         return output
 
@@ -79,34 +181,7 @@ class BaseTransformer:
             dict:
                 Mapping from the transformed column names to the produced sdtypes.
         """
-        return self._add_prefix(self.OUTPUT_SDTYPES)
-
-    def is_transform_deterministic(self):
-        """Return whether the transform is deterministic.
-
-        Returns:
-            bool:
-                Whether or not the transform is deterministic.
-        """
-        return self.DETERMINISTIC_TRANSFORM
-
-    def is_reverse_deterministic(self):
-        """Return whether the reverse transform is deterministic.
-
-        Returns:
-            bool:
-                Whether or not the reverse transform is deterministic.
-        """
-        return self.DETERMINISTIC_REVERSE
-
-    def is_composition_identity(self):
-        """Return whether composition of transform and reverse transform produces the input data.
-
-        Returns:
-            bool:
-                Whether or not transforming and then reverse transforming returns the input data.
-        """
-        return self.COMPOSITION_IS_IDENTITY
+        return self._get_output_to_property('sdtype')
 
     def get_next_transformers(self):
         """Return the suggested next transformer to be used for each column.
@@ -115,7 +190,16 @@ class BaseTransformer:
             dict:
                 Mapping from transformed column names to the transformers to apply to each column.
         """
-        return self._add_prefix(self.NEXT_TRANSFORMERS)
+        return self._get_output_to_property('next_transformer')
+
+    def is_generator(self):
+        """Return whether this transformer generates new data or not.
+
+        Returns:
+            bool:
+                Whether this transformer generates new data or not.
+        """
+        return bool(self.IS_GENERATOR)
 
     def get_input_column(self):
         """Return input column name for transformer.
@@ -133,7 +217,7 @@ class BaseTransformer:
             list:
                 Names of columns created during ``transform``.
         """
-        return list(self.get_output_sdtypes())
+        return list(self._get_output_to_property('sdtype'))
 
     def _store_columns(self, columns, data):
         if isinstance(columns, tuple) and columns not in data:
@@ -155,41 +239,50 @@ class BaseTransformer:
         return data[columns].copy()
 
     @staticmethod
-    def _add_columns_to_data(data, columns, column_names):
+    def _add_columns_to_data(data, transformed_data, transformed_names):
         """Add new columns to a ``pandas.DataFrame``.
 
         Args:
             - data (pd.DataFrame):
                 The ``pandas.DataFrame`` to which the new columns have to be added.
-            - columns (pd.DataFrame, pd.Series, np.ndarray):
+            - transformed_data (pd.DataFrame, pd.Series, np.ndarray):
                 The data of the new columns to be added.
-            - column_names (list, np.ndarray):
+            - transformed_names (list, np.ndarray):
                 The names of the new columns to be added.
 
         Returns:
             ``pandas.DataFrame`` with the new columns added.
         """
-        if columns is not None:
-            if isinstance(columns, (pd.DataFrame, pd.Series)):
-                columns.index = data.index
+        if isinstance(transformed_data, (pd.Series, np.ndarray)):
+            transformed_data = pd.DataFrame(transformed_data, columns=transformed_names)
 
-            if len(columns.shape) == 1:
-                data[column_names[0]] = columns
-            else:
-                new_data = pd.DataFrame(columns, columns=column_names)
-                data = pd.concat([data, new_data.set_index(data.index)], axis=1)
+        if transformed_names:
+            # When '#' is added to the column_prefix of a transformer
+            # the columns of transformed_data and transformed_names don't match
+            transformed_data.columns = transformed_names
+            data = pd.concat([data, transformed_data.set_index(data.index)], axis=1)
 
         return data
 
     def _build_output_columns(self, data):
         self.column_prefix = '#'.join(self.columns)
-        self.output_columns = list(self.get_output_sdtypes().keys())
+        self.output_columns = self.get_output_columns()
 
-        # make sure none of the generated `output_columns` exists in the data
-        data_columns = set(data.columns)
-        while data_columns & set(self.output_columns):
+        # make sure none of the generated `output_columns` exists in the data,
+        # except when a column generates another with the same name
+        output_columns = set(self.output_columns) - set(self.columns)
+        repeated_columns = set(output_columns) & set(data.columns)
+        while repeated_columns:
+            warnings.warn(
+                f'The output columns {repeated_columns} generated by the {self.get_name()} '
+                'transformer already exist in the data (or they have already been generated '
+                "by some other transformer). Appending a '#' to the column name to distinguish "
+                'between them.'
+            )
             self.column_prefix += '#'
-            self.output_columns = list(self.get_output_sdtypes().keys())
+            self.output_columns = self.get_output_columns()
+            output_columns = set(self.output_columns) - set(self.columns)
+            repeated_columns = set(output_columns) & set(data.columns)
 
     def __repr__(self):
         """Represent initialization of transformer as text.
@@ -198,7 +291,7 @@ class BaseTransformer:
             str:
                 The name of the transformer followed by any non-default parameters.
         """
-        class_name = self.__class__.__name__
+        class_name = self.__class__.get_name()
         custom_args = []
         args = inspect.getfullargspec(self.__init__)
         keys = args.args[1:]
@@ -225,6 +318,7 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
+    @random_state
     def fit(self, data, column):
         """Fit the transformer to a ``column`` of the ``data``.
 
@@ -235,10 +329,8 @@ class BaseTransformer:
                 Column name. Must be present in the data.
         """
         self._store_columns(column, data)
-
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
-
         self._build_output_columns(data)
 
     def _transform(self, columns_data):
@@ -254,14 +346,13 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def transform(self, data, drop=True):
+    @random_state
+    def transform(self, data):
         """Transform the `self.columns` of the `data`.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            drop (bool):
-                Whether or not to drop original columns.
 
         Returns:
             pd.DataFrame:
@@ -272,13 +363,10 @@ class BaseTransformer:
             return data
 
         data = data.copy()
-
         columns_data = self._get_columns_data(data, self.columns)
         transformed_data = self._transform(columns_data)
-
+        data = data.drop(self.columns, axis=1)
         data = self._add_columns_to_data(data, transformed_data, self.output_columns)
-        if drop:
-            data = data.drop(self.columns, axis=1)
 
         return data
 
@@ -311,14 +399,13 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
-    def reverse_transform(self, data, drop=True):
+    @random_state
+    def reverse_transform(self, data):
         """Revert the transformations to the original values.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            drop (bool):
-                Whether or not to drop derived columns.
 
         Returns:
             pandas.DataFrame:
@@ -329,12 +416,9 @@ class BaseTransformer:
             return data
 
         data = data.copy()
-
         columns_data = self._get_columns_data(data, self.output_columns)
         reversed_data = self._reverse_transform(columns_data)
-
+        data = data.drop(self.output_columns, axis=1)
         data = self._add_columns_to_data(data, reversed_data, self.columns)
-        if drop:
-            data = data.drop(self.output_columns, axis=1)
 
         return data
