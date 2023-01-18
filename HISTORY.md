@@ -2,7 +2,7 @@
 
 ## 1.3.0 - 2023-01-18
 
-This release makes changes to the way that individual transformers are stored in the `HyperTransformer`. When accessing the config via `HyperTransformer.get_config()`, the transformers listed in the config are the actual transformer instances used during fitting and transforming. These instances can now be accessed and used to examine their properties post fitting. For example, you can now view the mapping for a `PseudoAnonymizedFaker` instance using `PseudoAnonymizedFaker.get_mapping()` on the instance retrieved from the config.
+This release makes changes to the way that individual transformers are stored in the `HyperTransformer`. When accessing the config via `HyperTransformer.get_config()`, the transformers listed in the config are now the actual transformer instances used during fitting and transforming. These instances can now be accessed and used to examine their properties post fitting. For example, you can now view the mapping for a `PseudoAnonymizedFaker` instance using `PseudoAnonymizedFaker.get_mapping()` on the instance retrieved from the config.
 
 Additionally, the output of `reverse_tranform` no longer appends the `.value` suffix to every unnamed output column. Only output columns that are created from context extracted from the input columns will have suffixes (eg. `.normalized` in the `ClusterBasedNormalizer`).
 
@@ -11,7 +11,7 @@ The `AnonymizedFaker` and `RegexGenerator` now have an `enforce_uniqueness` para
 
 Another major change in this release is the ability to control randomization. Every time a `HyperTransformer` is initialized, its randomness will be reset to the same seed, and it will yield the same results for `reverse_transform` if given the same input. Every subsequent call to `reverse_transform` yields a different result. If a user desires to reset the seed, they can call `HyperTransformer.reset_randomization`.
 
-Finally, this release adds support for Python 3.10 and drops support for 3.6
+Finally, this release adds support for Python 3.10 and drops support for 3.6.
 
 ### Bugs
 
