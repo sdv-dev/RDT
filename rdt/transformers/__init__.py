@@ -3,7 +3,9 @@
 import importlib
 import inspect
 import json
+import logging
 import sys
+import pkg_resources
 from collections import defaultdict
 from copy import deepcopy
 from functools import lru_cache
@@ -57,6 +59,56 @@ def _import_addons():
 
 _import_addons()
 
+def _import_plugins():
+    """Load in a list of transformers registered by other libraries into RDT.
+    Example entry_points definition for a library using this entry point either in:
+        - setup.py:
+            setup(
+                entry_points={
+                    'rdt_transformers': [
+                        'other_library = other_library',
+                    ],
+                },
+            )
+    where `other_library` is a top-level module containing all the primitives.
+    """
+    logger = logging.getLogger('rdt')
+    for entry_point in pkg_resources.iter_entry_points('rdt_transformers'):
+        try:
+            loaded = entry_point.load()
+        except Exception:
+            message = f'RDT failed to load "{entry_point.name}" tranformers from "{entry_point.module_name}". '
+            message += "For a full stack trace, set logging to debug."
+            continue
+
+        for key in dir(loaded):
+            transformer = getattr(loaded, key, None)
+
+            if (
+                inspect.isclass(transformer)
+                and issubclass(transformer, BaseTransformer)
+                and transformer != BaseTransformer
+            ):
+                name = transformer.__name__
+                scope = globals()
+
+                if name in scope:
+                    this_module, that_module = (
+                        transformer.__module__,
+                        scope[name].__module__,
+                    )
+                    message = f'While loading transformers via "{entry_point.name}" entry point, '
+                    message += (
+                        f'ignored transformer "{name}" from "{this_module}" because '
+                    )
+                    message += (
+                        f'a transformer with that name already exists in "{that_module}"'
+                    )
+                    logger.warning(message)
+                else:
+                    scope[name] = transformer
+
+_import_plugins()
 
 def get_transformer_name(transformer):
     """Return the fully qualified path of the transformer.
