@@ -126,6 +126,7 @@ class AnonymizedFaker(BaseTransformer):
             data (pandas.Series):
                 Data to fit to.
         """
+        self.faker.seed_instance(self._random_seed)
         self.data_length = len(data)
 
     def _transform(self, _data):

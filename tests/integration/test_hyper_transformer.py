@@ -1167,3 +1167,31 @@ def test_hyper_transformer_cluster_based_normalizer_randomization():
     ht2.fit(data)
 
     pd.testing.assert_frame_equal(transformed1, ht2.transform(data))
+
+def test_hypertransformer_default_inputs():
+    """."""
+    # Setup
+    data = pd.DataFrame({
+        'integer': [1, 2, 1, 3, 1, 4, 2, 3],
+        'float': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
+        'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
+        'bool': [False, np.nan, False, True, False, np.nan, True, False],
+        'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
+    }, index=TEST_DATA_INDEX)
+
+    # Run
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.update_sdtypes({
+        'categorical': 'pii',
+        'names': 'pii'
+    })
+    ht.update_transformers({
+        'names': AnonymizedFaker(),
+        'categorical': AnonymizedFaker()
+    })
+    ht.fit(data)
+    transformed = ht.transform(data)
+    reverse_transformed = ht.reverse_transform(transformed)
+    print(reverse_transformed)
+    assert 0

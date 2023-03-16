@@ -548,6 +548,7 @@ class HyperTransformer:
             self._output_columns.append(field)
 
         else:
+            transformer.set_seed(field)
             transformer.fit(data, field)
             self._transformers_sequence.append(transformer)
             data = transformer.transform(data)

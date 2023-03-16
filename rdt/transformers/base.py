@@ -7,6 +7,7 @@ from functools import wraps
 
 import numpy as np
 import pandas as pd
+import hashlib
 
 
 @contextlib.contextmanager
@@ -53,7 +54,6 @@ def random_state(function):
 
     return wrapper
 
-
 class BaseTransformer:
     """Base class for all transformers.
 
@@ -65,6 +65,7 @@ class BaseTransformer:
     INPUT_SDTYPE = None
     SUPPORTED_SDTYPES = None
     IS_GENERATOR = None
+
     INITIAL_FIT_STATE = np.random.RandomState(seed=21)
     INITIAL_TRANSFORM_STATE = np.random.RandomState(seed=80)
     INITIAL_REVERSE_TRANSFORM_STATE = np.random.RandomState(seed=130)
@@ -76,10 +77,19 @@ class BaseTransformer:
 
     def __init__(self):
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
+        self._random_seed = None
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
             'transform': self.INITIAL_TRANSFORM_STATE,
             'reverse_transform': self.INITIAL_REVERSE_TRANSFORM_STATE
+        }
+    
+    def set_seed(self, field):
+        self._random_seed = hash(field) % (2 ** 31)
+        self.random_states = {
+            'fit': np.random.RandomState(seed=self._random_seed + 21),
+            'transform': np.random.RandomState(seed=self._random_seed + 42),
+            'reverse_transform': np.random.RandomState(seed=self._random_seed + 84)
         }
 
     def set_random_state(self, state, method_name):
@@ -100,9 +110,11 @@ class BaseTransformer:
 
     def reset_randomization(self):
         """Reset the random state for ``reverse_transform``."""
+        print('?')
         self.set_random_state(self.INITIAL_FIT_STATE, 'fit')
         self.set_random_state(self.INITIAL_TRANSFORM_STATE, 'transform')
         self.set_random_state(self.INITIAL_REVERSE_TRANSFORM_STATE, 'reverse_transform')
+        self._random_seed = None
 
     def _set_missing_value_replacement(self, default, missing_value_replacement):
         if missing_value_replacement is None:
@@ -328,6 +340,10 @@ class BaseTransformer:
             column (str):
                 Column name. Must be present in the data.
         """
+        if isinstance(column, list):
+            column = column[0]
+
+        self._random_seed = hash(column) % ((2 ** 32) - 1)
         self._store_columns(column, data)
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
