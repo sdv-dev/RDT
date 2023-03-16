@@ -1098,11 +1098,11 @@ def test_hyper_transformer_reset_randomization():
     # test reverse transforming multiple times with different tranformers
     expected_first_reverse = pd.DataFrame({
         'credit_card': [
-            '180090934066211',
-            '30083012986584',
-            '2290394691481974',
-            '4444812351068428276',
-            '4875851017747494'
+            '4685805292066161955',
+            '3570987982637714',
+            '38240103038731',
+            '30321079703603',
+            '3517991209979418'
         ],
         'age': [18, 25, 54, 60, 31],
         'name': ['AAAAA', 'AAAAB', 'AAAAC', 'AAAAD', 'AAAAE'],
@@ -1112,11 +1112,11 @@ def test_hyper_transformer_reset_randomization():
     })
     expected_second_reverse = pd.DataFrame({
         'credit_card': [
-            '4228463375694866475',
-            '378224850315805',
-            '3568070297954787',
-            '4681503697026160',
-            '4490550771579'
+            '501844883964',
+            '060461332938',
+            '4718023244547',
+            '3520660255932598',
+            '6011477584365724'
         ],
         'age': [18, 25, 54, 60, 31],
         'name': ['AAAAF', 'AAAAG', 'AAAAH', 'AAAAI', 'AAAAJ'],
@@ -1127,7 +1127,6 @@ def test_hyper_transformer_reset_randomization():
     first_reverse1 = ht1.reverse_transform(first_transformed1)
     first_reverse2 = ht2.reverse_transform(first_transformed1)
     second_reverse1 = ht1.reverse_transform(first_transformed1)
-
     pd.testing.assert_frame_equal(first_reverse1, expected_first_reverse)
     pd.testing.assert_frame_equal(first_reverse2, expected_first_reverse)
     pd.testing.assert_frame_equal(expected_second_reverse, second_reverse1)
@@ -1168,30 +1167,49 @@ def test_hyper_transformer_cluster_based_normalizer_randomization():
 
     pd.testing.assert_frame_equal(transformed1, ht2.transform(data))
 
-def test_hypertransformer_default_inputs():
-    """."""
+
+def test_hypertransformer_anonymized_faker():
+    """Test ``AnonymizedFaker`` generates different random values for different columns.
+
+    Issue: https://github.com/sdv-dev/RDT/issues/619.
+    """
     # Setup
     data = pd.DataFrame({
-        'integer': [1, 2, 1, 3, 1, 4, 2, 3],
-        'float': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, np.nan, 0.3],
-        'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
-        'bool': [False, np.nan, False, True, False, np.nan, True, False],
-        'names': ['Jon', 'Arya', 'Arya', 'Jon', 'Jon', 'Sansa', 'Jon', 'Jon'],
-    }, index=TEST_DATA_INDEX)
-
-    # Run
+        'id1': ['a', 'b', 'c'],
+        'id2': ['d', 'e', 'f'],
+    })
     ht = HyperTransformer()
+
+    # Run - simple run
     ht.detect_initial_config(data)
     ht.update_sdtypes({
-        'categorical': 'pii',
-        'names': 'pii'
+        'id1': 'pii',
+        'id2': 'pii'
     })
     ht.update_transformers({
-        'names': AnonymizedFaker(),
-        'categorical': AnonymizedFaker()
+        'id1': AnonymizedFaker(),
+        'id2': AnonymizedFaker()
     })
     ht.fit(data)
     transformed = ht.transform(data)
-    reverse_transformed = ht.reverse_transform(transformed)
-    print(reverse_transformed)
-    assert 0
+    reverse_transformed1 = ht.reverse_transform(transformed)
+
+    # Assert
+    assert reverse_transformed1['id1'].tolist() != reverse_transformed1['id2'].tolist()
+
+    # Run - make sure transforming again returns different values than the original transform
+    transformed = ht.transform(data)
+    reverse_transformed2 = ht.reverse_transform(transformed)
+
+    # Assert
+    assert reverse_transformed2['id1'].tolist() != reverse_transformed2['id2'].tolist()
+    assert reverse_transformed1['id1'].tolist() != reverse_transformed2['id1'].tolist()
+    assert reverse_transformed1['id2'].tolist() != reverse_transformed2['id2'].tolist()
+
+    # Run - make sure resetting randomization works
+    ht.reset_randomization()
+    transformed = ht.transform(data)
+    reverse_transformed3 = ht.reverse_transform(transformed)
+
+    # Assert
+    pd.testing.assert_frame_equal(reverse_transformed1, reverse_transformed3)

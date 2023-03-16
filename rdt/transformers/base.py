@@ -1,13 +1,13 @@
 """BaseTransformer module."""
 import abc
 import contextlib
+import hashlib
 import inspect
 import warnings
 from functools import wraps
 
 import numpy as np
 import pandas as pd
-import hashlib
 
 
 @contextlib.contextmanager
@@ -54,6 +54,7 @@ def random_state(function):
 
     return wrapper
 
+
 class BaseTransformer:
     """Base class for all transformers.
 
@@ -65,7 +66,6 @@ class BaseTransformer:
     INPUT_SDTYPE = None
     SUPPORTED_SDTYPES = None
     IS_GENERATOR = None
-
     INITIAL_FIT_STATE = np.random.RandomState(seed=21)
     INITIAL_TRANSFORM_STATE = np.random.RandomState(seed=80)
     INITIAL_REVERSE_TRANSFORM_STATE = np.random.RandomState(seed=130)
@@ -105,7 +105,6 @@ class BaseTransformer:
         self.set_random_state(self.INITIAL_FIT_STATE, 'fit')
         self.set_random_state(self.INITIAL_TRANSFORM_STATE, 'transform')
         self.set_random_state(self.INITIAL_REVERSE_TRANSFORM_STATE, 'reverse_transform')
-        self._random_seed = None
 
     def _set_missing_value_replacement(self, default, missing_value_replacement):
         if missing_value_replacement is None:
@@ -334,7 +333,8 @@ class BaseTransformer:
         if isinstance(column, list):
             column = column[0]
 
-        self._random_seed = hash(column) % ((2 ** 32) - 1)
+        hash_int = int(hashlib.sha256(column.encode('utf-8')).hexdigest(), 16)
+        self._random_seed = hash_int % ((2 ** 32) - 1)  # maximum value for a seed
         self._store_columns(column, data)
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
