@@ -243,6 +243,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
+        self.faker.seed_instance(self._random_seed)
         unique_values = columns_data[columns_data.notna()].unique()
         unique_data_length = len(unique_values)
         try:

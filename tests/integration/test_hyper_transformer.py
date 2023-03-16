@@ -12,6 +12,7 @@ from rdt.transformers import (
     AnonymizedFaker, BaseTransformer, BinaryEncoder, ClusterBasedNormalizer, FloatFormatter,
     FrequencyEncoder, LabelEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder,
     get_default_transformer, get_default_transformers)
+from rdt.transformers.pii.anonymizer import PseudoAnonymizedFaker
 
 
 class DummyTransformerNumerical(BaseTransformer):
@@ -1213,3 +1214,30 @@ def test_hypertransformer_anonymized_faker():
 
     # Assert
     pd.testing.assert_frame_equal(reverse_transformed1, reverse_transformed3)
+
+
+def test_hypertransformer_pseudo_anonymized_faker():
+    """Test ``PseudoAnonymizedFaker`` generates different random values for different columns."""
+    # Setup
+    data = pd.DataFrame({
+        'id1': ['a', 'b', 'c'],
+        'id2': ['d', 'e', 'f'],
+    })
+    ht = HyperTransformer()
+
+    # Run
+    ht.detect_initial_config(data)
+    ht.update_sdtypes({
+        'id1': 'pii',
+        'id2': 'pii'
+    })
+    ht.update_transformers({
+        'id1': PseudoAnonymizedFaker(),
+        'id2': PseudoAnonymizedFaker()
+    })
+    ht.fit(data)
+    transformed = ht.transform(data)
+    reverse_transformed1 = ht.reverse_transform(transformed)
+
+    # Assert
+    assert reverse_transformed1['id1'].tolist() != reverse_transformed1['id2'].tolist()
