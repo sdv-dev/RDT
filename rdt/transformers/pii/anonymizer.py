@@ -110,7 +110,7 @@ class AnonymizedFaker(BaseTransformer):
         """Create a new ``Faker`` instance."""
         super().reset_randomization()
         self.faker = faker.Faker(self.locales)
-        self.faker.seed_instance(self.INITIAL_SEED)
+        self.faker.seed_instance(self._random_seed)
 
     def _function(self):
         """Return a callable ``faker`` function."""

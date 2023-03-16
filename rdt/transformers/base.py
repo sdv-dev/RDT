@@ -83,14 +83,6 @@ class BaseTransformer:
             'transform': self.INITIAL_TRANSFORM_STATE,
             'reverse_transform': self.INITIAL_REVERSE_TRANSFORM_STATE
         }
-    
-    def set_seed(self, field):
-        self._random_seed = hash(field) % (2 ** 31)
-        self.random_states = {
-            'fit': np.random.RandomState(seed=self._random_seed + 21),
-            'transform': np.random.RandomState(seed=self._random_seed + 42),
-            'reverse_transform': np.random.RandomState(seed=self._random_seed + 84)
-        }
 
     def set_random_state(self, state, method_name):
         """Set the random state for a transformer.
@@ -110,7 +102,6 @@ class BaseTransformer:
 
     def reset_randomization(self):
         """Reset the random state for ``reverse_transform``."""
-        print('?')
         self.set_random_state(self.INITIAL_FIT_STATE, 'fit')
         self.set_random_state(self.INITIAL_TRANSFORM_STATE, 'transform')
         self.set_random_state(self.INITIAL_REVERSE_TRANSFORM_STATE, 'reverse_transform')
