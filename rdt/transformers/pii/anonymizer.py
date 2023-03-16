@@ -38,7 +38,6 @@ class AnonymizedFaker(BaseTransformer):
 
     IS_GENERATOR = True
     INPUT_SDTYPE = 'pii'
-    INITIAL_SEED = 30
 
     @staticmethod
     def check_provider_function(provider_name, function_name):
@@ -102,7 +101,6 @@ class AnonymizedFaker(BaseTransformer):
 
         self.locales = locales
         self.faker = faker.Faker(self.locales)
-        self.faker.seed_instance(self.INITIAL_SEED)
         if self.locales:
             self._check_locales()
 
