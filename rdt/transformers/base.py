@@ -77,7 +77,7 @@ class BaseTransformer:
 
     def __init__(self):
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
-        self._random_seed = None
+        self._faker_random_seed = None
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
             'transform': self.INITIAL_TRANSFORM_STATE,
@@ -334,7 +334,7 @@ class BaseTransformer:
             column = column[0]
 
         hash_int = int(hashlib.sha256(column.encode('utf-8')).hexdigest(), 16)
-        self._random_seed = hash_int % ((2 ** 32) - 1)  # maximum value for a seed
+        self._faker_random_seed = hash_int % ((2 ** 32) - 1)  # maximum value for a seed
         self._store_columns(column, data)
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)

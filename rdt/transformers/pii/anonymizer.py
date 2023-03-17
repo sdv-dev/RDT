@@ -108,7 +108,7 @@ class AnonymizedFaker(BaseTransformer):
         """Create a new ``Faker`` instance."""
         super().reset_randomization()
         self.faker = faker.Faker(self.locales)
-        self.faker.seed_instance(self._random_seed)
+        self.faker.seed_instance(self._faker_random_seed)
 
     def _function(self):
         """Return a callable ``faker`` function."""
@@ -124,7 +124,7 @@ class AnonymizedFaker(BaseTransformer):
             data (pandas.Series):
                 Data to fit to.
         """
-        self.faker.seed_instance(self._random_seed)
+        self.faker.seed_instance(self._faker_random_seed)
         self.data_length = len(data)
 
     def _transform(self, _data):
@@ -243,7 +243,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
-        self.faker.seed_instance(self._random_seed)
+        self.faker.seed_instance(self._faker_random_seed)
         unique_values = columns_data[columns_data.notna()].unique()
         unique_data_length = len(unique_values)
         try:
