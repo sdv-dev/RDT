@@ -308,6 +308,7 @@ class TestAnonymizedFaker:
         # Setup
         transformer = AnonymizedFaker()
         columns_data = pd.Series(['1', '2', '3'])
+        transformer.columns = ['col']
 
         # Run
         transformer._fit(columns_data)

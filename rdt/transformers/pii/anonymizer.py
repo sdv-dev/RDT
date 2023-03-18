@@ -1,5 +1,6 @@
 """Personal Identifiable Information Anonymizer."""
 
+import hashlib
 import importlib
 import inspect
 import warnings
@@ -99,6 +100,7 @@ class AnonymizedFaker(BaseTransformer):
         self.check_provider_function(self.provider_name, self.function_name)
         self.output_properties = {None: {'next_transformer': None}}
 
+        self._faker_random_seed = None
         self.locales = locales
         self.faker = faker.Faker(self.locales)
         if self.locales:
@@ -124,6 +126,9 @@ class AnonymizedFaker(BaseTransformer):
             data (pandas.Series):
                 Data to fit to.
         """
+        column_name = self.get_input_column()
+        hash_int = int(hashlib.sha256(column_name.encode('utf-8')).hexdigest(), 16)
+        self._faker_random_seed = hash_int % ((2 ** 32) - 1)  # maximum value for a seed
         self.faker.seed_instance(self._faker_random_seed)
         self.data_length = len(data)
 

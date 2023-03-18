@@ -55,7 +55,6 @@ class TestRegexGenerator:
             'output_properties': {None: {'next_transformer': None}},
             'regex_format': '[A-Za-z]{5}',
             'random_states': mock_random_sates,
-            '_faker_random_seed': None
         }
 
     @patch('rdt.transformers.text.strings_from_regex')
