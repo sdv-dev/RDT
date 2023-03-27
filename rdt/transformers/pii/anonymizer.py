@@ -121,8 +121,10 @@ class AnonymizedFaker(BaseTransformer):
 
     def _set_seed(self, data):
         hash_value = self.get_input_column()
-        for value in data:
+        for index, value in enumerate(data):
             hash_value += str(value)
+            if index > 10:
+                break
 
         hash_value = int(hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16)
         self._faker_random_seed = hash_value % ((2 ** 32) - 1)  # maximum value for a seed
