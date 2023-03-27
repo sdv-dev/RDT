@@ -147,7 +147,7 @@ class FrequencyEncoder(BaseTransformer):
             if category is np.nan:
                 mask = data.isna()
             else:
-                mask = (data.to_numpy() == category)
+                mask = data.to_numpy() == category
 
             if self.add_noise:
                 result[mask] = norm.rvs(
@@ -227,7 +227,7 @@ class FrequencyEncoder(BaseTransformer):
         # loop over categories
         for category, values in self.intervals.items():
             start = values[0]
-            mask = (start <= data.to_numpy())
+            mask = start <= data.to_numpy()
             result[mask] = category
 
         return pd.Series(result, index=data.index, dtype=self.dtype)
