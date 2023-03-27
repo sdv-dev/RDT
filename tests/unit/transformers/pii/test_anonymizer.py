@@ -613,6 +613,7 @@ class TestPseudoAnonymizedFaker:
         instance = PseudoAnonymizedFaker()
         instance._function = Mock()
         instance._function.side_effect = [1, 2, 3]
+        instance.columns = ['col']
         data = pd.Series(['a', 'b', 'c'])
 
         # Run
@@ -649,6 +650,7 @@ class TestPseudoAnonymizedFaker:
         """
         # Setup
         instance = PseudoAnonymizedFaker('misc', 'boolean')
+        instance.columns = ['col']
         data = pd.Series(['a', 'b', 'c', 'd'])
 
         # Run / Assert

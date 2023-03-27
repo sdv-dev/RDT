@@ -1099,11 +1099,11 @@ def test_hyper_transformer_reset_randomization():
     # test reverse transforming multiple times with different tranformers
     expected_first_reverse = pd.DataFrame({
         'credit_card': [
-            '4685805292066161955',
-            '3570987982637714',
-            '38240103038731',
-            '30321079703603',
-            '3517991209979418'
+            '3564483245479407',
+            '4863061245886958069',
+            '4039466324278480',
+            '4217004814656859',
+            '4343691397776091'
         ],
         'age': [18, 25, 54, 60, 31],
         'name': ['AAAAA', 'AAAAB', 'AAAAC', 'AAAAD', 'AAAAE'],
@@ -1113,11 +1113,11 @@ def test_hyper_transformer_reset_randomization():
     })
     expected_second_reverse = pd.DataFrame({
         'credit_card': [
-            '501844883964',
-            '060461332938',
-            '4718023244547',
-            '3520660255932598',
-            '6011477584365724'
+            '4208002654643',
+            '3547584322792794',
+            '30187802217181',
+            '4138954513622487900',
+            '346502559595986'
         ],
         'age': [18, 25, 54, 60, 31],
         'name': ['AAAAF', 'AAAAG', 'AAAAH', 'AAAAI', 'AAAAJ'],
@@ -1221,7 +1221,7 @@ def test_hypertransformer_pseudo_anonymized_faker():
     # Setup
     data = pd.DataFrame({
         'id1': ['a', 'b', 'c'],
-        'id2': ['d', 'e', 'f'],
+        'id2': ['a', 'b', 'c'],
     })
     ht = HyperTransformer()
 
@@ -1241,3 +1241,67 @@ def test_hypertransformer_pseudo_anonymized_faker():
 
     # Assert
     assert reverse_transformed1['id1'].tolist() != reverse_transformed1['id2'].tolist()
+
+    # Run - run it again on the exact same data
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.update_sdtypes({
+        'id1': 'pii',
+        'id2': 'pii'
+    })
+    ht.update_transformers({
+        'id1': PseudoAnonymizedFaker(),
+        'id2': PseudoAnonymizedFaker()
+    })
+    ht.fit(data)
+    transformed = ht.transform(data)
+    reverse_transformed2 = ht.reverse_transform(transformed)
+
+    # Assert - different instances of the same transformer should return the same result
+    assert reverse_transformed1['id1'].tolist() == reverse_transformed2['id1'].tolist()
+
+
+def test_hypertransformer_anonymized_faker_multi_table():
+    """Test ``AnonymizedFaker`` generates different values for columns with same name."""
+    # Setup
+    data1 = pd.DataFrame({
+        'id1': ['a', 'b', 'c'],
+        'id2': ['a', 'b', 'c'],
+    })
+    data2 = pd.DataFrame({
+        'id1': ['d', 'e', 'f'],
+        'id2': ['d', 'e', 'f'],
+    })
+    ht = HyperTransformer()
+
+    # Run on data1
+    ht.detect_initial_config(data1)
+    ht.update_sdtypes({
+        'id1': 'pii',
+        'id2': 'pii'
+    })
+    ht.update_transformers({
+        'id1': AnonymizedFaker(),
+        'id2': PseudoAnonymizedFaker()
+    })
+    ht.fit(data1)
+    transformed = ht.transform(data1)
+    reverse_transformed1 = ht.reverse_transform(transformed)
+
+    # Run on data2
+    ht.detect_initial_config(data2)
+    ht.update_sdtypes({
+        'id1': 'pii',
+        'id2': 'pii'
+    })
+    ht.update_transformers({
+        'id1': AnonymizedFaker(),
+        'id2': PseudoAnonymizedFaker()
+    })
+    ht.fit(data2)
+    transformed = ht.transform(data2)
+    reverse_transformed2 = ht.reverse_transform(transformed)
+
+    # Assert
+    assert reverse_transformed1['id1'].tolist() != reverse_transformed2['id1'].tolist()
+    assert reverse_transformed1['id2'].tolist() != reverse_transformed2['id2'].tolist()

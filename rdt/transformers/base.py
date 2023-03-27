@@ -328,9 +328,6 @@ class BaseTransformer:
             column (str):
                 Column name. Must be present in the data.
         """
-        if isinstance(column, list):
-            column = column[0]
-
         self._store_columns(column, data)
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
