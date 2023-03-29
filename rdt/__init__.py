@@ -8,7 +8,10 @@ __email__ = 'info@sdv.dev'
 __version__ = '1.3.1.dev0'
 
 import warnings
-from importlib.metadata import entry_points as get_entry_points
+try:
+    from importlib_metadata import entry_points
+except ImportError:
+    from importlib.metadata import entry_points
 
 import numpy as np
 import pandas as pd
@@ -89,15 +92,7 @@ def get_demo(num_rows=5):
 
 
 def _add_version():
-    try:
-        entry_points = get_entry_points(name='version', group='rdt_modules')
-    except TypeError:
-        entry_points = [
-            entry_point for entry_point in get_entry_points().get('rdt_modules', [])
-            if entry_point.name == 'version'
-        ]
-
-    for entry_point in entry_points:
+    for entry_point in entry_points(name='version', group='rdt_modules'):
         try:
             module = entry_point.load()
         except Exception:
