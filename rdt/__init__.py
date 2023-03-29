@@ -8,16 +8,18 @@ __email__ = 'info@sdv.dev'
 __version__ = '1.3.1.dev0'
 
 import warnings
-try:
-    from importlib_metadata import entry_points
-except ImportError:
-    from importlib.metadata import entry_points
 
 import numpy as np
 import pandas as pd
 
 from rdt import transformers
 from rdt.hyper_transformer import HyperTransformer
+
+try:
+    from importlib_metadata import entry_points
+except ImportError:
+    from importlib.metadata import entry_points
+
 
 __all__ = [
     'HyperTransformer',
@@ -95,7 +97,7 @@ def _add_version():
     for entry_point in entry_points(name='version', group='rdt_modules'):
         try:
             module = entry_point.load()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             msg = f'Failed to load "{entry_point.name}" from "{entry_point.module}". '
             warnings.warn(msg)
             continue
