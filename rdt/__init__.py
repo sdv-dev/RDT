@@ -7,13 +7,12 @@ __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
 __version__ = '1.3.1.dev0'
 
-import warnings
 
 import numpy as np
 import pandas as pd
-from pkg_resources import iter_entry_points
 
 from rdt import transformers
+from rdt._addons import _find_addons
 from rdt.hyper_transformer import HyperTransformer
 
 __all__ = [
@@ -22,6 +21,9 @@ __all__ = [
 ]
 
 RANDOM_SEED = 42
+
+
+_find_addons(group='rdt_modules', parent_globals=globals())
 
 
 def get_demo(num_rows=5):
@@ -86,19 +88,3 @@ def get_demo(num_rows=5):
         'age': age,
         'dollars_spent': dollars_spent
     }), ignore_index=True)
-
-
-def _add_version():
-    for entry_point in iter_entry_points(name='version', group='rdt_modules'):
-        try:
-            module = entry_point.load()
-        except Exception:  # pylint: disable=broad-exception-caught
-            msg = f'Failed to load "{entry_point.name}" from "{entry_point.module}".'
-            warnings.warn(msg)
-            continue
-
-        if 'version' not in globals():
-            globals()['version'] = module
-
-
-_add_version()
