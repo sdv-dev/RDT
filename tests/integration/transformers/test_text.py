@@ -220,3 +220,27 @@ def test_regexgenerator_pickled(tmpdir):
 
     # Assert
     assert next(instance.generator) == next(loaded.generator)
+
+
+def test_regexgenerator_with_many_possibilities():
+    """Test the ``RegexGenerator`` with regex containing many possibilities."""
+    data = pd.DataFrame({
+        'id': ['a' * 50, 'a' * 49 + 'b', 'a' * 49 + 'c', 'a' * 49 + 'd', 'a' * 49 + 'e'],
+        'username': ['aa', 'bb', 'cc', 'dd', 'ee'],
+    })
+
+    instance = RegexGenerator(regex_format='[a-z]{50}')
+    transformed = instance.fit_transform(data, 'id')
+    reverse_transform = instance.reverse_transform(transformed)
+
+    expected_transformed = pd.DataFrame({
+        'username': ['aa', 'bb', 'cc', 'dd', 'ee'],
+    })
+
+    expected_reverse_transformed = pd.DataFrame({
+        'username': ['aa', 'bb', 'cc', 'dd', 'ee'],
+        'id': ['a' * 50, 'a' * 49 + 'b', 'a' * 49 + 'c', 'a' * 49 + 'd', 'a' * 49 + 'e'],
+    })
+
+    pd.testing.assert_frame_equal(transformed, expected_transformed)
+    pd.testing.assert_frame_equal(reverse_transform, expected_reverse_transformed)

@@ -49,7 +49,7 @@ def _max_repeat(options, max_repeat):
     sizes = []
     for repeat in range(min_, max_ + 1):
         if repeat:
-            sizes.append(size ** repeat)
+            sizes.append(int(float(size) ** float(repeat)))
             repeat_generators = [
                 (_GENERATORS[option](args, max_repeat)[0], option, args)
                 for _ in range(repeat)
@@ -119,7 +119,7 @@ def _from_generators(generators, max_repeat):
             yield ''.join(reversed(generated))
 
 
-def strings_from_regex(regex, max_repeat=16):
+def strings_from_regex(regex, max_repeat=32):
     """Generate strings that match the given regular expression.
 
     The output is a generator that produces regular expressions that match
@@ -148,5 +148,4 @@ def strings_from_regex(regex, max_repeat=16):
             generator, size = _GENERATORS[option](args, max_repeat)
             generators.append((generator, option, args))
             sizes.append(size)
-
     return _from_generators(generators, max_repeat), np.prod(sizes)
