@@ -1897,7 +1897,10 @@ class TestOrderedLabelEncoder:
         with pytest.raises(TransformerInputError, match=message):
             transformer._fit(data)
 
-    def test_customlabelencoder_warning(self):
+
+class TestCustomLabelEncoder:
+
+    def test___init__(self):
         """Test the warning message for  backwards compatibility of ``CustomLabelEncoder``."""
         # Setup / Run / Assert
         warning_msg = re.escape(
