@@ -25,8 +25,7 @@ install_requires = [
     "scikit-learn>=0.24,<2;python_version<'3.10'",
     "scikit-learn>=1.1.3,<2;python_version>='3.10'",
     'psutil>=5.7,<6',
-    'Faker>=10',
-    "importlib-metadata>=4.6,<6;python_version<'3.10'"
+    'Faker>=10'
 ]
 
 copulas_requires = [

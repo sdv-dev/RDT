@@ -11,15 +11,10 @@ import warnings
 
 import numpy as np
 import pandas as pd
+from pkg_resources import iter_entry_points
 
 from rdt import transformers
 from rdt.hyper_transformer import HyperTransformer
-
-try:
-    from importlib_metadata import entry_points
-except ImportError:
-    from importlib.metadata import entry_points
-
 
 __all__ = [
     'HyperTransformer',
@@ -94,11 +89,11 @@ def get_demo(num_rows=5):
 
 
 def _add_version():
-    for entry_point in entry_points(name='version', group='rdt_modules'):
+    for entry_point in iter_entry_points(name='version', group='rdt_modules'):
         try:
             module = entry_point.load()
         except Exception:  # pylint: disable=broad-exception-caught
-            msg = f'Failed to load "{entry_point.name}" from "{entry_point.module}". '
+            msg = f'Failed to load "{entry_point.name}" from "{entry_point.module}".'
             warnings.warn(msg)
             continue
 
