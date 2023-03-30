@@ -8,6 +8,7 @@ import numpy as np
 import sre_parse  # isort:skip
 
 
+
 def _literal(character, max_repeat):
     del max_repeat
     return iter([chr(character)]), 1
@@ -49,7 +50,7 @@ def _max_repeat(options, max_repeat):
     sizes = []
     for repeat in range(min_, max_ + 1):
         if repeat:
-            sizes.append(int(float(size) ** float(repeat)))
+            sizes.append(pow(int(size), repeat, 2 ** 63 - 1))
             repeat_generators = [
                 (_GENERATORS[option](args, max_repeat)[0], option, args)
                 for _ in range(repeat)
