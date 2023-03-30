@@ -119,7 +119,7 @@ def _from_generators(generators, max_repeat):
             yield ''.join(reversed(generated))
 
 
-def strings_from_regex(regex, max_repeat=32):
+def strings_from_regex(regex, max_repeat=16):
     """Generate strings that match the given regular expression.
 
     The output is a generator that produces regular expressions that match
@@ -148,4 +148,5 @@ def strings_from_regex(regex, max_repeat=32):
             generator, size = _GENERATORS[option](args, max_repeat)
             generators.append((generator, option, args))
             sizes.append(size)
+
     return _from_generators(generators, max_repeat), np.prod(sizes)
