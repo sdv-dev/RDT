@@ -8,7 +8,6 @@ import numpy as np
 import sre_parse  # isort:skip
 
 
-
 def _literal(character, max_repeat):
     del max_repeat
     return iter([chr(character)]), 1
