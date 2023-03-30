@@ -7,7 +7,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import cross_val_score
 
 from rdt import HyperTransformer
-from rdt.transformers import OrderedLabelEncoder, FloatFormatter, get_transformers_by_type
+from rdt.transformers import (
+    CustomLabelEncoder, FloatFormatter, OrderedLabelEncoder, get_transformers_by_type)
 from tests.quality.utils import download_single_table
 
 R2_THRESHOLD = 0.2
@@ -23,7 +24,7 @@ TYPE_TO_DTYPE = {
     'datetime': ['datetime'],
     'boolean': ['bool']
 }
-TRANSFORMERS_TO_SKIP = [OrderedLabelEncoder]
+TRANSFORMERS_TO_SKIP = [OrderedLabelEncoder, CustomLabelEncoder]
 
 
 def format_array(array):

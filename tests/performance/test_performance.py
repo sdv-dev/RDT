@@ -11,7 +11,7 @@ from rdt.transformers import get_transformers_by_type
 from rdt.transformers.categorical import OrderedLabelEncoder
 from rdt.transformers.numerical import ClusterBasedNormalizer
 
-SANDBOX_TRANSFORMERS = [ClusterBasedNormalizer, OrderedLabelEncoder]
+SANDBOX_TRANSFORMERS = [ClusterBasedNormalizer, OrderedLabelEncoder, OrderedLabelEncoder]
 
 
 def _get_performance_test_cases():

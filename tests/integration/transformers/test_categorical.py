@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 
-from rdt.transformers import OrderedLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder
+from rdt.transformers import FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder
 
 
 def test_frequency_encoder_numerical_nans():

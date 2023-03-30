@@ -7,7 +7,7 @@ import pytest
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.categorical import (
-    CustomLabelEncoder, OrderedLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder)
+    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
