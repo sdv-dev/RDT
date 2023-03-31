@@ -7,7 +7,7 @@ import pytest
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.categorical import (
-    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder)
+    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
@@ -1794,7 +1794,7 @@ class TestLabelEncoder:
         pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
 
 
-class TestCustomLabelEncoder:
+class TestOrderedLabelEncoder:
 
     def test___init__(self):
         """The the ``__init__`` method.
@@ -1802,7 +1802,7 @@ class TestCustomLabelEncoder:
         Passed arguments must be stored as attributes.
         """
         # Run
-        transformer = CustomLabelEncoder(order=['b', 'c', 'a', None], add_noise='add_noise_value')
+        transformer = OrderedLabelEncoder(order=['b', 'c', 'a', None], add_noise='add_noise_value')
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
@@ -1814,13 +1814,13 @@ class TestCustomLabelEncoder:
         The order should be printed as <CUSTOM> instead of the actual order.
         """
         # Setup
-        transformer = CustomLabelEncoder(order=['VISA', 'AMEX', 'DISCOVER', None])
+        transformer = OrderedLabelEncoder(order=['VISA', 'AMEX', 'DISCOVER', None])
 
         # Run
         stringified_transformer = transformer.__repr__()
 
         # Assert
-        assert stringified_transformer == 'CustomLabelEncoder(order=<CUSTOM>)'
+        assert stringified_transformer == 'OrderedLabelEncoder(order=<CUSTOM>)'
 
     def test___repr___add_noise_true(self):
         """Test that the ``__repr__`` method prints the custom order with ``add_noise``.
@@ -1829,13 +1829,13 @@ class TestCustomLabelEncoder:
         is provided, it should be printed too.
         """
         # Setup
-        transformer = CustomLabelEncoder(order=['VISA', 'AMEX', 'DISCOVER', None], add_noise=True)
+        transformer = OrderedLabelEncoder(order=['VISA', 'AMEX', 'DISCOVER', None], add_noise=True)
 
         # Run
         stringified_transformer = transformer.__repr__()
 
         # Assert
-        assert stringified_transformer == 'CustomLabelEncoder(order=<CUSTOM>, add_noise=True)'
+        assert stringified_transformer == 'OrderedLabelEncoder(order=<CUSTOM>, add_noise=True)'
 
     def test__fit(self):
         """Test the ``_fit`` method.
@@ -1845,7 +1845,7 @@ class TestCustomLabelEncoder:
         ``values_to_categories`` attribute. The order should match the ``self.order`` indices.
 
         Setup:
-            - create an instance of the ``CustomLabelEncoder``.
+            - create an instance of the ``OrderedLabelEncoder``.
 
         Input:
             - a pandas series.
@@ -1856,7 +1856,7 @@ class TestCustomLabelEncoder:
         """
         # Setup
         data = pd.Series([1, 2, 3, 2, np.nan, 1])
-        transformer = CustomLabelEncoder(order=[2, 3, np.nan, 1])
+        transformer = OrderedLabelEncoder(order=[2, 3, np.nan, 1])
 
         # Run
         transformer._fit(data)
@@ -1876,7 +1876,7 @@ class TestCustomLabelEncoder:
         If the data being fit is not in ``self.order`` an error should be raised.
 
         Setup:
-            - create an instance of the ``CustomLabelEncoder``.
+            - create an instance of the ``OrderedLabelEncoder``.
 
         Input:
             - a pandas series.
@@ -1887,7 +1887,7 @@ class TestCustomLabelEncoder:
         """
         # Setup
         data = pd.Series([1, 2, 3, 2, 1, 4])
-        transformer = CustomLabelEncoder(order=[2, 1])
+        transformer = OrderedLabelEncoder(order=[2, 1])
 
         # Run / Assert
         message = re.escape(
@@ -1896,3 +1896,16 @@ class TestCustomLabelEncoder:
         )
         with pytest.raises(TransformerInputError, match=message):
             transformer._fit(data)
+
+
+class TestCustomLabelEncoder:
+
+    def test___init__(self):
+        """Test the warning message for  backwards compatibility of ``CustomLabelEncoder``."""
+        # Setup / Run / Assert
+        warning_msg = re.escape(
+            "The 'CustomLabelEncoder' is renamed to 'OrderedLabelEncoder'. Please update the"
+            'name to ensure compatibility with future versions of RDT.'
+        )
+        with pytest.warns(FutureWarning, match=warning_msg):
+            CustomLabelEncoder(order=[2, 1])

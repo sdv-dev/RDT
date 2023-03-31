@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 
-from rdt.transformers import CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder
+from rdt.transformers import FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder
 
 
 def test_frequency_encoder_numerical_nans():
@@ -374,8 +374,8 @@ def test_label_encoder_order_by_alphabetical():
     pd.testing.assert_frame_equal(reverse, data)
 
 
-def test_custom_label_encoder():
-    """Test the CustomLabelEncoder end to end.
+def test_ordered_label_encoder():
+    """Test the OrderedLabelEncoder end to end.
 
     Input:
         - pandas.DataFrame of different types of data.
@@ -386,7 +386,7 @@ def test_custom_label_encoder():
     """
 
     data = pd.DataFrame(['two', 3, 1, np.nan, 'zero'], columns=['column_name'])
-    transformer = CustomLabelEncoder(order=['zero', 1, 'two', 3, np.nan])
+    transformer = OrderedLabelEncoder(order=['zero', 1, 'two', 3, np.nan])
     transformer.fit(data, 'column_name')
 
     transformed = transformer.transform(data)
@@ -397,8 +397,8 @@ def test_custom_label_encoder():
     pd.testing.assert_frame_equal(reverse, data)
 
 
-def test_custom_label_encoder_nans():
-    """The the CustomLabelEncoder with missing values.
+def test_ordered_label_encoder_nans():
+    """The the OrderedLabelEncoder with missing values.
 
     Input:
         - pandas.DataFrame of different types of data and different types of missing values.
@@ -409,7 +409,7 @@ def test_custom_label_encoder_nans():
     """
 
     data = pd.DataFrame(['two', 3, 1, np.nan, 'zero', None], columns=['column_name'])
-    transformer = CustomLabelEncoder(order=['zero', 1, 'two', 3, None])
+    transformer = OrderedLabelEncoder(order=['zero', 1, 'two', 3, None])
     transformer.fit(data, 'column_name')
 
     transformed = transformer.transform(data)

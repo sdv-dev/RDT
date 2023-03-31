@@ -545,7 +545,7 @@ class LabelEncoder(BaseTransformer):
         return data.round().map(self.values_to_categories)
 
 
-class CustomLabelEncoder(LabelEncoder):
+class OrderedLabelEncoder(LabelEncoder):
     """Custom label encoder for categorical data.
 
     This class works very similarly to the ``LabelEncoder``, except that it requires the ordering
@@ -606,3 +606,17 @@ class CustomLabelEncoder(LabelEncoder):
             category: value
             for value, category in self.values_to_categories.items()
         }
+
+
+class CustomLabelEncoder(OrderedLabelEncoder):
+    """Deprecated class name for ``OrderedLabelEncoder``.
+
+    Class to ensure backwards compatibility with previous versions of RDT.
+    """
+
+    def __init__(self, order, add_noise=False):
+        warnings.warn(
+            "The 'CustomLabelEncoder' is renamed to 'OrderedLabelEncoder'. Please update the"
+            'name to ensure compatibility with future versions of RDT.', FutureWarning
+        )
+        super().__init__(order, add_noise)
