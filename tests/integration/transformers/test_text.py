@@ -8,15 +8,18 @@ from rdt.transformers.text import RegexGenerator
 
 def test_regexgenerator():
     """Test ``RegexGenerator`` with the default parameters."""
+    # Setup
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
         'username': ['a', 'b', 'c', 'd', 'e']
     })
 
+    # Run
     instance = RegexGenerator()
     transformed = instance.fit_transform(data, 'id')
     reverse_transform = instance.reverse_transform(transformed)
 
+    # Assert
     expected_transformed = pd.DataFrame({
         'username': ['a', 'b', 'c', 'd', 'e']
     })
@@ -31,15 +34,18 @@ def test_regexgenerator():
 
 def test_regexgenerator_with_custom_regex():
     """Test the ``RegexGenerator`` with a custom regex format."""
+    # Setup
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
         'username': ['a', 'b', 'c', 'd', 'e'],
     })
 
+    # Run
     instance = RegexGenerator(regex_format='[1-9]')
     transformed = instance.fit_transform(data, 'id')
     reverse_transform = instance.reverse_transform(transformed)
 
+    # Assert
     expected_transformed = pd.DataFrame({
         'username': ['a', 'b', 'c', 'd', 'e'],
     })
@@ -55,15 +61,18 @@ def test_regexgenerator_with_custom_regex():
 
 def test_regexgenerator_with_nans():
     """Test the ``RegexGenerator`` with a custom regex format and ``nans``."""
+    # Setup
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
         'username': ['a', np.nan, 'c', 'd', 'e']
     })
 
+    # Run
     instance = RegexGenerator('[A-Z]')
     transformed = instance.fit_transform(data, 'username')
     reverse_transform = instance.reverse_transform(transformed)
 
+    # Assert
     expected_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
     })
@@ -79,15 +88,18 @@ def test_regexgenerator_with_nans():
 
 def test_regexgenerator_data_length_bigger_than_regex():
     """Test the ``RegexGenerator`` with short regex and more data length."""
+    # Setup
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
         'username': ['a', np.nan, 'c', 'd', 'e']
     })
 
+    # Run
     instance = RegexGenerator('[a-b]')
     transformed = instance.fit_transform(data, 'username')
     reverse_transform = instance.reverse_transform(transformed)
 
+    # Assert
     expected_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
     })
@@ -103,11 +115,13 @@ def test_regexgenerator_data_length_bigger_than_regex():
 
 def test_regexgenerator_input_data_bigger_than_data_length():
     """Test the ``RegexGenerator`` with input dataframe bigger than the learned data length."""
+    # Setup
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
         'username': ['a', 'b', 'c', 'd', 'e']
     })
 
+    # Run
     instance = RegexGenerator('[a-b]')
     instance.fit(data, 'username')
 
@@ -116,6 +130,7 @@ def test_regexgenerator_input_data_bigger_than_data_length():
     })
     reverse_transform = instance.reverse_transform(transformed)
 
+    # Assert
     expected_reverse_transformed = pd.DataFrame({
         'id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         'username': ['a', 'b', 'a', 'b', 'a', 'b', 'a', 'b', 'a', 'b'],
@@ -202,11 +217,13 @@ def test_regexgenerator_called_multiple_times_enforce_uniqueness():
 
 def test_regexgenerator_pickled(tmpdir):
     """Test that ensures that ``RegexGenerator`` can be pickled."""
+    # Setup
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
         'username': ['a', 'b', 'c', 'd', 'e']
     })
 
+    # Run
     instance = RegexGenerator()
     transformed = instance.fit_transform(data, 'id')
     instance.reverse_transform(transformed)
@@ -224,15 +241,18 @@ def test_regexgenerator_pickled(tmpdir):
 
 def test_regexgenerator_with_many_possibilities():
     """Test the ``RegexGenerator`` with regex containing many possibilities."""
+    # Setup
     data = pd.DataFrame({
         'id': ['a' * 50, 'a' * 49 + 'b', 'a' * 49 + 'c', 'a' * 49 + 'd', 'a' * 49 + 'e'],
         'username': ['aa', 'bb', 'cc', 'dd', 'ee'],
     })
 
+    # Run
     instance = RegexGenerator(regex_format='[a-z]{50}')
     transformed = instance.fit_transform(data, 'id')
     reverse_transform = instance.reverse_transform(transformed)
 
+    # Assert
     expected_transformed = pd.DataFrame({
         'username': ['aa', 'bb', 'cc', 'dd', 'ee'],
     })
