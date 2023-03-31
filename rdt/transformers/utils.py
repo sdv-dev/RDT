@@ -49,7 +49,7 @@ def _max_repeat(options, max_repeat):
     sizes = []
     for repeat in range(min_, max_ + 1):
         if repeat:
-            sizes.append(size ** repeat)
+            sizes.append(pow(int(size), repeat, 2 ** 63 - 1))
             repeat_generators = [
                 (_GENERATORS[option](args, max_repeat)[0], option, args)
                 for _ in range(repeat)
