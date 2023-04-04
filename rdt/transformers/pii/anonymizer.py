@@ -5,6 +5,7 @@ import importlib
 import inspect
 import warnings
 from copy import deepcopy
+from operator import attrgetter
 
 import faker
 import numpy as np
@@ -51,7 +52,7 @@ class AnonymizedFaker(BaseTransformer):
             ``AttributeError`` if the provider or the function is not found.
         """
         try:
-            module = getattr(faker.providers, provider_name)
+            module = attrgetter(provider_name)(faker.providers)
             if provider_name.lower() == 'baseprovider':
                 getattr(module, function_name)
 
