@@ -5,12 +5,14 @@
 
 __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
-__version__ = '1.3.0'
+__version__ = '1.4.0.dev1'
+
 
 import numpy as np
 import pandas as pd
 
 from rdt import transformers
+from rdt._addons import _find_addons
 from rdt.hyper_transformer import HyperTransformer
 
 __all__ = [
@@ -19,6 +21,9 @@ __all__ = [
 ]
 
 RANDOM_SEED = 42
+
+
+_find_addons(group='rdt_modules', parent_globals=globals())
 
 
 def get_demo(num_rows=5):

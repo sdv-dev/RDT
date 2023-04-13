@@ -935,7 +935,7 @@ class TestBaseTransformer:
             'b': [4, 5, 6],
             'c': [7, 8, 9]
         })
-        column = 'a'
+        column = ['a']
 
         class Dummy(BaseTransformer):
             def __init__(self):

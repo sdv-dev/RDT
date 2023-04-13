@@ -1,9 +1,11 @@
 """Personal Identifiable Information Anonymizer."""
 
+import hashlib
 import importlib
 import inspect
 import warnings
 from copy import deepcopy
+from operator import attrgetter
 
 import faker
 import numpy as np
@@ -38,7 +40,6 @@ class AnonymizedFaker(BaseTransformer):
 
     IS_GENERATOR = True
     INPUT_SDTYPE = 'pii'
-    INITIAL_SEED = 30
 
     @staticmethod
     def check_provider_function(provider_name, function_name):
@@ -51,7 +52,7 @@ class AnonymizedFaker(BaseTransformer):
             ``AttributeError`` if the provider or the function is not found.
         """
         try:
-            module = getattr(faker.providers, provider_name)
+            module = attrgetter(provider_name)(faker.providers)
             if provider_name.lower() == 'baseprovider':
                 getattr(module, function_name)
 
@@ -100,9 +101,9 @@ class AnonymizedFaker(BaseTransformer):
         self.check_provider_function(self.provider_name, self.function_name)
         self.output_properties = {None: {'next_transformer': None}}
 
+        self._faker_random_seed = None
         self.locales = locales
         self.faker = faker.Faker(self.locales)
-        self.faker.seed_instance(self.INITIAL_SEED)
         if self.locales:
             self._check_locales()
 
@@ -110,7 +111,7 @@ class AnonymizedFaker(BaseTransformer):
         """Create a new ``Faker`` instance."""
         super().reset_randomization()
         self.faker = faker.Faker(self.locales)
-        self.faker.seed_instance(self.INITIAL_SEED)
+        self.faker.seed_instance(self._faker_random_seed)
 
     def _function(self):
         """Return a callable ``faker`` function."""
@@ -119,6 +120,15 @@ class AnonymizedFaker(BaseTransformer):
 
         return getattr(self.faker, self.function_name)(**self.function_kwargs)
 
+    def _set_seed(self, data):
+        hash_value = self.get_input_column()
+        for value in data.head(5):
+            hash_value += str(value)
+
+        hash_value = int(hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16)
+        self._faker_random_seed = hash_value % ((2 ** 32) - 1)  # maximum value for a seed
+        self.faker.seed_instance(self._faker_random_seed)
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -126,6 +136,7 @@ class AnonymizedFaker(BaseTransformer):
             data (pandas.Series):
                 Data to fit to.
         """
+        self._set_seed(data)
         self.data_length = len(data)
 
     def _transform(self, _data):
@@ -244,6 +255,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
+        self._set_seed(columns_data)
         unique_values = columns_data[columns_data.notna()].unique()
         unique_data_length = len(unique_values)
         try:
