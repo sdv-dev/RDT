@@ -1,5 +1,23 @@
 # History
 
+## 1.4.0 - 2023-04-13
+
+This release adds a couple of new features including adding the `OrderedLabelEncoder` and deprecating the `CustomLabelEncoder`. It also adds a change that makes all generator type transformers in the `HyperTransformer` use a different random seed.
+
+Additionally, bugs were patched in the `RegexGenerator` that caused it to crash or take too long in certain cases. Finally, this release improved the detection of Faker functions in the `AnonymizedFaker`.
+
+### Bugs
+
+* Find nested Faker provider submodules - PR [#630](https://github.com/sdv-dev/RDT/pull/630) by @frances-h
+* RegexGenerator fails to generate values if there are too many possibilities - Issue [#623](https://github.com/sdv-dev/RDT/issues/623) by @R-Palazzo
+* RegexGenerator takes too much time and runs out of memory if there are too many possibilities - Issue [#624](https://github.com/sdv-dev/RDT/issues/624) by @R-Palazzo
+
+### New Features
+
+* Choose a different seed for each transformer - Issue [#619](https://github.com/sdv-dev/RDT/issues/619) by @fealho
+* Rename CustomLabelEncoder to OrderedLabelEncoder - Issue [#621](https://github.com/sdv-dev/RDT/issues/621) by @R-Palazzo
+* Add functionality to find version add-on - Issue [#620](https://github.com/sdv-dev/RDT/issues/620) by @frances-h
+
 ## 1.3.0 - 2023-01-18
 
 This release makes changes to the way that individual transformers are stored in the `HyperTransformer`. When accessing the config via `HyperTransformer.get_config()`, the transformers listed in the config are now the actual transformer instances used during fitting and transforming. These instances can now be accessed and used to examine their properties post fitting. For example, you can now view the mapping for a `PseudoAnonymizedFaker` instance using `PseudoAnonymizedFaker.get_mapping()` on the instance retrieved from the config.
