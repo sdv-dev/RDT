@@ -149,4 +149,4 @@ def strings_from_regex(regex, max_repeat=16):
             generators.append((generator, option, args))
             sizes.append(size)
 
-    return _from_generators(generators, max_repeat), np.prod(sizes)
+    return _from_generators(generators, max_repeat), np.prod(sizes, dtype=np.complex128)
