@@ -29,7 +29,7 @@ install_requires = [
 ]
 
 copulas_requires = [
-    'copulas @ git+ssh://git@github.com/sdv-dev/Copulas@issue-349-remove-pandas-upper-bound',
+    'copulas @ git+https://github.com/sdv-dev/Copulas@issue-349-remove-pandas-upper-bound',
 ]
 
 setup_requires = [
