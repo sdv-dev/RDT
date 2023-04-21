@@ -52,7 +52,7 @@ class UnixTimestampEncoder(BaseTransformer):
                 data = pd.to_datetime(data, format=pandas_datetime_format)
 
             except ValueError as error:
-                if 'Unknown string format:' in str(error):
+                if 'Unknown string' in str(error) or 'Unknown datetime string' in str(error):
                     message = 'Data must be of dtype datetime, or castable to datetime.'
                     raise TypeError(message) from None
 

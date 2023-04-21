@@ -17,9 +17,9 @@ with open('HISTORY.md', encoding='utf-8') as history_file:
 install_requires = [
     "numpy>=1.20.0,<2;python_version<'3.10'",
     "numpy>=1.23.3,<2;python_version>='3.10'",
-    "pandas>=1.1.3,<2;python_version<'3.10'",
-    "pandas>=1.3.4,<2;python_version>='3.10' and python_version<'3.11'",
-    "pandas>=1.5.0,<2;python_version>='3.11'",
+    "pandas>=1.1.3;python_version<'3.10'",
+    "pandas>=1.3.4;python_version>='3.10' and python_version<'3.11'",
+    "pandas>=1.5.0;python_version>='3.11'",
     "scipy>=1.5.4,<2;python_version<'3.10'",
     "scipy>=1.9.2,<2;python_version>='3.10'",
     "scikit-learn>=0.24,<2;python_version<'3.10'",
@@ -29,7 +29,7 @@ install_requires = [
 ]
 
 copulas_requires = [
-    'copulas>=0.8.0,<0.9',
+    'copulas @ git+ssh://git@github.com/sdv-dev/Copulas@issue-349-remove-pandas-upper-bound',
 ]
 
 setup_requires = [
