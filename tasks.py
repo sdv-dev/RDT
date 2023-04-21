@@ -80,14 +80,10 @@ def install_minimum(c):
                 continue
 
             line = line.strip()
-            if _validate_python_version(line):
+            if _validate_python_version(line) and 'copulas' not in line:
                 requirement = re.match(r'[^>]*', line).group(0)
                 requirement = re.sub(r"""['",]""", '', requirement)
-                if 'copulas' in line:
-                    version = 'git+https://github.com/sdv-dev/Copulas@issue-349-remove-pandas-upper-bound'
-
-                else:
-                    version = re.search(r'>=?[^(,|#)]*', line).group(0)
+                version = re.search(r'>=?[^(,|#)]*', line).group(0)
                 if version:
                     version = re.sub(r'>=?', '==', version)
                     version = re.sub(r"""['",]""", '', version)
@@ -100,7 +96,7 @@ def install_minimum(c):
             started = True
 
 
-    c.run(f'python -m pip install {" ".join(versions)}')
+    c.run(f'python -m pip install {" ".join(versions)} copulas')
 
 
 @task
