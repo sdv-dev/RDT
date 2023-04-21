@@ -167,7 +167,7 @@ def test_hypertransformer_default_inputs():
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
     reversed_datetimes = pd.to_datetime([
-        '2010-01-09 00:00:00.000000000',
+        '2010-01-09',
         '2010-02-01',
         '2010-01-01',
         '2010-01-01',
@@ -175,7 +175,7 @@ def test_hypertransformer_default_inputs():
         '2010-02-01',
         '2010-01-01',
         '2010-01-01',
-    ], format='mixed')
+    ])
     expected_reversed = pd.DataFrame({
         'integer': [1, 2, 1, 3, 1, 4, 2, 3],
         'float': [0.1, 0.2, 0.1, 0.20000000000000004, 0.1, 0.4, 0.20000000000000004, 0.3],
