@@ -90,7 +90,7 @@ class UnixTimestampEncoder(BaseTransformer):
         if self.datetime_format is None:
             datetime_array = data.astype(str).to_numpy()
             self.datetime_format = _guess_datetime_format_for_array(
-                [datetime_array[data.first_valid_index()]]
+                np.array(datetime_array[data.first_valid_index()])
             )
 
         transformed = self._transform_helper(data)
