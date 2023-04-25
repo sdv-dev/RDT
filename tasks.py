@@ -96,7 +96,7 @@ def install_minimum(c):
             started = True
 
 
-    print(f'python -m pip install {" ".join(versions)} copulas')
+    c.run(f'python -m pip install {" ".join(versions)} copulas')
 
 
 @task
