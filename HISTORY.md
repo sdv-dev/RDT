@@ -1,5 +1,13 @@
 # History
 
+## 1.4.1 - 2023-04-25
+
+This release patches an issue that prevented the `RgexGenerator` from working with regexes that had a very large number of possible combinations.
+
+### Bugs
+
+* RegexGenerator continues to have problems if there are too many possibilities - Issue [#635](https://github.com/sdv-dev/RDT/issues/635) by @pvk-developer
+
 ## 1.4.0 - 2023-04-13
 
 This release adds a couple of new features including adding the `OrderedLabelEncoder` and deprecating the `CustomLabelEncoder`. It also adds a change that makes all generator type transformers in the `HyperTransformer` use a different random seed.
