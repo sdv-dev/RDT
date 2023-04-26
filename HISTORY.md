@@ -2,7 +2,7 @@
 
 ## 1.4.1 - 2023-04-25
 
-This release patches an issue that prevented the `RgexGenerator` from working with regexes that had a very large number of possible combinations.
+This release patches an issue that prevented the `RegexGenerator` from working with regexes that had a very large number of possible combinations.
 
 ### Bugs
 
