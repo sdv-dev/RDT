@@ -80,7 +80,7 @@ def install_minimum(c):
                 continue
 
             line = line.strip()
-            if _validate_python_version(line) and 'copulas' not in line:
+            if _validate_python_version(line):
                 requirement = re.match(r'[^>]*', line).group(0)
                 requirement = re.sub(r"""['",]""", '', requirement)
                 version = re.search(r'>=?(\d\.?)+', line).group(0)
@@ -96,7 +96,7 @@ def install_minimum(c):
             started = True
 
 
-    c.run(f'python -m pip install {" ".join(versions)} copulas')
+    c.run(f'python -m pip install {" ".join(versions)}')
 
 
 @task

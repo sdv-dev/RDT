@@ -29,7 +29,7 @@ install_requires = [
 ]
 
 copulas_requires = [
-    'copulas @ git+https://github.com/sdv-dev/Copulas@master',
+    'copulas>=0.9.0,<0.10',
 ]
 
 setup_requires = [
