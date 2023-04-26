@@ -44,3 +44,12 @@ def test__any():
 def test___max_repeat():
     options = (0, MAXREPEAT, [(sre_parse.LITERAL, 10)])
     _max_repeat(options, 16)
+
+
+def test_strings_from_regex_very_large_regex():
+    """Ensure that ``size`` of a very large regex is still computable."""
+    very_large_regex = '[0-9a-zA-Z]{9}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{9}-[0-9a-zA-Z]{9}-[0-9a-z]{12}'
+    generator, size = strings_from_regex(very_large_regex, max_repeat=16)
+
+    assert size == 173689027553046619421110743915454114823342474255318764491341273608665169920
+    [next(generator) for _ in range(100_000)]
