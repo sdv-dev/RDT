@@ -109,7 +109,7 @@ def get_transformer_regression_scores(data, sdtype, dataset_name, transformers, 
                 'column': column,
                 'score': score
             })
-            scores = scores._append(row, ignore_index=True)
+            scores = pd.concat([scores, pd.DataFrame(row).T], ignore_index=True)
 
     return scores
 
@@ -152,8 +152,8 @@ def get_regression_scores(test_cases, transformers_by_type):
             transformers = transformers_by_type[sdtype]
             regression_scores = get_transformer_regression_scores(
                 data, sdtype, dataset_name, transformers, metadata)
-            all_scores[sdtype] = all_scores[sdtype]._append(
-                regression_scores, ignore_index=True)
+            all_scores[sdtype] = pd.concat(
+                [all_scores[sdtype], pd.DataFrame(regression_scores).T], ignore_index=True)
 
     return all_scores
 
@@ -198,7 +198,7 @@ def get_results_table(regression_scores):
                 'score': transformer_average,
                 'score_relative_to_average': transformer_average / average_without_transformer
             })
-            results = results._append(row, ignore_index=True)
+            results = pd.concat([results, pd.DataFrame(row).T], ignore_index=True)
 
     return results
 
