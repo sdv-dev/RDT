@@ -1,13 +1,10 @@
 """Unit tests for the NullTransformer."""
 
-import re
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-import pytest
 
-from rdt.errors import TransformerInputError
 from rdt.transformers import NullTransformer
 
 
@@ -182,19 +179,22 @@ class TestNullTransformer:
         # Assert
         assert missing_value_replacement == 1.5
 
-    def test__get_missing_value_replacement_mean_only_nans(self):
+    @patch('rdt.transformers.null.LOGGER')
+    def test__get_missing_value_replacement_mean_only_nans(self, logger_mock):
         """Test when missing_value_replacement is mean and data only contains nans."""
         # Setup
         transformer = NullTransformer('mean')
         data = pd.Series([float('nan'), None, np.nan], name='abc')
 
-        # Run and Assert
-        err_msg = re.escape(
-            "'missing_value_replacement' cannot be set to 'mean' when "
-            'the provided data only contains NaNs.'
+        # Run
+        missing_value_replacement = transformer._get_missing_value_replacement(data)
+
+        # Assert
+        logger_mock.info.assert_called_once_with(
+            "'missing_value_replacement' cannot be set to 'mean'"
+            ' when the provided data only contains NaNs. Using 0 instead.'
         )
-        with pytest.raises(TransformerInputError, match=err_msg):
-            transformer._get_missing_value_replacement(data)
+        assert missing_value_replacement == 0
 
     def test__get_missing_value_replacement_mode(self):
         """Test _get_missing_value_replacement when missing_value_replacement is 'mode'.
@@ -223,19 +223,22 @@ class TestNullTransformer:
         # Assert
         assert missing_value_replacement == 2
 
-    def test__get_missing_value_replacement_mode_only_nans(self):
+    @patch('rdt.transformers.null.LOGGER')
+    def test__get_missing_value_replacement_mode_only_nans(self, logger_mock):
         """Test when missing_value_replacement is mode and data only contains nans."""
         # Setup
         transformer = NullTransformer('mode')
         data = pd.Series([float('nan'), None, np.nan], name='abc')
 
-        # Run and Assert
-        err_msg = re.escape(
+        # Run
+        missing_value_replacement = transformer._get_missing_value_replacement(data)
+
+        # Assert
+        logger_mock.info.assert_called_once_with(
             "'missing_value_replacement' cannot be set to 'mode' when "
-            'the provided data only contains NaNs.'
+            'the provided data only contains NaNs. Using 0 instead.'
         )
-        with pytest.raises(TransformerInputError, match=err_msg):
-            transformer._get_missing_value_replacement(data)
+        assert missing_value_replacement == 0
 
     def test_fit_model_missing_values_none_and_nulls(self):
         """Test fit when null column is none and there are nulls.
