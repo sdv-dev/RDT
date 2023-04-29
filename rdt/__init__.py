@@ -40,15 +40,16 @@ def get_demo(num_rows=5):
         pd.DataFrame
     """
     # Hard code first five rows
-    login_dates = ['2021-06-26', '2021-02-10', 'NAT', '2020-09-26', '2020-12-22']
-    last_login = [np.datetime64(i) for i in login_dates]
+    login_dates = pd.Series([
+        '2021-06-26', '2021-02-10', 'NAT', '2020-09-26', '2020-12-22'
+    ], dtype='datetime64[ns]')
     email_optin = pd.Series([False, False, False, True, np.nan], dtype='object')
     credit_card = ['VISA', 'VISA', 'AMEX', np.nan, 'DISCOVER']
     age = [29, 18, 21, 45, 32]
     dollars_spent = [99.99, np.nan, 2.50, 25.00, 19.99]
 
     data = pd.DataFrame({
-        'last_login': last_login,
+        'last_login': login_dates,
         'email_optin': email_optin,
         'credit_card': credit_card,
         'age': age,
@@ -67,7 +68,7 @@ def get_demo(num_rows=5):
         login_dates = np.array([
             np.datetime64('2000-01-01') + np.timedelta64(np.random.randint(0, 10000), 'D')
             for _ in range(num_rows)
-        ])
+        ], dtype='datetime64[ns]')
         login_dates[np.random.random(size=num_rows) > 0.8] = np.datetime64('NaT')
 
         email_optin = pd.Series([True, False, np.nan], dtype='object').sample(
@@ -81,10 +82,13 @@ def get_demo(num_rows=5):
     finally:
         np.random.set_state(random_state)
 
-    return data.append(pd.DataFrame({
-        'last_login': login_dates,
-        'email_optin': email_optin,
-        'credit_card': credit_card,
-        'age': age,
-        'dollars_spent': dollars_spent
-    }), ignore_index=True)
+    return pd.concat([
+        data,
+        pd.DataFrame({
+            'last_login': login_dates,
+            'email_optin': email_optin,
+            'credit_card': credit_card,
+            'age': age,
+            'dollars_spent': dollars_spent
+        })
+    ], ignore_index=True)

@@ -45,19 +45,20 @@ def get_regression_score(features, target):
 
 def find_columns(data, sdtype, metadata=None):
     if metadata:
-        return {
+        columns = {
             column
             for column in metadata['fields']
             if metadata['fields'][column]['type'] == sdtype
         }
 
-    columns = set()
-    dtypes = TYPE_TO_DTYPE.get(sdtype, sdtype)
-    for dtype in dtypes:
-        selected = data.select_dtypes(dtype)
-        columns.update(set(selected.columns))
+    else:
+        columns = set()
+        dtypes = TYPE_TO_DTYPE.get(sdtype, sdtype)
+        for dtype in dtypes:
+            selected = data.select_dtypes(dtype)
+            columns.update(set(selected.columns))
 
-    return columns
+    return list(columns)
 
 
 def get_transformer_regression_scores(data, sdtype, dataset_name, transformers, metadata=None):
@@ -108,7 +109,7 @@ def get_transformer_regression_scores(data, sdtype, dataset_name, transformers, 
                 'column': column,
                 'score': score
             })
-            scores = scores.append(row, ignore_index=True)
+            scores = pd.concat([scores, pd.DataFrame(row).T], ignore_index=True)
 
     return scores
 
@@ -151,8 +152,8 @@ def get_regression_scores(test_cases, transformers_by_type):
             transformers = transformers_by_type[sdtype]
             regression_scores = get_transformer_regression_scores(
                 data, sdtype, dataset_name, transformers, metadata)
-            all_scores[sdtype] = all_scores[sdtype].append(
-                regression_scores, ignore_index=True)
+            all_scores[sdtype] = pd.concat(
+                [all_scores[sdtype], pd.DataFrame(regression_scores).T], ignore_index=True)
 
     return all_scores
 
@@ -197,7 +198,7 @@ def get_results_table(regression_scores):
                 'score': transformer_average,
                 'score_relative_to_average': transformer_average / average_without_transformer
             })
-            results = results.append(row, ignore_index=True)
+            results = pd.concat([results, pd.DataFrame(row).T], ignore_index=True)
 
     return results
 

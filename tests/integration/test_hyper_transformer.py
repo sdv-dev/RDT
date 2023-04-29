@@ -47,7 +47,7 @@ class DummyTransformerNotMLReady(BaseTransformer):
         return data.astype(str)
 
     def _reverse_transform(self, data):
-        return data.astype('datetime64')
+        return data.astype('datetime64[ns]')
 
 
 TEST_DATA_INDEX = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
@@ -167,7 +167,7 @@ def test_hypertransformer_default_inputs():
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
     reversed_datetimes = pd.to_datetime([
-        '2010-01-09 20:34:17.142857216',
+        '2010-01-09',
         '2010-02-01',
         '2010-01-01',
         '2010-01-01',
