@@ -52,7 +52,7 @@ class UnixTimestampEncoder(BaseTransformer):
                 data = pd.to_datetime(data, format=pandas_datetime_format)
 
             except ValueError as error:
-                if 'Unknown string format:' in str(error):
+                if 'Unknown string' in str(error) or 'Unknown datetime string' in str(error):
                     message = 'Data must be of dtype datetime, or castable to datetime.'
                     raise TypeError(message) from None
 
@@ -88,7 +88,7 @@ class UnixTimestampEncoder(BaseTransformer):
         """
         self._dtype = data.dtype
         if self.datetime_format is None:
-            datetime_array = data.astype(str).to_numpy()
+            datetime_array = data[data.notna()].astype(str).to_numpy()
             self.datetime_format = _guess_datetime_format_for_array(datetime_array)
 
         transformed = self._transform_helper(data)
@@ -129,7 +129,10 @@ class UnixTimestampEncoder(BaseTransformer):
             if self._dtype == 'object':
                 datetime_data = datetime_data.dt.strftime(self.datetime_format)
             elif is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
-                datetime_data = pd.to_datetime(datetime_data.dt.strftime(self.datetime_format))
+                datetime_data = pd.to_datetime(
+                    datetime_data.dt.strftime(self.datetime_format),
+                    format=self.datetime_format,
+                )
 
         return datetime_data
 
