@@ -1,6 +1,7 @@
 """BaseTransformer module."""
 import abc
 import contextlib
+import hashlib
 import inspect
 import warnings
 from functools import wraps
@@ -318,6 +319,19 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
+    def _set_seed(self, data):
+        hash_value = self.get_input_column()
+        for value in data.head(5):
+            hash_value += str(value)
+
+        hash_value = int(hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16)
+        random_seed = hash_value % ((2 ** 32) - 1)  # maximum value for a seed
+        self.random_states = {
+            'fit': np.random.RandomState(seed=random_seed),
+            'transform': np.random.RandomState(seed=random_seed + 1),
+            'reverse_transform': np.random.RandomState(seed=random_seed + 2)
+        }
+
     @random_state
     def fit(self, data, column):
         """Fit the transformer to a ``column`` of the ``data``.
@@ -329,6 +343,7 @@ class BaseTransformer:
                 Column name. Must be present in the data.
         """
         self._store_columns(column, data)
+        self._set_seed(data)
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
         self._build_output_columns(data)

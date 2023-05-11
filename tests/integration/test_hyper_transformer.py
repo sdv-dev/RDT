@@ -1305,3 +1305,18 @@ def test_hypertransformer_anonymized_faker_multi_table():
     # Assert
     assert reverse_transformed1['id1'].tolist() != reverse_transformed2['id1'].tolist()
     assert reverse_transformed1['id2'].tolist() != reverse_transformed2['id2'].tolist()
+
+def test_random_seed():
+    data = pd.DataFrame(data={
+        'low':    [1, 4, np.nan, 0,      4,      np.nan, np.nan, 5,      np.nan],
+        'middle': [2, 5, 3,      np.nan, 5,      np.nan, 5,      np.nan, np.nan],
+        'high':   [3, 7, 8,      4,      np.nan, 9,      np.nan, np.nan, np.nan]
+    })
+
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.fit(data)
+    transformed = ht.transform(data)
+    reverse_transformed = ht.reverse_transform(transformed)
+    print(reverse_transformed)
+    assert 0
