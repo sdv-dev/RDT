@@ -5,6 +5,8 @@ import logging
 import numpy as np
 import pandas as pd
 
+from rdt._addons import _find_addons
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -152,3 +154,6 @@ class NullTransformer():
             data.loc[isna] = np.nan
 
         return data
+
+
+_find_addons('rdt.transformers.null_modules', globals(), add_all=True)

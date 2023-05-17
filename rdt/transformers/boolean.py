@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 
+from rdt._addons import _find_addons
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
@@ -92,3 +93,6 @@ class BinaryEncoder(BaseTransformer):
         data[isna] = np.nan
 
         return data
+
+
+_find_addons('rdt.transformers.boolean_modules', globals(), add_all=True)

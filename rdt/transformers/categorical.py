@@ -7,6 +7,7 @@ import pandas as pd
 import psutil
 from scipy.stats import norm
 
+from rdt._addons import _find_addons
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
 
@@ -620,3 +621,6 @@ class CustomLabelEncoder(OrderedLabelEncoder):
             'name to ensure compatibility with future versions of RDT.', FutureWarning
         )
         super().__init__(order, add_noise)
+
+
+_find_addons('rdt.transformers.categorical_modules', globals(), add_all=True)
