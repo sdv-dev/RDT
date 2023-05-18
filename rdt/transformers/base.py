@@ -78,8 +78,8 @@ class BaseTransformer:
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
-            'transform': np.random.RandomState(42),
-            'reverse_transform': np.random.RandomState(42)
+            'transform': None,
+            'reverse_transform': None
         }
 
     def set_random_state(self, state, method_name):

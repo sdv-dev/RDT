@@ -118,19 +118,13 @@ class TestBaseTransformer:
         # Setup
         transformer = BaseTransformer()
         transformer.random_states['fit'] = 0
-        transformer.random_states['transform'] = 2
-        transformer.random_states['reverse_transform'] = None
 
         # Run
         transformer.reset_randomization()
 
         # Assert
         fit_state = transformer.INITIAL_FIT_STATE
-        transform_state = transformer.INITIAL_TRANSFORM_STATE
-        reverse_transform_state = transformer.INITIAL_REVERSE_TRANSFORM_STATE
         assert transformer.random_states['fit'] == fit_state
-        assert transformer.random_states['transform'] == transform_state
-        assert transformer.random_states['reverse_transform'] == reverse_transform_state
 
     def test_get_subclasses(self):
         """Test the ``get_subclasses`` method.
@@ -1004,6 +998,7 @@ class TestBaseTransformer:
         dummy_transformer = Dummy()
 
         # Run
+        dummy_transformer.set_random_state(np.random.RandomState(42), 'transform')
         transformed_data = dummy_transformer.transform(data)
 
         # Assert
@@ -1050,6 +1045,7 @@ class TestBaseTransformer:
         dummy_transformer = Dummy()
 
         # Run
+        dummy_transformer.set_random_state(np.random.RandomState(42), 'transform')
         transformed_data = dummy_transformer.transform(data)
 
         # Assert
@@ -1145,6 +1141,7 @@ class TestBaseTransformer:
         dummy_transformer = Dummy()
 
         # Run
+        dummy_transformer.set_random_state(np.random.RandomState(42), 'reverse_transform')
         transformed_data = dummy_transformer.reverse_transform(data)
 
         # Assert
@@ -1175,6 +1172,7 @@ class TestBaseTransformer:
 
         # Run
         dummy_transformer = Dummy()
+        dummy_transformer.set_random_state(np.random.RandomState(42), 'reverse_transform')
         transformed_data = dummy_transformer.reverse_transform(data)
 
         # Assert
