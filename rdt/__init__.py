@@ -121,8 +121,10 @@ def _find_addons():
         module_path = module_path.split('.')
 
         if module_path[0] != __name__:
-            msg = (f"Failed to load '{entry_point.name}'. Expected base module to be '{__name__}'"
-                   f", found '{module_path[0]}'.")
+            msg = (
+                f"Failed to load '{entry_point.name}'. Expected base module to be '{__name__}'"
+                f", found '{module_path[0]}'."
+            )
             warnings.warn(msg)
             continue
 
@@ -131,19 +133,23 @@ def _find_addons():
             try:
                 base_module = getattr(base_module, submodule)
             except AttributeError:
-                msg = (f"Failed to load '{entry_point.name}'. Target submodule "
-                       f"'{'.'.join(module_path[:depth + 2])}' not found.")
+                msg = (
+                    f"Failed to load '{entry_point.name}'. Target submodule "
+                    f"'{'.'.join(module_path[:depth + 2])}' not found."
+                )
                 warnings.warn(msg)
                 continue
 
         if not hasattr(base_module, module_path[-1]):
             if object_path:
-                msg = (f"Failed to load '{entry_point.name}'. Cannot add '{object_path}' to "
-                       f"unknown submodule '{'.'.join(module_path)}'.")
+                msg = (
+                    f"Failed to load '{entry_point.name}'. Cannot add '{object_path}' to "
+                    f"unknown submodule '{'.'.join(module_path)}'."
+                )
                 warnings.warn(msg)
                 continue
-            else:
-                setattr(base_module, module_path[-1], addon)
+
+            setattr(base_module, module_path[-1], addon)
         else:
             base_module = getattr(base_module, module_path[-1])
 
@@ -156,8 +162,10 @@ def _find_addons():
 
                 setattr(base_object, object_path[-1], addon)
             except AttributeError:
-                msg = (f"Failed to load '{entry_point.name}'. Cannot find "
-                       f"'{'.'.join(split_object[:-1])}' in submodule '{'.'.join(module_path)}'.")
+                msg = (
+                    f"Failed to load '{entry_point.name}'. Cannot find "
+                    f"'{'.'.join(split_object[:-1])}' in submodule '{'.'.join(module_path)}'."
+                )
                 warnings.warn(msg)
                 continue
 
