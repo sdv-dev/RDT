@@ -39,11 +39,21 @@ class FloatFormatter(BaseTransformer):
             replace them with the given value. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation.
             Defaults to ``mean``.
+        missing_value_generation (str or None):
+            The way missing values are being handled. There are three strategies:
+
+                * ``RANDOM``: Randomly generates missing values based on the percentage of
+                  missing values.
+                * ``FROM_COLUMN``: Creates a binary column that describes whether the original value
+                  was missing. Then use it to recreate missing values.
+                * ``None``: Do nothing with the missing values on the reverse transform. Simply
+                  pass whatever data we get through.
+
         model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not. The column
-            will be created only if there are null values. If ``True``, create the new column if
-            there are null values. If ``False``, do not create the new column even if there
-            are null values. Defaults to ``False``.
+            **DEPRECATED** Whether to create a new column to indicate which values were null or
+            not. The column will be created only if there are null values. If ``True``, create
+            the new column if there are null values. If ``False``, do not create the new column
+            even if there are null values. Defaults to ``False``.
         learn_rounding_scheme (bool):
             Whether or not to learn what place to round to based on the data seen during ``fit``.
             If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
@@ -65,12 +75,16 @@ class FloatFormatter(BaseTransformer):
     _min_value = None
     _max_value = None
 
-    def __init__(self, missing_value_replacement='mean', model_missing_values=False,
-                 learn_rounding_scheme=False, enforce_min_max_values=False,
-                 computer_representation='Float'):
+    def __init__(self, missing_value_replacement='mean', missing_value_generation='RANDOM',
+                 model_missing_values=None, learn_rounding_scheme=False,
+                 enforce_min_max_values=False, computer_representation='Float'):
         super().__init__()
+        self.missing_value_replacement = missing_value_replacement
+        self.missing_value_generation = missing_value_generation
         self._set_missing_value_replacement('mean', missing_value_replacement)
-        self.model_missing_values = model_missing_values
+        if model_missing_values is not None:
+            self._set_model_missing_values(model_missing_values)
+
         self.learn_rounding_scheme = learn_rounding_scheme
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation

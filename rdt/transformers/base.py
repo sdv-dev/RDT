@@ -106,6 +106,17 @@ class BaseTransformer:
             'reverse_transform': np.random.RandomState(self.random_seed + 1)
         }
 
+    def _set_model_missing_values(self, default, model_missing_values):
+        warnings.warn(
+            "Future versions of RDT will not support the 'model_missing_values' parameter. "
+            "Please switch to using the 'missing_value_generation' parameter to select your "
+            'strategy.', FutureWarning
+        )
+        if model_missing_values is True:
+            self.missing_value_generation = 'FROM_COLUMN'
+        elif model_missing_values is False:
+            self.missing_value_generation = 'RANDOM'
+
     def _set_missing_value_replacement(self, default, missing_value_replacement):
         if missing_value_replacement is None:
             warnings.warn(
