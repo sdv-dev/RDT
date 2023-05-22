@@ -8,7 +8,6 @@ import pandas as pd
 import scipy
 from sklearn.mixture import BayesianGaussianMixture
 
-from rdt._addons import _find_addons
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
@@ -518,6 +517,3 @@ class ClusterBasedNormalizer(FloatFormatter):
             data = recovered_data
 
         return super()._reverse_transform(data)
-
-
-_find_addons('rdt.transformers.numerical_modules', globals(), add_all=True)

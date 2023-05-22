@@ -4,7 +4,6 @@ import pandas as pd
 from pandas.api.types import is_datetime64_dtype
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
-from rdt._addons import _find_addons
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 
@@ -194,6 +193,3 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
         """Transform integer values back into datetimes."""
         data = super()._reverse_transform_helper(data)
         return data * self.divider
-
-
-_find_addons('rdt.transformers.datetime_modules', globals(), add_all=True)

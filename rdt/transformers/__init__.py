@@ -9,7 +9,6 @@ from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 
-from rdt._addons import _find_addons
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
 from rdt.transformers.categorical import (
@@ -173,6 +172,3 @@ def get_default_transformer(sdtype):
     """
     default_transformers = get_default_transformers()
     return default_transformers[sdtype]
-
-
-_find_addons('rdt.transformers_modules', globals(), add_all=True)

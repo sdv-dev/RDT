@@ -3,7 +3,6 @@ import warnings
 
 import numpy as np
 
-from rdt._addons import _find_addons
 from rdt.errors import TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import strings_from_regex
@@ -139,6 +138,3 @@ class RegexGenerator(BaseTransformer):
             reverse_transformed = np.array(reverse_transformed, dtype=object)
 
         return reverse_transformed
-
-
-_find_addons('rdt.transformers.text_modules', globals(), add_all=True)
