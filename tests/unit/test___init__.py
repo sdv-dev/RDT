@@ -43,7 +43,7 @@ def test_get_demo_many_rows():
 
 
 @patch('rdt.iter_entry_points')
-@patch('rdt.modules')
+@patch('rdt.sys.modules')
 def test__find_addons_module(modules_mock, entry_points_mock):
     """Test loading an add-on."""
     # Setup
@@ -61,7 +61,7 @@ def test__find_addons_module(modules_mock, entry_points_mock):
 
 
 @patch('rdt.iter_entry_points')
-@patch('rdt.modules')
+@patch('rdt.sys.modules')
 def test__find_addons_object(modules_mock, entry_points_mock):
     """Test loading an add-on."""
     # Setup
@@ -110,7 +110,7 @@ def test__find_addons_wrong_base(entry_points_mock, warning_mock):
     bad_entry_point.name = 'bad_base.bad_entry_point'
     entry_points_mock.return_value = [bad_entry_point]
     msg = (
-        "Failed to load 'bad_base.bad_entry_point'. Expected base module to be 'rdt', found "
+        "Failed to set 'bad_base.bad_entry_point': expected base module to be 'rdt', found "
         "'bad_base'."
     )
 
@@ -131,8 +131,8 @@ def test__find_addons_missing_submodule(entry_points_mock, warning_mock):
     bad_entry_point.name = 'rdt.missing_submodule.new_submodule'
     entry_points_mock.return_value = [bad_entry_point]
     msg = (
-        "Failed to load 'rdt.missing_submodule.new_submodule'. Target submodule "
-        "'rdt.missing_submodule' not found."
+        "Failed to set 'rdt.missing_submodule.new_submodule': module 'rdt' has no attribute "
+        "'missing_submodule'."
     )
 
     # Run
@@ -152,7 +152,7 @@ def test__find_addons_module_and_object(entry_points_mock, warning_mock):
     bad_entry_point.name = 'rdt.missing_submodule:new_object'
     entry_points_mock.return_value = [bad_entry_point]
     msg = (
-        "Failed to load 'rdt.missing_submodule:new_object'. Cannot add 'new_object' to unknown "
+        "Failed to set 'rdt.missing_submodule:new_object': cannot add 'new_object' to unknown "
         "submodule 'rdt.missing_submodule'."
     )
 
@@ -166,17 +166,14 @@ def test__find_addons_module_and_object(entry_points_mock, warning_mock):
 
 @patch('rdt.warnings.warn')
 @patch('rdt.iter_entry_points')
-@patch('rdt.modules')
+@patch('rdt.sys.modules')
 def test__find_addons_missing_object(modules_mock, entry_points_mock, warning_mock):
     """Test incorrect add-on name generates a warning."""
     # Setup
     bad_entry_point = Mock()
     bad_entry_point.name = 'rdt.submodule:missing_object.new_method'
     entry_points_mock.return_value = [bad_entry_point]
-    msg = (
-        "Failed to load 'rdt.submodule:missing_object.new_method'. Cannot find 'missing_object' "
-        "in submodule 'rdt.submodule'."
-    )
+    msg = ("Failed to set 'rdt.submodule:missing_object.new_method': missing_object.")
 
     del modules_mock['rdt'].submodule.missing_object
 

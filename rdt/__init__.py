@@ -10,7 +10,7 @@ __version__ = '1.4.3.dev0'
 
 import warnings
 from operator import attrgetter
-from sys import modules
+import sys
 
 import numpy as np
 import pandas as pd
@@ -95,19 +95,51 @@ def get_demo(num_rows=5):
     ], ignore_index=True)
 
 
-def _find_addons():
-    """Find and load add-ons based on the given group.
-
+def _get_addon_target(addon_path_name):
+    """Find the target object for the add-on.
+    
     Args:
-        group (str):
-            The name of the entry points group to load.
-        parent_globals (dict):
-            The caller's global scope. Modules will be added to the parent's global scope through
-            their name.
-        add_all (bool):
-            Whether to also add everything in the add-on's ``module.__all__`` to the parent's
-            global scope. Defaults to ``False``.
+        addon_path_name (str):
+            The add-on's name. The add-on's name should be the full path of valid Python
+            identifiers (i.e. importable.module:object.attr).
+    
+    Returns:
+        tuple:
+            * object:
+                The base module or object the add-on should be added to.
+            * str:
+                The name the add-on should be added to under the module or object.
     """
+    module_path, _, object_path = addon_path_name.partition(':')
+    module_path = module_path.split('.')
+
+    if module_path[0] != __name__:
+        msg = (f"expected base module to be '{__name__}', found '{module_path[0]}'")
+        raise AttributeError(msg)
+
+    target_base = sys.modules[__name__]
+    for submodule in module_path[1:-1]:
+        target_base = getattr(target_base, submodule)
+
+    addon_name = module_path[-1]
+    if not hasattr(target_base, module_path[-1]) and object_path:
+        msg = (f"cannot add '{object_path}' to unknown submodule '{'.'.join(module_path)}'")
+        raise AttributeError(msg)
+
+    if object_path:
+        target_base = getattr(target_base, module_path[-1])
+        split_object = object_path.split('.')
+        addon_name = split_object[-1]
+
+        if len(split_object) > 1:
+            target_base = attrgetter('.'.join(split_object[:-1]))(target_base)
+
+    return target_base, addon_name
+
+
+def _find_addons():
+    """Find and load all RDT add-ons."""
+
     group = 'rdt_modules'
     for entry_point in iter_entry_points(group=group):
         try:
@@ -116,58 +148,15 @@ def _find_addons():
             msg = f'Failed to load "{entry_point.name}" from "{entry_point.module_name}".'
             warnings.warn(msg)
             continue
-
-        module_path, _, object_path = entry_point.name.partition(':')
-        module_path = module_path.split('.')
-
-        if module_path[0] != __name__:
-            msg = (
-                f"Failed to load '{entry_point.name}'. Expected base module to be '{__name__}'"
-                f", found '{module_path[0]}'."
-            )
+    
+        try:
+            addon_target, addon_name = _get_addon_target(entry_point.name)
+        except AttributeError as e:
+            msg = f"Failed to set '{entry_point.name}': {e}."
             warnings.warn(msg)
             continue
 
-        base_module = modules[__name__]
-        for depth, submodule in enumerate(module_path[1:-1]):
-            try:
-                base_module = getattr(base_module, submodule)
-            except AttributeError:
-                msg = (
-                    f"Failed to load '{entry_point.name}'. Target submodule "
-                    f"'{'.'.join(module_path[:depth + 2])}' not found."
-                )
-                warnings.warn(msg)
-                continue
-
-        if not hasattr(base_module, module_path[-1]):
-            if object_path:
-                msg = (
-                    f"Failed to load '{entry_point.name}'. Cannot add '{object_path}' to "
-                    f"unknown submodule '{'.'.join(module_path)}'."
-                )
-                warnings.warn(msg)
-                continue
-
-            setattr(base_module, module_path[-1], addon)
-        else:
-            base_module = getattr(base_module, module_path[-1])
-
-        if object_path:
-            split_object = object_path.split('.')
-            try:
-                base_object = base_module
-                if len(split_object) > 1:
-                    base_object = attrgetter('.'.join(split_object[:-1]))(base_module)
-
-                setattr(base_object, object_path[-1], addon)
-            except AttributeError:
-                msg = (
-                    f"Failed to load '{entry_point.name}'. Cannot find "
-                    f"'{'.'.join(split_object[:-1])}' in submodule '{'.'.join(module_path)}'."
-                )
-                warnings.warn(msg)
-                continue
+        setattr(addon_target, addon_name, addon)
 
 
 _find_addons()
