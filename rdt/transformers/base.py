@@ -1,6 +1,7 @@
 """BaseTransformer module."""
 import abc
 import contextlib
+import hashlib
 import inspect
 import warnings
 from functools import wraps
@@ -65,21 +66,20 @@ class BaseTransformer:
     INPUT_SDTYPE = None
     SUPPORTED_SDTYPES = None
     IS_GENERATOR = None
-    INITIAL_FIT_STATE = np.random.RandomState(seed=21)
-    INITIAL_TRANSFORM_STATE = np.random.RandomState(seed=80)
-    INITIAL_REVERSE_TRANSFORM_STATE = np.random.RandomState(seed=130)
+    INITIAL_FIT_STATE = np.random.RandomState(42)
 
     columns = None
     column_prefix = None
     output_columns = None
     missing_value_replacement = None
+    random_seed = 42
 
     def __init__(self):
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
-            'transform': self.INITIAL_TRANSFORM_STATE,
-            'reverse_transform': self.INITIAL_REVERSE_TRANSFORM_STATE
+            'transform': None,
+            'reverse_transform': None
         }
 
     def set_random_state(self, state, method_name):
@@ -100,9 +100,11 @@ class BaseTransformer:
 
     def reset_randomization(self):
         """Reset the random state for ``reverse_transform``."""
-        self.set_random_state(self.INITIAL_FIT_STATE, 'fit')
-        self.set_random_state(self.INITIAL_TRANSFORM_STATE, 'transform')
-        self.set_random_state(self.INITIAL_REVERSE_TRANSFORM_STATE, 'reverse_transform')
+        self.random_states = {
+            'fit': self.INITIAL_FIT_STATE,
+            'transform': np.random.RandomState(self.random_seed),
+            'reverse_transform': np.random.RandomState(self.random_seed + 1)
+        }
 
     def _set_missing_value_replacement(self, default, missing_value_replacement):
         if missing_value_replacement is None:
@@ -318,6 +320,19 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
+    def _set_seed(self, data):
+        hash_value = self.get_input_column()
+        for value in data.head(5):
+            hash_value += str(value)
+
+        hash_value = int(hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16)
+        self.random_seed = hash_value % ((2 ** 32) - 1)  # maximum value for a seed
+        self.random_states = {
+            'fit': self.INITIAL_FIT_STATE,
+            'transform': np.random.RandomState(self.random_seed),
+            'reverse_transform': np.random.RandomState(self.random_seed + 1)
+        }
+
     @random_state
     def fit(self, data, column):
         """Fit the transformer to a ``column`` of the ``data``.
@@ -329,6 +344,7 @@ class BaseTransformer:
                 Column name. Must be present in the data.
         """
         self._store_columns(column, data)
+        self._set_seed(data)
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
         self._build_output_columns(data)

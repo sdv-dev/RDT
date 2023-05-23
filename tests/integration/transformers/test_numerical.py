@@ -119,7 +119,8 @@ class TestGaussianNormalizer:
         assert transformed.shape == (6, 1)
 
         reverse = ct.reverse_transform(transformed)
-        expected = pd.DataFrame([np.nan, 2, 1, np.nan, 1.4, 1], columns=['a'])
+        expected = pd.DataFrame(
+            [1., 1.9999999510423996, 1., 1.9999999510423996, 1.4, 1.], columns=['a'])
         pd.testing.assert_frame_equal(reverse, expected)
 
     def test_int(self):

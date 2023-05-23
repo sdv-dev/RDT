@@ -12,6 +12,8 @@ from rdt.transformers import (
     AnonymizedFaker, BaseTransformer, BinaryEncoder, ClusterBasedNormalizer, FloatFormatter,
     FrequencyEncoder, LabelEncoder, OneHotEncoder, RegexGenerator, UnixTimestampEncoder,
     get_default_transformer, get_default_transformers)
+from rdt.transformers.datetime import OptimizedTimestampEncoder
+from rdt.transformers.numerical import GaussianNormalizer
 from rdt.transformers.pii.anonymizer import PseudoAnonymizedFaker
 
 
@@ -1059,11 +1061,11 @@ def test_hyper_transformer_reset_randomization():
         ],
         'balance.component': [0.0, 0, 0, 0, 0],
         'card_type': [
-            0.3273532539594452,
-            0.36028672438848,
-            0.665212975367718,
-            0.8806283675768456,
-            0.23386325679767678
+            0.31440326318001877,
+            0.2879792449993428,
+            0.7147347796329043,
+            0.9397813187279729,
+            0.25144169889394075
         ]
     })
     expected_second_transformed = pd.DataFrame({
@@ -1078,11 +1080,11 @@ def test_hyper_transformer_reset_randomization():
         ],
         'balance.component': [0.0, 0, 0, 0, 0],
         'card_type': [
-            0.24748494176070168,
-            0.3886965582883772,
-            0.7408364277428201,
-            0.9194352110397322,
-            0.2293601452128275
+            0.20248666820805558,
+            0.4408301080724041,
+            0.7082705433167992,
+            0.8911691002937682,
+            0.2679993642397502
         ]
     })
 
@@ -1107,8 +1109,8 @@ def test_hyper_transformer_reset_randomization():
         ],
         'age': [18, 25, 54, 60, 31],
         'name': ['AAAAA', 'AAAAB', 'AAAAC', 'AAAAD', 'AAAAE'],
-        'signup_day': [np.nan, '02/19/2016', '04/01/2019', np.nan, '05/16/2016'],
-        'balance': [np.nan, 5400, 150000, np.nan, 91000],
+        'signup_day': ['01/01/2020', '02/19/2016', '04/01/2019', np.nan, np.nan],
+        'balance': [250, 5400, 150000, 61662.5, 91000],
         'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
     })
     expected_second_reverse = pd.DataFrame({
@@ -1121,8 +1123,8 @@ def test_hyper_transformer_reset_randomization():
         ],
         'age': [18, 25, 54, 60, 31],
         'name': ['AAAAF', 'AAAAG', 'AAAAH', 'AAAAI', 'AAAAJ'],
-        'signup_day': ['01/01/2020', '02/19/2016', np.nan, '12/01/2008', '05/16/2016'],
-        'balance': [250, 5400, np.nan, 61662.5, 91000],
+        'signup_day': ['01/01/2020', np.nan, '04/01/2019', '12/01/2008', np.nan],
+        'balance': [np.nan, 5400, np.nan, 61662.5, 91000],
         'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
     })
     first_reverse1 = ht1.reverse_transform(first_transformed1)
@@ -1305,3 +1307,54 @@ def test_hypertransformer_anonymized_faker_multi_table():
     # Assert
     assert reverse_transformed1['id1'].tolist() != reverse_transformed2['id1'].tolist()
     assert reverse_transformed1['id2'].tolist() != reverse_transformed2['id2'].tolist()
+
+
+def test_random_seed():
+    # Setup
+    data = pd.DataFrame({
+        'num1': [1, np.nan, 2] * 10,
+        'num2': [1, np.nan, 2] * 10,
+        'num3': [1, np.nan, 2] * 10,
+        'num4': [1, np.nan, 2] * 10,
+        'num5': [1, np.nan, 2] * 10,
+        'num6': [1, np.nan, 2] * 10,
+        'date1': [np.datetime64('2020-10-10'), np.datetime64('2021-11-11'), np.nan] * 10,
+        'date2': [np.datetime64('2020-10-10'), np.datetime64('2021-11-11'), np.nan] * 10,
+        'date3': [np.datetime64('2020-10-10'), np.datetime64('2021-11-11'), np.nan] * 10,
+        'date4': [np.datetime64('2020-10-10'), np.datetime64('2021-11-11'), np.nan] * 10,
+    })
+
+    ht = HyperTransformer()
+    ht.detect_initial_config(data)
+    ht.update_transformers({
+        'num1': FloatFormatter(),
+        'num2': FloatFormatter(),
+        'num3': ClusterBasedNormalizer(),
+        'num4': ClusterBasedNormalizer(),
+        'num5': GaussianNormalizer(),
+        'num6': GaussianNormalizer(),
+        'date1': UnixTimestampEncoder(),
+        'date2': UnixTimestampEncoder(),
+        'date3': OptimizedTimestampEncoder(),
+        'date4': OptimizedTimestampEncoder(),
+    })
+
+    # Run
+    ht.fit(data)
+    transformed = ht.transform(data)
+    reversed1 = ht.reverse_transform(transformed)
+
+    # Assert
+    assert reversed1['num1'].isna().tolist() != reversed1['num2'].isna().tolist()
+    assert reversed1['num3'].isna().tolist() != reversed1['num4'].isna().tolist()
+    assert reversed1['num5'].isna().tolist() != reversed1['num6'].isna().tolist()
+    assert reversed1['date1'].isna().tolist() != reversed1['date2'].isna().tolist()
+    assert reversed1['date3'].isna().tolist() != reversed1['date4'].isna().tolist()
+
+    # Run
+    ht.reset_randomization()
+    transformed = ht.transform(data)
+    reversed2 = ht.reverse_transform(transformed)
+
+    # Assert
+    pd.testing.assert_frame_equal(reversed1, reversed2)
