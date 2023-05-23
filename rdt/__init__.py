@@ -8,9 +8,9 @@ __email__ = 'info@sdv.dev'
 __version__ = '1.4.3.dev0'
 
 
+import sys
 import warnings
 from operator import attrgetter
-import sys
 
 import numpy as np
 import pandas as pd
@@ -97,12 +97,12 @@ def get_demo(num_rows=5):
 
 def _get_addon_target(addon_path_name):
     """Find the target object for the add-on.
-    
+
     Args:
         addon_path_name (str):
             The add-on's name. The add-on's name should be the full path of valid Python
             identifiers (i.e. importable.module:object.attr).
-    
+
     Returns:
         tuple:
             * object:
@@ -114,7 +114,7 @@ def _get_addon_target(addon_path_name):
     module_path = module_path.split('.')
 
     if module_path[0] != __name__:
-        msg = (f"expected base module to be '{__name__}', found '{module_path[0]}'")
+        msg = f"expected base module to be '{__name__}', found '{module_path[0]}'"
         raise AttributeError(msg)
 
     target_base = sys.modules[__name__]
@@ -123,7 +123,7 @@ def _get_addon_target(addon_path_name):
 
     addon_name = module_path[-1]
     if not hasattr(target_base, module_path[-1]) and object_path:
-        msg = (f"cannot add '{object_path}' to unknown submodule '{'.'.join(module_path)}'")
+        msg = f"cannot add '{object_path}' to unknown submodule '{'.'.join(module_path)}'"
         raise AttributeError(msg)
 
     if object_path:
@@ -139,7 +139,6 @@ def _get_addon_target(addon_path_name):
 
 def _find_addons():
     """Find and load all RDT add-ons."""
-
     group = 'rdt_modules'
     for entry_point in iter_entry_points(group=group):
         try:
@@ -148,11 +147,11 @@ def _find_addons():
             msg = f'Failed to load "{entry_point.name}" from "{entry_point.module_name}".'
             warnings.warn(msg)
             continue
-    
+
         try:
             addon_target, addon_name = _get_addon_target(entry_point.name)
-        except AttributeError as e:
-            msg = f"Failed to set '{entry_point.name}': {e}."
+        except AttributeError as error:
+            msg = f"Failed to set '{entry_point.name}': {error}."
             warnings.warn(msg)
             continue
 

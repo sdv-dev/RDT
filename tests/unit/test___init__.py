@@ -57,7 +57,7 @@ def test__find_addons_module(modules_mock, entry_points_mock):
 
     # Assert
     entry_points_mock.assert_called_once_with(group='rdt_modules')
-    modules_mock['rdt'].submodule.entry_name == 'entry_point'
+    assert modules_mock['rdt'].submodule.entry_name == 'entry_point'
 
 
 @patch('rdt.iter_entry_points')
@@ -75,7 +75,7 @@ def test__find_addons_object(modules_mock, entry_points_mock):
 
     # Assert
     entry_points_mock.assert_called_once_with(group='rdt_modules')
-    modules_mock['rdt'].submodule.entry_name.entry_object.entry_method == 'new_method'
+    assert modules_mock['rdt'].submodule.entry_object.entry_method == 'new_method'
 
 
 @patch('rdt.warnings.warn')
