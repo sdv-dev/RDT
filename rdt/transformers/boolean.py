@@ -20,20 +20,33 @@ class BinaryEncoder(BaseTransformer):
             Indicate what to replace the null values with. If the string ``'mode'`` is given,
             replace them with the most common value.
             Defaults to ``mode``.
+        missing_value_generation (str or None):
+            The way missing values are being handled. There are three strategies:
+
+                * ``RANDOM``: Randomly generates missing values based on the percentage of
+                  missing values.
+                * ``FROM_COLUMN``: Creates a binary column that describes whether the original
+                  value was missing. Then use it to recreate missing values.
+                * ``None``: Do nothing with the missing values on the reverse transform. Simply
+                  pass whatever data we get through.
+
         model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not. The column
-            will be created only if there are null values. If ``True``, create the new column if
-            there are null values. If ``False``, do not create the new column even if there
-            are null values. Defaults to ``False``.
+            **DEPRECATED** Whether to create a new column to indicate which values were null or
+            not. The column will be created only if there are null values. If ``True``, create
+            the new column if there are null values. If ``False``, do not create the new column
+            even if there are null values. Defaults to ``False``.
     """
 
     INPUT_SDTYPE = 'boolean'
     null_transformer = None
 
-    def __init__(self, missing_value_replacement='mode', model_missing_values=False):
+    def __init__(self, missing_value_replacement='mode', missing_value_generation='RANDOM',
+                 model_missing_values=None):
         super().__init__()
+        self.missing_value_generation = missing_value_generation
         self._set_missing_value_replacement('mode', missing_value_replacement)
-        self.model_missing_values = model_missing_values
+        if model_missing_values is not None:
+            self._set_model_missing_values(model_missing_values)
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -44,7 +57,7 @@ class BinaryEncoder(BaseTransformer):
         """
         self.null_transformer = NullTransformer(
             self.missing_value_replacement,
-            self.model_missing_values
+            self.missing_value_generation
         )
         self.null_transformer.fit(data)
         if self.null_transformer.models_missing_values():

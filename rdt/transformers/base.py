@@ -106,7 +106,7 @@ class BaseTransformer:
             'reverse_transform': np.random.RandomState(self.random_seed + 1)
         }
 
-    def _set_model_missing_values(self, default, model_missing_values):
+    def _set_model_missing_values(self, model_missing_values):
         warnings.warn(
             "Future versions of RDT will not support the 'model_missing_values' parameter. "
             "Please switch to using the 'missing_value_generation' parameter to select your "
@@ -310,7 +310,11 @@ class BaseTransformer:
         keys = args.args[1:]
         defaults = args.defaults or []
         defaults = dict(zip(keys, defaults))
-        instanced = {key: getattr(self, key) for key in keys}
+        instanced = {
+            key: getattr(self, key)
+            for key in keys
+            if hasattr(self, key)
+        }
 
         if defaults == instanced:
             return f'{class_name}()'
