@@ -71,8 +71,9 @@ class BaseTransformer:
     columns = None
     column_prefix = None
     output_columns = None
-    missing_value_replacement = None
     random_seed = 42
+    missing_value_replacement = None
+    missing_value_generation = None
 
     def __init__(self):
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
