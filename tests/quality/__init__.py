@@ -1,1 +1,0 @@
-"""RDT quality testing package."""
