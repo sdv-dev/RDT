@@ -75,8 +75,8 @@ class FloatFormatter(BaseTransformer):
     _min_value = None
     _max_value = None
 
-    def __init__(self, missing_value_replacement='mean', missing_value_generation='RANDOM',
-                 model_missing_values=None, learn_rounding_scheme=False,
+    def __init__(self, missing_value_replacement='mean', model_missing_values=None,
+                 missing_value_generation='RANDOM', learn_rounding_scheme=False,
                  enforce_min_max_values=False, computer_representation='Float'):
         super().__init__()
         self.missing_value_replacement = missing_value_replacement
@@ -271,12 +271,12 @@ class GaussianNormalizer(FloatFormatter):
 
     _univariate = None
 
-    def __init__(self, missing_value_generation='RANDOM', model_missing_values=None,
+    def __init__(self, model_missing_values=None, missing_value_generation='RANDOM',
                  learn_rounding_scheme=False, enforce_min_max_values=False,
                  distribution='truncated_gaussian'):
         super().__init__(
-            missing_value_generation=missing_value_generation,
             model_missing_values=model_missing_values,
+            missing_value_generation=missing_value_generation,
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values
         )
@@ -433,12 +433,12 @@ class ClusterBasedNormalizer(FloatFormatter):
     _bgm_transformer = None
     valid_component_indicator = None
 
-    def __init__(self, missing_value_generation='RANDOM', model_missing_values=None,
+    def __init__(self, model_missing_values=None, missing_value_generation='RANDOM',
                  learn_rounding_scheme=False, enforce_min_max_values=False, max_clusters=10,
                  weight_threshold=0.005):
         super().__init__(
-            missing_value_generation=missing_value_generation,
             model_missing_values=model_missing_values,
+            missing_value_generation=missing_value_generation,
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values
         )

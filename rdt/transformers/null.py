@@ -17,11 +17,15 @@ class NullTransformer():
             replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are given,
             replace them with the corresponding aggregation (``'mean'`` only works for numerical
             values). If ``None`` is given, do not replace them. Defaults to ``None``.
-        model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not. The column
-            will be created only if there are null values. If ``True``, create the new column if
-            there are null values. If ``False``, do not create the new column even if there
-            are null values. Defaults to ``False``.
+        missing_value_generation (str or None):
+            The way missing values are being handled. There are three strategies:
+
+                * ``RANDOM``: Randomly generates missing values based on the percentage of
+                  missing values.
+                * ``FROM_COLUMN``: Creates a binary column that describes whether the original
+                  value was missing. Then use it to recreate missing values.
+                * ``None``: Do nothing with the missing values on the reverse transform. Simply
+                  pass whatever data we get through.
     """
 
     nulls = None

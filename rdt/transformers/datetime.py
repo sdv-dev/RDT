@@ -44,8 +44,8 @@ class UnixTimestampEncoder(BaseTransformer):
     INPUT_SDTYPE = 'datetime'
     null_transformer = None
 
-    def __init__(self, missing_value_replacement='mean', missing_value_generation='RANDOM',
-                 model_missing_values=None, datetime_format=None):
+    def __init__(self, missing_value_replacement='mean', model_missing_values=None,
+                 missing_value_generation='RANDOM', datetime_format=None):
         super().__init__()
         self._set_missing_value_replacement('mean', missing_value_replacement)
         self.missing_value_generation = missing_value_generation
