@@ -126,7 +126,8 @@ def _get_addon_target(addon_path_name):
         if len(module_path) > 1 and not hasattr(target_base, module_path[-1]):
             msg = f"cannot add '{object_path}' to unknown submodule '{'.'.join(module_path)}'"
             raise AttributeError(msg)
-        elif len(module_path) > 1:
+
+        if len(module_path) > 1:
             target_base = getattr(target_base, module_path[-1])
 
         split_object = object_path.split('.')
