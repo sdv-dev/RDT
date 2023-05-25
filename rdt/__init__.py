@@ -8,11 +8,15 @@ __email__ = 'info@sdv.dev'
 __version__ = '1.4.3.dev0'
 
 
+import sys
+import warnings
+from operator import attrgetter
+
 import numpy as np
 import pandas as pd
+from pkg_resources import iter_entry_points
 
 from rdt import transformers
-from rdt._addons import _find_addons
 from rdt.hyper_transformer import HyperTransformer
 
 __all__ = [
@@ -21,9 +25,6 @@ __all__ = [
 ]
 
 RANDOM_SEED = 42
-
-
-_find_addons(group='rdt_modules', parent_globals=globals())
 
 
 def get_demo(num_rows=5):
@@ -92,3 +93,71 @@ def get_demo(num_rows=5):
             'dollars_spent': dollars_spent
         })
     ], ignore_index=True)
+
+
+def _get_addon_target(addon_path_name):
+    """Find the target object for the add-on.
+
+    Args:
+        addon_path_name (str):
+            The add-on's name. The add-on's name should be the full path of valid Python
+            identifiers (i.e. importable.module:object.attr).
+
+    Returns:
+        tuple:
+            * object:
+                The base module or object the add-on should be added to.
+            * str:
+                The name the add-on should be added to under the module or object.
+    """
+    module_path, _, object_path = addon_path_name.partition(':')
+    module_path = module_path.split('.')
+
+    if module_path[0] != __name__:
+        msg = f"expected base module to be '{__name__}', found '{module_path[0]}'"
+        raise AttributeError(msg)
+
+    target_base = sys.modules[__name__]
+    for submodule in module_path[1:-1]:
+        target_base = getattr(target_base, submodule)
+
+    addon_name = module_path[-1]
+    if object_path:
+        if len(module_path) > 1 and not hasattr(target_base, module_path[-1]):
+            msg = f"cannot add '{object_path}' to unknown submodule '{'.'.join(module_path)}'"
+            raise AttributeError(msg)
+
+        if len(module_path) > 1:
+            target_base = getattr(target_base, module_path[-1])
+
+        split_object = object_path.split('.')
+        addon_name = split_object[-1]
+
+        if len(split_object) > 1:
+            target_base = attrgetter('.'.join(split_object[:-1]))(target_base)
+
+    return target_base, addon_name
+
+
+def _find_addons():
+    """Find and load all RDT add-ons."""
+    group = 'rdt_modules'
+    for entry_point in iter_entry_points(group=group):
+        try:
+            addon = entry_point.load()
+        except Exception:  # pylint: disable=broad-exception-caught
+            msg = f'Failed to load "{entry_point.name}" from "{entry_point.module_name}".'
+            warnings.warn(msg)
+            continue
+
+        try:
+            addon_target, addon_name = _get_addon_target(entry_point.name)
+        except AttributeError as error:
+            msg = f"Failed to set '{entry_point.name}': {error}."
+            warnings.warn(msg)
+            continue
+
+        setattr(addon_target, addon_name, addon)
+
+
+_find_addons()
