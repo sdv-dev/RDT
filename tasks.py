@@ -46,11 +46,6 @@ def performance(c):
     c.run('python -m pytest -v ./tests/performance/test_performance.py')
 
 
-@task
-def quality(c):
-    c.run('pytest -v ./tests/quality/test_quality.py')
-
-
 def _validate_python_version(line):
     is_valid = True
     for python_version_match in re.finditer(r"python_version(<=?|>=?|==)\'(\d\.?)+\'", line):
