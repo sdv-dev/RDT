@@ -16,13 +16,13 @@ class TestUnixTimestampEncoder:
         # Run
         transformer = UnixTimestampEncoder(
             missing_value_replacement='mode',
-            missing_value_generation='FROM_COLUMN',
+            missing_value_generation='from_column',
             datetime_format='%M-%d-%Y'
         )
 
         # Asserts
         assert transformer.missing_value_replacement == 'mode'
-        assert transformer.missing_value_generation == 'FROM_COLUMN'
+        assert transformer.missing_value_generation == 'from_column'
         assert not hasattr(transformer, 'model_missing_values')
         assert transformer.datetime_format == '%M-%d-%Y'
 
@@ -37,7 +37,7 @@ class TestUnixTimestampEncoder:
 
         # Asserts
         assert transformer.missing_value_replacement == 'mode'
-        assert transformer.missing_value_generation == 'RANDOM'
+        assert transformer.missing_value_generation == 'random'
         assert not hasattr(transformer, 'model_missing_values')
         assert transformer.datetime_format == '%M-%d-%Y'
 
@@ -262,7 +262,7 @@ class TestUnixTimestampEncoder:
         transformer._fit(data)
 
         # Assert
-        null_transformer_mock.assert_called_once_with('mean', 'RANDOM')
+        null_transformer_mock.assert_called_once_with('mean', 'random')
         assert null_transformer_mock.return_value.fit.call_count == 1
         np.testing.assert_allclose(
             null_transformer_mock.return_value.fit.call_args_list[0][0][0],
@@ -313,11 +313,11 @@ class TestUnixTimestampEncoder:
     def test__fit_missing_value_generation(self):
         """Test output_properties contains 'is_null' column.
 
-        When missing_value_generation is 'FROM_COLUMN' the expected output is to have an extra
+        When missing_value_generation is 'from_column' the expected output is to have an extra
         column.
         """
         # Setup
-        transformer = UnixTimestampEncoder(missing_value_generation='FROM_COLUMN')
+        transformer = UnixTimestampEncoder(missing_value_generation='from_column')
         data = pd.Series(['2020-02-01', np.nan])
 
         # Run

@@ -9,6 +9,8 @@ from functools import wraps
 import numpy as np
 import pandas as pd
 
+from rdt.errors import TransformerInputError
+
 
 @contextlib.contextmanager
 def set_random_states(random_states, method_name, set_model_random_state):
@@ -107,6 +109,15 @@ class BaseTransformer:
             'reverse_transform': np.random.RandomState(self.random_seed + 1)
         }
 
+    def _set_missing_value_generation(self, missing_value_generation):
+        if missing_value_generation not in (None, 'from_column', 'random'):
+            raise TransformerInputError(
+                "'missing_value_generation' must be one of the following values: "
+                "None, 'from_column' or 'random'."
+            )
+
+        self.missing_value_generation = missing_value_generation
+
     def _set_model_missing_values(self, model_missing_values):
         warnings.warn(
             "Future versions of RDT will not support the 'model_missing_values' parameter. "
@@ -114,9 +125,9 @@ class BaseTransformer:
             'strategy.', FutureWarning
         )
         if model_missing_values is True:
-            self.missing_value_generation = 'FROM_COLUMN'
+            self._set_missing_value_generation('from_column')
         elif model_missing_values is False:
-            self.missing_value_generation = 'RANDOM'
+            self._set_missing_value_generation('random')
 
     def _set_missing_value_replacement(self, default, missing_value_replacement):
         if missing_value_replacement is None:

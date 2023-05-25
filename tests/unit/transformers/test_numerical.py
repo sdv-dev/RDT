@@ -18,11 +18,11 @@ class TestFloatFormatter(TestCase):
         """super() arguments are properly passed and set as attributes."""
         nt = FloatFormatter(
             missing_value_replacement='mode',
-            missing_value_generation='RANDOM'
+            missing_value_generation='random'
         )
 
         assert nt.missing_value_replacement == 'mode'
-        assert nt.missing_value_generation == 'RANDOM'
+        assert nt.missing_value_generation == 'random'
 
     def test__learn_rounding_digits_more_than_15_decimals(self):
         """Test the _learn_rounding_digits method with more than 15 decimals.
@@ -411,11 +411,11 @@ class TestFloatFormatter(TestCase):
     def test__fit_missing_value_replacement_from_column(self):
         """Test output_properties contains 'is_null' column.
 
-        When ``missing_value_generation`` is ``FROM_COLUMN`` an output property ``is_null`` should
+        When ``missing_value_generation`` is ``from_column`` an output property ``is_null`` should
         exist.
         """
         # Setup
-        transformer = FloatFormatter(missing_value_generation='FROM_COLUMN')
+        transformer = FloatFormatter(missing_value_generation='from_column')
         data = pd.Series([1, np.nan])
 
         # Run
@@ -774,13 +774,13 @@ class TestGaussianNormalizer:
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
         ct = GaussianNormalizer(
-            missing_value_generation='RANDOM',
+            missing_value_generation='random',
             learn_rounding_scheme=False,
             enforce_min_max_values=False
         )
 
         assert ct.missing_value_replacement == 'mean'
-        assert ct.missing_value_generation == 'RANDOM'
+        assert ct.missing_value_generation == 'random'
         assert ct.learn_rounding_scheme is False
         assert ct.enforce_min_max_values is False
 
@@ -980,7 +980,7 @@ class TestGaussianNormalizer:
         """
         # Setup
         data = pd.Series([0.0, np.nan, 1.0])
-        ct = GaussianNormalizer(missing_value_generation='FROM_COLUMN')
+        ct = GaussianNormalizer(missing_value_generation='from_column')
         ct._get_univariate = Mock()
 
         # Run
@@ -1059,14 +1059,14 @@ class TestGaussianNormalizer:
         """Test the ``_transform`` method.
 
         Validate that ``_transform`` produces the correct values when ``missing_value_generation``
-        is 'FROM_COLUMN'.
+        is 'from_column'.
         """
         # Setup
         data = pd.Series([0.0, 1.0, 2.0, np.nan])
         ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
-        ct.null_transformer = NullTransformer('mean', missing_value_generation='FROM_COLUMN')
+        ct.null_transformer = NullTransformer('mean', missing_value_generation='from_column')
         ct.null_transformer.fit(data)
 
         # Run
@@ -1083,7 +1083,7 @@ class TestGaussianNormalizer:
         """Test the ``_transform`` method.
 
         Validate that ``_transform`` produces the correct values when ``missing_value_generation``
-        is ``RANDOM``.
+        is ``random``.
         """
         # Setup
         data = pd.Series([
@@ -1092,7 +1092,7 @@ class TestGaussianNormalizer:
         ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
-        ct.null_transformer = NullTransformer('mean', missing_value_generation='RANDOM')
+        ct.null_transformer = NullTransformer('mean', missing_value_generation='random')
 
         # Run
         ct.null_transformer.fit(data)
@@ -1106,7 +1106,7 @@ class TestGaussianNormalizer:
         """Test the ``_reverse_transform`` method.
 
         Validate that ``_reverse_transform`` produces the correct values when
-        ``missing_value_generation`` is 'FROM_COLUMN'.
+        ``missing_value_generation`` is 'from_column'.
         """
         # Setup
         data = np.array([
@@ -1121,7 +1121,7 @@ class TestGaussianNormalizer:
         ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
         ct.null_transformer = NullTransformer(
             missing_value_replacement='mean',
-            missing_value_generation='FROM_COLUMN'
+            missing_value_generation='from_column'
         )
 
         # Run
@@ -1135,7 +1135,7 @@ class TestGaussianNormalizer:
         """Test the ``_reverse_transform`` method.
 
         Validate that ``_reverse_transform`` produces the correct values when
-        ``missing_value_generation`` is 'RANDOM'.
+        ``missing_value_generation`` is 'random'.
         """
         # Setup
         data = pd.Series(
@@ -1147,7 +1147,7 @@ class TestGaussianNormalizer:
         ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
-        ct.null_transformer = NullTransformer(None, missing_value_generation='RANDOM')
+        ct.null_transformer = NullTransformer(None, missing_value_generation='random')
 
         # Run
         ct.null_transformer.fit(expected)
@@ -1230,7 +1230,7 @@ class TestClusterBasedNormalizer(TestCase):
         transformer = ClusterBasedNormalizer(
             max_clusters=10,
             weight_threshold=0.005,
-            missing_value_generation='FROM_COLUMN'
+            missing_value_generation='from_column'
         )
 
         data = pd.Series(np.random.random(size=100))
@@ -1405,7 +1405,7 @@ class TestClusterBasedNormalizer(TestCase):
         transformer._bgm_transformer.predict_proba.return_value = probabilities
 
         transformer.valid_component_indicator = np.array([True, True, False])
-        transformer.null_transformer = NullTransformer(0.0, missing_value_generation='FROM_COLUMN')
+        transformer.null_transformer = NullTransformer(0.0, missing_value_generation='from_column')
         data = pd.Series([0.01, np.nan, -0.01, -0.01, 0.0, 0.99, 0.97, np.nan, np.nan, 0.97])
 
         # Run
@@ -1535,7 +1535,7 @@ class TestClusterBasedNormalizer(TestCase):
         """
         # Setup
         transformer = ClusterBasedNormalizer(
-            missing_value_generation='FROM_COLUMN',
+            missing_value_generation='from_column',
             max_clusters=3
         )
         transformer.output_columns = ['col.normalized', 'col.component']
@@ -1547,7 +1547,7 @@ class TestClusterBasedNormalizer(TestCase):
 
         transformer.null_transformer = NullTransformer(
             'mean',
-            missing_value_generation='FROM_COLUMN'
+            missing_value_generation='from_column'
         )
         transformer.null_transformer.fit(pd.Series([0, np.nan]))
 
@@ -1593,7 +1593,7 @@ class TestClusterBasedNormalizer(TestCase):
         """
         # Setup
         transformer = ClusterBasedNormalizer(
-            missing_value_generation='FROM_COLUMN',
+            missing_value_generation='from_column',
             max_clusters=3
         )
         transformer.output_columns = ['col.normalized', 'col.component']
@@ -1603,7 +1603,7 @@ class TestClusterBasedNormalizer(TestCase):
             0.63579893, 0.62239389, 0.67292805, 0.67292805, 0.62239389
         ])
 
-        transformer.null_transformer = NullTransformer('mean', missing_value_generation='RANDOM')
+        transformer.null_transformer = NullTransformer('mean', missing_value_generation='random')
         transformer.null_transformer.fit(pd.Series([0, np.nan]))
         transformer.null_transformer.reverse_transform = Mock()
         transformer.null_transformer.reverse_transform.return_value = np.array(

@@ -5,6 +5,8 @@ import logging
 import numpy as np
 import pandas as pd
 
+from rdt.errors import TransformerInputError
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -20,9 +22,9 @@ class NullTransformer():
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
 
-                * ``RANDOM``: Randomly generates missing values based on the percentage of
+                * ``random``: Randomly generates missing values based on the percentage of
                   missing values.
-                * ``FROM_COLUMN``: Creates a binary column that describes whether the original
+                * ``from_column``: Creates a binary column that describes whether the original
                   value was missing. Then use it to recreate missing values.
                 * ``None``: Do nothing with the missing values on the reverse transform. Simply
                   pass whatever data we get through.
@@ -33,11 +35,15 @@ class NullTransformer():
     _missing_value_replacement = None
     _null_percentage = None
 
-    def __init__(self, missing_value_replacement=None, missing_value_generation='RANDOM'):
+    def __init__(self, missing_value_replacement=None, missing_value_generation='random'):
         self._missing_value_replacement = missing_value_replacement
+        if missing_value_generation not in (None, 'from_column', 'random'):
+            raise TransformerInputError(
+                "'missing_value_generation' must be one of the following values: "
+                "None, 'from_column' or 'random'."
+            )
+
         self._missing_value_generation = missing_value_generation
-        if isinstance(self._missing_value_generation, str):
-            self._missing_value_generation = self._missing_value_generation.upper()
 
     def models_missing_values(self):
         """Indicate whether this transformer creates a null column on transform.
@@ -46,7 +52,7 @@ class NullTransformer():
             bool:
                 Whether a null column is created on transform.
         """
-        return self._missing_value_generation == 'FROM_COLUMN'
+        return self._missing_value_generation == 'from_column'
 
     def _get_missing_value_replacement(self, data):
         """Get the fill value to use for the given data.
@@ -105,7 +111,7 @@ class NullTransformer():
                 )
                 LOGGER.info(guidance_message)
 
-            if self._missing_value_generation == 'RANDOM':
+            if self._missing_value_generation == 'random':
                 self._null_percentage = null_values.sum() / len(data)
 
     def transform(self, data):
@@ -127,7 +133,7 @@ class NullTransformer():
         if isna.any() and self._missing_value_replacement is not None:
             data = data.fillna(self._missing_value_replacement)
 
-        if self._missing_value_generation == 'FROM_COLUMN':
+        if self._missing_value_generation == 'from_column':
             return pd.concat([data, isna.astype(np.float64)], axis=1).to_numpy()
 
         return data.to_numpy()
@@ -147,7 +153,7 @@ class NullTransformer():
             pandas.Series
         """
         data = data.copy()
-        if self._missing_value_generation == 'FROM_COLUMN':
+        if self._missing_value_generation == 'from_column':
             if self.nulls:
                 isna = data[:, 1] > 0.5
 

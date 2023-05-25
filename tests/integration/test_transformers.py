@@ -16,22 +16,22 @@ PRIMARY_SDTYPES = ['boolean', 'categorical', 'datetime', 'numerical']
 TRANSFORMER_ARGS = {
     'BinaryEncoder': {
         'missing_value_replacement': -1,
-        'missing_value_generation': 'FROM_COLUMN'
+        'missing_value_generation': 'from_column'
     },
     'UnixTimestampEncoder': {
-        'missing_value_generation': 'FROM_COLUMN'
+        'missing_value_generation': 'from_column'
     },
     'OptimizedTimestampEncoder': {
-        'missing_value_generation': 'FROM_COLUMN'
+        'missing_value_generation': 'from_column'
     },
     'FloatFormatter': {
-        'missing_value_generation': 'FROM_COLUMN'
+        'missing_value_generation': 'from_column'
     },
     'GaussianNormalizer': {
-        'missing_value_generation': 'FROM_COLUMN'
+        'missing_value_generation': 'from_column'
     },
     'ClusterBasedNormalizer': {
-        'missing_value_generation': 'FROM_COLUMN'
+        'missing_value_generation': 'from_column'
     },
 }
 

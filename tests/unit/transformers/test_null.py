@@ -1,10 +1,13 @@
 """Unit tests for the NullTransformer."""
 
+import re
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
+from rdt.errors import TransformerInputError
 from rdt.transformers import NullTransformer
 
 
@@ -21,7 +24,7 @@ class TestNullTransformer:
 
         # Assert
         assert transformer._missing_value_replacement is None
-        assert transformer._missing_value_generation == 'RANDOM'
+        assert transformer._missing_value_generation == 'random'
 
     def test___init__not_default(self):
         """Test the initialization passing values different than defaults.
@@ -42,14 +45,26 @@ class TestNullTransformer:
         assert transformer._missing_value_replacement == 'a_missing_value_replacement'
         assert transformer._missing_value_generation is None
 
+    def test___init__raises_error(self):
+        """Test the initialization passing invalid values for ``missing_value_generation``."""
+        # Setup
+        error_msg = re.escape(
+            "'missing_value_generation' must be one of the following values: None, 'from_column' "
+            "or 'random'."
+        )
+
+        # Run / Assert
+        with pytest.raises(TransformerInputError, match=error_msg):
+            transformer = NullTransformer('mean', 'None')
+
     def test_models_missing_values(self):
         """Test the models_missing_values method.
 
-        Test that when ``missing_value_generation`` is ``'FROM_COLUMN'``, this returns
+        Test that when ``missing_value_generation`` is ``'from_column'``, this returns
         ``True``.
         """
         # Setup
-        transformer = NullTransformer('something', missing_value_generation='FROM_COLUMN')
+        transformer = NullTransformer('something', missing_value_generation='from_column')
 
         # Run
         models_missing_values = transformer.models_missing_values()
@@ -60,12 +75,12 @@ class TestNullTransformer:
     def test_models_missing_values_missing_value_generation_is_none(self):
         """Test the models_missing_values method.
 
-        Test that when ``missing_value_generation`` is other than ``'FROM_COLUMN'``, this returns
+        Test that when ``missing_value_generation`` is other than ``'from_column'``, this returns
         ``False``.
         """
         # Setup
         none_transformer = NullTransformer('something', missing_value_generation=None)
-        random_transformer = NullTransformer('something', missing_value_generation='RANDOM')
+        random_transformer = NullTransformer('something', missing_value_generation='random')
 
         # Run
         none_models_missing_values = none_transformer.models_missing_values()
@@ -265,9 +280,9 @@ class TestNullTransformer:
         assert transformer._missing_value_replacement == 'mean'  # Has not been altered.
 
     def test_fit_missing_value_generation_from_column_and_no_nulls(self):
-        """Test fit when ``missing_value_generation`` is 'FROM_COLUMN' and there are nulls."""
+        """Test fit when ``missing_value_generation`` is 'from_column' and there are nulls."""
         # Setup
-        transformer = NullTransformer(missing_value_generation='FROM_COLUMN')
+        transformer = NullTransformer(missing_value_generation='from_column')
 
         # Run
         data = pd.Series(['a', 'b', 'b'])
@@ -290,19 +305,19 @@ class TestNullTransformer:
         # Setup
         missing_value_generation_random_nulls = NullTransformer(
             missing_value_replacement='mode',
-            missing_value_generation='RANDOM'
+            missing_value_generation='random'
         )
         missing_value_generation_random_no_nulls = NullTransformer(
             missing_value_replacement='mode',
-            missing_value_generation='RANDOM'
+            missing_value_generation='random'
         )
         missing_value_generation_column_nulls = NullTransformer(
             missing_value_replacement='mean',
-            missing_value_generation='FROM_COLUMN'
+            missing_value_generation='from_column'
         )
         missing_value_generation_column_no_nulls = NullTransformer(
             missing_value_replacement='mean',
-            missing_value_generation='FROM_COLUMN'
+            missing_value_generation='from_column'
         )
 
         missing_value_generation_none_int = NullTransformer(
@@ -328,15 +343,15 @@ class TestNullTransformer:
         missing_value_generation_none_str.fit(nulls_str)
 
         # Assert
-        assert missing_value_generation_random_nulls._missing_value_generation == 'RANDOM'
+        assert missing_value_generation_random_nulls._missing_value_generation == 'random'
         assert missing_value_generation_random_nulls.nulls
         assert missing_value_generation_random_nulls._missing_value_replacement == 'b'
 
-        assert missing_value_generation_random_no_nulls._missing_value_generation == 'RANDOM'
+        assert missing_value_generation_random_no_nulls._missing_value_generation == 'random'
         assert not missing_value_generation_random_no_nulls.nulls
         assert missing_value_generation_random_no_nulls._missing_value_replacement == 'b'
 
-        assert missing_value_generation_column_nulls._missing_value_generation == 'FROM_COLUMN'
+        assert missing_value_generation_column_nulls._missing_value_generation == 'from_column'
         assert missing_value_generation_column_nulls.nulls
         assert missing_value_generation_column_nulls._missing_value_replacement == 2
 
@@ -353,14 +368,14 @@ class TestNullTransformer:
         assert missing_value_generation_none_str._missing_value_replacement == 'mean'
 
     def test_transform__missing_value_generation_from_column(self):
-        """Test transform when ``_missing_value_generation`` is set to ``FROM_COLUMN``.
+        """Test transform when ``_missing_value_generation`` is set to ``from_column``.
 
-        When ``missing_value_generation`` is 'FROM_COLUMN', the nulls should be replaced
+        When ``missing_value_generation`` is 'from_column', the nulls should be replaced
         by the ``_missing_value_replacement`` and another column flagging the nulls
         should be created.
         """
         # Setup
-        transformer = NullTransformer(missing_value_generation='FROM_COLUMN')
+        transformer = NullTransformer(missing_value_generation='from_column')
         transformer.nulls = False
         transformer._missing_value_replacement = 'c'
         input_data = pd.Series(['a', 'b', np.nan])
@@ -377,9 +392,9 @@ class TestNullTransformer:
         np.testing.assert_equal(expected_output, output)
 
     def test_transform__missing_value_generation_random(self):
-        """Test transform when ``_missing_value_generation`` is set to ``RANDOM``.
+        """Test transform when ``_missing_value_generation`` is set to ``random``.
 
-        Test that when the ``_missing_value_generation`` is set to ``RANDOM``, the nulls should
+        Test that when the ``_missing_value_generation`` is set to ``random``, the nulls should
         be replaced by the ``_missing_value_replacement``.
         """
         # Setup
@@ -398,14 +413,14 @@ class TestNullTransformer:
         pd.testing.assert_series_equal(modified_input_data, input_data)
 
     def test_reverse_transform__missing_value_generation_from_column_with_nulls(self):
-        """Test reverse_transform when ``missing_value_generation`` is ``FROM_COLUMN`` and nulls.
+        """Test reverse_transform when ``missing_value_generation`` is ``from_column`` and nulls.
 
-        When ``missing_value_generation`` is ``FROM_COLUMN`` and there are nulls, the second column
+        When ``missing_value_generation`` is ``from_column`` and there are nulls, the second column
         in the input data should be used to decide which values to replace with nan,
         by selecting the rows where the null column value is > 0.5.
         """
         # Setup
-        transformer = NullTransformer(missing_value_generation='FROM_COLUMN')
+        transformer = NullTransformer(missing_value_generation='from_column')
         transformer.nulls = True
         input_data = np.array([
             [0.0, 0.0],
@@ -423,14 +438,14 @@ class TestNullTransformer:
         pd.testing.assert_series_equal(expected_output, output)
 
     def test_reverse_transform__missing_value_generation_from_column_no_nulls(self):
-        """Test reverse_transform when ``missing_value_generation`` is ``FROM_COLUMN``, no nulls.
+        """Test reverse_transform when ``missing_value_generation`` is ``from_column``, no nulls.
 
-        When ``missing_value_generation`` is ``FROM_COLUMN`` but no nulls are found, the second
+        When ``missing_value_generation`` is ``from_column`` but no nulls are found, the second
         column of the input data must be dropped and the first one returned as a ``pd.Series``
         without having been modified.
         """
         # Setup
-        transformer = NullTransformer(missing_value_generation='FROM_COLUMN')
+        transformer = NullTransformer(missing_value_generation='from_column')
         transformer.nulls = False
         input_data = np.array([
             [0.0, 0.0],
@@ -449,13 +464,13 @@ class TestNullTransformer:
 
     @patch('rdt.transformers.null.np.random')
     def test_reverse_transform__missing_value_generation_random_with_nulls(self, random_mock):
-        """Test reverse_transform when ``missing_value_generation`` is ``RANDOM`` and nulls.
+        """Test reverse_transform when ``missing_value_generation`` is ``random`` and nulls.
 
-        When ``missing_value_generation`` is ``RANDOM`` and there are nulls, a ``_null_percentage``
+        When ``missing_value_generation`` is ``random`` and there are nulls, a ``_null_percentage``
         of values should randomly be replaced with ``np.nan``.
         """
         # Setup
-        transformer = NullTransformer(missing_value_generation='RANDOM')
+        transformer = NullTransformer(missing_value_generation='random')
         transformer.nulls = True
         transformer._null_percentage = 0.5
         input_data = np.array([0.0, 0.2, 0.4, 0.6])
@@ -469,13 +484,13 @@ class TestNullTransformer:
         pd.testing.assert_series_equal(expected_output, output)
 
     def test_reverse_transform__missing_value_generation_random_no_nulls(self):
-        """Test reverse_transform when missing_value_generation is ``RANDOM`` and no nulls.
+        """Test reverse_transform when missing_value_generation is ``random`` and no nulls.
 
-        When ``missing_value_generation`` is ``RANDOM`` and there are no nulls, the input data
+        When ``missing_value_generation`` is ``random`` and there are no nulls, the input data
         is not modified at all.
         """
         # Setup
-        transformer = NullTransformer(missing_value_generation='RANDOM')
+        transformer = NullTransformer(missing_value_generation='random')
         transformer.nulls = False
         transformer._missing_value_replacement = 0.4
         input_data = np.array([0.0, 0.2, 0.4, 0.6])

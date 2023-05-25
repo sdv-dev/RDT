@@ -42,9 +42,9 @@ class FloatFormatter(BaseTransformer):
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
 
-                * ``RANDOM``: Randomly generates missing values based on the percentage of
+                * ``random``: Randomly generates missing values based on the percentage of
                   missing values.
-                * ``FROM_COLUMN``: Creates a binary column that describes whether the original
+                * ``from_column``: Creates a binary column that describes whether the original
                   value was missing. Then use it to recreate missing values.
                 * ``None``: Do nothing with the missing values on the reverse transform. Simply
                   pass whatever data we get through.
@@ -76,11 +76,11 @@ class FloatFormatter(BaseTransformer):
     _max_value = None
 
     def __init__(self, missing_value_replacement='mean', model_missing_values=None,
-                 missing_value_generation='RANDOM', learn_rounding_scheme=False,
+                 missing_value_generation='random', learn_rounding_scheme=False,
                  enforce_min_max_values=False, computer_representation='Float'):
         super().__init__()
         self.missing_value_replacement = missing_value_replacement
-        self.missing_value_generation = missing_value_generation
+        self._set_missing_value_generation(missing_value_generation)
         self._set_missing_value_replacement('mean', missing_value_replacement)
         if model_missing_values is not None:
             self._set_model_missing_values(model_missing_values)
@@ -237,9 +237,9 @@ class GaussianNormalizer(FloatFormatter):
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
 
-                * ``RANDOM``: Randomly generates missing values based on the percentage of
+                * ``random``: Randomly generates missing values based on the percentage of
                   missing values.
-                * ``FROM_COLUMN``: Creates a binary column that describes whether the original
+                * ``from_column``: Creates a binary column that describes whether the original
                   value was missing. Then use it to recreate missing values.
                 * ``None``: Do nothing with the missing values on the reverse transform. Simply
                   pass whatever data we get through.
@@ -271,7 +271,7 @@ class GaussianNormalizer(FloatFormatter):
 
     _univariate = None
 
-    def __init__(self, model_missing_values=None, missing_value_generation='RANDOM',
+    def __init__(self, model_missing_values=None, missing_value_generation='random',
                  learn_rounding_scheme=False, enforce_min_max_values=False,
                  distribution='truncated_gaussian'):
         super().__init__(
@@ -393,9 +393,9 @@ class ClusterBasedNormalizer(FloatFormatter):
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
 
-                * ``RANDOM``: Randomly generates missing values based on the percentage of
+                * ``random``: Randomly generates missing values based on the percentage of
                   missing values.
-                * ``FROM_COLUMN``: Creates a binary column that describes whether the original
+                * ``from_column``: Creates a binary column that describes whether the original
                   value was missing. Then use it to recreate missing values.
                 * ``None``: Do nothing with the missing values on the reverse transform. Simply
                   pass whatever data we get through.
@@ -433,7 +433,7 @@ class ClusterBasedNormalizer(FloatFormatter):
     _bgm_transformer = None
     valid_component_indicator = None
 
-    def __init__(self, model_missing_values=None, missing_value_generation='RANDOM',
+    def __init__(self, model_missing_values=None, missing_value_generation='random',
                  learn_rounding_scheme=False, enforce_min_max_values=False, max_clusters=10,
                  weight_threshold=0.005):
         super().__init__(
