@@ -55,7 +55,7 @@ class TestNullTransformer:
 
         # Run / Assert
         with pytest.raises(TransformerInputError, match=error_msg):
-            transformer = NullTransformer('mean', 'None')
+            NullTransformer('mean', 'None')
 
     def test_models_missing_values(self):
         """Test the models_missing_values method.
