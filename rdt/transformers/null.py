@@ -126,7 +126,7 @@ class NullTransformer():
         Returns:
             numpy.ndarray
         """
-        if self._missing_value_replacement is None:
+        if self._missing_value_generation is None:
             return data.to_numpy()
 
         isna = data.isna()
