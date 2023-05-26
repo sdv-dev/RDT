@@ -412,6 +412,23 @@ class TestNullTransformer:
         modified_input_data = pd.Series([1, 2, np.nan])
         pd.testing.assert_series_equal(modified_input_data, input_data)
 
+    def test_transform__missing_value_generation_is_none(self):
+        """Test transform when ``_missing_value_generation`` is set to ``from_column``.
+
+        When ``missing_value_generation`` is 'None', the nulls should be returned.
+        """
+        # Setup
+        transformer = NullTransformer(missing_value_generation=None)
+        transformer.nulls = False
+        transformer._missing_value_replacement = 'c'
+        input_data = pd.Series([1., 2., np.nan])
+
+        # Run
+        output = transformer.transform(input_data)
+
+        # Assert
+        np.testing.assert_equal(input_data, output)
+
     def test_reverse_transform__missing_value_generation_from_column_with_nulls(self):
         """Test reverse_transform when ``missing_value_generation`` is ``from_column`` and nulls.
 
