@@ -42,18 +42,16 @@ class TestBinaryEncoder:
 
         Ensure that the BinaryEncoder can fit, transform, and reverse transform on
         boolean data when `missing_value_replacement` is set to `'mode'` and
-        `model_missing_values` is set to True. Expect that the reverse
+        `missing_value_generation` is set to 'from_column'. Expect that the reverse
         transformed data is the same as the input.
-
-        Input:
-            - boolean data with None values
-        Output:
-            - The reversed transformed data
         """
         # Setup
         data = pd.DataFrame([True, True, None, False], columns=['bool'])
         column = 'bool'
-        transformer = BinaryEncoder(missing_value_replacement='mode', model_missing_values=True)
+        transformer = BinaryEncoder(
+            missing_value_replacement='mode',
+            missing_value_generation='from_column'
+        )
 
         # Run
         transformer.fit(data, column)
@@ -64,6 +62,31 @@ class TestBinaryEncoder:
         expected_transformed = pd.DataFrame({
             'bool': [1., 1., 1., 0.],
             'bool.is_null': [0., 0., 1., 0.]
+        })
+        pd.testing.assert_frame_equal(transformed, expected_transformed)
+        pd.testing.assert_frame_equal(reverse, data)
+
+    def test_boolean_missing_value_generation_none(self):
+        """Test the BinaryEncoder when `missing_value_generation` is None.
+
+        In this test we should get `nans` on the transformed data.
+        """
+        # Setup
+        data = pd.DataFrame([True, True, None, False], columns=['bool'])
+        column = 'bool'
+        transformer = BinaryEncoder(
+            missing_value_replacement='mode',
+            missing_value_generation=None
+        )
+
+        # Run
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        reverse = transformer.reverse_transform(transformed)
+
+        # Assert
+        expected_transformed = pd.DataFrame({
+            'bool': [1., 1., None, 0.],
         })
         pd.testing.assert_frame_equal(transformed, expected_transformed)
         pd.testing.assert_frame_equal(reverse, data)

@@ -9,6 +9,8 @@ from functools import wraps
 import numpy as np
 import pandas as pd
 
+from rdt.errors import TransformerInputError
+
 
 @contextlib.contextmanager
 def set_random_states(random_states, method_name, set_model_random_state):
@@ -71,8 +73,9 @@ class BaseTransformer:
     columns = None
     column_prefix = None
     output_columns = None
-    missing_value_replacement = None
     random_seed = 42
+    missing_value_replacement = None
+    missing_value_generation = None
 
     def __init__(self):
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
@@ -105,6 +108,26 @@ class BaseTransformer:
             'transform': np.random.RandomState(self.random_seed),
             'reverse_transform': np.random.RandomState(self.random_seed + 1)
         }
+
+    def _set_missing_value_generation(self, missing_value_generation):
+        if missing_value_generation not in (None, 'from_column', 'random'):
+            raise TransformerInputError(
+                "'missing_value_generation' must be one of the following values: "
+                "None, 'from_column' or 'random'."
+            )
+
+        self.missing_value_generation = missing_value_generation
+
+    def _set_model_missing_values(self, model_missing_values):
+        warnings.warn(
+            "Future versions of RDT will not support the 'model_missing_values' parameter. "
+            "Please switch to using the 'missing_value_generation' parameter to select your "
+            'strategy.', FutureWarning
+        )
+        if model_missing_values is True:
+            self._set_missing_value_generation('from_column')
+        elif model_missing_values is False:
+            self._set_missing_value_generation('random')
 
     def _set_missing_value_replacement(self, default, missing_value_replacement):
         if missing_value_replacement is None:
@@ -299,7 +322,11 @@ class BaseTransformer:
         keys = args.args[1:]
         defaults = args.defaults or []
         defaults = dict(zip(keys, defaults))
-        instanced = {key: getattr(self, key) for key in keys}
+        instanced = {
+            key: getattr(self, key)
+            for key in keys
+            if hasattr(self, key)
+        }
 
         if defaults == instanced:
             return f'{class_name}()'

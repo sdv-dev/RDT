@@ -11,22 +11,22 @@ DATASET_SIZES = [1000, 10000, 100000]
 TRANSFORMER_ARGS = {
     'BinaryEncoder': {
         'missing_value_replacement': -1,
-        'model_missing_values': True
+        'missing_value_generation': 'from_column'
     },
     'UnixTimestampEncoder': {
-        'model_missing_values': True
+        'missing_value_generation': 'from_column'
     },
     'OptimizedTimestampEncoder': {
-        'model_missing_values': True
+        'missing_value_generation': 'from_column'
     },
     'FloatFormatter': {
-        'model_missing_values': True
+        'missing_value_generation': 'from_column'
     },
     'GaussianNormalizer': {
-        'model_missing_values': True
+        'missing_value_generation': 'from_column'
     },
     'ClusterBasedNormalizer': {
-        'model_missing_values': True
+        'missing_value_generation': 'from_column'
     },
 }
 
