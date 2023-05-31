@@ -1,5 +1,21 @@
 # History
 
+## 1.5.0 - 2023-06-01
+
+### Bugs
+
+* Fix randomization when creating null values - Issue [#639](https://github.com/sdv-dev/RDT/issues/639) by @fealho
+
+### New Features
+
+* Allow a no-op handling strategy for missing values (nulls) - Issue [#644](https://github.com/sdv-dev/RDT/issues/644) by @pvk-developer
+* Add add-on detection for premium transformers - Issue [#646](https://github.com/sdv-dev/RDT/issues/646) by @frances-h
+
+### Maintenance
+
+* Performance tests still fragile - Issue [#641](https://github.com/sdv-dev/RDT/issues/641) by @fealho
+* Investigate removing quality tests - Issue [#642](https://github.com/sdv-dev/RDT/issues/642) by @amontanez24
+
 ## 1.4.2 - 2023-05-02
 
 This release fixes a bug that caused datetime and numerical transformers to crash if a column was all NaNs. Additionally, it adds support for Pandas 2.0!
