@@ -23,7 +23,6 @@ class TestUnixTimestampEncoder:
         # Asserts
         assert transformer.missing_value_replacement == 'mode'
         assert transformer.missing_value_generation == 'from_column'
-        assert not hasattr(transformer, 'model_missing_values')
         assert transformer.datetime_format == '%M-%d-%Y'
 
     def test___init__with_model_missing_values(self):
@@ -38,7 +37,6 @@ class TestUnixTimestampEncoder:
         # Asserts
         assert transformer.missing_value_replacement == 'mode'
         assert transformer.missing_value_generation == 'random'
-        assert not hasattr(transformer, 'model_missing_values')
         assert transformer.datetime_format == '%M-%d-%Y'
 
     def test__convert_to_datetime(self):

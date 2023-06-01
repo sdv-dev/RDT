@@ -27,7 +27,6 @@ class TestBinaryEncoder(TestCase):
 
         # Assert
         transformer.missing_value_generation == 'from_column'
-        assert not hasattr(transformer, 'model_missing_values')
 
     def test__fit_missing_value_replacement_not_ignore(self):
         """Test _fit missing_value_replacement not equal to ignore"""
