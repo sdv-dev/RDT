@@ -37,12 +37,12 @@ class FloatFormatter(BaseTransformer):
         missing_value_replacement (object):
             Indicate what to replace the null values with. If an integer or float is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'``
-            are given, replace them with the corresponding aggregation.
+            are given, replace them with the corresponding aggregation. Defaults to ``mean``.
          model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
             not. The column will be created only if there are null values. If ``True``, create
             the new column if there are null values. If ``False``, do not create the new column
-            even if there are null values. Defaults to ``False``.           Defaults to ``mean``.
+            even if there are null values. Defaults to ``False``.
         learn_rounding_scheme (bool):
             Whether or not to learn what place to round to based on the data seen during ``fit``.
             If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
