@@ -20,6 +20,11 @@ class BinaryEncoder(BaseTransformer):
             Indicate what to replace the null values with. If the string ``'mode'`` is given,
             replace them with the most common value.
             Defaults to ``mode``.
+        model_missing_values (bool):
+            **DEPRECATED** Whether to create a new column to indicate which values were null or
+            not. The column will be created only if there are null values. If ``True``, create
+            the new column if there are null values. If ``False``, do not create the new column
+            even if there are null values. Defaults to ``False``.
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
 

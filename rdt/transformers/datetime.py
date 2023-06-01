@@ -21,6 +21,11 @@ class UnixTimestampEncoder(BaseTransformer):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation.
             Defaults to ``mean``.
+        model_missing_values (bool):
+            **DEPRECATED** Whether to create a new column to indicate which values were null or
+            not. The column will be created only if there are null values. If ``True``, create
+            the new column if there are null values. If ``False``, do not create the new column
+            even if there are null values. Defaults to ``False``.
         datetime_format (str):
             The strftime to use for parsing time. For more information, see
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
@@ -162,6 +167,11 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation.
             Defaults to ``mean``.
+        model_missing_values (bool):
+            **DEPRECATED** Whether to create a new column to indicate which values were null or
+            not. The column will be created only if there are null values. If ``True``, create
+            the new column if there are null values. If ``False``, do not create the new column
+            even if there are null values. Defaults to ``False``.
         datetime_format (str):
             The strftime to use for parsing time. For more information, see
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
