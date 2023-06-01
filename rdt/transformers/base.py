@@ -109,6 +109,16 @@ class BaseTransformer:
             'reverse_transform': np.random.RandomState(self.random_seed + 1)
         }
 
+    @property
+    def model_missing_values(self):
+        """Return whether or not a new column is being used to model missing values."""
+        warnings.warn(
+            "Future versions of RDT will not support the 'model_missing_values' parameter. "
+            "Please switch to using the 'missing_value_generation' parameter instead.",
+            FutureWarning
+        )
+        return self.missing_value_generation == 'from_column'
+
     def _set_missing_value_generation(self, missing_value_generation):
         if missing_value_generation not in (None, 'from_column', 'random'):
             raise TransformerInputError(
@@ -325,7 +335,7 @@ class BaseTransformer:
         instanced = {
             key: getattr(self, key)
             for key in keys
-            if hasattr(self, key)
+            if key != 'model_missing_values'  # Remove after deprecation
         }
 
         if defaults == instanced:
