@@ -1360,6 +1360,7 @@ class TestHyperTransformer(TestCase):
         instance._fitted = True
         instance._modified_config = False
         instance._subset.return_value = False
+        instance.random_state = {}
 
         random_element = AnonymizedFaker(
             function_name='random_element',
@@ -1367,6 +1368,7 @@ class TestHyperTransformer(TestCase):
         )
         random_element.columns = ['random_element']
         random_element.output_columns = []
+        random_element.set_random_state(np.random.RandomState(42), 'reverse_transform')
 
         regex_id = RegexGenerator(regex_format='id_[0-9]')
         regex_id.reset_randomization()

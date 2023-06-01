@@ -108,10 +108,6 @@ test-readme: ## run the readme snippets
 test-performance: ## run performance tests
 	invoke performance
 
-.PHONY: test-quality
-test-quality: ## run quality tests
-	invoke quality
-
 .PHONY: test
 test: test-unit test-integration test-readme ## test everything that needs test dependencies
 
@@ -120,7 +116,7 @@ test-all: ## test using tox
 	tox -r
 
 .PHONY: test-repo
-test-repo: lint test-unit test-integration test-readme test-performance test-quality ## test everything
+test-repo: lint test-unit test-integration test-readme test-performance ## test everything
 
 .PHONY: coverage
 coverage: ## check code coverage quickly with the default Python

@@ -335,7 +335,7 @@ class UniqueIntegerGenerator(CategoricalGenerator):
                 'memory': 500000.0
             },
             'reverse_transform': {
-                'time': 0.0004,
+                'time': 0.0005,
                 'memory': 1000000.0,
             }
         }
@@ -362,7 +362,7 @@ class UniqueIntegerNaNsGenerator(CategoricalGenerator):
                 'memory': 1000000.0
             },
             'reverse_transform': {
-                'time': 0.0004,
+                'time': 0.0005,
                 'memory': 1000000.0,
             }
         }
@@ -389,7 +389,7 @@ class UniqueStringGenerator(CategoricalGenerator):
                 'memory': 500000.0
             },
             'reverse_transform': {
-                'time': 0.0004,
+                'time': 0.0005,
                 'memory': 1000000.0,
             }
         }

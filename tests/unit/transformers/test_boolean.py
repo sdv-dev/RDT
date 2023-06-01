@@ -16,8 +16,17 @@ class TestBinaryEncoder(TestCase):
 
         # Asserts
         error_message = 'Unexpected missing_value_replacement'
+        error_generation = 'Unexpected missing_value_generation'
         assert transformer.missing_value_replacement == 'mode', error_message
-        assert not transformer.model_missing_values, 'model_missing_values is False by default'
+        assert transformer.missing_value_generation == 'random', error_generation
+
+    def test___init___model_missing_value_passed(self):
+        """Test when model missing value is passed to the init."""
+        # Run
+        transformer = BinaryEncoder(model_missing_values=True)
+
+        # Assert
+        transformer.missing_value_generation == 'from_column'
 
     def test__fit_missing_value_replacement_not_ignore(self):
         """Test _fit missing_value_replacement not equal to ignore"""
@@ -45,10 +54,14 @@ class TestBinaryEncoder(TestCase):
         error_msg = 'Unexpected fill value'
         assert transformer.null_transformer._missing_value_replacement == 0, error_msg
 
-    def test__fit_model_missing_values(self):
-        """Test output_properties contains 'is_null' column when model_missing_values=True."""
+    def test__fit_missing_value_generation_from_column(self):
+        """Test output_properties contains 'is_null' column.
+
+        When missing_value_generation is 'from_column' the expected output is to have an extra
+        column.
+        """
         # Setup
-        transformer = BinaryEncoder(model_missing_values=True)
+        transformer = BinaryEncoder(missing_value_generation='from_column')
         data = pd.Series([True, np.nan])
 
         # Run

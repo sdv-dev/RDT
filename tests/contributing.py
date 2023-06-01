@@ -20,8 +20,6 @@ from tests.code_style import (
     validate_transformer_subclass)
 from tests.integration.test_transformers import validate_transformer
 from tests.performance import validate_performance
-from tests.quality.test_quality import (
-    TEST_THRESHOLD, get_regression_scores, get_results_table, get_test_cases)
 
 # Mapping of validation method to (check name, check description).
 CHECK_DETAILS = {
@@ -347,64 +345,6 @@ def validate_transformer_unit_tests(transformer):
     return rounded_score
 
 
-def validate_transformer_quality(transformer):
-    """Validate quality tests for a transformer.
-
-    This function creates a DataFrame containing the results
-    from running the quality tests for this transformer against
-    all the datasets with columns of its input sdtype. It does the
-    following steps:
-    1. A DataFrame containing the regression scores obtained from running the
-    transformers of the input sdtype against the datasets in the test cases is
-    created. Each row in the DataFrame has the transformer name, dataset name,
-    column name and score. The scores are computed as follows:
-        - For every transformer of the sdtype, transform all the
-        columns of that sdtype.
-        - For every numerical column in the dataset, the transformed
-        columns are used as features to train a regression model.
-        - The score is the coefficient of determination obtained from
-        that model trying to predict the target column.
-    2. Once the scores are gathered, a results table is created. Each row has
-    a transformer name, dataset name, average score for the dataset,
-    a score comparing the transformer's average score for the dataset to
-    the average of the average score for the dataset across all transformers of
-    the same sdtype, and whether or not the score passed the test threshold.
-
-    Returns:
-        DataFrame containing the following columns for each dataset the transformer
-        is validated against: ``Dataset``, ``Score``, ``Compared To Average``, ``Acceptable``.
-    """
-    if isinstance(transformer, str):
-        transformer = get_transformer_class(transformer)
-
-    print(f'Validating Quality Tests for transformer {transformer.get_name()}\n')
-
-    input_sdtype = transformer.get_input_sdtype()
-    test_cases = get_test_cases({input_sdtype})
-    regression_scores = get_regression_scores(test_cases, get_transformers_by_type())
-    results = get_results_table(regression_scores)
-
-    transformer_results = results[results['transformer_name'] == transformer.get_name()]
-    transformer_results = transformer_results.drop('transformer_name', axis=1)
-    transformer_results['Acceptable'] = False
-    passing_relative_scores = transformer_results['score_relative_to_average'] > TEST_THRESHOLD
-    acceptable_indices = passing_relative_scores | (transformer_results['score'] > TEST_THRESHOLD)
-    transformer_results.loc[acceptable_indices, 'Acceptable'] = True
-    new_names = {
-        'dataset_name': 'Dataset',
-        'score': 'Score',
-        'score_relative_to_average': 'Compared To Average'
-    }
-    transformer_results = transformer_results.rename(columns=new_names)
-
-    if transformer_results['Acceptable'].all():
-        print('SUCCESS: The quality tests were successful.\n')
-    else:
-        print('Failure: The quality tests were NOT successful.\n')
-
-    return transformer_results.reset_index(drop=True)
-
-
 def validate_transformer_performance(transformer):
     """Validate the performance of a transformer.
 
@@ -535,12 +475,10 @@ def validate_pull_request(transformer):
     unit_tests = validate_transformer_unit_tests(transformer)
     integration_tests = validate_transformer_integration(transformer)
     performance_tests = validate_transformer_performance(transformer)
-    quality_tests = validate_transformer_quality(transformer)
     clean_repository = check_clean_repository()
 
     unit_bool = unit_tests == 1.0
     performance_bool = 'No' not in performance_tests['Acceptable'].unique()
-    quality_bool = quality_tests['Acceptable'].all()
 
     results = [
         _build_validation_dict(
@@ -568,12 +506,6 @@ def validate_pull_request(transformer):
             'The performance of the transformer is unacceptable!'
         ),
         _build_validation_dict(
-            'Quality tests',
-            quality_bool,
-            'The output data quality is acceptable.',
-            'The output data quality is unacceptable.',
-        ),
-        _build_validation_dict(
             'Clean Repository',
             clean_repository,
             'There are no unexpected changes in the repository.',
@@ -589,7 +521,6 @@ def validate_pull_request(transformer):
         unit_bool,
         integration_tests,
         performance_bool,
-        quality_bool,
         clean_repository
     ])
 

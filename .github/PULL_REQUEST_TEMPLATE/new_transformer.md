@@ -11,7 +11,6 @@ __sdtype__: (replace this with the sdtype that your new transformer handles)
 - [ ] If the sdtype that this Transformer addresses is new, have you added Dataset Generators and Real World Datasets for this new sdtype?
 - [ ] Have you successfully run the Integration tests on your Transformer?
 - [ ] Have you run the Performance tests, and optimized your transformer according to the [Common Performance Pitfalls](https://github.com/sdv-dev/RDT/blob/master/CONTRIBUTING.rst#common-performance-pitfalls)?
-- [ ] Have you run and tried to optimize the results of the Quality tests of your Transformer, if applicable?
 
 ----
 Please follow the [Contributing Guide](https://github.com/sdv-dev/RDT/blob/master/CONTRIBUTING.rst#contributing) to add a new transformer.

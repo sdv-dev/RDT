@@ -120,7 +120,7 @@ class AnonymizedFaker(BaseTransformer):
 
         return getattr(self.faker, self.function_name)(**self.function_kwargs)
 
-    def _set_seed(self, data):
+    def _set_faker_seed(self, data):
         hash_value = self.get_input_column()
         for value in data.head(5):
             hash_value += str(value)
@@ -136,7 +136,7 @@ class AnonymizedFaker(BaseTransformer):
             data (pandas.Series):
                 Data to fit to.
         """
-        self._set_seed(data)
+        self._set_faker_seed(data)
         self.data_length = len(data)
 
     def _transform(self, _data):
@@ -255,7 +255,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
-        self._set_seed(columns_data)
+        self._set_faker_seed(columns_data)
         unique_values = columns_data[columns_data.notna()].unique()
         unique_data_length = len(unique_values)
         try:

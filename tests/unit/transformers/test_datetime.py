@@ -12,28 +12,31 @@ from rdt.transformers.null import NullTransformer
 class TestUnixTimestampEncoder:
 
     def test___init__(self):
-        """Test the ``__init__`` method.
-
-        Validate the passed arguments are stored as attributes.
-
-        Setup:
-            - initialize a ``UnixTimestampEncoder`` with values for each parameter.
-
-        Side effect:
-            - the ``missing_value_replacement`` attribute has been assigned as ``'mode'``.
-            - the ``model_missing_values`` attribute has been assigned as True.
-            - the ``datetime_format`` attribute has been assigned.
-        """
-        # Setup
+        """Test the ``__init__`` method and the passed arguments are stored as attributes."""
+        # Run
         transformer = UnixTimestampEncoder(
             missing_value_replacement='mode',
-            model_missing_values=True,
+            missing_value_generation='from_column',
             datetime_format='%M-%d-%Y'
         )
 
         # Asserts
         assert transformer.missing_value_replacement == 'mode'
-        assert transformer.model_missing_values is True
+        assert transformer.missing_value_generation == 'from_column'
+        assert transformer.datetime_format == '%M-%d-%Y'
+
+    def test___init__with_model_missing_values(self):
+        """Test the ``__init__`` method and the passed arguments are stored as attributes."""
+        # Run
+        transformer = UnixTimestampEncoder(
+            missing_value_replacement='mode',
+            model_missing_values=False,
+            datetime_format='%M-%d-%Y'
+        )
+
+        # Asserts
+        assert transformer.missing_value_replacement == 'mode'
+        assert transformer.missing_value_generation == 'random'
         assert transformer.datetime_format == '%M-%d-%Y'
 
     def test__convert_to_datetime(self):
@@ -248,15 +251,6 @@ class TestUnixTimestampEncoder:
         ``NullTransformer`` with the correct attributes, (2) calls the
         ``self.null_transformer``'s ``fit`` method, and (3) calls the
         ``_transform_helper`` method with the transformed data.
-
-        Input:
-            - a pandas Series.
-
-        Side effects:
-            - sets ``self.null_transformer`` to the ``NullTransformer`` with
-            the correct attributes.
-            - calls the ``self.null_transformer``'s ``fit`` method.
-            - calls the ``_transform_helper`` method with the transformed data.
         """
         # Setup
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
@@ -266,7 +260,7 @@ class TestUnixTimestampEncoder:
         transformer._fit(data)
 
         # Assert
-        null_transformer_mock.assert_called_once_with('mean', False)
+        null_transformer_mock.assert_called_once_with('mean', 'random')
         assert null_transformer_mock.return_value.fit.call_count == 1
         np.testing.assert_allclose(
             null_transformer_mock.return_value.fit.call_args_list[0][0][0],
@@ -314,10 +308,14 @@ class TestUnixTimestampEncoder:
         )
         assert transformer.datetime_format == '%Y-%m-%d'
 
-    def test__fit_model_missing_values(self):
-        """Test output_properties contains 'is_null' column when model_missing_values=True."""
+    def test__fit_missing_value_generation(self):
+        """Test output_properties contains 'is_null' column.
+
+        When missing_value_generation is 'from_column' the expected output is to have an extra
+        column.
+        """
         # Setup
-        transformer = UnixTimestampEncoder(model_missing_values=True)
+        transformer = UnixTimestampEncoder(missing_value_generation='from_column')
         data = pd.Series(['2020-02-01', np.nan])
 
         # Run
@@ -334,18 +332,6 @@ class TestUnixTimestampEncoder:
 
         Validate that this method calls the ``null_transformer.transform`` method.
         It should also check that the final output is correct.
-
-        Setup:
-            - mock behavior of ``_fit``.
-
-        Input:
-            - a pandas Series.
-
-        Output:
-            - a numpy array containing the transformed data.
-
-        Side effect:
-            - calls the ``null_transformer.transform`` method with the transformed data.
         """
         # Setup
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
@@ -366,12 +352,6 @@ class TestUnixTimestampEncoder:
         """Test the ``_reverse_transform`` method with ``None`` values.
 
         Validate that the method transforms ``None`` into ``NaT``.
-
-        Input:
-            - A ``pd.Series`` with ``None`` as a value.
-
-        Output:
-            - A ``DatetimeIndex`` with ``NaT`` as a value.
         """
         # Setup
         ute = UnixTimestampEncoder()
@@ -388,12 +368,6 @@ class TestUnixTimestampEncoder:
         """Test the ``_reverse_transform`` method.
 
         Validate that the method correctly reverse transforms.
-
-        Input:
-            - a numpy array.
-
-        Output:
-            - a pandas ``DatetimeIndex`` of the correct datetimes.
         """
         # Setup
         ute = UnixTimestampEncoder()
@@ -408,17 +382,7 @@ class TestUnixTimestampEncoder:
         pd.testing.assert_series_equal(output, expected)
 
     def test__reverse_transform_datetime_format_dtype_is_datetime(self):
-        """Test the ``_reverse_transform`` method returns the correct datetime format.
-
-        Setup:
-            - Set the instance to have a different ``datetime_format``.
-
-        Input:
-            - a numpy array of integers.
-
-        Output:
-            - a pandas ``Series`` of the datetimes in the right format.
-        """
+        """Test the ``_reverse_transform`` method returns the correct datetime format."""
         # Setup
         ute = UnixTimestampEncoder()
         ute.datetime_format = '%b %d, %Y'
@@ -434,17 +398,7 @@ class TestUnixTimestampEncoder:
         pd.testing.assert_series_equal(output, expected)
 
     def test__reverse_transform_datetime_format(self):
-        """Test the ``_reverse_transform`` method returns the correct datetime format.
-
-        Setup:
-            - Set the instance to have a different ``datetime_format``.
-
-        Input:
-            - a numpy array of integers.
-
-        Output:
-            - a pandas ``Series`` of the datetimes in the right format.
-        """
+        """Test the ``_reverse_transform`` method returns the correct datetime format."""
         # Setup
         ute = UnixTimestampEncoder()
         ute.datetime_format = '%b %d, %Y'
@@ -460,17 +414,7 @@ class TestUnixTimestampEncoder:
         pd.testing.assert_series_equal(output, expected)
 
     def test__reverse_transform_datetime_format_with_strftime_formats(self):
-        """Test the ``_reverse_transform`` method returns the correct datetime format.
-
-        Setup:
-            - Set the instance to have a different ``datetime_format`` which includes `-` on it.
-
-        Input:
-            - a numpy array of integers.
-
-        Output:
-            - a pandas ``Series`` of the datetimes in the right format.
-        """
+        """Test the ``_reverse_transform`` method returns the correct datetime format."""
         # Setup
         ute = UnixTimestampEncoder()
         ute.datetime_format = '%b %-d, %Y'
@@ -495,12 +439,6 @@ class TestOptimizedTimestampEncoder:
         Find the greatest common denominator out of these values: [10] * 9 + [60, 60, 24],
         where each consecutive value in the list is multiplied by the previous one
         (so 10, 100, 1000, etc).
-
-        Input:
-            - a numpy array.
-
-        Side effect:
-            - sets ``self.divider`` to the correct divider.
         """
         # Setup
         data = np.array([100, 7919])
@@ -517,12 +455,6 @@ class TestOptimizedTimestampEncoder:
 
         Validate the helper method produces the values stripped to the smallest
         non-zero time unit.
-
-        Input:
-            - a pandas series of datetimes.
-
-        Output:
-            - a pandas series of the transformed datetimes.
         """
         # Setup
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
@@ -541,12 +473,6 @@ class TestOptimizedTimestampEncoder:
 
         Validate the helper produces the values multiplied by the
         smallest non-zero time unit.
-
-        Input:
-            - a pandas series of timestamps.
-
-        Output:
-            - a numpy array of the values multiplied by ``self.divider``.
         """
         # Setup
         data = pd.Series([18262., 18293., 18322.])

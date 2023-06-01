@@ -1,12 +1,15 @@
 """BaseTransformer module."""
 import abc
 import contextlib
+import hashlib
 import inspect
 import warnings
 from functools import wraps
 
 import numpy as np
 import pandas as pd
+
+from rdt.errors import TransformerInputError
 
 
 @contextlib.contextmanager
@@ -65,21 +68,21 @@ class BaseTransformer:
     INPUT_SDTYPE = None
     SUPPORTED_SDTYPES = None
     IS_GENERATOR = None
-    INITIAL_FIT_STATE = np.random.RandomState(seed=21)
-    INITIAL_TRANSFORM_STATE = np.random.RandomState(seed=80)
-    INITIAL_REVERSE_TRANSFORM_STATE = np.random.RandomState(seed=130)
+    INITIAL_FIT_STATE = np.random.RandomState(42)
 
     columns = None
     column_prefix = None
     output_columns = None
+    random_seed = 42
     missing_value_replacement = None
+    missing_value_generation = None
 
     def __init__(self):
         self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
-            'transform': self.INITIAL_TRANSFORM_STATE,
-            'reverse_transform': self.INITIAL_REVERSE_TRANSFORM_STATE
+            'transform': None,
+            'reverse_transform': None
         }
 
     def set_random_state(self, state, method_name):
@@ -100,9 +103,41 @@ class BaseTransformer:
 
     def reset_randomization(self):
         """Reset the random state for ``reverse_transform``."""
-        self.set_random_state(self.INITIAL_FIT_STATE, 'fit')
-        self.set_random_state(self.INITIAL_TRANSFORM_STATE, 'transform')
-        self.set_random_state(self.INITIAL_REVERSE_TRANSFORM_STATE, 'reverse_transform')
+        self.random_states = {
+            'fit': self.INITIAL_FIT_STATE,
+            'transform': np.random.RandomState(self.random_seed),
+            'reverse_transform': np.random.RandomState(self.random_seed + 1)
+        }
+
+    @property
+    def model_missing_values(self):
+        """Return whether or not a new column is being used to model missing values."""
+        warnings.warn(
+            "Future versions of RDT will not support the 'model_missing_values' parameter. "
+            "Please switch to using the 'missing_value_generation' parameter instead.",
+            FutureWarning
+        )
+        return self.missing_value_generation == 'from_column'
+
+    def _set_missing_value_generation(self, missing_value_generation):
+        if missing_value_generation not in (None, 'from_column', 'random'):
+            raise TransformerInputError(
+                "'missing_value_generation' must be one of the following values: "
+                "None, 'from_column' or 'random'."
+            )
+
+        self.missing_value_generation = missing_value_generation
+
+    def _set_model_missing_values(self, model_missing_values):
+        warnings.warn(
+            "Future versions of RDT will not support the 'model_missing_values' parameter. "
+            "Please switch to using the 'missing_value_generation' parameter to select your "
+            'strategy.', FutureWarning
+        )
+        if model_missing_values is True:
+            self._set_missing_value_generation('from_column')
+        elif model_missing_values is False:
+            self._set_missing_value_generation('random')
 
     def _set_missing_value_replacement(self, default, missing_value_replacement):
         if missing_value_replacement is None:
@@ -297,7 +332,11 @@ class BaseTransformer:
         keys = args.args[1:]
         defaults = args.defaults or []
         defaults = dict(zip(keys, defaults))
-        instanced = {key: getattr(self, key) for key in keys}
+        instanced = {
+            key: getattr(self, key)
+            for key in keys
+            if key != 'model_missing_values'  # Remove after deprecation
+        }
 
         if defaults == instanced:
             return f'{class_name}()'
@@ -318,6 +357,19 @@ class BaseTransformer:
         """
         raise NotImplementedError()
 
+    def _set_seed(self, data):
+        hash_value = self.get_input_column()
+        for value in data.head(5):
+            hash_value += str(value)
+
+        hash_value = int(hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16)
+        self.random_seed = hash_value % ((2 ** 32) - 1)  # maximum value for a seed
+        self.random_states = {
+            'fit': self.INITIAL_FIT_STATE,
+            'transform': np.random.RandomState(self.random_seed),
+            'reverse_transform': np.random.RandomState(self.random_seed + 1)
+        }
+
     @random_state
     def fit(self, data, column):
         """Fit the transformer to a ``column`` of the ``data``.
@@ -329,6 +381,7 @@ class BaseTransformer:
                 Column name. Must be present in the data.
         """
         self._store_columns(column, data)
+        self._set_seed(data)
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
         self._build_output_columns(data)

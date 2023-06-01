@@ -22,23 +22,35 @@ class UnixTimestampEncoder(BaseTransformer):
             are given, replace them with the corresponding aggregation.
             Defaults to ``mean``.
         model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not. The column
-            will be created only if there are null values. If ``True``, create the new column if
-            there are null values. If ``False``, do not create the new column even if there
-            are null values. Defaults to ``False``.
+            **DEPRECATED** Whether to create a new column to indicate which values were null or
+            not. The column will be created only if there are null values. If ``True``, create
+            the new column if there are null values. If ``False``, do not create the new column
+            even if there are null values. Defaults to ``False``.
         datetime_format (str):
             The strftime to use for parsing time. For more information, see
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
+        missing_value_generation (str or None):
+            The way missing values are being handled. There are three strategies:
+
+                * ``random``: Randomly generates missing values based on the percentage of
+                  missing values.
+                * ``from_column``: Creates a binary column that describes whether the original
+                  value was missing. Then use it to recreate missing values.
+                * ``None``: Do nothing with the missing values on the reverse transform. Simply
+                  pass whatever data we get through.
     """
 
     INPUT_SDTYPE = 'datetime'
     null_transformer = None
 
-    def __init__(self, missing_value_replacement='mean', model_missing_values=False,
-                 datetime_format=None):
+    def __init__(self, missing_value_replacement='mean', model_missing_values=None,
+                 datetime_format=None, missing_value_generation='random'):
         super().__init__()
         self._set_missing_value_replacement('mean', missing_value_replacement)
-        self.model_missing_values = model_missing_values
+        self._set_missing_value_generation(missing_value_generation)
+        if model_missing_values is not None:
+            self._set_model_missing_values(model_missing_values)
+
         self.datetime_format = datetime_format
         self._dtype = None
 
@@ -94,7 +106,7 @@ class UnixTimestampEncoder(BaseTransformer):
         transformed = self._transform_helper(data)
         self.null_transformer = NullTransformer(
             self.missing_value_replacement,
-            self.model_missing_values
+            self.missing_value_generation
         )
         self.null_transformer.fit(transformed)
         if self.null_transformer.models_missing_values():
@@ -156,20 +168,30 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
             are given, replace them with the corresponding aggregation.
             Defaults to ``mean``.
         model_missing_values (bool):
-            Whether to create a new column to indicate which values were null or not. The column
-            will be created only if there are null values. If ``True``, create the new column if
-            there are null values. If ``False``, do not create the new column even if there
-            are null values. Defaults to ``False``.
+            **DEPRECATED** Whether to create a new column to indicate which values were null or
+            not. The column will be created only if there are null values. If ``True``, create
+            the new column if there are null values. If ``False``, do not create the new column
+            even if there are null values. Defaults to ``False``.
         datetime_format (str):
             The strftime to use for parsing time. For more information, see
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
+        missing_value_generation (str or None):
+            The way missing values are being handled. There are three strategies:
+
+                * ``random``: Randomly generates missing values based on the percentage of
+                  missing values.
+                * ``from_column``: Creates a binary column that describes whether the original
+                  value was missing. Then use it to recreate missing values.
+                * ``None``: Do nothing with the missing values on the reverse transform. Simply
+                  pass whatever data we get through.
     """
 
     divider = None
 
-    def __init__(self, missing_value_replacement=None, model_missing_values=False,
-                 datetime_format=None):
+    def __init__(self, missing_value_replacement=None, model_missing_values=None,
+                 datetime_format=None, missing_value_generation='random'):
         super().__init__(missing_value_replacement=missing_value_replacement,
+                         missing_value_generation=missing_value_generation,
                          model_missing_values=model_missing_values,
                          datetime_format=datetime_format)
 

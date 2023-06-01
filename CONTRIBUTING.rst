@@ -175,10 +175,9 @@ class uses. In some cases, integration tests may also be required. More details 
 found below.
 
 If the transformer adds a previously unsupported `sdtype` to RDT, then more steps will need
-to be taken for the quality and performance tests. A new `DatasetGenerator` class may need to
-be created for the `sdtype`. You may also need to find a real world dataset containing this
-`sdtype` and request for it to be added. More details for these steps can be found below in
-the `Transformer Performance`_ and `Transformer Quality`_ sections respectively.
+to be taken for performance tests. A new `DatasetGenerator` class may need to be created for
+the `sdtype`. More details for these steps can be found below in the `Transformer Performance`_
+section.
 
 Transformer Validations
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -418,64 +417,6 @@ of the transformer.
 Fix any performance issues that are reported. If there are no errors but performance
 can be improved, this function should be used for reference.
 
-.. _Transformer Quality:
-
-Transformer Quality
-"""""""""""""""""""
-
-To assess the quality of a transformer, we run quality tests that apply the Transformer
-on all the real world datasets that contain the Transformer input sdtype. The quality tests
-look at how well the original correlations are preserved by using transformed data to train
-regression models that predict other columns in the data. We compare the transformer's quality
-results to that of other transformers of the same sdtype.
-
-.. _Adding a Dataset:
-
-Adding a Dataset
-****************
-
-If the transformer you are creating adds a new sdtype, then a dataset with that sdtype may need to
-be added for the quality tests. This only needs to be done if the transformer being added is 
-expected to preserve or expose relationships in the data. This can be done using the following
-steps:
-
-1. Find a dataset containing the sdtype your transformer uses as an input.
-
-2. Test your transformer against this dataset by loading it into a ``DataFrame`` and using the
-   ``get_transformer_regression_scores`` in the ``test_quality`` package::
-
-    from tests.quality.test_quality import get_transformer_regression_scores
-    get_transformer_regression_scores(data, sdtype, dataset_name, [transformer])
-
-3. If the scores are higher than the ``TEST_THRESHOLD`` in the ``test_quality`` package, contact
-   one of the `RDT core contributors`_ on GitHub and ask them to add the dataset. Once this is
-   done, the quality tests should pass.
-
-Validating Quality
-******************
-
-Validate the quality of your transformer using the ``validate_transformer_quality`` function.
-This function returns a ``pandas.DataFrame`` containing the scores attained by the transformer
-on each dataset, how that score compares to average and whether or not it is acceptable.
-
-.. code-block:: Python
-
-   In [1]: from tests.contributing import validate_transformer_quality
-
-   In [2]: results = validate_transformer_quality('rdt.transformers.FrequencyEncoder') # Replace FrequencyEncoder with your transformer
-   Validating Quality Tests for transformer FrequencyEncoder
-
-   SUCCESS: The quality tests were successful.
-
-   In [3]: results
-   Out [3]:
-                     Dataset     Score  Compared To Average  Acceptable
-   0                   adult  0.223325             0.443181        True
-   1      student_placements  0.457490             0.994631        True
-   2  student_placements_pii  0.457490             0.988428        True
-
-Fix any quality issues that are reported.
-
 Finalize Your Transformer
 """""""""""""""""""""""""
 
@@ -496,7 +437,6 @@ above. It also prints a table summarizing the results of all these checks.
    Unit Tests         Yes        The unit tests are correct and run successfully.
    Integration tests  Yes        The integration tests run successfully.
    Performance Tests  Yes        The performance of the transformer is acceptable.
-   Quality tests      Yes        The output data quality is acceptable.
    Clean Repository   Yes        There are no unexpected changes in the repository.
 
    SUCCESS: The Pull Request can be made!
@@ -528,14 +468,8 @@ Summary of Steps to Add a New Transformer
 10. Run the ``validate_transformer_performance`` function and fix any errors reported.
     If there are no errors but performance can be improved, this function should be used for
     reference.
-11. If this transformer is expected to help preserve relationships in the data, run the
-    ``validate_transformer_quality`` function. If the quality is too low, make the
-    necessary enhancements to the transformer.
-12. If the quality tests fail because there is no dataset for the transformer's sdtype,
-    follow the steps in the `Adding a Dataset`_ section to add a real world dataset
-    containing the new sdtype to the quality tests.
-13. Run the ``validate_pull_request`` function as a final check and fix any errors reported.
-14. After all the previous steps pass, all the new and modified files can be committed and pushed
+11. Run the ``validate_pull_request`` function as a final check and fix any errors reported.
+12. After all the previous steps pass, all the new and modified files can be committed and pushed
     to github, and a Pull Request can be submitted. Follow the steps in the
     `Pull Request Guidelines`_ section to submit your Pull Request.
 

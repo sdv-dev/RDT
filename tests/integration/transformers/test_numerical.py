@@ -6,13 +6,13 @@ from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, G
 
 class TestFloatFormatter:
 
-    def test_model_missing_values(self):
+    def test_missing_value_generation_from_column(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
         nt = FloatFormatter(
             missing_value_replacement='mean',
-            model_missing_values=True,
+            missing_value_generation='from_column',
         )
         nt.fit(data, column)
         transformed = nt.transform(data)
@@ -39,7 +39,7 @@ class TestFloatFormatter:
         reverse = nt.reverse_transform(transformed)
         assert list(reverse['a']) == [1, 2, 1, 2, 1]
 
-    def test_int_nan_not_model_missing_values(self):
+    def test_int_nan_not_missing_value_generation(self):
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
         column = 'a'
 
@@ -70,6 +70,44 @@ class TestFloatFormatter:
         reverse = nt.reverse_transform(transformed)
         assert list(reverse['a']) == [1, 2, 1, 2, 1]
 
+    def test_missing_value_generation_none(self):
+        """Test when ``missing_value_generation`` is ``None``.
+
+        When ``missing_value_generation`` is ``None`` we are expecting to have
+        ``None`` or null values in our ``transformed`` data.
+        """
+        # Setup
+        data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
+        column = 'a'
+        fft = FloatFormatter(missing_value_generation=None)
+        fft.fit(data, column)
+
+        # Run
+        transformed = fft.transform(data)
+
+        # Assert
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (6, 1)
+        assert pd.isna(transformed['a'].iloc[5])
+
+    def test_model_missing_value(self):
+        """Test that we are still able to use ``model_missing_value``."""
+        # Setup
+        data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
+        column = 'a'
+
+        # Run
+        nt = FloatFormatter('mean', True)
+        nt.fit(data, column)
+        transformed = nt.transform(data)
+        reverse = nt.reverse_transform(transformed)
+
+        # Assert
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (6, 2)
+        assert list(transformed.iloc[:, 1]) == [0, 0, 0, 0, 1, 0]
+        np.testing.assert_array_almost_equal(reverse, data, decimal=2)
+
 
 class TestGaussianNormalizer:
 
@@ -91,11 +129,11 @@ class TestGaussianNormalizer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
-    def test_model_missing_values(self):
+    def test_missing_value_generation_from_column(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianNormalizer(model_missing_values=True)
+        ct = GaussianNormalizer(missing_value_generation='from_column')
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -107,11 +145,11 @@ class TestGaussianNormalizer:
 
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
-    def test_not_model_missing_values(self):
+    def test_missing_value_generation_random(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
-        ct = GaussianNormalizer(model_missing_values=False)
+        ct = GaussianNormalizer(missing_value_generation='random')
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -119,7 +157,8 @@ class TestGaussianNormalizer:
         assert transformed.shape == (6, 1)
 
         reverse = ct.reverse_transform(transformed)
-        expected = pd.DataFrame([np.nan, 2, 1, np.nan, 1.4, 1], columns=['a'])
+        expected = pd.DataFrame(
+            [1., 1.9999999510423996, 1., 1.9999999510423996, 1.4, 1.], columns=['a'])
         pd.testing.assert_frame_equal(reverse, expected)
 
     def test_int(self):
@@ -140,7 +179,7 @@ class TestGaussianNormalizer:
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
         column = 'a'
 
-        ct = GaussianNormalizer(model_missing_values=True)
+        ct = GaussianNormalizer(missing_value_generation='from_column')
         ct.fit(data, column)
         transformed = ct.transform(data)
 
@@ -184,7 +223,7 @@ class TestClusterBasedNormalizer:
         data[mask] = np.nan
         column = 'col'
 
-        bgmm_transformer = ClusterBasedNormalizer(model_missing_values=True)
+        bgmm_transformer = ClusterBasedNormalizer(missing_value_generation='from_column')
         bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
