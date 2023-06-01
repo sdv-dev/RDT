@@ -2,6 +2,12 @@
 
 ## 1.5.0 - 2023-06-01
 
+This release adds a new parameter called `missing_value_generation` to the initialization of certain transformers to specify how missing values should be created. The parameter can be used in the `FloatFormatter`, `BinaryEncoder`, `UnixTimestampEncoder`, `OptimizedTimestampEncoder`, `GaussianNormalizer` and `ClusterBasedNormalizer`. Additionally, it fixes a bug that was causing every column that had nulls to generate them in the same place.
+
+### Deprecations
+
+* The `model_missing_values` parameter is being deprecated in favor of the new `missing_value_generation` parameter.
+
 ### Bugs
 
 * Fix randomization when creating null values - Issue [#639](https://github.com/sdv-dev/RDT/issues/639) by @fealho
