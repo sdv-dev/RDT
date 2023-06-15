@@ -164,8 +164,10 @@ def _find_addons():
             warnings.warn(msg)
             continue
 
-        if isinstance(addon, ModuleType) and addon.__name__ not in sys.modules:
-            sys.modules[addon.__name__] = addon
+        if isinstance(addon, ModuleType):
+            addon_module_name = f'{addon_target.__name__}.{addon_name}'
+            if addon_module_name not in sys.modules:
+                sys.modules[addon_module_name] = addon
 
         setattr(addon_target, addon_name, addon)
 
