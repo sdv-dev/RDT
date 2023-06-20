@@ -11,6 +11,7 @@ __version__ = '1.5.1.dev0'
 import sys
 import warnings
 from operator import attrgetter
+from types import ModuleType
 
 import numpy as np
 import pandas as pd
@@ -140,7 +141,13 @@ def _get_addon_target(addon_path_name):
 
 
 def _find_addons():
-    """Find and load all RDT add-ons."""
+    """Find and load all RDT add-ons.
+
+    If the add-on is a module, we add it both to the target module and to
+    ``system.modules`` so that they can be imported from the top of a file as follows:
+
+    from top_module.addon_module import x
+    """
     group = 'rdt_modules'
     for entry_point in iter_entry_points(group=group):
         try:
@@ -156,6 +163,11 @@ def _find_addons():
             msg = f"Failed to set '{entry_point.name}': {error}."
             warnings.warn(msg)
             continue
+
+        if isinstance(addon, ModuleType):
+            addon_module_name = f'{addon_target.__name__}.{addon_name}'
+            if addon_module_name not in sys.modules:
+                sys.modules[addon_module_name] = addon
 
         setattr(addon_target, addon_name, addon)
 
