@@ -98,11 +98,11 @@ class NullTransformer():
             data (pandas.Series):
                 Data to transform.
         """
+        self._missing_value_replacement = self._get_missing_value_replacement(data)
         if self._missing_value_generation is not None:
             null_values = data.isna().to_numpy()
             self.nulls = null_values.any()
 
-            self._missing_value_replacement = self._get_missing_value_replacement(data)
             if not self.nulls and self.models_missing_values():
                 self._missing_value_generation = None
                 guidance_message = (
@@ -126,9 +126,6 @@ class NullTransformer():
         Returns:
             numpy.ndarray
         """
-        if self._missing_value_generation is None:
-            return data.to_numpy()
-
         isna = data.isna()
         if isna.any() and self._missing_value_replacement is not None:
             data = data.fillna(self._missing_value_replacement)

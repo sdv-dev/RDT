@@ -7,6 +7,10 @@ from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, G
 class TestFloatFormatter:
 
     def test_missing_value_generation_from_column(self):
+        """Test end to end with ``missing_value_generation`` set to ``from_column``.
+
+        The transform method should create a boolean column for the missing values.
+        """
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
         column = 'a'
 
@@ -26,6 +30,7 @@ class TestFloatFormatter:
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
     def test_int(self):
+        """Test end to end on a column of all ints."""
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
         column = 'a'
 
@@ -39,7 +44,8 @@ class TestFloatFormatter:
         reverse = nt.reverse_transform(transformed)
         assert list(reverse['a']) == [1, 2, 1, 2, 1]
 
-    def test_int_nan_not_missing_value_generation(self):
+    def test_int_nan_default_missing_value_generation(self):
+        """Test that NaNs are randomly inserted in the output."""
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
         column = 'a'
 
@@ -57,6 +63,7 @@ class TestFloatFormatter:
             assert value in {1, 2} or np.isnan(value)
 
     def test_computer_representation(self):
+        """Test that the ``computer_representation`` is learned and applied on the output."""
         data = pd.DataFrame([1, 2, 1, 2, 1], columns=['a'])
         column = 'a'
 
@@ -73,8 +80,7 @@ class TestFloatFormatter:
     def test_missing_value_generation_none(self):
         """Test when ``missing_value_generation`` is ``None``.
 
-        When ``missing_value_generation`` is ``None`` we are expecting to have
-        ``None`` or null values in our ``transformed`` data.
+        When ``missing_value_generation`` is ``None`` the NaNs should be replaced by the mean.
         """
         # Setup
         data = pd.DataFrame([1, 2, 1, 2, 1, np.nan], columns=['a'])
@@ -88,7 +94,7 @@ class TestFloatFormatter:
         # Assert
         assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (6, 1)
-        assert pd.isna(transformed['a'].iloc[5])
+        assert transformed['a'].iloc[5] == 1.4
 
     def test_model_missing_value(self):
         """Test that we are still able to use ``model_missing_value``."""
