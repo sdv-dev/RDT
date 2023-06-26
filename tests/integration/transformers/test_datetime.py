@@ -6,6 +6,7 @@ from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEn
 
 class TestUnixTimestampEncoder:
     def test_unixtimestampencoder(self):
+        """Test the ``UnixTimestampEncoder`` end to end."""
         # Setup
         ute = UnixTimestampEncoder(missing_value_replacement='mean')
         data = pd.DataFrame({'column': pd.to_datetime([None, '1996-10-17', '1965-05-23'])})
@@ -25,6 +26,7 @@ class TestUnixTimestampEncoder:
         pd.testing.assert_frame_equal(reverted, data)
 
     def test_unixtimestampencoder_different_format(self):
+        """Test the ``UnixTimestampEncoder`` with a unique datetime format."""
         ute = UnixTimestampEncoder(missing_value_replacement='mean', datetime_format='%b %d, %Y')
         data = pd.DataFrame({'column': [None, 'Oct 17, 1996', 'May 23, 1965']})
 
@@ -42,7 +44,7 @@ class TestUnixTimestampEncoder:
         pd.testing.assert_frame_equal(reverted, data)
 
     def test_unixtimestampencoder_with_missing_value_generation_none(self):
-        """Test that transformed data will contain null values."""
+        """Test that transformed data will replace nans with the mean."""
         # Setup
         ute = UnixTimestampEncoder(
             missing_value_replacement='mean',
@@ -59,10 +61,13 @@ class TestUnixTimestampEncoder:
 
         # Asserts
         expect_transformed = pd.DataFrame({
-            'column': [None, 845510400000000000, -145497600000000000]
+            'column': [3.500064e+17, 845510400000000000, -145497600000000000]
+        })
+        expected_reversed = pd.DataFrame({
+            'column': ['Feb 03, 1981', 'Oct 17, 1996', 'May 23, 1965']
         })
         pd.testing.assert_frame_equal(expect_transformed, transformed)
-        pd.testing.assert_frame_equal(reverted, data)
+        pd.testing.assert_frame_equal(reverted, expected_reversed)
 
     def test_unixtimestampencoder_with_model_missing_values(self):
         """Test that `model_missing_values` is accepted by the transformer."""
