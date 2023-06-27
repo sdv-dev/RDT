@@ -90,6 +90,47 @@ class TestUnixTimestampEncoder:
         pd.testing.assert_frame_equal(expected_transformed, transformed)
         pd.testing.assert_frame_equal(reverted, data)
 
+    def test_unixtimestampencoder_with_integer_datetimes(self):
+        """Test that the transformer properly handles integer columns."""
+        # Setup
+        ute = UnixTimestampEncoder('mean', True, datetime_format='%m%d%Y')
+        data = pd.DataFrame({'column': [1201992, 11022028, 10011990]})
+
+        # Run
+        ute.fit(data, column='column')
+        ute.set_random_state(np.random.RandomState(7), 'reverse_transform')
+        transformed = ute.transform(data)
+        reverted = ute.reverse_transform(transformed)
+
+        # Asserts
+        expected_transformed = pd.DataFrame({
+            'column': [6.958656e+17, 1.856736e+18, 6.547392e+17],
+        })
+
+        pd.testing.assert_frame_equal(expected_transformed, transformed)
+        pd.testing.assert_frame_equal(reverted, data)
+
+    def test_unixtimestampencoder_with_nans(self):
+        """Test that the transformer properly handles null columns."""
+        # Setup
+        ute = UnixTimestampEncoder('mean', True)
+        data = pd.DataFrame({'column': [np.nan, np.nan, np.nan]})
+
+        # Run
+        ute.fit(data, column='column')
+        ute.set_random_state(np.random.RandomState(7), 'reverse_transform')
+        transformed = ute.transform(data)
+        reverted = ute.reverse_transform(transformed)
+
+        # Asserts
+        expected_transformed = pd.DataFrame({
+            'column': [0., 0., 0.],
+            'column.is_null': [1., 1., 1.]
+        })
+
+        pd.testing.assert_frame_equal(expected_transformed, transformed)
+        pd.testing.assert_frame_equal(reverted, data)
+
 
 class TestOptimizedTimestampEncoder:
     def test_optimizedtimestampencoder(self):
