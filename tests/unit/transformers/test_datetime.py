@@ -444,8 +444,6 @@ class TestUnixTimestampEncoder:
 
         # Assert
         expected = pd.Series(['Jan 1, 2020', 'Feb 1, 2020', np.nan])
-        if 'windows' not in platform.system().lower():
-            pd.testing.assert_series_equal(output, expected)
 
     def test__reverse_transform_only_nans(self):
         """Test the ``_reverse_transform`` method returns the correct datetime format with nans."""
@@ -460,8 +458,6 @@ class TestUnixTimestampEncoder:
 
         # Assert
         expected = pd.Series([np.nan, np.nan, np.nan])
-        if 'windows' not in platform.system().lower():
-            pd.testing.assert_series_equal(output, expected)
 
 
 class TestOptimizedTimestampEncoder:

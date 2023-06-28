@@ -55,6 +55,25 @@ class UnixTimestampEncoder(BaseTransformer):
         self._dtype = None
 
     def _convert_to_datetime(self, data):
+        """Convert datetime column into datetime dtype.
+
+        Convert the datetime column to datetime dtype using the ``datetime_format``.
+        All non-numeric columns will automatically be cast to datetimes. Numeric columns
+        with a ``datetime_format`` will be treated as strings and cast to datetime. Numeric
+        columns without a ``datetime_format`` will be treated as already converted datetimes.
+
+        Args:
+            data (pandas.Series):
+                The datetime column.
+
+        Raises:
+            - ``TypeError`` if data cannot be converted to datetime.
+            - ``ValueError`` if data does not match the specified datetime format
+
+        Returns:
+            pandas.Series:
+                The datetime column converted to the datetime dtype.
+        """
         if self.datetime_format or not is_numeric_dtype(data):
             try:
                 pandas_datetime_format = None
