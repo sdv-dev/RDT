@@ -430,6 +430,37 @@ class TestUnixTimestampEncoder:
         if 'windows' not in platform.system().lower():
             pd.testing.assert_series_equal(output, expected)
 
+    def test__reverse_transform_datetime_format_with_nans(self):
+        """Test the ``_reverse_transform`` method returns the correct datetime format with nans."""
+        # Setup
+        ute = UnixTimestampEncoder()
+        ute.datetime_format = '%b %d, %Y'
+        transformed = np.array([1.5778368e+18, 1.5805152e+18, np.nan])
+        ute._dtype = 'object'
+        ute.null_transformer = NullTransformer('mean')
+
+        # Run
+        output = ute._reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series(['Jan 01, 2020', 'Feb 01, 2020', np.nan])
+        pd.testing.assert_series_equal(output, expected)
+
+    def test__reverse_transform_only_nans(self):
+        """Test the ``_reverse_transform`` method returns the correct datetime format with nans."""
+        # Setup
+        ute = UnixTimestampEncoder()
+        transformed = np.array([np.nan, np.nan, np.nan])
+        ute._dtype = 'float'
+        ute.null_transformer = NullTransformer('mean')
+
+        # Run
+        output = ute._reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series([np.nan, np.nan, np.nan])
+        pd.testing.assert_series_equal(output, expected)
+
 
 class TestOptimizedTimestampEncoder:
 
