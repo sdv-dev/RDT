@@ -222,7 +222,7 @@ class TestAnonymizedFaker:
         assert instance.enforce_uniqueness is False
         assert instance.missing_value_generation == 'random'
 
-    def test__init__error_missing_value_generation(self):
+    def test___init__error_missing_value_generation(self):
         """Test that the ``__init__`` raises an error if the missing value generation is invalid.
 
         Test that the ``__init__`` raises an error if the missing value generation is invalid.
