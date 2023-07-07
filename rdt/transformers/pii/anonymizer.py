@@ -85,7 +85,7 @@ class AnonymizedFaker(BaseTransformer):
             )
 
     def __init__(self, provider_name=None, function_name=None, function_kwargs=None,
-                 locales=None, enforce_uniqueness=False):
+                 locales=None, enforce_uniqueness=False, missing_value_generation='random'):
         super().__init__()
         self.data_length = None
         self.enforce_uniqueness = enforce_uniqueness
@@ -106,6 +106,15 @@ class AnonymizedFaker(BaseTransformer):
         self.faker = faker.Faker(self.locales)
         if self.locales:
             self._check_locales()
+
+        if missing_value_generation not in ['random', None]:
+            raise TransformerInputError(
+                f"Missing value generation '{missing_value_generation}' is not supported "
+                "for AnonymizedFaker. Please use either 'random' or None."
+            )
+
+        self.missing_value_generation = missing_value_generation
+        self.nan_frequency = 0.0
 
     def reset_randomization(self):
         """Create a new ``Faker`` instance."""
@@ -138,6 +147,8 @@ class AnonymizedFaker(BaseTransformer):
         """
         self._set_faker_seed(data)
         self.data_length = len(data)
+        if self.missing_value_generation == 'random':
+            self.nan_frequency = data.isna().sum() / len(data)
 
     def _transform(self, _data):
         """Drop the input column by returning ``None``."""
@@ -169,6 +180,13 @@ class AnonymizedFaker(BaseTransformer):
                 'values. Please use a different Faker function for column '
                 f"('{self.get_input_column()}')."
             ) from exception
+
+        if self.missing_value_generation == 'random':
+            nan_mask = np.random.choice(
+                [True, False], size=sample_size,
+                p=[self.nan_frequency, 1 - self.nan_frequency]
+            )
+            reverse_transformed[nan_mask] = np.nan
 
         return reverse_transformed
 

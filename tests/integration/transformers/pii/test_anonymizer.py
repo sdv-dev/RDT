@@ -71,6 +71,26 @@ def test_anonymizedfaker_with_nans():
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     assert len(reverse_transform['username']) == 5
+    assert reverse_transform['username'].isna().sum() == 2
+
+
+def test_anonymizedfaker_with_nans_missing_value_generation_none():
+    """End to end test settings missing_value_generation=None."""
+    data = pd.DataFrame({
+        'id': [1, 2, 3, 4, 5],
+        'username': ['a', np.nan, 'c', 'd', 'e']
+    })
+
+    instance = AnonymizedFaker(missing_value_generation=None)
+    transformed = instance.fit_transform(data, 'username')
+    reverse_transform = instance.reverse_transform(transformed)
+
+    expected_transformed = pd.DataFrame({
+        'id': [1, 2, 3, 4, 5],
+    })
+
+    pd.testing.assert_frame_equal(transformed, expected_transformed)
+    assert len(reverse_transform['username']) == 5
     assert reverse_transform['username'].isna().sum() == 0
 
 
@@ -102,7 +122,7 @@ def test_anonymizedfaker_custom_provider_with_nans():
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     assert len(reverse_transform['cc']) == 5
-    assert reverse_transform['cc'].isna().sum() == 0
+    assert reverse_transform['cc'].isna().sum() == 1
 
 
 def test_anonymizedfaker_enforce_uniqueness():
