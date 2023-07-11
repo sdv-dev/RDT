@@ -286,8 +286,8 @@ class TestHyperTransformer(TestCase):
         field_transformers = {k: repr(v) for (k, v) in ht.field_transformers.items()}
         assert field_transformers == {
             'col1': 'FloatFormatter()',
-            'col2': 'FrequencyEncoder()',
-            'col3': 'BinaryEncoder()',
+            'col2': 'LabelEncoder(add_noise=True)',
+            'col3': 'LabelEncoder(add_noise=True)',
             'col4': 'UnixTimestampEncoder()',
             'col5': 'FloatFormatter()'
         }
@@ -303,8 +303,8 @@ class TestHyperTransformer(TestCase):
             '    },',
             '    "transformers": {',
             '        "col1": FloatFormatter(),',
-            '        "col2": FrequencyEncoder(),',
-            '        "col3": BinaryEncoder(),',
+            '        "col2": LabelEncoder(add_noise=True),',
+            '        "col3": LabelEncoder(add_noise=True),',
             '        "col4": UnixTimestampEncoder(),',
             '        "col5": FloatFormatter()',
             '    }',

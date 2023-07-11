@@ -92,16 +92,25 @@ def get_transformed_data():
     return pd.DataFrame({
         'integer': [1., 2., 1., 3., 1., 4., 2., 3.],
         'float': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
-        'categorical': [0.3125, 0.3125, .8125, 0.8125, 0.3125, 0.8125, 0.3125, 0.3125],
-        'bool': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+        'categorical': [
+            0.9690758764963199, 0.8816575994729887, 1.1326495454234662, 1.7988488918189502,
+            0.9265972159030215, 1.885454600378942, 0.9280858691537548, 0.5093227924068265
+        ],
+        'bool': [
+            0.26161253184788935, 0.5735484647493089, 0.026673806296574787, 1.197229599974477,
+            0.8860641570557322, 0.33432787358513416, 1.1089412122841389, 0.6182653878449814
+        ],
         'datetime': datetimes,
-        'names': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
+        'names': [
+            0.24180193241041126, 1.9297787196579723, 1.5617500744772101, 0.6811042561384157,
+            0.48017218468846856, 2.2867787591284823, 0.25476586891248476, 0.620052082101593
+        ]
     }, index=TEST_DATA_INDEX)
 
 
 def get_reversed_data():
     data = get_input_data()
-    data['bool'] = data['bool'].astype('object')
+
     return data
 
 
@@ -161,10 +170,19 @@ def test_hypertransformer_default_inputs():
     expected_transformed = pd.DataFrame({
         'integer': [1., 2., 1., 3., 1., 4., 2., 3.],
         'float': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
-        'categorical': [0.3125, 0.3125, 0.9375, 0.75, 0.3125, 0.75, 0.3125, 0.3125],
-        'bool': [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
+        'categorical': [
+            0.9690758764963199, 0.8816575994729887, 1.1326495454234662, 2.7988488918189502,
+            0.9265972159030215, 2.8854546003789423, 0.9280858691537548, 0.5093227924068265
+        ],
+        'bool': [
+            0.26161253184788935, 1.573548464749309, 0.026673806296574787, 2.1972295999744773,
+            0.8860641570557322, 1.334327873585134, 2.108941212284139, 0.6182653878449814
+        ],
         'datetime': expected_datetimes,
-        'names': [0.3125, 0.75, 0.75, 0.3125, 0.3125, 0.9375, 0.3125, 0.3125]
+        'names': [
+            0.24180193241041126, 1.9297787196579723, 1.5617500744772101, 0.6811042561384157,
+            0.48017218468846856, 2.2867787591284823, 0.25476586891248476, 0.620052082101593
+        ]
     }, index=TEST_DATA_INDEX)
     pd.testing.assert_frame_equal(transformed, expected_transformed)
 
@@ -194,10 +212,10 @@ def test_hypertransformer_default_inputs():
 
     assert isinstance(ht.field_transformers['integer'], FloatFormatter)
     assert isinstance(ht.field_transformers['float'], FloatFormatter)
-    assert isinstance(ht.field_transformers['categorical'], FrequencyEncoder)
-    assert isinstance(ht.field_transformers['bool'], BinaryEncoder)
+    assert isinstance(ht.field_transformers['categorical'], LabelEncoder)
+    assert isinstance(ht.field_transformers['bool'], LabelEncoder)
     assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
-    assert isinstance(ht.field_transformers['names'], FrequencyEncoder)
+    assert isinstance(ht.field_transformers['names'], LabelEncoder)
 
     get_default_transformers.cache_clear()
     get_default_transformer.cache_clear()
@@ -236,10 +254,10 @@ def test_hypertransformer_field_transformers():
         'transformers': {
             'integer': FloatFormatter(missing_value_replacement='mean'),
             'float': FloatFormatter(missing_value_replacement='mean'),
-            'categorical': FrequencyEncoder(),
-            'bool': BinaryEncoder(missing_value_replacement='mode'),
+            'categorical': LabelEncoder(add_noise=True),
+            'bool': LabelEncoder(add_noise=True),
             'datetime': DummyTransformerNotMLReady(),
-            'names': FrequencyEncoder()
+            'names': LabelEncoder(add_noise=True)
         }
     }
 
