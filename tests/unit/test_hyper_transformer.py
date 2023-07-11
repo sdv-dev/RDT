@@ -108,7 +108,6 @@ class TestHyperTransformer(TestCase):
 
         # Asserts
         assert ht.field_sdtypes == {}
-        assert ht._default_sdtype_transformers == {}
         assert ht.field_transformers == {}
         assert ht._specified_fields == set()
         assert ht._valid_output_sdtypes == ht._DEFAULT_OUTPUT_SDTYPES
@@ -221,15 +220,14 @@ class TestHyperTransformer(TestCase):
             'integer': FloatFormatter(),
             'float': ClusterBasedNormalizer(),
         }
-        default_sdtype_transformers = {
-            'boolean': BinaryEncoder(),
-            'categorical': FrequencyEncoder()
-        }
-        get_default_transformer_mock.return_value = UnixTimestampEncoder()
+        get_default_transformer_mock.side_effect = [
+            LabelEncoder(),
+            LabelEncoder(),
+            UnixTimestampEncoder(),
+        ]
         ht = HyperTransformer()
         ht.field_transformers = field_transformers
         ht.field_sdtypes = {'datetime': 'datetime'}
-        ht._default_sdtype_transformers = default_sdtype_transformers
         ht._unfit = Mock()
 
         # Run
@@ -246,8 +244,8 @@ class TestHyperTransformer(TestCase):
 
         assert isinstance(ht.field_transformers['integer'], FloatFormatter)
         assert isinstance(ht.field_transformers['float'], ClusterBasedNormalizer)
-        assert isinstance(ht.field_transformers['categorical'], FrequencyEncoder)
-        assert isinstance(ht.field_transformers['bool'], BinaryEncoder)
+        assert isinstance(ht.field_transformers['categorical'], LabelEncoder)
+        assert isinstance(ht.field_transformers['bool'], LabelEncoder)
         assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
         ht._unfit.assert_called_once()
 

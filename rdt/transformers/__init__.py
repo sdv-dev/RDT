@@ -99,6 +99,7 @@ DEFAULT_TRANSFORMERS = {
         missing_value_replacement='mean',
         missing_value_generation='random',
     ),
+    'id': RegexGenerator(),
     'pii': AnonymizedFaker(),
 }
 
