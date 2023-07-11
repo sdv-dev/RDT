@@ -338,7 +338,7 @@ class TestAnonymizedFaker:
         # Assert
         assert transformer.data_length == 5
         assert transformer.output_properties == {None: {'next_transformer': None}}
-        assert transformer.nan_frequency == 0.4
+        assert transformer._nan_frequency == 0.4
 
     def test__transform(self):
         """Test the ``_transform`` method.

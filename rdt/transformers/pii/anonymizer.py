@@ -36,6 +36,14 @@ class AnonymizedFaker(BaseTransformer):
             Whether or not to ensure that the new anonymized data is all unique. If it isn't
             possible to create the requested number of rows, then an error will be raised.
             Defaults to ``False``.
+        missing_value_generation (str or None):
+            The way missing values are being handled. There are two strategies:
+
+                * ``random``: Randomly generates missing values based on the percentage of
+                  missing values.
+                * ``None``: Don't learn anything during fit. Then during reverse transform,
+                  don't create any missing values.
+
     """
 
     IS_GENERATOR = True
@@ -114,7 +122,7 @@ class AnonymizedFaker(BaseTransformer):
             )
 
         self.missing_value_generation = missing_value_generation
-        self.nan_frequency = 0.0
+        self._nan_frequency = 0.0
 
     def reset_randomization(self):
         """Create a new ``Faker`` instance."""
@@ -148,7 +156,7 @@ class AnonymizedFaker(BaseTransformer):
         self._set_faker_seed(data)
         self.data_length = len(data)
         if self.missing_value_generation == 'random':
-            self.nan_frequency = data.isna().sum() / len(data)
+            self._nan_frequency = data.isna().sum() / len(data)
 
     def _transform(self, _data):
         """Drop the input column by returning ``None``."""
@@ -184,7 +192,7 @@ class AnonymizedFaker(BaseTransformer):
         if self.missing_value_generation == 'random':
             nan_mask = np.random.choice(
                 [True, False], size=sample_size,
-                p=[self.nan_frequency, 1 - self.nan_frequency]
+                p=[self._nan_frequency, 1 - self._nan_frequency]
             )
             reverse_transformed[nan_mask] = np.nan
 
