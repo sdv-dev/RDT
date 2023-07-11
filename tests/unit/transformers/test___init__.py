@@ -116,6 +116,5 @@ def test_get_default_transformers():
         'pii': AnonymizedFaker,
     }
 
-    # Assert
     for sdtype, transformer in expected_dict.items():
         assert isinstance(default_transformer_dict[sdtype], transformer)

@@ -112,7 +112,6 @@ class HyperTransformer:
     def __init__(self):
         self.field_sdtypes = {}
         self.field_transformers = {}
-
         self._specified_fields = set()
         self._validate_field_transformers()
         self._valid_output_sdtypes = self._DEFAULT_OUTPUT_SDTYPES
