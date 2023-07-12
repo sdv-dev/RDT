@@ -1,5 +1,6 @@
 
 import sys
+from types import ModuleType
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -14,6 +15,7 @@ from rdt import _find_addons, get_demo
 def mock_rdt():
     rdt_module = sys.modules['rdt']
     rdt_mock = Mock()
+    rdt_mock.submodule.__name__ = 'rdt.submodule'
     sys.modules['rdt'] = rdt_mock
     yield rdt_mock
     sys.modules['rdt'] = rdt_module
@@ -58,9 +60,10 @@ def test_get_demo_many_rows():
 def test__find_addons_module(entry_points_mock, mock_rdt):
     """Test loading an add-on."""
     # Setup
+    add_on_mock = Mock(spec=ModuleType)
     entry_point = Mock()
     entry_point.name = 'rdt.submodule.entry_name'
-    entry_point.load.return_value = 'entry_point'
+    entry_point.load.return_value = add_on_mock
     entry_points_mock.return_value = [entry_point]
 
     # Run
@@ -68,7 +71,8 @@ def test__find_addons_module(entry_points_mock, mock_rdt):
 
     # Assert
     entry_points_mock.assert_called_once_with(group='rdt_modules')
-    assert mock_rdt.submodule.entry_name == 'entry_point'
+    assert mock_rdt.submodule.entry_name == add_on_mock
+    assert sys.modules['rdt.submodule.entry_name'] == add_on_mock
 
 
 @patch.object(rdt, 'iter_entry_points')

@@ -111,7 +111,6 @@ setup(
         'License :: Free for non-commercial use',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
@@ -135,11 +134,11 @@ setup(
         include=['rdt', 'rdt.*'],
         exclude=['rdt.transformers.addons.*']
     ),
-    python_requires='>=3.7,<3.12',
+    python_requires='>=3.8,<3.12',
     setup_requires=setup_requires,
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='1.5.0',
+    version='1.6.0.dev1',
     zip_safe=False,
 )

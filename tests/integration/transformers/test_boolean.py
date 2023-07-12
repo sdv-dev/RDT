@@ -67,9 +67,9 @@ class TestBinaryEncoder:
         pd.testing.assert_frame_equal(reverse, data)
 
     def test_boolean_missing_value_generation_none(self):
-        """Test the BinaryEncoder when `missing_value_generation` is None.
+        """Test the BinaryEncoder when ``missing_value_generation`` is None.
 
-        In this test we should get `nans` on the transformed data.
+        In this test, the nans should be replacd by the mode on the transformed data.
         """
         # Setup
         data = pd.DataFrame([True, True, None, False], columns=['bool'])
@@ -85,8 +85,7 @@ class TestBinaryEncoder:
         reverse = transformer.reverse_transform(transformed)
 
         # Assert
-        expected_transformed = pd.DataFrame({
-            'bool': [1., 1., None, 0.],
-        })
+        expected_transformed = pd.DataFrame({'bool': [1., 1., 1., 0.]})
+        expected_reversed = pd.DataFrame({'bool': [True, True, True, False]})
         pd.testing.assert_frame_equal(transformed, expected_transformed)
-        pd.testing.assert_frame_equal(reverse, data)
+        pd.testing.assert_frame_equal(reverse, expected_reversed, check_dtype=False)

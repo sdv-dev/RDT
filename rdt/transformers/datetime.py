@@ -1,7 +1,7 @@
 """Transformer for datetime data."""
 import numpy as np
 import pandas as pd
-from pandas.api.types import is_datetime64_dtype
+from pandas.api.types import is_datetime64_dtype, is_numeric_dtype
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 from rdt.transformers.base import BaseTransformer
@@ -55,7 +55,26 @@ class UnixTimestampEncoder(BaseTransformer):
         self._dtype = None
 
     def _convert_to_datetime(self, data):
-        if data.dtype == 'object':
+        """Convert datetime column into datetime dtype.
+
+        Convert the datetime column to datetime dtype using the ``datetime_format``.
+        All non-numeric columns will automatically be cast to datetimes. Numeric columns
+        with a ``datetime_format`` will be treated as strings and cast to datetime. Numeric
+        columns without a ``datetime_format`` will be treated as already converted datetimes.
+
+        Args:
+            data (pandas.Series):
+                The datetime column.
+
+        Raises:
+            - ``TypeError`` if data cannot be converted to datetime.
+            - ``ValueError`` if data does not match the specified datetime format
+
+        Returns:
+            pandas.Series:
+                The datetime column converted to the datetime dtype.
+        """
+        if self.datetime_format or not is_numeric_dtype(data):
             try:
                 pandas_datetime_format = None
                 if self.datetime_format:
@@ -138,13 +157,16 @@ class UnixTimestampEncoder(BaseTransformer):
         data = self._reverse_transform_helper(data)
         datetime_data = pd.to_datetime(data)
         if self.datetime_format:
-            if self._dtype == 'object':
-                datetime_data = datetime_data.dt.strftime(self.datetime_format)
-            elif is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
+            if is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
                 datetime_data = pd.to_datetime(
                     datetime_data.dt.strftime(self.datetime_format),
                     format=self.datetime_format,
                 )
+            else:
+                datetime_data = datetime_data.dt.strftime(self.datetime_format).astype(self._dtype)
+        elif is_numeric_dtype(self._dtype):
+            datetime_data = pd.to_numeric(datetime_data.astype('object'), errors='coerce')
+            datetime_data = datetime_data.astype(self._dtype)
 
         return datetime_data
 

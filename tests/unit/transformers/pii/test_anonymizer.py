@@ -220,6 +220,23 @@ class TestAnonymizedFaker:
         assert instance.locales is None
         assert mock_faker.Faker.called_once_with(None)
         assert instance.enforce_uniqueness is False
+        assert instance.missing_value_generation == 'random'
+
+    def test___init__error_missing_value_generation(self):
+        """Test that the ``__init__`` raises an error if the missing value generation is invalid.
+
+        Test that the ``__init__`` raises an error if the missing value generation is invalid.
+
+        Side effects:
+            - ``ValueError`` is raised.
+        """
+        expected_message = (
+            "Missing value generation 'invalid' is not supported "
+            "for AnonymizedFaker. Please use either 'random' or None."
+        )
+        # Run and Assert
+        with pytest.raises(TransformerInputError, match=expected_message):
+            AnonymizedFaker(missing_value_generation='invalid')
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
@@ -312,15 +329,16 @@ class TestAnonymizedFaker:
         """
         # Setup
         transformer = AnonymizedFaker()
-        columns_data = pd.Series(['1', '2', '3'])
+        columns_data = pd.Series(['1', '2', '3', None, np.nan])
         transformer.columns = ['col']
 
         # Run
         transformer._fit(columns_data)
 
         # Assert
-        assert transformer.data_length == 3
+        assert transformer.data_length == 5
         assert transformer.output_properties == {None: {'next_transformer': None}}
+        assert transformer._nan_frequency == 0.4
 
     def test__transform(self):
         """Test the ``_transform`` method.
@@ -376,6 +394,26 @@ class TestAnonymizedFaker:
         # Assert
         assert function.call_args_list == [call(), call(), call()]
         np.testing.assert_array_equal(result, np.array(['a', 'b', 'c']))
+
+    def test__reverse_transform_with_nans(self):
+        """Test that ``_reverse_transform`` generates NaNs."""
+        # Setup
+        instance = AnonymizedFaker()
+        instance.data_length = 4
+        instance._nan_frequency = 0.25
+        function = Mock()
+        function.side_effect = ['a', 'b', 'c', 'd']
+
+        instance._function = function
+
+        # Run
+        result = instance._reverse_transform(None)
+        result = pd.Series(result)
+
+        # Assert
+        assert function.call_args_list == [call(), call(), call(), call()]
+        assert instance.missing_value_generation == 'random'
+        assert result.isna().sum() == 1
 
     def test__reverse_transform_not_enough_unique_values(self):
         """Test the ``_reverse_transform`` method.
