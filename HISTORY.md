@@ -1,8 +1,14 @@
 # History
 
-## 1.5.1 -2023-07-11
+## 1.6.0 -2023-07-12
 
-This release improves the `NullTransformer` by allowing nulls to be replaced on the forward transform even is `missing_value_generation` is set to None. It also fixes a bug that was causing the `UnixTimestampEncoder` to return a different dtype than the input on `reverse_transform`. This was particularly problematic when datetime columns are represented as ints.
+This release adds the ability to generate missing values to the `AnonymizedFaker`. Users can now provide the `missing_value_generation` parameter during initialization. They can set it to `None` to not generate any missing values, or `'random'` to generate random missing values in the same proportion as the fitted data.
+
+Additionally, this release improves the `NullTransformer` by allowing nulls to be replaced on the forward transform even is `missing_value_generation` is set to None. It also fixes a bug that was causing the `UnixTimestampEncoder` to return a different dtype than the input on `reverse_transform`. This was particularly problematic when datetime columns are represented as ints.
+
+### New Features
+
+* AnonymizedFaker should be able to model and generate missing values - Issue [#660](https://github.com/sdv-dev/RDT/issues/660) by @R-Palazzo
 
 ### Bugs
 
