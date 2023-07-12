@@ -87,19 +87,11 @@ TRANSFORMERS = {
 
 
 DEFAULT_TRANSFORMERS = {
-    'numerical': FloatFormatter(
-        learn_rounding_scheme=False,
-        enforce_min_max_values=False,
-        missing_value_replacement='mean',
-        missing_value_generation='random',
-    ),
+    'numerical': FloatFormatter(),
     'categorical': LabelEncoder(add_noise=True),
     'boolean': LabelEncoder(add_noise=True),
-    'datetime': UnixTimestampEncoder(
-        missing_value_replacement='mean',
-        missing_value_generation='random',
-    ),
-    'id': RegexGenerator(),
+    'datetime': UnixTimestampEncoder(),
+    'text': RegexGenerator(),
     'pii': AnonymizedFaker(),
 }
 

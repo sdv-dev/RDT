@@ -217,7 +217,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         data = self.get_data()
         data['pii'] = ['a', 'b', 'c', 'd']
-        data['id'] = ['e', 'f', 'g', 'h']
+        data['text'] = ['e', 'f', 'g', 'h']
         field_transformers = {
             'integer': FloatFormatter(),
             'float': ClusterBasedNormalizer(),
@@ -234,7 +234,7 @@ class TestHyperTransformer(TestCase):
         ht.field_sdtypes = {
             'datetime': 'datetime',
             'pii': 'pii',
-            'id': 'id'
+            'text': 'text'
         }
         ht._unfit = Mock()
 
@@ -249,7 +249,7 @@ class TestHyperTransformer(TestCase):
             'categorical': 'categorical',
             'datetime': 'datetime',
             'pii': 'pii',
-            'id': 'id'
+            'text': 'text',
         }
 
         assert isinstance(ht.field_transformers['integer'], FloatFormatter)
@@ -258,7 +258,7 @@ class TestHyperTransformer(TestCase):
         assert isinstance(ht.field_transformers['bool'], LabelEncoder)
         assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
         assert isinstance(ht.field_transformers['pii'], AnonymizedFaker)
-        assert isinstance(ht.field_transformers['id'], RegexGenerator)
+        assert isinstance(ht.field_transformers['text'], RegexGenerator)
         ht._unfit.assert_called_once()
 
     @patch('rdt.hyper_transformer.LOGGER')

@@ -112,7 +112,7 @@ def test_get_default_transformers():
         'categorical': LabelEncoder,
         'boolean': LabelEncoder,
         'datetime': UnixTimestampEncoder,
-        'id': RegexGenerator,
+        'text': RegexGenerator,
         'pii': AnonymizedFaker,
     }
 
