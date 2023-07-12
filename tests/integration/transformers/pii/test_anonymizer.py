@@ -71,7 +71,7 @@ def test_anonymizedfaker_with_nans():
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     assert len(reverse_transform['username']) == 5
-    assert reverse_transform['username'].isna().sum() == 2
+    assert reverse_transform['username'].isna().sum() == 1
 
 
 def test_anonymizedfaker_with_nans_missing_value_generation_none():

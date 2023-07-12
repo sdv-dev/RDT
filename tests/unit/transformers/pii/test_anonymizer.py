@@ -395,6 +395,26 @@ class TestAnonymizedFaker:
         assert function.call_args_list == [call(), call(), call()]
         np.testing.assert_array_equal(result, np.array(['a', 'b', 'c']))
 
+    def test__reverse_transform_with_nans(self):
+        """Test that ``_reverse_transform`` generates NaNs."""
+        # Setup
+        instance = AnonymizedFaker()
+        instance.data_length = 4
+        instance._nan_frequency = 0.25
+        function = Mock()
+        function.side_effect = ['a', 'b', 'c', 'd']
+
+        instance._function = function
+
+        # Run
+        result = instance._reverse_transform(None)
+        result = pd.Series(result)
+
+        # Assert
+        assert function.call_args_list == [call(), call(), call(), call()]
+        assert instance.missing_value_generation == 'random'
+        assert result.isna().sum() == 1
+
     def test__reverse_transform_not_enough_unique_values(self):
         """Test the ``_reverse_transform`` method.
 

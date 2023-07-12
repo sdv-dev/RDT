@@ -190,11 +190,9 @@ class AnonymizedFaker(BaseTransformer):
             ) from exception
 
         if self.missing_value_generation == 'random':
-            nan_mask = np.random.choice(
-                [True, False], size=sample_size,
-                p=[self._nan_frequency, 1 - self._nan_frequency]
-            )
-            reverse_transformed[nan_mask] = np.nan
+            num_nans = int(self._nan_frequency * sample_size)
+            nan_indices = np.random.choice(sample_size, num_nans, replace=False)
+            reverse_transformed[nan_indices] = np.nan
 
         return reverse_transformed
 
