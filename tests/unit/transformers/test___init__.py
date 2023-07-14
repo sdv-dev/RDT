@@ -1,6 +1,8 @@
 import pytest
 
-from rdt.transformers import BinaryEncoder, get_transformer_class, get_transformer_name
+from rdt.transformers import (
+    AnonymizedFaker, BinaryEncoder, FloatFormatter, LabelEncoder, RegexGenerator,
+    UnixTimestampEncoder, get_default_transformers, get_transformer_class, get_transformer_name)
 from rdt.transformers.addons.identity.identity import IdentityTransformer
 
 
@@ -94,3 +96,25 @@ def test_get_transformer_class_transformer_path_addon():
 
     # Assert
     assert returned == IdentityTransformer
+
+
+def test_get_default_transformers():
+    """Test the ``get_default_transformers`` method.
+
+    Check that the right default transformer is returned for each type.
+    """
+    # Run
+    default_transformer_dict = get_default_transformers()
+
+    # Assert
+    expected_dict = {
+        'numerical': FloatFormatter,
+        'categorical': LabelEncoder,
+        'boolean': LabelEncoder,
+        'datetime': UnixTimestampEncoder,
+        'text': RegexGenerator,
+        'pii': AnonymizedFaker,
+    }
+
+    for sdtype, transformer in expected_dict.items():
+        assert isinstance(default_transformer_dict[sdtype], transformer)

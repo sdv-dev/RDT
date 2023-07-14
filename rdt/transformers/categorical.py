@@ -439,6 +439,7 @@ class LabelEncoder(BaseTransformer):
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
     values_to_categories = None
     categories_to_values = None
+    dtype = 'O'
 
     def __init__(self, add_noise=False, order_by=None):
         super().__init__()
@@ -483,6 +484,7 @@ class LabelEncoder(BaseTransformer):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
+        self.dtype = data.dtype
         unique_data = pd.unique(data.fillna(np.nan))
         unique_data = self._order_categories(unique_data)
         self.values_to_categories = dict(enumerate(unique_data))
@@ -524,6 +526,7 @@ class LabelEncoder(BaseTransformer):
         )
 
         if self.add_noise:
+            mapped = mapped.astype(float)
             mapped = np.random.uniform(mapped, mapped + 1)
 
         return mapped
@@ -542,7 +545,9 @@ class LabelEncoder(BaseTransformer):
             data = np.floor(data)
 
         data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
-        return data.round().map(self.values_to_categories)
+        data = data.round().map(self.values_to_categories)
+
+        return data.astype(self.dtype)
 
 
 class OrderedLabelEncoder(LabelEncoder):
