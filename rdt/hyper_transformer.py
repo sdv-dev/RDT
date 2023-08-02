@@ -110,10 +110,8 @@ class HyperTransformer:
             self._add_field_to_set(field, self._specified_fields)
 
     def __init__(self):
-        self._default_sdtype_transformers = {}
         self.field_sdtypes = {}
         self.field_transformers = {}
-
         self._specified_fields = set()
         self._validate_field_transformers()
         self._valid_output_sdtypes = self._DEFAULT_OUTPUT_SDTYPES
@@ -489,11 +487,7 @@ class HyperTransformer:
                 self._set_field_sdtype(data, field)
             if field not in self.field_transformers:
                 sdtype = self.field_sdtypes[field]
-                if sdtype in self._default_sdtype_transformers:
-                    self.field_transformers[field] = deepcopy(
-                        self._default_sdtype_transformers[sdtype])
-                else:
-                    self.field_transformers[field] = deepcopy(get_default_transformer(sdtype))
+                self.field_transformers[field] = deepcopy(get_default_transformer(sdtype))
 
     def detect_initial_config(self, data):
         """Print the configuration of the data.
@@ -508,7 +502,6 @@ class HyperTransformer:
                 Data which will have its configuration detected.
         """
         # Reset the state of the HyperTransformer
-        self._default_sdtype_transformers = {}
         self.field_sdtypes = {}
         self.field_transformers = {}
 

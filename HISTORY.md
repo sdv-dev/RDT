@@ -1,6 +1,16 @@
 # History
 
-## 1.6.0 -2023-07-12
+## 1.6.1 - 2023-08-02
+
+This release updates the default transformers used for certain sdtypes. It also enables the `AnonymizedFaker` and `PseudoAnonymizedFaker` to work with any sdtype besides boolean, categorical, datetime, numerical or text.
+
+### Bugs
+* [Enterprise Usage] Unable to assign generic PII transformers (eg. AnonymizedFaker) - Issue [#674](https://github.com/sdv-dev/RDT/issues/674) by @amontanez24
+
+### New Features
+* Update the default transformers that HyperTransformer assigns to each sdtype - Issue [#664](https://github.com/sdv-dev/RDT/issues/664) by @amontanez24
+
+## 1.6.0 - 2023-07-12
 
 This release adds the ability to generate missing values to the `AnonymizedFaker`. Users can now provide the `missing_value_generation` parameter during initialization. They can set it to `None` to not generate any missing values, or `'random'` to generate random missing values in the same proportion as the fitted data.
 

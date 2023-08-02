@@ -108,7 +108,6 @@ class TestHyperTransformer(TestCase):
 
         # Asserts
         assert ht.field_sdtypes == {}
-        assert ht._default_sdtype_transformers == {}
         assert ht.field_transformers == {}
         assert ht._specified_fields == set()
         assert ht._valid_output_sdtypes == ht._DEFAULT_OUTPUT_SDTYPES
@@ -217,19 +216,26 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         data = self.get_data()
+        data['pii'] = ['a', 'b', 'c', 'd']
+        data['text'] = ['e', 'f', 'g', 'h']
         field_transformers = {
             'integer': FloatFormatter(),
             'float': ClusterBasedNormalizer(),
         }
-        default_sdtype_transformers = {
-            'boolean': BinaryEncoder(),
-            'categorical': FrequencyEncoder()
-        }
-        get_default_transformer_mock.return_value = UnixTimestampEncoder()
+        get_default_transformer_mock.side_effect = [
+            LabelEncoder(),
+            LabelEncoder(),
+            UnixTimestampEncoder(),
+            AnonymizedFaker(),
+            RegexGenerator(),
+        ]
         ht = HyperTransformer()
         ht.field_transformers = field_transformers
-        ht.field_sdtypes = {'datetime': 'datetime'}
-        ht._default_sdtype_transformers = default_sdtype_transformers
+        ht.field_sdtypes = {
+            'datetime': 'datetime',
+            'pii': 'pii',
+            'text': 'text'
+        }
         ht._unfit = Mock()
 
         # Run
@@ -241,14 +247,18 @@ class TestHyperTransformer(TestCase):
             'float': 'numerical',
             'bool': 'boolean',
             'categorical': 'categorical',
-            'datetime': 'datetime'
+            'datetime': 'datetime',
+            'pii': 'pii',
+            'text': 'text',
         }
 
         assert isinstance(ht.field_transformers['integer'], FloatFormatter)
         assert isinstance(ht.field_transformers['float'], ClusterBasedNormalizer)
-        assert isinstance(ht.field_transformers['categorical'], FrequencyEncoder)
-        assert isinstance(ht.field_transformers['bool'], BinaryEncoder)
+        assert isinstance(ht.field_transformers['categorical'], LabelEncoder)
+        assert isinstance(ht.field_transformers['bool'], LabelEncoder)
         assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
+        assert isinstance(ht.field_transformers['pii'], AnonymizedFaker)
+        assert isinstance(ht.field_transformers['text'], RegexGenerator)
         ht._unfit.assert_called_once()
 
     @patch('rdt.hyper_transformer.LOGGER')
@@ -286,8 +296,8 @@ class TestHyperTransformer(TestCase):
         field_transformers = {k: repr(v) for (k, v) in ht.field_transformers.items()}
         assert field_transformers == {
             'col1': 'FloatFormatter()',
-            'col2': 'FrequencyEncoder()',
-            'col3': 'BinaryEncoder()',
+            'col2': 'LabelEncoder(add_noise=True)',
+            'col3': 'LabelEncoder(add_noise=True)',
             'col4': 'UnixTimestampEncoder()',
             'col5': 'FloatFormatter()'
         }
@@ -303,8 +313,8 @@ class TestHyperTransformer(TestCase):
             '    },',
             '    "transformers": {',
             '        "col1": FloatFormatter(),',
-            '        "col2": FrequencyEncoder(),',
-            '        "col3": BinaryEncoder(),',
+            '        "col2": LabelEncoder(add_noise=True),',
+            '        "col3": LabelEncoder(add_noise=True),',
             '        "col4": UnixTimestampEncoder(),',
             '        "col5": FloatFormatter()',
             '    }',

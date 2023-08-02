@@ -88,9 +88,11 @@ TRANSFORMERS = {
 
 DEFAULT_TRANSFORMERS = {
     'numerical': FloatFormatter(),
-    'categorical': FrequencyEncoder(),
-    'boolean': BinaryEncoder(),
+    'categorical': LabelEncoder(add_noise=True),
+    'boolean': LabelEncoder(add_noise=True),
     'datetime': UnixTimestampEncoder(),
+    'text': RegexGenerator(),
+    'pii': AnonymizedFaker(),
 }
 
 
