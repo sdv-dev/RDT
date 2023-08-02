@@ -298,6 +298,42 @@ class TestAnonymizedFaker:
         with pytest.raises(TransformerInputError, match=expected_message):
             AnonymizedFaker(provider_name='credit_card', locales=['en_US', 'fr_FR'])
 
+    @patch('rdt.transformers.pii.anonymizer.issubclass')
+    @patch('rdt.transformers.pii.anonymizer.BaseTransformer')
+    def test_get_supported_sdtypes(self, base_mock, issubclass_mock):
+        """Test that the method returns all sdtypes except the basic ones."""
+        # Setup
+        issubclass_mock.return_value = False
+        numerical_mock = Mock()
+        numerical_mock.get_supported_sdtypes.return_value = ['numerical']
+        categorical_mock = Mock()
+        categorical_mock.get_supported_sdtypes.return_value = ['categorical']
+        datetime_mock = Mock()
+        datetime_mock.get_supported_sdtypes.return_value = ['datetime']
+        boolean_mock = Mock()
+        boolean_mock.get_supported_sdtypes.return_value = ['boolean', 'categorical']
+        text_mock = Mock()
+        text_mock.get_supported_sdtypes.return_value = ['text']
+        phone_mock = Mock()
+        phone_mock.get_supported_sdtypes.return_value = ['phone_number']
+        pii_mock = Mock()
+        pii_mock.get_supported_sdtypes.return_value = ['pii']
+        base_mock.get_subclasses.return_value = [
+            numerical_mock,
+            categorical_mock,
+            datetime_mock,
+            boolean_mock,
+            text_mock,
+            phone_mock,
+            pii_mock
+        ]
+
+        # Run
+        supported_sdtypes = AnonymizedFaker.get_supported_sdtypes()
+
+        # Assert
+        assert sorted(supported_sdtypes) == sorted(['phone_number', 'pii'])
+
     @patch('rdt.transformers.pii.anonymizer.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.pii.anonymizer.faker')
     def test_reset_randomization(self, mock_faker, mock_base_reset):

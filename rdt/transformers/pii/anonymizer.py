@@ -124,6 +124,23 @@ class AnonymizedFaker(BaseTransformer):
         self.missing_value_generation = missing_value_generation
         self._nan_frequency = 0.0
 
+    @classmethod
+    def get_supported_sdtypes(cls):
+        """Return the supported sdtypes by the transformer.
+
+        Returns:
+            list:
+                Accepted input sdtypes of the transformer.
+        """
+        unsupported_sdtypes = {'numerical', 'datetime', 'categorical', 'boolean', 'text', None}
+        all_sdtypes = {cls.INPUT_SDTYPE}
+        for transformer in BaseTransformer.get_subclasses():
+            if not issubclass(transformer, cls):
+                all_sdtypes.update(transformer.get_supported_sdtypes())
+
+        supported_sdtypes = all_sdtypes - unsupported_sdtypes
+        return list(supported_sdtypes)
+
     def reset_randomization(self):
         """Create a new ``Faker`` instance."""
         super().reset_randomization()

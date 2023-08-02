@@ -27,6 +27,15 @@ def test_anonymizedfaker():
     assert len(reverse_transform['username']) == 5
 
 
+def test_anonymizedfaker_get_supported_sdtypes():
+    """Test that the correct supported sdtypes are returned."""
+    # Run
+    supported_sdtypes = AnonymizedFaker.get_supported_sdtypes()
+
+    # Assert
+    assert supported_sdtypes == ['pii']
+
+
 def test_anonymizedfaker_custom_provider():
     """End to end test with a custom provider and function for the ``AnonymizedFaker``."""
     data = pd.DataFrame({
