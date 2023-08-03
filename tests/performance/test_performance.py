@@ -8,10 +8,12 @@ from rdt.performance.datasets import get_dataset_generators_by_type
 from rdt.performance.performance import evaluate_transformer_performance
 from rdt.performance.profiling import profile_transformer
 from rdt.transformers import get_transformers_by_type
-from rdt.transformers.categorical import CustomLabelEncoder, OrderedLabelEncoder
+from rdt.transformers.categorical import CustomLabelEncoder, OrderedLabelEncoder, OrderedUniformEncoder
 from rdt.transformers.numerical import ClusterBasedNormalizer
 
-SANDBOX_TRANSFORMERS = [ClusterBasedNormalizer, OrderedLabelEncoder, CustomLabelEncoder]
+SANDBOX_TRANSFORMERS = [
+    ClusterBasedNormalizer, OrderedLabelEncoder, CustomLabelEncoder, OrderedUniformEncoder
+]
 
 
 def _get_performance_test_cases():
