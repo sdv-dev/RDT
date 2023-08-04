@@ -359,38 +359,26 @@ class TestOrderedUniformEncoder:
         assert stringified_transformer == 'OrderedUniformEncoder(order=<CUSTOM>)'
 
     def test__fit(self):
-        """Test the ``_fit`` method.
-
-        Validate that a unique integer representation for each category of the data is stored
-        in the ``categories_to_values`` attribute, and the reverse is stored in the
-        ``values_to_categories`` attribute. The order should match the ``self.order`` indices.
-        Setup:
-            - create an instance of the ``CustomLabelEncoder``.
-        Input:
-            - a pandas series.
-        Side effects:
-            - set the ``values_to_categories`` dictionary to the appropriate value.
-            - set ``categories_to_values`` dictionary to the appropriate value.
-        """
+        """Test the ``_fit`` method."""
         # Setup
-        data = pd.Series([1, 2, 3, 2, np.nan, 1, 1])
-        transformer = OrderedUniformEncoder(order=[2, 3, np.nan, 1])
+        data = pd.Series([1, 2, 3, 2, None, 1, 1])
+        transformer = OrderedUniformEncoder(order=[2, 3, None, 1])
 
         # Run
         transformer._fit(data)
 
         # Assert
         expected_frequencies = {
-            2: 0.2857142857142857,
-            3: 0.14285714285714285,
+            2.0: 0.2857142857142857,
+            3.0: 0.14285714285714285,
             None: 0.14285714285714285,
-            1: 0.42857142857142855
+            1.0: 0.42857142857142855
         }
         expected_intervals = {
-            2: [0.0, 0.2857142857142857],
-            3: [0.2857142857142857, 0.42857142857142855],
+            2.0: [0.0, 0.2857142857142857],
+            3.0: [0.2857142857142857, 0.42857142857142855],
             None: [0.42857142857142855, 0.5714285714285714],
-            1: [0.5714285714285714, 1.0]
+            1.0: [0.5714285714285714, 1.0]
         }
         assert transformer.frequencies == expected_frequencies
         assert transformer.intervals == expected_intervals
