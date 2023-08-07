@@ -67,7 +67,9 @@ def _validate_helper(validator_function, args, steps):
 
 def _is_valid_transformer(transformer_name):
     """Determine if transformer should be tested or not."""
-    invalid_names = ['IdentityTransformer', 'Dummy', 'OrderedLabelEncoder', 'CustomLabelEncoder']
+    invalid_names = [
+        'IdentityTransformer', 'Dummy', 'OrderedLabelEncoder', 'CustomLabelEncoder', 'IDGenerator'
+    ]
     return all(invalid_name not in transformer_name for invalid_name in invalid_names)
 
 
