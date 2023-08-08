@@ -264,7 +264,10 @@ class OrderedUniformEncoder(UniformEncoder):
         else:
             freq = data.value_counts(normalize=True, dropna=False)
 
+        nan_value = freq[np.nan] if np.nan in freq.index else None
         freq = freq.reindex(self.order).array
+        freq[np.isnan(freq)] = nan_value
+
         self.frequencies, self.intervals = self._compute_frequencies_intervals(self.order, freq)
 
     def _transform(self, data):
