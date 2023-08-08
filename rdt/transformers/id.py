@@ -28,12 +28,12 @@ class IDGenerator(BaseTransformer):
         self.prefix = prefix
         self.starting_value = starting_value
         self.suffix = suffix
-        self.counter = 0
+        self._counter = 0
         self.output_properties = {None: {'next_transformer': None}}
 
     def reset_sampling(self):
-        """Reset the sampling counter."""
-        self.counter = 0
+        """Reset the sampling _counter."""
+        self._counter = 0
 
     def _fit(self, data):
         pass
@@ -52,11 +52,11 @@ class IDGenerator(BaseTransformer):
         Returns:
             pd.Series
         """
-        start = self.starting_value + self.counter
+        start = self.starting_value + self._counter
         prefix_str = self.prefix if self.prefix is not None else ''
         suffix_str = self.suffix if self.suffix is not None else ''
 
         values = [f'{prefix_str}{start + idx}{suffix_str}' for idx in range(len(data))]
-        self.counter += len(data)
+        self._counter += len(data)
 
         return pd.Series(values)
