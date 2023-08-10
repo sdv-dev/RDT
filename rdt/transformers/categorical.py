@@ -126,7 +126,11 @@ class UniformEncoder(BaseTransformer):
         data = fill_nan_with_none(data)
         labels = pd.unique(data)
         labels = self._order_categories(labels)
-        freq = data.value_counts(normalize=True, dropna=False).reindex(labels).array
+        freq = data.value_counts(normalize=True, dropna=False)
+        nan_value = freq[np.nan] if np.nan in freq.index else None
+        freq = freq.reindex(labels).array
+        freq[np.isnan(freq)] = nan_value
+
         self.frequencies, self.intervals = self._compute_frequencies_intervals(labels, freq)
 
     def _transform(self, data):
