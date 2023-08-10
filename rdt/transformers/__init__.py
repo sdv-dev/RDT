@@ -14,11 +14,10 @@ from rdt.transformers.boolean import BinaryEncoder
 from rdt.transformers.categorical import (
     CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder)
 from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
-from rdt.transformers.id import IDGenerator
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
 from rdt.transformers.pii.anonymizer import AnonymizedFaker, PseudoAnonymizedFaker
-from rdt.transformers.text import RegexGenerator
+from rdt.transformers.text import IDGenerator, RegexGenerator
 
 __all__ = [
     'BaseTransformer',
