@@ -18,7 +18,7 @@ class TestIDGenerator():
         transformed = transformer.fit_transform(data, 'id')
         reverse_transform = transformer.reverse_transform(transformed)
         reverse_transform_2 = transformer.reverse_transform(transformed)
-        transformer.reset_sampling()
+        transformer.reset_randomization()
         reverse_transform_3 = transformer.reverse_transform(transformed)
 
         # Assert

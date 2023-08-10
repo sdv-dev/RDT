@@ -51,14 +51,14 @@ class TestIDGenerator:
         assert transformer_all._counter == 0
         assert transformer_all.output_properties == {None: {'next_transformer': None}}
 
-    def test_reset_sampling(self):
-        """Test the ``reset_sampling`` method."""
+    def test_reset_randomization(self):
+        """Test the ``reset_randomization`` method."""
         # Setup
         transformer = IDGenerator()
         transformer._counter = 10
 
         # Run
-        transformer.reset_sampling()
+        transformer.reset_randomization()
 
         # Assert
         assert transformer._counter == 0

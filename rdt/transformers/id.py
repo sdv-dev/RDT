@@ -21,7 +21,8 @@ class IDGenerator(BaseTransformer):
                 Defaults to ``None``.
     """
 
-    INPUT_SDTYPE = 'id'
+    IS_GENERATOR = True
+    INPUT_SDTYPE = 'pii'
 
     def __init__(self, prefix=None, starting_value=0, suffix=None):
         super().__init__()
@@ -31,7 +32,7 @@ class IDGenerator(BaseTransformer):
         self._counter = 0
         self.output_properties = {None: {'next_transformer': None}}
 
-    def reset_sampling(self):
+    def reset_randomization(self):
         """Reset the sampling _counter."""
         self._counter = 0
 
