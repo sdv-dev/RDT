@@ -163,7 +163,7 @@ class UniformEncoder(BaseTransformer):
         def map_labels(label):
             return np.random.uniform(self.intervals[label][0], self.intervals[label][1])
 
-        return data_with_none.map(map_labels)
+        return data_with_none.map(map_labels).astype(float)
 
     def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
