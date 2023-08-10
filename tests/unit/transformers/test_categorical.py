@@ -361,8 +361,8 @@ class TestOrderedUniformEncoder:
     def test__fit(self):
         """Test the ``_fit`` method."""
         # Setup
-        data = pd.Series([1, 2, 3, 2, None, 1, 1])
-        transformer = OrderedUniformEncoder(order=[2, 3, None, 1])
+        data = pd.Series([1, 2, 3, 2, np.nan, 1, 1])
+        transformer = OrderedUniformEncoder(order=[2, 3, np.nan, 1])
 
         # Run
         transformer._fit(data)
@@ -446,20 +446,16 @@ class TestOrderedUniformEncoder:
         If the data being transformed is not in ``self.order`` an error should be raised.
         """
         # Setup
-        data_error = pd.Series([1, 2, 3, 2, 1, 4])
-        data = pd.Series([1, 2, 1, 2, 1, 1])
+        data = pd.Series([1, 2, 3, 2, 1, 4])
         transformer = OrderedUniformEncoder(order=[2, 1])
 
         # Run / Assert
-        transformer._fit(data)
-        transformer._transform(data)
-
         message = re.escape(
             "Unknown categories '[3, 4]'. All possible categories must be defined in the "
             "'order' parameter."
         )
         with pytest.raises(TransformerInputError, match=message):
-            transformer._transform(data_error)
+            transformer._transform(data)
 
 
 class TestFrequencyEncoder:
