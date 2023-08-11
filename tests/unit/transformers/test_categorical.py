@@ -440,6 +440,31 @@ class TestOrderedUniformEncoder:
         # Assert
         assert expected_message in caplog.text
 
+    def test__transform(self):
+        """Test the ``_transform`` method."""
+        # Setup
+        transformer = OrderedUniformEncoder(order=['b', 'c', 'a'])
+        data = pd.Series(['a', 'b', 'b', 'a', 'a', 'c', 'a'])
+
+        transformer.frequencies = {
+            'b': 0.2857142857142858,
+            'c': 0.14285714285714285,
+            'a': 0.42857142857142855,
+        }
+        transformer.intervals = {
+            'b': [0.0, 0.2857142857142857],
+            'c': [0.2857142857142857, 0.42857142857142855],
+            'a': [0.42857142857142855, 0.8571428571428571],
+        }
+
+        # Run
+        transformed = transformer._transform(data)
+
+        # Asserts
+        for key in transformer.intervals:
+            assert (transformed.loc[data == key] >= transformer.intervals[key][0]).all()
+            assert (transformed.loc[data == key] < transformer.intervals[key][1]).all()
+
     def test__transform_error(self):
         """Test the ``_transform`` method checks that data is in ``self.order``.
 
