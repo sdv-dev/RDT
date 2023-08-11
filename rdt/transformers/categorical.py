@@ -128,8 +128,7 @@ class UniformEncoder(BaseTransformer):
         labels = self._order_categories(labels)
         freq = data.value_counts(normalize=True, dropna=False)
         nan_value = freq[np.nan] if np.nan in freq.index else None
-        freq = freq.reindex(labels).array
-        freq[np.isnan(freq)] = nan_value
+        freq = freq.reindex(labels, fill_value=nan_value).array
 
         self.frequencies, self.intervals = self._compute_frequencies_intervals(labels, freq)
 
@@ -269,8 +268,7 @@ class OrderedUniformEncoder(UniformEncoder):
             freq = data.value_counts(normalize=True, dropna=False)
 
         nan_value = freq[np.nan] if np.nan in freq.index else None
-        freq = freq.reindex(self.order).array
-        freq[np.isnan(freq)] = nan_value
+        freq = freq.reindex(self.order, fill_value=nan_value).array
 
         self.frequencies, self.intervals = self._compute_frequencies_intervals(self.order, freq)
 
