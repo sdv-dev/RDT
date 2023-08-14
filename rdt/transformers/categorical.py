@@ -1,5 +1,6 @@
 """Transformers for categorical data."""
 
+import logging
 import warnings
 
 import numpy as np
@@ -9,6 +10,273 @@ from scipy.stats import norm
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
+from rdt.transformers.utils import fill_nan_with_none
+
+LOGGER = logging.getLogger(__name__)
+
+
+class UniformEncoder(BaseTransformer):
+    """Transformer for categorical data.
+
+    This transformer computes a float representative for each one of the categories
+    found in the fit data, and then replaces the instances of these categories with
+    the corresponding representative.
+
+    The representatives are decided by computing the frequencies of each labels and
+    then dividing the ``[0, 1]`` interval according to these frequencies.
+
+    When the transformation is reverted, each value is assigned the category that
+    corresponds to the interval it falls in.
+
+    Null values are considered just another category.
+
+    Args:
+        order_by (str or None):
+            String defining how to order the data before applying the labels. Options are
+            'alphabetical', 'numerical' and ``None``. Defaults to ``None``.
+    """
+
+    INPUT_SDTYPE = 'categorical'
+    SUPPORTED_SDTYPES = ['categorical', 'boolean']
+    frequencies = None
+    intervals = None
+    dtype = None
+
+    def __init__(self, order_by=None):
+        super().__init__()
+        if order_by not in [None, 'alphabetical', 'numerical_value']:
+            raise TransformerInputError(
+                "order_by must be one of the following values: None, 'numerical_value' or "
+                "'alphabetical'"
+            )
+
+        self.order_by = order_by
+
+    def _order_categories(self, unique_data):
+        nans = pd.isna(unique_data)
+        if self.order_by == 'alphabetical':
+            # pylint: disable=invalid-unary-operand-type
+            if any(map(lambda item: not isinstance(item, str), unique_data[~nans])):
+                raise TransformerInputError(
+                    "The data must be of type string if order_by is 'alphabetical'."
+                )
+        elif self.order_by == 'numerical_value':
+            if not np.issubdtype(unique_data.dtype.type, np.number):
+                raise TransformerInputError(
+                    "The data must be numerical if order_by is 'numerical_value'."
+                )
+
+        if self.order_by is not None:
+            unique_data = np.sort(unique_data[~nans])  # pylint: disable=invalid-unary-operand-type
+            if nans.any():
+                unique_data = np.append(unique_data, [None])
+
+        return unique_data
+
+    @classmethod
+    def _get_message_unseen_categories(cls, unseen_categories):
+        """Message to raise when there is unseen categories.
+
+        Args:
+            unseen_categories (list): list of unseen categories
+
+        Returns:
+            message to print
+        """
+        categories_to_print = ', '.join(str(x) for x in unseen_categories[:3])
+        if len(unseen_categories) > 3:
+            categories_to_print = f'{categories_to_print}, +{len(unseen_categories) - 3} more'
+
+        return categories_to_print
+
+    @staticmethod
+    def _compute_frequencies_intervals(categories, freq):
+        """Compute the frequencies and intervals of the categories.
+
+        Args:
+            categories (list):
+                List of categories.
+            freq (list):
+                List of frequencies.
+
+        Returns:
+            tuple[dict, dict]:
+                First dict maps categories to their frequency and the
+                second dict maps the categories to their intervals.
+        """
+        frequencies = dict(zip(categories, freq))
+        shift = np.cumsum(np.hstack([0, freq]))
+        shift[-1] = 1
+        list_int = [[shift[i], shift[i + 1]] for i in range(len(shift) - 1)]
+        intervals = dict(zip(categories, list_int))
+
+        return frequencies, intervals
+
+    def _fit(self, data):
+        """Fit the transformer to the data.
+
+        Compute the frequencies of each category and use them
+        to map the column to a numerical one.
+
+        Args:
+            data (pandas.Series):
+                Data to fit the transformer to.
+        """
+        self.dtype = data.dtypes
+        data = fill_nan_with_none(data)
+        labels = pd.unique(data)
+        labels = self._order_categories(labels)
+        freq = data.value_counts(normalize=True, dropna=False)
+        nan_value = freq[np.nan] if np.nan in freq.index else None
+        freq = freq.reindex(labels, fill_value=nan_value).array
+
+        self.frequencies, self.intervals = self._compute_frequencies_intervals(labels, freq)
+
+    def _transform(self, data):
+        """Map the category to a continuous value.
+
+        This value is sampled from a uniform distribution
+        with boudaries defined by the frequencies.
+
+        Args:
+            data (pandas.Series):
+                Data to transform.
+
+        Returns:
+            pandas.Series
+        """
+        data_with_none = fill_nan_with_none(data)
+        unseen_indexes = ~(data_with_none.isin(self.frequencies))
+        if unseen_indexes.any():
+            # Keep the 3 first unseen categories
+            unseen_categories = list(data.loc[unseen_indexes].unique())
+            categories_to_print = self._get_message_unseen_categories(unseen_categories)
+            warnings.warn(
+                f"The data in column '{self.get_input_column()}' contains new categories "
+                f"that did not appear during 'fit' ({categories_to_print}). Assigning "
+                'them random values. If you want to model new categories, '
+                "please fit the data again using 'fit'.",
+                category=UserWarning
+            )
+
+            choices = list(self.frequencies.keys())
+            size = unseen_indexes.size
+            data_with_none[unseen_indexes] = np.random.choice(choices, size=size)
+
+        def map_labels(label):
+            return np.random.uniform(self.intervals[label][0], self.intervals[label][1])
+
+        return data_with_none.map(map_labels).astype(float)
+
+    def _reverse_transform(self, data):
+        """Convert float values back to the original categorical values.
+
+        Args:
+            data (pandas.Series):
+                Data to revert.
+
+        Returns:
+            pandas.Series
+        """
+        data = data.clip(0, 1)
+        bins = [0]
+        labels = []
+        nan_name = 'NaN'
+        while nan_name in self.intervals.keys():
+            nan_name += '_'
+
+        for key, interval in self.intervals.items():
+            bins.append(interval[1])
+            if pd.isna(key):
+                labels.append(nan_name)
+            else:
+                labels.append(key)
+
+        result = pd.cut(data, bins=bins, labels=labels)
+        return result.replace(nan_name, np.nan).astype(self.dtype)
+
+
+class OrderedUniformEncoder(UniformEncoder):
+    """Ordered uniform encoder for categorical data.
+
+    This class works very similarly to the ``UniformEncoder``, except that it requires the ordering
+    for the labels to be provided.
+    Null values are considered just another category.
+
+    Args:
+        order (list):
+            A list of all the unique categories for the data. The order of the list determines the
+            label that each category will get.
+    """
+
+    def __init__(self, order):
+        self.order = fill_nan_with_none(pd.Series(order))
+        super().__init__()
+
+    def __repr__(self):
+        """Represent initialization of transformer as text.
+
+        Returns:
+            str:
+                The name of the transformer followed by any non-default parameters.
+        """
+        class_name = self.__class__.get_name()
+        custom_args = ['order=<CUSTOM>']
+        args_string = ', '.join(custom_args)
+        return f'{class_name}({args_string})'
+
+    def _check_unknown_categories(self, data):
+        missing = list(data[~data.isin(self.order)].unique())
+        if len(missing) > 0:
+            raise TransformerInputError(
+                f"Unknown categories '{missing}'. All possible categories must be defined in the "
+                "'order' parameter."
+            )
+
+    def _fit(self, data):
+        """Fit the transformer to the data.
+
+        Create all the class attributes while respecting the speicified
+        order of the labels.
+
+        Args:
+            data (pandas.Series):
+                Data to fit the transformer to.
+        """
+        self.dtype = data.dtypes
+        data = fill_nan_with_none(data)
+        self._check_unknown_categories(data)
+
+        category_not_seen = (set(self.order.dropna()) != set(data.dropna()))
+        nans_not_seen = (pd.isna(self.order).any() and not pd.isna(data).any())
+        if category_not_seen or nans_not_seen:
+            unseen_categories = [x for x in self.order if x not in data.array]
+            categories_to_print = self._get_message_unseen_categories(unseen_categories)
+            LOGGER.info(
+                "For column '%s', some of the provided category values were not present in the"
+                ' data during fit: (%s).',
+                self.get_input_column(),
+                categories_to_print
+            )
+
+            freq = data.value_counts(normalize=True, dropna=False)
+            freq = 0.9 * freq
+            for category in unseen_categories:
+                freq[category] = 0.1 / len(unseen_categories)
+
+        else:
+            freq = data.value_counts(normalize=True, dropna=False)
+
+        nan_value = freq[np.nan] if np.nan in freq.index else None
+        freq = freq.reindex(self.order, fill_value=nan_value).array
+
+        self.frequencies, self.intervals = self._compute_frequencies_intervals(self.order, freq)
+
+    def _transform(self, data):
+        """Map the category to a continuous value."""
+        data = fill_nan_with_none(data)
+        self._check_unknown_categories(data)
+        return super()._transform(data)
 
 
 class FrequencyEncoder(BaseTransformer):

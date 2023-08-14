@@ -1,7 +1,7 @@
 import pytest
 
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, LabelEncoder, RegexGenerator,
+    AnonymizedFaker, BinaryEncoder, FloatFormatter, RegexGenerator, UniformEncoder,
     UnixTimestampEncoder, get_default_transformers, get_transformer_class, get_transformer_name)
 from rdt.transformers.addons.identity.identity import IdentityTransformer
 
@@ -109,8 +109,8 @@ def test_get_default_transformers():
     # Assert
     expected_dict = {
         'numerical': FloatFormatter,
-        'categorical': LabelEncoder,
-        'boolean': LabelEncoder,
+        'categorical': UniformEncoder,
+        'boolean': UniformEncoder,
         'datetime': UnixTimestampEncoder,
         'text': RegexGenerator,
         'pii': AnonymizedFaker,

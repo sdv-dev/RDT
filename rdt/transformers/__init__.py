@@ -12,7 +12,8 @@ from pathlib import Path
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
 from rdt.transformers.categorical import (
-    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder)
+    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder,
+    OrderedUniformEncoder, UniformEncoder)
 from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
@@ -42,6 +43,8 @@ __all__ = [
     'get_transformers_by_type',
     'get_default_transformers',
     'get_default_transformer',
+    'UniformEncoder',
+    'OrderedUniformEncoder',
 ]
 
 
@@ -89,8 +92,8 @@ TRANSFORMERS = {
 
 DEFAULT_TRANSFORMERS = {
     'numerical': FloatFormatter(),
-    'categorical': LabelEncoder(add_noise=True),
-    'boolean': LabelEncoder(add_noise=True),
+    'categorical': UniformEncoder(),
+    'boolean': UniformEncoder(),
     'datetime': UnixTimestampEncoder(),
     'text': RegexGenerator(),
     'pii': AnonymizedFaker(),

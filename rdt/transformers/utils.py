@@ -150,3 +150,16 @@ def strings_from_regex(regex, max_repeat=16):
             sizes.append(size)
 
     return _from_generators(generators, max_repeat), np.prod(sizes, dtype=np.complex128)
+
+
+def fill_nan_with_none(data):
+    """Replace all nan values with None.
+
+    Args:
+        data (pd.DataFrame or pd.Series)
+
+    Returns:
+        data:
+            Original data with nan values replaced by None.
+    """
+    return data.fillna(np.nan).replace([np.nan], [None])
