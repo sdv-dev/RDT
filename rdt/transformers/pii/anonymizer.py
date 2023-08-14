@@ -132,7 +132,9 @@ class AnonymizedFaker(BaseTransformer):
             list:
                 Accepted input sdtypes of the transformer.
         """
-        unsupported_sdtypes = {'numerical', 'datetime', 'categorical', 'boolean', 'text', None}
+        unsupported_sdtypes = {
+            'numerical', 'datetime', 'categorical', 'boolean', 'text', None
+        }
         all_sdtypes = {cls.INPUT_SDTYPE}
         for transformer in BaseTransformer.get_subclasses():
             if not issubclass(transformer, cls):
