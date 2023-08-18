@@ -332,7 +332,7 @@ class TestAnonymizedFaker:
         supported_sdtypes = AnonymizedFaker.get_supported_sdtypes()
 
         # Assert
-        assert sorted(supported_sdtypes) == sorted(['phone_number', 'pii', 'text'])
+        assert sorted(supported_sdtypes) == sorted(['phone_number', 'pii'])
 
     @patch('rdt.transformers.pii.anonymizer.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.pii.anonymizer.faker')
