@@ -155,21 +155,14 @@ class TestBaseTransformer:
         assert Child in subclasses
         assert Parent not in subclasses
 
-    def test_get_input_sdtype_raises_warning(self):
+    @patch('rdt.transformers.base.BaseTransformer.get_supported_sdtypes')
+    def test_get_input_sdtype_raises_warning(self, mock_get_supported_sdtypes):
         """Test the ``get_input_sdtype`` method.
 
         This method should raise a FutureWarning and then call ``get_supported_sdtypes_`` method.
-
-        Setup:
-            - create a ``Dummy`` class which inherits from the ``BaseTransformer``,
-            containing only a ``INPUT_SDTYPE`` attribute.
-
-        Output:
-            - the string stored in the ``INPUT_SDTYPE`` attribute.
         """
         # Setup
-        class Dummy(BaseTransformer):
-            INPUT_SDTYPE = 'categorical'
+        mock_get_supported_sdtypes.return_value = ['categorical']
 
         # Run
         expected_message = (
@@ -177,10 +170,11 @@ class TestBaseTransformer:
             '``get_supported_sdtypes`` instead.'
         )
         with pytest.warns(FutureWarning, match=expected_message):
-            input_sdtype = Dummy.get_input_sdtype()
+            input_sdtype = BaseTransformer.get_input_sdtype()
 
         # Assert
         assert input_sdtype == 'categorical'
+        mock_get_supported_sdtypes.assert_called_once()
 
     def test_get_supported_sdtypes_supported_sdtypes(self):
         """Test the ``get_supported_sdtypes`` method.
