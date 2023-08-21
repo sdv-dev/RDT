@@ -188,7 +188,7 @@ class BaseTransformer:
             '``get_input_sdtype`` is deprecated. Please use ``get_supported_sdtypes`` instead.',
             FutureWarning
         )
-        return cls.get_supported_sdtypes()
+        return cls.get_supported_sdtypes()[0]
 
     @classmethod
     def get_supported_sdtypes(cls):

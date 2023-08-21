@@ -177,7 +177,7 @@ class TestBaseTransformer:
             '``get_supported_sdtypes`` instead.'
         )
         with pytest.warns(FutureWarning, match=expected_message):
-            input_sdtype = Dummy.get_input_sdtype()[0]
+            input_sdtype = Dummy.get_input_sdtype()
 
         # Assert
         assert input_sdtype == 'categorical'
