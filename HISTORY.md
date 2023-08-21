@@ -6,7 +6,7 @@ This release adds 3 new transformers:
 
 1. `UniformEncoder` - A categorical and boolean transformer that converts the column into a uniform distribution.
 2. `OrderedUniformEncoder` - The same as above, but the order for the categories can be specified, changing which range in the uniform distribution each category belongs to.
-3. `IDGenerator`- A text transformer that drops the input column during transform and returns IDs during reverse transform. The IDs all take the form <prefix>-<number>-<suffix> andcan be configured with a custom prefix, suffix and starting point.
+3. `IDGenerator`- A text transformer that drops the input column during transform and returns IDs during reverse transform. The IDs all take the form <prefix>-<number>-<suffix> and can be configured with a custom prefix, suffix and starting point.
 
 Additionally, the `AnonymizedFaker` is enhanced to support the text sdtype. 
 
