@@ -365,7 +365,7 @@ def validate_transformer_performance(transformer):
 
     print(f'Validating Performance for transformer {transformer.get_name()}\n')
 
-    sdtype = transformer.get_input_sdtype()
+    sdtype = transformer.get_supported_sdtypes()[0]
     transformers = get_transformers_by_type().get(sdtype, [])
     dataset_generators = get_dataset_generators_by_type().get(sdtype, [])
 

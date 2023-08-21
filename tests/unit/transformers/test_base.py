@@ -155,10 +155,10 @@ class TestBaseTransformer:
         assert Child in subclasses
         assert Parent not in subclasses
 
-    def test_get_input_sdtype(self):
+    def test_get_input_sdtype_raises_warning(self):
         """Test the ``get_input_sdtype`` method.
 
-        This method should return the value defined in the ``INPUT_SDTYPE`` of the child classes.
+        This method should raise a FutureWarning and then call ``get_supported_sdtypes_`` method.
 
         Setup:
             - create a ``Dummy`` class which inherits from the ``BaseTransformer``,
@@ -172,7 +172,12 @@ class TestBaseTransformer:
             INPUT_SDTYPE = 'categorical'
 
         # Run
-        input_sdtype = Dummy.get_input_sdtype()
+        expected_message = (
+            '``get_input_sdtype`` is deprecated. Please use '
+            '``get_supported_sdtypes`` instead.'
+        )
+        with pytest.warns(FutureWarning, match=expected_message):
+            input_sdtype = Dummy.get_input_sdtype()[0]
 
         # Assert
         assert input_sdtype == 'categorical'
