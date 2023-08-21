@@ -603,8 +603,8 @@ class HyperTransformer:
         self._validate_detect_config_called(data)
         self._unfit()
         self._input_columns = list(data.columns)
-        for field in self._input_columns:
-            data = self._fit_field_transformer(data, field, self.field_transformers[field])
+        for fields_column, fields_transformer in self.field_transformers.items():
+            data = self._fit_field_transformer(data, fields_column, fields_transformer)
 
         self._validate_all_fields_fitted()
         self._fitted = True
