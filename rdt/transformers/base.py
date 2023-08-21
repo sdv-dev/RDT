@@ -259,12 +259,21 @@ class BaseTransformer:
         return list(self._get_output_to_property('sdtype'))
 
     def _store_columns(self, columns, data):
-        if isinstance(columns, tuple) and columns not in data:
-            columns = list(columns)
-        elif not isinstance(columns, list):
-            columns = [columns]
+        """Store the column names to be transformed.
 
-        missing = set(columns) - set(data.columns)
+        Args:
+            columns (str, list, tuple):
+                Column name(s) to be transformed.
+            data (pandas.DataFrame):
+                The entire table.
+        """
+        column_names = columns
+        if isinstance(column_names, tuple) and column_names not in data:
+            column_names = list(column_names)
+        elif not isinstance(column_names, list):
+            column_names = [column_names]
+
+        missing = set(column_names) - set(data.columns)
         if missing:
             raise KeyError(f'Columns {missing} were not present in the data.')
 
@@ -479,3 +488,58 @@ class BaseTransformer:
         data = self._add_columns_to_data(data, reversed_data, self.columns)
 
         return data
+
+
+class BaseMultiColumnTransformer(BaseTransformer):
+    """Base class for all multi column transformers.
+
+    The ``BaseMultiColumnTransformer`` class contains methods that must be implemented
+    in order to create a new mulit column transformer.
+    """
+
+    def get_input_column(self):
+        """Override ``get_input_column`` method from ``BaseTransformer``.
+
+        Raise an error because for multi column transformers, ``get_input_columns``
+        must be used instead.
+        """
+        raise ValueError(
+            'MultiColumnTransformers does not have a single input column.'
+            'Please use ``get_input_columns`` instead.'
+        )
+
+    def get_input_columns(self):
+        """Return input column name for transformer.
+
+        Returns:
+            list:
+                Input column names.
+        """
+        return self.columns
+
+    def _fit(self, columns_data, columns_to_sdtypes):
+        """Fit the transformer to the data.
+
+        Args:
+            columns_data (pandas.DataFrame):
+                Data to transform.
+            columns_to_sdtypes (dict):
+                Dictionary mapping column names to their sdtypes.
+        """
+        raise NotImplementedError()
+
+    def fit(self, data, columns_to_sdtypes):
+        """Fit the transformer to a ``column`` of the ``data``.
+
+        Args:
+            data (pandas.DataFrame):
+                The entire table.
+            columns_to_sdtypes (dict):
+                Dictionary mapping column names to their sdtypes.
+        """
+        column_names = list(columns_to_sdtypes.keys())
+        self._store_columns(column_names, data)
+        self._set_seed(data)
+        columns_data = self._get_columns_data(data, self.columns)
+        self._fit(columns_data, columns_to_sdtypes)
+        self._build_output_columns(data)

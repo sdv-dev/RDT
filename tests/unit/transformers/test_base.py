@@ -1272,3 +1272,18 @@ class TestBaseTransformer:
             'b': [0.0, 0.0, 0.0],
         })
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)
+
+
+class TestBaseMultiColumnTransformer:
+
+    def test_get_input_column(self):
+        pass
+
+    def test_get_input_columns(self):
+        pass
+
+    def test__fit(self):
+        pass
+
+    def test_fit(self):
+        pass
