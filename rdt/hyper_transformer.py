@@ -408,6 +408,16 @@ class HyperTransformer:
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
+    def _generate_column_in_tuple(self):
+        """Generate a dict mapping columns in a tuple to the tuple itself."""
+        column_in_tuple = {}
+        for fields in self.field_transformers:
+            if isinstance(fields, tuple):
+                for column in fields:
+                    column_in_tuple[column] = fields
+
+        return column_in_tuple
+
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
 
@@ -425,6 +435,8 @@ class HyperTransformer:
         self._validate_update_columns(update_columns)
         self._validate_transformers(column_name_to_transformer)
 
+        column_in_tuple = self._generate_column_in_tuple()
+
         for column_name, transformer in column_name_to_transformer.items():
             columns = column_name if isinstance(column_name, tuple) else (column_name,)
             for column in columns:
@@ -438,6 +450,20 @@ class HyperTransformer:
 
                 if len(columns) > 1:
                     del self.field_transformers[column]
+                elif column in column_in_tuple:
+                    old_tuple = column_in_tuple[column]
+                    new_tuple = tuple(
+                        item for item in old_tuple if item != column
+                    )
+                    if len(new_tuple) == 1:
+                        new_tuple = new_tuple[0]
+                        del column_in_tuple[new_tuple]
+                    else:
+                        for col in new_tuple:
+                            column_in_tuple[col] = new_tuple
+
+                    self.field_transformers[new_tuple] = self.field_transformers[old_tuple]
+                    del self.field_transformers[old_tuple]
 
             self.field_transformers[column_name] = transformer
 
