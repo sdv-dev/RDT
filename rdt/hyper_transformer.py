@@ -421,6 +421,29 @@ class HyperTransformer:
 
         return column_in_tuple
 
+    def _update_column_in_tuple(self, column, column_in_tuple):
+        """Update the column in tuple dict.
+
+        Args:
+            column (str):
+                Column name to be updated.
+            column_in_tuple (dict):
+                Dict mapping columns in a tuple to the tuple itself.
+        """
+        old_tuple = column_in_tuple[column]
+        new_tuple = tuple(
+            item for item in old_tuple if item != column
+        )
+        if len(new_tuple) == 1:
+            new_tuple = new_tuple[0]
+            del column_in_tuple[new_tuple]
+        else:
+            for col in new_tuple:
+                column_in_tuple[col] = new_tuple
+
+        self.field_transformers[new_tuple] = self.field_transformers[old_tuple]
+        del self.field_transformers[old_tuple]
+
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
 
@@ -454,19 +477,7 @@ class HyperTransformer:
                 if len(columns) > 1:
                     del self.field_transformers[column]
                 elif column in column_in_tuple:
-                    old_tuple = column_in_tuple[column]
-                    new_tuple = tuple(
-                        item for item in old_tuple if item != column
-                    )
-                    if len(new_tuple) == 1:
-                        new_tuple = new_tuple[0]
-                        del column_in_tuple[new_tuple]
-                    else:
-                        for col in new_tuple:
-                            column_in_tuple[col] = new_tuple
-
-                    self.field_transformers[new_tuple] = self.field_transformers[old_tuple]
-                    del self.field_transformers[old_tuple]
+                    self._update_column_in_tuple(column, column_in_tuple)
 
             self.field_transformers[column_name] = transformer
 
