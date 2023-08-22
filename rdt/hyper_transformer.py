@@ -249,7 +249,10 @@ class HyperTransformer:
             )
 
     def _validate_update_columns(self, update_columns):
-        unknown_columns = self._subset(update_columns, self.field_sdtypes.keys(), not_in=True)
+
+        unknown_columns = self._subset(
+            flatten_column_list(update_columns), self.field_sdtypes.keys(), not_in=True
+        )
         if unknown_columns:
             raise InvalidConfigError(
                 f'Invalid column names: {unknown_columns}. These columns do not exist in the '
