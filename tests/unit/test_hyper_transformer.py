@@ -2246,11 +2246,10 @@ class TestHyperTransformer(TestCase):
         instance = HyperTransformer()
         instance._fitted = False
         mock_transformer = Mock()
-        mock_transformer.get_supported_sdtype.return_value = ['datetime']
         column_name_to_transformer = {
             'my_column': mock_transformer
         }
-
+        expected_config = instance.get_config()
         # Run
         expected_msg = (
             'Nothing to update. Use the `detect_initial_config` method to pre-populate '
@@ -2258,6 +2257,8 @@ class TestHyperTransformer(TestCase):
         )
         with pytest.raises(ConfigNotSetError, match=expected_msg):
             instance.update_transformers(column_name_to_transformer)
+
+        assert instance.get_config() == expected_config
 
     @patch('rdt.hyper_transformer.print')
     def test_update_transformers_missmatch_sdtypes(self, mock_warnings):
