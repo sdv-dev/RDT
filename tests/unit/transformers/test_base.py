@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from rdt.errors import TransformerInputError
-from rdt.transformers import BaseTransformer, NullTransformer
+from rdt.transformers import BaseMultiColumnTransformer, BaseTransformer, NullTransformer
 from rdt.transformers.base import random_state, set_random_states
 
 
@@ -1277,13 +1277,73 @@ class TestBaseTransformer:
 class TestBaseMultiColumnTransformer:
 
     def test_get_input_column(self):
-        pass
+        """Test the ``get_input_column`` method.
+
+        When the ``get_input_column`` method is called, it should raise a ``NotImplementedError``.
+        """
+        # Setup
+        expected_message = (
+            'MultiColumnTransformers does not have a single input column.'
+            'Please use ``get_input_columns`` instead.'
+        )
+
+        # Run and Assert
+        with pytest.raises(NotImplementedError, match=expected_message):
+            BaseMultiColumnTransformer().get_input_column()
 
     def test_get_input_columns(self):
-        pass
+        """Test the ``get_input_columns`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        transformer.columns = ['a', 'b', 'c']
+
+        # Run
+        output = transformer.get_input_columns()
+
+        # Assert
+        assert output == ['a', 'b', 'c']
 
     def test__fit(self):
-        pass
+        """Test the ``_fit`` method.
+
+        Check that an error is raised when the ``_fit`` method is called.
+        """
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+
+        # Run and Assert
+        with pytest.raises(NotImplementedError):
+            transformer._fit(None, None)
 
     def test_fit(self):
-        pass
+        """Test the ``fit`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        data = Mock()
+        columns_to_sdtypes = {
+            'a': 'numerical',
+            'b': 'categorical',
+            'c': 'boolean'
+        }
+        data_transformer = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': ['a', 'b', 'c'],
+        })
+        transformer.columns = ['a', 'b']
+        transformer._store_columns = Mock()
+        transformer._get_columns_data = Mock(return_value=data_transformer)
+        transformer._set_seed = Mock()
+        transformer._fit = Mock()
+        transformer._build_output_columns = Mock()
+
+        # Run
+        transformer.fit(data, columns_to_sdtypes)
+
+        # Assert
+        transformer._store_columns.assert_called_once_with(
+            list(columns_to_sdtypes.keys()), data
+        )
+        transformer._set_seed.assert_called_once_with(data)
+        transformer._get_columns_data.assert_called_once_with(data, ['a', 'b'])
+        transformer._fit.assert_called_once_with(data_transformer, columns_to_sdtypes)
+        transformer._build_output_columns.assert_called_once_with(data)

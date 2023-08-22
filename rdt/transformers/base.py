@@ -277,7 +277,7 @@ class BaseTransformer:
         if missing:
             raise KeyError(f'Columns {missing} were not present in the data.')
 
-        self.columns = columns
+        self.columns = column_names
 
     @staticmethod
     def _get_columns_data(data, columns):
@@ -494,7 +494,7 @@ class BaseMultiColumnTransformer(BaseTransformer):
     """Base class for all multi column transformers.
 
     The ``BaseMultiColumnTransformer`` class contains methods that must be implemented
-    in order to create a new mulit column transformer.
+    in order to create a new multi column transformer.
     """
 
     def get_input_column(self):
@@ -503,7 +503,7 @@ class BaseMultiColumnTransformer(BaseTransformer):
         Raise an error because for multi column transformers, ``get_input_columns``
         must be used instead.
         """
-        raise ValueError(
+        raise NotImplementedError(
             'MultiColumnTransformers does not have a single input column.'
             'Please use ``get_input_columns`` instead.'
         )
