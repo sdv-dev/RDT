@@ -185,7 +185,7 @@ class BaseTransformer:
                 Accepted input sdtype of the transformer.
         """
         warnings.warn(
-            '``get_input_sdtype`` is deprecated. Please use ``get_supported_sdtypes`` instead.',
+            '`get_input_sdtype` is deprecated. Please use `get_supported_sdtypes` instead.',
             FutureWarning
         )
         return cls.get_supported_sdtypes()[0]

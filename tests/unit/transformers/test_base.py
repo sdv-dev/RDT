@@ -166,8 +166,8 @@ class TestBaseTransformer:
 
         # Run
         expected_message = (
-            '``get_input_sdtype`` is deprecated. Please use '
-            '``get_supported_sdtypes`` instead.'
+            '`get_input_sdtype` is deprecated. Please use '
+            '`get_supported_sdtypes` instead.'
         )
         with pytest.warns(FutureWarning, match=expected_message):
             input_sdtype = BaseTransformer.get_input_sdtype()
