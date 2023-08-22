@@ -24,6 +24,11 @@ class Config(dict):
 
     def __repr__(self):
         """Pretty print the dictionary."""
+        transformers_repr = {}
+        for key, value in self['transformers'].items():
+            transformed_key = str(key)
+            transformers_repr[transformed_key] = repr(value)
+
         config = {
             'sdtypes': self['sdtypes'],
             'transformers': {str(k): repr(v) for k, v in self['transformers'].items()}
