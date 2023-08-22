@@ -12,12 +12,13 @@ from pathlib import Path
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
 from rdt.transformers.categorical import (
-    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder)
+    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder,
+    OrderedUniformEncoder, UniformEncoder)
 from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
 from rdt.transformers.pii.anonymizer import AnonymizedFaker, PseudoAnonymizedFaker
-from rdt.transformers.text import RegexGenerator
+from rdt.transformers.text import IDGenerator, RegexGenerator
 
 __all__ = [
     'BaseTransformer',
@@ -36,11 +37,14 @@ __all__ = [
     'RegexGenerator',
     'AnonymizedFaker',
     'PseudoAnonymizedFaker',
+    'IDGenerator',
     'get_transformer_name',
     'get_transformer_class',
     'get_transformers_by_type',
     'get_default_transformers',
     'get_default_transformer',
+    'UniformEncoder',
+    'OrderedUniformEncoder',
 ]
 
 
@@ -88,8 +92,8 @@ TRANSFORMERS = {
 
 DEFAULT_TRANSFORMERS = {
     'numerical': FloatFormatter(),
-    'categorical': LabelEncoder(add_noise=True),
-    'boolean': LabelEncoder(add_noise=True),
+    'categorical': UniformEncoder(),
+    'boolean': UniformEncoder(),
     'datetime': UnixTimestampEncoder(),
     'text': RegexGenerator(),
     'pii': AnonymizedFaker(),
@@ -141,8 +145,8 @@ def get_transformers_by_type():
     sdtype_transformers = defaultdict(list)
     transformer_classes = BaseTransformer.get_subclasses()
     for transformer in transformer_classes:
-        input_sdtype = transformer.get_input_sdtype()
-        sdtype_transformers[input_sdtype].append(transformer)
+        for sdtype in transformer.get_supported_sdtypes():
+            sdtype_transformers[sdtype].append(transformer)
 
     return sdtype_transformers
 

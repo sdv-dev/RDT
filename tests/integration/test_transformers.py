@@ -67,7 +67,10 @@ def _validate_helper(validator_function, args, steps):
 
 def _is_valid_transformer(transformer_name):
     """Determine if transformer should be tested or not."""
-    invalid_names = ['IdentityTransformer', 'Dummy', 'OrderedLabelEncoder', 'CustomLabelEncoder']
+    invalid_names = [
+        'IdentityTransformer', 'Dummy', 'OrderedLabelEncoder', 'CustomLabelEncoder',
+        'OrderedUniformEncoder',
+    ]
     return all(invalid_name not in transformer_name for invalid_name in invalid_names)
 
 
@@ -127,7 +130,7 @@ def _validate_reverse_transformed_data(transformer, reversed_data, input_dtype):
 
     Expect that the dtype is equal to the dtype of the input data.
     """
-    expected_sdtype = transformer.get_input_sdtype()
+    expected_sdtype = transformer.get_supported_sdtypes()[0]
     message = f'Reverse transformed data is not the expected sdtype {expected_sdtype}'
     assert reversed_data.dtypes[TEST_COL].kind in SDTYPE_TO_DTYPES[expected_sdtype], message
 
@@ -178,7 +181,7 @@ def _validate_hypertransformer_transformed_data(transformed_data):
 
 def _validate_hypertransformer_reverse_transformed_data(transformer, reversed_data):
     """Check that the reverse transformed data has the same dtype as the input."""
-    expected_sdtype = transformer().get_input_sdtype()
+    expected_sdtype = transformer().get_supported_sdtypes()[0]
     message = f'Reversed transformed data is not the expected sdtype {expected_sdtype}'
     assert reversed_data.dtype.kind in SDTYPE_TO_DTYPES[expected_sdtype], message
 
@@ -247,7 +250,7 @@ def validate_transformer(transformer, steps=None, subtests=None):
         subtests:
             Whether or not to test with subtests.
     """
-    input_sdtype = transformer.get_input_sdtype()
+    input_sdtype = transformer.get_supported_sdtypes()[0]
 
     dataset_generators = _find_dataset_generators(input_sdtype, generators)
     _validate_helper(_validate_dataset_generators, [dataset_generators], steps)

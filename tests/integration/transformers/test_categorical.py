@@ -5,7 +5,165 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 
-from rdt.transformers import FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder
+from rdt.transformers import (
+    FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder, OrderedUniformEncoder,
+    UniformEncoder)
+
+
+class TestUniformEncoder:
+    """Test class for the UniformEncoder."""
+
+    def test_frequency(self):
+        """Test that the frequencies sum up to 1.0."""
+        # Setup
+        data_1 = pd.DataFrame({'column_name': [1, 2, 3, 2, 1, 1, 1]})
+        data_2 = pd.DataFrame({'column_name': [1, 2, 3]})
+        column = 'column_name'
+
+        transformer_1 = UniformEncoder()
+        transformer_2 = UniformEncoder()
+
+        # Run
+        transformer_1.fit(data_1, column)
+        transformer_2.fit(data_2, column)
+
+        # Asserts
+        assert sum(transformer_1.frequencies.values()) == 1.0
+        assert sum(transformer_2.frequencies.values()) == 1.0
+
+    def test_clip_interval(self):
+        """Test that the first interval starts at 0 and last ends at 0."""
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 2, 3, 2, 1, 1, 1]})
+        column = 'column_name'
+        transformer = UniformEncoder(order_by='numerical_value')
+
+        # Run
+        transformer.fit(data, column)
+
+        # Asserts
+        assert transformer.intervals[1][0] == 0.0
+        assert transformer.intervals[3][-1] == 1.0
+
+    def test__reverse_transform(self):
+        """Test the ``reverse_transform``."""
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 2, 3, 2, 2, 1, 3, 3, 2]})
+        column = 'column_name'
+
+        transformer = UniformEncoder()
+
+        # Run
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        output = transformer.reverse_transform(transformed)
+
+        # Asserts
+        pd.testing.assert_series_equal(output['column_name'], data['column_name'])
+
+    def test__reverse_transform_nans(self):
+        """Test ``reverse_transform`` for data with NaNs."""
+        # Setup
+        data = pd.DataFrame({
+            'column_name': ['a', 'b', 'c', np.nan, 'c', 'b', 'b', 'a', 'b', np.nan]
+        })
+        column = 'column_name'
+
+        transformer = UniformEncoder()
+
+        # Run
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        output = transformer.reverse_transform(transformed)
+
+        # Asserts
+        pd.testing.assert_series_equal(output[column], data[column])
+
+    def test_uniform_encoder_unseen_transform_nan(self):
+        """Ensure UniformEncoder works when np.nan to transform wasn't seen during fit."""
+        # Setup
+        fit_data = pd.DataFrame([1.0, 2.0, 3.0], columns=['column_name'])
+        transform_data = pd.DataFrame([1, 2, 3, np.nan], columns=['column_name'])
+        column = 'column_name'
+
+        transformer = UniformEncoder()
+
+        # Run
+        transformer.fit(fit_data, column)
+        transformed = transformer.transform(transform_data)
+        reverse = transformer.reverse_transform(transformed)
+
+        # Asserts
+        pd.testing.assert_frame_equal(reverse[:3], transform_data[:3])
+        assert reverse.iloc[3][0] in {1, 2, 3}
+
+    def test_transform_with_nans(self):
+        """Test the ``UniformEncoder`` works properly with nan values."""
+        # Setup
+        data = pd.DataFrame({
+            'bool': [True, False, None, False, True],
+            'mycol': ['a', 'b', 'a', None, np.nan],
+        })
+        ue = UniformEncoder()
+
+        # Run
+        ue.fit(data, 'mycol')
+        transformed = ue.transform(data)
+        out = ue.reverse_transform(transformed)
+
+        # Assert
+        pd.testing.assert_frame_equal(out, data)
+
+
+class TestOrderedUniformEncoder:
+    """Test class for the OrderedUniformEncoder."""
+
+    def test_order(self):
+        """Test that the ``order`` parameter is respected."""
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 2, 3, 2, np.nan, 1, 1]})
+        transformer = OrderedUniformEncoder(order=[2, 3, np.nan, 1])
+        column = 'column_name'
+
+        # Run
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        reverse = transformer.reverse_transform(transformed)
+        expected_order = pd.Series([2, 3, np.nan, 1], dtype=object)
+
+        # Asserts
+        pd.testing.assert_series_equal(reverse[column], data[column])
+        pd.testing.assert_series_equal(transformer.order, expected_order)
+
+    def test_string(self):
+        """Test that the transformer works with string labels."""
+        # Setup
+        data = pd.DataFrame({'column_name': ['b', 'a', 'c', 'a', np.nan, 'b', 'b']})
+        transformer = OrderedUniformEncoder(order=['a', 'c', np.nan, 'b'])
+        column = 'column_name'
+
+        # Run
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        reverse = transformer.reverse_transform(transformed)
+
+        # Asserts
+        pd.testing.assert_series_equal(reverse[column], data[column])
+
+    def test_mixt_dtype(self):
+        """Test that the transformer works with mixture of dtypes labels."""
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 'a', 'c', 'a', np.nan, 1, 1]})
+        transformer = OrderedUniformEncoder(order=['a', 'c', np.nan, 1])
+        column = 'column_name'
+
+        # Run
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        reverse = transformer.reverse_transform(transformed)
+
+        # Asserts
+        pd.testing.assert_series_equal(reverse[column], data[column])
 
 
 def test_frequency_encoder_numerical_nans():

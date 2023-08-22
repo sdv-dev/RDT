@@ -1,3 +1,4 @@
+import logging
 import re
 from unittest.mock import Mock, call, patch
 
@@ -7,9 +8,479 @@ import pytest
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.categorical import (
-    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder)
+    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder,
+    OrderedUniformEncoder, UniformEncoder)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
+
+
+class TestUniformEncoder:
+    """Test class for the UniformEncoder."""
+
+    def test___init___bad_order_by(self):
+        """Test that the ``__init__`` raises error if ``order_by`` is a bad value.
+
+        Input:
+            - ``order_by`` will be set to an unexpected string.
+        Expected behavior:
+            - An error should be raised.
+        """
+        # Run / Assert
+        message = (
+            "order_by must be one of the following values: None, 'numerical_value' or "
+            "'alphabetical'"
+        )
+        with pytest.raises(TransformerInputError, match=message):
+            UniformEncoder(order_by='bad_value')
+
+    def test__order_categories_alphabetical(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        Setup:
+            - Set ``order_by`` to 'alphabetical'.
+        Input:
+            - numpy array of strings that are unordered.
+        Output:
+            - Same numpy array but with the strings alphabetically ordered.
+        """
+        # Setup
+        transformer = UniformEncoder(order_by='alphabetical')
+        arr = np.array(['one', 'two', 'three', 'four'])
+
+        # Run
+        ordered = transformer._order_categories(arr)
+
+        # Assert
+        np.testing.assert_array_equal(ordered, np.array(['four', 'one', 'three', 'two']))
+
+    def test__order_categories_alphabetical_with_nans(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        Setup:
+            - Set ``order_by`` to 'alphabetical'.
+        Input:
+            - numpy array of strings that are unordered and have nans.
+        Output:
+            - Same numpy array but with the strings alphabetically ordered and nan at the end.
+        """
+        # Setup
+        transformer = UniformEncoder(order_by='alphabetical')
+        arr = np.array(['one', 'two', 'three', np.nan, 'four'], dtype='object')
+
+        # Run
+        ordered = transformer._order_categories(arr)
+
+        # Assert
+        expected = np.array(['four', 'one', 'three', 'two', np.nan], dtype='object')
+        pd.testing.assert_series_equal(pd.Series(ordered), pd.Series(expected))
+
+    def test__order_categories_alphabetical_float_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        If ``order_by`` is 'alphabetical' but the data isn't a string, then an error should
+        be raised.
+        """
+        # Setup
+        transformer = UniformEncoder(order_by='alphabetical')
+        arr = np.array([1, 2, 3, 4])
+
+        # Run / Assert
+        message = "The data must be of type string if order_by is 'alphabetical'."
+        with pytest.raises(TransformerInputError, match=message):
+            transformer._order_categories(arr)
+
+    def test__order_categories_alphabetical_nonstring_object_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
+
+        If ``order_by`` is 'alphabetical' and the data's dtype is object but none of the values
+        are strings, then an error should be raised.
+        """
+        # Setup
+        transformer = UniformEncoder(order_by='alphabetical')
+        arr = np.array([True, False, None])
+
+        # Run / Assert
+        message = "The data must be of type string if order_by is 'alphabetical'."
+        with pytest.raises(TransformerInputError, match=message):
+            transformer._order_categories(arr)
+
+    def test__order_categories_numerical(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
+
+        Setup:
+            - Set ``order_by`` to 'numerical_value'.
+        Input:
+            - numpy array of numbers that are unordered.
+        Output:
+            - Same numpy array but with the numbers ordered.
+        """
+        # Setup
+        transformer = UniformEncoder(order_by='numerical_value')
+        arr = np.array([5, 3.11, 100, 67.8, np.nan, -2.5])
+
+        # Run
+        ordered = transformer._order_categories(arr)
+
+        # Assert
+        np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, None]))
+
+    def test__order_categories_numerical_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
+
+        If the array is made up of strings that can't be converted to floats, and `order_by`
+        is 'numerical_value', then we should raise an error.
+        Setup:
+            - Set ``order_by`` to 'numerical_value'.
+        Input:
+            - numpy array of strings.
+        Expected behavior:
+            - Error should be raised.
+        """
+        # Setup
+        transformer = UniformEncoder(order_by='numerical_value')
+        arr = np.array(['one', 'two', 'three', 'four'])
+
+        # Run / Assert
+        message = ("The data must be numerical if order_by is 'numerical_value'.")
+        with pytest.raises(TransformerInputError, match=message):
+            transformer._order_categories(arr)
+
+    def test__order_categories_numerical_different_dtype_error(self):
+        """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
+
+        If the array is made up of a dtype that is not numeric and can't be converted to a float,
+        and `order_by` is 'numerical_value', then we should raise an error.
+        Setup:
+            - Set ``order_by`` to 'numerical_value'.
+        Input:
+            - numpy array of booleans.
+        Expected behavior:
+            - Error should be raised.
+        """
+        # Setup
+        transformer = UniformEncoder(order_by='numerical_value')
+        arr = np.array([True, False, False, True])
+
+        # Run / Assert
+        message = ("The data must be numerical if order_by is 'numerical_value'.")
+        with pytest.raises(TransformerInputError, match=message):
+            transformer._order_categories(arr)
+
+    def test__fit(self):
+        """Test the ``_fit`` method.
+
+        Check the frequencies and intervals dictionnary.
+        """
+        # Setup
+        transformer = UniformEncoder()
+
+        # Run
+        data = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
+        transformer._fit(data)
+
+        # Asserts
+        expected_frequencies = {
+            'foo': 0.5,
+            'bar': 0.3333333333333333,
+            'tar': 0.16666666666666666
+        }
+        expected_intervals = {
+            'foo': [0., 0.5],
+            'bar': [0.5, 0.8333333333333333],
+            'tar': [0.8333333333333333, 1.0]
+        }
+        assert transformer.frequencies == expected_frequencies
+        assert transformer.intervals == expected_intervals
+
+    def test__transform(self):
+        """Test the ``_transform`` method.
+
+        Check that the labels are correctly mapped
+        according to their interval.
+        """
+        # Setup
+        transformer = UniformEncoder()
+        data = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
+        transformer.frequencies = {
+            'foo': 0.5,
+            'bar': 0.3333333333333333,
+            'tar': 0.16666666666666666
+        }
+        transformer.intervals = {
+            'foo': [0., 0.5],
+            'bar': [0.5, 0.8333333333333333],
+            'tar': [0.8333333333333333, 1.0]
+        }
+
+        # Run
+        transformed = transformer._transform(data)
+
+        # Asserts
+        for key in transformer.intervals:
+            assert (transformed.loc[data == key] >= transformer.intervals[key][0]).all()
+            assert (transformed.loc[data == key] < transformer.intervals[key][1]).all()
+
+    def test__transform_user_warning(self):
+        """Test the ``transform`` with unknown data.
+
+        In this test ``transform`` should raise a warning due to the attempt
+        of transforming data with previously unseen categories.
+
+        Input:
+        - Series with unknown categorical values
+        """
+        # Setup
+        data = pd.DataFrame({'col': [1, 2, 3, 4]})
+        data_1 = data['col'].copy()
+        data_1.loc[4] = 5
+        data_2 = pd.Series([1, 2, 3, 4, 5, 'a', 7, 8, 'b'])
+        transformer = UniformEncoder()
+        transformer.columns = ['col']
+        transformer.frequencies = {
+            1: 0.25, 2: 0.25, 3: 0.25, 4: 0.25
+        }
+
+        transformer.intervals = {
+            1: [0, 0.25],
+            2: [0.25, 0.5],
+            3: [0.5, 0.75],
+            4: [0.75, 1]
+        }
+
+        # Run
+        warning_msg_1 = re.escape(
+            "The data in column 'col' contains new categories"
+            " that did not appear during 'fit' (5). Assigning"
+            ' them random values. If you want to model new categories,'
+            " please fit the data again using 'fit'."
+        )
+
+        warning_msg_2 = re.escape(
+            "The data in column 'col' contains new categories"
+            " that did not appear during 'fit' (5, a, 7, +2 more). Assigning"
+            ' them random values. If you want to model new categories,'
+            " please fit the data again using 'fit'."
+        )
+
+        # Assert
+        with pytest.warns(UserWarning, match=warning_msg_1):
+            transformed = transformer._transform(data_1)
+        with pytest.warns(UserWarning, match=warning_msg_2):
+            transformed = transformer._transform(data_2)
+
+        assert transformed.iloc[4] >= 0
+        assert transformed.iloc[4] < 1
+
+    def test__reverse_transform(self):
+        """Test the ``_reverse_transform``."""
+        # Setup
+        data = pd.Series([1, 2, 3, 2, 2, 1, 3, 3, 2])
+        transformer = UniformEncoder()
+        transformer.dtype = np.int64
+        transformer.frequencies = {
+            1: 0.222222,
+            2: 0.444444,
+            3: 0.333333
+        }
+        transformer.intervals = {
+            1: [0, 0.222222],
+            2: [0.222222, 0.666666],
+            3: [0.666666, 1.0]
+        }
+
+        transformed = pd.Series([0.12, 0.254, 0.789, 0.43, 0.56, 0.08, 0.67, 0.98, 0.36])
+
+        # Run
+        output = transformer._reverse_transform(transformed)
+
+        # Asserts
+        pd.testing.assert_series_equal(output, data)
+
+    def test__reverse_transform_nans(self):
+        """Test ``_reverse_transform`` for data with NaNs."""
+        # Setup
+        data = pd.Series(['a', 'b', 'NaN', np.nan, 'NaN', 'b', 'b', 'a', 'b', np.nan])
+        transformer = UniformEncoder()
+        transformer.dtype = object
+        transformer.frequencies = {
+            'a': 0.2,
+            'b': 0.4,
+            'NaN': 0.2,
+            np.nan: 0.2
+        }
+        transformer.intervals = {
+            'a': [0, 0.2],
+            'b': [0.2, 0.6],
+            'NaN': [0.6, 0.8],
+            np.nan: [0.8, 1]
+        }
+
+        transformed = pd.Series([0.12, 0.254, 0.789, 0.88, 0.69, 0.53, 0.47, 0.08, 0.39, 0.92])
+
+        # Run
+        output = transformer._reverse_transform(transformed)
+
+        # Asserts
+        pd.testing.assert_series_equal(output, data)
+
+
+@pytest.fixture(autouse=True)
+def _setup_caplog(caplog):
+    """Define the logging for info message."""
+    caplog.set_level(logging.INFO)
+
+
+class TestOrderedUniformEncoder:
+    """Unit test for the ``OrderedUniformEncoder``."""
+
+    def test___init__(self):
+        """The the ``__init__`` method.
+
+        Passed arguments must be stored as attributes.
+        """
+        # Run
+        transformer = OrderedUniformEncoder(order=['b', 'c', 'a', None])
+
+        # Asserts
+        pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
+
+    def test___repr___default(self):
+        """Test that the ``__repr__`` method prints the custom order.
+
+        The order should be printed as <CUSTOM> instead of the actual order.
+        """
+        # Setup
+        transformer = OrderedUniformEncoder(order=['VISA', 'AMEX', 'DISCOVER', None])
+
+        # Run
+        stringified_transformer = transformer.__repr__()
+
+        # Assert
+        assert stringified_transformer == 'OrderedUniformEncoder(order=<CUSTOM>)'
+
+    def test__fit(self):
+        """Test the ``_fit`` method."""
+        # Setup
+        data = pd.Series([1, 2, 3, 2, np.nan, 1, 1])
+        transformer = OrderedUniformEncoder(order=[2, 3, np.nan, 1])
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        expected_frequencies = {
+            2.0: 0.2857142857142857,
+            3.0: 0.14285714285714285,
+            None: 0.14285714285714285,
+            1.0: 0.42857142857142855
+        }
+        expected_intervals = {
+            2.0: [0.0, 0.2857142857142857],
+            3.0: [0.2857142857142857, 0.42857142857142855],
+            None: [0.42857142857142855, 0.5714285714285714],
+            1.0: [0.5714285714285714, 1.0]
+        }
+        assert transformer.frequencies == expected_frequencies
+        assert transformer.intervals == expected_intervals
+
+    def test__fit_error(self):
+        """Test the ``_fit`` method checks that data is in ``self.order``.
+
+        If the data being fit is not in ``self.order`` an error should be raised.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 2, 1, 4])
+        transformer = OrderedUniformEncoder(order=[2, 1])
+
+        # Run / Assert
+        message = re.escape(
+            "Unknown categories '[3, 4]'. All possible categories must be defined in the "
+            "'order' parameter."
+        )
+        with pytest.raises(TransformerInputError, match=message):
+            transformer._fit(data)
+
+    def test__fit_info(self, caplog):
+        """Test the ``_fit`` method checks that data is in ``self.order``.
+
+        If the data being fit does not contain all the category of ``self.order``,
+        an info message should be raised.
+        """
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 2, 1, 1, 2, 3, 1, 2]})
+        transformer = OrderedUniformEncoder(order=[1, 2, 3, 4, 5, 6, 7])
+
+        # Run
+        transformer.fit(data, 'column_name')
+        expected_message = (
+            "For column 'column_name', some of the provided category "
+            'values were not present in the data during fit: (4, 5, 6, +1 more).'
+        )
+
+        # Assert
+        assert expected_message in caplog.text
+
+    def test__fit_info_nan(self, caplog):
+        """Test the ``_fit`` method checks that data is in ``self.order``.
+
+        If the data being fit does not contain all the category of ``self.order``,
+        an info should be raised. Check if it works for NaNs.
+        """
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 2, 1, 1, 2, 3, 1, 2]})
+        transformer = OrderedUniformEncoder(order=[1, 2, 3, np.nan])
+
+        # Run
+        transformer.fit(data, 'column_name')
+        expected_message = (
+            "For column 'column_name', some of the provided category "
+            'values were not present in the data during fit: (None).'
+        )
+
+        # Assert
+        assert expected_message in caplog.text
+
+    def test__transform(self):
+        """Test the ``_transform`` method."""
+        # Setup
+        transformer = OrderedUniformEncoder(order=['b', 'c', 'a'])
+        data = pd.Series(['a', 'b', 'b', 'a', 'a', 'c', 'a'])
+
+        transformer.frequencies = {
+            'b': 0.2857142857142858,
+            'c': 0.14285714285714285,
+            'a': 0.42857142857142855,
+        }
+        transformer.intervals = {
+            'b': [0.0, 0.2857142857142857],
+            'c': [0.2857142857142857, 0.42857142857142855],
+            'a': [0.42857142857142855, 0.8571428571428571],
+        }
+
+        # Run
+        transformed = transformer._transform(data)
+
+        # Asserts
+        for key in transformer.intervals:
+            assert (transformed.loc[data == key] >= transformer.intervals[key][0]).all()
+            assert (transformed.loc[data == key] < transformer.intervals[key][1]).all()
+
+    def test__transform_error(self):
+        """Test the ``_transform`` method checks that data is in ``self.order``.
+
+        If the data being transformed is not in ``self.order`` an error should be raised.
+        """
+        # Setup
+        data = pd.Series([1, 2, 3, 2, 1, 4])
+        transformer = OrderedUniformEncoder(order=[2, 1])
+
+        # Run / Assert
+        message = re.escape(
+            "Unknown categories '[3, 4]'. All possible categories must be defined in the "
+            "'order' parameter."
+        )
+        with pytest.raises(TransformerInputError, match=message):
+            transformer._transform(data)
 
 
 class TestFrequencyEncoder:

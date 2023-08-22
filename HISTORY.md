@@ -1,13 +1,39 @@
 # History
 
+## 1.7.0 - 2023-08-22
+
+This release adds 3 new transformers:
+
+1. `UniformEncoder` - A categorical and boolean transformer that converts the column into a uniform distribution.
+2. `OrderedUniformEncoder` - The same as above, but the order for the categories can be specified, changing which range in the uniform distribution each category belongs to.
+3. `IDGenerator`- A text transformer that drops the input column during transform and returns IDs during reverse transform. The IDs all take the form \<prefix>\<number>\<suffix> and can be configured with a custom prefix, suffix and starting point.
+
+Additionally, the `AnonymizedFaker` is enhanced to support the text sdtype. 
+
+### Deprecations
+
+* The `get_input_sdtype` method is being deprecated in favor of `get_supported_sdtypes`.
+
+### New Features
+
+* Create IDGenerator transformer - Issue [#675](https://github.com/sdv-dev/RDT/issues/675) by @R-Palazzo
+* Add UniformEncoder (and its ordered version) - Issue [#678](https://github.com/sdv-dev/RDT/issues/678) by @R-Palazzo
+* Allow me to use AnonymizedFaker with sdtype text columns - Issue [#688](https://github.com/sdv-dev/RDT/issues/688) by @amontanez24
+
+### Maintenance
+
+* Deprecate get_input_sdtype - Issue [#682](https://github.com/sdv-dev/RDT/issues/682) by @R-Palazzo
+
 ## 1.6.1 - 2023-08-02
 
 This release updates the default transformers used for certain sdtypes. It also enables the `AnonymizedFaker` and `PseudoAnonymizedFaker` to work with any sdtype besides boolean, categorical, datetime, numerical or text.
 
 ### Bugs
+
 * [Enterprise Usage] Unable to assign generic PII transformers (eg. AnonymizedFaker) - Issue [#674](https://github.com/sdv-dev/RDT/issues/674) by @amontanez24
 
 ### New Features
+
 * Update the default transformers that HyperTransformer assigns to each sdtype - Issue [#664](https://github.com/sdv-dev/RDT/issues/664) by @amontanez24
 
 ## 1.6.0 - 2023-07-12
