@@ -2236,6 +2236,110 @@ class TestHyperTransformer(TestCase):
         assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
         assert ht.field_transformers['categorical_column'].order_by == 'alphabetical'
 
+    def test_generate_column_in_tuple(self):
+        """Test ``_generate_column_in_tuple``."""
+        # Setup
+        ht = HyperTransformer()
+
+        ht.field_transformers = {
+            ('column1', 'column2'): 'transformer1',
+            ('column3', 'column4'): 'transformer2',
+        }
+
+        # Run
+        column_in_tuple = ht._generate_column_in_tuple()
+
+        # Assert
+        expected_mapping = {
+            'column1': ('column1', 'column2'),
+            'column2': ('column1', 'column2'),
+            'column3': ('column3', 'column4'),
+            'column4': ('column3', 'column4'),
+        }
+
+        assert column_in_tuple == expected_mapping
+
+    def test_update_column_in_tuple(self):
+        """Test ``_update_column_in_tuple``."""
+        # Setup
+        column_in_tuple = {
+            'column1': ('column1', 'column2', 'column3'),
+            'column2': ('column1', 'column2', 'column3'),
+            'column3': ('column1', 'column2', 'column3'),
+        }
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            ('column1', 'column2', 'column3'): 'transformer',
+        }
+        # Run
+        result = ht._update_column_in_tuple('column1', column_in_tuple)
+
+        # Assert
+        expected_column_in_tuple = {
+            'column2': ('column2', 'column3'),
+            'column3': ('column2', 'column3'),
+        }
+        expected_field_transformers = {('column2', 'column3'): 'transformer'}
+        assert ht.field_transformers == expected_field_transformers
+        assert result == expected_column_in_tuple
+
+    def test_update_column_in_tuple_single_column_left(self):
+        """Test ``_update_column_in_tuple`` with a single column left in the tuple."""
+        # Setup
+        column_in_tuple = {
+            'column1': ('column1', 'column2'),
+            'column2': ('column1', 'column2'),
+        }
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            ('column1', 'column2'): 'transformer',
+        }
+        # Run
+        result = ht._update_column_in_tuple('column1', column_in_tuple)
+
+        # Assert
+        expected_column_in_tuple = {}
+        expected_field_transformers = {'column2': 'transformer'}
+        assert ht.field_transformers == expected_field_transformers
+        assert result == expected_column_in_tuple
+
+    def test_update_transformers_by_sdtype_with_multi_column_transformer(self):
+        """Test ``update_transformers_by_sdtype`` with columns use with a multi-column transformer.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            'A': LabelEncoder(),
+            'B': UniformEncoder(),
+            "('C', 'D')": None,
+        }
+        ht.field_sdtypes = {
+            'A': 'categorical',
+            'B': 'boolean',
+            'C': 'categorical',
+            'D': 'numerical'
+        }
+
+        column_in_tuple = {
+            'C': ('C', 'D'),
+            'D': ('C', 'D')
+        }
+        mock__update_column_in_tuple = Mock()
+        mock__generate_column_in_tuple = Mock(return_value=column_in_tuple)
+        ht._update_column_in_tuple = mock__update_column_in_tuple
+        ht._generate_column_in_tuple = mock__generate_column_in_tuple
+
+        # Run
+        ht.update_transformers_by_sdtype(
+            'categorical',
+            transformer_name='LabelEncoder',
+        )
+
+        # Assert
+        assert len(ht.field_transformers) == 4
+        mock__generate_column_in_tuple.assert_called_once()
+        assert mock__update_column_in_tuple.call_count == 1
+
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_fitted(self, mock_warnings):
         """Test update transformers.
@@ -2269,6 +2373,9 @@ class TestHyperTransformer(TestCase):
             'my_column': transformer
         }
 
+        mock__generate_column_in_tuple = Mock(return_value={})
+        instance._generate_column_in_tuple = mock__generate_column_in_tuple
+
         # Run
         instance.update_transformers(column_name_to_transformer)
 
@@ -2281,6 +2388,77 @@ class TestHyperTransformer(TestCase):
         mock_warnings.warn.assert_called_once_with(expected_message)
         assert instance.field_transformers['my_column'] == transformer
         instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
+        mock__generate_column_in_tuple.assert_called_once()
+
+    def test_update_transformers_multi_column(self):
+        """Test ``update_transformers`` with a multi-column transformer."""
+        # Setup
+        ht = HyperTransformer()
+        mock__generate_column_in_tuple = Mock(return_value={})
+        mock__update_column_in_tuple = Mock()
+        ht._generate_column_in_tuple = mock__generate_column_in_tuple
+        ht._update_column_in_tuple = mock__update_column_in_tuple
+        ht.field_sdtypes = {
+            'A': 'categorical',
+            'B': 'boolean',
+            'C': 'numerical',
+        }
+        ht.field_transformers = {
+            'A': LabelEncoder(),
+            'B': UniformEncoder(),
+            'C': FloatFormatter(),
+        }
+
+        column_name_to_transformer = {
+            ('A', 'B'): None,
+            'C': None,
+        }
+        # Run
+        ht.update_transformers(column_name_to_transformer)
+
+        # Assert
+        expected_field_transformers = {
+            ('A', 'B'): None,
+            'C': None,
+        }
+        ht.field_transformers == expected_field_transformers
+        mock__generate_column_in_tuple.assert_called_once()
+
+    def test_update_transformers_changing_multi_column_transformer(self):
+        """Test ``update_transformers`` when changing a mulit column transformer."""
+        # Setup
+        ht = HyperTransformer()
+        mock__generate_column_in_tuple = Mock(return_value={
+            'A': ('A', 'B'),
+            'B': ('A', 'B'),
+        })
+        mock__update_column_in_tuple = Mock()
+        ht._generate_column_in_tuple = mock__generate_column_in_tuple
+        ht._update_column_in_tuple = mock__update_column_in_tuple
+        ht.field_sdtypes = {
+            'A': 'categorical',
+            'B': 'boolean',
+            'C': 'numerical',
+        }
+        ht.field_transformers = {
+            ('A', 'B'): None,
+            'C': FloatFormatter(),
+        }
+
+        column_name_to_transformer = {
+            'A': UniformEncoder(),
+        }
+        # Run
+        ht.update_transformers(column_name_to_transformer)
+
+        # Assert
+        expected_field_transformers = {
+            'A': UniformEncoder(),
+            'B': None,
+            'C': FloatFormatter(),
+        }
+        ht.field_transformers == expected_field_transformers
+        mock__generate_column_in_tuple.assert_called_once()
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_not_fitted(self, mock_warnings):

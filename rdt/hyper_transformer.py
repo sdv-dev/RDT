@@ -335,6 +335,39 @@ class HyperTransformer:
                 'parameters instead.', FutureWarning
             )
 
+    def _generate_column_in_tuple(self):
+        """Generate a dict mapping columns in a tuple to the tuple itself."""
+        column_in_tuple = {}
+        for fields in self.field_transformers:
+            if isinstance(fields, tuple):
+                for column in fields:
+                    column_in_tuple[column] = fields
+
+        return column_in_tuple
+
+    def _update_column_in_tuple(self, column, column_in_tuple):
+        """Update the column in tuple dict.
+
+        Args:
+            column (str):
+                Column name to be updated.
+            column_in_tuple (dict):
+                Dict mapping columns in a tuple to the tuple itself.
+        """
+        old_tuple = column_in_tuple.pop(column)
+        new_tuple = tuple(item for item in old_tuple if item != column)
+
+        if len(new_tuple) == 1:
+            new_tuple, = new_tuple
+            column_in_tuple.pop(new_tuple, None)
+        else:
+            for col in new_tuple:
+                column_in_tuple[col] = new_tuple
+
+        self.field_transformers[new_tuple] = self.field_transformers.pop(old_tuple)
+
+        return column_in_tuple
+
     def update_transformers_by_sdtype(
             self, sdtype, transformer=None, transformer_name=None, transformer_parameters=None):
         """Update the transformers for the specified ``sdtype``.
@@ -373,7 +406,7 @@ class HyperTransformer:
             if field_sdtype == sdtype:
                 self.field_transformers[field] = deepcopy(transformer_instance)
                 if field in column_in_tuple:
-                    self._update_column_in_tuple(field, column_in_tuple)
+                    column_in_tuple = self._update_column_in_tuple(field, column_in_tuple)
 
         self._modified_config = True
 
@@ -414,39 +447,6 @@ class HyperTransformer:
         self._modified_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
-
-    def _generate_column_in_tuple(self):
-        """Generate a dict mapping columns in a tuple to the tuple itself."""
-        column_in_tuple = {}
-        for fields in self.field_transformers:
-            if isinstance(fields, tuple):
-                for column in fields:
-                    column_in_tuple[column] = fields
-
-        return column_in_tuple
-
-    def _update_column_in_tuple(self, column, column_in_tuple):
-        """Update the column in tuple dict.
-
-        Args:
-            column (str):
-                Column name to be updated.
-            column_in_tuple (dict):
-                Dict mapping columns in a tuple to the tuple itself.
-        """
-        old_tuple = column_in_tuple[column]
-        new_tuple = tuple(
-            item for item in old_tuple if item != column
-        )
-        if len(new_tuple) == 1:
-            new_tuple = new_tuple[0]
-            del column_in_tuple[new_tuple]
-        else:
-            for col in new_tuple:
-                column_in_tuple[col] = new_tuple
-
-        self.field_transformers[new_tuple] = self.field_transformers[old_tuple]
-        del self.field_transformers[old_tuple]
 
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
