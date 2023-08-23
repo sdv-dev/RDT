@@ -359,6 +359,8 @@ class HyperTransformer:
         self._warn_update_transformers_by_sdtype(transformer, transformer_name)
 
         transformer_instance = transformer
+        column_in_tuple = self._generate_column_in_tuple()
+
         if transformer_name is not None:
             if transformer_parameters is not None:
                 transformer_instance = \
@@ -370,6 +372,8 @@ class HyperTransformer:
         for field, field_sdtype in self.field_sdtypes.items():
             if field_sdtype == sdtype:
                 self.field_transformers[field] = deepcopy(transformer_instance)
+                if field in column_in_tuple:
+                    self._update_column_in_tuple(field, column_in_tuple)
 
         self._modified_config = True
 
