@@ -478,7 +478,7 @@ class HyperTransformer:
                             f"incompatible with the '{transformer.get_name()}' transformer."
                         )
 
-                if len(columns) > 1:
+                if len(columns) > 1 and column in self.field_transformers:
                     del self.field_transformers[column]
                 elif column in column_in_tuple:
                     self._update_column_in_tuple(column, column_in_tuple)
