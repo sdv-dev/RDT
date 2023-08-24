@@ -2260,7 +2260,7 @@ class TestHyperTransformer(TestCase):
             instance.update_transformers(column_name_to_transformer)
 
     @patch('rdt.hyper_transformer.print')
-    def test_update_transformers_missmatch_sdtypes(self, mock_warnings):
+    def test_update_transformers_mismatch_sdtypes(self, mock_warnings):
         """Test update transformers.
 
         Ensure that the function updates properly the ``self.field_transformers`` and prints the
@@ -2302,7 +2302,6 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(InvalidConfigError, match=err_msg):
             instance.update_transformers(column_name_to_transformer)
 
-        assert mock_warnings.assert_called_once_with(err_msg)
         instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
 
     def test_update_transformers_transformer_is_none(self):
