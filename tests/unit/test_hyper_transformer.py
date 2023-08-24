@@ -2302,7 +2302,7 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(InvalidConfigError, match=err_msg):
             instance.update_transformers(column_name_to_transformer)
 
-        assert mock_warnings.called_once_with(err_msg)
+        assert mock_warnings.assert_called_once_with(err_msg)
         instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
 
     def test_update_transformers_transformer_is_none(self):
