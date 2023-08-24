@@ -2257,7 +2257,7 @@ class TestHyperTransformer(TestCase):
         )
         with pytest.raises(ConfigNotSetError, match=expected_msg):
             instance.update_transformers(column_name_to_transformer)
-           
+
         assert instance.get_config() == expected_config
 
     def test_update_transformers_mismatch_sdtypes(self):
