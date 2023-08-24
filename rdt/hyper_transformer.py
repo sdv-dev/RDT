@@ -335,38 +335,24 @@ class HyperTransformer:
                 'parameters instead.', FutureWarning
             )
 
-    def _generate_column_in_tuple(self):
-        """Generate a dict mapping columns in a tuple to the tuple itself."""
-        column_in_tuple = {}
-        for fields in self.field_transformers:
-            if isinstance(fields, tuple):
-                for column in fields:
-                    column_in_tuple[column] = fields
-
-        return column_in_tuple
-
-    def _update_column_in_tuple(self, column, column_in_tuple):
+    def _remove_column_in_multi_column_fields(self, column):
         """Update the column in tuple dict.
 
         Args:
             column (str):
                 Column name to be updated.
-            column_in_tuple (dict):
-                Dict mapping columns in a tuple to the tuple itself.
         """
-        old_tuple = column_in_tuple.pop(column)
+        old_tuple = self._multi_column_fields.pop(column)
         new_tuple = tuple(item for item in old_tuple if item != column)
 
         if len(new_tuple) == 1:
             new_tuple, = new_tuple
-            column_in_tuple.pop(new_tuple, None)
+            self._multi_column_fields.pop(new_tuple, None)
         else:
             for col in new_tuple:
-                column_in_tuple[col] = new_tuple
+                self._multi_column_fields[col] = new_tuple
 
         self.field_transformers[new_tuple] = self.field_transformers.pop(old_tuple)
-
-        return column_in_tuple
 
     def update_transformers_by_sdtype(
             self, sdtype, transformer=None, transformer_name=None, transformer_parameters=None):
@@ -392,7 +378,7 @@ class HyperTransformer:
         self._warn_update_transformers_by_sdtype(transformer, transformer_name)
 
         transformer_instance = transformer
-        column_in_tuple = self._generate_column_in_tuple()
+        self._multi_column_fields = self._create_multi_column_fields()
 
         if transformer_name is not None:
             if transformer_parameters is not None:
@@ -405,8 +391,8 @@ class HyperTransformer:
         for field, field_sdtype in self.field_sdtypes.items():
             if field_sdtype == sdtype:
                 self.field_transformers[field] = deepcopy(transformer_instance)
-                if field in column_in_tuple:
-                    column_in_tuple = self._update_column_in_tuple(field, column_in_tuple)
+                if field in self._multi_column_fields:
+                    self._remove_column_in_multi_column_fields(field)
 
         self._modified_config = True
 
@@ -465,7 +451,7 @@ class HyperTransformer:
         self._validate_update_columns(update_columns)
         self._validate_transformers(column_name_to_transformer)
 
-        column_in_tuple = self._generate_column_in_tuple()
+        self._multi_column_fields = self._create_multi_column_fields()
 
         for column_name, transformer in column_name_to_transformer.items():
             columns = column_name if isinstance(column_name, tuple) else (column_name,)
@@ -480,8 +466,8 @@ class HyperTransformer:
 
                 if len(columns) > 1 and column in self.field_transformers:
                     del self.field_transformers[column]
-                elif column in column_in_tuple:
-                    self._update_column_in_tuple(column, column_in_tuple)
+                elif column in self._multi_column_fields:
+                    self._remove_column_in_multi_column_fields(column)
 
             self.field_transformers[column_name] = transformer
 
