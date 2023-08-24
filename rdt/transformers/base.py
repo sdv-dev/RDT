@@ -259,25 +259,16 @@ class BaseTransformer:
         return list(self._get_output_to_property('sdtype'))
 
     def _store_columns(self, columns, data):
-        """Store the column names to be transformed.
+        if isinstance(columns, tuple) and columns not in data:
+            columns = list(columns)
+        elif not isinstance(columns, list):
+            columns = [columns]
 
-        Args:
-            columns (str, list, tuple):
-                Column name(s) to be transformed.
-            data (pandas.DataFrame):
-                The entire table.
-        """
-        column_names = columns
-        if isinstance(column_names, tuple) and column_names not in data:
-            column_names = list(column_names)
-        elif not isinstance(column_names, list):
-            column_names = [column_names]
-
-        missing = set(column_names) - set(data.columns)
+        missing = set(columns) - set(data.columns)
         if missing:
             raise KeyError(f'Columns {missing} were not present in the data.')
 
-        self.columns = column_names
+        self.columns = columns
 
     @staticmethod
     def _get_columns_data(data, columns):
