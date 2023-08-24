@@ -145,8 +145,8 @@ def get_transformers_by_type():
     sdtype_transformers = defaultdict(list)
     transformer_classes = BaseTransformer.get_subclasses()
     for transformer in transformer_classes:
-        input_sdtype = transformer.get_input_sdtype()
-        sdtype_transformers[input_sdtype].append(transformer)
+        for sdtype in transformer.get_supported_sdtypes():
+            sdtype_transformers[sdtype].append(transformer)
 
     return sdtype_transformers
 
