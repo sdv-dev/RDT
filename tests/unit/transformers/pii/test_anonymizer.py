@@ -218,7 +218,7 @@ class TestAnonymizedFaker:
         assert instance.function_name == 'lexify'
         assert instance.function_kwargs == {}
         assert instance.locales is None
-        assert mock_faker.Faker.called_once_with(None)
+        mock_faker.Faker.assert_called_once_with(None)
         assert instance.enforce_uniqueness is False
         assert instance.missing_value_generation == 'random'
 
@@ -279,7 +279,7 @@ class TestAnonymizedFaker:
         assert instance.function_name == 'credit_card_full'
         assert instance.function_kwargs == {'type': 'visa'}
         assert instance.locales == ['en_US', 'fr_FR']
-        assert mock_faker.Faker.called_once_with(['en_US', 'fr_FR'])
+        mock_faker.Faker.assert_called_once_with(['en_US', 'fr_FR'])
         assert instance.enforce_uniqueness
 
     def test___init__no_function_name(self):
@@ -346,7 +346,7 @@ class TestAnonymizedFaker:
         AnonymizedFaker.reset_randomization(instance)
 
         # Assert
-        assert mock_faker.Faker.called_once_with(['en_US'])
+        mock_faker.Faker.assert_has_calls([call(None), call(['en_US'])])
         mock_base_reset.assert_called_once()
 
     def test__fit(self):
@@ -597,7 +597,7 @@ class TestPseudoAnonymizedFaker:
         assert instance.function_name == 'lexify'
         assert instance.function_kwargs == {}
         assert instance.locales is None
-        assert mock_faker.Faker.called_once_with(None)
+        mock_faker.Faker.assert_called_once_with(None)
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
@@ -641,7 +641,7 @@ class TestPseudoAnonymizedFaker:
         assert instance.function_name == 'credit_card_full'
         assert instance.function_kwargs == {'type': 'visa'}
         assert instance.locales == ['en_US', 'fr_FR']
-        assert mock_faker.Faker.called_once_with(['en_US', 'fr_FR'])
+        mock_faker.Faker.assert_called_once_with(['en_US', 'fr_FR'])
 
     def test_get_mapping(self):
         """Test the ``get_mapping`` method.

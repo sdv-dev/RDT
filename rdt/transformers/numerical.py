@@ -524,8 +524,7 @@ class ClusterBasedNormalizer(FloatFormatter):
         normalized = np.clip(data[:, 0], -1, 1)
         means = self._bgm_transformer.means_.reshape([-1])
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
-        selected_component = data[:, 1].astype(int)
-
+        selected_component = data[:, 1].astype(int)  # maybe round instead?
         std_t = stds[self.valid_component_indicator][selected_component]
         mean_t = means[self.valid_component_indicator][selected_component]
         reversed_data = normalized * self.STD_MULTIPLIER * std_t + mean_t
