@@ -186,6 +186,28 @@ class TestAnonymizedFaker:
         )
         mock_warnings.warn.assert_called_once_with(expected_message)
 
+    @patch('rdt.transformers.pii.anonymizer.importlib')
+    @patch('rdt.transformers.pii.anonymizer.warnings')
+    def test__check_locales_provider_ending_with_locale(self, mock_warnings, mock_importlib):
+        """Test that check locales does not warn the user if the provider ends with the locale.
+
+        Mock:
+            - Mock importlib with side effects to return `None`.
+            - Mock the warnings.
+        """
+        # Setup
+        instance = Mock()
+        instance.provider_name = 'address.en_US'
+        instance.function_name = 'postcode'
+        instance.locales = ['en_US']
+        mock_importlib.util.find_spec.side_effect = [None]
+
+        # Run
+        AnonymizedFaker._check_locales(instance)
+
+        # Assert
+        mock_warnings.warn.assert_not_called()
+
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
     def test___init__default(self, mock_check_provider_function, mock_faker):

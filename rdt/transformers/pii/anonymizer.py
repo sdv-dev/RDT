@@ -81,7 +81,7 @@ class AnonymizedFaker(BaseTransformer):
         missed_locales = []
         for locale in locales:
             spec = importlib.util.find_spec(f'faker.providers.{self.provider_name}.{locale}')
-            if spec is None:
+            if spec is None and not self.provider_name.endswith(locale):
                 missed_locales.append(locale)
 
         if missed_locales:
