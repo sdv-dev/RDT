@@ -273,6 +273,7 @@ class HyperTransformer:
         self._validate_config(config)
         self.field_sdtypes.update(config['sdtypes'])
         self.field_transformers.update(config['transformers'])
+        self._multi_column_fields = self._create_multi_column_fields()
         self._modified_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
@@ -380,7 +381,6 @@ class HyperTransformer:
         self._warn_update_transformers_by_sdtype(transformer, transformer_name)
 
         transformer_instance = transformer
-        self._multi_column_fields = self._create_multi_column_fields()
 
         if transformer_name is not None:
             if transformer_parameters is not None:
@@ -452,8 +452,6 @@ class HyperTransformer:
         update_columns = column_name_to_transformer.keys()
         self._validate_update_columns(update_columns)
         self._validate_transformers(column_name_to_transformer)
-
-        self._multi_column_fields = self._create_multi_column_fields()
 
         for column_name, transformer in column_name_to_transformer.items():
             columns = column_name if isinstance(column_name, tuple) else (column_name,)

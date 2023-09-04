@@ -2320,13 +2320,11 @@ class TestHyperTransformer(TestCase):
             'D': 'numerical'
         }
 
-        _multi_column_fields = {
+        ht._multi_column_fields = {
             'C': ('C', 'D'),
             'D': ('C', 'D')
         }
         mock__remove_column_in_multi_column_fields = Mock()
-        mock__create_multi_column_fields = Mock(return_value=_multi_column_fields)
-        ht._create_multi_column_fields = mock__create_multi_column_fields
         ht._remove_column_in_multi_column_fields = mock__remove_column_in_multi_column_fields
 
         # Run
@@ -2337,7 +2335,6 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         assert len(ht.field_transformers) == 4
-        mock__create_multi_column_fields.assert_called_once()
         assert mock__remove_column_in_multi_column_fields.call_count == 1
 
     @patch('rdt.hyper_transformer.warnings')
@@ -2373,9 +2370,6 @@ class TestHyperTransformer(TestCase):
             'my_column': transformer
         }
 
-        mock__create_multi_column_fields = Mock(return_value={})
-        instance._create_multi_column_fields = mock__create_multi_column_fields
-
         # Run
         instance.update_transformers(column_name_to_transformer)
 
@@ -2388,15 +2382,12 @@ class TestHyperTransformer(TestCase):
         mock_warnings.warn.assert_called_once_with(expected_message)
         assert instance.field_transformers['my_column'] == transformer
         instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
-        mock__create_multi_column_fields.assert_called_once()
 
     def test_update_transformers_multi_column(self):
         """Test ``update_transformers`` with a multi-column transformer."""
         # Setup
         ht = HyperTransformer()
-        mock__create_multi_column_fields = Mock(return_value={})
         mock__remove_column_in_multi_column_fields = Mock()
-        ht._create_multi_column_fields = mock__create_multi_column_fields
         ht._remove_column_in_multi_column_fields = mock__remove_column_in_multi_column_fields
         ht.field_sdtypes = {
             'A': 'categorical',
@@ -2422,18 +2413,16 @@ class TestHyperTransformer(TestCase):
             'C': None,
         }
         ht.field_transformers == expected_field_transformers
-        mock__create_multi_column_fields.assert_called_once()
 
     def test_update_transformers_changing_multi_column_transformer(self):
         """Test ``update_transformers`` when changing a mulit column transformer."""
         # Setup
         ht = HyperTransformer()
-        mock__create_multi_column_fields = Mock(return_value={
+        ht._multi_column_fields = {
             'A': ('A', 'B'),
             'B': ('A', 'B'),
-        })
+        }
         mock__remove_column_in_multi_column_fields = Mock()
-        ht._create_multi_column_fields = mock__create_multi_column_fields
         ht._remove_column_in_multi_column_fields = mock__remove_column_in_multi_column_fields
         ht.field_sdtypes = {
             'A': 'categorical',
@@ -2458,7 +2447,6 @@ class TestHyperTransformer(TestCase):
             'C': FloatFormatter(),
         }
         ht.field_transformers == expected_field_transformers
-        mock__create_multi_column_fields.assert_called_once()
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_not_fitted(self, mock_warnings):
