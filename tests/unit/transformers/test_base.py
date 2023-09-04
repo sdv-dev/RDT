@@ -1303,6 +1303,27 @@ class TestBaseMultiColumnTransformer:
         # Assert
         assert output == ['a', 'b', 'c']
 
+    def test__get_output_to_property(self):
+        """Test the ``_get_output_to_property`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        transformer.output_properties = {
+            'col_1': {'sdtype': 'numerical'},
+            'col_2': {'sdtype': 'categorical'},
+            'col_3': {'sdtype': 'boolean'},
+        }
+
+        # Run
+        output = transformer._get_output_to_property('sdtype')
+
+        # Assert
+        expected_output = {
+            'col_1': 'numerical',
+            'col_2': 'categorical',
+            'col_3': 'boolean',
+        }
+        assert output == expected_output
+
     def test__fit(self):
         """Test the ``_fit`` method.
 
@@ -1341,9 +1362,35 @@ class TestBaseMultiColumnTransformer:
 
         # Assert
         transformer._store_columns.assert_called_once_with(
-            list(columns_to_sdtypes.keys()), data
+            tuple(columns_to_sdtypes.keys()), data
         )
         transformer._set_seed.assert_called_once_with(data)
         transformer._get_columns_data.assert_called_once_with(data, ['a', 'b'])
         transformer._fit.assert_called_once_with(data_transformer, columns_to_sdtypes)
         transformer._build_output_columns.assert_called_once_with(data)
+
+    def test_fit_transform(self):
+        """Test the ``fit_transform`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        columns_to_sdtypes = {
+            'a': 'numerical',
+            'b': 'categorical',
+            'c': 'boolean'
+        }
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': ['a', 'b', 'c'],
+        })
+        transformer.columns = ['a', 'b']
+        mock_fit = Mock()
+        mock_transform = Mock(return_value=data)
+        transformer.fit = mock_fit
+        transformer.transform = mock_transform
+
+        # Run
+        transformer.fit_transform(data, columns_to_sdtypes)
+
+        # Assert
+        mock_fit.assert_called_once_with(data, columns_to_sdtypes)
+        mock_transform.assert_called_once_with(data)

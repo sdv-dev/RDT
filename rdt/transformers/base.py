@@ -362,7 +362,7 @@ class BaseTransformer:
         raise NotImplementedError()
 
     def _set_seed(self, data):
-        hash_value = self.get_input_column()
+        hash_value = self.columns[0]
         for value in data.head(5):
             hash_value += str(value)
 
@@ -508,6 +508,14 @@ class BaseMultiColumnTransformer(BaseTransformer):
         """
         return self.columns
 
+    def _get_output_to_property(self, property_):
+        result = {
+            output_column: properties[property_]
+            for output_column, properties in self.output_properties.items()
+        }
+
+        return result
+
     def _fit(self, columns_data, columns_to_sdtypes):
         """Fit the transformer to the data.
 
@@ -519,6 +527,7 @@ class BaseMultiColumnTransformer(BaseTransformer):
         """
         raise NotImplementedError()
 
+    @random_state
     def fit(self, data, columns_to_sdtypes):
         """Fit the transformer to a ``column`` of the ``data``.
 
@@ -528,9 +537,25 @@ class BaseMultiColumnTransformer(BaseTransformer):
             columns_to_sdtypes (dict):
                 Dictionary mapping column names to their sdtypes.
         """
-        column_names = list(columns_to_sdtypes.keys())
+        column_names = tuple(columns_to_sdtypes.keys())
         self._store_columns(column_names, data)
         self._set_seed(data)
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data, columns_to_sdtypes)
         self._build_output_columns(data)
+
+    def fit_transform(self, data, columns_to_sdtypes):
+        """Fit the transformer to a `column` of the `data` and then transform it.
+
+        Args:
+            data (pandas.DataFrame):
+                The entire table.
+            columns_to_sdtypes (dict):
+                Dictionary mapping column names to their sdtypes.
+
+        Returns:
+            pd.DataFrame:
+                The entire table, containing the transformed data.
+        """
+        self.fit(data, columns_to_sdtypes)
+        return self.transform(data)
