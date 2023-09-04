@@ -249,7 +249,6 @@ class HyperTransformer:
             )
 
     def _validate_update_columns(self, update_columns):
-
         unknown_columns = self._subset(
             flatten_column_list(update_columns), self.field_sdtypes.keys(), not_in=True
         )
@@ -336,7 +335,10 @@ class HyperTransformer:
             )
 
     def _remove_column_in_multi_column_fields(self, column):
-        """Update the column in tuple dict.
+        """Remove a column that is part of a multi-column field.
+
+        Update the tuple to remove the column from it and modify the ``multi_column_fields``
+        as well as the ``field_transformers`` dicts accordingly.
 
         Args:
             column (str):
