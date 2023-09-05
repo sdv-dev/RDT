@@ -54,6 +54,25 @@ class DummyTransformerNotMLReady(BaseTransformer):
         return data.astype('datetime64[ns]')
 
 
+class DummyMultiColumnTransformerNumerical(BaseMultiColumnTransformer):
+    """Multi column transformer that takes categorical data."""
+
+    SUPPORTED_SDTYPES = ['categorical', 'boolean']
+
+    def _fit(self, columns_data, columns_to_sdtypes):
+        self.output_properties = {
+            column: {
+                'sdtype': 'numerical',
+            } for column in self.columns
+        }
+
+    def _transform(self, data):
+        return data.astype(float)
+
+    def _reverse_transform(self, data):
+        return data.astype(str)
+
+
 TEST_DATA_INDEX = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
 
 
