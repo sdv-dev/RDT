@@ -521,6 +521,9 @@ class HyperTransformer:
 
         for column_name, column_sdtype in self.field_sdtypes.items():
             if column_sdtype == sdtype:
+                if column_name in self._multi_column_fields:
+                    self._remove_column_in_multi_column_fields(column_name)
+
                 self.field_transformers[column_name] = None
 
         if self._fitted:

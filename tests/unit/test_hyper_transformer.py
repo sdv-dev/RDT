@@ -3248,6 +3248,41 @@ class TestHyperTransformer(TestCase):
         with pytest.raises(InvalidConfigError, match=error_msg):
             ht.remove_transformers_by_sdtype('phone_number')
 
+    def test_remove_transformers_by_sdtype_multi_column(self):
+        """Test the ``remove_transformers_by_sdtype`` method.
+
+        Test that the method removes the columns that are in a multi column transformer and
+        set their transformer to ``None``.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_sdtypes = {
+            'column1': 'categorical',
+            'column2': 'categorical',
+            'column3': 'boolean',
+            'column4': 'boolean'
+        }
+        ht.field_transformers = {
+            'column1': 'transformer',
+            ('column2', 'column3'): 'multi_column_transformer',
+            'column4': 'transformer'
+        }
+        ht._multi_column_fields = {
+            'column2': ('column2', 'column3'),
+            'column3': ('column2', 'column3')
+        }
+
+        # Run
+        ht.remove_transformers_by_sdtype(sdtype='boolean')
+
+        # Assert
+        assert ht.field_transformers == {
+            'column1': 'transformer',
+            'column2': 'multi_column_transformer',
+            'column3': None,
+            'column4': None
+        }
+
     def test__fit_field_transformer_multi_column_field_not_ready(self,):
         """Test the ``_fit_field_transformer`` method.
 
