@@ -3019,6 +3019,11 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
+        ht.field_sdtypes = {
+            'column1': 'categorical',
+            'column2': 'categorical',
+            'column3': 'categorical'
+        }
         ht.field_transformers = {
             'column1': 'transformer',
             'column2': 'transformer',
@@ -3057,6 +3062,11 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         ht = HyperTransformer()
+        ht.field_sdtypes = {
+            'column1': 'categorical',
+            'column2': 'categorical',
+            'column3': 'categorical'
+        }
         ht.field_transformers = {
             'column1': 'transformer',
             'column2': 'transformer',
@@ -3103,6 +3113,11 @@ class TestHyperTransformer(TestCase):
         # Setup
         ht = HyperTransformer()
         ht._fitted = True
+        ht.field_sdtypes = {
+            'column1': 'categorical',
+            'column2': 'categorical',
+            'column3': 'categorical'
+        }
         ht.field_transformers = {
             'column1': 'transformer',
             'column2': 'transformer',
@@ -3122,6 +3137,41 @@ class TestHyperTransformer(TestCase):
             'column1': 'transformer',
             'column2': None,
             'column3': None
+        }
+
+    def test_remove_transformers_multi_column(self):
+        """Test the ``remove_transformers`` method.
+
+        Test that the method removes the columns that are in a multi column transformer and
+        set their transformer to ``None``.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_sdtypes = {
+            'column1': 'categorical',
+            'column2': 'categorical',
+            'column3': 'categorical',
+            'column4': 'categorical'
+        }
+        ht.field_transformers = {
+            'column1': 'transformer',
+            ('column2', 'column3'): 'multi_column_transformer',
+            'column4': 'transformer'
+        }
+        ht._multi_column_fields = {
+            'column2': ('column2', 'column3'),
+            'column3': ('column2', 'column3')
+        }
+
+        # Run
+        ht.remove_transformers(column_names=['column3', 'column4'])
+
+        # Assert
+        assert ht.field_transformers == {
+            'column1': 'transformer',
+            'column2': 'multi_column_transformer',
+            'column3': None,
+            'column4': None
         }
 
     @patch('rdt.hyper_transformer.warnings')
