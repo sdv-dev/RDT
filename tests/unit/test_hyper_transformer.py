@@ -2947,6 +2947,114 @@ class TestHyperTransformer(TestCase):
         assert instance.field_transformers == {'a': transformer}
         mock_logger.info.assert_called_once_with(user_message)
 
+    def test_update_sdtypes_multi_column_with_supported_sdtypes(self):
+        """Test the ``update_sdtypes`` method.
+
+        Test that the method works for column that are in a multi-column transformer.
+        In this case the multi column transformer supports the new sdtype so the transformer
+        should not be changed.
+        """
+        # Setup
+        class DummyMultiColumnTransformer(BaseMultiColumnTransformer):
+            """Dummy multi column transformer."""
+
+            SUPPORTED_SDTYPES = ['categorical', 'boolean']
+
+        ht = HyperTransformer()
+        ht.field_sdtypes = {
+            'column1': 'categorical',
+            'column2': 'categorical',
+            'column3': 'categorical',
+            'column4': 'categorical'
+        }
+        ht.field_transformers = {
+            'column1': UniformEncoder(),
+            ('column2', 'column3'): DummyMultiColumnTransformer(),
+            'column4': None
+        }
+        ht._multi_column_fields = {
+            'column2': ('column2', 'column3'),
+            'column3': ('column2', 'column3')
+        }
+
+        # Run
+        ht.update_sdtypes(column_name_to_sdtype={
+            'column2': 'boolean',
+            'column1': 'boolean'
+        })
+
+        # Assert
+        expected_field_sdtypes = {
+            'column1': 'boolean',
+            'column2': 'boolean',
+            'column3': 'categorical',
+            'column4': 'categorical'
+        }
+        expected_field_transformers = {
+            'column1': UniformEncoder(),
+            ('column2', 'column3'): DummyMultiColumnTransformer(),
+            'column4': None
+        }
+        assert ht.field_sdtypes == expected_field_sdtypes
+        assert str(ht.field_transformers) == str(expected_field_transformers)
+
+    def test_update_sdtypes_multi_column_with_unsupported_sdtypes(self):
+        """Test the ``update_sdtypes`` method.
+
+        Test that the method works for column that are in a multi-column transformer.
+        In this case the multi column transformer does not support the new sdtype so the
+        transformer should be changed to the default one.
+        """
+        # Setup
+        class DummyMultiColumnTransformer(BaseMultiColumnTransformer):
+            """Dummy multi column transformer."""
+
+            SUPPORTED_SDTYPES = ['categorical', 'boolean']
+
+        ht = HyperTransformer()
+        ht.field_sdtypes = {
+            'column1': 'categorical',
+            'column2': 'categorical',
+            'column3': 'categorical',
+            'column4': 'categorical'
+        }
+        ht.field_transformers = {
+            'column1': UniformEncoder(),
+            ('column2', 'column3'): DummyMultiColumnTransformer(),
+            'column4': None
+        }
+        ht._multi_column_fields = {
+            'column2': ('column2', 'column3'),
+            'column3': ('column2', 'column3')
+        }
+
+        # Run
+        expected_warning = (
+            "Sdtype 'numerical' is incompatible with transformer 'DummyMultiColumnTransformer'."
+            ' Assigning a new transformer to it.'
+        )
+        with pytest.warns(UserWarning, match=expected_warning):
+            ht.update_sdtypes(column_name_to_sdtype={
+                'column2': 'numerical',
+                'column1': 'boolean'
+            })
+
+        # Assert
+        expected_field_sdtypes = {
+            'column1': 'boolean',
+            'column2': 'numerical',
+            'column3': 'categorical',
+            'column4': 'categorical'
+        }
+        expected_field_transformers = {
+            'column1': UniformEncoder(),
+            'column4': None,
+            'column3': DummyMultiColumnTransformer(),
+            'column2': FloatFormatter(),
+        }
+        assert ht.field_sdtypes == expected_field_sdtypes
+        assert str(ht.field_transformers) == str(expected_field_transformers)
+
     def test__validate_update_columns(self):
         """Test ``_validate_update_columns``.
 
