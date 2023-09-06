@@ -252,9 +252,10 @@ class GaussianNormalizer(FloatFormatter):
                 * ``gamma``: Use a Gamma distribution.
                 * ``beta``: Use a Beta distribution.
                 * ``student_t``: Use a Student T distribution.
-                * ``gussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
+                * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
                 * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
+                # ``uniform``: Use a UniformUnivariate distribution.
 
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
@@ -268,24 +269,6 @@ class GaussianNormalizer(FloatFormatter):
     """
 
     _univariate = None
-
-    def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
-                 enforce_min_max_values=False, distribution='truncated_gaussian',
-                 missing_value_generation='random'):
-        super().__init__(
-            model_missing_values=model_missing_values,
-            missing_value_generation=missing_value_generation,
-            learn_rounding_scheme=learn_rounding_scheme,
-            enforce_min_max_values=enforce_min_max_values
-        )
-
-        self.distribution = distribution  # Distribution initialized by the user
-
-        self._distributions = self._get_distributions()
-        if isinstance(distribution, str):
-            distribution = self._distributions[distribution]
-
-        self._distribution = distribution
 
     @staticmethod
     def _get_distributions():
@@ -305,7 +288,24 @@ class GaussianNormalizer(FloatFormatter):
             'student_t': univariate.StudentTUnivariate,
             'gaussian_kde': univariate.GaussianKDE,
             'truncated_gaussian': univariate.TruncatedGaussian,
+            'uniform': univariate.UniformUnivariate,
         }
+
+    def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
+                 enforce_min_max_values=False, distribution='truncated_gaussian',
+                 missing_value_generation='random'):
+        super().__init__(
+            model_missing_values=model_missing_values,
+            missing_value_generation=missing_value_generation,
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values
+        )
+
+        self._distributions = self._get_distributions()
+        if isinstance(distribution, str):
+            distribution = self._distributions[distribution]
+
+        self._distribution = distribution
 
     def _get_univariate(self):
         distribution = self._distribution
