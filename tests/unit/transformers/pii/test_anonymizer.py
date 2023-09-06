@@ -208,6 +208,37 @@ class TestAnonymizedFaker:
         # Assert
         mock_warnings.warn.assert_not_called()
 
+    @patch('rdt.transformers.pii.anonymizer.importlib')
+    @patch('rdt.transformers.pii.anonymizer.warnings')
+    def test__check_locales_provider_ending_with_wrong_locale(self, mock_warnings, mock_importlib):
+        """Test that check locales warns the user.
+
+        If the provider ends with the given locale but is not separated by a dot this will warn
+        that the default 'en_US' will be used instead'.
+
+        Mock:
+            - Mock importlib with side effects to return `None`.
+            - Mock the warnings.
+        """
+        # Setup
+        instance = Mock()
+        instance.provider_name = 'addressit'
+        instance.function_name = 'postcode'
+        instance.locales = ['it']
+        mock_importlib.util.find_spec.side_effect = [None]
+
+        # Run
+        AnonymizedFaker._check_locales(instance)
+
+        # Assert
+        expected_message = (
+            "Locales ['it'] do not support provider 'addressit' and function 'postcode'.\n"
+            "In place of these locales, 'en_US' will be used instead. "
+            'Please refer to the localized provider docs for more information: '
+            'https://faker.readthedocs.io/en/master/locales.html'
+        )
+        mock_warnings.warn.assert_called_once_with(expected_message)
+
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
     def test___init__default(self, mock_check_provider_function, mock_faker):
