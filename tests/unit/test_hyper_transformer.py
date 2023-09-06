@@ -2980,7 +2980,8 @@ class TestHyperTransformer(TestCase):
         # Run
         ht.update_sdtypes(column_name_to_sdtype={
             'column2': 'boolean',
-            'column1': 'boolean'
+            'column1': 'boolean',
+            'column4': 'categorical'
         })
 
         # Assert
