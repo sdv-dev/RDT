@@ -200,7 +200,7 @@ class TestAnonymizedFaker:
         instance.provider_name = 'address.en_US'
         instance.function_name = 'postcode'
         instance.locales = ['en_US']
-        mock_importlib.util.find_spec.side_effect = [None]
+        mock_importlib.util.find_spec.side_effect = ['en_US']
 
         # Run
         AnonymizedFaker._check_locales(instance)
