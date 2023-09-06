@@ -416,28 +416,25 @@ class HyperTransformer:
 
         transformers_to_update = {}
         for column, sdtype in column_name_to_sdtype.items():
-            if self.field_sdtypes.get(column) != sdtype:
-                if column in self._multi_column_fields:
-                    column_key = self._multi_column_fields[column]
-                else:
-                    column_key = column
+            if self.field_sdtypes.get(column) == sdtype:
+                continue
 
-                current_transformer = self.field_transformers.get(column_key)
-                supported_sdtypes = []
-                if current_transformer:
-                    supported_sdtypes = current_transformer.get_supported_sdtypes()
+            column_key = self._multi_column_fields.get(column, column)
+            current_transformer = self.field_transformers.get(column_key)
 
-                if sdtype not in supported_sdtypes:
-                    if current_transformer:
-                        warnings.warn(
-                            f"Sdtype '{sdtype}' is incompatible with transformer "
-                            f"'{current_transformer.get_name()}'. Assigning a new transformer "
-                            'to it.'
-                        )
-                    if column in self._multi_column_fields:
-                        self._remove_column_in_multi_column_fields(column)
+            if current_transformer:
+                supported_sdtypes = current_transformer.get_supported_sdtypes()
+                if sdtype in supported_sdtypes:
+                    continue
 
-                    transformers_to_update[column] = deepcopy(get_default_transformer(sdtype))
+                warnings.warn(
+                    f"Sdtype '{sdtype}' is incompatible with transformer "
+                    f"'{current_transformer.get_name()}'. Assigning a new transformer to it."
+                )
+            if column in self._multi_column_fields:
+                self._remove_column_in_multi_column_fields(column)
+
+            transformers_to_update[column] = deepcopy(get_default_transformer(sdtype))
 
         self.field_sdtypes.update(column_name_to_sdtype)
         self.field_transformers.update(transformers_to_update)
