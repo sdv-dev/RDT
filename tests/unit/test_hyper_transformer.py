@@ -2387,8 +2387,6 @@ class TestHyperTransformer(TestCase):
         """Test ``update_transformers`` with a multi-column transformer."""
         # Setup
         ht = HyperTransformer()
-        mock__remove_column_in_multi_column_fields = Mock()
-        ht._remove_column_in_multi_column_fields = mock__remove_column_in_multi_column_fields
         ht.field_sdtypes = {
             'A': 'categorical',
             'B': 'boolean',
@@ -2412,18 +2410,16 @@ class TestHyperTransformer(TestCase):
             ('A', 'B'): None,
             'C': None,
         }
-        ht.field_transformers == expected_field_transformers
+        assert ht.field_transformers == expected_field_transformers
 
     def test_update_transformers_changing_multi_column_transformer(self):
-        """Test ``update_transformers`` when changing a mulit column transformer."""
+        """Test ``update_transformers`` when changing a multi column transformer."""
         # Setup
         ht = HyperTransformer()
         ht._multi_column_fields = {
             'A': ('A', 'B'),
             'B': ('A', 'B'),
         }
-        mock__remove_column_in_multi_column_fields = Mock()
-        ht._remove_column_in_multi_column_fields = mock__remove_column_in_multi_column_fields
         ht.field_sdtypes = {
             'A': 'categorical',
             'B': 'boolean',
@@ -2437,16 +2433,32 @@ class TestHyperTransformer(TestCase):
         column_name_to_transformer = {
             'A': UniformEncoder(),
         }
+
+        def side_effect(column):
+            ht._multi_column_fields = {
+                'B': ('B',)
+            }
+            ht.field_transformers = {
+                'C': FloatFormatter(),
+                'B': None,
+                'A': UniformEncoder()
+            }
+
+        mock_remove_column_in_multi_column_fields = Mock()
+        mock_remove_column_in_multi_column_fields.side_effect = side_effect
+        ht._remove_column_in_multi_column_fields = mock_remove_column_in_multi_column_fields
+
         # Run
         ht.update_transformers(column_name_to_transformer)
 
         # Assert
         expected_field_transformers = {
-            'A': UniformEncoder(),
-            'B': None,
             'C': FloatFormatter(),
+            'B': None,
+            'A': UniformEncoder()
         }
-        ht.field_transformers == expected_field_transformers
+        mock_remove_column_in_multi_column_fields.assert_called_once_with('A')
+        assert str(ht.field_transformers) == str(expected_field_transformers)
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_not_fitted(self, mock_warnings):
