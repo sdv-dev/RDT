@@ -155,7 +155,7 @@ def test_multi_column_transformer_same_number_of_columns_input_output():
             result = data.diff(axis=1)
             result.iloc[:, 0] = data.iloc[:, 0]
 
-            return result.astype(int)
+            return result.astype('int64')
 
     data_test = pd.DataFrame({
         'col_1': [1, 2, 3],
