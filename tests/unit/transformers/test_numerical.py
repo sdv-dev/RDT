@@ -1213,7 +1213,6 @@ class TestClusterBasedNormalizer(TestCase):
             n_components=10,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,
-            n_init=1,
             random_state=0
         )
 
