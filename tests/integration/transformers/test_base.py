@@ -136,11 +136,17 @@ def test_multi_column_transformer_same_number_of_columns_input_output():
     # Setup
     class AdditionTransformer(BaseMultiColumnTransformer):
         """This transformer takes 3 columns and return the cumulative sum of each row."""
-        def _fit(self, columns_data, columns_to_sdtypes):
+        def _fit(self, columns_data, ordered_columns):
             self.output_properties = {
                 column: {'sdtype': 'numerical'} for column in self.columns
             }
-            self.dtypes = columns_data.dtypes
+
+        def _generate_prefixes(self, ordered_columns):
+            prefixes = {}
+            for idx, column in enumerate(self.output_properties):
+                prefixes[column] = '#'.join(ordered_columns[:idx + 1])
+
+            return prefixes
 
         def _transform(self, data):
             return data.cumsum(axis=1)
@@ -149,7 +155,7 @@ def test_multi_column_transformer_same_number_of_columns_input_output():
             result = data.diff(axis=1)
             result.iloc[:, 0] = data.iloc[:, 0]
 
-            return result.astype(self.dtypes)
+            return result.astype(int)
 
     data_test = pd.DataFrame({
         'col_1': [1, 2, 3],
@@ -157,22 +163,18 @@ def test_multi_column_transformer_same_number_of_columns_input_output():
         'col_3': [100, 200, 300]
     })
 
-    column_to_sdtype = {
-        'col_1': 'numerical',
-        'col_2': 'numerical',
-        'col_3': 'numerical'
-    }
+    order_columns = ('col_1', 'col_2', 'col_3')
     transformer = AdditionTransformer()
 
     # Run
-    transformed = transformer.fit_transform(data_test, column_to_sdtype)
+    transformed = transformer.fit_transform(data_test, order_columns)
     reverse = transformer.reverse_transform(transformed)
 
     # Assert
     expected_transform = pd.DataFrame({
-        'col_1': [1, 2, 3],
-        'col_2': [11, 22, 33],
-        'col_3': [111, 222, 333]
+        'col_1.col_1': [1, 2, 3],
+        'col_1#col_2.col_2': [11, 22, 33],
+        'col_1#col_2#col_3.col_3': [111, 222, 333]
     })
     pd.testing.assert_frame_equal(expected_transform, transformed)
     pd.testing.assert_frame_equal(reverse, data_test)
@@ -184,14 +186,20 @@ def test_multi_column_transformer_less_output_than_input_columns():
         """This transformer takes 4 columns and concatenate them into 2 columns.
         The two first and last columns are concatenated together.
         """
-        def _fit(self, columns_data, columns_to_sdtypes):
+        def _fit(self, columns_data, ordered_columns):
             self.name_1 = self.columns[0] + '#' + self.columns[1]
             self.name_2 = self.columns[2] + '#' + self.columns[3]
             self.output_properties = {
-                self.name_1: {'sdtype': 'categorical'},
-                self.name_2: {'sdtype': 'categorical'}
+                'concatenate_1': {'sdtype': 'categorical'},
+                'concatenate_2': {'sdtype': 'categorical'}
             }
-            self.dtypes = columns_data.dtypes
+
+        def _generate_prefixes(self, ordered_columns):
+            prefixes = {}
+            for idx, column in enumerate(self.output_properties):
+                prefixes[column] = self.name_1 if idx == 0 else self.name_2
+
+            return prefixes
 
         def _transform(self, data):
             data[self.name_1] = data.iloc[:, 0] + '#' + data.iloc[:, 1]
@@ -209,7 +217,7 @@ def test_multi_column_transformer_less_output_than_input_columns():
             col3, col4 = column_names[1].split('#')
             result[[col3, col4]] = result[column_names[1]].str.split('#', expand=True)
 
-            return result.astype(self.dtypes).drop(columns=column_names)
+            return result.drop(columns=column_names)
 
     data_test = pd.DataFrame({
         'col_1': ['A', 'B', 'C'],
@@ -218,23 +226,18 @@ def test_multi_column_transformer_less_output_than_input_columns():
         'col_4': ['J', 'K', 'L']
     })
 
-    column_to_sdtype = {
-        'col_1': 'categorical',
-        'col_2': 'categorical',
-        'col_3': 'categorical',
-        'col_4': 'categorical'
-    }
+    ordered_columns = ('col_1', 'col_2', 'col_3', 'col_4')
     transformer = ConcatenateTransformer()
 
     # Run
-    transformer.fit(data_test, column_to_sdtype)
+    transformer.fit(data_test, ordered_columns)
     transformed = transformer.transform(data_test)
     reverse = transformer.reverse_transform(transformed)
 
     # Assert
     expected_transform = pd.DataFrame({
-        'col_1#col_2': ['A#D', 'B#E', 'C#F'],
-        'col_3#col_4': ['G#J', 'H#K', 'I#L']
+        'col_1#col_2.concatenate_1': ['A#D', 'B#E', 'C#F'],
+        'col_3#col_4.concatenate_2': ['G#J', 'H#K', 'I#L']
     })
     pd.testing.assert_frame_equal(expected_transform, transformed)
     pd.testing.assert_frame_equal(reverse, data_test)
@@ -244,57 +247,61 @@ def test_multi_column_transformer_more_output_than_input_columns():
     """Test a multi-column transformer when the output has more columns than the input."""
     class ExpandTransformer(BaseMultiColumnTransformer):
 
-        def _fit(self, columns_data, columns_to_sdtypes):
-            name_1 = self.columns[0] + '.first_part'
-            name_2 = self.columns[0] + '.second_part'
-            name_3 = self.columns[1] + '.first_part'
-            name_4 = self.columns[1] + '.second_part'
+        def _fit(self, columns_data, ordered_columns):
             self.output_properties = {
-                name_1: {'sdtype': 'categorical'},
-                name_2: {'sdtype': 'categorical'},
-                name_3: {'sdtype': 'categorical'},
-                name_4: {'sdtype': 'categorical'}
+                'first_part_1': {'sdtype': 'categorical'},
+                'second_part_1': {'sdtype': 'categorical'},
+                'first_part_2': {'sdtype': 'categorical'},
+                'second_part_2': {'sdtype': 'categorical'}
             }
-            self.names = [name_1, name_2, name_3, name_4]
-            self.dtypes = columns_data.dtypes
+
+        def _generate_prefixes(self, ordered_columns):
+            list_prefixes = [
+                self.columns[0], self.columns[0],
+                self.columns[1], self.columns[1]
+            ]
+            prefixes = {}
+            for idx, column in enumerate(self.output_properties):
+                prefixes[column] = list_prefixes[idx]
+
+            return prefixes
 
         def _transform(self, data):
-            data[self.names[0]] = data[self.columns[0]].str[0]
-            data[self.names[1]] = data[self.columns[0]].str[1]
-            data[self.names[2]] = data[self.columns[1]].str[0]
-            data[self.names[3]] = data[self.columns[1]].str[1]
+            data[self.output_columns[0]] = data[self.columns[0]].str[0]
+            data[self.output_columns[1]] = data[self.columns[0]].str[1]
+            data[self.output_columns[2]] = data[self.columns[1]].str[0]
+            data[self.output_columns[3]] = data[self.columns[1]].str[1]
 
             return data.drop(columns=self.columns)
 
         def _reverse_transform(self, data):
             result = data.copy()
-            result[self.columns[0]] = result[self.names[0]] + result[self.names[1]]
-            result[self.columns[1]] = result[self.names[2]] + result[self.names[3]]
+            reverse_1 = result[self.output_columns[0]] + result[self.output_columns[1]]
+            reverse_2 = result[self.output_columns[2]] + result[self.output_columns[3]]
+            result[self.columns[0]] = reverse_1
+            result[self.columns[1]] = reverse_2
 
-            return result.astype(self.dtypes).drop(columns=self.names)
+            return result.drop(columns=self.output_columns)
 
     data_test = pd.DataFrame({
         'col_1': ['AB', 'CD', 'EF'],
         'col_2': ['GH', 'IJ', 'KL'],
     })
 
-    column_to_sdtype = {
-        'col_1': 'categorical',
-        'col_2': 'categorical',
-    }
+    ordered_columns = ('col_1', 'col_2')
     transformer = ExpandTransformer()
 
     # Run
-    transformer.fit(data_test, column_to_sdtype)
+    transformer.fit(data_test, ordered_columns)
     transformed = transformer.transform(data_test)
     reverse = transformer.reverse_transform(transformed)
 
     # Assert
     expected_transform = pd.DataFrame({
-        'col_1.first_part': ['A', 'C', 'E'],
-        'col_1.second_part': ['B', 'D', 'F'],
-        'col_2.first_part': ['G', 'I', 'K'],
-        'col_2.second_part': ['H', 'J', 'L']
+        'col_1.first_part_1': ['A', 'C', 'E'],
+        'col_1.second_part_1': ['B', 'D', 'F'],
+        'col_2.first_part_2': ['G', 'I', 'K'],
+        'col_2.second_part_2': ['H', 'J', 'L']
     })
     pd.testing.assert_frame_equal(expected_transform, transformed)
     pd.testing.assert_frame_equal(reverse, data_test)
