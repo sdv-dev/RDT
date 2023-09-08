@@ -488,7 +488,7 @@ class BaseMultiColumnTransformer(BaseTransformer):
     in order to create a new multi column transformer.
 
     Attributes:
-        ordered_columns (tuple):
+        columns_to_sdtype (tuple):
             Order of the columns to be used for the transformer.
         prefixes (dict):
             Dictionary mapping each output column to its prefix.
@@ -496,7 +496,7 @@ class BaseMultiColumnTransformer(BaseTransformer):
 
     def __init__(self):
         super().__init__()
-        self.ordered_columns = None
+        self.columns_to_sdtype = {}
         self.prefixes = {}
 
     def get_input_column(self):
@@ -519,87 +519,82 @@ class BaseMultiColumnTransformer(BaseTransformer):
         """
         return self.columns
 
+    def _get_prefix(self):
+        """Return the prefix of the output columns.
+
+        Returns:
+            str:
+                Prefix of the output columns.
+        """
+        raise NotImplementedError()
+
     def _get_output_to_property(self, property_):
-        result = {
-            f'{self.prefixes[output_column]}.{output_column}': properties[property_]
-            for output_column, properties in self.output_properties.items()
-        }
+        self.prefixes = self._get_prefix()
+        is_prefix_dict = isinstance(self.prefixes, dict)
+        output = {}
+        for output_column, properties in self.output_properties.items():
+            # if 'sdtype' is not in the dict, ignore the column
+            if property_ not in properties:
+                continue
 
-        return result
+            if is_prefix_dict:
+                prefix = self.prefixes[output_column]
+            else:
+                prefix = self.prefixes
 
-    def _validate_ordered_columns(self, data, ordered_columns):
-        """Check that all the columns in ``ordered_columns`` are present in the data."""
-        missing = set(ordered_columns) - set(data.columns)
+            if prefix is None:
+                output[f'{output_column}'] = properties[property_]
+            else:
+                output[f'{prefix}.{output_column}'] = properties[property_]
+
+        return output
+
+    def _validate_columns_to_sdtype(self, data, columns_to_sdtype):
+        """Check that all the columns in ``columns_to_sdtype`` are present in the data."""
+        missing = set(columns_to_sdtype.keys()) - set(data.columns)
         if missing:
             missing_to_print = ', '.join(missing)
             raise KeyError(f'Columns ({missing_to_print}) are not present in the data.')
 
-    def _generate_prefixes(self, ordered_columns):
-        """Generate prefixes for the output columns to precised which column they come from.
-
-        Returns:
-            dict:
-                Dictionary mapping each output column to its prefix.
-                The key is the output column name and the value is the prefix.
-        """
-        raise NotImplementedError()
-
-    def _validate_prefixes(self, ordered_columns):
-        """Check that the prefixes are valid.
-
-        Every prefix must include the name of at least one column in the data.
-        """
-        for prefix in self.prefixes.values():
-            if not any(column in prefix for column in ordered_columns):
-                raise ValueError(
-                    f"The prefix '{prefix}' does not include the name of any column in the data."
-                )
-
-    def _fit(self, data, ordered_columns):
+    def _fit(self, data):
         """Fit the transformer to the data.
 
         Args:
             data (pandas.DataFrame):
                 Data to transform.
-            ordered_columns (tuple):
-                Order of the columns to be used for the transformer.
         """
         raise NotImplementedError()
 
     @random_state
-    def fit(self, data, ordered_columns):
+    def fit(self, data, columns_to_sdtype):
         """Fit the transformer to a ``column`` of the ``data``.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            ordered_columns (tuple):
+            columns_to_sdtype (tuple):
                 Order of the columns to be used for the transformer.
         """
-        self._validate_ordered_columns(data, ordered_columns)
-        self.ordered_columns = ordered_columns
-        self._store_columns(ordered_columns, data)
+        self._validate_columns_to_sdtype(data, columns_to_sdtype)
+        self.columns_to_sdtype = columns_to_sdtype
+        self._store_columns(list(self.columns_to_sdtype.keys()), data)
         self._set_seed(data)
-
         columns_data = self._get_columns_data(data, self.columns)
-        self._fit(columns_data, ordered_columns)
-
-        self.prefixes = self._generate_prefixes(ordered_columns)
-        self._validate_prefixes(ordered_columns)
+        self._fit(columns_data)
         self._build_output_columns(data)
 
-    def fit_transform(self, data, ordered_columns):
+    def fit_transform(self, data, columns_to_sdtype):
         """Fit the transformer to a `column` of the `data` and then transform it.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            ordered_columns (tuple):
+            columns_to_sdtype (tuple):
                 Order of the columns to be used for the transformer.
 
         Returns:
             pd.DataFrame:
                 The entire table, containing the transformed data.
         """
-        self.fit(data, ordered_columns)
+        self.fit(data, columns_to_sdtype)
         return self.transform(data)
