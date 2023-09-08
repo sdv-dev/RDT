@@ -841,6 +841,7 @@ class TestGaussianNormalizer:
             'student_t': univariate.StudentTUnivariate,
             'gaussian_kde': univariate.GaussianKDE,
             'truncated_gaussian': univariate.TruncatedGaussian,
+            'uniform': univariate.UniformUnivariate
         }
         assert distributions == expected
 

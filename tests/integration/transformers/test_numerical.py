@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from copulas import univariate
 
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
 
@@ -194,6 +195,66 @@ class TestGaussianNormalizer:
 
         reverse = ct.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
+
+    def test_uniform(self):
+        """Test it works when distribution='uniform'."""
+        # Setup
+        data = pd.DataFrame(np.random.uniform(size=1000), columns=['a'])
+        ct = GaussianNormalizer(distribution='uniform')
+
+        # Run
+        ct.fit(data, 'a')
+        transformed = ct.transform(data)
+        reverse = ct.reverse_transform(transformed)
+
+        # Assert
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (1000, 1)
+
+        np.testing.assert_almost_equal(transformed['a'].mean(), 0, decimal=1)
+        np.testing.assert_almost_equal(transformed['a'].std(), 1, decimal=1)
+
+        np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+
+    def test_uniform_object(self):
+        """Test it works when distribution=UniformUnivariate()."""
+        # Setup
+        data = pd.DataFrame(np.random.uniform(size=1000), columns=['a'])
+        ct = GaussianNormalizer(distribution=univariate.UniformUnivariate())
+
+        # Run
+        ct.fit(data, 'a')
+        transformed = ct.transform(data)
+        reverse = ct.reverse_transform(transformed)
+
+        # Assert
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (1000, 1)
+
+        np.testing.assert_almost_equal(transformed['a'].mean(), 0, decimal=1)
+        np.testing.assert_almost_equal(transformed['a'].std(), 1, decimal=1)
+
+        np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+
+    def test_uniform_class(self):
+        """Test it works when distribution=UniformUnivariate."""
+        # Setup
+        data = pd.DataFrame(np.random.uniform(size=1000), columns=['a'])
+        ct = GaussianNormalizer(distribution=univariate.UniformUnivariate)
+
+        # Run
+        ct.fit(data, 'a')
+        transformed = ct.transform(data)
+        reverse = ct.reverse_transform(transformed)
+
+        # Assert
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (1000, 1)
+
+        np.testing.assert_almost_equal(transformed['a'].mean(), 0, decimal=1)
+        np.testing.assert_almost_equal(transformed['a'].std(), 1, decimal=1)
+
+        np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
 
 class TestClusterBasedNormalizer:
