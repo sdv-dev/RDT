@@ -5,7 +5,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import psutil
 from scipy.stats import norm
 
 from rdt.errors import TransformerInputError
@@ -475,19 +474,6 @@ class FrequencyEncoder(BaseTransformer):
 
         return self._transform_by_row(data)
 
-    def _reverse_transform_by_matrix(self, data):
-        """Reverse transform the data with matrix operations."""
-        num_rows = len(data)
-        num_categories = len(self.starts)
-
-        data = np.broadcast_to(data, (num_categories, num_rows)).T
-        starts = np.broadcast_to(self.starts.index, (num_rows, num_categories))
-        is_data_greater_than_starts = (data >= starts)[:, ::-1]
-        interval_indexes = num_categories - np.argmax(is_data_greater_than_starts, axis=1) - 1
-
-        get_category_from_index = list(self.starts.category).__getitem__
-        return pd.Series(interval_indexes).apply(get_category_from_index).astype(self.dtype)
-
     def _reverse_transform_by_category(self, data):
         """Reverse transform the data by iterating over all the categories."""
         result = np.empty(shape=(len(data), ), dtype=self.dtype)
@@ -521,12 +507,6 @@ class FrequencyEncoder(BaseTransformer):
         data = data.clip(0, 1)
         num_rows = len(data)
         num_categories = len(self.means)
-
-        # total shape * float size * number of matrices needed
-        needed_memory = num_rows * num_categories * 8 * 3
-        available_memory = psutil.virtual_memory().available
-        if available_memory > needed_memory:
-            return self._reverse_transform_by_matrix(data)
 
         if num_rows > num_categories:
             return self._reverse_transform_by_category(data)
