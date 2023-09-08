@@ -488,8 +488,8 @@ class BaseMultiColumnTransformer(BaseTransformer):
     in order to create a new multi column transformer.
 
     Attributes:
-        columns_to_sdtype (tuple):
-            Order of the columns to be used for the transformer.
+        columns_to_sdtype (dict):
+            Dictionary mapping each column to its sdtype.
         prefixes (dict):
             Dictionary mapping each output column to its prefix.
     """
@@ -572,8 +572,8 @@ class BaseMultiColumnTransformer(BaseTransformer):
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            columns_to_sdtype (tuple):
-                Order of the columns to be used for the transformer.
+            columns_to_sdtype (dict):
+                Dictionary mapping each column to its sdtype.
         """
         self._validate_columns_to_sdtype(data, columns_to_sdtype)
         self.columns_to_sdtype = columns_to_sdtype
@@ -589,8 +589,8 @@ class BaseMultiColumnTransformer(BaseTransformer):
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            columns_to_sdtype (tuple):
-                Order of the columns to be used for the transformer.
+            columns_to_sdtype (dict):
+                Dictionary mapping each column to its sdtype.
 
         Returns:
             pd.DataFrame:
