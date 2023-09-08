@@ -24,7 +24,6 @@ install_requires = [
     "scipy>=1.9.2,<2;python_version>='3.10'",
     "scikit-learn>=0.24,<2;python_version<'3.10'",
     "scikit-learn>=1.1.3,<2;python_version>='3.10'",
-    'psutil>=5.7,<6',
     'Faker>=10',
 ]
 
@@ -42,6 +41,7 @@ tests_require = [
     'jupyter>=1.0.0,<2',
     'rundoc>=0.4.3,<0.5',
     'pytest-subtests>=0.5,<1.0',
+    'psutil>=5.7,<6',
 ]
 
 addons_require = []
