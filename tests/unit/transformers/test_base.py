@@ -1282,7 +1282,7 @@ class TestBaseMultiColumnTransformer:
         transformer = BaseMultiColumnTransformer()
 
         # Assert
-        assert transformer.columns_to_sdtype == {}
+        assert transformer.columns_to_sdtypes == {}
         assert transformer.prefixes == {}
 
     def test_get_input_column(self):
@@ -1396,8 +1396,8 @@ class TestBaseMultiColumnTransformer:
         assert output == expected_output
         transformer._get_prefix.assert_called_once_with()
 
-    def test__validate_columns_to_sdtype(self):
-        """Test the ``_validate_columns_to_sdtype`` method."""
+    def test__validate_columns_to_sdtypes(self):
+        """Test the ``_validate_columns_to_sdtypes`` method."""
         # Setup
         transformer = BaseMultiColumnTransformer()
         data = pd.DataFrame({
@@ -1405,16 +1405,16 @@ class TestBaseMultiColumnTransformer:
             'b': ['a', 'b', 'c'],
             'c': [True, False, True],
         })
-        columns_to_sdtype = {
+        columns_to_sdtypes = {
             'a': 'numerical',
             'b': 'categorical',
             'c': 'boolean',
         }
 
         # Run and Assert
-        transformer._validate_columns_to_sdtype(data, columns_to_sdtype)
+        transformer._validate_columns_to_sdtypes(data, columns_to_sdtypes)
 
-        wrong_columns_to_sdtype = {
+        wrong_columns_to_sdtypes = {
             'a': 'numerical',
             'b': 'categorical',
             'd': 'boolean',
@@ -1423,7 +1423,7 @@ class TestBaseMultiColumnTransformer:
             'Columns (d) are not present in the data.'
         )
         with pytest.raises(KeyError, match=expected_error_msg):
-            transformer._validate_columns_to_sdtype(data, wrong_columns_to_sdtype)
+            transformer._validate_columns_to_sdtypes(data, wrong_columns_to_sdtypes)
 
     def test__fit(self):
         """Test the ``_fit`` method.
@@ -1446,13 +1446,13 @@ class TestBaseMultiColumnTransformer:
             'a': [1, 2, 3],
             'b': ['a', 'b', 'c'],
         })
-        columns_to_sdtype = {
+        columns_to_sdtypes = {
             'a': 'numerical',
             'b': 'categorical',
         }
         transformer.columns = ['a', 'b']
 
-        transformer._validate_columns_to_sdtype = Mock()
+        transformer._validate_columns_to_sdtypes = Mock()
         transformer._store_columns = Mock()
         transformer._get_columns_data = Mock(return_value=data_transformer)
         transformer._set_seed = Mock()
@@ -1460,10 +1460,10 @@ class TestBaseMultiColumnTransformer:
         transformer._build_output_columns = Mock()
 
         # Run
-        transformer.fit(data, columns_to_sdtype)
+        transformer.fit(data, columns_to_sdtypes)
 
         # Assert
-        transformer._validate_columns_to_sdtype.assert_called_once_with(data, columns_to_sdtype)
+        transformer._validate_columns_to_sdtypes.assert_called_once_with(data, columns_to_sdtypes)
         transformer._store_columns.assert_called_once_with(
             ['a', 'b'], data
         )
@@ -1476,7 +1476,7 @@ class TestBaseMultiColumnTransformer:
         """Test the ``fit_transform`` method."""
         # Setup
         transformer = BaseMultiColumnTransformer()
-        columns_to_sdtype = ('a', 'b', 'c')
+        columns_to_sdtypes = ('a', 'b', 'c')
         data = pd.DataFrame({
             'a': [1, 2, 3],
             'b': ['a', 'b', 'c'],
@@ -1488,8 +1488,8 @@ class TestBaseMultiColumnTransformer:
         transformer.transform = mock_transform
 
         # Run
-        transformer.fit_transform(data, columns_to_sdtype)
+        transformer.fit_transform(data, columns_to_sdtypes)
 
         # Assert
-        mock_fit.assert_called_once_with(data, columns_to_sdtype)
+        mock_fit.assert_called_once_with(data, columns_to_sdtypes)
         mock_transform.assert_called_once_with(data)

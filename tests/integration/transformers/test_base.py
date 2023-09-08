@@ -161,7 +161,7 @@ def test_multi_column_transformer_same_number_of_columns_input_output():
         'col_3': [100, 200, 300]
     })
 
-    columns_to_sdtype = {
+    columns_to_sdtypes = {
         'col_1': 'numerical',
         'col_2': 'numerical',
         'col_3': 'numerical'
@@ -169,7 +169,7 @@ def test_multi_column_transformer_same_number_of_columns_input_output():
     transformer = AdditionTransformer()
 
     # Run
-    transformed = transformer.fit_transform(data_test, columns_to_sdtype)
+    transformed = transformer.fit_transform(data_test, columns_to_sdtypes)
     reverse = transformer.reverse_transform(transformed)
 
     # Assert
@@ -229,7 +229,7 @@ def test_multi_column_transformer_less_output_than_input_columns():
         'col_4': ['J', 'K', 'L']
     })
 
-    columns_to_sdtype = {
+    columns_to_sdtypes = {
         'col_1': 'categorical',
         'col_2': 'categorical',
         'col_3': 'categorical',
@@ -238,7 +238,7 @@ def test_multi_column_transformer_less_output_than_input_columns():
     transformer = ConcatenateTransformer()
 
     # Run
-    transformer.fit(data_test, columns_to_sdtype)
+    transformer.fit(data_test, columns_to_sdtypes)
     transformed = transformer.transform(data_test)
     reverse = transformer.reverse_transform(transformed)
 
@@ -296,14 +296,14 @@ def test_multi_column_transformer_more_output_than_input_columns():
         'col_2': ['GH', 'IJ', 'KL'],
     })
 
-    columns_to_sdtype = {
+    columns_to_sdtypes = {
         'col_1': 'categorical',
         'col_2': 'categorical'
     }
     transformer = ExpandTransformer()
 
     # Run
-    transformer.fit(data_test, columns_to_sdtype)
+    transformer.fit(data_test, columns_to_sdtypes)
     transformed = transformer.transform(data_test)
     reverse = transformer.reverse_transform(transformed)
 

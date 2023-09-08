@@ -488,7 +488,7 @@ class BaseMultiColumnTransformer(BaseTransformer):
     in order to create a new multi column transformer.
 
     Attributes:
-        columns_to_sdtype (dict):
+        columns_to_sdtypes (dict):
             Dictionary mapping each column to its sdtype.
         prefixes (dict):
             Dictionary mapping each output column to its prefix.
@@ -496,7 +496,7 @@ class BaseMultiColumnTransformer(BaseTransformer):
 
     def __init__(self):
         super().__init__()
-        self.columns_to_sdtype = {}
+        self.columns_to_sdtypes = {}
         self.prefixes = {}
 
     def get_input_column(self):
@@ -549,9 +549,9 @@ class BaseMultiColumnTransformer(BaseTransformer):
 
         return output
 
-    def _validate_columns_to_sdtype(self, data, columns_to_sdtype):
-        """Check that all the columns in ``columns_to_sdtype`` are present in the data."""
-        missing = set(columns_to_sdtype.keys()) - set(data.columns)
+    def _validate_columns_to_sdtypes(self, data, columns_to_sdtypes):
+        """Check that all the columns in ``columns_to_sdtypes`` are present in the data."""
+        missing = set(columns_to_sdtypes.keys()) - set(data.columns)
         if missing:
             missing_to_print = ', '.join(missing)
             raise KeyError(f'Columns ({missing_to_print}) are not present in the data.')
@@ -566,35 +566,35 @@ class BaseMultiColumnTransformer(BaseTransformer):
         raise NotImplementedError()
 
     @random_state
-    def fit(self, data, columns_to_sdtype):
+    def fit(self, data, columns_to_sdtypes):
         """Fit the transformer to a ``column`` of the ``data``.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            columns_to_sdtype (dict):
+            columns_to_sdtypes (dict):
                 Dictionary mapping each column to its sdtype.
         """
-        self._validate_columns_to_sdtype(data, columns_to_sdtype)
-        self.columns_to_sdtype = columns_to_sdtype
-        self._store_columns(list(self.columns_to_sdtype.keys()), data)
+        self._validate_columns_to_sdtypes(data, columns_to_sdtypes)
+        self.columns_to_sdtypes = columns_to_sdtypes
+        self._store_columns(list(self.columns_to_sdtypes.keys()), data)
         self._set_seed(data)
         columns_data = self._get_columns_data(data, self.columns)
         self._fit(columns_data)
         self._build_output_columns(data)
 
-    def fit_transform(self, data, columns_to_sdtype):
+    def fit_transform(self, data, columns_to_sdtypes):
         """Fit the transformer to a `column` of the `data` and then transform it.
 
         Args:
             data (pandas.DataFrame):
                 The entire table.
-            columns_to_sdtype (dict):
+            columns_to_sdtypes (dict):
                 Dictionary mapping each column to its sdtype.
 
         Returns:
             pd.DataFrame:
                 The entire table, containing the transformed data.
         """
-        self.fit(data, columns_to_sdtype)
+        self.fit(data, columns_to_sdtypes)
         return self.transform(data)
