@@ -12,7 +12,7 @@ from rdt.errors import (
     TransformerProcessingError)
 from rdt.transformers import (
     AnonymizedFaker, BaseMultiColumnTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
-    LabelEncoder, RegexGenerator, UnixTimestampEncoder)
+    LabelEncoder, RegexGenerator, UniformEncoder, UnixTimestampEncoder)
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer
 

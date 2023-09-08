@@ -59,7 +59,7 @@ class DummyMultiColumnTransformerNumerical(BaseMultiColumnTransformer):
 
     SUPPORTED_SDTYPES = ['categorical', 'boolean']
 
-    def _fit(self, data, ordered_columns):
+    def _fit(self, data):
         self.output_properties = {
             column: {
                 'sdtype': 'numerical',
@@ -67,9 +67,8 @@ class DummyMultiColumnTransformerNumerical(BaseMultiColumnTransformer):
             } for column in self.columns
         }
 
-    def _generate_prefixes(self, ordered_columns):
-        prefixes = {column: column for column in self.output_properties}
-        return prefixes
+    def _get_prefix(self):
+        return None
 
     def _transform(self, data):
         return data.astype(float)
@@ -1637,8 +1636,8 @@ class TestHyperTransformer:
 
         expected_transformed_data = pd.DataFrame({
             'C': [0.5225768219566304, 0.7797813625043645, 0.31881544039752413],
-            'A.A': [1.0, 2.0, 3.0],
-            'B.B': [4.0, 5.0, 6.0]
+            'A': [1.0, 2.0, 3.0],
+            'B': [4.0, 5.0, 6.0]
         })
 
         assert repr(new_config) == repr(expected_config)
