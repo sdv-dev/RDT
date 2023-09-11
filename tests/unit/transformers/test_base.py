@@ -1397,7 +1397,10 @@ class TestBaseMultiColumnTransformer:
         transformer._get_prefix.assert_called_once_with()
 
     def test__validate_columns_to_sdtypes(self):
-        """Test the ``_validate_columns_to_sdtypes`` method."""
+        """Test the ``_validate_columns_to_sdtypes`` method.
+
+        Test that an error with the missing column names is raised.
+        """
         # Setup
         transformer = BaseMultiColumnTransformer()
         data = pd.DataFrame({
@@ -1422,7 +1425,7 @@ class TestBaseMultiColumnTransformer:
         expected_error_msg = re.escape(
             'Columns (d) are not present in the data.'
         )
-        with pytest.raises(KeyError, match=expected_error_msg):
+        with pytest.raises(ValueError, match=expected_error_msg):
             transformer._validate_columns_to_sdtypes(data, wrong_columns_to_sdtypes)
 
     def test__fit(self):

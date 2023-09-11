@@ -554,7 +554,7 @@ class BaseMultiColumnTransformer(BaseTransformer):
         missing = set(columns_to_sdtypes.keys()) - set(data.columns)
         if missing:
             missing_to_print = ', '.join(missing)
-            raise KeyError(f'Columns ({missing_to_print}) are not present in the data.')
+            raise ValueError(f'Columns ({missing_to_print}) are not present in the data.')
 
     def _fit(self, data):
         """Fit the transformer to the data.
