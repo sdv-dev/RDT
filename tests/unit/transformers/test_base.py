@@ -1283,7 +1283,6 @@ class TestBaseMultiColumnTransformer:
 
         # Assert
         assert transformer.columns_to_sdtypes == {}
-        assert transformer.prefixes == {}
 
     def test_get_input_column(self):
         """Test the ``get_input_column`` method.
@@ -1330,20 +1329,15 @@ class TestBaseMultiColumnTransformer:
             'col_2': {'sdtype': 'categorical'},
             'col_3': {'next_transformer': None},
         }
-        prefixes = {
-            'col_1': 'prefix_1',
-            'col_2': 'prefix_2',
-            'col_3': 'prefix_3',
-        }
-        transformer._get_prefix = Mock(return_value=prefixes)
+        transformer._get_prefix = Mock(return_value='prefix')
 
         # Run
         output = transformer._get_output_to_property('sdtype')
 
         # Assert
         expected_output = {
-            'prefix_1.col_1': 'numerical',
-            'prefix_2.col_2': 'categorical',
+            'prefix.col_1': 'numerical',
+            'prefix.col_2': 'categorical',
         }
         assert output == expected_output
         transformer._get_prefix.assert_called_once_with()

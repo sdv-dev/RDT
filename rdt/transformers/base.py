@@ -490,14 +490,11 @@ class BaseMultiColumnTransformer(BaseTransformer):
     Attributes:
         columns_to_sdtypes (dict):
             Dictionary mapping each column to its sdtype.
-        prefixes (dict):
-            Dictionary mapping each output column to its prefix.
     """
 
     def __init__(self):
         super().__init__()
         self.columns_to_sdtypes = {}
-        self.prefixes = {}
 
     def get_input_column(self):
         """Override ``get_input_column`` method from ``BaseTransformer``.
@@ -529,23 +526,17 @@ class BaseMultiColumnTransformer(BaseTransformer):
         raise NotImplementedError()
 
     def _get_output_to_property(self, property_):
-        self.prefixes = self._get_prefix()
-        is_prefix_dict = isinstance(self.prefixes, dict)
+        self.column_prefix = self._get_prefix()
         output = {}
         for output_column, properties in self.output_properties.items():
             # if 'sdtype' is not in the dict, ignore the column
             if property_ not in properties:
                 continue
 
-            if is_prefix_dict:
-                prefix = self.prefixes[output_column]
-            else:
-                prefix = self.prefixes
-
-            if prefix is None:
+            if self.column_prefix is None:
                 output[f'{output_column}'] = properties[property_]
             else:
-                output[f'{prefix}.{output_column}'] = properties[property_]
+                output[f'{self.column_prefix}.{output_column}'] = properties[property_]
 
         return output
 

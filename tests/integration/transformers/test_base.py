@@ -192,17 +192,12 @@ def test_multi_column_transformer_less_output_than_input_columns():
             self.name_1 = self.columns[0] + '#' + self.columns[1]
             self.name_2 = self.columns[2] + '#' + self.columns[3]
             self.output_properties = {
-                'concatenate_1': {'sdtype': 'categorical'},
-                'concatenate_2': {'sdtype': 'categorical'}
+                f'{self.name_1}.concatenate_1': {'sdtype': 'categorical'},
+                f'{self.name_2}.concatenate_2': {'sdtype': 'categorical'}
             }
 
         def _get_prefix(self):
-            prefixes = {
-                'concatenate_1': self.name_1,
-                'concatenate_2': self.name_2
-            }
-
-            return prefixes
+            return None
 
         def _transform(self, data):
             data[self.name_1] = data.iloc[:, 0] + '#' + data.iloc[:, 1]
@@ -257,22 +252,14 @@ def test_multi_column_transformer_more_output_than_input_columns():
 
         def _fit(self, columns_data):
             self.output_properties = {
-                'first_part_1': {'sdtype': 'categorical'},
-                'second_part_1': {'sdtype': 'categorical'},
-                'first_part_2': {'sdtype': 'categorical'},
-                'second_part_2': {'sdtype': 'categorical'}
+                f'{self.columns[0]}.first_part_1': {'sdtype': 'categorical'},
+                f'{self.columns[0]}.second_part_1': {'sdtype': 'categorical'},
+                f'{self.columns[1]}.first_part_2': {'sdtype': 'categorical'},
+                f'{self.columns[1]}.second_part_2': {'sdtype': 'categorical'}
             }
 
         def _get_prefix(self):
-            list_prefixes = [
-                self.columns[0], self.columns[0],
-                self.columns[1], self.columns[1]
-            ]
-            prefixes = {}
-            for idx, column in enumerate(self.output_properties):
-                prefixes[column] = list_prefixes[idx]
-
-            return prefixes
+            return None
 
         def _transform(self, data):
             data[self.output_columns[0]] = data[self.columns[0]].str[0]
