@@ -163,3 +163,24 @@ def fill_nan_with_none(data):
             Original data with nan values replaced by None.
     """
     return data.fillna(np.nan).replace([np.nan], [None])
+
+
+def flatten_column_list(column_list):
+    """Flatten a list of columns.
+
+    Args:
+        column_list (list):
+            List of columns to flatten.
+
+    Returns:
+        list:
+            Flattened list of columns.
+    """
+    flattened = []
+    for column in column_list:
+        if isinstance(column, tuple):
+            flattened.extend(column)
+        else:
+            flattened.append(column)
+
+    return flattened
