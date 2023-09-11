@@ -619,16 +619,13 @@ class HyperTransformer:
             self._transformers_sequence.append(transformer)
             data = transformer.transform(data)
 
-            output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()
-            for output_name in output_columns:
-                output_field = self._multi_column_fields.get(output_name, output_name)
-                next_transformer = next_transformers[output_field]
+            for column_name, next_transformer in next_transformers.items():
 
                 # If the column is part of a multi-column field, and at least one column
                 # isn't present in the data, then it should not fit the next transformer
-                if self._field_in_data(output_field, data):
-                    data = self._fit_field_transformer(data, output_field, next_transformer)
+                if self._field_in_data(column_name, data):
+                    data = self._fit_field_transformer(data, column_name, next_transformer)
 
         return data
 
