@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from rdt.errors import TransformerInputError
-from rdt.transformers import BaseTransformer, NullTransformer
+from rdt.transformers import BaseMultiColumnTransformer, BaseTransformer, NullTransformer
 from rdt.transformers.base import random_state, set_random_states
 
 
@@ -1272,3 +1272,221 @@ class TestBaseTransformer:
             'b': [0.0, 0.0, 0.0],
         })
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)
+
+
+class TestBaseMultiColumnTransformer:
+
+    def test___init__(self):
+        """Test the ``__init__`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+
+        # Assert
+        assert transformer.columns_to_sdtypes == {}
+
+    def test_get_input_column(self):
+        """Test the ``get_input_column`` method.
+
+        When the ``get_input_column`` method is called, it should raise a ``NotImplementedError``.
+        """
+        # Setup
+        expected_message = (
+            'MultiColumnTransformers does not have a single input column.'
+            'Please use ``get_input_columns`` instead.'
+        )
+
+        # Run and Assert
+        with pytest.raises(NotImplementedError, match=expected_message):
+            BaseMultiColumnTransformer().get_input_column()
+
+    def test_get_input_columns(self):
+        """Test the ``get_input_columns`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        transformer.columns = ['a', 'b', 'c']
+
+        # Run
+        output = transformer.get_input_columns()
+
+        # Assert
+        assert output == ['a', 'b', 'c']
+
+    def test__get_prefixes(self):
+        """Test the ``_get_prefix`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+
+        # Run and Assert
+        with pytest.raises(NotImplementedError):
+            transformer._get_prefix()
+
+    def test__get_output_to_property(self):
+        """Test the ``_get_output_to_property`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        transformer.output_properties = {
+            'col_1': {'sdtype': 'numerical'},
+            'col_2': {'sdtype': 'categorical'},
+            'col_3': {'next_transformer': None},
+        }
+        transformer._get_prefix = Mock(return_value='prefix')
+
+        # Run
+        output = transformer._get_output_to_property('sdtype')
+
+        # Assert
+        expected_output = {
+            'prefix.col_1': 'numerical',
+            'prefix.col_2': 'categorical',
+        }
+        assert output == expected_output
+        transformer._get_prefix.assert_called_once_with()
+
+    def test__get_output_to_property_with_single_prefix(self):
+        """Test the ``_get_output_to_property`` method when the prefix is a single string."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        transformer.output_properties = {
+            'col_1': {'sdtype': 'numerical'},
+            'col_2': {'sdtype': 'categorical'},
+            'col_3': {'sdtype': 'boolean'},
+        }
+        prefixes = 'prefix'
+        transformer._get_prefix = Mock(return_value=prefixes)
+
+        # Run
+        output = transformer._get_output_to_property('sdtype')
+
+        # Assert
+        expected_output = {
+            'prefix.col_1': 'numerical',
+            'prefix.col_2': 'categorical',
+            'prefix.col_3': 'boolean',
+        }
+        assert output == expected_output
+        transformer._get_prefix.assert_called_once_with()
+
+    def test__get_output_to_property_with_prefix_none(self):
+        """Test the ``_get_output_to_property`` method when the prefix is None."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        transformer.output_properties = {
+            'col_1': {'sdtype': 'numerical'},
+            'col_2': {'sdtype': 'categorical'},
+            'col_3': {'sdtype': 'boolean'},
+        }
+        prefixes = None
+        transformer._get_prefix = Mock(return_value=prefixes)
+
+        # Run
+        output = transformer._get_output_to_property('sdtype')
+
+        # Assert
+        expected_output = {
+            'col_1': 'numerical',
+            'col_2': 'categorical',
+            'col_3': 'boolean',
+        }
+        assert output == expected_output
+        transformer._get_prefix.assert_called_once_with()
+
+    def test__validate_columns_to_sdtypes(self):
+        """Test the ``_validate_columns_to_sdtypes`` method.
+
+        Test that an error with the missing column names is raised.
+        """
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': ['a', 'b', 'c'],
+            'c': [True, False, True],
+        })
+        columns_to_sdtypes = {
+            'a': 'numerical',
+            'b': 'categorical',
+            'c': 'boolean',
+        }
+
+        # Run and Assert
+        transformer._validate_columns_to_sdtypes(data, columns_to_sdtypes)
+
+        wrong_columns_to_sdtypes = {
+            'a': 'numerical',
+            'b': 'categorical',
+            'd': 'boolean',
+        }
+        expected_error_msg = re.escape(
+            'Columns (d) are not present in the data.'
+        )
+        with pytest.raises(ValueError, match=expected_error_msg):
+            transformer._validate_columns_to_sdtypes(data, wrong_columns_to_sdtypes)
+
+    def test__fit(self):
+        """Test the ``_fit`` method.
+
+        Check that an error is raised when the ``_fit`` method is called.
+        """
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+
+        # Run and Assert
+        with pytest.raises(NotImplementedError):
+            transformer._fit(None)
+
+    def test_fit(self):
+        """Test the ``fit`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        data = Mock()
+        data_transformer = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': ['a', 'b', 'c'],
+        })
+        columns_to_sdtypes = {
+            'a': 'numerical',
+            'b': 'categorical',
+        }
+        transformer.columns = ['a', 'b']
+
+        transformer._validate_columns_to_sdtypes = Mock()
+        transformer._store_columns = Mock()
+        transformer._get_columns_data = Mock(return_value=data_transformer)
+        transformer._set_seed = Mock()
+        transformer._fit = Mock()
+        transformer._build_output_columns = Mock()
+
+        # Run
+        transformer.fit(data, columns_to_sdtypes)
+
+        # Assert
+        transformer._validate_columns_to_sdtypes.assert_called_once_with(data, columns_to_sdtypes)
+        transformer._store_columns.assert_called_once_with(
+            ['a', 'b'], data
+        )
+        transformer._set_seed.assert_called_once_with(data)
+        transformer._get_columns_data.assert_called_once_with(data, ['a', 'b'])
+        transformer._fit.assert_called_once_with(data_transformer)
+        transformer._build_output_columns.assert_called_once_with(data)
+
+    def test_fit_transform(self):
+        """Test the ``fit_transform`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        columns_to_sdtypes = ('a', 'b', 'c')
+        data = pd.DataFrame({
+            'a': [1, 2, 3],
+            'b': ['a', 'b', 'c'],
+        })
+        transformer.columns = ['a', 'b']
+        mock_fit = Mock()
+        mock_transform = Mock(return_value=data)
+        transformer.fit = mock_fit
+        transformer.transform = mock_transform
+
+        # Run
+        transformer.fit_transform(data, columns_to_sdtypes)
+
+        # Assert
+        mock_fit.assert_called_once_with(data, columns_to_sdtypes)
+        mock_transform.assert_called_once_with(data)

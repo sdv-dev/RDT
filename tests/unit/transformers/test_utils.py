@@ -1,7 +1,7 @@
 import sre_parse
 from sre_constants import MAXREPEAT
 
-from rdt.transformers.utils import _any, _max_repeat, strings_from_regex
+from rdt.transformers.utils import _any, _max_repeat, flatten_column_list, strings_from_regex
 
 
 def test_strings_from_regex_literal():
@@ -53,3 +53,16 @@ def test_strings_from_regex_very_large_regex():
 
     assert size == 173689027553046619421110743915454114823342474255318764491341273608665169920
     [next(generator) for _ in range(100_000)]
+
+
+def test_flatten_column_list():
+    """Test `flatten_column_list` function."""
+    # Setup
+    column_list = ['column1', ('column2', 'column3'), 'column4', ('column5',), 'column6']
+
+    # Run
+    flattened_list = flatten_column_list(column_list)
+
+    # Assert
+    expected_flattened_list = ['column1', 'column2', 'column3', 'column4', 'column5', 'column6']
+    assert flattened_list == expected_flattened_list
