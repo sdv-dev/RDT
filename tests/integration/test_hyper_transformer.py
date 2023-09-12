@@ -6,12 +6,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt import HyperTransformer, get_demo
+from rdt import get_demo
 from rdt.errors import ConfigNotSetError, InvalidConfigError, InvalidDataError, NotFittedError
+from rdt.hyper_transformer import Config, HyperTransformer
 from rdt.transformers import (
-    AnonymizedFaker, BaseTransformer, BinaryEncoder, ClusterBasedNormalizer, FloatFormatter,
-    FrequencyEncoder, LabelEncoder, OneHotEncoder, RegexGenerator, UniformEncoder,
-    UnixTimestampEncoder, get_default_transformer, get_default_transformers)
+    AnonymizedFaker, BaseMultiColumnTransformer, BaseTransformer, BinaryEncoder,
+    ClusterBasedNormalizer, FloatFormatter, FrequencyEncoder, LabelEncoder, OneHotEncoder,
+    RegexGenerator, UniformEncoder, UnixTimestampEncoder, get_default_transformer,
+    get_default_transformers)
 from rdt.transformers.datetime import OptimizedTimestampEncoder
 from rdt.transformers.numerical import GaussianNormalizer
 from rdt.transformers.pii.anonymizer import PseudoAnonymizedFaker
@@ -53,6 +55,29 @@ class DummyTransformerNotMLReady(BaseTransformer):
 
 
 TEST_DATA_INDEX = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
+
+
+class DummyMultiColumnTransformerNumerical(BaseMultiColumnTransformer):
+    """Multi column transformer that takes categorical data."""
+
+    SUPPORTED_SDTYPES = ['categorical', 'boolean']
+
+    def _fit(self, data):
+        self.output_properties = {
+            column: {
+                'sdtype': 'numerical',
+                'next_transformer': None,
+            } for column in self.columns
+        }
+
+    def _get_prefix(self):
+        return None
+
+    def _transform(self, data):
+        return data.astype(float)
+
+    def _reverse_transform(self, data):
+        return data.astype(str)
 
 
 def get_input_data():
@@ -1370,3 +1395,40 @@ class TestHyperTransformer:
 
         # Assert
         pd.testing.assert_frame_equal(reversed1, reversed2)
+
+    def test_hypertransformer_with_mutli_column_transformer_end_to_end(self):
+        """Test ``HyperTransformer`` with mutli column transformers end to end."""
+        # Setup
+        data_test = pd.DataFrame({
+            'A': ['1.0', '2.0', '3.0'],
+            'B': ['4.0', '5.0', '6.0'],
+            'C': [True, False, True]
+        })
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean'
+            },
+            'transformers': {
+                ('A', 'B'): DummyMultiColumnTransformerNumerical(),
+                'C': UniformEncoder()
+            }
+        }
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        transformed_data = ht.fit_transform(data_test)
+        reverse_transformed_data = ht.reverse_transform(transformed_data)
+
+        # Assert
+        expected_transformed_data = pd.DataFrame({
+            'A': [1.0, 2.0, 3.0],
+            'B': [4.0, 5.0, 6.0],
+            'C': [0.5892351646057272, 0.8615278122985615, 0.36493646501970534]
+        })
+
+        pd.testing.assert_frame_equal(transformed_data, expected_transformed_data)
+        pd.testing.assert_frame_equal(reverse_transformed_data, data_test)
