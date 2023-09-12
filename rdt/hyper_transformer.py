@@ -545,6 +545,7 @@ class HyperTransformer:
         columns_to_sdtypes = {}
         for column in field:
             columns_to_sdtypes[column] = self.field_sdtypes[column]
+
         return columns_to_sdtypes
 
     def _fit_field_transformer(self, data, field, transformer):
