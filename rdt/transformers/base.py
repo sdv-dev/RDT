@@ -362,7 +362,7 @@ class BaseTransformer:
         raise NotImplementedError()
 
     def _set_seed(self, data):
-        hash_value = self.get_input_column()
+        hash_value = self.columns[0]
         for value in data.head(5):
             hash_value += str(value)
 
@@ -479,3 +479,113 @@ class BaseTransformer:
         data = self._add_columns_to_data(data, reversed_data, self.columns)
 
         return data
+
+
+class BaseMultiColumnTransformer(BaseTransformer):
+    """Base class for all multi column transformers.
+
+    The ``BaseMultiColumnTransformer`` class contains methods that must be implemented
+    in order to create a new multi column transformer.
+
+    Attributes:
+        columns_to_sdtypes (dict):
+            Dictionary mapping each column to its sdtype.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.columns_to_sdtypes = {}
+
+    def get_input_column(self):
+        """Override ``get_input_column`` method from ``BaseTransformer``.
+
+        Raise an error because for multi column transformers, ``get_input_columns``
+        must be used instead.
+        """
+        raise NotImplementedError(
+            'MultiColumnTransformers does not have a single input column.'
+            'Please use ``get_input_columns`` instead.'
+        )
+
+    def get_input_columns(self):
+        """Return input column name for transformer.
+
+        Returns:
+            list:
+                Input column names.
+        """
+        return self.columns
+
+    def _get_prefix(self):
+        """Return the prefix of the output columns.
+
+        Returns:
+            str:
+                Prefix of the output columns.
+        """
+        raise NotImplementedError()
+
+    def _get_output_to_property(self, property_):
+        self.column_prefix = self._get_prefix()
+        output = {}
+        for output_column, properties in self.output_properties.items():
+            # if 'sdtype' is not in the dict, ignore the column
+            if property_ not in properties:
+                continue
+
+            if self.column_prefix is None:
+                output[f'{output_column}'] = properties[property_]
+            else:
+                output[f'{self.column_prefix}.{output_column}'] = properties[property_]
+
+        return output
+
+    def _validate_columns_to_sdtypes(self, data, columns_to_sdtypes):
+        """Check that all the columns in ``columns_to_sdtypes`` are present in the data."""
+        missing = set(columns_to_sdtypes.keys()) - set(data.columns)
+        if missing:
+            missing_to_print = ', '.join(missing)
+            raise ValueError(f'Columns ({missing_to_print}) are not present in the data.')
+
+    def _fit(self, data):
+        """Fit the transformer to the data.
+
+        Args:
+            data (pandas.DataFrame):
+                Data to transform.
+        """
+        raise NotImplementedError()
+
+    @random_state
+    def fit(self, data, columns_to_sdtypes):
+        """Fit the transformer to a ``column`` of the ``data``.
+
+        Args:
+            data (pandas.DataFrame):
+                The entire table.
+            columns_to_sdtypes (dict):
+                Dictionary mapping each column to its sdtype.
+        """
+        self._validate_columns_to_sdtypes(data, columns_to_sdtypes)
+        self.columns_to_sdtypes = columns_to_sdtypes
+        self._store_columns(list(self.columns_to_sdtypes.keys()), data)
+        self._set_seed(data)
+        columns_data = self._get_columns_data(data, self.columns)
+        self._fit(columns_data)
+        self._build_output_columns(data)
+
+    def fit_transform(self, data, columns_to_sdtypes):
+        """Fit the transformer to a `column` of the `data` and then transform it.
+
+        Args:
+            data (pandas.DataFrame):
+                The entire table.
+            columns_to_sdtypes (dict):
+                Dictionary mapping each column to its sdtype.
+
+        Returns:
+            pd.DataFrame:
+                The entire table, containing the transformed data.
+        """
+        self.fit(data, columns_to_sdtypes)
+        return self.transform(data)

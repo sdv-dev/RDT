@@ -14,6 +14,7 @@ from rdt.errors import (
 from rdt.transformers import (
     BaseTransformer, get_class_by_transformer_name, get_default_transformer,
     get_transformers_by_type)
+from rdt.transformers.utils import flatten_column_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class Config(dict):
         """Pretty print the dictionary."""
         config = {
             'sdtypes': self['sdtypes'],
-            'transformers': {k: repr(v) for k, v in self['transformers'].items()}
+            'transformers': {str(k): repr(v) for k, v in self['transformers'].items()}
         }
 
         printed = json.dumps(config, indent=4)
@@ -115,7 +116,7 @@ class HyperTransformer:
         self._specified_fields = set()
         self._validate_field_transformers()
         self._valid_output_sdtypes = self._DEFAULT_OUTPUT_SDTYPES
-        self._multi_column_fields = self._create_multi_column_fields()
+        self._multi_column_fields = {}
         self._transformers_sequence = []
         self._output_columns = []
         self._input_columns = []
@@ -205,7 +206,18 @@ class HyperTransformer:
 
         sdtypes = config['sdtypes']
         transformers = config['transformers']
-        if set(sdtypes.keys()) != set(transformers.keys()):
+
+        sdtype_keys = sdtypes.keys()
+        transformer_keys = flatten_column_list(transformers.keys())
+
+        is_transformer_keys_unique = len(transformer_keys) == len(set(transformer_keys))
+        if not is_transformer_keys_unique:
+            raise InvalidConfigError(
+                'Error: Invalid config. Please provide unique keys for the sdtypes '
+                'and transformers.'
+            )
+
+        if set(sdtype_keys) != set(transformer_keys):
             raise InvalidConfigError(
                 "The column names in the 'sdtypes' dictionary must match the "
                 "column names in the 'transformers' dictionary."
@@ -216,10 +228,14 @@ class HyperTransformer:
 
         mismatched_columns = []
         for column_name, transformer in transformers.items():
-            if transformer is not None:
-                sdtype = sdtypes.get(column_name)
+            if transformer is None:
+                continue
+
+            columns = column_name if isinstance(column_name, tuple) else [column_name]
+            for column in columns:
+                sdtype = sdtypes.get(column)
                 if sdtype not in transformer.get_supported_sdtypes():
-                    mismatched_columns.append(column_name)
+                    mismatched_columns.append(column)
 
         if mismatched_columns:
             raise InvalidConfigError(
@@ -519,6 +535,19 @@ class HyperTransformer:
         LOGGER.info('Config:')
         LOGGER.info(str(config))
 
+    def _get_columns_to_sdtypes(self, field):
+        """Generate the ``columns_to_sdtypes`` dict for the given field.
+
+        Args:
+            field (tuple):
+                Names of the column for the multi column trnasformer.
+        """
+        columns_to_sdtypes = {}
+        for column in field:
+            columns_to_sdtypes[column] = self.field_sdtypes[column]
+
+        return columns_to_sdtypes
+
     def _fit_field_transformer(self, data, field, transformer):
         """Fit a transformer to its corresponding field.
 
@@ -541,7 +570,12 @@ class HyperTransformer:
             self._output_columns.append(field)
 
         else:
-            transformer.fit(data, field)
+            if isinstance(field, tuple):
+                columns_to_sdtypes = self._get_columns_to_sdtypes(field)
+                transformer.fit(data, columns_to_sdtypes)
+            else:
+                transformer.fit(data, field)
+
             self._transformers_sequence.append(transformer)
             data = transformer.transform(data)
 
@@ -603,8 +637,8 @@ class HyperTransformer:
         self._validate_detect_config_called(data)
         self._unfit()
         self._input_columns = list(data.columns)
-        for field in self._input_columns:
-            data = self._fit_field_transformer(data, field, self.field_transformers[field])
+        for field_column, field_transformer in self.field_transformers.items():
+            data = self._fit_field_transformer(data, field_column, field_transformer)
 
         self._validate_all_fields_fitted()
         self._fitted = True
