@@ -338,7 +338,7 @@ class HyperTransformer:
     def _remove_column_in_multi_column_fields(self, column):
         """Remove a column that is part of a multi-column field.
 
-        Update the tuple to remove the column from it and modify the ``multi_column_fields``
+        Remove the column from the tuple and modify the ``multi_column_fields``
         as well as the ``field_transformers`` dicts accordingly.
 
         Args:
