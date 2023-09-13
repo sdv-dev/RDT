@@ -24,6 +24,11 @@ class Config(dict):
 
     def __repr__(self):
         """Pretty print the dictionary."""
+        transformers_repr = {}
+        for key, value in self['transformers'].items():
+            transformed_key = str(key)
+            transformers_repr[transformed_key] = repr(value)
+
         config = {
             'sdtypes': self['sdtypes'],
             'transformers': {str(k): repr(v) for k, v in self['transformers'].items()}
@@ -244,7 +249,9 @@ class HyperTransformer:
             )
 
     def _validate_update_columns(self, update_columns):
-        unknown_columns = self._subset(update_columns, self.field_sdtypes.keys(), not_in=True)
+        unknown_columns = self._subset(
+            flatten_column_list(update_columns), self.field_sdtypes.keys(), not_in=True
+        )
         if unknown_columns:
             raise InvalidConfigError(
                 f'Invalid column names: {unknown_columns}. These columns do not exist in the '
@@ -266,6 +273,7 @@ class HyperTransformer:
         self._validate_config(config)
         self.field_sdtypes.update(config['sdtypes'])
         self.field_transformers.update(config['transformers'])
+        self._multi_column_fields = self._create_multi_column_fields()
         self._modified_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
@@ -327,6 +335,28 @@ class HyperTransformer:
                 'parameters instead.', FutureWarning
             )
 
+    def _remove_column_in_multi_column_fields(self, column):
+        """Remove a column that is part of a multi-column field.
+
+        Remove the column from the tuple and modify the ``multi_column_fields``
+        as well as the ``field_transformers`` dicts accordingly.
+
+        Args:
+            column (str):
+                Column name to be updated.
+        """
+        old_tuple = self._multi_column_fields.pop(column)
+        new_tuple = tuple(item for item in old_tuple if item != column)
+
+        if len(new_tuple) == 1:
+            new_tuple, = new_tuple
+            self._multi_column_fields.pop(new_tuple, None)
+        else:
+            for col in new_tuple:
+                self._multi_column_fields[col] = new_tuple
+
+        self.field_transformers[new_tuple] = self.field_transformers.pop(old_tuple)
+
     def update_transformers_by_sdtype(
             self, sdtype, transformer=None, transformer_name=None, transformer_parameters=None):
         """Update the transformers for the specified ``sdtype``.
@@ -351,6 +381,7 @@ class HyperTransformer:
         self._warn_update_transformers_by_sdtype(transformer, transformer_name)
 
         transformer_instance = transformer
+
         if transformer_name is not None:
             if transformer_parameters is not None:
                 transformer_instance = \
@@ -362,6 +393,8 @@ class HyperTransformer:
         for field, field_sdtype in self.field_sdtypes.items():
             if field_sdtype == sdtype:
                 self.field_transformers[field] = deepcopy(transformer_instance)
+                if field in self._multi_column_fields:
+                    self._remove_column_in_multi_column_fields(field)
 
         self._modified_config = True
 
@@ -421,13 +454,20 @@ class HyperTransformer:
         self._validate_transformers(column_name_to_transformer)
 
         for column_name, transformer in column_name_to_transformer.items():
-            if transformer is not None:
-                current_sdtype = self.field_sdtypes.get(column_name)
-                if current_sdtype and current_sdtype not in transformer.get_supported_sdtypes():
-                    raise InvalidConfigError(
-                        f"Column '{column_name}' is a {current_sdtype} column, which is "
-                        f"incompatible with the '{transformer.get_name()}' transformer."
-                    )
+            columns = column_name if isinstance(column_name, tuple) else (column_name,)
+            for column in columns:
+                if transformer is not None:
+                    col_sdtype = self.field_sdtypes.get(column)
+                    if col_sdtype and col_sdtype not in transformer.get_supported_sdtypes():
+                        raise InvalidConfigError(
+                            f"Column '{column}' is a {col_sdtype} column, which is "
+                            f"incompatible with the '{transformer.get_name()}' transformer."
+                        )
+
+                if len(columns) > 1 and column in self.field_transformers:
+                    del self.field_transformers[column]
+                elif column in self._multi_column_fields:
+                    self._remove_column_in_multi_column_fields(column)
 
             self.field_transformers[column_name] = transformer
 
@@ -579,16 +619,13 @@ class HyperTransformer:
             self._transformers_sequence.append(transformer)
             data = transformer.transform(data)
 
-            output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()
-            for output_name in output_columns:
-                output_field = self._multi_column_fields.get(output_name, output_name)
-                next_transformer = next_transformers[output_field]
+            for column_name, next_transformer in next_transformers.items():
 
                 # If the column is part of a multi-column field, and at least one column
                 # isn't present in the data, then it should not fit the next transformer
-                if self._field_in_data(output_field, data):
-                    data = self._fit_field_transformer(data, output_field, next_transformer)
+                if self._field_in_data(column_name, data):
+                    data = self._fit_field_transformer(data, column_name, next_transformer)
 
         return data
 

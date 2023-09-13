@@ -12,7 +12,7 @@ from rdt.errors import (
     TransformerProcessingError)
 from rdt.transformers import (
     AnonymizedFaker, BaseMultiColumnTransformer, BinaryEncoder, FloatFormatter, FrequencyEncoder,
-    LabelEncoder, RegexGenerator, UnixTimestampEncoder)
+    LabelEncoder, RegexGenerator, UniformEncoder, UnixTimestampEncoder)
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.numerical import ClusterBasedNormalizer
 
@@ -2236,6 +2236,107 @@ class TestHyperTransformer(TestCase):
         assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
         assert ht.field_transformers['categorical_column'].order_by == 'alphabetical'
 
+    def test_create_multi_column_fields(self):
+        """Test ``_create_multi_column_fields``."""
+        # Setup
+        ht = HyperTransformer()
+
+        ht.field_transformers = {
+            ('column1', 'column2'): 'transformer1',
+            ('column3', 'column4'): 'transformer2',
+        }
+
+        # Run
+        self._multi_column_fields = ht._create_multi_column_fields()
+
+        # Assert
+        expected_mapping = {
+            'column1': ('column1', 'column2'),
+            'column2': ('column1', 'column2'),
+            'column3': ('column3', 'column4'),
+            'column4': ('column3', 'column4'),
+        }
+
+        assert self._multi_column_fields == expected_mapping
+
+    def test_remove_column_in_multi_column_fields(self):
+        """Test ``_remove_column_in_multi_column_fields``."""
+        # Setup
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            ('column1', 'column2', 'column3'): 'transformer',
+        }
+        ht._multi_column_fields = {
+            'column1': ('column1', 'column2', 'column3'),
+            'column2': ('column1', 'column2', 'column3'),
+            'column3': ('column1', 'column2', 'column3'),
+        }
+        # Run
+        ht._remove_column_in_multi_column_fields('column1')
+
+        # Assert
+        expected_column_in_tuple = {
+            'column2': ('column2', 'column3'),
+            'column3': ('column2', 'column3'),
+        }
+        expected_field_transformers = {('column2', 'column3'): 'transformer'}
+        assert ht.field_transformers == expected_field_transformers
+        assert ht._multi_column_fields == expected_column_in_tuple
+
+    def test_remove_column_in_multi_column_fields_single_column_left(self):
+        """Test ``_remove_column_in_multi_column_fields`` with one column left in the tuple."""
+        # Setup
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            ('column1', 'column2'): 'transformer',
+        }
+        ht._multi_column_fields = {
+            'column1': ('column1', 'column2'),
+            'column2': ('column1', 'column2'),
+        }
+        # Run
+        ht._remove_column_in_multi_column_fields('column1')
+
+        # Assert
+        expected_column_in_tuple = {}
+        expected_field_transformers = {'column2': 'transformer'}
+        assert ht.field_transformers == expected_field_transformers
+        assert ht._multi_column_fields == expected_column_in_tuple
+
+    def test_update_transformers_by_sdtype_with_multi_column_transformer(self):
+        """Test ``update_transformers_by_sdtype`` with columns use with a multi-column transformer.
+        """
+        # Setup
+        ht = HyperTransformer()
+        ht.field_transformers = {
+            'A': LabelEncoder(),
+            'B': UniformEncoder(),
+            "('C', 'D')": None,
+        }
+        ht.field_sdtypes = {
+            'A': 'categorical',
+            'B': 'boolean',
+            'C': 'categorical',
+            'D': 'numerical'
+        }
+
+        ht._multi_column_fields = {
+            'C': ('C', 'D'),
+            'D': ('C', 'D')
+        }
+        mock__remove_column_in_multi_column_fields = Mock()
+        ht._remove_column_in_multi_column_fields = mock__remove_column_in_multi_column_fields
+
+        # Run
+        ht.update_transformers_by_sdtype(
+            'categorical',
+            transformer_name='LabelEncoder',
+        )
+
+        # Assert
+        assert len(ht.field_transformers) == 4
+        assert mock__remove_column_in_multi_column_fields.call_count == 1
+
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_fitted(self, mock_warnings):
         """Test update transformers.
@@ -2281,6 +2382,83 @@ class TestHyperTransformer(TestCase):
         mock_warnings.warn.assert_called_once_with(expected_message)
         assert instance.field_transformers['my_column'] == transformer
         instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
+
+    def test_update_transformers_multi_column(self):
+        """Test ``update_transformers`` with a multi-column transformer."""
+        # Setup
+        ht = HyperTransformer()
+        ht.field_sdtypes = {
+            'A': 'categorical',
+            'B': 'boolean',
+            'C': 'numerical',
+        }
+        ht.field_transformers = {
+            'A': LabelEncoder(),
+            'B': UniformEncoder(),
+            'C': FloatFormatter(),
+        }
+
+        column_name_to_transformer = {
+            ('A', 'B'): None,
+            'C': None,
+        }
+        # Run
+        ht.update_transformers(column_name_to_transformer)
+
+        # Assert
+        expected_field_transformers = {
+            ('A', 'B'): None,
+            'C': None,
+        }
+        assert ht.field_transformers == expected_field_transformers
+
+    def test_update_transformers_changing_multi_column_transformer(self):
+        """Test ``update_transformers`` when changing a multi column transformer."""
+        # Setup
+        ht = HyperTransformer()
+        ht._multi_column_fields = {
+            'A': ('A', 'B'),
+            'B': ('A', 'B'),
+        }
+        ht.field_sdtypes = {
+            'A': 'categorical',
+            'B': 'boolean',
+            'C': 'numerical',
+        }
+        ht.field_transformers = {
+            ('A', 'B'): None,
+            'C': FloatFormatter(),
+        }
+
+        column_name_to_transformer = {
+            'A': UniformEncoder(),
+        }
+
+        def side_effect(column):
+            ht._multi_column_fields = {
+                'B': ('B',)
+            }
+            ht.field_transformers = {
+                'C': FloatFormatter(),
+                'B': None,
+                'A': UniformEncoder()
+            }
+
+        mock_remove_column_in_multi_column_fields = Mock()
+        mock_remove_column_in_multi_column_fields.side_effect = side_effect
+        ht._remove_column_in_multi_column_fields = mock_remove_column_in_multi_column_fields
+
+        # Run
+        ht.update_transformers(column_name_to_transformer)
+
+        # Assert
+        expected_field_transformers = {
+            'C': FloatFormatter(),
+            'B': None,
+            'A': UniformEncoder()
+        }
+        mock_remove_column_in_multi_column_fields.assert_called_once_with('A')
+        assert str(ht.field_transformers) == str(expected_field_transformers)
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_not_fitted(self, mock_warnings):
