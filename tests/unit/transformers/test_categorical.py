@@ -514,7 +514,7 @@ class TestFrequencyEncoder:
         # Run
         warn_message = (
             "The 'FrequencyEncoder' transformer will no longer be supported in future "
-            "versions of the RDT library. Please use the 'LabelEncoder' transformer instead."
+            "versions of the RDT library. Please use the 'UniformEncoder' transformer instead."
         )
         with pytest.warns(FutureWarning, match=warn_message):
             transformer = FrequencyEncoder(add_noise='add_noise_value')

@@ -321,7 +321,7 @@ class FrequencyEncoder(BaseTransformer):
     def __init__(self, add_noise=False):
         warnings.warn(
             "The 'FrequencyEncoder' transformer will no longer be supported in future versions "
-            "of the RDT library. Please use the 'LabelEncoder' transformer instead.",
+            "of the RDT library. Please use the 'UniformEncoder' transformer instead.",
             FutureWarning
         )
         super().__init__()
