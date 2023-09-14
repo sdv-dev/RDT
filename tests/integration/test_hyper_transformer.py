@@ -1703,3 +1703,51 @@ class TestHyperTransformer:
         })
 
         assert repr(new_config) == repr(expected_config)
+
+    def test_update_sdtype(self):
+        """Test ``update_sdtypes`` with multi column transformer."""
+        # Setup
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                ('B', 'C', 'D'): DummyMultiColumnTransformerNumerical(),
+                'E': UniformEncoder()
+            }
+        }
+
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        ht.update_sdtypes({
+            'C': 'numerical',
+            'A': 'numerical'
+        })
+        new_config = ht.get_config()
+
+        # Assert
+        expected_config = Config({
+            'sdtypes': {
+                'A': 'numerical',
+                'B': 'categorical',
+                'C': 'numerical',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': FloatFormatter(),
+                'E': UniformEncoder(),
+                "('B', 'D')": DummyMultiColumnTransformerNumerical(),
+                'C': FloatFormatter()
+            }
+        })
+
+        assert repr(new_config) == repr(expected_config)
