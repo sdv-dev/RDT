@@ -485,7 +485,7 @@ class HyperTransformer:
         """
         unknown_columns = []
         for column_name in column_names:
-            if column_name not in self.field_transformers:
+            if column_name not in self.field_sdtypes:
                 unknown_columns.append(column_name)
 
         if unknown_columns:
@@ -495,6 +495,9 @@ class HyperTransformer:
             )
 
         for column_name in column_names:
+            if column_name in self._multi_column_fields:
+                self._remove_column_in_multi_column_fields(column_name)
+
             self.field_transformers[column_name] = None
 
         if self._fitted:
@@ -518,6 +521,9 @@ class HyperTransformer:
 
         for column_name, column_sdtype in self.field_sdtypes.items():
             if column_sdtype == sdtype:
+                if column_name in self._multi_column_fields:
+                    self._remove_column_in_multi_column_fields(column_name)
+
                 self.field_transformers[column_name] = None
 
         if self._fitted:
