@@ -319,6 +319,11 @@ class FrequencyEncoder(BaseTransformer):
         self.__dict__ = state
 
     def __init__(self, add_noise=False):
+        warnings.warn(
+            "The 'FrequencyEncoder' transformer will no longer be supported in future versions "
+            "of the RDT library. Please use the 'LabelEncoder' transformer instead.",
+            FutureWarning
+        )
         super().__init__()
         self.add_noise = add_noise
 
