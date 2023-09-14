@@ -1614,3 +1614,92 @@ class TestHyperTransformer:
         })
 
         assert repr(new_config) == repr(expected_config)
+
+    def test_remove_transformer(self):
+        """Test ``remove_transformer`` with multi column transformer."""
+        # Setup
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                ('B', 'C', 'D'): DummyMultiColumnTransformerNumerical(),
+                'E': UniformEncoder()
+            }
+        }
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        ht.remove_transformers(column_names=['B'])
+        new_config = ht.get_config()
+
+        # Assert
+        expected_config = Config({
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                'E': UniformEncoder(),
+                "('C', 'D')": DummyMultiColumnTransformerNumerical(),
+                'B': None
+            }
+        })
+
+        assert repr(new_config) == repr(expected_config)
+
+    def test_remove_transformer_by_sdtype(self):
+        """Test ``remove_transformer_by_sdtype`` with multi column transformer."""
+        # Setup
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                ('B', 'C', 'D'): DummyMultiColumnTransformerNumerical(),
+                'E': UniformEncoder()
+            }
+        }
+
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        ht.remove_transformers_by_sdtype(sdtype='boolean')
+        new_config = ht.get_config()
+
+        # Assert
+        expected_config = Config({
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                'E': UniformEncoder(),
+                "('B', 'D')": DummyMultiColumnTransformerNumerical(),
+                'C': None
+            }
+        })
+
+        assert repr(new_config) == repr(expected_config)
