@@ -512,7 +512,12 @@ class TestFrequencyEncoder:
     def test___init__(self):
         """Passed arguments must be stored as attributes."""
         # Run
-        transformer = FrequencyEncoder(add_noise='add_noise_value')
+        warn_message = (
+            "The 'FrequencyEncoder' transformer will no longer be supported in future "
+            "versions of the RDT library. Please use the 'LabelEncoder' transformer instead."
+        )
+        with pytest.warns(FutureWarning, match=warn_message):
+            transformer = FrequencyEncoder(add_noise='add_noise_value')
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
@@ -948,7 +953,6 @@ class TestFrequencyEncoder:
         # Asserts
         expected = np.array([0.875, 0.625, 0.375, 0.125])
         assert (transformed == expected).all()
-
 
     @patch('psutil.virtual_memory')
     def test__reverse_transform_by_category_called(self, psutil_mock):
