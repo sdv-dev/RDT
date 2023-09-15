@@ -954,16 +954,14 @@ class TestFrequencyEncoder:
         expected = np.array([0.875, 0.625, 0.375, 0.125])
         assert (transformed == expected).all()
 
-    @patch('psutil.virtual_memory')
-    def test__reverse_transform_by_category_called(self, psutil_mock):
+    def test__reverse_transform_by_category_called(self):
         """Test that the `_reverse_transform_by_category` method is called.
 
-        When there is not enough virtual memory and the number of rows is greater than the
-        number of categories, expect that the `_reverse_transform_by_category` method is called.
+        When the number of rows is greater than the number of categories, expect
+        that the `_reverse_transform_by_category` method is called.
 
         Setup:
-            The categorical transformer is instantiated with 4 categories. Also patch the
-            `psutil.virtual_memory` function to return an `available_memory` of 1.
+            The categorical transformer is instantiated with 4 categories.
         Input:
             - numerical data with 5 rows
         Output:
@@ -977,10 +975,6 @@ class TestFrequencyEncoder:
         categorical_transformer_mock = Mock()
         categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
 
-        virtual_memory = Mock()
-        virtual_memory.available = 1
-        psutil_mock.return_value = virtual_memory
-
         # Run
         reverse = FrequencyEncoder._reverse_transform(
             categorical_transformer_mock, transform_data)
@@ -990,16 +984,14 @@ class TestFrequencyEncoder:
         np.testing.assert_array_equal(reverse_arg, transform_data.clip(0, 1))
         assert reverse == categorical_transformer_mock._reverse_transform_by_category.return_value
 
-    @patch('psutil.virtual_memory')
-    def test__reverse_transform_by_category(self, psutil_mock):
+    def test__reverse_transform_by_category(self):
         """Test the _reverse_transform_by_category method with numerical data.
 
         Expect that the transformed data is correctly reverse transformed.
 
         Setup:
             The categorical transformer is instantiated with 4 categories, and the means
-            and intervals are set for those categories. Also patch the `psutil.virtual_memory`
-            function to return an `available_memory` of 1.
+            and intervals are set for those categories.
         Input:
             - transformed data with 5 rows
         Ouptut:
@@ -1017,10 +1009,6 @@ class TestFrequencyEncoder:
             1: (0.75, 1.0, 0.875, 0.041666666666666664),
         }
         transformer.dtype = data.dtype
-
-        virtual_memory = Mock()
-        virtual_memory.available = 1
-        psutil_mock.return_value = virtual_memory
 
         reverse = transformer._reverse_transform_by_category(transformed)
 
@@ -1052,17 +1040,14 @@ class TestFrequencyEncoder:
         # Assert
         assert category == 'c'
 
-    @patch('psutil.virtual_memory')
-    def test__reverse_transform_by_row_called(self, psutil_mock):
+    def test__reverse_transform_by_row_called(self):
         """Test that the `_reverse_transform_by_row` method is called.
 
-        When there is not enough virtual memory and the number of rows is less than or equal
-        to the number of categories, expect that the `_reverse_transform_by_row` method
-        is called.
+        When the number of rows is less than or equal to the number of categories,
+        expect that the `_reverse_transform_by_row` method is called.
 
         Setup:
-            The categorical transformer is instantiated with 4 categories. Also patch the
-            `psutil.virtual_memory` function to return an `available_memory` of 1.
+            The categorical transformer is instantiated with 4 categories.
         Input:
             - numerical data with 4 rows
         Output:
@@ -1079,10 +1064,6 @@ class TestFrequencyEncoder:
             [0., 0.25, 0.5, 0.75], index=[4, 3, 2, 1], columns=['category'])
         categorical_transformer_mock._normalize.return_value = data
 
-        virtual_memory = Mock()
-        virtual_memory.available = 1
-        psutil_mock.return_value = virtual_memory
-
         # Run
         reverse = FrequencyEncoder._reverse_transform(categorical_transformer_mock, data)
 
@@ -1091,16 +1072,14 @@ class TestFrequencyEncoder:
         np.testing.assert_array_equal(reverse_arg, data.clip(0, 1))
         assert reverse == categorical_transformer_mock._reverse_transform_by_row.return_value
 
-    @patch('psutil.virtual_memory')
-    def test__reverse_transform_by_row(self, psutil_mock):
+    def test__reverse_transform_by_row(self):
         """Test the _reverse_transform_by_row method with numerical data.
 
         Expect that the transformed data is correctly reverse transformed.
 
         Setup:
             The categorical transformer is instantiated with 4 categories, and the means, starts,
-            and intervals are set for those categories. Also patch the `psutil.virtual_memory`
-            function to return an `available_memory` of 1.
+            and intervals are set for those categories.
         Input:
             - transformed data with 4 rows
         Ouptut:
@@ -1121,10 +1100,6 @@ class TestFrequencyEncoder:
             1: (0.75, 1.0, 0.875, 0.041666666666666664),
         }
         transformer.dtype = data.dtype
-
-        virtual_memory = Mock()
-        virtual_memory.available = 1
-        psutil_mock.return_value = virtual_memory
 
         # Run
         reverse = transformer._reverse_transform(transformed)
