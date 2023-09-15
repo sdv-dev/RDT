@@ -705,6 +705,44 @@ class TestFrequencyEncoder:
         # Asserts
         assert result == 0.2745
 
+    def test__reverse_transform_series(self):
+        """Test reverse_transform a pandas Series"""
+        # Setup
+        data = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'tar'])
+        rt_data = pd.Series([-0.6, 0.5, 0.6, 0.2, 0.1, -0.2])
+        transformer = FrequencyEncoder()
+
+        # Run
+        transformer._fit(data)
+        result = transformer._reverse_transform(rt_data)
+
+        # Asserts
+        expected_intervals = {
+            'foo': (
+                0,
+                0.5,
+                0.25,
+                0.5 / 6
+            ),
+            'bar': (
+                0.5,
+                0.8333333333333333,
+                0.6666666666666666,
+                0.05555555555555555
+            ),
+            'tar': (
+                0.8333333333333333,
+                0.9999999999999999,
+                0.9166666666666666,
+                0.027777777777777776
+            )
+        }
+
+        assert transformer.intervals == expected_intervals
+
+        expect = pd.Series(['foo', 'bar', 'bar', 'foo', 'foo', 'foo'])
+        pd.testing.assert_series_equal(result, expect)
+
     def test__transform_user_warning(self):
         """Test the ``_transform`` method generates the correct user warning.
 
