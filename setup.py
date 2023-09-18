@@ -24,7 +24,6 @@ install_requires = [
     "scipy>=1.9.2,<2;python_version>='3.10'",
     "scikit-learn>=0.24,<2;python_version<'3.10'",
     "scikit-learn>=1.1.3,<2;python_version>='3.10'",
-    'psutil>=5.7,<6',
     'Faker>=10',
 ]
 

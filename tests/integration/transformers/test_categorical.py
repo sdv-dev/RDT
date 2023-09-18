@@ -1,6 +1,5 @@
 import pickle
 from io import BytesIO
-from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -360,43 +359,12 @@ def test_frequency_encoder_mixed():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-@patch('psutil.virtual_memory')
-def test_frequency_encoder_mixed_low_virtual_memory(psutil_mock):
-    """Test the FrequencyEncoder on mixed type data with low virtual memory.
+def test_frequency_encoder_mixed_more_rows():
+    """Test the FrequencyEncoder on mixed type data.
 
     Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform on mixed type data, when there is low virtual memory. Expect that the
-    reverse transformed data is the same as the input.
-
-    Input:
-        - 4 rows of mixed data
-    Output:
-        - The reverse transformed data
-    """
-    # setup
-    data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
-    column = 'column_name'
-    transformer = FrequencyEncoder()
-
-    virtual_memory = Mock()
-    virtual_memory.available = 1
-    psutil_mock.return_value = virtual_memory
-
-    # run
-    transformer.fit(data, column)
-    reverse = transformer.reverse_transform(transformer.transform(data))
-
-    # assert
-    pd.testing.assert_frame_equal(data, reverse)
-
-
-@patch('psutil.virtual_memory')
-def test_frequency_encoder_mixed_more_rows(psutil_mock):
-    """Test the FrequencyEncoder on mixed type data with low virtual memory.
-
-    Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform on mixed type data, when there is low virtual memory and a larger
-    number of rows. Expect that the reverse transformed data is the same as the input.
+    transform on mixed type data, when there is a larger number of rows.
+    Expect that the reverse transformed data is the same as the input.
 
     Input:
         - 4 rows of mixed data
@@ -408,10 +376,6 @@ def test_frequency_encoder_mixed_more_rows(psutil_mock):
     column = 'column_name'
     transform_data = pd.DataFrame(['a', 1, None, 'a', True, 1], columns=['column_name'])
     transformer = FrequencyEncoder()
-
-    virtual_memory = Mock()
-    virtual_memory.available = 1
-    psutil_mock.return_value = virtual_memory
 
     # run
     transformer.fit(data, column)
