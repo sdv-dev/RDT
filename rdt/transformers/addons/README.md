@@ -8,14 +8,14 @@
 [![PyPi Shield](https://img.shields.io/pypi/v/RDT.svg)](https://pypi.python.org/pypi/RDT)
 [![Unit Tests](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml/badge.svg)](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
-[![Coverage Status](https://codecov.io/gh/sdv-dev/RDT/branch/master/graph/badge.svg)](https://codecov.io/gh/sdv-dev/RDT)
+[![Coverage Status](https://codecov.io/gh/sdv-dev/RDT/branch/main/graph/badge.svg)](https://codecov.io/gh/sdv-dev/RDT)
 [![Slack](https://img.shields.io/badge/Community-Slack-blue?style=plastic&logo=slack)](https://bit.ly/sdv-slack-invite)
 
 <div align="left">
 <br/>
 <p align="center">
 <a href="https://github.com/sdv-dev/RDT">
-<img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/master/docs/images/RDT-DataCebo.png"></img>
+<img align="center" width=40% src="https://github.com/sdv-dev/SDV/blob/stable/docs/images/RDT-DataCebo.png"></img>
 </a>
 </p>
 </div>
@@ -28,7 +28,7 @@ RDT (Reversible Data Transforms) is a Python library that transforms raw data in
 data, ready for data science. The transforms are reversible, allowing you to convert from numerical
 data back into your original format.
 
-<img align="center" src="https://github.com/sdv-dev/SDV/blob/master/docs/images/rdt_main_tranformation.png"></img>
+<img align="center" src="https://github.com/sdv-dev/SDV/blob/stable/docs/images/rdt_main_tranformation.png"></img>
 
 
 # Addons
