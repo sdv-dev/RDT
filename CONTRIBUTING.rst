@@ -476,5 +476,5 @@ Summary of Steps to Add a New Transformer
 .. _Github actions page: https://github.com/sdv-dev/RDT/actions
 .. _nullable boolean type: https://pandas.pydata.org/pandas-docs/version/1.0/user_guide/boolean.html
 .. _RDT core contributors: https://github.com/orgs/sdv-dev/teams/core-contributors
-.. _dataset generator folder: https://github.com/sdv-dev/RDT/tree/master/tests/datasets
+.. _dataset generator folder: https://github.com/sdv-dev/RDT/tree/main/tests/datasets
 .. _Development Guide: DEVELOPMENT.rst
