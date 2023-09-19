@@ -37,8 +37,8 @@ class TestFloatFormatter(TestCase):
         output = FloatFormatter._learn_rounding_digits(data)
 
         # Assert
-        logger_msg = "No rounding scheme detected for column 'col'. Data will not be rounded."
-        logger_mock.info.assert_called_once_with(logger_msg)
+        logger_msg = "No rounding scheme detected for column '%s'. Data will not be rounded."
+        logger_mock.info.assert_called_once_with(logger_msg, 'col')
         assert output is None
 
     def test__learn_rounding_digits_less_than_15_decimals(self):

@@ -112,7 +112,7 @@ class FloatFormatter(BaseTransformer):
                     return decimal
 
         # Can't round, not equal after MAX_DECIMALS digits of precision
-        LOGGER.info(f"No rounding scheme detected for column '{name}'. Data will not be rounded.")
+        LOGGER.info("No rounding scheme detected for column '%s'. Data will not be rounded.", name)
         return None
 
     def _raise_out_of_bounds_error(self, value, name, bound_type, min_bound, max_bound):
