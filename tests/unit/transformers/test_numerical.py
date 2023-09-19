@@ -24,7 +24,8 @@ class TestFloatFormatter(TestCase):
         assert nt.missing_value_replacement == 'mode'
         assert nt.missing_value_generation == 'random'
 
-    def test__learn_rounding_digits_more_than_15_decimals(self):
+    @patch('rdt.transformers.numerical.LOGGER')
+    def test__learn_rounding_digits_more_than_15_decimals(self, logger_mock):
         """Test the _learn_rounding_digits method with more than 15 decimals.
 
         If the data has more than 15 decimals, return None and raise warning.
@@ -32,11 +33,12 @@ class TestFloatFormatter(TestCase):
         # Setup
         data = pd.Series(np.random.random(size=10).round(20), name='col')
 
-        # Run and Assert
-        warn_msg = "No rounding scheme detected for column 'col'. Data will not be rounded."
-        with pytest.warns(UserWarning, match=warn_msg):
-            output = FloatFormatter._learn_rounding_digits(data)
+        # Run
+        output = FloatFormatter._learn_rounding_digits(data)
 
+        # Assert
+        logger_msg = "No rounding scheme detected for column 'col'. Data will not be rounded."
+        logger_mock.info.assert_called_once_with(logger_msg)
         assert output is None
 
     def test__learn_rounding_digits_less_than_15_decimals(self):

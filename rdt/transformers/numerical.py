@@ -1,5 +1,6 @@
 """Transformers for numerical data."""
 import copy
+import logging
 import sys
 import warnings
 
@@ -10,6 +11,8 @@ from sklearn.mixture import BayesianGaussianMixture
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
+
+LOGGER = logging.getLogger(__name__)
 
 EPSILON = np.finfo(np.float32).eps
 MAX_DECIMALS = sys.float_info.dig - 1
@@ -109,8 +112,7 @@ class FloatFormatter(BaseTransformer):
                     return decimal
 
         # Can't round, not equal after MAX_DECIMALS digits of precision
-        warnings.warn(
-            f"No rounding scheme detected for column '{name}'. Data will not be rounded.")
+        LOGGER.info(f"No rounding scheme detected for column '{name}'. Data will not be rounded.")
         return None
 
     def _raise_out_of_bounds_error(self, value, name, bound_type, min_bound, max_bound):
