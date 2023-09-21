@@ -1,8 +1,11 @@
+from unittest.mock import patch
+
 import pytest
 
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, RegexGenerator, UniformEncoder,
-    UnixTimestampEncoder, get_default_transformers, get_transformer_class, get_transformer_name)
+    AnonymizedFaker, BaseMultiColumnTransformer, BinaryEncoder, FloatFormatter, RegexGenerator,
+    UniformEncoder, UnixTimestampEncoder, get_default_transformers, get_multi_column_transformers,
+    get_transformer_class, get_transformer_name)
 from rdt.transformers.addons.identity.identity import IdentityTransformer
 
 
@@ -118,3 +121,17 @@ def test_get_default_transformers():
 
     for sdtype, transformer in expected_dict.items():
         assert isinstance(default_transformer_dict[sdtype], transformer)
+
+
+@patch('rdt.transformers.MULTI_COLUMN_TRANSFORMERS', {'transformer': BaseMultiColumnTransformer()})
+def test_get_multi_column_transformers():
+    """Test the ``get_multi_column_transformers`` method.
+
+    Check that the right dict of transformer is returned.
+    """
+    # Run
+    multi_column_transformer_dict = get_multi_column_transformers()
+
+    # Assert
+    assert list(multi_column_transformer_dict.keys()) == ['transformer']
+    assert isinstance(multi_column_transformer_dict['transformer'], BaseMultiColumnTransformer)
