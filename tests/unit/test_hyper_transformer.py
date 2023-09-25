@@ -1056,6 +1056,10 @@ class TestHyperTransformer(TestCase):
             'col2': 'categorical',
         }
         ht = HyperTransformer()
+        ht._multi_column_fields = {
+            'col1': ('col1', 'col2'),
+            'col2': ('col1', 'col2'),
+        }
         ht.field_transformers = field_transformers
         ht.field_sdtypes = field_sdtypes
         ht._get_columns_to_sdtypes = Mock(return_value=columns_to_sdtype)

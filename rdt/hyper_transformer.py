@@ -691,8 +691,19 @@ class HyperTransformer:
         self._validate_detect_config_called(data)
         self._unfit()
         self._input_columns = list(data.columns)
-        for field_column, field_transformer in self.field_transformers.items():
-            data = self._fit_field_transformer(data, field_column, field_transformer)
+        skipped_columns = []  # skip columns in multi column transformer already fitted
+        for column in self._input_columns:
+            if column in skipped_columns:
+                continue
+
+            if column in self._multi_column_fields:
+                field = self._multi_column_fields[column]
+                field_to_skip = [col for col in field if col != column]
+                skipped_columns.extend(field_to_skip)
+            else:
+                field = column
+
+            data = self._fit_field_transformer(data, field, self.field_transformers[field])
 
         self._validate_all_fields_fitted()
         self._fitted = True
