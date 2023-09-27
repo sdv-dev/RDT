@@ -100,8 +100,6 @@ DEFAULT_TRANSFORMERS = {
     'pii': AnonymizedFaker(),
 }
 
-MULTI_COLUMN_TRANSFORMERS = {}
-
 
 @lru_cache()
 def get_class_by_transformer_name():
@@ -181,9 +179,3 @@ def get_default_transformer(sdtype):
     """
     default_transformers = get_default_transformers()
     return default_transformers[sdtype]
-
-
-@lru_cache()
-def get_multi_column_transformers():
-    """Get all existing multi-column transformers."""
-    return deepcopy(MULTI_COLUMN_TRANSFORMERS)
