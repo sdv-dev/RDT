@@ -73,7 +73,7 @@ class NullTransformer():
         if self._missing_value_replacement is None:
             return None
 
-        if self._missing_value_replacement in {'mean', 'mode'} and pd.isna(data).all():
+        if self._missing_value_replacement in {'mean', 'mode', 'random'} and pd.isna(data).all():
             msg = (
                 f"'missing_value_replacement' cannot be set to '{self._missing_value_replacement}'"
                 ' when the provided data only contains NaNs. Using 0 instead.'
@@ -114,6 +114,10 @@ class NullTransformer():
             if self._missing_value_generation == 'random':
                 self._null_percentage = null_values.sum() / len(data)
 
+        if self._missing_value_replacement == 'random':
+            self._min_value = data.min()
+            self._max_value = data.max()
+
     def transform(self, data):
         """Replace null values with the indicated ``missing_value_replacement``.
 
@@ -127,7 +131,15 @@ class NullTransformer():
             numpy.ndarray
         """
         isna = data.isna()
-        if isna.any() and self._missing_value_replacement is not None:
+        if self._missing_value_replacement == 'random':
+            data_mask = list(np.random.uniform(
+                low=self._min_value,
+                high=self._max_value,
+                size=len(data)
+            ))
+            data = data.mask(data.isnull(), data_mask)
+
+        elif isna.any() and self._missing_value_replacement is not None:
             data = data.fillna(self._missing_value_replacement)
 
         if self._missing_value_generation == 'from_column':
