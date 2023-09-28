@@ -44,6 +44,8 @@ class NullTransformer():
             )
 
         self._missing_value_generation = missing_value_generation
+        self._min_value = None
+        self._max_value = None
 
     def models_missing_values(self):
         """Indicate whether this transformer creates a null column on transform.
@@ -137,7 +139,7 @@ class NullTransformer():
                 high=self._max_value,
                 size=len(data)
             ))
-            data = data.mask(data.isnull(), data_mask)
+            data = data.mask(data.isna(), data_mask)
 
         elif isna.any() and self._missing_value_replacement is not None:
             data = data.fillna(self._missing_value_replacement)

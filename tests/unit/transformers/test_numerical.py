@@ -781,7 +781,7 @@ class TestGaussianNormalizer:
             enforce_min_max_values=False
         )
 
-        assert ct.missing_value_replacement == 'mean'
+        assert ct.missing_value_replacement == 'random'
         assert ct.missing_value_generation == 'random'
         assert ct.learn_rounding_scheme is False
         assert ct.enforce_min_max_values is False
