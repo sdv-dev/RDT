@@ -960,6 +960,7 @@ class TestGaussianNormalizer:
         # Setup
         data = pd.Series([0.0, np.nan, 1.0])
         ct = GaussianNormalizer()
+        ct.missing_value_replacement = 'mean'
         ct._get_univariate = Mock()
 
         # Run
@@ -984,6 +985,7 @@ class TestGaussianNormalizer:
         # Setup
         data = pd.Series([0.0, np.nan, 1.0])
         ct = GaussianNormalizer(missing_value_generation='from_column')
+        ct.missing_value_replacement = 'mean'
         ct._get_univariate = Mock()
 
         # Run
