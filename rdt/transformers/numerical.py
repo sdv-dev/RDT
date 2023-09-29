@@ -300,6 +300,7 @@ class GaussianNormalizer(FloatFormatter):
         super().__init__(
             model_missing_values=model_missing_values,
             missing_value_generation=missing_value_generation,
+            missing_value_replacement='mean',  # Using this as default instead of random
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values
         )

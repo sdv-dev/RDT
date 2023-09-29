@@ -781,7 +781,7 @@ class TestGaussianNormalizer:
             enforce_min_max_values=False
         )
 
-        assert ct.missing_value_replacement == 'random'
+        assert ct.missing_value_replacement == 'mean'
         assert ct.missing_value_generation == 'random'
         assert ct.learn_rounding_scheme is False
         assert ct.enforce_min_max_values is False
@@ -960,7 +960,6 @@ class TestGaussianNormalizer:
         # Setup
         data = pd.Series([0.0, np.nan, 1.0])
         ct = GaussianNormalizer()
-        ct.missing_value_replacement = 'mean'
         ct._get_univariate = Mock()
 
         # Run
@@ -985,7 +984,6 @@ class TestGaussianNormalizer:
         # Setup
         data = pd.Series([0.0, np.nan, 1.0])
         ct = GaussianNormalizer(missing_value_generation='from_column')
-        ct.missing_value_replacement = 'mean'
         ct._get_univariate = Mock()
 
         # Run
