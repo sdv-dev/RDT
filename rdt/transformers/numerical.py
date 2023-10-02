@@ -440,6 +440,7 @@ class ClusterBasedNormalizer(FloatFormatter):
         super().__init__(
             model_missing_values=model_missing_values,
             missing_value_generation=missing_value_generation,
+            missing_value_replacement='mean',
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values
         )
