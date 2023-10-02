@@ -396,6 +396,7 @@ class HyperTransformer:
                 if field in self._multi_column_fields:
                     self._remove_column_in_multi_column_fields(field)
 
+        self._multi_column_fields = self._create_multi_column_fields()
         self._modified_config = True
 
     def update_sdtypes(self, column_name_to_sdtype):
@@ -443,6 +444,7 @@ class HyperTransformer:
             "Use 'get_config()' to verify the transformers."
         )
 
+        self._multi_column_fields = self._create_multi_column_fields()
         self._modified_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
@@ -482,6 +484,7 @@ class HyperTransformer:
 
             self.field_transformers[column_name] = transformer
 
+        self._multi_column_fields = self._create_multi_column_fields()
         self._modified_config = True
 
     def remove_transformers(self, column_names):
