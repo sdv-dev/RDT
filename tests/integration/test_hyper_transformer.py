@@ -158,16 +158,6 @@ class TestHyperTransformer:
         reverse_transformed = ht.reverse_transform(transformed)
 
         # Assert
-        expected_datetimes = [
-            1.263069e+18,
-            1.264982e+18,
-            1.262304e+18,
-            1.262304e+18,
-            1.262304e+18,
-            1.264982e+18,
-            1.262304e+18,
-            1.262304e+18
-        ]
         expected_transformed = pd.DataFrame({
             'integer': [1.0, 2.0, 1.0, 3.0, 1.0, 4.0, 2.0, 3.0],
             'float': [
@@ -219,7 +209,8 @@ class TestHyperTransformer:
                 0.910847,
                 0.159229,
                 0.387533
-            ]}, index=TEST_DATA_INDEX)
+            ]
+        }, index=TEST_DATA_INDEX)
         pd.testing.assert_frame_equal(transformed, expected_transformed)
 
         reversed_datetimes = pd.to_datetime([
