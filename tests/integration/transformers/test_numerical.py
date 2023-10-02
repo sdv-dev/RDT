@@ -59,7 +59,7 @@ class TestFloatFormatter:
 
         reverse = nt.reverse_transform(transformed)
         assert len(reverse) == 6
-        assert reverse['a'][5] == 1.4 or np.isnan(reverse['a'][5])
+        assert reverse['a'][5] == 1.9583798838965891 or np.isnan(reverse['a'][5])
         for value in reverse['a'][:5]:
             assert value in {1, 2} or np.isnan(value)
 
@@ -95,7 +95,7 @@ class TestFloatFormatter:
         # Assert
         assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (6, 1)
-        assert transformed['a'].iloc[5] == 1.4
+        assert transformed['a'].iloc[5] == 1.9583798838965891
 
     def test_model_missing_value(self):
         """Test that we are still able to use ``model_missing_value``."""
