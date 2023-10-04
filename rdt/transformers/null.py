@@ -18,7 +18,8 @@ class NullTransformer():
             Indicate what to do with the null values. If an integer, float or string is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are given,
             replace them with the corresponding aggregation (``'mean'`` only works for numerical
-            values). If ``None`` is given, do not replace them. Defaults to ``None``.
+            values) if ``'random'`` replace each null value with a random value in the data range.
+            If ``None`` is given, do not replace them. Defaults to ``None``.
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
 

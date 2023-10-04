@@ -41,7 +41,7 @@ class FloatFormatter(BaseTransformer):
             Indicate what to replace the null values with. If an integer or float is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation and if ``'random'``
-            replace each null value with a random value from the data. Defaults to ``random``.
+            replace each null value with a random value in the data range. Defaults to ``random``.
          model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
             not. The column will be created only if there are null values. If ``True``, create
@@ -297,10 +297,14 @@ class GaussianNormalizer(FloatFormatter):
     def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
                  enforce_min_max_values=False, distribution='truncated_gaussian',
                  missing_value_generation='random'):
+
+        # Using missing_value_replacement='mean' as the default instead of random
+        # as this may lead to different outcomes in certain synthesizers
+        # affecting the synthesizers directly and this is out of scope for now.
         super().__init__(
             model_missing_values=model_missing_values,
             missing_value_generation=missing_value_generation,
-            missing_value_replacement='mean',  # Using this as default instead of random
+            missing_value_replacement='mean',
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values
         )
@@ -437,6 +441,10 @@ class ClusterBasedNormalizer(FloatFormatter):
     def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
                  enforce_min_max_values=False, max_clusters=10, weight_threshold=0.005,
                  missing_value_generation='random'):
+
+        # Using missing_value_replacement='mean' as the default instead of random
+        # as this may lead to different outcomes in certain synthesizers
+        # affecting the synthesizers directly and this is out of scope for now.
         super().__init__(
             model_missing_values=model_missing_values,
             missing_value_generation=missing_value_generation,
