@@ -1475,7 +1475,7 @@ class TestHyperTransformer:
         expected_transformed_data = pd.DataFrame({
             'A': [1.0, 2.0, 3.0],
             'B': [4.0, 5.0, 6.0],
-            'C': [0.5892351646057272, 0.8615278122985615, 0.36493646501970534]
+            'C': [0.10333535312718026, 0.6697388922326716, 0.18775548909503287]
         })
 
         pd.testing.assert_frame_equal(transformed_data, expected_transformed_data)
@@ -1519,7 +1519,13 @@ class TestHyperTransformer:
             }
         })
 
+        expected_multi_columns = {
+            'A': ('A', 'B'),
+            'B': ('A', 'B')
+        }
+
         assert repr(new_config) == repr(expected_config)
+        assert ht._multi_column_fields == expected_multi_columns
 
     def test_update_transformers_multi_to_single_column(self):
         """Test ``update_transformers`` to go from multi to single column transformer."""
@@ -1568,7 +1574,12 @@ class TestHyperTransformer:
             }
         })
 
+        expected_multi_columns = {
+            'A': ('A', 'B'),
+            'B': ('A', 'B'),
+        }
         assert repr(new_config) == repr(expected_config)
+        assert ht._multi_column_fields == expected_multi_columns
 
     def test_update_transformers_by_sdtype_mutli_column(self):
         """Test ``update_transformers_by_sdtype`` with mutli column transformers."""
@@ -1612,8 +1623,13 @@ class TestHyperTransformer:
                 "('B', 'D')": DummyMultiColumnTransformerNumerical()
             }
         })
+        expected_multi_columns = {
+            'B': ('B', 'D'),
+            'D': ('B', 'D')
+        }
 
         assert repr(new_config) == repr(expected_config)
+        assert ht._multi_column_fields == expected_multi_columns
 
     def test_remove_transformer(self):
         """Test ``remove_transformer`` with multi column transformer."""
@@ -1656,8 +1672,13 @@ class TestHyperTransformer:
                 'B': None
             }
         })
+        exepected_multi_columns = {
+            'C': ('C', 'D'),
+            'D': ('C', 'D')
+        }
 
         assert repr(new_config) == repr(expected_config)
+        assert ht._multi_column_fields == exepected_multi_columns
 
     def test_remove_transformer_by_sdtype(self):
         """Test ``remove_transformer_by_sdtype`` with multi column transformer."""
@@ -1749,5 +1770,10 @@ class TestHyperTransformer:
                 'C': FloatFormatter()
             }
         })
+        expected_multi_columns = {
+            'B': ('B', 'D'),
+            'D': ('B', 'D')
+        }
 
         assert repr(new_config) == repr(expected_config)
+        assert ht._multi_column_fields == expected_multi_columns
