@@ -396,6 +396,7 @@ class HyperTransformer:
                 if field in self._multi_column_fields:
                     self._remove_column_in_multi_column_fields(field)
 
+        self._multi_column_fields = self._create_multi_column_fields()
         self._modified_config = True
 
     def update_sdtypes(self, column_name_to_sdtype):
@@ -443,6 +444,7 @@ class HyperTransformer:
             "Use 'get_config()' to verify the transformers."
         )
 
+        self._multi_column_fields = self._create_multi_column_fields()
         self._modified_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
@@ -482,6 +484,7 @@ class HyperTransformer:
 
             self.field_transformers[column_name] = transformer
 
+        self._multi_column_fields = self._create_multi_column_fields()
         self._modified_config = True
 
     def remove_transformers(self, column_names):
@@ -697,8 +700,19 @@ class HyperTransformer:
         self._validate_detect_config_called(data)
         self._unfit()
         self._input_columns = list(data.columns)
-        for field_column, field_transformer in self.field_transformers.items():
-            data = self._fit_field_transformer(data, field_column, field_transformer)
+        skipped_columns = []  # skip columns in multi column transformer already fitted
+        for column in self._input_columns:
+            if column in skipped_columns:
+                continue
+
+            if column in self._multi_column_fields:
+                field = self._multi_column_fields[column]
+                field_to_skip = [col for col in field if col != column]
+                skipped_columns.extend(field_to_skip)
+            else:
+                field = column
+
+            data = self._fit_field_transformer(data, field, self.field_transformers[field])
 
         self._validate_all_fields_fitted()
         self._fitted = True
