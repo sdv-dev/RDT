@@ -1056,6 +1056,10 @@ class TestHyperTransformer(TestCase):
             'col2': 'categorical',
         }
         ht = HyperTransformer()
+        ht._multi_column_fields = {
+            'col1': ('col1', 'col2'),
+            'col2': ('col1', 'col2'),
+        }
         ht.field_transformers = field_transformers
         ht.field_sdtypes = field_sdtypes
         ht._get_columns_to_sdtypes = Mock(return_value=columns_to_sdtype)
@@ -2326,6 +2330,7 @@ class TestHyperTransformer(TestCase):
         }
         mock__remove_column_in_multi_column_fields = Mock()
         ht._remove_column_in_multi_column_fields = mock__remove_column_in_multi_column_fields
+        ht._create_multi_column_fields = Mock()
 
         # Run
         ht.update_transformers_by_sdtype(
@@ -2336,6 +2341,7 @@ class TestHyperTransformer(TestCase):
         # Assert
         assert len(ht.field_transformers) == 4
         assert mock__remove_column_in_multi_column_fields.call_count == 1
+        ht._create_multi_column_fields.assert_called_once()
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_fitted(self, mock_warnings):
@@ -2402,6 +2408,8 @@ class TestHyperTransformer(TestCase):
             ('A', 'B'): None,
             'C': None,
         }
+        ht._create_multi_column_fields = Mock()
+
         # Run
         ht.update_transformers(column_name_to_transformer)
 
@@ -2410,7 +2418,9 @@ class TestHyperTransformer(TestCase):
             ('A', 'B'): None,
             'C': None,
         }
+
         assert ht.field_transformers == expected_field_transformers
+        ht._create_multi_column_fields.assert_called_once()
 
     def test_update_transformers_changing_multi_column_transformer(self):
         """Test ``update_transformers`` when changing a multi column transformer."""
@@ -2976,6 +2986,7 @@ class TestHyperTransformer(TestCase):
             'column2': ('column2', 'column3'),
             'column3': ('column2', 'column3')
         }
+        ht._create_multi_column_fields = Mock()
 
         # Run
         ht.update_sdtypes(column_name_to_sdtype={
@@ -2998,6 +3009,7 @@ class TestHyperTransformer(TestCase):
         }
         assert ht.field_sdtypes == expected_field_sdtypes
         assert str(ht.field_transformers) == str(expected_field_transformers)
+        ht._create_multi_column_fields.assert_called_once()
 
     def test_update_sdtypes_multi_column_with_unsupported_sdtypes(self):
         """Test the ``update_sdtypes`` method.
