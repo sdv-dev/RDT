@@ -90,6 +90,10 @@ class NullTransformer():
         if self._missing_value_replacement == 'mode':
             return data.mode(dropna=True)[0]
 
+        if self._missing_value_replacement == 'random':
+            self._min_value = data.min()
+            self._max_value = data.max()
+
         return self._missing_value_replacement
 
     def fit(self, data):
@@ -116,10 +120,6 @@ class NullTransformer():
 
             if self._missing_value_generation == 'random':
                 self._null_percentage = null_values.sum() / len(data)
-
-        if self._missing_value_replacement == 'random':
-            self._min_value = data.min()
-            self._max_value = data.max()
 
     def transform(self, data):
         """Replace null values with the indicated ``missing_value_replacement``.

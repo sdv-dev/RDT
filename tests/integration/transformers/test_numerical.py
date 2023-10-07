@@ -115,6 +115,47 @@ class TestFloatFormatter:
         assert list(transformed.iloc[:, 1]) == [0, 0, 0, 0, 1, 0]
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
+    def test_missing_value_replacement_set_to_random_and_model_missing_values(self):
+        """Test that we are still able to use ``missing_value_replacement`` when is ``random``."""
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3, np.nan, np.nan, 4]})
+
+        # Run
+        ft = FloatFormatter('random', True)
+        ft.fit(data, 'a')
+        transformed = ft.transform(data)
+        reverse = ft.reverse_transform(transformed)
+
+        # Assert
+        expected_transformed = pd.DataFrame({
+            'a': [1., 2., 3., 2.617107, 1.614805, 4.],
+            'a.is_null': [0., 0., 0., 1., 1., 0.]
+        })
+        pd.testing.assert_frame_equal(transformed, expected_transformed)
+        pd.testing.assert_frame_equal(reverse, data)
+        np.testing.assert_array_almost_equal(reverse, data, decimal=2)
+
+    def test_missing_value_replacement_random_all_nans(self):
+        """Test ``FloatFormatter`` with all ``nans``.
+
+        Test that ``FloatFormatter`` works when the ``missing_value_replacement`` is set to
+        ``random`` and the data is all ``np.nan``.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [np.nan] * 10})
+        ft = FloatFormatter('random')
+
+        # Run
+        ft.fit(data, 'a')
+        transformed = ft.transform(data)
+        reverse_transformed = ft.reverse_transform(transformed)
+
+        # Assert
+        expected_transformed = pd.DataFrame({'a': [0.0] * 10})
+        expected_reverse_transformed = pd.DataFrame({'a': [np.nan] * 10})
+        pd.testing.assert_frame_equal(transformed, expected_transformed)
+        pd.testing.assert_frame_equal(reverse_transformed, expected_reverse_transformed)
+
 
 class TestGaussianNormalizer:
 
