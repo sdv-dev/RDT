@@ -90,10 +90,6 @@ class NullTransformer():
         if self._missing_value_replacement == 'mode':
             return data.mode(dropna=True)[0]
 
-        if self._missing_value_replacement == 'random':
-            self._min_value = data.min()
-            self._max_value = data.max()
-
         return self._missing_value_replacement
 
     def fit(self, data):
@@ -106,6 +102,10 @@ class NullTransformer():
                 Data to transform.
         """
         self._missing_value_replacement = self._get_missing_value_replacement(data)
+        if self._missing_value_replacement == 'random':
+            self._min_value = data.min()
+            self._max_value = data.max()
+
         if self._missing_value_generation is not None:
             null_values = data.isna().to_numpy()
             self.nulls = null_values.any()
