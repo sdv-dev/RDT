@@ -543,13 +543,17 @@ class HyperTransformer:
         else:
             transformer.fit(data, field)
             self._transformers_sequence.append(transformer)
-            data = transformer.transform(data)
 
             output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()
+
+            transformed = False
             for output_name in output_columns:
                 output_field = self._multi_column_fields.get(output_name, output_name)
                 next_transformer = next_transformers[output_field]
+                if next_transformer and not transformed:
+                    data = transformer.transform(data)
+                    transformed = True
 
                 # If the column is part of a multi-column field, and at least one column
                 # isn't present in the data, then it should not fit the next transformer
@@ -593,6 +597,12 @@ class HyperTransformer:
         if not self._fitted or self._modified_config:
             raise NotFittedError(self._NOT_FIT_MESSAGE)
 
+    def reset_randomization(self):
+        """Reset the generators for the anonymized columns."""
+        for transformer in self.field_transformers.values():
+            if transformer:
+                transformer.reset_randomization()
+
     def fit(self, data):
         """Fit the transformers to the data.
 
@@ -609,6 +619,12 @@ class HyperTransformer:
         self._validate_all_fields_fitted()
         self._fitted = True
         self._modified_config = False
+
+        # In some cases, the 'fit' method may invoke 'transformer.transform',
+        # Which can advance the random seed. As a result, it can lead to inconsistent
+        # Values for 'instance.transform' before and after calling 'reset_randomization'.
+        # To ensure consistency, we call 'reset_randomization' after fitting is done.
+        self.reset_randomization()
 
     def _transform(self, data, prevent_subset):
         self._validate_config_exists()
@@ -677,12 +693,6 @@ class HyperTransformer:
         """
         self.fit(data)
         return self.transform(data)
-
-    def reset_randomization(self):
-        """Reset the generators for the anonymized columns."""
-        for transformer in self.field_transformers.values():
-            if transformer:
-                transformer.reset_randomization()
 
     def create_anonymized_columns(self, num_rows, column_names):
         """Create the anonymized columns for this ``HyperTransformer``.

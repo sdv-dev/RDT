@@ -384,6 +384,29 @@ class TestHyperTransformer(TestCase):
         transformer2.fit.assert_called_once()
         assert ht._transformers_sequence == [transformer1, transformer2]
 
+    def test__fit_field_transformer_no_next_transformers(self):
+        """Test the ``_fit_field_transformer`` method.
+
+        Test the ``_fit_field_transformer`` method when the transformer has no next transformers
+        and doesn't apply a transformation on the data.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3]})
+        transformer1 = Mock()
+        transformer1.get_output_columns.return_value = ['a']
+        transformer1.get_next_transformers.return_value = {'a': None}
+        ht = HyperTransformer()
+
+        # Run
+        out = ht._fit_field_transformer(data, 'a', transformer1)
+
+        # Assert
+        expected = pd.DataFrame({'a': [1, 2, 3]})
+        pd.testing.assert_frame_equal(out, expected)
+        transformer1.fit.assert_called_once()
+        transformer1.transform.assert_not_called()
+        assert ht._transformers_sequence == [transformer1]
+
     def test__fit_field_transformer_transformer_is_none(self):
         """Test the ``_fit_field_transformer`` method.
 
