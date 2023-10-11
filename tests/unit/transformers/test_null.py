@@ -25,6 +25,8 @@ class TestNullTransformer:
         # Assert
         assert transformer._missing_value_replacement is None
         assert transformer._missing_value_generation == 'random'
+        assert transformer._min_value is None
+        assert transformer._max_value is None
 
     def test___init__not_default(self):
         """Test the initialization passing values different than defaults.
@@ -44,6 +46,8 @@ class TestNullTransformer:
         # Assert
         assert transformer._missing_value_replacement == 'a_missing_value_replacement'
         assert transformer._missing_value_generation is None
+        assert transformer._min_value is None
+        assert transformer._max_value is None
 
     def test___init__raises_error(self):
         """Test the initialization passing invalid values for ``missing_value_generation``."""
@@ -293,6 +297,22 @@ class TestNullTransformer:
         assert transformer._missing_value_generation is None
         assert transformer._missing_value_replacement is None
 
+    def test_fit_missing_value_replacement_is_random(self):
+        """Test fit when ``missing_value_replacement`` is random."""
+        # Setup
+        transformer = NullTransformer(missing_value_replacement='random')
+
+        # Run
+        data = pd.Series([1, 2, 3])
+        transformer.fit(data)
+
+        # Assert
+        assert not transformer.nulls
+        assert transformer._missing_value_generation == 'random'
+        assert transformer._missing_value_replacement == 'random'
+        assert transformer._min_value == 1
+        assert transformer._max_value == 3
+
     def test_fit_with_multiple_missing_value_generations(self):
         """Test fit when ``missing_value_generation`` is set to its three possibilities.
 
@@ -411,6 +431,27 @@ class TestNullTransformer:
 
         modified_input_data = pd.Series([1, 2, np.nan])
         pd.testing.assert_series_equal(modified_input_data, input_data)
+
+    @patch('rdt.transformers.null.np.random.uniform')
+    def test_transform__missing_value_replacement_random(self, mock_np_random_uniform):
+        """Test transform when ``_missing_value_replacement`` is set to ``random``."""
+        # Setup
+        transformer = NullTransformer(missing_value_replacement='random')
+        input_data = pd.Series([1, 2, np.nan])
+        transformer._min_value = 1
+        transformer._max_value = 2
+        mock_np_random_uniform.return_value = np.array([1, 1.25, 1.5])
+
+        # Run
+        output = transformer.transform(input_data)
+
+        # Assert
+        expected_output = np.array([1, 2, 1.5])
+        np.testing.assert_equal(expected_output, output)
+
+        modified_input_data = pd.Series([1, 2, np.nan])
+        pd.testing.assert_series_equal(modified_input_data, input_data)
+        mock_np_random_uniform.assert_called_once_with(low=1, high=2, size=3)
 
     def test_reverse_transform__missing_value_generation_from_column_with_nulls(self):
         """Test reverse_transform when ``missing_value_generation`` is ``from_column`` and nulls.

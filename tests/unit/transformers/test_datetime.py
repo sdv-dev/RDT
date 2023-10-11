@@ -260,7 +260,7 @@ class TestUnixTimestampEncoder:
         transformer._fit(data)
 
         # Assert
-        null_transformer_mock.assert_called_once_with('mean', 'random')
+        null_transformer_mock.assert_called_once_with('random', 'random')
         assert null_transformer_mock.return_value.fit.call_count == 1
         np.testing.assert_allclose(
             null_transformer_mock.return_value.fit.call_args_list[0][0][0],

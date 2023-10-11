@@ -19,8 +19,9 @@ class UnixTimestampEncoder(BaseTransformer):
     Args:
         missing_value_replacement (object):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
-            are given, replace them with the corresponding aggregation.
-            Defaults to ``mean``.
+            are given, replace them with the corresponding aggregation, if ``'random'``, use
+            random values from the dataset to fill the nan values.
+            Defaults to ``random``.
         model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
             not. The column will be created only if there are null values. If ``True``, create
@@ -43,10 +44,10 @@ class UnixTimestampEncoder(BaseTransformer):
     INPUT_SDTYPE = 'datetime'
     null_transformer = None
 
-    def __init__(self, missing_value_replacement='mean', model_missing_values=None,
+    def __init__(self, missing_value_replacement='random', model_missing_values=None,
                  datetime_format=None, missing_value_generation='random'):
         super().__init__()
-        self._set_missing_value_replacement('mean', missing_value_replacement)
+        self._set_missing_value_replacement('random', missing_value_replacement)
         self._set_missing_value_generation(missing_value_generation)
         if model_missing_values is not None:
             self._set_model_missing_values(model_missing_values)
@@ -187,8 +188,9 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
     Args:
         missing_value_replacement (object):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
-            are given, replace them with the corresponding aggregation.
-            Defaults to ``mean``.
+            are given, replace them with the corresponding aggregation, if ``'random'``, use
+            random values from the dataset to fill the nan values.
+            Defaults to ``random``.
         model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
             not. The column will be created only if there are null values. If ``True``, create
