@@ -191,7 +191,7 @@ class UniformEncoder(BaseTransformer):
             else:
                 labels.append(key)
 
-        result = pd.cut(data, bins=bins, labels=labels)
+        result = pd.cut(data, bins=bins, labels=labels, include_lowest=True)
         return result.replace(nan_name, np.nan).astype(self.dtype)
 
 
