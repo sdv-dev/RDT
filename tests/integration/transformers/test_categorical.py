@@ -47,7 +47,7 @@ class TestUniformEncoder:
     def test__reverse_transform(self):
         """Test the ``reverse_transform``."""
         # Setup
-        data = pd.DataFrame({'column_name': [1, 2, 3, 2, 2, 1, 3, 3, 2]})
+        data = pd.DataFrame({'column_name': [-1, 0, 1, 2, 3, 2, 2, 1, 3, 3, 2, -11, 0]})
         column = 'column_name'
 
         transformer = UniformEncoder()
