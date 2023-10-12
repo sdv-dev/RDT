@@ -210,6 +210,13 @@ class OrderedUniformEncoder(UniformEncoder):
 
     def __init__(self, order):
         self.order = fill_nan_with_none(pd.Series(order))
+        if not self.order.is_unique:
+            error_msg = (
+                "The OrderedUniformEncoder has duplicate categories in the 'order' parameter. "
+                'Please drop the duplicates to proceed.'
+            )
+            raise TransformerInputError(error_msg)
+
         super().__init__()
 
     def __repr__(self):
@@ -822,6 +829,13 @@ class OrderedLabelEncoder(LabelEncoder):
 
     def __init__(self, order, add_noise=False):
         self.order = pd.Series(order).fillna(np.nan)
+        if not self.order.is_unique:
+            err_msg = (
+                "The OrderedLabelEncoder has duplicate categories in the 'order' parameter. "
+                'Please drop the duplicates to proceed.'
+            )
+            raise TransformerInputError(err_msg)
+
         super().__init__(add_noise=add_noise)
 
     def __repr__(self):
