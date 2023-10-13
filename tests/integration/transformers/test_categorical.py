@@ -74,8 +74,7 @@ class TestUniformEncoder:
 
         # Asserts
         # Make sure there is no Nan values due to the negative number
-        for col in pd.isna(output).any():
-            assert (not col)
+        assert all(~pd.isna(output).any())
 
     def test__reverse_transform_nans(self):
         """Test ``reverse_transform`` for data with NaNs."""
