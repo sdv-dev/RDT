@@ -70,10 +70,11 @@ class TestUniformEncoder:
         transformer.fit(data, column)
         transformed = transformer.transform(data)
         transformed.loc[1, 'column_name'] = -0.1
+        transformed.loc[2, 'column_name'] = 100
         output = transformer.reverse_transform(transformed)
 
         # Asserts
-        # Make sure there is no Nan values due to the negative number
+        # Make sure there is no Nan values due to the negative number or large upper bound number
         assert all(~pd.isna(output).any())
 
     def test__reverse_transform_nans(self):
