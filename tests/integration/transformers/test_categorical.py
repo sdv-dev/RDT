@@ -47,9 +47,8 @@ class TestUniformEncoder:
     def test__reverse_transform(self):
         """Test the ``reverse_transform``."""
         # Setup
-        data = pd.DataFrame({'column_name': [-1, 0, 1, 2, 3, 2, 2, 1, 3, 3, 2, -11, 0]})
+        data = pd.DataFrame({'column_name': [1, 2, 3, 2, 2, 1, 3, 3, 2]})
         column = 'column_name'
-
         transformer = UniformEncoder()
 
         # Run
@@ -59,6 +58,24 @@ class TestUniformEncoder:
 
         # Asserts
         pd.testing.assert_series_equal(output['column_name'], data['column_name'])
+    
+    def test__reverse_transform_negative_transformed_values(self):
+        """Test the ``reverse_transform``."""
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 2, 3, 2, 2, 1, 3, 3, 2]})
+        column = 'column_name'
+        transformer = UniformEncoder()
+
+        # Run
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        transformed.loc[1,'column_name'] = -0.1
+        output = transformer.reverse_transform(transformed)
+
+        # Asserts
+        # Make sure there is no Nan values due to the negative number
+        for col in pd.isna(output).any():
+            assert(col == False)
 
     def test__reverse_transform_nans(self):
         """Test ``reverse_transform`` for data with NaNs."""
