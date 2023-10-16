@@ -344,6 +344,19 @@ class TestOrderedUniformEncoder:
         # Asserts
         pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
 
+    def test___init___duplicate_categories(self):
+        """Test the ``__init__`` method errors if duplicate categories provided.
+
+        Test initialization errors if duplicate categories are passed in the ``order`` parameter.
+        """
+        # Run / Assert
+        expected_msg = (
+            "The OrderedUniformEncoder has duplicate categories in the 'order' parameter. "
+            'Please drop the duplicates to proceed.'
+        )
+        with pytest.raises(TransformerInputError, match=expected_msg):
+            OrderedUniformEncoder(order=['a', 'b', 'c', 'c'])
+
     def test___repr___default(self):
         """Test that the ``__repr__`` method prints the custom order.
 
@@ -2191,6 +2204,19 @@ class TestOrderedLabelEncoder:
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
         pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
+
+    def test___init___duplicate_categories(self):
+        """The the ``__init__`` method with duplicate categories in the order parameter.
+
+        Transformer should error with ``TransformerInputError``.
+        """
+        # Run / Assert
+        expected_msg = (
+            "The OrderedLabelEncoder has duplicate categories in the 'order' parameter. "
+            'Please drop the duplicates to proceed.'
+        )
+        with pytest.raises(TransformerInputError, match=expected_msg):
+            OrderedLabelEncoder(order=['b', 'c', 'a', 'a'], add_noise='add_noise_value')
 
     def test___repr___default(self):
         """Test that the ``__repr__`` method prints the custom order.
