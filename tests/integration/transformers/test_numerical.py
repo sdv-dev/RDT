@@ -388,3 +388,22 @@ class TestClusterBasedNormalizer:
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
         np.random.set_state(random_state)
+
+    def test_out_of_bounds_reverse_transform(self):
+        """Test that the reverse transform works when the data is out of bounds GH#672."""
+        # Setup
+        data = pd.DataFrame({
+            'col': [round(i, 2) for i in np.random.uniform(0, 10, size=100)] + [None]
+        })
+        reverse_data = pd.DataFrame(data={
+            'col.normalized': np.random.uniform(-10, 10, size=100),
+            'col.component': np.random.choice([0.0, 1.0, 2.0, 10.0], size=100)
+        })
+        transformer = ClusterBasedNormalizer()
+
+        # Run
+        transformer.fit(data, 'col')
+        reverse = transformer.reverse_transform(reverse_data)
+
+        # Assert
+        assert isinstance(reverse, pd.DataFrame)
