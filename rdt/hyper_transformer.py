@@ -539,28 +539,22 @@ class HyperTransformer:
         if transformer is None:
             self._add_field_to_set(field, self._fitted_fields)
             self._output_columns.append(field)
+
         else:
             transformer.fit(data, field)
             self._transformers_sequence.append(transformer)
+            data = transformer.transform(data)
 
+            output_columns = transformer.get_output_columns()
             next_transformers = transformer.get_next_transformers()
-            for output_column_name, next_transformer in next_transformers.items():
-                output_column_name = self._multi_column_fields.get(
-                    output_column_name,
-                    output_column_name
-                )
-                if next_transformer is not None:
-                    data = transformer.transform(data)
+            for output_name in output_columns:
+                output_field = self._multi_column_fields.get(output_name, output_name)
+                next_transformer = next_transformers[output_field]
 
                 # If the column is part of a multi-column field, and at least one column
                 # isn't present in the data, then it should not fit the next transformer
-                if self._field_in_data(output_column_name, data) or next_transformer:
-                    data = self._fit_field_transformer(data, output_column_name, next_transformer)
-
-                # In case of a transformer produsing multiple outputs
-                elif not self._field_in_data(output_column_name, data):
-                    self._add_field_to_set(output_column_name, self._fitted_fields)
-                    self._output_columns.append(output_column_name)
+                if self._field_in_data(output_field, data):
+                    data = self._fit_field_transformer(data, output_field, next_transformer)
 
         return data
 
