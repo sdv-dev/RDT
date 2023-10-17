@@ -434,15 +434,16 @@ def test_one_hot_doesnt_warn():
 
     # Run
     ohe.fit(data, 'column_name')
-    with tempfile.NamedTemporaryFile() as tmp:
-        pickle.dump(ohe, tmp)
-        with open(tmp.name, 'rb') as f:
-            ht_loaded = pickle.load(f)
+    # Create a temporary file and dump the transformer
+    tmp = tempfile.NamedTemporaryFile()
+    pickle.dump(ohe, tmp)
+    tmp.seek(0)
+    ohe_loaded = pickle.load(tmp)
 
     # Assert
     with warnings.catch_warnings():
         warnings.simplefilter('error')
-        ht_loaded.transform(data)
+        ohe_loaded.transform(data)
 
 
 def test_label_numerical_2d_array():
