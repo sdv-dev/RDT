@@ -799,6 +799,18 @@ class TestGaussianNormalizer:
 
         assert ct._distribution is univariate
 
+    def test___init__deprecated_distributions_warning(self):
+        """Test it warns when using deprecated distributions."""
+        # Run and Assert
+        dists = zip(['gaussian', 'student_t', 'truncated_gaussian'], ['norm', 't', 'truncnorm'])
+        for deprecated, distribution in dists:
+            err_msg = re.escape(
+                f"Future versions of RDT will not support '{deprecated}' as an option. "
+                f"Please use '{distribution}' instead."
+            )
+            with pytest.warns(FutureWarning, match=err_msg):
+                GaussianNormalizer(distribution=deprecated)
+
     def test__get_distributions_copulas_not_installed(self):
         """Test the ``_get_distributions`` method when copulas is not installed.
 
@@ -843,7 +855,10 @@ class TestGaussianNormalizer:
             'student_t': univariate.StudentTUnivariate,
             'gaussian_kde': univariate.GaussianKDE,
             'truncated_gaussian': univariate.TruncatedGaussian,
-            'uniform': univariate.UniformUnivariate
+            'uniform': univariate.UniformUnivariate,
+            'truncnorm': univariate.TruncatedGaussian,
+            'norm': univariate.GaussianUnivariate,
+            't': univariate.StudentTUnivariate,
         }
         assert distributions == expected
 

@@ -251,13 +251,13 @@ class GaussianNormalizer(FloatFormatter):
             Copulas univariate distribution to use. Defaults to ``truncated_gaussian``.
             Options include:
 
-                * ``gaussian``: Use a Gaussian distribution.
+                * ``norm``: Use a Gaussian distribution.
                 * ``gamma``: Use a Gamma distribution.
                 * ``beta``: Use a Beta distribution.
-                * ``student_t``: Use a Student T distribution.
+                * ``t``: Use a Student T distribution.
                 * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
-                * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
+                * ``truncnorm``: Use a Truncated Gaussian distribution.
                 # ``uniform``: Use a UniformUnivariate distribution.
 
         missing_value_generation (str or None):
@@ -285,13 +285,17 @@ class GaussianNormalizer(FloatFormatter):
             raise
 
         return {
-            'gaussian': univariate.GaussianUnivariate,
+            'norm': univariate.GaussianUnivariate,
             'gamma': univariate.GammaUnivariate,
             'beta': univariate.BetaUnivariate,
-            'student_t': univariate.StudentTUnivariate,
+            't': univariate.StudentTUnivariate,
             'gaussian_kde': univariate.GaussianKDE,
-            'truncated_gaussian': univariate.TruncatedGaussian,
+            'truncnorm': univariate.TruncatedGaussian,
             'uniform': univariate.UniformUnivariate,
+            # the following are deprecated
+            'gaussian': univariate.GaussianUnivariate,
+            'student_t': univariate.StudentTUnivariate,
+            'truncated_gaussian': univariate.TruncatedGaussian,
         }
 
     def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
@@ -311,6 +315,15 @@ class GaussianNormalizer(FloatFormatter):
 
         self._distributions = self._get_distributions()
         if isinstance(distribution, str):
+            if distribution in {'gaussian', 'student_t', 'truncated_gaussian'}:
+                deprecated_distributions_mapping = {
+                    'gaussian': 'norm', 'student_t': 't', 'truncated_gaussian': 'truncnorm'}
+                warnings.warn(
+                    f"Future versions of RDT will not support '{distribution}' as an option. "
+                    f"Please use '{deprecated_distributions_mapping[distribution]}' instead.",
+                    FutureWarning
+                )
+
             distribution = self._distributions[distribution]
 
         self._distribution = distribution
