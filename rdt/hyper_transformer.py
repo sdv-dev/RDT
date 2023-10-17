@@ -617,8 +617,8 @@ class HyperTransformer:
         self._modified_config = False
 
         # In some cases, the 'fit' method may invoke 'transformer.transform',
-        # Which can advance the random seed. As a result, it can lead to inconsistent
-        # Values for 'instance.transform' before and after calling 'reset_randomization'.
+        # which can advance the random seed. As a result, it can lead to inconsistent
+        # values for 'instance.transform' before and after calling 'reset_randomization'.
         # To ensure consistency, we call 'reset_randomization' after fitting is done.
         self.reset_randomization()
 
