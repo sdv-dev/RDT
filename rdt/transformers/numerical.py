@@ -272,6 +272,11 @@ class GaussianNormalizer(FloatFormatter):
     """
 
     _univariate = None
+    _DEPRECATED_DISTRIBUTIONS_MAPPING = {
+        'gaussian': 'norm',
+        'student_t': 't',
+        'truncated_gaussian': 'truncnorm'
+    }
 
     @staticmethod
     def _get_distributions():
@@ -292,10 +297,6 @@ class GaussianNormalizer(FloatFormatter):
             'gaussian_kde': univariate.GaussianKDE,
             'truncnorm': univariate.TruncatedGaussian,
             'uniform': univariate.UniformUnivariate,
-            # the following are deprecated
-            'gaussian': univariate.GaussianUnivariate,
-            'student_t': univariate.StudentTUnivariate,
-            'truncated_gaussian': univariate.TruncatedGaussian,
         }
 
     def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
@@ -316,13 +317,13 @@ class GaussianNormalizer(FloatFormatter):
         self._distributions = self._get_distributions()
         if isinstance(distribution, str):
             if distribution in {'gaussian', 'student_t', 'truncated_gaussian'}:
-                deprecated_distributions_mapping = {
-                    'gaussian': 'norm', 'student_t': 't', 'truncated_gaussian': 'truncnorm'}
                 warnings.warn(
                     f"Future versions of RDT will not support '{distribution}' as an option. "
-                    f"Please use '{deprecated_distributions_mapping[distribution]}' instead.",
+                    f"Please use '{self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]}' "
+                    'instead.',
                     FutureWarning
                 )
+                distribution = self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]
 
             distribution = self._distributions[distribution]
 

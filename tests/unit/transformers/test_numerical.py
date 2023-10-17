@@ -849,12 +849,9 @@ class TestGaussianNormalizer:
 
         # Assert
         expected = {
-            'gaussian': univariate.GaussianUnivariate,
             'gamma': univariate.GammaUnivariate,
             'beta': univariate.BetaUnivariate,
-            'student_t': univariate.StudentTUnivariate,
             'gaussian_kde': univariate.GaussianKDE,
-            'truncated_gaussian': univariate.TruncatedGaussian,
             'uniform': univariate.UniformUnivariate,
             'truncnorm': univariate.TruncatedGaussian,
             'norm': univariate.GaussianUnivariate,
