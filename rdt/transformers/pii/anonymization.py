@@ -81,9 +81,7 @@ def _detect_provider_name(function_name, locales=None):
     module = module.split('.')
     if len(module) == 2:
         return 'BaseProvider'
-
-    else:
-        return '.'.join(module[2:])
+    return '.'.join(module[2:])
 
 
 def get_anonymized_transformer(function_name, transformer_kwargs=None):
