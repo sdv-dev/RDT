@@ -634,7 +634,7 @@ class OneHotEncoder(BaseTransformer):
         """
         data = self._prepare_data(data)
         unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
-        unseen_categories = unique_data - set(self.dummies)
+        unseen_categories = unique_data - {np.nan if pd.isna(x) else x for x in self.dummies}
         if unseen_categories:
             # Select only the first 5 unseen categories to avoid flooding the console.
             examples_unseen_categories = set(list(unseen_categories)[:5])

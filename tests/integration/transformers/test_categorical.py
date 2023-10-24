@@ -1,4 +1,5 @@
 import pickle
+import warnings
 from io import BytesIO
 
 import numpy as np
@@ -442,6 +443,26 @@ def test_one_hot_numerical_nans():
     pd.testing.assert_frame_equal(reverse, data)
 
 
+def test_one_hot_doesnt_warn(tmp_path):
+    """Ensure OneHotEncoder doesn't warn when saving and loading GH#616."""
+    # Setup
+    data = pd.DataFrame({'column_name': [1.0, 2.0, np.nan, 2.0, 3.0, np.nan, 3.0]})
+    ohe = OneHotEncoder()
+
+    # Run
+    ohe.fit(data, 'column_name')
+    tmp = tmp_path / 'ohe.pkl'
+    with open(tmp.name, 'wb') as f:
+        pickle.dump(ohe, f)
+    with open(tmp.name, 'rb') as f:
+        ohe_loaded = pickle.load(f)
+
+    # Assert
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        ohe_loaded.transform(data)
+
+
 def test_label_numerical_2d_array():
     """Ensure LabelEncoder works on numerical + nan only columns."""
 
@@ -450,6 +471,7 @@ def test_label_numerical_2d_array():
 
     transformer = LabelEncoder()
     transformer.fit(data, column)
+
     transformed = pd.DataFrame([0., 1., 2., 3.], columns=['column_name'])
     reverse = transformer.reverse_transform(transformed)
 
