@@ -452,9 +452,9 @@ def test_one_hot_doesnt_warn(tmp_path):
     # Run
     ohe.fit(data, 'column_name')
     tmp = tmp_path / 'ohe.pkl'
-    with open(tmp.name, 'wb') as f:
+    with open(tmp, 'wb') as f:
         pickle.dump(ohe, f)
-    with open(tmp.name, 'rb') as f:
+    with open(tmp, 'rb') as f:
         ohe_loaded = pickle.load(f)
 
     # Assert
