@@ -41,7 +41,7 @@ class FloatFormatter(BaseTransformer):
             Indicate what to replace the null values with. If an integer or float is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation and if ``'random'``
-            replace each null value with a random value in the data range. Defaults to ``random``.
+            replace each null value with a random value in the data range. Defaults to ``mean``.
          model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
             not. The column will be created only if there are null values. If ``True``, create
@@ -77,13 +77,13 @@ class FloatFormatter(BaseTransformer):
     _min_value = None
     _max_value = None
 
-    def __init__(self, missing_value_replacement='random', model_missing_values=None,
+    def __init__(self, missing_value_replacement='mean', model_missing_values=None,
                  learn_rounding_scheme=False, enforce_min_max_values=False,
                  computer_representation='Float', missing_value_generation='random'):
         super().__init__()
         self.missing_value_replacement = missing_value_replacement
         self._set_missing_value_generation(missing_value_generation)
-        self._set_missing_value_replacement('random', missing_value_replacement)
+        self._set_missing_value_replacement('mean', missing_value_replacement)
         if model_missing_values is not None:
             self._set_model_missing_values(model_missing_values)
 
