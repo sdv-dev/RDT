@@ -17,7 +17,7 @@ class TestBinaryEncoder(TestCase):
         # Asserts
         error_message = 'Unexpected missing_value_replacement'
         error_generation = 'Unexpected missing_value_generation'
-        assert transformer.missing_value_replacement == 'random', error_message
+        assert transformer.missing_value_replacement == 'mode', error_message
         assert transformer.missing_value_generation == 'random', error_generation
 
     def test___init___model_missing_value_passed(self):

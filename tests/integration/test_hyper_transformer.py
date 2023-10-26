@@ -178,16 +178,7 @@ class TestHyperTransformer:
         # Assert
         expected_transformed = pd.DataFrame({
             'integer': [1.0, 2.0, 1.0, 3.0, 1.0, 4.0, 2.0, 3.0],
-            'float': [
-                0.100000,
-                0.200000,
-                0.100000,
-                0.325355,
-                0.100000,
-                0.400000,
-                0.299855,
-                0.300000
-            ],
+            'float': [0.1, 0.2, 0.1, 0.20000000000000004, 0.1, 0.4, 0.20000000000000004, 0.3],
             'categorical': [
                 0.239836,
                 0.233842,
@@ -209,14 +200,14 @@ class TestHyperTransformer:
                 0.450609,
             ],
             'datetime': [
-                1.263287e+18,
-                1.264982e+18,
+                1.2630692571428572e+18,
+                1.2649824e+18,
                 1.262304e+18,
                 1.262304e+18,
                 1.262304e+18,
-                1.264982e+18,
+                1.2649824e+18,
                 1.262304e+18,
-                1.262304e+18,
+                1.262304e+18
             ],
             'names': [
                 0.159704,
@@ -232,7 +223,7 @@ class TestHyperTransformer:
         pd.testing.assert_frame_equal(transformed, expected_transformed)
 
         reversed_datetimes = pd.to_datetime([
-            '2010-01-12',
+            '2010-01-09',
             '2010-02-01',
             '2010-01-01',
             '2010-01-01',
@@ -247,7 +238,7 @@ class TestHyperTransformer:
                 0.100000,
                 np.nan,
                 np.nan,
-                0.3253550514650646,
+                0.20000000000000004,
                 0.100000,
                 0.400000,
                 np.nan,
@@ -1095,7 +1086,9 @@ class TestHyperTransformer:
         # Test transforming multiple times with different transformers
         expected_first_transformed = pd.DataFrame({
             'age': [18.0, 25.0, 54.0, 60.0, 31.0],
-            'signup_day': [1.577837e+18, 1.260712e+18, 1.554077e+18, 1.228090e+18, 1.463357e+18],
+            'signup_day': [
+                1.5778368e+18, 1.45584e+18, 1.5540768e+18, 1.2280896e+18, 1.4633568e+18
+            ],
             'balance.normalized': [
                 -2.693016e-01,
                 -2.467182e-01,
@@ -1114,7 +1107,9 @@ class TestHyperTransformer:
         })
         expected_second_transformed = pd.DataFrame({
             'age': [18.0, 25.0, 54.0, 60.0, 31.0],
-            'signup_day': [1.577837e+18, 1.333605e+18, 1.554077e+18, 1.228090e+18, 1.463357e+18],
+            'signup_day': [
+                1.5778368e+18, 1.45584e+18, 1.5540768e+18, 1.2280896e+18, 1.4633568e+18
+            ],
             'balance.normalized': [
                 -2.693016e-01,
                 -2.467182e-01,
@@ -1153,7 +1148,7 @@ class TestHyperTransformer:
             ],
             'age': [18, 25, 54, 60, 31],
             'name': ['AAAAA', 'AAAAB', 'AAAAC', 'AAAAD', 'AAAAE'],
-            'signup_day': ['01/01/2020', '12/13/2009', '04/01/2019', np.nan, np.nan],
+            'signup_day': ['01/01/2020', '02/19/2016', '04/01/2019', np.nan, np.nan],
             'balance': [250, 5400, 150000, 61662.5, 91000],
             'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa']
         })
