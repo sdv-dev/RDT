@@ -2,6 +2,14 @@
 
 ## 1.8.0 - 2023-10-30
 
+This release adds the 'random' missing value replacement strategy, uses random values of the dataset to fill in random values. 
+Additionally users are now able to use the `UniformUnivariate` distribution within the Gaussian Normalizer with this update.
+
+This release contains fixes for the `ClusterBasedNormalizer` which crashes in the reverse transform caused by values being out of bounds and
+a patch for the randomization issue dealing with different values after applying `reset_randomization`
+
+Anonymization has been moved into RDT library from SDV as it was found to self contained module for RDT and would reduce dependencies needed in SDV 
+
 ### Features
 
 * Make the default missing value imputation 'mean' - Issue[#730](https://github.com/sdv-dev/RDT/issues/730) by @R-Palazzo
@@ -26,6 +34,11 @@
 * Remove performance tests - Issue[#707](https://github.com/sdv-dev/RDT/issues/707) by @fealho
 * ClusterBasedNormalizer code cleanup - Issue[#696](https://github.com/sdv-dev/RDT/issues/696) by @fealho
 * Switch default branch from master to main - Issue[#687](https://github.com/sdv-dev/RDT/issues/687) by @amontanez24
+
+### Deprecations
+
+* The `frequencyEncoder` transformer will no longer be supported in future versions of RDT. Please use the `UniformEncoder` transformer instead.
+* `GaussianNormalizer` distribution option names have been updated to be consistent with scipy. `gaussian` -> `norm`, `student_t`-> `t`, and `truncated_gaussian` -> `truncnorm`
 
 ## 1.7.0 - 2023-08-22
 
