@@ -1,6 +1,6 @@
 # History
 
-## 1.8.0 - 2023-10-30
+## 1.8.0 - 2023-10-31
 
 This release adds the 'random' missing value replacement strategy, which uses random values of the dataset to fill in missing values. 
 Additionally users are now able to use the `UniformUnivariate` distribution within the Gaussian Normalizer with this update.
