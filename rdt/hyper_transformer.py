@@ -12,8 +12,8 @@ from rdt.errors import (
     ConfigNotSetError, InvalidConfigError, InvalidDataError, NotFittedError, TransformerInputError,
     TransformerProcessingError)
 from rdt.transformers import (
-    BaseTransformer, get_class_by_transformer_name, get_default_transformer,
-    get_transformers_by_type)
+    BaseMultiColumnTransformer, BaseTransformer, get_class_by_transformer_name,
+    get_default_transformer, get_transformers_by_type)
 from rdt.transformers.utils import flatten_column_list
 
 LOGGER = logging.getLogger(__name__)
@@ -599,10 +599,13 @@ class HyperTransformer:
         """Generate the ``columns_to_sdtypes`` dict for the given field.
 
         Args:
-            field (tuple):
+            field (str, tuple[str]):
                 Names of the column for the multi column trnasformer.
         """
         columns_to_sdtypes = {}
+        if isinstance(field, str):
+            field = (field,)
+
         for column in field:
             columns_to_sdtypes[column] = self.field_sdtypes[column]
 
@@ -630,7 +633,7 @@ class HyperTransformer:
             self._output_columns.append(field)
 
         else:
-            if isinstance(field, tuple):
+            if isinstance(transformer, BaseMultiColumnTransformer):
                 columns_to_sdtypes = self._get_columns_to_sdtypes(field)
                 transformer.fit(data, columns_to_sdtypes)
             else:

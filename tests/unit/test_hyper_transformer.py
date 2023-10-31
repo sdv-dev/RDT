@@ -340,7 +340,8 @@ class TestHyperTransformer(TestCase):
         column_tuple = ('col1', 'col2', 'col3')
 
         # Run
-        columns_to_sdtypes = ht._get_columns_to_sdtypes(column_tuple)
+        columns_to_sdtypes_tuple = ht._get_columns_to_sdtypes(column_tuple)
+        columns_to_sdtypes_str = ht._get_columns_to_sdtypes('col4')
 
         # Assert
         expected_columns_to_sdtypes = {
@@ -348,7 +349,8 @@ class TestHyperTransformer(TestCase):
             'col2': 'categorical',
             'col3': 'boolean',
         }
-        assert columns_to_sdtypes == expected_columns_to_sdtypes
+        assert columns_to_sdtypes_tuple == expected_columns_to_sdtypes
+        assert columns_to_sdtypes_str == {'col4': 'datetime'}
 
     def test__fit_field_transformer(self):
         """Test the ``_fit_field_transformer`` method.
