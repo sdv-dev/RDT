@@ -1497,7 +1497,7 @@ class TestHyperTransformer:
             },
             'transformers': {
                 'A': DummyMultiColumnTransformerNumerical(),
-                ('B2'): DummyMultiColumnTransformerNumerical(),
+                ('B2', ): DummyMultiColumnTransformerNumerical(),
                 'C': UniformEncoder()
             }
         }
