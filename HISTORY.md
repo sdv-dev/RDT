@@ -2,13 +2,13 @@
 
 ## 1.8.0 - 2023-10-30
 
-This release adds the 'random' missing value replacement strategy, uses random values of the dataset to fill in random values. 
+This release adds the 'random' missing value replacement strategy, which uses random values of the dataset to fill in missing values. 
 Additionally users are now able to use the `UniformUnivariate` distribution within the Gaussian Normalizer with this update.
 
-This release contains fixes for the `ClusterBasedNormalizer` which crashes in the reverse transform caused by values being out of bounds and
-a patch for the randomization issue dealing with different values after applying `reset_randomization`
+This release contains fixes for the `ClusterBasedNormalizer` which crashes in the reverse transform caused by values being out of bounds 
+and a patch for the randomization issue dealing with different values after applying `reset_randomization`.
 
-Anonymization has been moved into RDT library from SDV as it was found to self contained module for RDT and would reduce dependencies needed in SDV 
+Anonymization has been moved into RDT library from SDV as it was found to self contained module for RDT and would reduce dependencies needed in SDV.
 
 ### Features
 
