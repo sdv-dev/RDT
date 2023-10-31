@@ -1,6 +1,6 @@
 import pickle
+import warnings
 from io import BytesIO
-from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -60,6 +60,24 @@ class TestUniformEncoder:
 
         # Asserts
         pd.testing.assert_series_equal(output['column_name'], data['column_name'])
+
+    def test__reverse_transform_negative_transformed_values(self):
+        """Test the ``reverse_transform``."""
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 2, 3, 2, 2, 1, 3, 3, 2]})
+        column = 'column_name'
+        transformer = UniformEncoder()
+
+        # Run
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        transformed.loc[1, 'column_name'] = -0.1
+        transformed.loc[2, 'column_name'] = 100
+        output = transformer.reverse_transform(transformed)
+
+        # Asserts
+        # Make sure there is no Nan values due to the negative number or large upper bound number
+        assert not any(pd.isna(output).to_numpy())
 
     def test__reverse_transform_nans(self):
         """Test ``reverse_transform`` for data with NaNs."""
@@ -360,43 +378,12 @@ def test_frequency_encoder_mixed():
     pd.testing.assert_frame_equal(data, reverse)
 
 
-@patch('psutil.virtual_memory')
-def test_frequency_encoder_mixed_low_virtual_memory(psutil_mock):
-    """Test the FrequencyEncoder on mixed type data with low virtual memory.
+def test_frequency_encoder_mixed_more_rows():
+    """Test the FrequencyEncoder on mixed type data.
 
     Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform on mixed type data, when there is low virtual memory. Expect that the
-    reverse transformed data is the same as the input.
-
-    Input:
-        - 4 rows of mixed data
-    Output:
-        - The reverse transformed data
-    """
-    # setup
-    data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
-    column = 'column_name'
-    transformer = FrequencyEncoder()
-
-    virtual_memory = Mock()
-    virtual_memory.available = 1
-    psutil_mock.return_value = virtual_memory
-
-    # run
-    transformer.fit(data, column)
-    reverse = transformer.reverse_transform(transformer.transform(data))
-
-    # assert
-    pd.testing.assert_frame_equal(data, reverse)
-
-
-@patch('psutil.virtual_memory')
-def test_frequency_encoder_mixed_more_rows(psutil_mock):
-    """Test the FrequencyEncoder on mixed type data with low virtual memory.
-
-    Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform on mixed type data, when there is low virtual memory and a larger
-    number of rows. Expect that the reverse transformed data is the same as the input.
+    transform on mixed type data, when there is a larger number of rows.
+    Expect that the reverse transformed data is the same as the input.
 
     Input:
         - 4 rows of mixed data
@@ -408,10 +395,6 @@ def test_frequency_encoder_mixed_more_rows(psutil_mock):
     column = 'column_name'
     transform_data = pd.DataFrame(['a', 1, None, 'a', True, 1], columns=['column_name'])
     transformer = FrequencyEncoder()
-
-    virtual_memory = Mock()
-    virtual_memory.available = 1
-    psutil_mock.return_value = virtual_memory
 
     # run
     transformer.fit(data, column)
@@ -460,6 +443,26 @@ def test_one_hot_numerical_nans():
     pd.testing.assert_frame_equal(reverse, data)
 
 
+def test_one_hot_doesnt_warn(tmp_path):
+    """Ensure OneHotEncoder doesn't warn when saving and loading GH#616."""
+    # Setup
+    data = pd.DataFrame({'column_name': [1.0, 2.0, np.nan, 2.0, 3.0, np.nan, 3.0]})
+    ohe = OneHotEncoder()
+
+    # Run
+    ohe.fit(data, 'column_name')
+    tmp = tmp_path / 'ohe.pkl'
+    with open(tmp, 'wb') as f:
+        pickle.dump(ohe, f)
+    with open(tmp, 'rb') as f:
+        ohe_loaded = pickle.load(f)
+
+    # Assert
+    with warnings.catch_warnings():
+        warnings.simplefilter('error')
+        ohe_loaded.transform(data)
+
+
 def test_label_numerical_2d_array():
     """Ensure LabelEncoder works on numerical + nan only columns."""
 
@@ -468,6 +471,7 @@ def test_label_numerical_2d_array():
 
     transformer = LabelEncoder()
     transformer.fit(data, column)
+
     transformed = pd.DataFrame([0., 1., 2., 3.], columns=['column_name'])
     reverse = transformer.reverse_transform(transformed)
 

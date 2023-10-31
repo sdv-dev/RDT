@@ -414,7 +414,7 @@ def check_clean_repository():
     """Check whether or not the repository has only expected changes.
 
     This function checks if there are unexpected changes on the current branch
-    against the master branch. If there are modifications outside ``rdt/transformers``,
+    against the main branch. If there are modifications outside ``rdt/transformers``,
     ``tests/unit``, ``tests/integration`` or ``tests/datasets`` this will return a ``False``.
 
     Returns:
@@ -422,7 +422,7 @@ def check_clean_repository():
             ``True`` if the changes are applied only to the expected subfolders, ``False``
             if any other file has been modified outside of that range.
     """
-    run_command = 'git diff --name-only master'.split(' ')
+    run_command = 'git diff --name-only main'.split(' ')
     output_capture = subprocess.run(run_command, capture_output=True).stdout.decode()
     output_capture = output_capture.splitlines()
 

@@ -24,8 +24,7 @@ install_requires = [
     "scipy>=1.9.2,<2;python_version>='3.10'",
     "scikit-learn>=0.24,<2;python_version<'3.10'",
     "scikit-learn>=1.1.3,<2;python_version>='3.10'",
-    'psutil>=5.7,<6',
-    'Faker>=10',
+    'Faker>=17,<20',
 ]
 
 copulas_requires = [
@@ -139,6 +138,6 @@ setup(
     test_suite='tests',
     tests_require=tests_require,
     url='https://github.com/sdv-dev/RDT',
-    version='1.7.0',
+    version='1.8.0.dev2',
     zip_safe=False,
 )

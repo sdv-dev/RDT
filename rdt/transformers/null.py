@@ -18,7 +18,8 @@ class NullTransformer():
             Indicate what to do with the null values. If an integer, float or string is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are given,
             replace them with the corresponding aggregation (``'mean'`` only works for numerical
-            values). If ``None`` is given, do not replace them. Defaults to ``None``.
+            values) if ``'random'`` replace each null value with a random value in the data range.
+            If ``None`` is given, do not replace them. Defaults to ``None``.
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
 
@@ -44,6 +45,8 @@ class NullTransformer():
             )
 
         self._missing_value_generation = missing_value_generation
+        self._min_value = None
+        self._max_value = None
 
     def models_missing_values(self):
         """Indicate whether this transformer creates a null column on transform.
@@ -73,7 +76,7 @@ class NullTransformer():
         if self._missing_value_replacement is None:
             return None
 
-        if self._missing_value_replacement in {'mean', 'mode'} and pd.isna(data).all():
+        if self._missing_value_replacement in {'mean', 'mode', 'random'} and pd.isna(data).all():
             msg = (
                 f"'missing_value_replacement' cannot be set to '{self._missing_value_replacement}'"
                 ' when the provided data only contains NaNs. Using 0 instead.'
@@ -99,6 +102,10 @@ class NullTransformer():
                 Data to transform.
         """
         self._missing_value_replacement = self._get_missing_value_replacement(data)
+        if self._missing_value_replacement == 'random':
+            self._min_value = data.min()
+            self._max_value = data.max()
+
         if self._missing_value_generation is not None:
             null_values = data.isna().to_numpy()
             self.nulls = null_values.any()
@@ -127,7 +134,15 @@ class NullTransformer():
             numpy.ndarray
         """
         isna = data.isna()
-        if isna.any() and self._missing_value_replacement is not None:
+        if self._missing_value_replacement == 'random':
+            data_mask = list(np.random.uniform(
+                low=self._min_value,
+                high=self._max_value,
+                size=len(data)
+            ))
+            data = data.mask(data.isna(), data_mask)
+
+        elif isna.any() and self._missing_value_replacement is not None:
             data = data.fillna(self._missing_value_replacement)
 
         if self._missing_value_generation == 'from_column':

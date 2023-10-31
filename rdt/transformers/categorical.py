@@ -5,7 +5,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import psutil
 from scipy.stats import norm
 
 from rdt.errors import TransformerInputError
@@ -192,7 +191,7 @@ class UniformEncoder(BaseTransformer):
             else:
                 labels.append(key)
 
-        result = pd.cut(data, bins=bins, labels=labels)
+        result = pd.cut(data, bins=bins, labels=labels, include_lowest=True)
         return result.replace(nan_name, np.nan).astype(self.dtype)
 
 
@@ -211,6 +210,13 @@ class OrderedUniformEncoder(UniformEncoder):
 
     def __init__(self, order):
         self.order = fill_nan_with_none(pd.Series(order))
+        if not self.order.is_unique:
+            error_msg = (
+                "The OrderedUniformEncoder has duplicate categories in the 'order' parameter. "
+                'Please drop the duplicates to proceed.'
+            )
+            raise TransformerInputError(error_msg)
+
         super().__init__()
 
     def __repr__(self):
@@ -320,6 +326,11 @@ class FrequencyEncoder(BaseTransformer):
         self.__dict__ = state
 
     def __init__(self, add_noise=False):
+        warnings.warn(
+            "The 'FrequencyEncoder' transformer will no longer be supported in future versions "
+            "of the RDT library. Please use the 'UniformEncoder' transformer instead.",
+            FutureWarning
+        )
         super().__init__()
         self.add_noise = add_noise
 
@@ -475,19 +486,6 @@ class FrequencyEncoder(BaseTransformer):
 
         return self._transform_by_row(data)
 
-    def _reverse_transform_by_matrix(self, data):
-        """Reverse transform the data with matrix operations."""
-        num_rows = len(data)
-        num_categories = len(self.starts)
-
-        data = np.broadcast_to(data, (num_categories, num_rows)).T
-        starts = np.broadcast_to(self.starts.index, (num_rows, num_categories))
-        is_data_greater_than_starts = (data >= starts)[:, ::-1]
-        interval_indexes = num_categories - np.argmax(is_data_greater_than_starts, axis=1) - 1
-
-        get_category_from_index = list(self.starts.category).__getitem__
-        return pd.Series(interval_indexes).apply(get_category_from_index).astype(self.dtype)
-
     def _reverse_transform_by_category(self, data):
         """Reverse transform the data by iterating over all the categories."""
         result = np.empty(shape=(len(data), ), dtype=self.dtype)
@@ -521,12 +519,6 @@ class FrequencyEncoder(BaseTransformer):
         data = data.clip(0, 1)
         num_rows = len(data)
         num_categories = len(self.means)
-
-        # total shape * float size * number of matrices needed
-        needed_memory = num_rows * num_categories * 8 * 3
-        available_memory = psutil.virtual_memory().available
-        if available_memory > needed_memory:
-            return self._reverse_transform_by_matrix(data)
 
         if num_rows > num_categories:
             return self._reverse_transform_by_category(data)
@@ -642,7 +634,7 @@ class OneHotEncoder(BaseTransformer):
         """
         data = self._prepare_data(data)
         unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
-        unseen_categories = unique_data - set(self.dummies)
+        unseen_categories = unique_data - {np.nan if pd.isna(x) else x for x in self.dummies}
         if unseen_categories:
             # Select only the first 5 unseen categories to avoid flooding the console.
             examples_unseen_categories = set(list(unseen_categories)[:5])
@@ -837,6 +829,13 @@ class OrderedLabelEncoder(LabelEncoder):
 
     def __init__(self, order, add_noise=False):
         self.order = pd.Series(order).fillna(np.nan)
+        if not self.order.is_unique:
+            err_msg = (
+                "The OrderedLabelEncoder has duplicate categories in the 'order' parameter. "
+                'Please drop the duplicates to proceed.'
+            )
+            raise TransformerInputError(err_msg)
+
         super().__init__(add_noise=add_noise)
 
     def __repr__(self):

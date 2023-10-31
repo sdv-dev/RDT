@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from copulas import univariate
 
 from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
 
@@ -114,6 +115,47 @@ class TestFloatFormatter:
         assert list(transformed.iloc[:, 1]) == [0, 0, 0, 0, 1, 0]
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
+    def test_missing_value_replacement_set_to_random_and_model_missing_values(self):
+        """Test that we are still able to use ``missing_value_replacement`` when is ``random``."""
+        # Setup
+        data = pd.DataFrame({'a': [1, 2, 3, np.nan, np.nan, 4]})
+
+        # Run
+        ft = FloatFormatter('random', True)
+        ft.fit(data, 'a')
+        transformed = ft.transform(data)
+        reverse = ft.reverse_transform(transformed)
+
+        # Assert
+        expected_transformed = pd.DataFrame({
+            'a': [1., 2., 3., 2.617107, 1.614805, 4.],
+            'a.is_null': [0., 0., 0., 1., 1., 0.]
+        })
+        pd.testing.assert_frame_equal(transformed, expected_transformed)
+        pd.testing.assert_frame_equal(reverse, data)
+        np.testing.assert_array_almost_equal(reverse, data, decimal=2)
+
+    def test_missing_value_replacement_random_all_nans(self):
+        """Test ``FloatFormatter`` with all ``nans``.
+
+        Test that ``FloatFormatter`` works when the ``missing_value_replacement`` is set to
+        ``random`` and the data is all ``np.nan``.
+        """
+        # Setup
+        data = pd.DataFrame({'a': [np.nan] * 10})
+        ft = FloatFormatter('random')
+
+        # Run
+        ft.fit(data, 'a')
+        transformed = ft.transform(data)
+        reverse_transformed = ft.reverse_transform(transformed)
+
+        # Assert
+        expected_transformed = pd.DataFrame({'a': [0.0] * 10})
+        expected_reverse_transformed = pd.DataFrame({'a': [np.nan] * 10})
+        pd.testing.assert_frame_equal(transformed, expected_transformed)
+        pd.testing.assert_frame_equal(reverse_transformed, expected_reverse_transformed)
+
 
 class TestGaussianNormalizer:
 
@@ -194,6 +236,66 @@ class TestGaussianNormalizer:
 
         reverse = ct.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
+
+    def test_uniform(self):
+        """Test it works when distribution='uniform'."""
+        # Setup
+        data = pd.DataFrame(np.random.uniform(size=1000), columns=['a'])
+        ct = GaussianNormalizer(distribution='uniform')
+
+        # Run
+        ct.fit(data, 'a')
+        transformed = ct.transform(data)
+        reverse = ct.reverse_transform(transformed)
+
+        # Assert
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (1000, 1)
+
+        np.testing.assert_almost_equal(transformed['a'].mean(), 0, decimal=1)
+        np.testing.assert_almost_equal(transformed['a'].std(), 1, decimal=1)
+
+        np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+
+    def test_uniform_object(self):
+        """Test it works when distribution=UniformUnivariate()."""
+        # Setup
+        data = pd.DataFrame(np.random.uniform(size=1000), columns=['a'])
+        ct = GaussianNormalizer(distribution=univariate.UniformUnivariate())
+
+        # Run
+        ct.fit(data, 'a')
+        transformed = ct.transform(data)
+        reverse = ct.reverse_transform(transformed)
+
+        # Assert
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (1000, 1)
+
+        np.testing.assert_almost_equal(transformed['a'].mean(), 0, decimal=1)
+        np.testing.assert_almost_equal(transformed['a'].std(), 1, decimal=1)
+
+        np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+
+    def test_uniform_class(self):
+        """Test it works when distribution=UniformUnivariate."""
+        # Setup
+        data = pd.DataFrame(np.random.uniform(size=1000), columns=['a'])
+        ct = GaussianNormalizer(distribution=univariate.UniformUnivariate)
+
+        # Run
+        ct.fit(data, 'a')
+        transformed = ct.transform(data)
+        reverse = ct.reverse_transform(transformed)
+
+        # Assert
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape == (1000, 1)
+
+        np.testing.assert_almost_equal(transformed['a'].mean(), 0, decimal=1)
+        np.testing.assert_almost_equal(transformed['a'].std(), 1, decimal=1)
+
+        np.testing.assert_array_almost_equal(reverse, data, decimal=1)
 
 
 class TestClusterBasedNormalizer:
@@ -286,3 +388,22 @@ class TestClusterBasedNormalizer:
         reverse = bgmm_transformer.reverse_transform(transformed)
         np.testing.assert_array_almost_equal(reverse, data, decimal=1)
         np.random.set_state(random_state)
+
+    def test_out_of_bounds_reverse_transform(self):
+        """Test that the reverse transform works when the data is out of bounds GH#672."""
+        # Setup
+        data = pd.DataFrame({
+            'col': [round(i, 2) for i in np.random.uniform(0, 10, size=100)] + [None]
+        })
+        reverse_data = pd.DataFrame(data={
+            'col.normalized': np.random.uniform(-10, 10, size=100),
+            'col.component': np.random.choice([0.0, 1.0, 2.0, 10.0], size=100)
+        })
+        transformer = ClusterBasedNormalizer()
+
+        # Run
+        transformer.fit(data, 'col')
+        reverse = transformer.reverse_transform(reverse_data)
+
+        # Assert
+        assert isinstance(reverse, pd.DataFrame)

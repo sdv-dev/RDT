@@ -186,6 +186,59 @@ class TestAnonymizedFaker:
         )
         mock_warnings.warn.assert_called_once_with(expected_message)
 
+    @patch('rdt.transformers.pii.anonymizer.importlib')
+    @patch('rdt.transformers.pii.anonymizer.warnings')
+    def test__check_locales_provider_ending_with_locale(self, mock_warnings, mock_importlib):
+        """Test that check locales does not warn the user if the provider ends with the locale.
+
+        Mock:
+            - Mock importlib with side effects to return `None`.
+            - Mock the warnings.
+        """
+        # Setup
+        instance = Mock()
+        instance.provider_name = 'address.en_US'
+        instance.function_name = 'postcode'
+        instance.locales = ['en_US']
+        mock_importlib.util.find_spec.side_effect = ['en_US']
+
+        # Run
+        AnonymizedFaker._check_locales(instance)
+
+        # Assert
+        mock_warnings.warn.assert_not_called()
+
+    @patch('rdt.transformers.pii.anonymizer.importlib')
+    @patch('rdt.transformers.pii.anonymizer.warnings')
+    def test__check_locales_provider_ending_with_wrong_locale(self, mock_warnings, mock_importlib):
+        """Test that check locales warns the user.
+
+        If the provider ends with the given locale but is not separated by a dot this will warn
+        that the default 'en_US' will be used instead'.
+
+        Mock:
+            - Mock importlib with side effects to return `None`.
+            - Mock the warnings.
+        """
+        # Setup
+        instance = Mock()
+        instance.provider_name = 'addressit'
+        instance.function_name = 'postcode'
+        instance.locales = ['it']
+        mock_importlib.util.find_spec.side_effect = [None]
+
+        # Run
+        AnonymizedFaker._check_locales(instance)
+
+        # Assert
+        expected_message = (
+            "Locales ['it'] do not support provider 'addressit' and function 'postcode'.\n"
+            "In place of these locales, 'en_US' will be used instead. "
+            'Please refer to the localized provider docs for more information: '
+            'https://faker.readthedocs.io/en/master/locales.html'
+        )
+        mock_warnings.warn.assert_called_once_with(expected_message)
+
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
     def test___init__default(self, mock_check_provider_function, mock_faker):
@@ -218,7 +271,7 @@ class TestAnonymizedFaker:
         assert instance.function_name == 'lexify'
         assert instance.function_kwargs == {}
         assert instance.locales is None
-        assert mock_faker.Faker.called_once_with(None)
+        mock_faker.Faker.assert_called_once_with(None)
         assert instance.enforce_uniqueness is False
         assert instance.missing_value_generation == 'random'
 
@@ -279,7 +332,7 @@ class TestAnonymizedFaker:
         assert instance.function_name == 'credit_card_full'
         assert instance.function_kwargs == {'type': 'visa'}
         assert instance.locales == ['en_US', 'fr_FR']
-        assert mock_faker.Faker.called_once_with(['en_US', 'fr_FR'])
+        mock_faker.Faker.assert_called_once_with(['en_US', 'fr_FR'])
         assert instance.enforce_uniqueness
 
     def test___init__no_function_name(self):
@@ -346,7 +399,7 @@ class TestAnonymizedFaker:
         AnonymizedFaker.reset_randomization(instance)
 
         # Assert
-        assert mock_faker.Faker.called_once_with(['en_US'])
+        mock_faker.Faker.assert_has_calls([call(None), call(['en_US'])])
         mock_base_reset.assert_called_once()
 
     def test__fit(self):
@@ -597,7 +650,7 @@ class TestPseudoAnonymizedFaker:
         assert instance.function_name == 'lexify'
         assert instance.function_kwargs == {}
         assert instance.locales is None
-        assert mock_faker.Faker.called_once_with(None)
+        mock_faker.Faker.assert_called_once_with(None)
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
@@ -641,7 +694,7 @@ class TestPseudoAnonymizedFaker:
         assert instance.function_name == 'credit_card_full'
         assert instance.function_kwargs == {'type': 'visa'}
         assert instance.locales == ['en_US', 'fr_FR']
-        assert mock_faker.Faker.called_once_with(['en_US', 'fr_FR'])
+        mock_faker.Faker.assert_called_once_with(['en_US', 'fr_FR'])
 
     def test_get_mapping(self):
         """Test the ``get_mapping`` method.

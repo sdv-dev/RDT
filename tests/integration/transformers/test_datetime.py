@@ -69,6 +69,31 @@ class TestUnixTimestampEncoder:
         pd.testing.assert_frame_equal(expect_transformed, transformed)
         pd.testing.assert_frame_equal(reverted, expected_reversed)
 
+    def test_unixtimestampencoder_with_missing_value_replacement_random(self):
+        """Test that transformed data will replace nans with random values from the data."""
+        # Setup
+        ute = UnixTimestampEncoder(
+            missing_value_replacement='random',
+            datetime_format='%b %d, %Y'
+        )
+        data = pd.DataFrame({'column': [None, 'Oct 17, 1996', 'May 23, 1965']})
+
+        # Run
+        ute.fit(data, column='column')
+        ute.set_random_state(np.random.RandomState(7), 'reverse_transform')
+        transformed = ute.transform(data)
+        reverted = ute.reverse_transform(transformed)
+
+        # Asserts
+        expect_transformed = pd.DataFrame({
+            'column': [-7.007396e+16, 845510400000000000, -145497600000000000]
+        })
+        expected_reversed = pd.DataFrame({
+            'column': [np.nan, 'Oct 17, 1996', 'May 23, 1965']
+        })
+        pd.testing.assert_frame_equal(expect_transformed, transformed)
+        pd.testing.assert_frame_equal(reverted, expected_reversed)
+
     def test_unixtimestampencoder_with_model_missing_values(self):
         """Test that `model_missing_values` is accepted by the transformer."""
         # Setup

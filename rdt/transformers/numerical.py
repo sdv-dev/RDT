@@ -1,5 +1,6 @@
 """Transformers for numerical data."""
 import copy
+import logging
 import sys
 import warnings
 
@@ -10,6 +11,8 @@ from sklearn.mixture import BayesianGaussianMixture
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
+
+LOGGER = logging.getLogger(__name__)
 
 EPSILON = np.finfo(np.float32).eps
 MAX_DECIMALS = sys.float_info.dig - 1
@@ -37,7 +40,8 @@ class FloatFormatter(BaseTransformer):
         missing_value_replacement (object):
             Indicate what to replace the null values with. If an integer or float is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'``
-            are given, replace them with the corresponding aggregation. Defaults to ``mean``.
+            are given, replace them with the corresponding aggregation and if ``'random'``
+            replace each null value with a random value in the data range. Defaults to ``mean``.
          model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
             not. The column will be created only if there are null values. If ``True``, create
@@ -109,8 +113,7 @@ class FloatFormatter(BaseTransformer):
                     return decimal
 
         # Can't round, not equal after MAX_DECIMALS digits of precision
-        warnings.warn(
-            f"No rounding scheme detected for column '{name}'. Data will not be rounded.")
+        LOGGER.info("No rounding scheme detected for column '%s'. Data will not be rounded.", name)
         return None
 
     def _raise_out_of_bounds_error(self, value, name, bound_type, min_bound, max_bound):
@@ -248,13 +251,14 @@ class GaussianNormalizer(FloatFormatter):
             Copulas univariate distribution to use. Defaults to ``truncated_gaussian``.
             Options include:
 
-                * ``gaussian``: Use a Gaussian distribution.
+                * ``norm``: Use a Gaussian distribution.
                 * ``gamma``: Use a Gamma distribution.
                 * ``beta``: Use a Beta distribution.
-                * ``student_t``: Use a Student T distribution.
-                * ``gussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
+                * ``t``: Use a Student T distribution.
+                * ``gaussian_kde``: Use a GaussianKDE distribution. This model is non-parametric,
                   so using this will make ``get_parameters`` unusable.
-                * ``truncated_gaussian``: Use a Truncated Gaussian distribution.
+                * ``truncnorm``: Use a Truncated Gaussian distribution.
+                # ``uniform``: Use a UniformUnivariate distribution.
 
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
@@ -268,24 +272,11 @@ class GaussianNormalizer(FloatFormatter):
     """
 
     _univariate = None
-
-    def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
-                 enforce_min_max_values=False, distribution='truncated_gaussian',
-                 missing_value_generation='random'):
-        super().__init__(
-            model_missing_values=model_missing_values,
-            missing_value_generation=missing_value_generation,
-            learn_rounding_scheme=learn_rounding_scheme,
-            enforce_min_max_values=enforce_min_max_values
-        )
-
-        self.distribution = distribution  # Distribution initialized by the user
-
-        self._distributions = self._get_distributions()
-        if isinstance(distribution, str):
-            distribution = self._distributions[distribution]
-
-        self._distribution = distribution
+    _DEPRECATED_DISTRIBUTIONS_MAPPING = {
+        'gaussian': 'norm',
+        'student_t': 't',
+        'truncated_gaussian': 'truncnorm'
+    }
 
     @staticmethod
     def _get_distributions():
@@ -299,13 +290,44 @@ class GaussianNormalizer(FloatFormatter):
             raise
 
         return {
-            'gaussian': univariate.GaussianUnivariate,
+            'norm': univariate.GaussianUnivariate,
             'gamma': univariate.GammaUnivariate,
             'beta': univariate.BetaUnivariate,
-            'student_t': univariate.StudentTUnivariate,
+            't': univariate.StudentTUnivariate,
             'gaussian_kde': univariate.GaussianKDE,
-            'truncated_gaussian': univariate.TruncatedGaussian,
+            'truncnorm': univariate.TruncatedGaussian,
+            'uniform': univariate.UniformUnivariate,
         }
+
+    def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
+                 enforce_min_max_values=False, distribution='truncated_gaussian',
+                 missing_value_generation='random'):
+
+        # Using missing_value_replacement='mean' as the default instead of random
+        # as this may lead to different outcomes in certain synthesizers
+        # affecting the synthesizers directly and this is out of scope for now.
+        super().__init__(
+            model_missing_values=model_missing_values,
+            missing_value_generation=missing_value_generation,
+            missing_value_replacement='mean',
+            learn_rounding_scheme=learn_rounding_scheme,
+            enforce_min_max_values=enforce_min_max_values
+        )
+
+        self._distributions = self._get_distributions()
+        if isinstance(distribution, str):
+            if distribution in {'gaussian', 'student_t', 'truncated_gaussian'}:
+                warnings.warn(
+                    f"Future versions of RDT will not support '{distribution}' as an option. "
+                    f"Please use '{self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]}' "
+                    'instead.',
+                    FutureWarning
+                )
+                distribution = self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]
+
+            distribution = self._distributions[distribution]
+
+        self._distribution = distribution
 
     def _get_univariate(self):
         distribution = self._distribution
@@ -433,9 +455,14 @@ class ClusterBasedNormalizer(FloatFormatter):
     def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
                  enforce_min_max_values=False, max_clusters=10, weight_threshold=0.005,
                  missing_value_generation='random'):
+
+        # Using missing_value_replacement='mean' as the default instead of random
+        # as this may lead to different outcomes in certain synthesizers
+        # affecting the synthesizers directly and this is out of scope for now.
         super().__init__(
             model_missing_values=model_missing_values,
             missing_value_generation=missing_value_generation,
+            missing_value_replacement='mean',
             learn_rounding_scheme=learn_rounding_scheme,
             enforce_min_max_values=enforce_min_max_values
         )
@@ -463,7 +490,6 @@ class ClusterBasedNormalizer(FloatFormatter):
             n_components=self.max_clusters,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,
-            n_init=1,
             random_state=self._get_current_random_seed()
         )
 
@@ -494,10 +520,12 @@ class ClusterBasedNormalizer(FloatFormatter):
 
         data = data.reshape((len(data), 1))
         means = self._bgm_transformer.means_.reshape((1, self.max_clusters))
-
+        means = means[:, self.valid_component_indicator]
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self.max_clusters))
+        stds = stds[:, self.valid_component_indicator]
+
+        # Multiply stds by 4 so that a value will be in the range [-1,1] with 99.99% probability
         normalized_values = (data - means) / (self.STD_MULTIPLIER * stds)
-        normalized_values = normalized_values[:, self.valid_component_indicator]
         component_probs = self._bgm_transformer.predict_proba(data)
         component_probs = component_probs[:, self.valid_component_indicator]
 
@@ -524,8 +552,8 @@ class ClusterBasedNormalizer(FloatFormatter):
         normalized = np.clip(data[:, 0], -1, 1)
         means = self._bgm_transformer.means_.reshape([-1])
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
-        selected_component = data[:, 1].astype(int)
-
+        selected_component = data[:, 1].round().astype(int)
+        selected_component = selected_component.clip(0, self.valid_component_indicator.sum() - 1)
         std_t = stds[self.valid_component_indicator][selected_component]
         mean_t = means[self.valid_component_indicator][selected_component]
         reversed_data = normalized * self.STD_MULTIPLIER * std_t + mean_t
@@ -547,8 +575,6 @@ class ClusterBasedNormalizer(FloatFormatter):
 
         recovered_data = self._reverse_transform_helper(data)
         if self.null_transformer and self.null_transformer.models_missing_values():
-            data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
-        else:
-            data = recovered_data
+            recovered_data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
 
-        return super()._reverse_transform(data)
+        return super()._reverse_transform(recovered_data)

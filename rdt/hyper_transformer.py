@@ -593,6 +593,12 @@ class HyperTransformer:
         if not self._fitted or self._modified_config:
             raise NotFittedError(self._NOT_FIT_MESSAGE)
 
+    def reset_randomization(self):
+        """Reset the generators for the anonymized columns."""
+        for transformer in self.field_transformers.values():
+            if transformer:
+                transformer.reset_randomization()
+
     def fit(self, data):
         """Fit the transformers to the data.
 
@@ -609,6 +615,12 @@ class HyperTransformer:
         self._validate_all_fields_fitted()
         self._fitted = True
         self._modified_config = False
+
+        # In some cases, the 'fit' method may invoke 'transformer.transform',
+        # which can advance the random seed. As a result, it can lead to inconsistent
+        # values for 'instance.transform' before and after calling 'reset_randomization'.
+        # To ensure consistency, we call 'reset_randomization' after fitting is done.
+        self.reset_randomization()
 
     def _transform(self, data, prevent_subset):
         self._validate_config_exists()
@@ -677,12 +689,6 @@ class HyperTransformer:
         """
         self.fit(data)
         return self.transform(data)
-
-    def reset_randomization(self):
-        """Reset the generators for the anonymized columns."""
-        for transformer in self.field_transformers.values():
-            if transformer:
-                transformer.reset_randomization()
 
     def create_anonymized_columns(self, num_rows, column_names):
         """Create the anonymized columns for this ``HyperTransformer``.

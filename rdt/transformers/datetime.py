@@ -19,7 +19,8 @@ class UnixTimestampEncoder(BaseTransformer):
     Args:
         missing_value_replacement (object):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
-            are given, replace them with the corresponding aggregation.
+            are given, replace them with the corresponding aggregation, if ``'random'``, use
+            random values from the dataset to fill the nan values.
             Defaults to ``mean``.
         model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
@@ -187,7 +188,8 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
     Args:
         missing_value_replacement (object):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
-            are given, replace them with the corresponding aggregation.
+            are given, replace them with the corresponding aggregation, if ``'random'``, use
+            random values from the dataset to fill the nan values.
             Defaults to ``mean``.
         model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or

@@ -1,5 +1,45 @@
 # History
 
+## 1.8.0 - 2023-10-31
+
+This release adds the 'random' missing value replacement strategy, which uses random values of the dataset to fill in missing values. 
+Additionally users are now able to use the `UniformUnivariate` distribution within the Gaussian Normalizer with this update.
+
+This release contains fixes for the `ClusterBasedNormalizer` which crashes in the reverse transform caused by values being out of bounds 
+and a patch for the randomization issue dealing with different values after applying `reset_randomization`.
+
+Anonymization has been moved into RDT library from SDV as it was found to self contained module for RDT and would reduce dependencies needed in SDV.
+
+### Features
+
+* Make the default missing value imputation 'mean' - Issue[#730](https://github.com/sdv-dev/RDT/issues/730) by @R-Palazzo
+* When no rounding scheme is detected, log the info instead of showing a warning - Issue[#709](https://github.com/sdv-dev/RDT/issues/709) by @frances-h
+* The GaussianNormalizer should accept distribution names that are consistent with scipy - Issue[#656](https://github.com/sdv-dev/RDT/issues/656) by @fealho
+* The GaussianNormalizer should accept uniform distributions - Issue[#655](https://github.com/sdv-dev/RDT/issues/655) by @fealho
+* Remove psutil - Issue[#615](https://github.com/sdv-dev/RDT/issues/615) by @fealho
+* Consider deprecating the FrequencyEncoder - Issue[#614](https://github.com/sdv-dev/RDT/issues/614) by @fealho
+* Replace missing values with variable (random) values from the dataset - Issue[#606](https://github.com/sdv-dev/RDT/issues/606)
+
+### Bugs
+
+* RDT Uniform Encoder creates nan Value bug - Issue[#719](https://github.com/sdv-dev/RDT/issues/719) by @lajohn4747
+* HyperTransformer transforms while fitting and messes up the random seed - Issue[#716](https://github.com/sdv-dev/RDT/issues/716) by @pvk-developer
+* Resolve locales warning for specific sdtype/locale combos (eg. en_US with postcode) - Issue[#701](https://github.com/sdv-dev/RDT/issues/701) by @pvk-developer
+* The OrderedLabelEncoder should not accept duplicate categories - Issue[#673](https://github.com/sdv-dev/RDT/issues/673) by @frances-h 
+* ClusterBasedNormalizer crashes on reverse transform (IndexError) - Issue[#672](https://github.com/sdv-dev/RDT/issues/672) by @fealho
+* Unnecessary warning in OneHotEncoder when there are nan values - Issue[#616](https://github.com/sdv-dev/RDT/issues/616) by @fealho
+
+### Maintenance
+
+* Remove performance tests - Issue[#707](https://github.com/sdv-dev/RDT/issues/707) by @fealho
+* ClusterBasedNormalizer code cleanup - Issue[#696](https://github.com/sdv-dev/RDT/issues/696) by @fealho
+* Switch default branch from master to main - Issue[#687](https://github.com/sdv-dev/RDT/issues/687) by @amontanez24
+
+### Deprecations
+
+* The `frequencyEncoder` transformer will no longer be supported in future versions of RDT. Please use the `UniformEncoder` transformer instead.
+* `GaussianNormalizer` distribution option names have been updated to be consistent with scipy. `gaussian` -> `norm`, `student_t`-> `t`, and `truncated_gaussian` -> `truncnorm`
+
 ## 1.7.0 - 2023-08-22
 
 This release adds 3 new transformers:
