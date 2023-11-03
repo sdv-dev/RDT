@@ -85,7 +85,7 @@ class AnonymizedFaker(BaseTransformer):
                 provider_name = self.provider_name.replace(f'.{locale}', '')
 
             spec = importlib.util.find_spec(f'faker.providers.{provider_name}.{locale}')
-            if spec is None:
+            if spec is None and locale != 'en_US':
                 missed_locales.append(locale)
 
         if missed_locales:
