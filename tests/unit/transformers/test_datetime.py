@@ -17,13 +17,15 @@ class TestUnixTimestampEncoder:
         transformer = UnixTimestampEncoder(
             missing_value_replacement='mode',
             missing_value_generation='from_column',
-            datetime_format='%M-%d-%Y'
+            datetime_format='%M-%d-%Y',
+            enforce_min_max_values=True,
         )
 
         # Asserts
         assert transformer.missing_value_replacement == 'mode'
         assert transformer.missing_value_generation == 'from_column'
         assert transformer.datetime_format == '%M-%d-%Y'
+        assert transformer.enforce_min_max_values is True
 
     def test___init__with_model_missing_values(self):
         """Test the ``__init__`` method and the passed arguments are stored as attributes."""
@@ -267,6 +269,23 @@ class TestUnixTimestampEncoder:
             np.array([1.577837e+18, 1.580515e+18, 1.583021e+18]), rtol=1e-5
         )
 
+    def test__fit_enforce_min_max_values(self):
+        """Test the ``_fit`` method when enforce_min_max_values is True.
+
+        It should compute the min and max values of the integer conversion
+        of the datetimes.
+        """
+        # Setup
+        data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
+        transformer = UnixTimestampEncoder(enforce_min_max_values=True)
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer._min_value == 1.5778368e+18
+        assert transformer._max_value == 1.5830208e+18
+
     def test__fit_calls_transform_helper(self):
         """Test the ``_fit`` method.
 
@@ -379,6 +398,30 @@ class TestUnixTimestampEncoder:
 
         # Assert
         expected = pd.Series(pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01']))
+        pd.testing.assert_series_equal(output, expected)
+
+    def test__reverse_transform_enforce_min_max_values(self):
+        """Test the ``_reverse_transform`` with enforce_min_max_values True.
+
+        All the values that are outside the min and max values should be clipped to the min and
+        max values.
+        """
+        # Setup
+        ute = UnixTimestampEncoder(enforce_min_max_values=True)
+        transformed = np.array([
+            1.5678367e+18, 1.5778368e+18, 1.5805152e+18, 1.5830208e+18, 1.5930209e+18
+        ])
+        ute.null_transformer = NullTransformer('mean')
+        ute._min_value = 1.5778368e+18
+        ute._max_value = 1.5830208e+18
+
+        # Run
+        output = ute._reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series(pd.to_datetime([
+            '2020-01-01', '2020-01-01', '2020-02-01', '2020-03-01', '2020-03-01'
+        ]))
         pd.testing.assert_series_equal(output, expected)
 
     def test__reverse_transform_datetime_format_dtype_is_datetime(self):

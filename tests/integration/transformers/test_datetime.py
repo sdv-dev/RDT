@@ -156,6 +156,26 @@ class TestUnixTimestampEncoder:
         pd.testing.assert_frame_equal(expected_transformed, transformed)
         pd.testing.assert_frame_equal(reverted, data)
 
+    def test_with_enforce_min_max_values_true(self):
+        """Test that the transformer properly clipped out of bounds values."""
+        # Setup
+        ute = UnixTimestampEncoder(enforce_min_max_values=True)
+        data = pd.DataFrame({'column': ['Feb 03, 1981', 'Oct 17, 1996', 'May 23, 1965']})
+        ute.fit(data, column='column')
+
+        # Run
+        transformed = ute.transform(data)
+        min_val = transformed['column'].min()
+        max_val = transformed['column'].max()
+        transformed.loc[transformed['column'] == min_val, 'column'] = min_val - 1e17
+        transformed.loc[transformed['column'] == max_val, 'column'] = max_val + 1e17
+        reverted = ute.reverse_transform(transformed)
+
+        # Asserts
+        assert ute._min_value == min_val
+        assert ute._max_value == max_val
+        pd.testing.assert_frame_equal(reverted, data)
+
 
 class TestOptimizedTimestampEncoder:
     def test_optimizedtimestampencoder(self):
