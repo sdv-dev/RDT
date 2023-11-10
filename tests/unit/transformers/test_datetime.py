@@ -507,6 +507,24 @@ class TestUnixTimestampEncoder:
 
 class TestOptimizedTimestampEncoder:
 
+    def test___init__(self):
+        """Test the ``__init__`` method."""
+        # Run
+        transformer = OptimizedTimestampEncoder(
+            missing_value_replacement='mode',
+            missing_value_generation='from_column',
+            datetime_format='%M-%d-%Y',
+            enforce_min_max_values=True,
+        )
+
+        # Asserts
+        assert transformer.enforce_min_max_values is True
+        assert transformer.missing_value_replacement == 'mode'
+        assert transformer.missing_value_generation == 'from_column'
+        assert transformer.datetime_format == '%M-%d-%Y'
+        assert transformer.divider is None
+        assert transformer.null_transformer is None
+
     def test__find_divider(self):
         """Test the ``_find_divider`` method.
 
