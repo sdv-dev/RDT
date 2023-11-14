@@ -30,9 +30,6 @@ class UnixTimestampEncoder(BaseTransformer):
         datetime_format (str):
             The strftime to use for parsing time. For more information, see
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
-        enforce_min_max_values (bool):
-            Whether or not to clip the data returned by ``reverse_transform`` to the min and
-            max values seen during ``fit``. Defaults to ``False``.
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
 
@@ -42,6 +39,9 @@ class UnixTimestampEncoder(BaseTransformer):
                   value was missing. Then use it to recreate missing values.
                 * ``None``: Do nothing with the missing values on the reverse transform. Simply
                   pass whatever data we get through.
+        enforce_min_max_values (bool):
+            Whether or not to clip the data returned by ``reverse_transform`` to the min and
+            max values seen during ``fit``. Defaults to ``False``.
     """
 
     INPUT_SDTYPE = 'datetime'
@@ -50,8 +50,8 @@ class UnixTimestampEncoder(BaseTransformer):
     _max_value = None
 
     def __init__(self, missing_value_replacement='mean', model_missing_values=None,
-                 datetime_format=None, enforce_min_max_values=False,
-                 missing_value_generation='random'):
+                 datetime_format=None, missing_value_generation='random',
+                 enforce_min_max_values=False):
         super().__init__()
         self._set_missing_value_replacement('mean', missing_value_replacement)
         self._set_missing_value_generation(missing_value_generation)
@@ -213,9 +213,6 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
         datetime_format (str):
             The strftime to use for parsing time. For more information, see
             https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior.
-        enforce_min_max_values (bool):
-            Whether or not to clip the data returned by ``reverse_transform`` to the min and
-            max values seen during ``fit``. Defaults to ``False``.
         missing_value_generation (str or None):
             The way missing values are being handled. There are three strategies:
 
@@ -225,13 +222,16 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
                   value was missing. Then use it to recreate missing values.
                 * ``None``: Do nothing with the missing values on the reverse transform. Simply
                   pass whatever data we get through.
+        enforce_min_max_values (bool):
+            Whether or not to clip the data returned by ``reverse_transform`` to the min and
+            max values seen during ``fit``. Defaults to ``False``.
     """
 
     divider = None
 
     def __init__(self, missing_value_replacement=None, model_missing_values=None,
-                 datetime_format=None, enforce_min_max_values=False,
-                 missing_value_generation='random'):
+                 datetime_format=None, missing_value_generation='random',
+                 enforce_min_max_values=False):
         super().__init__(missing_value_replacement=missing_value_replacement,
                          missing_value_generation=missing_value_generation,
                          enforce_min_max_values=enforce_min_max_values,
