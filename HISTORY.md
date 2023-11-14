@@ -1,5 +1,27 @@
 # History
 
+## 1.9.0 - 2023-11-14
+
+This release adds a parameter to the `UnixTimestampEncoder` and `OptimizedTimestampEncoder`, called `enforce_min_max_values`. When this is set to True, it clips all values in the reverse transformed data to the min and max datetimes seen in the fitted data.
+
+This release also internally adds support for multi-column transformers!
+
+### New Features
+
+* Support multi-column transformers - Issue [#683](https://github.com/sdv-dev/RDT/issues/683) by @R-Palazzo
+* Improve user warnings and logic for update_sdtype - Issue [#684](https://github.com/sdv-dev/RDT/issues/684) by @R-Palazzo
+* Improve user warnings and logic for update_transformers and update_transformers_by_sdtype - Issue [#685](https://github.com/sdv-dev/RDT/issues/685) by @R-Palazzo
+* Improve user warnings and logic for remove_transformers and remove_transformers_by_sdtype - Issue [#686](https://github.com/sdv-dev/RDT/issues/686) by @R-Palazzo
+* Add enforce_min_max_values to datetime transformers - Issue [#740](https://github.com/sdv-dev/RDT/issues/740) by @R-Palazzo
+
+### Internal
+
+* Support multi-column transformers - Issue [#683](https://github.com/sdv-dev/RDT/issues/683) by @R-Palazzo
+
+### Bugs Fixed
+
+* Multi column transformers crash when assigned to single column - Issue [#734](https://github.com/sdv-dev/RDT/issues/734) by @R-Palazzo
+
 ## 1.8.0 - 2023-10-31
 
 This release adds the 'random' missing value replacement strategy, which uses random values of the dataset to fill in missing values. 
