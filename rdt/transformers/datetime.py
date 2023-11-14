@@ -19,7 +19,8 @@ class UnixTimestampEncoder(BaseTransformer):
     Args:
         missing_value_replacement (object):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
-            are given, replace them with the corresponding aggregation.
+            are given, replace them with the corresponding aggregation, if ``'random'``, use
+            random values from the dataset to fill the nan values.
             Defaults to ``mean``.
         model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
@@ -38,16 +39,23 @@ class UnixTimestampEncoder(BaseTransformer):
                   value was missing. Then use it to recreate missing values.
                 * ``None``: Do nothing with the missing values on the reverse transform. Simply
                   pass whatever data we get through.
+        enforce_min_max_values (bool):
+            Whether or not to clip the data returned by ``reverse_transform`` to the min and
+            max values seen during ``fit``. Defaults to ``False``.
     """
 
     INPUT_SDTYPE = 'datetime'
     null_transformer = None
+    _min_value = None
+    _max_value = None
 
     def __init__(self, missing_value_replacement='mean', model_missing_values=None,
-                 datetime_format=None, missing_value_generation='random'):
+                 datetime_format=None, missing_value_generation='random',
+                 enforce_min_max_values=False):
         super().__init__()
         self._set_missing_value_replacement('mean', missing_value_replacement)
         self._set_missing_value_generation(missing_value_generation)
+        self.enforce_min_max_values = enforce_min_max_values
         if model_missing_values is not None:
             self._set_model_missing_values(model_missing_values)
 
@@ -123,6 +131,10 @@ class UnixTimestampEncoder(BaseTransformer):
             self.datetime_format = _guess_datetime_format_for_array(datetime_array)
 
         transformed = self._transform_helper(data)
+        if self.enforce_min_max_values:
+            self._min_value = transformed.min()
+            self._max_value = transformed.max()
+
         self.null_transformer = NullTransformer(
             self.missing_value_replacement,
             self.missing_value_generation
@@ -154,6 +166,9 @@ class UnixTimestampEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
+        if self.enforce_min_max_values:
+            data = data.clip(self._min_value, self._max_value)
+
         data = self._reverse_transform_helper(data)
         datetime_data = pd.to_datetime(data)
         if self.datetime_format:
@@ -187,7 +202,8 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
     Args:
         missing_value_replacement (object):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
-            are given, replace them with the corresponding aggregation.
+            are given, replace them with the corresponding aggregation, if ``'random'``, use
+            random values from the dataset to fill the nan values.
             Defaults to ``mean``.
         model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
@@ -206,14 +222,19 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
                   value was missing. Then use it to recreate missing values.
                 * ``None``: Do nothing with the missing values on the reverse transform. Simply
                   pass whatever data we get through.
+        enforce_min_max_values (bool):
+            Whether or not to clip the data returned by ``reverse_transform`` to the min and
+            max values seen during ``fit``. Defaults to ``False``.
     """
 
     divider = None
 
     def __init__(self, missing_value_replacement=None, model_missing_values=None,
-                 datetime_format=None, missing_value_generation='random'):
+                 datetime_format=None, missing_value_generation='random',
+                 enforce_min_max_values=False):
         super().__init__(missing_value_replacement=missing_value_replacement,
                          missing_value_generation=missing_value_generation,
+                         enforce_min_max_values=enforce_min_max_values,
                          model_missing_values=model_missing_values,
                          datetime_format=datetime_format)
 

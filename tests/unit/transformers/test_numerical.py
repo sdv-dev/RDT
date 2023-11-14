@@ -24,7 +24,8 @@ class TestFloatFormatter(TestCase):
         assert nt.missing_value_replacement == 'mode'
         assert nt.missing_value_generation == 'random'
 
-    def test__learn_rounding_digits_more_than_15_decimals(self):
+    @patch('rdt.transformers.numerical.LOGGER')
+    def test__learn_rounding_digits_more_than_15_decimals(self, logger_mock):
         """Test the _learn_rounding_digits method with more than 15 decimals.
 
         If the data has more than 15 decimals, return None and raise warning.
@@ -32,11 +33,12 @@ class TestFloatFormatter(TestCase):
         # Setup
         data = pd.Series(np.random.random(size=10).round(20), name='col')
 
-        # Run and Assert
-        warn_msg = "No rounding scheme detected for column 'col'. Data will not be rounded."
-        with pytest.warns(UserWarning, match=warn_msg):
-            output = FloatFormatter._learn_rounding_digits(data)
+        # Run
+        output = FloatFormatter._learn_rounding_digits(data)
 
+        # Assert
+        logger_msg = "No rounding scheme detected for column '%s'. Data will not be rounded."
+        logger_mock.info.assert_called_once_with(logger_msg, 'col')
         assert output is None
 
     def test__learn_rounding_digits_less_than_15_decimals(self):
@@ -797,6 +799,18 @@ class TestGaussianNormalizer:
 
         assert ct._distribution is univariate
 
+    def test___init__deprecated_distributions_warning(self):
+        """Test it warns when using deprecated distributions."""
+        # Run and Assert
+        dists = zip(['gaussian', 'student_t', 'truncated_gaussian'], ['norm', 't', 'truncnorm'])
+        for deprecated, distribution in dists:
+            err_msg = re.escape(
+                f"Future versions of RDT will not support '{deprecated}' as an option. "
+                f"Please use '{distribution}' instead."
+            )
+            with pytest.warns(FutureWarning, match=err_msg):
+                GaussianNormalizer(distribution=deprecated)
+
     def test__get_distributions_copulas_not_installed(self):
         """Test the ``_get_distributions`` method when copulas is not installed.
 
@@ -835,12 +849,13 @@ class TestGaussianNormalizer:
 
         # Assert
         expected = {
-            'gaussian': univariate.GaussianUnivariate,
             'gamma': univariate.GammaUnivariate,
             'beta': univariate.BetaUnivariate,
-            'student_t': univariate.StudentTUnivariate,
             'gaussian_kde': univariate.GaussianKDE,
-            'truncated_gaussian': univariate.TruncatedGaussian,
+            'uniform': univariate.UniformUnivariate,
+            'truncnorm': univariate.TruncatedGaussian,
+            'norm': univariate.GaussianUnivariate,
+            't': univariate.StudentTUnivariate,
         }
         assert distributions == expected
 
@@ -1213,7 +1228,6 @@ class TestClusterBasedNormalizer(TestCase):
             n_components=10,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,
-            n_init=1,
             random_state=0
         )
 

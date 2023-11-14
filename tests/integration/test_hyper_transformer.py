@@ -6,12 +6,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt import HyperTransformer, get_demo
+from rdt import get_demo
 from rdt.errors import ConfigNotSetError, InvalidConfigError, InvalidDataError, NotFittedError
+from rdt.hyper_transformer import Config, HyperTransformer
 from rdt.transformers import (
-    AnonymizedFaker, BaseTransformer, BinaryEncoder, ClusterBasedNormalizer, FloatFormatter,
-    FrequencyEncoder, LabelEncoder, OneHotEncoder, RegexGenerator, UniformEncoder,
-    UnixTimestampEncoder, get_default_transformer, get_default_transformers)
+    AnonymizedFaker, BaseMultiColumnTransformer, BaseTransformer, BinaryEncoder,
+    ClusterBasedNormalizer, FloatFormatter, FrequencyEncoder, LabelEncoder, OneHotEncoder,
+    RegexGenerator, UniformEncoder, UnixTimestampEncoder, get_default_transformer,
+    get_default_transformers)
 from rdt.transformers.datetime import OptimizedTimestampEncoder
 from rdt.transformers.numerical import GaussianNormalizer
 from rdt.transformers.pii.anonymizer import PseudoAnonymizedFaker
@@ -52,6 +54,29 @@ class DummyTransformerNotMLReady(BaseTransformer):
         return data.astype('datetime64[ns]')
 
 
+class DummyMultiColumnTransformerNumerical(BaseMultiColumnTransformer):
+    """Multi column transformer that takes categorical data."""
+
+    SUPPORTED_SDTYPES = ['categorical', 'boolean']
+
+    def _fit(self, data):
+        self.output_properties = {
+            column: {
+                'sdtype': 'numerical',
+                'next_transformer': None,
+            } for column in self.columns
+        }
+
+    def _get_prefix(self):
+        return None
+
+    def _transform(self, data):
+        return data.astype(float)
+
+    def _reverse_transform(self, data):
+        return data.astype(str)
+
+
 TEST_DATA_INDEX = [4, 6, 3, 8, 'a', 1.0, 2.0, 3.0]
 
 
@@ -87,23 +112,41 @@ def get_transformed_data():
         1.262304e+18,
         1.264982e+18,
         1.262304e+18,
-        1.262304e+18
+        1.262304e+18,
     ]
     return pd.DataFrame({
         'integer': [1., 2., 1., 3., 1., 4., 2., 3.],
         'float': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
         'categorical': [
-            0.6056724228102, 0.551035999670618, 0.6747435795337998, 0.9245683344321064,
-            0.5791232599393884, 0.9570454751421033, 0.5800536682210967, 0.3183267452542666
+            0.239836,
+            0.233842,
+            0.654524,
+            0.994903,
+            0.371298,
+            0.659559,
+            0.270355,
+            0.120638,
         ],
         'bool': [
-            0.196209398885917, 0.4301613485619816, 0.02000535472243109, 0.7993073999936193,
-            0.6645481177917991, 0.25074590518885065, 0.7772353030710347, 0.46369904088373604
+            0.667087,
+            0.238123,
+            0.345841,
+            0.842023,
+            0.478896,
+            0.495079,
+            0.775272,
+            0.675913,
         ],
         'datetime': datetimes,
         'names': [
-            0.15112620775650704, 0.857444679914493, 0.7654375186193025, 0.42569016008650984,
-            0.30010761543029285, 0.9108473448910603, 0.15922866807030298, 0.3875325513134956
+            0.159704,
+            0.684242,
+            0.719619,
+            0.458355,
+            0.536445,
+            0.991478,
+            0.078868,
+            0.575187,
         ]
     }, index=TEST_DATA_INDEX)
 
@@ -158,31 +201,48 @@ class TestHyperTransformer:
         reverse_transformed = ht.reverse_transform(transformed)
 
         # Assert
-        expected_datetimes = [
-            1.263069e+18,
-            1.264982e+18,
-            1.262304e+18,
-            1.262304e+18,
-            1.262304e+18,
-            1.264982e+18,
-            1.262304e+18,
-            1.262304e+18
-        ]
         expected_transformed = pd.DataFrame({
-            'integer': [1., 2., 1., 3., 1., 4., 2., 3.],
-            'float': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
+            'integer': [1.0, 2.0, 1.0, 3.0, 1.0, 4.0, 2.0, 3.0],
+            'float': [0.1, 0.2, 0.1, 0.20000000000000004, 0.1, 0.4, 0.20000000000000004, 0.3],
             'categorical': [
-                0.6056724228102, 0.551035999670618, 0.6415811931779333, 0.9497122229547376,
-                0.5791232599393884, 0.9713636500947356, 0.5800536682210967, 0.3183267452542666
+                0.239836,
+                0.233842,
+                0.634841,
+                0.996602,
+                0.371298,
+                0.773039,
+                0.270355,
+                0.120638,
             ],
             'bool': [
-                0.13080626592394468, 0.6433871161873272, 0.013336903148287393, 0.7993073999936193,
-                0.4430320785278661, 0.5835819683962835, 0.7772353030710347, 0.3091326939224907
+                0.444725,
+                0.579374,
+                0.230561,
+                0.842023,
+                0.319264,
+                0.665026,
+                0.775272,
+                0.450609,
             ],
-            'datetime': expected_datetimes,
+            'datetime': [
+                1.2630692571428572e+18,
+                1.2649824e+18,
+                1.262304e+18,
+                1.262304e+18,
+                1.262304e+18,
+                1.2649824e+18,
+                1.262304e+18,
+                1.262304e+18
+            ],
             'names': [
-                0.15112620775650704, 0.857444679914493, 0.7654375186193025, 0.42569016008650984,
-                0.30010761543029285, 0.9108473448910603, 0.15922866807030298, 0.3875325513134956
+                0.159704,
+                0.684242,
+                0.719619,
+                0.458355,
+                0.536445,
+                0.991478,
+                0.078868,
+                0.575187,
             ]
         }, index=TEST_DATA_INDEX)
         pd.testing.assert_frame_equal(transformed, expected_transformed)
@@ -199,7 +259,16 @@ class TestHyperTransformer:
         ])
         expected_reversed = pd.DataFrame({
             'integer': [1, 2, 1, 3, 1, 4, 2, 3],
-            'float': [0.1, 0.2, 0.1, 0.20000000000000004, 0.1, 0.4, 0.20000000000000004, 0.3],
+            'float': [
+                0.100000,
+                np.nan,
+                np.nan,
+                0.20000000000000004,
+                0.100000,
+                0.400000,
+                np.nan,
+                0.300000,
+            ],
             'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
             'bool': [False, False, False, True, False, False, True, False],
             'datetime': reversed_datetimes,
@@ -1042,7 +1111,9 @@ class TestHyperTransformer:
         # Test transforming multiple times with different transformers
         expected_first_transformed = pd.DataFrame({
             'age': [18.0, 25.0, 54.0, 60.0, 31.0],
-            'signup_day': [1.577837e+18, 1.455840e+18, 1.554077e+18, 1.228090e+18, 1.463357e+18],
+            'signup_day': [
+                1.5778368e+18, 1.45584e+18, 1.5540768e+18, 1.2280896e+18, 1.4633568e+18
+            ],
             'balance.normalized': [
                 -2.693016e-01,
                 -2.467182e-01,
@@ -1052,16 +1123,18 @@ class TestHyperTransformer:
             ],
             'balance.component': [0.0, 0, 0, 0, 0],
             'card_type': [
-                0.31440326318001877,
-                0.2879792449993428,
-                0.7147347796329043,
-                0.9397813187279729,
-                0.25144169889394075
+                0.413995,
+                0.224306,
+                0.639794,
+                0.862760,
+                0.263703,
             ]
         })
         expected_second_transformed = pd.DataFrame({
             'age': [18.0, 25.0, 54.0, 60.0, 31.0],
-            'signup_day': [1.577837e+18, 1.455840e+18, 1.554077e+18, 1.228090e+18, 1.463357e+18],
+            'signup_day': [
+                1.5778368e+18, 1.45584e+18, 1.5540768e+18, 1.2280896e+18, 1.4633568e+18
+            ],
             'balance.normalized': [
                 -2.693016e-01,
                 -2.467182e-01,
@@ -1071,11 +1144,11 @@ class TestHyperTransformer:
             ],
             'balance.component': [0.0, 0, 0, 0, 0],
             'card_type': [
-                0.20248666820805558,
-                0.4408301080724041,
-                0.7082705433167992,
-                0.8911691002937682,
-                0.2679993642397502
+                0.314403,
+                0.287979,
+                0.714735,
+                0.939781,
+                0.251442,
             ]
         })
 
@@ -1096,7 +1169,7 @@ class TestHyperTransformer:
                 '4863061245886958069',
                 '4039466324278480',
                 '4217004814656859',
-                '4343691397776091'
+                '4343691397776091',
             ],
             'age': [18, 25, 54, 60, 31],
             'name': ['AAAAA', 'AAAAB', 'AAAAC', 'AAAAD', 'AAAAE'],
@@ -1110,7 +1183,7 @@ class TestHyperTransformer:
                 '3547584322792794',
                 '30187802217181',
                 '4138954513622487900',
-                '346502559595986'
+                '346502559595986',
             ],
             'age': [18, 25, 54, 60, 31],
             'name': ['AAAAF', 'AAAAG', 'AAAAH', 'AAAAI', 'AAAAJ'],
@@ -1353,8 +1426,8 @@ class TestHyperTransformer:
 
         # Run
         ht.fit(data)
-        transformed = ht.transform(data)
-        reversed1 = ht.reverse_transform(transformed)
+        transformed1 = ht.transform(data)
+        reversed1 = ht.reverse_transform(transformed1)
 
         # Assert
         assert reversed1['num1'].isna().tolist() != reversed1['num2'].isna().tolist()
@@ -1365,8 +1438,380 @@ class TestHyperTransformer:
 
         # Run
         ht.reset_randomization()
-        transformed = ht.transform(data)
-        reversed2 = ht.reverse_transform(transformed)
+        transformed2 = ht.transform(data)
+        reversed2 = ht.reverse_transform(transformed2)
 
         # Assert
         pd.testing.assert_frame_equal(reversed1, reversed2)
+
+    def test_hypertransformer_with_mutli_column_transformer_end_to_end(self):
+        """Test ``HyperTransformer`` with mutli column transformers end to end."""
+        # Setup
+        data_test = pd.DataFrame({
+            'A': ['1.0', '2.0', '3.0'],
+            'B': ['4.0', '5.0', '6.0'],
+            'C': [True, False, True]
+        })
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean'
+            },
+            'transformers': {
+                ('A', 'B'): DummyMultiColumnTransformerNumerical(),
+                'C': UniformEncoder()
+            }
+        }
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        transformed_data = ht.fit_transform(data_test)
+        reverse_transformed_data = ht.reverse_transform(transformed_data)
+
+        # Assert
+        expected_transformed_data = pd.DataFrame({
+            'A': [1.0, 2.0, 3.0],
+            'B': [4.0, 5.0, 6.0],
+            'C': [0.10333535312718026, 0.6697388922326716, 0.18775548909503287]
+        })
+
+        pd.testing.assert_frame_equal(transformed_data, expected_transformed_data)
+        pd.testing.assert_frame_equal(reverse_transformed_data, data_test)
+
+    def test_hypertransformer_with_mutli_column_transformer_and_single_column(self):
+        """Test a mutli column transformer used with for a single column."""
+        # Setup
+        data_test = pd.DataFrame({
+            'A': ['1.0', '2.0', '3.0'],
+            'B2': ['4.0', '5.0', '6.0'],
+            'C': [True, False, True]
+        })
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B2': 'categorical',
+                'C': 'boolean'
+            },
+            'transformers': {
+                'A': DummyMultiColumnTransformerNumerical(),
+                ('B2', ): DummyMultiColumnTransformerNumerical(),
+                'C': UniformEncoder()
+            }
+        }
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        transformed_data = ht.fit_transform(data_test)
+        reverse_transformed_data = ht.reverse_transform(transformed_data)
+
+        # Assert
+        expected_transformed_data = pd.DataFrame({
+            'A': [1.0, 2.0, 3.0],
+            'B2': [4.0, 5.0, 6.0],
+            'C': [0.04206197607326308, 0.8000968077312287, 0.06325519846695522]
+        })
+
+        pd.testing.assert_frame_equal(transformed_data, expected_transformed_data)
+        pd.testing.assert_frame_equal(reverse_transformed_data, data_test)
+
+    def test_update_transformers_single_to_multi_column(self):
+        """Test ``update_transformers`` to go from single to mutli column transformer."""
+        # Setup
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean'
+            },
+            'transformers': {
+                'A': None,
+                'B': UniformEncoder(),
+                'C': UniformEncoder()
+            }
+        }
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        ht.update_transformers({
+            ('A', 'B'): DummyMultiColumnTransformerNumerical(),
+        })
+        new_config = ht.get_config()
+
+        # Assert
+        expected_config = Config({
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean'
+            },
+            'transformers': {
+                'C': UniformEncoder(),
+                ('A', 'B'): DummyMultiColumnTransformerNumerical(),
+            }
+        })
+
+        expected_multi_columns = {
+            'A': ('A', 'B'),
+            'B': ('A', 'B'),
+        }
+
+        assert repr(new_config) == repr(expected_config)
+        assert ht._multi_column_fields == expected_multi_columns
+
+    def test_update_transformers_multi_to_single_column(self):
+        """Test ``update_transformers`` to go from multi to single column transformer."""
+
+        # Setup
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                ('B', 'C', 'D'): DummyMultiColumnTransformerNumerical(),
+                'E': UniformEncoder()
+            }
+        }
+
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        ht.update_transformers({
+            ('A', 'B'): DummyMultiColumnTransformerNumerical(),
+            'D': UniformEncoder()
+        })
+        new_config = ht.get_config()
+
+        # Assert
+        expected_config = Config({
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'E': UniformEncoder(),
+                "('A', 'B')": DummyMultiColumnTransformerNumerical(),
+                'C': DummyMultiColumnTransformerNumerical(),
+                'D': UniformEncoder()
+            }
+        })
+
+        expected_multi_columns = {
+            'A': ('A', 'B'),
+            'B': ('A', 'B'),
+        }
+        assert repr(new_config) == repr(expected_config)
+        assert ht._multi_column_fields == expected_multi_columns
+
+    def test_update_transformers_by_sdtype_mutli_column(self):
+        """Test ``update_transformers_by_sdtype`` with mutli column transformers."""
+        # Setup
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                ('B', 'C', 'D'): DummyMultiColumnTransformerNumerical(),
+                'E': UniformEncoder()
+            }
+        }
+
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        ht.update_transformers_by_sdtype('boolean', transformer_name='LabelEncoder')
+        new_config = ht.get_config()
+
+        # Assert
+        expected_config = Config({
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                'E': UniformEncoder(),
+                'C': LabelEncoder(),
+                "('B', 'D')": DummyMultiColumnTransformerNumerical()
+            }
+        })
+        expected_multi_columns = {
+            'B': ('B', 'D'),
+            'D': ('B', 'D')
+        }
+
+        assert repr(new_config) == repr(expected_config)
+        assert ht._multi_column_fields == expected_multi_columns
+
+    def test_remove_transformer(self):
+        """Test ``remove_transformer`` with multi column transformer."""
+        # Setup
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                ('B', 'C', 'D'): DummyMultiColumnTransformerNumerical(),
+                'E': UniformEncoder()
+            }
+        }
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        ht.remove_transformers(column_names=['B'])
+        new_config = ht.get_config()
+
+        # Assert
+        expected_config = Config({
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                'E': UniformEncoder(),
+                "('C', 'D')": DummyMultiColumnTransformerNumerical(),
+                'B': None
+            }
+        })
+        exepected_multi_columns = {
+            'C': ('C', 'D'),
+            'D': ('C', 'D')
+        }
+
+        assert repr(new_config) == repr(expected_config)
+        assert ht._multi_column_fields == exepected_multi_columns
+
+    def test_remove_transformer_by_sdtype(self):
+        """Test ``remove_transformer_by_sdtype`` with multi column transformer."""
+        # Setup
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                ('B', 'C', 'D'): DummyMultiColumnTransformerNumerical(),
+                'E': UniformEncoder()
+            }
+        }
+
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        ht.remove_transformers_by_sdtype(sdtype='boolean')
+        new_config = ht.get_config()
+
+        # Assert
+        expected_config = Config({
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                'E': UniformEncoder(),
+                "('B', 'D')": DummyMultiColumnTransformerNumerical(),
+                'C': None
+            }
+        })
+
+        assert repr(new_config) == repr(expected_config)
+
+    def test_update_sdtype(self):
+        """Test ``update_sdtypes`` with multi column transformer."""
+        # Setup
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'boolean',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                ('B', 'C', 'D'): DummyMultiColumnTransformerNumerical(),
+                'E': UniformEncoder()
+            }
+        }
+
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        ht.update_sdtypes({
+            'C': 'numerical',
+            'A': 'numerical'
+        })
+        new_config = ht.get_config()
+
+        # Assert
+        expected_config = Config({
+            'sdtypes': {
+                'A': 'numerical',
+                'B': 'categorical',
+                'C': 'numerical',
+                'D': 'categorical',
+                'E': 'categorical'
+            },
+            'transformers': {
+                'A': FloatFormatter(),
+                'E': UniformEncoder(),
+                "('B', 'D')": DummyMultiColumnTransformerNumerical(),
+                'C': FloatFormatter()
+            }
+        })
+        expected_multi_columns = {
+            'B': ('B', 'D'),
+            'D': ('B', 'D')
+        }
+
+        assert repr(new_config) == repr(expected_config)
+        assert ht._multi_column_fields == expected_multi_columns

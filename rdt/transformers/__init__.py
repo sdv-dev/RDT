@@ -9,7 +9,7 @@ from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 
-from rdt.transformers.base import BaseTransformer
+from rdt.transformers.base import BaseMultiColumnTransformer, BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
 from rdt.transformers.categorical import (
     CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder,
@@ -22,6 +22,7 @@ from rdt.transformers.text import IDGenerator, RegexGenerator
 
 __all__ = [
     'BaseTransformer',
+    'BaseMultiColumnTransformer',
     'BinaryEncoder',
     'ClusterBasedNormalizer',
     'CustomLabelEncoder',
