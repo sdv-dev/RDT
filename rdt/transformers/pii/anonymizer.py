@@ -4,6 +4,7 @@ import hashlib
 import importlib
 import inspect
 import warnings
+from collections.abc import Iterable
 from copy import deepcopy
 from operator import attrgetter
 
@@ -155,10 +156,13 @@ class AnonymizedFaker(BaseTransformer):
 
     def _function(self):
         """Return a callable ``faker`` function."""
-        if self.enforce_uniqueness:
-            return getattr(self.faker.unique, self.function_name)(**self.function_kwargs)
+        faker_attr = self.faker.unique if self.enforce_uniqueness else self.faker
+        result = getattr(faker_attr, self.function_name)(**self.function_kwargs)
 
-        return getattr(self.faker, self.function_name)(**self.function_kwargs)
+        if isinstance(result, Iterable) and not isinstance(result, str):
+            result = ', '.join(map(str, result))
+
+        return result
 
     def _set_faker_seed(self, data):
         hash_value = self.get_input_column()
