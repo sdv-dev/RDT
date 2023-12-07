@@ -155,7 +155,7 @@ class AnonymizedFaker(BaseTransformer):
         self.faker.seed_instance(self._faker_random_seed)
 
     def _function(self):
-        """Return a callable ``faker`` function."""
+        """Return the result of calling the ``faker`` function."""
         faker_attr = self.faker.unique if self.enforce_uniqueness else self.faker
         result = getattr(faker_attr, self.function_name)(**self.function_kwargs)
 
