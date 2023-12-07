@@ -156,6 +156,25 @@ class TestAnonymizedFaker:
         unique_function.assert_called_once_with(type='int')
         assert result == 1
 
+    def test__function_with_iterables_return(self):
+        """Test that ``_function`` returns the values of the iterable."""
+        # setup
+        instance = Mock()
+        instance.enforce_uniqueness = False
+        function = Mock()
+        function.return_value = ('value_1', 'value_2')
+
+        instance.faker.number = function
+        instance.function_name = 'number'
+        instance.function_kwargs = {'type': 'int'}
+
+        # Run
+        result = AnonymizedFaker._function(instance)
+
+        # Assert
+        function.assert_called_once_with(type='int')
+        assert result == 'value_1, value_2'
+
     @patch('rdt.transformers.pii.anonymizer.importlib')
     @patch('rdt.transformers.pii.anonymizer.warnings')
     def test__check_locales(self, mock_warnings, mock_importlib):
