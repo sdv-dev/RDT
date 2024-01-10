@@ -1,5 +1,13 @@
 # History
 
+## 1.9.1 - 2024-01-10
+
+This release fixes a bug that caused the `AnonymizedFaker` to crash with provider/function combinations that return tuples.
+
+### Bugs Fixed
+
+* AnonymizedFaker crashes with ValueError for specific provider/function pairs (eg. currency) - Issue [#743](https://github.com/sdv-dev/RDT/issues/743) by @ R-Palazzo
+
 ## 1.9.0 - 2023-11-14
 
 This release adds a parameter to the `UnixTimestampEncoder` and `OptimizedTimestampEncoder`, called `enforce_min_max_values`. When this is set to True, it clips all values in the reverse transformed data to the min and max datetimes seen in the fitted data.

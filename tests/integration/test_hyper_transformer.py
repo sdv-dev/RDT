@@ -1815,3 +1815,34 @@ class TestHyperTransformer:
 
         assert repr(new_config) == repr(expected_config)
         assert ht._multi_column_fields == expected_multi_columns
+
+    def test_with_tuple_returned_by_faker(self):
+        """Test that the Hypertransformer handles situations when Faker returns a tuple."""
+        # Setup
+        ht = HyperTransformer()
+        ht.set_config({
+            'sdtypes': {
+                'A': 'pii'
+            },
+            'transformers': {
+                'A': AnonymizedFaker(provider_name='currency', function_name='currency')
+            }
+        })
+
+        ht.fit(pd.DataFrame({
+            'A': ['a', 'b', 'c']
+        }))
+
+        # Run
+        result = ht.create_anonymized_columns(num_rows=10, column_names=['A'])
+
+        # Assert
+        expected_results = pd.DataFrame({
+            'A': [
+                'KHR, Cambodian riel', 'TVD, Tuvaluan dollar', 'PKR, Pakistani rupee',
+                'SVC, Salvadoran colón', 'CVE, Cape Verdean escudo', 'BRL, Brazilian real',
+                'RWF, Rwandan franc', 'KZT, Kazakhstani tenge', 'HRK, Croatian kuna',
+                'ILS, Israeli new shekel'
+            ]
+        })
+        pd.testing.assert_frame_equal(result, expected_results)
