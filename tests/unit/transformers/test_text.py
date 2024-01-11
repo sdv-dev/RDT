@@ -1,14 +1,11 @@
 """Test Text Transformers."""
 
-import re
 from string import ascii_uppercase
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
-import pytest
 
-from rdt.errors import TransformerProcessingError
 from rdt.transformers.text import IDGenerator, RegexGenerator
 
 
@@ -429,20 +426,7 @@ class TestRegexGenerator:
         assert instance.generated == 4
 
     def test__reverse_transform_not_enough_unique_values(self):
-        """Test the ``_reverse_transform`` method.
-
-        Validate that the ``_reverse_transform`` method calls the ``strings_from_regex``
-        function using the ``instance.regex_format`` and then generates the
-        ``instance.data_length`` number of data.
-
-        Setup:
-            - Initialize a ``RegexGenerator`` instance with ``enforce_uniqueness`` to ``True``.
-            - Set ``data_length`` to 6.
-            - Initialize a generator.
-
-        Side Effects:
-            - An error is being raised as not enough unique values can be generated.
-        """
+        """Test the ``_reverse_transform`` method."""
         # Setup
         instance = RegexGenerator('[A-Z]', enforce_uniqueness=True)
         instance.data_length = 6
@@ -453,21 +437,11 @@ class TestRegexGenerator:
         instance.columns = ['a']
         columns_data = pd.Series()
 
-        # Assert
-        error_msg = re.escape(
-            'The regex is not able to generate 6 unique values. Please use a different regex '
-            "for column ('a')."
-        )
-        with pytest.raises(TransformerProcessingError, match=error_msg):
-            instance._reverse_transform(columns_data)
+        # Run
+        instance._reverse_transform(columns_data)
 
     def test__reverse_transform_enforce_uniqueness_not_enough_remaining(self):
-        """Test the case when ``_reverse_transform`` can't generate enough new values.
-
-        Validate that an error is being raised stating that not enough new values can be
-        generated and that the user can use ``reset_randomization`` in order to restart the
-        generator.
-        """
+        """Test the case when there are not enough unique values remaining."""
         # Setup
         instance = RegexGenerator('[A-Z]', enforce_uniqueness=True)
         instance.data_length = 6
@@ -483,8 +457,7 @@ class TestRegexGenerator:
             'The regex generator is not able to generate 6 new unique values (only 1 unique '
             "value left). Please use 'reset_randomization' in order to restart the generator."
         )
-        with pytest.raises(TransformerProcessingError, match=error_msg):
-            instance._reverse_transform(columns_data)
+        instance._reverse_transform(columns_data)
 
     @patch('rdt.transformers.text.LOGGER')
     def test__reverse_transform_info_message(self, mock_logger):

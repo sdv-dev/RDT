@@ -4,7 +4,6 @@ import logging
 import numpy as np
 import pandas as pd
 
-from rdt.errors import TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import strings_from_regex
 
@@ -158,11 +157,16 @@ class RegexGenerator(BaseTransformer):
 
         if sample_size > self.generator_size:
             if self.enforce_uniqueness:
-                raise TransformerProcessingError(
-                    f'The regex is not able to generate {sample_size} unique values. '
-                    f"Please use a different regex for column ('{self.get_input_column()}')."
+                warnings.warn(
+                    f"The regex for '{self.get_input_column()}' can only generate {sample_size} "
+                    'unique values. Additional values may not exactly follow the provided regex.'
                 )
-
+            else:
+                warnings.warn(
+                    f'The data has {sample_size} rows but the regex for '
+                    f"'{self.get_input_column()}' can only create {self.generator_size} unique "
+                    f"values. Some values in '{self.get_input_column()}' may be repeated."
+                )
             LOGGER.info(
                 "The data has %s rows but the regex for '%s' can only create %s unique values."
                 " Some values in '%s' may be repeated.",
@@ -170,33 +174,40 @@ class RegexGenerator(BaseTransformer):
             )
 
         remaining = self.generator_size - self.generated
-        if sample_size > self.generator_size - self.generated:
-            if self.enforce_uniqueness:
-                raise TransformerProcessingError(
-                    f'The regex generator is not able to generate {sample_size} new unique '
-                    f'values (only {remaining} unique value left). Please use '
-                    "'reset_randomization' in order to restart the generator."
-                )
-
+        if sample_size > remaining:
             self.reset_randomization()
             remaining = self.generator_size
 
         if remaining >= sample_size:
-            reverse_transformed = np.array([
-                next(self.generator)
-                for _ in range(sample_size)
-            ], dtype=object)
-
+            reverse_transformed = [next(self.generator) for _ in range(sample_size)]
             self.generated += sample_size
 
         else:
-            self.generated = self.generator_size
             generated_values = list(self.generator)
-            reverse_transformed = []
-            while len(reverse_transformed) < sample_size:
-                remaining_samples = sample_size - len(reverse_transformed)
-                reverse_transformed.extend(generated_values[:remaining_samples])
+            reverse_transformed = generated_values[:]
+            self.generated = self.generator_size
+            if self.enforce_uniqueness:
+                counter = 0
+                try:
+                    int(generated_values[0])
+                    dtype = int
+                except ValueError:
+                    dtype = 'other'
 
-            reverse_transformed = np.array(reverse_transformed, dtype=object)
+                while len(reverse_transformed) < sample_size:
+                    remaining_samples = sample_size - len(reverse_transformed)
+                    if dtype == int:
+                        reverse_transformed.extend(
+                            list(range(counter, counter + remaining_samples)))
+                        counter += remaining_samples
+                    else:
+                        reverse_transformed.extend(
+                            [f'{i}({counter})' for i in generated_values[:remaining_samples]])
+                        counter += 1
 
-        return reverse_transformed
+            else:
+                while len(reverse_transformed) < sample_size:
+                    remaining_samples = sample_size - len(reverse_transformed)
+                    reverse_transformed.extend(generated_values[:remaining_samples])
+
+        return np.array(reverse_transformed, dtype=object)
