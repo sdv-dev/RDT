@@ -1086,7 +1086,7 @@ class TestHyperTransformer:
 
         return ht
 
-    def test_reset_randomization(self):  # DELETE
+    def test_reset_randomization(self):
         """Test that the random seeds are properly set and reset.
 
         If two separate ``HyperTransformer``s are fit, they should have the same parameters
