@@ -1,5 +1,5 @@
 """Transformers for text data."""
-import warnings
+import logging
 
 import numpy as np
 import pandas as pd
@@ -7,6 +7,8 @@ import pandas as pd
 from rdt.errors import TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import strings_from_regex
+
+LOGGER = logging.getLogger(__name__)
 
 
 class IDGenerator(BaseTransformer):
@@ -161,10 +163,10 @@ class RegexGenerator(BaseTransformer):
                     f"Please use a different regex for column ('{self.get_input_column()}')."
                 )
 
-            warnings.warn(
-                f"The data has {sample_size} rows but the regex for '{self.get_input_column()}' "
-                f'can only create {self.generator_size} unique values. Some values in '
-                f"'{self.get_input_column()}' may be repeated."
+            LOGGER.info(
+                "The data has %s rows but the regex for '%s' can only create %s unique values."
+                " Some values in '%s' may be repeated.",
+                sample_size, self.get_input_column(), self.generator_size, self.get_input_column()
             )
 
         remaining = self.generator_size - self.generated
