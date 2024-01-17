@@ -426,7 +426,7 @@ class TestRegexGenerator:
         assert instance.generated == 4
 
     @patch('rdt.transformers.text.warnings')
-    def test__reverse_transform_not_enough_unique_values(self, mock_warnings):
+    def test__reverse_transform_not_enough_unique_values_enforce_uniqueness(self, mock_warnings):
         """Test it when there are not enough unique values to generate."""
         # Setup
         instance = RegexGenerator('[A-E]', enforce_uniqueness=True)
@@ -447,6 +447,47 @@ class TestRegexGenerator:
             'unique values. Additional values may not exactly follow the provided regex.'
         )
         np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'A(0)']))
+
+    def test__reverse_transform_not_enough_unique_values(self):
+        """Test it when there are not enough unique values to generate."""
+        # Setup
+        instance = RegexGenerator('[A-E]', enforce_uniqueness=False)
+        instance.data_length = 6
+        generator = AsciiGenerator(5)
+        instance.generator = generator
+        instance.generator_size = 5
+        instance.generated = 0
+        instance.columns = ['a']
+        columns_data = pd.Series()
+
+        # Run
+        out = instance._reverse_transform(columns_data)
+
+        # Assert
+        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'A']))
+
+    @patch('rdt.transformers.text.warnings')
+    def test__reverse_transform_not_enough_unique_values_numerical(self, mock_warnings):
+        """Test it when there are not enough unique values to generate."""
+        # Setup
+        instance = RegexGenerator('[1-3]', enforce_uniqueness=True)
+        instance.data_length = 6
+        generator = AsciiGenerator(5)
+        instance.generator = generator
+        instance.generator_size = 3
+        instance.generated = 0
+        instance.columns = ['a']
+        columns_data = pd.Series()
+
+        # Run
+        out = instance._reverse_transform(columns_data)
+
+        # Assert
+        mock_warnings.warn.assert_called_once_with(
+            "The regex for 'a' can only generate 3 "
+            'unique values. Additional values may not exactly follow the provided regex.'
+        )
+        np.testing.assert_array_equal(out, np.array(['1', '2', '3', '4', '5', '6']))
 
     @patch('rdt.transformers.text.warnings')
     def test__reverse_transform_enforce_uniqueness_not_enough_remaining(self, mock_warnings):
