@@ -323,6 +323,52 @@ class TestUniformEncoder:
         # Asserts
         pd.testing.assert_series_equal(output, data)
 
+    def test__reverse_transform_nan_in_transform(self):
+        """Test ``_reverse_transform`` when there is NaNs in the transform data.
+
+        In this situation, a warning should be raised. If the data was integer, it should be
+        converted to float.
+        """
+        # Setup
+        object_categories = ['a', 'b', 'c']
+        integer_categories = [1, 2, 3]
+        frequencies = [0.2, 0.3, 0.5]
+        intervals = [[0, 0.2], [0.2, 0.5], [0.5, 1]]
+
+        transformer_object = UniformEncoder()
+        transformer_object.dtype = object
+
+        transformer_integer = UniformEncoder()
+        transformer_integer.dtype = np.int64
+        transformer_integer.is_integer = True
+
+        transformer_object.frequencies = dict(zip(object_categories, frequencies))
+        transformer_object.intervals = dict(zip(object_categories, intervals))
+        transformer_integer.frequencies = dict(zip(integer_categories, frequencies))
+        transformer_integer.intervals = dict(zip(integer_categories, intervals))
+
+        transformed = pd.Series([0.1026, 0.1651, np.nan, 0.3116, 0.6546, 0.8541, 0.7041])
+
+        # Run
+        expected_message = (
+            'There are null values in the transformed data. The reversed '
+            'transformed data will contain null values'
+        )
+        expected_message_object = expected_message + '.'
+        expected_message_integer = expected_message + " of type 'float'."
+        with pytest.warns(UserWarning, match=expected_message_object):
+            output_object = transformer_object._reverse_transform(transformed)
+
+        with pytest.warns(UserWarning, match=expected_message_integer):
+            output_integer = transformer_integer._reverse_transform(transformed)
+
+        # Asserts
+        expected_output_object = pd.Series(['a', 'a', np.nan, 'b', 'c', 'c', 'c'])
+        expected_output_integer = pd.Series([1, 1, np.nan, 2, 3, 3, 3])
+
+        pd.testing.assert_series_equal(output_object, expected_output_object)
+        pd.testing.assert_series_equal(output_integer, expected_output_integer)
+
 
 @pytest.fixture(autouse=True)
 def _setup_caplog(caplog):

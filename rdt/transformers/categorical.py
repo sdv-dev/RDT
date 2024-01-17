@@ -50,6 +50,7 @@ class UniformEncoder(BaseTransformer):
             )
 
         self.order_by = order_by
+        self.is_integer = None
 
     def _order_categories(self, unique_data):
         nans = pd.isna(unique_data)
@@ -122,6 +123,7 @@ class UniformEncoder(BaseTransformer):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtypes
+        self.is_integer = pd.api.types.is_integer_dtype(self.dtype)
         data = fill_nan_with_none(data)
         labels = pd.unique(data)
         labels = self._order_categories(labels)
@@ -181,6 +183,7 @@ class UniformEncoder(BaseTransformer):
         bins = [0]
         labels = []
         nan_name = 'NaN'
+        convert_to_float = False
         while nan_name in self.intervals.keys():
             nan_name += '_'
 
@@ -191,8 +194,26 @@ class UniformEncoder(BaseTransformer):
             else:
                 labels.append(key)
 
+        if pd.isna(data).any():
+            message = (
+                'There are null values in the transformed data. The reversed '
+                'transformed data will contain null values'
+            )
+            if self.is_integer:
+                message += " of type 'float'."
+                convert_to_float = True
+            else:
+                message += '.'
+
+            warnings.warn(message)
+
         result = pd.cut(data, bins=bins, labels=labels, include_lowest=True)
-        return result.replace(nan_name, np.nan).astype(self.dtype)
+        result = result.replace(nan_name, np.nan)
+
+        if convert_to_float:
+            return result.astype(float)
+
+        return result.astype(self.dtype)
 
 
 class OrderedUniformEncoder(UniformEncoder):
