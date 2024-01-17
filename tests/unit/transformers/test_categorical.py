@@ -51,6 +51,7 @@ class TestUniformEncoder:
         ordered = transformer._order_categories(arr)
 
         # Assert
+        assert transformer._is_integer is False
         np.testing.assert_array_equal(ordered, np.array(['four', 'one', 'three', 'two']))
 
     def test__order_categories_alphabetical_with_nans(self):
@@ -366,6 +367,7 @@ class TestOrderedUniformEncoder:
         transformer = OrderedUniformEncoder(order=['b', 'c', 'a', None])
 
         # Asserts
+        assert transformer._is_integer is False
         pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
 
     def test___init___duplicate_categories(self):
@@ -558,6 +560,7 @@ class TestFrequencyEncoder:
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
+        assert transformer._is_integer is False
 
     def test__get_intervals(self):
         """Test the ``_get_intervals`` method.
@@ -1889,6 +1892,7 @@ class TestLabelEncoder:
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
         assert transformer.order_by == 'alphabetical'
+        assert transformer._is_integer is False
 
     def test___init___bad_order_by(self):
         """Test that the ``__init__`` raises error if ``order_by`` is a bad value.
@@ -2261,6 +2265,7 @@ class TestOrderedLabelEncoder:
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
+        assert transformer._is_integer is False
         pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
 
     def test___init___duplicate_categories(self):
