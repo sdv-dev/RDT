@@ -1,8 +1,9 @@
+import sre_parse
+from sre_constants import MAXREPEAT
+
 import numpy as np
 import pandas as pd
 import pytest
-import sre_parse
-from sre_constants import MAXREPEAT
 
 from rdt.transformers.utils import (
     _any, _max_repeat, check_nan_in_transform, flatten_column_list, strings_from_regex)
