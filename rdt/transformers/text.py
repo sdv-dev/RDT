@@ -1,5 +1,6 @@
 """Transformers for text data."""
 import logging
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -147,24 +148,28 @@ class RegexGenerator(BaseTransformer):
             sample_size (int):
                 Number of samples to be generated.
         """
+        warned = False
         if sample_size > self.generator_size:
             if self.enforce_uniqueness:
                 warnings.warn(
-                    f"The regex for '{self.get_input_column()}' can only generate {sample_size} "
-                    'unique values. Additional values may not exactly follow the provided regex.'
+                    f"The regex for '{self.get_input_column()}' can only generate "
+                    f'{self.generator_size} unique values. Additional values may not exactly '
+                    'follow the provided regex.'
                 )
+                warned = True
             else:
-                warnings.warn(
-                    f'The data has {sample_size} rows but the regex for '
-                    f"'{self.get_input_column()}' can only create {self.generator_size} unique "
-                    f"values. Some values in '{self.get_input_column()}' may be repeated."
+                LOGGER.info(
+                    "The data has %s rows but the regex for '%s' can only create %s unique values."
+                    " Some values in '%s' may be repeated.",
+                    sample_size, self.get_input_column(), self.generator_size,
+                    self.get_input_column()
                 )
 
         remaining = self.generator_size - self.generated
-        if sample_size > remaining and self.enforce_uniqueness:
+        if sample_size > remaining and self.enforce_uniqueness and not warned:
             warnings.warn(
                 f'The regex generator is not able to generate {sample_size} new unique '
-                f'values (only {remaining} unique value left). Please use '
+                f'values (only {max(remaining, 0)} unique values left). Please use '
                 "'reset_randomization' in order to restart the generator."
             )
 
@@ -183,23 +188,6 @@ class RegexGenerator(BaseTransformer):
         else:
             sample_size = self.data_length
 
-        if sample_size > self.generator_size:
-            if self.enforce_uniqueness:
-                warnings.warn(
-                    f"The regex for '{self.get_input_column()}' can only generate {sample_size} "
-                    'unique values. Additional values may not exactly follow the provided regex.'
-                )
-            else:
-                warnings.warn(
-                    f'The data has {sample_size} rows but the regex for '
-                    f"'{self.get_input_column()}' can only create {self.generator_size} unique "
-                    f"values. Some values in '{self.get_input_column()}' may be repeated."
-                )
-            LOGGER.info(
-                "The data has %s rows but the regex for '%s' can only create %s unique values."
-                " Some values in '%s' may be repeated.",
-                sample_size, self.get_input_column(), self.generator_size, self.get_input_column()
-            )
         self._warn_not_enough_unique_values(sample_size)
 
         remaining = self.generator_size - self.generated
@@ -216,18 +204,19 @@ class RegexGenerator(BaseTransformer):
             reverse_transformed = generated_values[:]
             self.generated = self.generator_size
             if self.enforce_uniqueness:
-                counter = 0
                 try:
                     int(generated_values[0])
                     dtype = int
+                    counter = int(generated_values[-1]) + 1
                 except ValueError:
                     dtype = 'other'
+                    counter = 0
 
                 while len(reverse_transformed) < sample_size:
                     remaining_samples = sample_size - len(reverse_transformed)
                     if dtype == int:
                         reverse_transformed.extend(
-                            list(range(counter, counter + remaining_samples)))
+                            [str(i) for i in range(counter, counter + remaining_samples)])
                         counter += remaining_samples
                     else:
                         reverse_transformed.extend(

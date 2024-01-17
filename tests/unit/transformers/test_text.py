@@ -425,10 +425,11 @@ class TestRegexGenerator:
         np.testing.assert_array_equal(result, expected_result)
         assert instance.generated == 4
 
-    def test__reverse_transform_not_enough_unique_values(self):
-        """Test the ``_reverse_transform`` method."""
+    @patch('rdt.transformers.text.warnings')
+    def test__reverse_transform_not_enough_unique_values(self, mock_warnings):
+        """Test it when there are not enough unique values to generate."""
         # Setup
-        instance = RegexGenerator('[A-Z]', enforce_uniqueness=True)
+        instance = RegexGenerator('[A-E]', enforce_uniqueness=True)
         instance.data_length = 6
         generator = AsciiGenerator(5)
         instance.generator = generator
@@ -438,7 +439,14 @@ class TestRegexGenerator:
         columns_data = pd.Series()
 
         # Run
-        instance._reverse_transform(columns_data)
+        out = instance._reverse_transform(columns_data)
+
+        # Assert
+        mock_warnings.warn.assert_called_once_with(
+            "The regex for 'a' can only generate 5 "
+            'unique values. Additional values may not exactly follow the provided regex.'
+        )
+        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'A(0)']))
 
     @patch('rdt.transformers.text.warnings')
     def test__reverse_transform_enforce_uniqueness_not_enough_remaining(self, mock_warnings):
@@ -453,18 +461,16 @@ class TestRegexGenerator:
         instance.columns = ['a']
         columns_data = pd.Series()
 
+        # Run
+        out = instance._reverse_transform(columns_data)
+
         # Assert
-        error_msg = re.escape(
-            'The regex generator is not able to generate 6 new unique values (only 1 unique '
-            "value left). Please use 'reset_randomization' in order to restart the generator."
-        )
-        instance._reverse_transform(columns_data)
-        
         mock_warnings.warn.assert_called_once_with(
             'The regex generator is not able to generate 6 new unique '
-            'values (only 1 unique value left). Please use '
+            'values (only 1 unique values left). Please use '
             "'reset_randomization' in order to restart the generator."
         )
+        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'F']))
 
     @patch('rdt.transformers.text.LOGGER')
     def test__reverse_transform_info_message(self, mock_logger):
