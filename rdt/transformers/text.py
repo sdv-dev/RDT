@@ -140,6 +140,34 @@ class RegexGenerator(BaseTransformer):
         """Drop the input column by returning ``None``."""
         return None
 
+    def _warn_not_enough_unique_values(self, sample_size):
+        """Warn the user that the regex cannot generate enough unique values.
+
+        Args:
+            sample_size (int):
+                Number of samples to be generated.
+        """
+        if sample_size > self.generator_size:
+            if self.enforce_uniqueness:
+                warnings.warn(
+                    f"The regex for '{self.get_input_column()}' can only generate {sample_size} "
+                    'unique values. Additional values may not exactly follow the provided regex.'
+                )
+            else:
+                warnings.warn(
+                    f'The data has {sample_size} rows but the regex for '
+                    f"'{self.get_input_column()}' can only create {self.generator_size} unique "
+                    f"values. Some values in '{self.get_input_column()}' may be repeated."
+                )
+
+        remaining = self.generator_size - self.generated
+        if sample_size > remaining and self.enforce_uniqueness:
+            warnings.warn(
+                f'The regex generator is not able to generate {sample_size} new unique '
+                f'values (only {remaining} unique value left). Please use '
+                "'reset_randomization' in order to restart the generator."
+            )
+
     def _reverse_transform(self, data):
         """Generate new data using the provided ``regex_format``.
 
@@ -172,6 +200,7 @@ class RegexGenerator(BaseTransformer):
                 " Some values in '%s' may be repeated.",
                 sample_size, self.get_input_column(), self.generator_size, self.get_input_column()
             )
+        self._warn_not_enough_unique_values(sample_size)
 
         remaining = self.generator_size - self.generated
         if sample_size > remaining:

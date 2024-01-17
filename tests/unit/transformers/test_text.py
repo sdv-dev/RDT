@@ -440,7 +440,8 @@ class TestRegexGenerator:
         # Run
         instance._reverse_transform(columns_data)
 
-    def test__reverse_transform_enforce_uniqueness_not_enough_remaining(self):
+    @patch('rdt.transformers.text.warnings')
+    def test__reverse_transform_enforce_uniqueness_not_enough_remaining(self, mock_warnings):
         """Test the case when there are not enough unique values remaining."""
         # Setup
         instance = RegexGenerator('[A-Z]', enforce_uniqueness=True)
@@ -458,6 +459,12 @@ class TestRegexGenerator:
             "value left). Please use 'reset_randomization' in order to restart the generator."
         )
         instance._reverse_transform(columns_data)
+        
+        mock_warnings.warn.assert_called_once_with(
+            'The regex generator is not able to generate 6 new unique '
+            'values (only 1 unique value left). Please use '
+            "'reset_randomization' in order to restart the generator."
+        )
 
     @patch('rdt.transformers.text.LOGGER')
     def test__reverse_transform_info_message(self, mock_logger):
