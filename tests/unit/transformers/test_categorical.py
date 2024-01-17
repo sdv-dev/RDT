@@ -51,7 +51,7 @@ class TestUniformEncoder:
         ordered = transformer._order_categories(arr)
 
         # Assert
-        assert transformer._is_integer is False
+        assert transformer._is_integer is None
         np.testing.assert_array_equal(ordered, np.array(['four', 'one', 'three', 'two']))
 
     def test__order_categories_alphabetical_with_nans(self):
@@ -367,7 +367,7 @@ class TestOrderedUniformEncoder:
         transformer = OrderedUniformEncoder(order=['b', 'c', 'a', None])
 
         # Asserts
-        assert transformer._is_integer is False
+        assert transformer._is_integer is None
         pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
 
     def test___init___duplicate_categories(self):
@@ -560,7 +560,7 @@ class TestFrequencyEncoder:
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
-        assert transformer._is_integer is False
+        assert transformer._is_integer is None
 
     def test__get_intervals(self):
         """Test the ``_get_intervals`` method.
@@ -1192,7 +1192,7 @@ class TestFrequencyEncoder:
         mock_input_data = mock_check_nan.call_args.args[0]
         mock_input_boolean = mock_check_nan.call_args.args[1]
         pd.testing.assert_series_equal(mock_input_data, transformed)
-        assert mock_input_boolean is False
+        assert mock_input_boolean is None
         pd.testing.assert_series_equal(data, reverse)
 
 
@@ -1892,7 +1892,7 @@ class TestLabelEncoder:
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
         assert transformer.order_by == 'alphabetical'
-        assert transformer._is_integer is False
+        assert transformer._is_integer is None
 
     def test___init___bad_order_by(self):
         """Test that the ``__init__`` raises error if ``order_by`` is a bad value.
@@ -2232,7 +2232,7 @@ class TestLabelEncoder:
         mock_input_data = mock_check_nan.call_args.args[0]
         mock_input_boolean = mock_check_nan.call_args.args[1]
         pd.testing.assert_series_equal(mock_input_data, data)
-        assert mock_input_boolean is False
+        assert mock_input_boolean is None
 
     def test__reverse_transform_integer_and_nans(self):
         """Test the ``reverse_transform`` method with integers and nans.
@@ -2265,7 +2265,7 @@ class TestOrderedLabelEncoder:
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
-        assert transformer._is_integer is False
+        assert transformer._is_integer is None
         pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
 
     def test___init___duplicate_categories(self):

@@ -50,7 +50,7 @@ class UniformEncoder(BaseTransformer):
             )
 
         self.order_by = order_by
-        self._is_integer = False
+        self._is_integer = None
 
     def _order_categories(self, unique_data):
         nans = pd.isna(unique_data)
@@ -342,7 +342,7 @@ class FrequencyEncoder(BaseTransformer):
         )
         super().__init__()
         self.add_noise = add_noise
-        self._is_integer = False
+        self._is_integer = None
 
     @staticmethod
     def _get_intervals(data):
@@ -723,7 +723,7 @@ class LabelEncoder(BaseTransformer):
             )
 
         self.order_by = order_by
-        self._is_integer = False
+        self._is_integer = None
 
     def _order_categories(self, unique_data):
         if self.order_by == 'alphabetical':
