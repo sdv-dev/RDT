@@ -1,7 +1,11 @@
+import numpy as np
+import pandas as pd
+import pytest
 import sre_parse
 from sre_constants import MAXREPEAT
 
-from rdt.transformers.utils import _any, _max_repeat, flatten_column_list, strings_from_regex
+from rdt.transformers.utils import (
+    _any, _max_repeat, check_nan_in_transform, flatten_column_list, strings_from_regex)
 
 
 def test_strings_from_regex_literal():
@@ -66,3 +70,30 @@ def test_flatten_column_list():
     # Assert
     expected_flattened_list = ['column1', 'column2', 'column3', 'column4', 'column5', 'column6']
     assert flattened_list == expected_flattened_list
+
+
+def test_check_nan_in_transform():
+    """Test ``check_nan_in_transform`` method.
+
+    If there nan in the data, a warning should be raised.
+    If the data was integer, it should be converted to float.
+    """
+    # Setup
+    transformed = pd.Series([0.1026, 0.1651, np.nan, 0.3116, 0.6546, 0.8541, 0.7041])
+
+    # Run
+    expected_message = (
+        'There are null values in the transformed data. The reversed '
+        'transformed data will contain null values'
+    )
+    expected_message_object = expected_message + '.'
+    expected_message_integer = expected_message + " of type 'float'."
+    with pytest.warns(UserWarning, match=expected_message_object):
+        convert_to_float_for_object = check_nan_in_transform(transformed)
+
+    with pytest.warns(UserWarning, match=expected_message_integer):
+        convert_to_float_for_integer = check_nan_in_transform(transformed, is_integer=True)
+
+    # Asserts
+    assert convert_to_float_for_object is False
+    assert convert_to_float_for_integer is True

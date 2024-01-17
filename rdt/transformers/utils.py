@@ -2,8 +2,10 @@
 
 import re
 import string
+import warnings
 
 import numpy as np
+import pandas as pd
 
 import sre_parse  # isort:skip
 
@@ -184,3 +186,33 @@ def flatten_column_list(column_list):
             flattened.append(column)
 
     return flattened
+
+
+def check_nan_in_transform(data, is_integer=False):
+    """Check if there are null values in the transformed data.
+
+    Args:
+        data (pd.Series or numpy.ndarray):
+            Data that has been transformed.
+        is_integer (bool):
+            Indicates if the initial data was integer.
+
+    Returns:
+        bool:
+            Indicates if the transformed data has to be converted to float.
+    """
+    convert_to_float = False
+    if pd.isna(data).any():
+        message = (
+            'There are null values in the transformed data. The reversed '
+            'transformed data will contain null values'
+        )
+        if is_integer:
+            message += " of type 'float'."
+            convert_to_float = True
+        else:
+            message += '.'
+
+        warnings.warn(message)
+
+    return convert_to_float
