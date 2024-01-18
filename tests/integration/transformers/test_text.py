@@ -307,7 +307,7 @@ def test_regexgenerator_with_many_possibilities():
 
 def test_regexgenerator_enforce_uniqueness_not_enough_values_categorical():
     """Test the ``RegexGenerator`` with enforce_uniqueness=True but insufficient regex values."""
-    # Assert
+    # Setup
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
     })
@@ -324,7 +324,7 @@ def test_regexgenerator_enforce_uniqueness_not_enough_values_categorical():
 
 def test_regexgenerator_enforce_uniqueness_not_enough_values_numerical():
     """Test the ``RegexGenerator`` with enforce_uniqueness=True but insufficient regex values."""
-    # Assert
+    # Setup
     data = pd.DataFrame({
         'id': [1, 2, 3, 4, 5],
     })

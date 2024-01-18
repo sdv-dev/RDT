@@ -169,8 +169,7 @@ class RegexGenerator(BaseTransformer):
         if sample_size > remaining and self.enforce_uniqueness and not warned:
             warnings.warn(
                 f'The regex generator is not able to generate {sample_size} new unique '
-                f'values (only {max(remaining, 0)} unique values left). Please use '
-                "'reset_randomization' in order to restart the generator."
+                f'values (only {max(remaining, 0)} unique values left).'
             )
 
     def _reverse_transform(self, data):
@@ -205,20 +204,15 @@ class RegexGenerator(BaseTransformer):
             self.generated = self.generator_size
             if self.enforce_uniqueness:
                 try:
-                    int(generated_values[0])
-                    dtype = int
-                    counter = int(generated_values[-1]) + 1
-                except ValueError:
-                    dtype = 'other'
-                    counter = 0
-
-                while len(reverse_transformed) < sample_size:
                     remaining_samples = sample_size - len(reverse_transformed)
-                    if dtype == int:
-                        reverse_transformed.extend(
-                            [str(i) for i in range(counter, counter + remaining_samples)])
-                        counter += remaining_samples
-                    else:
+                    start = int(generated_values[-1]) + 1
+                    reverse_transformed.extend(
+                            [str(i) for i in range(start, start + remaining_samples)])
+
+                except ValueError:
+                    counter = 0
+                    while len(reverse_transformed) < sample_size:
+                        remaining_samples = sample_size - len(reverse_transformed)
                         reverse_transformed.extend(
                             [f'{i}({counter})' for i in generated_values[:remaining_samples]])
                         counter += 1

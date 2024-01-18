@@ -508,8 +508,7 @@ class TestRegexGenerator:
         # Assert
         mock_warnings.warn.assert_called_once_with(
             'The regex generator is not able to generate 6 new unique '
-            'values (only 1 unique values left). Please use '
-            "'reset_randomization' in order to restart the generator."
+            'values (only 1 unique values left).'
         )
         np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'F']))
 
