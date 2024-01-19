@@ -197,7 +197,7 @@ def check_nan_in_transform(data, dtype):
         dtype (str):
             Data type of the transformed data.
     """
-    if pd.isna(data).any():
+    if pd.isna(data).any().any():
         message = (
             'There are null values in the transformed data. The reversed '
             'transformed data will contain null values'
