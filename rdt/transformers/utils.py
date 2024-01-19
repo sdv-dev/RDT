@@ -188,31 +188,49 @@ def flatten_column_list(column_list):
     return flattened
 
 
-def check_nan_in_transform(data, is_integer=False):
+def check_nan_in_transform(data, dtype):
     """Check if there are null values in the transformed data.
 
     Args:
         data (pd.Series or numpy.ndarray):
             Data that has been transformed.
-        is_integer (bool):
-            Indicates if the initial data was integer.
-
-    Returns:
-        bool:
-            Indicates if the transformed data has to be converted to float.
+        dtype (str):
+            Data type of the transformed data.
     """
-    convert_to_float = False
     if pd.isna(data).any():
         message = (
             'There are null values in the transformed data. The reversed '
             'transformed data will contain null values'
         )
+        is_integer = pd.api.types.is_integer_dtype(dtype)
         if is_integer:
             message += " of type 'float'."
-            convert_to_float = True
         else:
             message += '.'
 
         warnings.warn(message)
 
-    return convert_to_float
+
+def try_convert_to_dtype(data, dtype):
+    """Try to convert data to a given dtype.
+
+    Args:
+        data (pd.Series or numpy.ndarray):
+            Data to convert.
+        dtype (str):
+            Data type to convert to.
+
+    Returns:
+        data:
+            Data converted to the given dtype.
+    """
+    try:
+        data = data.astype(dtype)
+    except ValueError as error:
+        is_integer = pd.api.types.is_integer_dtype(dtype)
+        if is_integer:
+            data = data.astype(float)
+        else:
+            raise error
+
+    return data

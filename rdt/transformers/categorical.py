@@ -9,7 +9,7 @@ from scipy.stats import norm
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.utils import check_nan_in_transform, fill_nan_with_none
+from rdt.transformers.utils import check_nan_in_transform, fill_nan_with_none, try_convert_to_dtype
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,7 +50,6 @@ class UniformEncoder(BaseTransformer):
             )
 
         self.order_by = order_by
-        self._is_integer = None
 
     def _order_categories(self, unique_data):
         nans = pd.isna(unique_data)
@@ -123,7 +122,6 @@ class UniformEncoder(BaseTransformer):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtypes
-        self._is_integer = pd.api.types.is_integer_dtype(self.dtype)
         data = fill_nan_with_none(data)
         labels = pd.unique(data)
         labels = self._order_categories(labels)
@@ -179,7 +177,7 @@ class UniformEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
-        convert_to_float = check_nan_in_transform(data, self._is_integer)
+        check_nan_in_transform(data, self.dtype)
         data = data.clip(0, 1)
         bins = [0]
         labels = []
@@ -196,11 +194,9 @@ class UniformEncoder(BaseTransformer):
 
         result = pd.cut(data, bins=bins, labels=labels, include_lowest=True)
         result = result.replace(nan_name, np.nan)
+        result = try_convert_to_dtype(result, self.dtype)
 
-        if convert_to_float:
-            return result.astype(float)
-
-        return result.astype(self.dtype)
+        return result
 
 
 class OrderedUniformEncoder(UniformEncoder):
@@ -258,7 +254,6 @@ class OrderedUniformEncoder(UniformEncoder):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtypes
-        self._is_integer = pd.api.types.is_integer_dtype(self.dtype)
         data = fill_nan_with_none(data)
         self._check_unknown_categories(data)
 
@@ -412,7 +407,6 @@ class FrequencyEncoder(BaseTransformer):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtype
-        self._is_integer = pd.api.types.is_integer_dtype(self.dtype)
         self.intervals, self.means, self.starts = self._get_intervals(data)
 
     @staticmethod
@@ -527,7 +521,7 @@ class FrequencyEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
-        check_nan_in_transform(data, self._is_integer)
+        check_nan_in_transform(data, self.dtype)
         data = data.clip(0, 1)
         num_rows = len(data)
         num_categories = len(self.means)
@@ -723,7 +717,6 @@ class LabelEncoder(BaseTransformer):
             )
 
         self.order_by = order_by
-        self._is_integer = None
 
     def _order_categories(self, unique_data):
         if self.order_by == 'alphabetical':
@@ -758,7 +751,6 @@ class LabelEncoder(BaseTransformer):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtype
-        self._is_integer = pd.api.types.is_integer_dtype(self.dtype)
         unique_data = pd.unique(data.fillna(np.nan))
         unique_data = self._order_categories(unique_data)
         self.values_to_categories = dict(enumerate(unique_data))
@@ -815,17 +807,15 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
-        convert_to_float = check_nan_in_transform(data, self._is_integer)
+        check_nan_in_transform(data, self.dtype)
         if self.add_noise:
             data = np.floor(data)
 
         data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
         data = data.round().map(self.values_to_categories)
+        data = try_convert_to_dtype(data, self.dtype)
 
-        if convert_to_float:
-            return data.astype(float)
-
-        return data.astype(self.dtype)
+        return data
 
 
 class OrderedLabelEncoder(LabelEncoder):
@@ -884,7 +874,6 @@ class OrderedLabelEncoder(LabelEncoder):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtype
-        self._is_integer = pd.api.types.is_integer_dtype(self.dtype)
         data = data.fillna(np.nan)
         missing = list(data[~data.isin(self.order)].unique())
         if len(missing) > 0:
