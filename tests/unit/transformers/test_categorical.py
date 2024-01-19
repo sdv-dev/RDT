@@ -1256,6 +1256,7 @@ class TestOneHotEncoder:
 
         # Assert
         np.testing.assert_array_equal(ohe.dummies, ['a', 2, 'c'])
+        assert ohe.dtype == 'object'
 
     def test__fit_dummies_nans(self):
         """Test the ``_fit`` method without nans.
@@ -1810,11 +1811,14 @@ class TestOneHotEncoder:
         assert not ohe._dummy_encoded
         np.testing.assert_array_equal(out, expected)
 
-    def test__reverse_transform_no_nans(self):
+    @patch('rdt.transformers.categorical.check_nan_in_transform')
+    @patch('rdt.transformers.categorical.try_convert_to_dtype')
+    def test__reverse_transform_no_nans(self, mock_convert_dtype, mock_check_nan):
         # Setup
         ohe = OneHotEncoder()
         data = pd.Series(['a', 'b', 'c'])
         ohe._fit(data)
+        mock_convert_dtype.return_value = data
 
         # Run
         transformed = np.array([
@@ -1827,6 +1831,11 @@ class TestOneHotEncoder:
         # Assert
         expected = pd.Series(['a', 'b', 'c'])
         pd.testing.assert_series_equal(out, expected)
+        mock_input_data = mock_check_nan.call_args.args[0]
+        mock_input_dtype = mock_check_nan.call_args.args[1]
+        np.testing.assert_array_equal(mock_input_data, transformed)
+        assert mock_input_dtype == 'O'
+        mock_convert_dtype.assert_called_once()
 
     def test__reverse_transform_nans(self):
         # Setup

@@ -551,6 +551,7 @@ class OneHotEncoder(BaseTransformer):
     _dummy_encoded = False
     _indexer = None
     _uniques = None
+    dtype = None
 
     @staticmethod
     def _prepare_data(data):
@@ -588,6 +589,7 @@ class OneHotEncoder(BaseTransformer):
             data (pandas.Series or pandas.DataFrame):
                 Data to fit the transformer to.
         """
+        self.dtype = data.dtype
         data = self._prepare_data(data)
 
         null = pd.isna(data).to_numpy()
@@ -663,6 +665,7 @@ class OneHotEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
+        check_nan_in_transform(data, self.dtype)
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
@@ -670,8 +673,10 @@ class OneHotEncoder(BaseTransformer):
             data = data.reshape(-1, 1)
 
         indices = np.argmax(data, axis=1)
+        result = pd.Series(indices).map(self.dummies.__getitem__)
+        result = try_convert_to_dtype(result, self.dtype)
 
-        return pd.Series(indices).map(self.dummies.__getitem__)
+        return result
 
 
 class LabelEncoder(BaseTransformer):
