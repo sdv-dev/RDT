@@ -9,9 +9,30 @@ import pytest
 from rdt.errors import TransformerInputError
 from rdt.transformers.categorical import (
     CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder,
-    OrderedUniformEncoder, UniformEncoder)
+    OrderedUniformEncoder, UniformEncoder, try_convert_to_dtype)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
+
+
+def test_try_convert_to_dtype():
+    """Test ``try_convert_to_dtype`` method.
+
+    If the data can be converted to the specified dtype, it should be converted.
+    If the data cannot be converted, a ValueError should be raised.
+    Should allow to convert integer with NaNs to float.
+    """
+    # Setup
+    data_int_with_nan = pd.Series([1.0, 2.0, np.nan, 4.0, 5.0])
+    data_not_convetible = pd.Series(['a', 'b', 'c', 'd', 'e'])
+
+    # Run
+    output_int_with_nan = try_convert_to_dtype(data_int_with_nan, 'int')
+    with pytest.raises(ValueError, match="could not convert string to float: 'a'"):
+        try_convert_to_dtype(data_not_convetible, 'int')
+
+    # Assert
+    expected_data_with_nan = pd.Series([1, 2, np.nan, 4, 5])
+    pd.testing.assert_series_equal(output_int_with_nan, expected_data_with_nan)
 
 
 class TestUniformEncoder:

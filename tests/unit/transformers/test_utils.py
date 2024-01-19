@@ -6,8 +6,7 @@ import pandas as pd
 import pytest
 
 from rdt.transformers.utils import (
-    _any, _max_repeat, check_nan_in_transform, flatten_column_list, strings_from_regex,
-    try_convert_to_dtype)
+    _any, _max_repeat, check_nan_in_transform, flatten_column_list, strings_from_regex)
 
 
 def test_strings_from_regex_literal():
@@ -95,24 +94,3 @@ def test_check_nan_in_transform():
 
     with pytest.warns(UserWarning, match=expected_message_integer):
         check_nan_in_transform(transformed, 'int')
-
-
-def test_try_to_convert_dtype():
-    """Test ``try_convert_to_dtype`` method.
-
-    If the data can be converted to the specified dtype, it should be converted.
-    If the data cannot be converted, a ValueError should be raised.
-    Should allow to convert integer with NaNs to float.
-    """
-    # Setup
-    data_int_with_nan = pd.Series([1.0, 2.0, np.nan, 4.0, 5.0])
-    data_not_convetible = pd.Series(['a', 'b', 'c', 'd', 'e'])
-
-    # Run
-    output_int_with_nan = try_convert_to_dtype(data_int_with_nan, 'int')
-    with pytest.raises(ValueError, match="could not convert string to float: 'a'"):
-        try_convert_to_dtype(data_not_convetible, 'int')
-
-    # Assert
-    expected_data_with_nan = pd.Series([1, 2, np.nan, 4, 5])
-    pd.testing.assert_series_equal(output_int_with_nan, expected_data_with_nan)

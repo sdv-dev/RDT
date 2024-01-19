@@ -209,28 +209,3 @@ def check_nan_in_transform(data, dtype):
             message += '.'
 
         warnings.warn(message)
-
-
-def try_convert_to_dtype(data, dtype):
-    """Try to convert data to a given dtype.
-
-    Args:
-        data (pd.Series or numpy.ndarray):
-            Data to convert.
-        dtype (str):
-            Data type to convert to.
-
-    Returns:
-        data:
-            Data converted to the given dtype.
-    """
-    try:
-        data = data.astype(dtype)
-    except ValueError as error:
-        is_integer = pd.api.types.is_integer_dtype(dtype)
-        if is_integer:
-            data = data.astype(float)
-        else:
-            raise error
-
-    return data
