@@ -136,6 +136,7 @@ def test_multi_column_transformer_same_number_of_columns_input_output():
     # Setup
     class AdditionTransformer(BaseMultiColumnTransformer):
         """This transformer takes 3 columns and return the cumulative sum of each row."""
+
         def _fit(self, columns_data):
             self.output_properties = {
                 f'{self.columns[0]}': {'sdtype': 'numerical'},
@@ -188,6 +189,7 @@ def test_multi_column_transformer_less_output_than_input_columns():
         """This transformer takes 4 columns and concatenate them into 2 columns.
         The two first and last columns are concatenated together.
         """
+
         def _fit(self, columns_data):
             self.name_1 = self.columns[0] + '#' + self.columns[1]
             self.name_2 = self.columns[2] + '#' + self.columns[3]
