@@ -9,7 +9,7 @@ from scipy.stats import norm
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.utils import fill_nan_with_none
+from rdt.transformers.utils import check_nan_in_transform, fill_nan_with_none, try_convert_to_dtype
 
 LOGGER = logging.getLogger(__name__)
 
@@ -177,6 +177,7 @@ class UniformEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
+        check_nan_in_transform(data, self.dtype)
         data = data.clip(0, 1)
         bins = [0]
         labels = []
@@ -192,7 +193,10 @@ class UniformEncoder(BaseTransformer):
                 labels.append(key)
 
         result = pd.cut(data, bins=bins, labels=labels, include_lowest=True)
-        return result.replace(nan_name, np.nan).astype(self.dtype)
+        result = result.replace(nan_name, np.nan)
+        result = try_convert_to_dtype(result, self.dtype)
+
+        return result
 
 
 class OrderedUniformEncoder(UniformEncoder):
@@ -333,6 +337,7 @@ class FrequencyEncoder(BaseTransformer):
         )
         super().__init__()
         self.add_noise = add_noise
+        self._is_integer = None
 
     @staticmethod
     def _get_intervals(data):
@@ -516,6 +521,7 @@ class FrequencyEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
+        check_nan_in_transform(data, self.dtype)
         data = data.clip(0, 1)
         num_rows = len(data)
         num_categories = len(self.means)
@@ -545,6 +551,7 @@ class OneHotEncoder(BaseTransformer):
     _dummy_encoded = False
     _indexer = None
     _uniques = None
+    dtype = None
 
     @staticmethod
     def _prepare_data(data):
@@ -582,6 +589,7 @@ class OneHotEncoder(BaseTransformer):
             data (pandas.Series or pandas.DataFrame):
                 Data to fit the transformer to.
         """
+        self.dtype = data.dtype
         data = self._prepare_data(data)
 
         null = pd.isna(data).to_numpy()
@@ -657,6 +665,7 @@ class OneHotEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
+        check_nan_in_transform(data, self.dtype)
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
@@ -664,8 +673,10 @@ class OneHotEncoder(BaseTransformer):
             data = data.reshape(-1, 1)
 
         indices = np.argmax(data, axis=1)
+        result = pd.Series(indices).map(self.dummies.__getitem__)
+        result = try_convert_to_dtype(result, self.dtype)
 
-        return pd.Series(indices).map(self.dummies.__getitem__)
+        return result
 
 
 class LabelEncoder(BaseTransformer):
@@ -801,13 +812,15 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
+        check_nan_in_transform(data, self.dtype)
         if self.add_noise:
             data = np.floor(data)
 
         data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
         data = data.round().map(self.values_to_categories)
+        data = try_convert_to_dtype(data, self.dtype)
 
-        return data.astype(self.dtype)
+        return data
 
 
 class OrderedLabelEncoder(LabelEncoder):
@@ -865,6 +878,7 @@ class OrderedLabelEncoder(LabelEncoder):
             data (pandas.Series):
                 Data to fit the transformer to.
         """
+        self.dtype = data.dtype
         data = data.fillna(np.nan)
         missing = list(data[~data.isin(self.order)].unique())
         if len(missing) > 0:
