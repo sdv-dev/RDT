@@ -9,34 +9,9 @@ from scipy.stats import norm
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.utils import check_nan_in_transform, fill_nan_with_none
+from rdt.transformers.utils import check_nan_in_transform, fill_nan_with_none, try_convert_to_dtype
 
 LOGGER = logging.getLogger(__name__)
-
-
-def try_convert_to_dtype(data, dtype):
-    """Try to convert data to a given dtype.
-
-    Args:
-        data (pd.Series or numpy.ndarray):
-            Data to convert.
-        dtype (str):
-            Data type to convert to.
-
-    Returns:
-        data:
-            Data converted to the given dtype.
-    """
-    try:
-        data = data.astype(dtype)
-    except ValueError as error:
-        is_integer = pd.api.types.is_integer_dtype(dtype)
-        if is_integer:
-            data = data.astype(float)
-        else:
-            raise error
-
-    return data
 
 
 class UniformEncoder(BaseTransformer):
