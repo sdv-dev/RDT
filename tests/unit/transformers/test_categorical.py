@@ -272,7 +272,8 @@ class TestUniformEncoder:
         assert transformed.iloc[4] < 1
 
     @patch('rdt.transformers.categorical.check_nan_in_transform')
-    def test__reverse_transform(self, mock_check_nan):
+    @patch('rdt.transformers.categorical.try_convert_to_dtype')
+    def test__reverse_transform(self, mock_convert_dtype, mock_check_nan):
         """Test the ``_reverse_transform``."""
         # Setup
         data = pd.Series([1, 2, 3, 2, 2, 1, 3, 3, 2])
@@ -290,6 +291,7 @@ class TestUniformEncoder:
         }
 
         transformed = pd.Series([0.12, 0.254, 0.789, 0.43, 0.56, 0.08, 0.67, 0.98, 0.36])
+        mock_convert_dtype.return_value = pd.Series([1, 2, 3, 2, 2, 1, 3, 3, 2])
 
         # Run
         output = transformer._reverse_transform(transformed)
@@ -300,6 +302,7 @@ class TestUniformEncoder:
         mock_input_dtype = mock_check_nan.call_args.args[1]
         pd.testing.assert_series_equal(mock_input_data, transformed)
         assert mock_input_dtype == transformer.dtype
+        mock_convert_dtype.assert_called_once()
 
     def test__reverse_transform_nans(self):
         """Test ``_reverse_transform`` for data with NaNs."""
@@ -2212,7 +2215,8 @@ class TestLabelEncoder:
         pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
 
     @patch('rdt.transformers.categorical.check_nan_in_transform')
-    def test__reverse_transform_add_noise(self, mock_check_nan):
+    @patch('rdt.transformers.categorical.try_convert_to_dtype')
+    def test__reverse_transform_add_noise(self, mock_convert_dtype, mock_check_nan):
         """Test the ``_reverse_transform`` method with ``add_noise``.
 
         Test that the method correctly reverse transforms the data
@@ -2227,6 +2231,7 @@ class TestLabelEncoder:
         transformer = LabelEncoder(add_noise=True)
         transformer.values_to_categories = {0: 'a', 1: 'b', 2: 'c'}
         data = pd.Series([0.5, 1.0, 10.9])
+        mock_convert_dtype.return_value = pd.Series(['a', 'b', 'c'])
 
         # Run
         out = transformer._reverse_transform(data)
@@ -2237,6 +2242,7 @@ class TestLabelEncoder:
         mock_input_dtype = mock_check_nan.call_args.args[1]
         pd.testing.assert_series_equal(mock_input_data, data)
         assert mock_input_dtype == 'O'
+        mock_convert_dtype.assert_called_once()
 
     def test__reverse_transform_integer_and_nans(self):
         """Test the ``reverse_transform`` method with integers and nans.

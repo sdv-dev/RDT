@@ -82,7 +82,10 @@ def test_check_nan_in_transform():
     """
     # Setup
     transformed = pd.Series([0.1026, 0.1651, np.nan, 0.3116, 0.6546, 0.8541, 0.7041])
-    data_without_nans = pd.Series([0.1026, 0.1651, 0.3116, 0.6546, 0.8541, 0.7041])
+    data_without_nans = pd.DataFrame({
+        'col 1': [1, 2, 3],
+        'col 2': [4, 5, 6],
+    })
 
     # Run and Assert
     check_nan_in_transform(data_without_nans, 'float')
@@ -116,8 +119,11 @@ def test_try_convert_to_dtype():
     with pytest.raises(ValueError, match="could not convert string to float: 'a'"):
         try_convert_to_dtype(data_not_convertible, 'int')
 
+    with pytest.raises(ValueError, match="could not convert string to float: 'a'"):
+        try_convert_to_dtype(data_not_convertible, 'float')
+
     # Assert
     expected_data_with_nan = pd.Series([1, 2, np.nan, 4, 5])
-    expected_data_covertibe = pd.Series(['1.0', '2.0', 'nan', '4.0', '5.0'])
+    expected_data_convertibe = pd.Series(['1.0', '2.0', 'nan', '4.0', '5.0'])
     pd.testing.assert_series_equal(output_int_with_nan, expected_data_with_nan)
-    pd.testing.assert_series_equal(output_convertibe, expected_data_covertibe)
+    pd.testing.assert_series_equal(output_convertibe, expected_data_convertibe)
