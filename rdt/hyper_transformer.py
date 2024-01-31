@@ -229,7 +229,6 @@ class HyperTransformer:
         for columns, transformer in column_name_to_transformer.items():
             if isinstance(columns, tuple):
                 self.field_transformers[columns] = transformer
-                del column_name_to_transformer[columns]
             elif columns in self._multi_column_fields:
                 old_multi_column = self._multi_column_fields[columns]
                 old_transformer = self.field_transformers.get(old_multi_column)
