@@ -153,6 +153,109 @@ class HyperTransformer:
             'transformers': self.field_transformers
         })
 
+    def _update_multi_column_config(self, column_name_to_transformer):
+        
+        column_names = [
+            item for key in column_name_to_transformer.keys()
+            for item in (key if isinstance(key, tuple) else (key,))
+        ]
+
+        # Curate the multi column fields
+        updated_mutli_column_fields = {}
+        for column in column_names:
+            if column in self._multi_column_fields:
+                old_tuple = self._multi_column_fields[column]
+                if old_tuple in updated_mutli_column_fields:
+                    tuple_to_update = updated_mutli_column_fields[old_tuple]
+                else:
+                    tuple_to_update = old_tuple
+
+                new_tuple = tuple(item for item in tuple_to_update if item != column) # Check empty case
+                updated_mutli_column_fields[old_tuple] = new_tuple
+    
+        # Add the new multi column fields
+        for columns, transformer in column_name_to_transformer.items():
+            if isinstance(columns, tuple):
+                updated_mutli_column_fields[columns] = columns
+    
+        # Check there is no overlap between the updated multi column fields
+        columns_in_multi_column = []
+        columns_in_mullti_column_set = set()
+        for columns in updated_mutli_column_fields.values():
+            columns_in_multi_column.extend(columns)
+            columns_in_mullti_column_set.update(columns)
+
+        if len(columns_in_multi_column) != len(columns_in_mullti_column_set):
+            raise InvalidConfigError(
+                'Invalid multi column fields. There is an overlap between the multi column fields.'
+            )
+
+        # Update the multi column fields
+        multi_columns_to_transformer = {}
+        for old_multi_column, new_multi_column in updated_mutli_column_fields.items():
+            if old_multi_column in self.field_transformers:
+                transformer = self.field_transformers[old_multi_column]
+            else:
+                transformer = column_name_to_transformer.get(new_multi_column)
+
+            multi_columns_to_transformer[new_multi_column] = transformer
+
+        return multi_columns_to_transformer
+
+    def _validate_multi_column_transformers(self, column_name_to_transformer):
+        multi_columns_to_transformer = self._update_multi_column_config(column_name_to_transformer)
+        for columns in list(multi_columns_to_transformer.keys()):
+            transformer = multi_columns_to_transformer[columns]
+            if not transformer:
+                continue
+
+            columns_to_sdtype = self._get_columns_to_sdtypes(columns)
+            try:
+                transformer.__class__._validate_sdtypes(columns_to_sdtype)
+                column_name_to_transformer[columns] = transformer
+            except:
+                for column in columns:
+                    sdtype = self.field_sdtypes.get(column)
+                    column_name_to_transformer[column] = deepcopy(get_default_transformer(sdtype))
+
+                del multi_columns_to_transformer[columns]
+
+        return column_name_to_transformer
+            
+    def _update_multi_column_transformers(self, column_name_to_transformer):
+        column_name_to_transformer = self._validate_multi_column_transformers(
+            column_name_to_transformer
+        )
+        for columns, transformer in column_name_to_transformer.items():
+            if isinstance(columns, tuple):
+                self.field_transformers[columns] = transformer
+                del column_name_to_transformer[columns]
+            elif columns in self._multi_column_fields:
+                old_multi_column = self._multi_column_fields[columns]
+                old_transformer = self.field_transformers.get(old_multi_column)
+                if old_transformer:
+                    del self.field_transformers[old_multi_column]
+
+        self._multi_column_fields = self._create_multi_column_fields()
+
+        return column_name_to_transformer
+
+
+    def _update_single_column_transformers(self, column_name_to_transformer):
+        for column, transformer in column_name_to_transformer.items():
+            if isinstance(column, tuple):
+                continue
+
+            if transformer:
+                sdtype = self.field_sdtypes.get(column)
+                if sdtype not in transformer.get_supported_sdtypes():
+                    raise InvalidConfigError(
+                            f"Column '{column}' is a {col_sdtype} column, which is "
+                            f"incompatible with the '{transformer.get_name()}' transformer."
+                        )
+
+            self.field_transformers[column] = transformer
+
     @staticmethod
     def _validate_transformers(column_name_to_transformer):
         """Validate the given transformers are valid.
@@ -176,6 +279,7 @@ class HyperTransformer:
                 f'Invalid transformers for columns: {invalid_transformers_columns}. '
                 'Please assign an rdt transformer instance to each column name.'
             )
+
 
     @staticmethod
     def _validate_sdtypes(sdtypes):
@@ -466,25 +570,10 @@ class HyperTransformer:
         self._validate_update_columns(update_columns)
         self._validate_transformers(column_name_to_transformer)
 
-        for column_name, transformer in column_name_to_transformer.items():
-            columns = column_name if isinstance(column_name, tuple) else (column_name,)
-            for column in columns:
-                if transformer is not None:
-                    col_sdtype = self.field_sdtypes.get(column)
-                    if col_sdtype and col_sdtype not in transformer.get_supported_sdtypes():
-                        raise InvalidConfigError(
-                            f"Column '{column}' is a {col_sdtype} column, which is "
-                            f"incompatible with the '{transformer.get_name()}' transformer."
-                        )
-
-                if len(columns) > 1 and column in self.field_transformers:
-                    del self.field_transformers[column]
-                elif column in self._multi_column_fields:
-                    self._remove_column_in_multi_column_fields(column)
-
-            self.field_transformers[column_name] = transformer
-
-        self._multi_column_fields = self._create_multi_column_fields()
+        column_name_to_transformer = self._update_multi_column_transformers(
+            column_name_to_transformer
+        )
+        self._update_single_column_transformers(column_name_to_transformer)
         self._modified_config = True
 
     def remove_transformers(self, column_names):
