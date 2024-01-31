@@ -193,7 +193,7 @@ class HyperTransformer:
         # Update the multi column fields
         multi_columns_to_transformer = {}
         for old_multi_column, new_multi_column in updated_mutli_column_fields.items():
-            if old_multi_column in self.field_transformers:
+            if old_multi_column in self.field_transformers and old_multi_column not in column_name_to_transformer:
                 transformer = self.field_transformers[old_multi_column]
             else:
                 transformer = column_name_to_transformer.get(new_multi_column)
@@ -229,6 +229,7 @@ class HyperTransformer:
         for columns, transformer in column_name_to_transformer.items():
             if isinstance(columns, tuple):
                 self.field_transformers[columns] = transformer
+
             elif columns in self._multi_column_fields:
                 old_multi_column = self._multi_column_fields[columns]
                 old_transformer = self.field_transformers.get(old_multi_column)
