@@ -7,7 +7,8 @@ import pandas as pd
 import pytest
 
 from rdt import get_demo
-from rdt.errors import ConfigNotSetError, InvalidConfigError, InvalidDataError, NotFittedError
+from rdt.errors import (
+    ConfigNotSetError, InvalidConfigError, InvalidDataError, NotFittedError, TransformerInputError)
 from rdt.hyper_transformer import Config, HyperTransformer
 from rdt.transformers import (
     AnonymizedFaker, BaseMultiColumnTransformer, BaseTransformer, BinaryEncoder,
@@ -66,6 +67,10 @@ class DummyMultiColumnTransformerNumerical(BaseMultiColumnTransformer):
                 'next_transformer': None,
             } for column in self.columns
         }
+
+    @staticmethod
+    def _validate_sdtypes(columns_to_sdtype):
+        return None
 
     def _get_prefix(self):
         return None
@@ -1846,3 +1851,80 @@ class TestHyperTransformer:
             ]
         })
         pd.testing.assert_frame_equal(result, expected_results)
+
+    methods_to_inputs = {
+        'update_transformers': {'column_name_to_transformer': {'C': UniformEncoder()}},
+        'update_transformers_by_sdtype': {'sdtype': 'boolean', 'transformer': UniformEncoder()},
+        'remove_transformers': {'column_names': ['C']},
+        'remove_transformers_by_sdtype': {'sdtype': 'boolean'},
+    }
+
+    @pytest.mark.parametrize('method_name', methods_to_inputs.keys())
+    def test_unvalid_multi_column(self, method_name):
+        """Test that the Hypertransformer handles invalid multi column transformers."""
+        # Setup
+        class BadDummyMultiColumnTransformer(DummyMultiColumnTransformerNumerical):
+
+            @staticmethod
+            def _validate_sdtypes(columns_to_sdtype):
+                raise TransformerInputError('Invalid sdtype')
+
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'D': 'categorical',
+                'E': 'categorical',
+                'C': 'boolean',
+            },
+            'transformers': {
+                'A': UniformEncoder(),
+                ('B', 'D', 'C'): BadDummyMultiColumnTransformer(),
+                'E': UniformEncoder()
+            }
+        }
+
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run
+        expected_warning = re.escape(
+            "Transformer 'BadDummyMultiColumnTransformer' is incompatible with the "
+            "multi-column field '('B', 'D')'. Assigning default transformer to the columns."
+        )
+        with pytest.warns(UserWarning, match=expected_warning):
+            ht.__getattribute__(method_name)(**self.methods_to_inputs[method_name])
+
+        # Assert
+        new_config = ht.get_config()
+        expected_dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'D': 'categorical',
+                'E': 'categorical',
+                'C': 'boolean'
+            }
+        }
+        if method_name.startswith('update'):
+            expected_dict_config['transformers'] = {
+                'A': UniformEncoder(),
+                'E': UniformEncoder(),
+                'C': UniformEncoder(),
+                'B': UniformEncoder(),
+                'D': UniformEncoder()
+            }
+        else:
+            expected_dict_config['transformers'] = {
+                'A': UniformEncoder(),
+                'E': UniformEncoder(),
+                'C': None,
+                'B': UniformEncoder(),
+                'D': UniformEncoder()
+            }
+
+        expected_config = Config(expected_dict_config)
+        expected_multi_columns = {}
+        assert ht._multi_column_fields == expected_multi_columns
+        assert repr(new_config) == repr(expected_config)
