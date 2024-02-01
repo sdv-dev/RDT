@@ -2398,8 +2398,8 @@ class TestHyperTransformer(TestCase):
         """Test ``_update_multi_column_transformer`` with a valid multi-column transformer."""
         # Setup
         class ValidMultiColumnTransformer(BaseMultiColumnTransformer):
-            @staticmethod
-            def _validate_sdtypes(columns_to_sdtypes):
+            @classmethod
+            def _validate_sdtypes(cls, columns_to_sdtypes):
                 return
 
         ht = HyperTransformer()
@@ -2440,8 +2440,8 @@ class TestHyperTransformer(TestCase):
         """
         # Setup
         class InvalidMultiColumnTransformer(BaseMultiColumnTransformer):
-            @staticmethod
-            def _validate_sdtypes(columns_to_sdtypes):
+            @classmethod
+            def _validate_sdtypes(cls, columns_to_sdtypes):
                 raise TransformerInputError('Invalid columns.')
 
         ht = HyperTransformer()
@@ -3068,8 +3068,8 @@ class TestHyperTransformer(TestCase):
             """Dummy multi column transformer."""
             SUPPORTED_SDTYPES = ['categorical', 'boolean']
 
-            @staticmethod
-            def _validate_sdtypes(columns_to_sdtypes):
+            @classmethod
+            def _validate_sdtypes(cls, columns_to_sdtypes):
                 return
 
         ht = HyperTransformer()

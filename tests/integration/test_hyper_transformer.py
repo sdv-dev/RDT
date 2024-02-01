@@ -68,8 +68,8 @@ class DummyMultiColumnTransformerNumerical(BaseMultiColumnTransformer):
             } for column in self.columns
         }
 
-    @staticmethod
-    def _validate_sdtypes(columns_to_sdtype):
+    @classmethod
+    def _validate_sdtypes(cls, columns_to_sdtype):
         return None
 
     def _get_prefix(self):
@@ -1865,8 +1865,8 @@ class TestHyperTransformer:
         # Setup
         class BadDummyMultiColumnTransformer(DummyMultiColumnTransformerNumerical):
 
-            @staticmethod
-            def _validate_sdtypes(columns_to_sdtype):
+            @classmethod
+            def _validate_sdtypes(cls, columns_to_sdtype):
                 raise TransformerInputError('Invalid sdtype')
 
         dict_config = {
