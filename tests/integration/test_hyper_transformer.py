@@ -1852,16 +1852,62 @@ class TestHyperTransformer:
         })
         pd.testing.assert_frame_equal(result, expected_results)
 
-    methods_to_inputs = {
-        'update_transformers': {'column_name_to_transformer': {'C': UniformEncoder()}},
-        'update_transformers_by_sdtype': {'sdtype': 'boolean', 'transformer': UniformEncoder()},
-        'remove_transformers': {'column_names': ['C']},
-        'remove_transformers_by_sdtype': {'sdtype': 'boolean'},
+    expected_sdtype = {
+        'sdtypes': {
+            'A': 'categorical',
+            'B': 'categorical',
+            'D': 'categorical',
+            'E': 'categorical',
+            'C': 'boolean'
+        }
+    }
+    expected_transformer_update = {
+        'transformers': {
+            'A': UniformEncoder(),
+            'E': UniformEncoder(),
+            'C': UniformEncoder(),
+            'B': UniformEncoder(),
+            'D': UniformEncoder()
+        }
+    }
+    expected_transformer_remove = {
+        'transformers': {
+            'A': UniformEncoder(),
+            'E': UniformEncoder(),
+            'C': None,
+            'B': UniformEncoder(),
+            'D': UniformEncoder()
+        }
+    }
+    expected_update = {
+        **expected_sdtype,
+        **expected_transformer_update
+    }
+    expected_remove = {
+        **expected_sdtype,
+        **expected_transformer_remove
     }
 
-    @pytest.mark.parametrize('method_name', methods_to_inputs.keys())
-    def test_unvalid_multi_column(self, method_name):
-        """Test that the Hypertransformer handles invalid multi column transformers."""
+    parametrization = [
+        (
+            'update_transformers', {'column_name_to_transformer': {'C': UniformEncoder()}},
+            expected_update
+        ),
+        (
+            'update_transformers_by_sdtype',
+            {'sdtype': 'boolean', 'transformer': UniformEncoder()}, expected_update
+        ),
+        ('remove_transformers', {'column_names': 'C'}, expected_remove),
+        ('remove_transformers_by_sdtype', {'sdtype': 'boolean'}, expected_remove),
+    ]
+
+    @pytest.mark.parametrize(('method_name', 'method_input', 'expected_result'), parametrization)
+    def test_invalid_multi_column(self, method_name, method_input, expected_result):
+        """Test the ``update`` and ``remove`` methods with invalid multi column transformer.
+
+        When a multi column is no longer valid, all these methods should raise a warning
+        and assign the default transformer to the columns.
+        """
         # Setup
         class BadDummyMultiColumnTransformer(DummyMultiColumnTransformerNumerical):
 
@@ -1894,37 +1940,11 @@ class TestHyperTransformer:
             "multi-column field '('B', 'D')'. Assigning default transformer to the columns."
         )
         with pytest.warns(UserWarning, match=expected_warning):
-            ht.__getattribute__(method_name)(**self.methods_to_inputs[method_name])
+            ht.__getattribute__(method_name)(**method_input)
 
         # Assert
         new_config = ht.get_config()
-        expected_dict_config = {
-            'sdtypes': {
-                'A': 'categorical',
-                'B': 'categorical',
-                'D': 'categorical',
-                'E': 'categorical',
-                'C': 'boolean'
-            }
-        }
-        if method_name.startswith('update'):
-            expected_dict_config['transformers'] = {
-                'A': UniformEncoder(),
-                'E': UniformEncoder(),
-                'C': UniformEncoder(),
-                'B': UniformEncoder(),
-                'D': UniformEncoder()
-            }
-        else:
-            expected_dict_config['transformers'] = {
-                'A': UniformEncoder(),
-                'E': UniformEncoder(),
-                'C': None,
-                'B': UniformEncoder(),
-                'D': UniformEncoder()
-            }
-
-        expected_config = Config(expected_dict_config)
+        expected_config = Config(expected_result)
         expected_multi_columns = {}
         assert ht._multi_column_fields == expected_multi_columns
         assert repr(new_config) == repr(expected_config)
