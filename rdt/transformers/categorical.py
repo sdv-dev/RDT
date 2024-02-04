@@ -6,6 +6,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+from pandas.api.types import is_numeric_dtype
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
@@ -599,7 +600,7 @@ class OneHotEncoder(BaseTransformer):
         self._indexer = list(range(self._num_dummies))
         self.dummies = self._uniques.copy()
 
-        if not np.issubdtype(data.dtype, np.number):
+        if not np.issubdtype(data.dtype.type, np.number):
             self._dummy_encoded = True
 
         if self._dummy_na:

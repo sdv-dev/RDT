@@ -463,6 +463,29 @@ def test_one_hot_doesnt_warn(tmp_path):
         ohe_loaded.transform(data)
 
 
+def test_one_hot_categoricals():
+    """Ensure OneHotEncoder works on categorical data. GH#751"""
+    # Setup
+    test_data = pd.DataFrame(data={
+        'A': ['Yes', 'No', 'Yes', 'Maybe', 'No']
+    })
+    test_data['A'] = test_data['A'].astype('category')
+    transformer = OneHotEncoder()
+
+    # Run
+    transformed_data = transformer.fit_transform(test_data, column='A')
+    
+    # Assert
+    pd.testing.assert_frame_equal(
+        transformed_data,
+        pd.DataFrame({
+            'A.value0': [1, 0, 1, 0, 0],
+            'A.value1': [0, 1, 0, 0, 1],
+            'A.value2': [0, 0, 0, 1, 0],
+        })
+    )
+
+
 def test_label_numerical_2d_array():
     """Ensure LabelEncoder works on numerical + nan only columns."""
 
