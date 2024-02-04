@@ -207,7 +207,7 @@ class RegexGenerator(BaseTransformer):
                     remaining_samples = sample_size - len(reverse_transformed)
                     start = int(generated_values[-1]) + 1
                     reverse_transformed.extend(
-                            [str(i) for i in range(start, start + remaining_samples)])
+                        [str(i) for i in range(start, start + remaining_samples)])
 
                 except ValueError:
                     counter = 0

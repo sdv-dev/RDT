@@ -474,7 +474,7 @@ def test_one_hot_categoricals():
 
     # Run
     transformed_data = transformer.fit_transform(test_data, column='A')
-    
+
     # Assert
     pd.testing.assert_frame_equal(
         transformed_data,
