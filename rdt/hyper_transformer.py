@@ -359,11 +359,13 @@ class HyperTransformer:
 
     def _update_multi_column_transformer(self):
         """Check that multi-columns mappings are valid and update them otherwise."""
-        all_fields_multi_column = set(self._multi_column_fields.values())
+        all_fields_multi_column = set()
+        for columns, transformer in self.field_transformers.items():
+            if isinstance(transformer, BaseMultiColumnTransformer):
+                all_fields_multi_column.add(columns)
+
         for field in all_fields_multi_column:
             transformer = self.field_transformers[field]
-            if transformer is None:
-                continue
 
             columns_to_sdtypes = self._get_columns_to_sdtypes(field)
             try:

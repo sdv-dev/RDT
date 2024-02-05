@@ -3133,6 +3133,10 @@ class TestHyperTransformer(TestCase):
 
             SUPPORTED_SDTYPES = ['categorical', 'boolean']
 
+            @classmethod
+            def _validate_sdtypes(cls, columns_to_sdtypes):
+                return
+
         ht = HyperTransformer()
         ht.field_sdtypes = {
             'column1': 'categorical',
