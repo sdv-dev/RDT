@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-
 from rdt.transformers.utils import (
     _any, _max_repeat, check_nan_in_transform, flatten_column_list, strings_from_regex,
     try_convert_to_dtype)
