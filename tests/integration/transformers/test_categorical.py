@@ -482,7 +482,8 @@ def test_one_hot_categoricals():
             'A.value0': [1, 0, 1, 0, 0],
             'A.value1': [0, 1, 0, 0, 1],
             'A.value2': [0, 0, 0, 1, 0],
-        }, check_dtype=False)
+        }),
+        check_dtype=False
     )
 
 
