@@ -486,6 +486,12 @@ def test_one_hot_categoricals():
         check_dtype=False
     )
 
+    # Run
+    reversed_data = transformer.reverse_transform(transformed_data)
+
+    # Assert
+    pd.testing.assert_frame_equal(reversed_data, test_data)
+
 
 def test_label_numerical_2d_array():
     """Ensure LabelEncoder works on numerical + nan only columns."""
