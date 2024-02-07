@@ -599,7 +599,7 @@ class OneHotEncoder(BaseTransformer):
         self._indexer = list(range(self._num_dummies))
         self.dummies = self._uniques.copy()
 
-        if not np.issubdtype(data.dtype, np.number):
+        if not np.issubdtype(data.dtype.type, np.number):
             self._dummy_encoded = True
 
         if self._dummy_na:
