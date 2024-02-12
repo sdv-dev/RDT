@@ -357,6 +357,32 @@ class HyperTransformer:
 
         self.field_transformers[new_tuple] = self.field_transformers.pop(old_tuple)
 
+    def _update_multi_column_transformer(self):
+        """Check that multi-columns mappings are valid and update them otherwise."""
+        all_fields_multi_column = set()
+        for columns, transformer in self.field_transformers.items():
+            if isinstance(transformer, BaseMultiColumnTransformer):
+                all_fields_multi_column.add(columns)
+
+        for field in all_fields_multi_column:
+            transformer = self.field_transformers[field]
+
+            columns_to_sdtypes = self._get_columns_to_sdtypes(field)
+            try:
+                transformer._validate_sdtypes(   # pylint: disable=protected-access
+                    columns_to_sdtypes
+                )
+            except TransformerInputError:
+                warnings.warn(
+                    f"Transformer '{transformer.get_name()}' is incompatible with the "
+                    f"multi-column field '{field}'. Assigning default transformer to the columns."
+                )
+                del self.field_transformers[field]
+                for column, sdtype in columns_to_sdtypes.items():
+                    self.field_transformers[column] = deepcopy(get_default_transformer(sdtype))
+
+        self._multi_column_fields = self._create_multi_column_fields()
+
     def update_transformers_by_sdtype(
             self, sdtype, transformer=None, transformer_name=None, transformer_parameters=None):
         """Update the transformers for the specified ``sdtype``.
@@ -397,6 +423,7 @@ class HyperTransformer:
                     self._remove_column_in_multi_column_fields(field)
 
         self._multi_column_fields = self._create_multi_column_fields()
+        self._update_multi_column_transformer()
         self._modified_config = True
 
     def update_sdtypes(self, column_name_to_sdtype):
@@ -445,6 +472,7 @@ class HyperTransformer:
         )
 
         self._multi_column_fields = self._create_multi_column_fields()
+        self._update_multi_column_transformer()
         self._modified_config = True
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
@@ -485,6 +513,7 @@ class HyperTransformer:
             self.field_transformers[column_name] = transformer
 
         self._multi_column_fields = self._create_multi_column_fields()
+        self._update_multi_column_transformer()
         self._modified_config = True
 
     def remove_transformers(self, column_names):
@@ -514,6 +543,7 @@ class HyperTransformer:
 
             self.field_transformers[column_name] = None
 
+        self._update_multi_column_transformer()
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
@@ -540,6 +570,7 @@ class HyperTransformer:
 
                 self.field_transformers[column_name] = None
 
+        self._update_multi_column_transformer()
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 

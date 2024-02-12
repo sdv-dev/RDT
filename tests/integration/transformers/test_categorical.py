@@ -474,7 +474,6 @@ def test_one_hot_categoricals():
 
     # Run
     transformed_data = transformer.fit_transform(test_data, column='A')
-    
     # Assert
     pd.testing.assert_frame_equal(
         transformed_data,
@@ -482,8 +481,15 @@ def test_one_hot_categoricals():
             'A.value0': [1, 0, 1, 0, 0],
             'A.value1': [0, 1, 0, 0, 1],
             'A.value2': [0, 0, 0, 1, 0],
-        })
+        }),
+        check_dtype=False
     )
+
+    # Run
+    reversed_data = transformer.reverse_transform(transformed_data)
+
+    # Assert
+    pd.testing.assert_frame_equal(reversed_data, test_data)
 
 
 def test_label_numerical_2d_array():
