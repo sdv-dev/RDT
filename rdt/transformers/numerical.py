@@ -1,7 +1,5 @@
 """Transformers for numerical data."""
 import copy
-import logging
-import sys
 import warnings
 
 import numpy as np
@@ -11,11 +9,9 @@ from sklearn.mixture import BayesianGaussianMixture
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
-
-LOGGER = logging.getLogger(__name__)
+from rdt.transformers.utils import learn_rounding_digits
 
 EPSILON = np.finfo(np.float32).eps
-MAX_DECIMALS = sys.float_info.dig - 1
 INTEGER_BOUNDS = {
     'Int8': (-2**7, 2**7 - 1),
     'Int16': (-2**15, 2**15 - 1),
@@ -91,31 +87,6 @@ class FloatFormatter(BaseTransformer):
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
 
-    @staticmethod
-    def _learn_rounding_digits(data):
-        # check if data has any decimals
-        name = data.name
-        data = np.array(data)
-        roundable_data = data[~(np.isinf(data) | pd.isna(data))]
-
-        # Doesn't contain numbers
-        if len(roundable_data) == 0:
-            return None
-
-        # Doesn't contain decimal digits
-        if ((roundable_data % 1) == 0).all():
-            return 0
-
-        # Try to round to fewer digits
-        if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
-            for decimal in range(MAX_DECIMALS + 1):
-                if (roundable_data == roundable_data.round(decimal)).all():
-                    return decimal
-
-        # Can't round, not equal after MAX_DECIMALS digits of precision
-        LOGGER.info("No rounding scheme detected for column '%s'. Data will not be rounded.", name)
-        return None
-
     def _raise_out_of_bounds_error(self, value, name, bound_type, min_bound, max_bound):
         raise ValueError(
             f"The {bound_type} value in column '{name}' is {value}."
@@ -158,7 +129,7 @@ class FloatFormatter(BaseTransformer):
             self._max_value = data.max()
 
         if self.learn_rounding_scheme:
-            self._rounding_digits = self._learn_rounding_digits(data)
+            self._rounding_digits = learn_rounding_digits(data)
 
         self.null_transformer = NullTransformer(
             self.missing_value_replacement,
