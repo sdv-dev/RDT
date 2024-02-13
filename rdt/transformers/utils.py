@@ -1,11 +1,19 @@
 """Tools to generate strings from regular expressions."""
 
+import logging
 import re
 import string
+import sys
+import warnings
 
 import numpy as np
+import pandas as pd
 
 import sre_parse  # isort:skip
+
+LOGGER = logging.getLogger(__name__)
+
+MAX_DECIMALS = sys.float_info.dig - 1
 
 
 def _literal(character, max_repeat):
@@ -149,7 +157,7 @@ def strings_from_regex(regex, max_repeat=16):
             generators.append((generator, option, args))
             sizes.append(size)
 
-    return _from_generators(generators, max_repeat), np.prod(sizes, dtype=np.complex128)
+    return _from_generators(generators, max_repeat), np.prod(sizes, dtype=np.complex128).real
 
 
 def fill_nan_with_none(data):
@@ -184,3 +192,86 @@ def flatten_column_list(column_list):
             flattened.append(column)
 
     return flattened
+
+
+def check_nan_in_transform(data, dtype):
+    """Check if there are null values in the transformed data.
+
+    Args:
+        data (pd.Series or numpy.ndarray):
+            Data that has been transformed.
+        dtype (str):
+            Data type of the transformed data.
+    """
+    if pd.isna(data).any().any():
+        message = (
+            'There are null values in the transformed data. The reversed '
+            'transformed data will contain null values'
+        )
+        is_integer = pd.api.types.is_integer_dtype(dtype)
+        if is_integer:
+            message += " of type 'float'."
+        else:
+            message += '.'
+
+        warnings.warn(message)
+
+
+def try_convert_to_dtype(data, dtype):
+    """Try to convert data to a given dtype.
+
+    Args:
+        data (pd.Series or numpy.ndarray):
+            Data to convert.
+        dtype (str):
+            Data type to convert to.
+
+    Returns:
+        data:
+            Data converted to the given dtype.
+    """
+    try:
+        data = data.astype(dtype)
+    except ValueError as error:
+        is_integer = pd.api.types.is_integer_dtype(dtype)
+        if is_integer:
+            data = data.astype(float)
+        else:
+            raise error
+
+    return data
+
+
+def learn_rounding_digits(data):
+    """Learn the number of digits to round data to.
+
+    Args:
+        data (pd.Series):
+            Data to learn the number of digits to round to.
+
+    Returns:
+        int or None:
+            Number of digits to round to.
+    """
+    # check if data has any decimals
+    name = data.name
+    data = np.array(data)
+    roundable_data = data[~(np.isinf(data) | pd.isna(data))]
+
+    # Doesn't contain numbers
+    if len(roundable_data) == 0:
+        return None
+
+    # Doesn't contain decimal digits
+    if ((roundable_data % 1) == 0).all():
+        return 0
+
+    # Try to round to fewer digits
+    if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
+        for decimal in range(MAX_DECIMALS + 1):
+            if (roundable_data == roundable_data.round(decimal)).all():
+                return decimal
+
+    # Can't round, not equal after MAX_DECIMALS digits of precision
+    LOGGER.info("No rounding scheme detected for column '%s'. Data will not be rounded.", name)
+    return None

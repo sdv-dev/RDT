@@ -303,3 +303,37 @@ def test_regexgenerator_with_many_possibilities():
 
     pd.testing.assert_frame_equal(transformed, expected_transformed)
     pd.testing.assert_frame_equal(reverse_transform, expected_reverse_transformed)
+
+
+def test_regexgenerator_enforce_uniqueness_not_enough_values_categorical():
+    """Test the ``RegexGenerator`` with enforce_uniqueness=True but insufficient regex values."""
+    # Setup
+    data = pd.DataFrame({
+        'id': [1, 2, 3, 4, 5],
+    })
+    instance = RegexGenerator('id_[a-b]{1}', enforce_uniqueness=True)
+
+    # Run
+    transformed = instance.fit_transform(data, 'id')
+    reverse_transform = instance.reverse_transform(transformed)
+
+    # Assert
+    expected = pd.DataFrame({'id': ['id_a', 'id_b', 'id_a(0)', 'id_b(0)', 'id_a(1)']})
+    pd.testing.assert_frame_equal(reverse_transform, expected)
+
+
+def test_regexgenerator_enforce_uniqueness_not_enough_values_numerical():
+    """Test the ``RegexGenerator`` with enforce_uniqueness=True but insufficient regex values."""
+    # Setup
+    data = pd.DataFrame({
+        'id': [1, 2, 3, 4, 5],
+    })
+    instance = RegexGenerator('[2-3]{1}', enforce_uniqueness=True)
+
+    # Run
+    transformed = instance.fit_transform(data, 'id')
+    reverse_transform = instance.reverse_transform(transformed)
+
+    # Assert
+    expected = pd.DataFrame({'id': ['2', '3', '4', '5', '6']}, dtype=object)
+    pd.testing.assert_frame_equal(reverse_transform, expected)

@@ -547,6 +547,10 @@ class BaseMultiColumnTransformer(BaseTransformer):
             missing_to_print = ', '.join(missing)
             raise ValueError(f'Columns ({missing_to_print}) are not present in the data.')
 
+    @classmethod
+    def _validate_sdtypes(cls, columns_to_sdtypes):
+        raise NotImplementedError()
+
     def _fit(self, data):
         """Fit the transformer to the data.
 

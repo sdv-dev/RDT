@@ -2317,7 +2317,7 @@ class TestHyperTransformer(TestCase):
         ht.field_transformers = {
             'A': LabelEncoder(),
             'B': UniformEncoder(),
-            "('C', 'D')": None,
+            ('C', 'D'): None,
         }
         ht.field_sdtypes = {
             'A': 'categorical',
@@ -2330,9 +2330,6 @@ class TestHyperTransformer(TestCase):
             'C': ('C', 'D'),
             'D': ('C', 'D')
         }
-        mock__remove_column_in_multi_column_fields = Mock()
-        ht._remove_column_in_multi_column_fields = mock__remove_column_in_multi_column_fields
-        ht._create_multi_column_fields = Mock()
 
         # Run
         ht.update_transformers_by_sdtype(
@@ -2341,9 +2338,15 @@ class TestHyperTransformer(TestCase):
         )
 
         # Assert
-        assert len(ht.field_transformers) == 4
-        assert mock__remove_column_in_multi_column_fields.call_count == 1
-        ht._create_multi_column_fields.assert_called_once()
+        expected_field_transformers = {
+            'A': LabelEncoder(),
+            'B': UniformEncoder(),
+            'C': LabelEncoder(),
+            'D': None,
+        }
+        expected_multi_column_fieds = {}
+        assert str(ht.field_transformers) == str(expected_field_transformers)
+        assert ht._multi_column_fields == expected_multi_column_fieds
 
     @patch('rdt.hyper_transformer.warnings')
     def test_update_transformers_fitted(self, mock_warnings):
@@ -2391,7 +2394,99 @@ class TestHyperTransformer(TestCase):
         assert instance.field_transformers['my_column'] == transformer
         instance._validate_transformers.assert_called_once_with(column_name_to_transformer)
 
-    def test_update_transformers_multi_column(self):
+    def test__update_transformers_multi_column_valid(self):
+        """Test ``_update_multi_column_transformer`` with a valid multi-column transformer."""
+        # Setup
+        class ValidMultiColumnTransformer(BaseMultiColumnTransformer):
+            @classmethod
+            def _validate_sdtypes(cls, columns_to_sdtypes):
+                return
+
+        ht = HyperTransformer()
+        ht.field_sdtypes = {
+            'A': 'categorical',
+            'B': 'boolean',
+            'C': 'numerical',
+        }
+        ht.field_transformers = {
+            'A': LabelEncoder(),
+            ('B', 'C'): ValidMultiColumnTransformer(),
+        }
+        ht._multi_column_fields = {
+            'B': ('B', 'C'),
+            'C': ('B', 'C'),
+        }
+
+        # Run
+        ht._update_multi_column_transformer()
+
+        # Assert
+        expected_field_transformers = {
+            'A': LabelEncoder(),
+            ('B', 'C'): ValidMultiColumnTransformer(),
+        }
+        expected_multi_column_fieds = {
+            'B': ('B', 'C'),
+            'C': ('B', 'C'),
+        }
+        assert str(ht.field_transformers) == str(expected_field_transformers)
+        assert ht._multi_column_fields == expected_multi_column_fieds
+
+    def test__update_transformers_multi_column_invalid(self):
+        """Test ``_update_multi_column_transformer`` with an invalid multi-column transformer.
+
+        The multi column transformer should be removed and its columns assigned to their default
+        transformers.
+        """
+        # Setup
+        class InvalidMultiColumnTransformer(BaseMultiColumnTransformer):
+            @classmethod
+            def _validate_sdtypes(cls, columns_to_sdtypes):
+                raise TransformerInputError('Invalid columns.')
+
+        ht = HyperTransformer()
+        ht.field_sdtypes = {
+            'A': 'categorical',
+            'B': 'boolean',
+            'C': 'numerical',
+            'D': 'categorical',
+            'E': 'categorical'
+        }
+        ht.field_transformers = {
+            'A': LabelEncoder(),
+            ('B', 'C'): InvalidMultiColumnTransformer(),
+            ('D', 'E'): None,
+        }
+        ht._multi_column_fields = {
+            'B': ('B', 'C'),
+            'C': ('B', 'C'),
+            'D': ('D', 'E'),
+            'E': ('D', 'E'),
+        }
+
+        # Run
+        expected_msg = re.escape(
+            "Transformer 'InvalidMultiColumnTransformer' is incompatible with the "
+            "multi-column field '('B', 'C')'. Assigning default transformer to the columns."
+        )
+        with pytest.warns(UserWarning, match=expected_msg):
+            ht._update_multi_column_transformer()
+
+        # Assert
+        expected_field_transformers = {
+            'A': LabelEncoder(),
+            ('D', 'E'): None,
+            'B': UniformEncoder(),
+            'C': FloatFormatter(),
+        }
+        expected_multi_column_fieds = {
+            'D': ('D', 'E'),
+            'E': ('D', 'E'),
+        }
+        assert str(ht.field_transformers) == str(expected_field_transformers)
+        assert ht._multi_column_fields == expected_multi_column_fieds
+
+    def test_update_transformers_with_multi_column(self):
         """Test ``update_transformers`` with a multi-column transformer."""
         # Setup
         ht = HyperTransformer()
@@ -2411,6 +2506,7 @@ class TestHyperTransformer(TestCase):
             'C': None,
         }
         ht._create_multi_column_fields = Mock()
+        ht._update_multi_column_transformer = Mock()
 
         # Run
         ht.update_transformers(column_name_to_transformer)
@@ -2423,6 +2519,7 @@ class TestHyperTransformer(TestCase):
 
         assert ht.field_transformers == expected_field_transformers
         ht._create_multi_column_fields.assert_called_once()
+        ht._update_multi_column_transformer.assert_called_once()
 
     def test_update_transformers_changing_multi_column_transformer(self):
         """Test ``update_transformers`` when changing a multi column transformer."""
@@ -2969,8 +3066,11 @@ class TestHyperTransformer(TestCase):
         # Setup
         class DummyMultiColumnTransformer(BaseMultiColumnTransformer):
             """Dummy multi column transformer."""
-
             SUPPORTED_SDTYPES = ['categorical', 'boolean']
+
+            @classmethod
+            def _validate_sdtypes(cls, columns_to_sdtypes):
+                return
 
         ht = HyperTransformer()
         ht.field_sdtypes = {
@@ -2988,7 +3088,13 @@ class TestHyperTransformer(TestCase):
             'column2': ('column2', 'column3'),
             'column3': ('column2', 'column3')
         }
-        ht._create_multi_column_fields = Mock()
+        ht._create_multi_column_fields = Mock(
+            return_value={
+                'column2': ('column2', 'column3'),
+                'column3': ('column2', 'column3')
+            }
+        )
+        ht._update_multi_column_transformer = Mock()
 
         # Run
         ht.update_sdtypes(column_name_to_sdtype={
@@ -3012,6 +3118,7 @@ class TestHyperTransformer(TestCase):
         assert ht.field_sdtypes == expected_field_sdtypes
         assert str(ht.field_transformers) == str(expected_field_transformers)
         ht._create_multi_column_fields.assert_called_once()
+        ht._update_multi_column_transformer.assert_called_once()
 
     def test_update_sdtypes_multi_column_with_unsupported_sdtypes(self):
         """Test the ``update_sdtypes`` method.
@@ -3025,6 +3132,10 @@ class TestHyperTransformer(TestCase):
             """Dummy multi column transformer."""
 
             SUPPORTED_SDTYPES = ['categorical', 'boolean']
+
+            @classmethod
+            def _validate_sdtypes(cls, columns_to_sdtypes):
+                return
 
         ht = HyperTransformer()
         ht.field_sdtypes = {

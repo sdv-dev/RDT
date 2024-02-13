@@ -1,12 +1,14 @@
 """Transformers for text data."""
+import logging
 import warnings
 
 import numpy as np
 import pandas as pd
 
-from rdt.errors import TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import strings_from_regex
+
+LOGGER = logging.getLogger(__name__)
 
 
 class IDGenerator(BaseTransformer):
@@ -139,6 +141,37 @@ class RegexGenerator(BaseTransformer):
         """Drop the input column by returning ``None``."""
         return None
 
+    def _warn_not_enough_unique_values(self, sample_size):
+        """Warn the user that the regex cannot generate enough unique values.
+
+        Args:
+            sample_size (int):
+                Number of samples to be generated.
+        """
+        warned = False
+        if sample_size > self.generator_size:
+            if self.enforce_uniqueness:
+                warnings.warn(
+                    f"The regex for '{self.get_input_column()}' can only generate "
+                    f'{self.generator_size} unique values. Additional values may not exactly '
+                    'follow the provided regex.'
+                )
+                warned = True
+            else:
+                LOGGER.info(
+                    "The data has %s rows but the regex for '%s' can only create %s unique values."
+                    " Some values in '%s' may be repeated.",
+                    sample_size, self.get_input_column(), self.generator_size,
+                    self.get_input_column()
+                )
+
+        remaining = self.generator_size - self.generated
+        if sample_size > remaining and self.enforce_uniqueness and not warned:
+            warnings.warn(
+                f'The regex generator is not able to generate {sample_size} new unique '
+                f'values (only {max(remaining, 0)} unique values left).'
+            )
+
     def _reverse_transform(self, data):
         """Generate new data using the provided ``regex_format``.
 
@@ -154,47 +187,39 @@ class RegexGenerator(BaseTransformer):
         else:
             sample_size = self.data_length
 
-        if sample_size > self.generator_size:
-            if self.enforce_uniqueness:
-                raise TransformerProcessingError(
-                    f'The regex is not able to generate {sample_size} unique values. '
-                    f"Please use a different regex for column ('{self.get_input_column()}')."
-                )
-
-            warnings.warn(
-                f"The data has {sample_size} rows but the regex for '{self.get_input_column()}' "
-                f'can only create {self.generator_size} unique values. Some values in '
-                f"'{self.get_input_column()}' may be repeated."
-            )
+        self._warn_not_enough_unique_values(sample_size)
 
         remaining = self.generator_size - self.generated
-        if sample_size > self.generator_size - self.generated:
-            if self.enforce_uniqueness:
-                raise TransformerProcessingError(
-                    f'The regex generator is not able to generate {sample_size} new unique '
-                    f'values (only {remaining} unique value left). Please use '
-                    "'reset_randomization' in order to restart the generator."
-                )
-
+        if sample_size > remaining:
             self.reset_randomization()
             remaining = self.generator_size
 
         if remaining >= sample_size:
-            reverse_transformed = np.array([
-                next(self.generator)
-                for _ in range(sample_size)
-            ], dtype=object)
-
+            reverse_transformed = [next(self.generator) for _ in range(sample_size)]
             self.generated += sample_size
 
         else:
-            self.generated = self.generator_size
             generated_values = list(self.generator)
-            reverse_transformed = []
-            while len(reverse_transformed) < sample_size:
-                remaining_samples = sample_size - len(reverse_transformed)
-                reverse_transformed.extend(generated_values[:remaining_samples])
+            reverse_transformed = generated_values[:]
+            self.generated = self.generator_size
+            if self.enforce_uniqueness:
+                try:
+                    remaining_samples = sample_size - len(reverse_transformed)
+                    start = int(generated_values[-1]) + 1
+                    reverse_transformed.extend(
+                        [str(i) for i in range(start, start + remaining_samples)])
 
-            reverse_transformed = np.array(reverse_transformed, dtype=object)
+                except ValueError:
+                    counter = 0
+                    while len(reverse_transformed) < sample_size:
+                        remaining_samples = sample_size - len(reverse_transformed)
+                        reverse_transformed.extend(
+                            [f'{i}({counter})' for i in generated_values[:remaining_samples]])
+                        counter += 1
 
-        return reverse_transformed
+            else:
+                while len(reverse_transformed) < sample_size:
+                    remaining_samples = sample_size - len(reverse_transformed)
+                    reverse_transformed.extend(generated_values[:remaining_samples])
+
+        return np.array(reverse_transformed, dtype=object)

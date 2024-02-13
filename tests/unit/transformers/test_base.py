@@ -1422,6 +1422,12 @@ class TestBaseMultiColumnTransformer:
         with pytest.raises(ValueError, match=expected_error_msg):
             transformer._validate_columns_to_sdtypes(data, wrong_columns_to_sdtypes)
 
+    def test__validate_sdtypes(self):
+        """Test the ``_validate_sdtypes`` method."""
+        # Run and Assert
+        with pytest.raises(NotImplementedError):
+            BaseMultiColumnTransformer._validate_sdtypes({})
+
     def test__fit(self):
         """Test the ``_fit`` method.
 
