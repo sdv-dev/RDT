@@ -1,13 +1,19 @@
 """Tools to generate strings from regular expressions."""
 
+import logging
 import re
 import string
+import sys
 import warnings
 
 import numpy as np
 import pandas as pd
 
 import sre_parse  # isort:skip
+
+LOGGER = logging.getLogger(__name__)
+
+MAX_DECIMALS = sys.float_info.dig - 1
 
 
 def _literal(character, max_repeat):
@@ -234,3 +240,38 @@ def try_convert_to_dtype(data, dtype):
             raise error
 
     return data
+
+
+def learn_rounding_digits(data):
+    """Learn the number of digits to round data to.
+
+    Args:
+        data (pd.Series):
+            Data to learn the number of digits to round to.
+
+    Returns:
+        int or None:
+            Number of digits to round to.
+    """
+    # check if data has any decimals
+    name = data.name
+    data = np.array(data)
+    roundable_data = data[~(np.isinf(data) | pd.isna(data))]
+
+    # Doesn't contain numbers
+    if len(roundable_data) == 0:
+        return None
+
+    # Doesn't contain decimal digits
+    if ((roundable_data % 1) == 0).all():
+        return 0
+
+    # Try to round to fewer digits
+    if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
+        for decimal in range(MAX_DECIMALS + 1):
+            if (roundable_data == roundable_data.round(decimal)).all():
+                return decimal
+
+    # Can't round, not equal after MAX_DECIMALS digits of precision
+    LOGGER.info("No rounding scheme detected for column '%s'. Data will not be rounded.", name)
+    return None
