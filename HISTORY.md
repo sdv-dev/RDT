@@ -1,5 +1,26 @@
 # History
 
+## 1.9.2 - 2024-02-13
+
+This release makes a couple improvements to the `RegexGenerator`. Error messaging is improved and it is now capable of generating an unlimited amount of rows even when the `enforce_uniqueness` flag is True. It does this by adding suffixes if the max amount of combinations for the provided regex is met.
+
+Additionally, this release resolves a few bugs. The `OneHotEncoder` should no longer crash on the `categorical` dtype and the `UniformEncoder` was improved to support more dtypes.
+
+### Bugs Fixed
+
+* Categorical reverse transform may crash with `ValueError` for certain dtypes (int64) - Issue [#747](https://github.com/sdv-dev/RDT/issues/747) by @R-Palazzo
+* RegexGenerator gives a confusing message: # of possibilities are shown as an imaginary number - Issue [#748](https://github.com/sdv-dev/RDT/issues/748) by @R-Palazzo
+* OneHotEncoder doesn't support dtype `'category'` - Issue [#751](https://github.com/sdv-dev/RDT/issues/751) by @fealho
+
+### New Features
+
+* RegexGenerator should create unlimited regexes, even if unique enforcement is on - Issue [#749](https://github.com/sdv-dev/RDT/issues/749) by @fealho
+* Add a _update_multi_column_transformer method - Issue [#757](https://github.com/sdv-dev/RDT/issues/757) by @R-Palazzo
+
+### Internal
+
+* Move the _learn_rounding_digits of the FloatFormatter into a helper - Issue [#750](https://github.com/sdv-dev/RDT/issues/750) by @fealho
+
 ## 1.9.1 - 2024-01-10
 
 This release fixes a bug that caused the `AnonymizedFaker` to crash with provider/function combinations that return tuples.
