@@ -466,6 +466,7 @@ class TestAnonymizedFaker:
         """
         # Setup
         transformer = AnonymizedFaker()
+        transformer.cardinality_rule = 'match'
         columns_data = pd.Series(['1', '2', '3', None, np.nan])
         transformer.columns = ['col']
 
@@ -476,6 +477,7 @@ class TestAnonymizedFaker:
         assert transformer.data_length == 5
         assert transformer.output_properties == {None: {'next_transformer': None}}
         assert transformer._nan_frequency == 0.4
+        assert transformer._data_cardinality == 5
 
     def test__transform(self):
         """Test the ``_transform`` method.
