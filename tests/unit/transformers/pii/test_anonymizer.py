@@ -332,7 +332,8 @@ class TestAnonymizedFaker:
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
-    def test___init__custom(self, mock_check_provider_function, mock_faker):
+    @patch('rdt.transformers.pii.anonymizer.warnings')
+    def test___init__custom(self, mock_warnings, mock_check_provider_function, mock_faker):
         """Test the instantiation of the transformer with custom parameters.
 
         Test that the transformer can be instantiated with a custom provider and function, and
@@ -362,7 +363,8 @@ class TestAnonymizedFaker:
                 'type': 'visa'
             },
             locales=['en_US', 'fr_FR'],
-            cardinality_rule='match'
+            cardinality_rule='match',
+            enforce_uniqueness=True
         )
 
         # Assert
@@ -373,6 +375,13 @@ class TestAnonymizedFaker:
         assert instance.locales == ['en_US', 'fr_FR']
         mock_faker.Faker.assert_called_once_with(['en_US', 'fr_FR'])
         assert instance.cardinality_rule == 'match'
+        mock_warnings.warn.assert_has_calls([
+            call(
+                "The 'enforce_uniqueness' parameter is no longer supported. "
+                "Please use the 'cardinality_rule' parameter instead.",
+                FutureWarning
+            )
+        ])
 
     def test___init__no_function_name(self):
         """Test the instantiation of the transformer with custom parameters.
