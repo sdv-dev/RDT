@@ -175,7 +175,7 @@ class AnonymizedFaker(BaseTransformer):
         """Return the result of calling the ``faker`` function."""
         if self.cardinality_rule in {'unique', 'match'}:
             faker_attr = self.faker.unique
-        elif not self.cardinality_rule:
+        else:
             faker_attr = self.faker
 
         result = getattr(faker_attr, self.function_name)(**self.function_kwargs)
