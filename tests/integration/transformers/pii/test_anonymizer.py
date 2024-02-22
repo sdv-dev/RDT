@@ -129,7 +129,7 @@ class TestAnonymizedFaker:
         assert len(reverse_transform['cc']) == 5
         assert reverse_transform['cc'].isna().sum() == 1
 
-    def test_enforce_uniqueness(self):
+    def test_cardinality_rule(self):
         """Test that ``AnonymizedFaker`` works with uniqueness.
 
         Also ensure that when we call ``reset_randomization`` the generator will be able to
@@ -139,7 +139,7 @@ class TestAnonymizedFaker:
             'job': np.arange(500)
         })
 
-        instance = AnonymizedFaker('job', 'job', enforce_uniqueness=True)
+        instance = AnonymizedFaker('job', 'job', cardinality_rule='unique')
         transformed = instance.fit_transform(data, 'job')
         reverse_transform = instance.reverse_transform(transformed)
 

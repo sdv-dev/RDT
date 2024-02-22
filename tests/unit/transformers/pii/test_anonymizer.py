@@ -78,7 +78,7 @@ class TestAnonymizedFaker:
         with pytest.raises(TransformerProcessingError, match=expected_message):
             AnonymizedFaker.check_provider_function('TestProvider', 'TestFunction')
 
-    def test__function_enforce_uniqueness_false(self):
+    def test__function_cardinality_rule_none(self):
         """Test that ``_function`` does not use ``faker.unique``.
 
         The method ``_function`` should return a call from the
@@ -86,7 +86,6 @@ class TestAnonymizedFaker:
 
         Mock:
             - Instance of 'AnonymizedFaker'.
-            - Instance ``enforce_uniqueness`` set to `False`
             - Faker instance.
             - A function for the faker instance.
 
@@ -99,11 +98,11 @@ class TestAnonymizedFaker:
         """
         # setup
         instance = Mock()
-        instance.enforce_uniqueness = False
         function = Mock()
         unique_function = Mock()
         function.return_value = 1
 
+        instance.cardinality_rule = None
         instance.faker.unique.number = unique_function
         instance.faker.number = function
         instance.function_name = 'number'
@@ -117,7 +116,7 @@ class TestAnonymizedFaker:
         function.assert_called_once_with(type='int')
         assert result == 1
 
-    def test__function_enforce_uniqueness_true(self):
+    def test__function_cardinality_rule_unique(self):
         """Test that ``_function`` uses the ``faker.unique``.
 
         The method ``_function`` should return a call from the
@@ -125,7 +124,6 @@ class TestAnonymizedFaker:
 
         Mock:
             - Instance of 'AnonymizedFaker'.
-            - Instance ``enforce_uniqueness`` set to ``True``
             - Faker instance.
             - A function for the faker instance.
 
@@ -138,11 +136,33 @@ class TestAnonymizedFaker:
         """
         # setup
         instance = Mock()
-        instance.enforce_uniqueness = True
         function = Mock()
         unique_function = Mock()
         unique_function.return_value = 1
 
+        instance.cardinality_rule = 'unique'
+        instance.faker.unique.number = unique_function
+        instance.faker.number = function
+        instance.function_name = 'number'
+        instance.function_kwargs = {'type': 'int'}
+
+        # Run
+        result = AnonymizedFaker._function(instance)
+
+        # Assert
+        function.assert_not_called()
+        unique_function.assert_called_once_with(type='int')
+        assert result == 1
+
+    def test__function_cardinality_rule_match(self):
+        """Test it when 'cardinality_rule' is 'match'."""
+        # setup
+        instance = Mock()
+        function = Mock()
+        unique_function = Mock()
+        unique_function.return_value = 1
+
+        instance.cardinality_rule = 'match'
         instance.faker.unique.number = unique_function
         instance.faker.number = function
         instance.function_name = 'number'
@@ -160,7 +180,7 @@ class TestAnonymizedFaker:
         """Test that ``_function`` returns the values of the iterable."""
         # setup
         instance = Mock()
-        instance.enforce_uniqueness = False
+        instance.cardinality_rule = None
         function = Mock()
         function.return_value = ('value_1', 'value_2')
 
@@ -291,7 +311,7 @@ class TestAnonymizedFaker:
         assert instance.function_kwargs == {}
         assert instance.locales is None
         mock_faker.Faker.assert_called_once_with(None)
-        assert instance.enforce_uniqueness is False
+        assert instance.cardinality_rule is None
         assert instance.missing_value_generation == 'random'
 
     def test___init__error_missing_value_generation(self):
@@ -342,7 +362,7 @@ class TestAnonymizedFaker:
                 'type': 'visa'
             },
             locales=['en_US', 'fr_FR'],
-            enforce_uniqueness=True
+            cardinality_rule='match'
         )
 
         # Assert
@@ -352,7 +372,7 @@ class TestAnonymizedFaker:
         assert instance.function_kwargs == {'type': 'visa'}
         assert instance.locales == ['en_US', 'fr_FR']
         mock_faker.Faker.assert_called_once_with(['en_US', 'fr_FR'])
-        assert instance.enforce_uniqueness
+        assert instance.cardinality_rule == 'match'
 
     def test___init__no_function_name(self):
         """Test the instantiation of the transformer with custom parameters.
@@ -503,6 +523,25 @@ class TestAnonymizedFaker:
         assert function.call_args_list == [call(), call(), call()]
         np.testing.assert_array_equal(result, np.array(['a', 'b', 'c']))
 
+    def test__reverse_transform_cardinality_rule_match(self):
+        """Test it when 'cardinality_rule' is 'match'."""
+        # Setup
+        instance = AnonymizedFaker()
+        instance.data_length = 3
+        instance.cardinality_rule = 'match'
+        instance._data_cardinality = 2
+        function = Mock()
+        function.side_effect = ['a', 'b', 'c']
+
+        instance._function = function
+
+        # Run
+        result = instance._reverse_transform(None)
+
+        # Assert
+        assert function.call_args_list == [call(), call()]
+        assert set(result).issubset({'a', 'b'})
+
     def test__reverse_transform_with_nans(self):
         """Test that ``_reverse_transform`` generates NaNs."""
         # Setup
@@ -539,7 +578,7 @@ class TestAnonymizedFaker:
             - Raises an error.
         """
         # Setup
-        instance = AnonymizedFaker('misc', 'boolean', enforce_uniqueness=True)
+        instance = AnonymizedFaker('misc', 'boolean', cardinality_rule='unique')
         data = pd.Series(['a', 'b', 'c', 'd'])
         instance.columns = ['a']
 

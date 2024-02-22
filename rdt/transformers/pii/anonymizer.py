@@ -33,9 +33,15 @@ class AnonymizedFaker(BaseTransformer):
             Keyword args to pass into the ``function_name`` when being called.
         locales (list):
             List of localized providers to use instead of the global provider.
+        cardinality_rule (str):
+            If ``'unique'`` enforce that every created value is unique.
+            If ``'match'`` match the cardinality of the data seen during fit.
+            If ``None`` do not consider cardinality.
+            Defaults to ``None``.
         enforce_uniqueness (bool):
-            Whether or not to ensure that the new anonymized data is all unique. If it isn't
-            possible to create the requested number of rows, then an error will be raised.
+            **DEPRECATED** Whether or not to ensure that the new anonymized data is all unique.
+            If it isn't possible to create the requested number of rows, then an error will be
+            raised.
             Defaults to ``False``.
         missing_value_generation (str or None):
             The way missing values are being handled. There are two strategies:
@@ -98,10 +104,18 @@ class AnonymizedFaker(BaseTransformer):
             )
 
     def __init__(self, provider_name=None, function_name=None, function_kwargs=None,
-                 locales=None, enforce_uniqueness=False, missing_value_generation='random'):
+                 locales=None, cardinality_rule=None, enforce_uniqueness=False,
+                 missing_value_generation='random'):
         super().__init__()
+        self._data_cardinality = None
         self.data_length = None
-        self.enforce_uniqueness = enforce_uniqueness
+        self.cardinality_rule = cardinality_rule
+        if enforce_uniqueness:
+            warnings.warn(
+                "The 'enforce_uniqueness' parameter is no longer supported. "
+                "Please use the 'cardinality_rule' parameter instead.",
+                FutureWarning
+            )
         self.provider_name = provider_name if provider_name else 'BaseProvider'
         if self.provider_name != 'BaseProvider' and function_name is None:
             raise TransformerInputError(
@@ -156,7 +170,11 @@ class AnonymizedFaker(BaseTransformer):
 
     def _function(self):
         """Return the result of calling the ``faker`` function."""
-        faker_attr = self.faker.unique if self.enforce_uniqueness else self.faker
+        if self.cardinality_rule in {'unique', 'match'}:
+            faker_attr = self.faker.unique
+        elif self.cardinality_rule is None:
+            faker_attr = self.faker
+
         result = getattr(faker_attr, self.function_name)(**self.function_kwargs)
 
         if isinstance(result, Iterable) and not isinstance(result, str):
@@ -185,6 +203,9 @@ class AnonymizedFaker(BaseTransformer):
         if self.missing_value_generation == 'random':
             self._nan_frequency = data.isna().sum() / len(data)
 
+        if self.cardinality_rule == 'match':
+            self._data_cardinality = len(data.unique())
+
     def _transform(self, _data):
         """Drop the input column by returning ``None``."""
         return None
@@ -205,10 +226,18 @@ class AnonymizedFaker(BaseTransformer):
             sample_size = self.data_length
 
         try:
-            reverse_transformed = np.array([
-                self._function()
-                for _ in range(sample_size)
-            ], dtype=object)
+            if self.cardinality_rule == 'match':
+                unique_categories = np.array([
+                    self._function()
+                    for _ in range(self._data_cardinality)
+                ], dtype=object)
+                reverse_transformed = np.random.choice(unique_categories, sample_size)
+
+            else:
+                reverse_transformed = np.array([
+                    self._function()
+                    for _ in range(sample_size)
+                ], dtype=object)
         except faker.exceptions.UniquenessException as exception:
             raise TransformerProcessingError(
                 f'The Faker function you specified is not able to generate {sample_size} unique '
@@ -235,6 +264,7 @@ class AnonymizedFaker(BaseTransformer):
         args = inspect.getfullargspec(self.__init__)
         keys = args.args[1:]
         defaults = dict(zip(keys, args.defaults))
+        keys.remove('enforce_uniqueness')
         instanced = {key: getattr(self, key) for key in keys}
 
         defaults['function_name'] = None
@@ -283,7 +313,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             function_name=function_name,
             function_kwargs=function_kwargs,
             locales=locales,
-            enforce_uniqueness=True
+            cardinality_rule='unique'
         )
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
