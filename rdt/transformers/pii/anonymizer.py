@@ -53,6 +53,8 @@ class AnonymizedFaker(BaseTransformer):
 
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     IS_GENERATOR = True
     INPUT_SDTYPE = 'pii'
 
