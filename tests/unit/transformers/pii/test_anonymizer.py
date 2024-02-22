@@ -477,7 +477,7 @@ class TestAnonymizedFaker:
         assert transformer.data_length == 5
         assert transformer.output_properties == {None: {'next_transformer': None}}
         assert transformer._nan_frequency == 0.4
-        assert transformer._data_cardinality == 5
+        assert transformer._data_cardinality == 3
 
     def test__transform(self):
         """Test the ``_transform`` method.
@@ -534,24 +534,66 @@ class TestAnonymizedFaker:
         assert function.call_args_list == [call(), call(), call()]
         np.testing.assert_array_equal(result, np.array(['a', 'b', 'c']))
 
-    def test__reverse_transform_cardinality_rule_match(self):
-        """Test it when 'cardinality_rule' is 'match'."""
+    def test__reverse_transform_match_cardinality(self):
+        """Test it calls the appropriate method."""
         # Setup
-        instance = AnonymizedFaker()
+        instance = Mock()
         instance.data_length = 3
         instance.cardinality_rule = 'match'
+
+        # Run
+        AnonymizedFaker._reverse_transform(instance, None)
+
+        # Assert
+        instance._reverse_transform_cardinality_rule_match.assert_called_once_with(3)
+
+    def test__reverse_transform_cardinality_rule_match_only_nans(self):
+        """Test it with only nans."""
+        # Setup
+        instance = AnonymizedFaker()
+        instance._nan_frequency = 1
+
+        # Run
+        result = instance._reverse_transform_cardinality_rule_match(3)
+
+        # Assert
+        assert pd.isna(result).all()
+
+    def test__reverse_transform_cardinality_rule_match_no_missing_value(self):
+        """Test it with default values."""
+        # Setup
+        instance = AnonymizedFaker(missing_value_generation=None)
         instance._data_cardinality = 2
+        instance._nan_frequency = 0
         function = Mock()
         function.side_effect = ['a', 'b', 'c']
 
         instance._function = function
 
         # Run
-        result = instance._reverse_transform(None)
+        result = instance._reverse_transform_cardinality_rule_match(3)
 
         # Assert
         assert function.call_args_list == [call(), call()]
         assert set(result).issubset({'a', 'b'})
+
+    def test__reverse_transform_cardinality_rule_match_not_enough_unique(self):
+        """Test it when there are not enough unique values."""
+        # Setup
+        instance = AnonymizedFaker()
+        instance._data_cardinality = 4
+        instance._nan_frequency = 0
+        function = Mock()
+        function.side_effect = ['a', 'b', 'c', 'd']
+
+        instance._function = function
+
+        # Run
+        result = instance._reverse_transform_cardinality_rule_match(3)
+
+        # Assert
+        assert function.call_args_list == [call(), call(), call()]
+        assert set(result) == {'a', 'b', 'c'}
 
     def test__reverse_transform_with_nans(self):
         """Test that ``_reverse_transform`` generates NaNs."""

@@ -157,6 +157,97 @@ class TestAnonymizedFaker:
         instance.reset_randomization()
         instance.reverse_transform(transformed)
 
+    def test_cardinality_rule_match(self):
+        """Test it works with the cardinality rule 'match'."""
+        # Setup
+        data = pd.DataFrame({
+            'col': [1, 2, 3, 1, 2]
+        })
+        instance = AnonymizedFaker(cardinality_rule='match')
+
+        # Run
+        transformed = instance.fit_transform(data, 'col')
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['col'].unique()) == 3
+
+    def test_cardinality_rule_match_nans(self):
+        """Test it works with the cardinality rule 'match' with nans."""
+        # Setup
+        data = pd.DataFrame({
+            'col': [1, 2, 3, 1, 2, None, np.nan, np.nan, 2]
+        })
+        instance = AnonymizedFaker(cardinality_rule='match')
+
+        # Run
+        transformed = instance.fit_transform(data, 'col')
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['col'].unique()) == 4
+        assert reverse_transform['col'].isna().sum() == 3
+
+    def test_cardinality_rule_match_not_enough_unique_values(self):
+        """Test it works with the cardinality rule 'match' and too few values to transform."""
+        # Setup
+        data_fit = pd.DataFrame({
+            'col': [1, 2, 3, 1, 2, None, np.nan, np.nan, 2]
+        })
+        data_transform = pd.DataFrame({
+            'col': [1, 1, 1]
+        })
+        instance = AnonymizedFaker(cardinality_rule='match')
+
+        # Run
+        transformed = instance.fit(data_fit, 'col')
+        transformed = instance.transform(data_transform)
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['col'].unique()) == 3
+        assert reverse_transform['col'].isna().sum() == 1
+
+    def test_cardinality_rule_match_too_many_unique(self):
+        """Test it works with the cardinality rule 'match' and more unique values than samples."""
+        # Setup
+        data_fit = pd.DataFrame({
+            'col': [1, 2, 3, 4, 5, 6]
+        })
+        data_transform = pd.DataFrame({
+            'col': [1, 1, np.nan, 3, 1]
+        })
+        instance = AnonymizedFaker(cardinality_rule='match')
+
+        # Run
+        transformed = instance.fit(data_fit, 'col')
+        transformed = instance.transform(data_transform)
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['col'].unique()) == 5
+        assert reverse_transform['col'].isna().sum() == 0
+
+    def test_cardinality_rule_match_too_many_nans(self):
+        """Test it works with the cardinality rule 'match' and more nans than possible to fit."""
+        # Setup
+        data_fit = pd.DataFrame({
+            'col': [1, 2, 3, np.nan, np.nan, np.nan]
+        })
+        data_transform = pd.DataFrame({
+            'col': [1, 1, 1, 1]
+        })
+        instance = AnonymizedFaker(cardinality_rule='match')
+
+        # Run
+        transformed = instance.fit(data_fit, 'col')
+        transformed = instance.transform(data_transform)
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['col'].unique()) <= 3
+        assert reverse_transform['col'].isna().sum() == 2
+
 
 class TestPsuedoAnonymizedFaker:
     def test_default_settings(self):

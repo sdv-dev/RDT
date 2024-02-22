@@ -10,6 +10,7 @@ from operator import attrgetter
 
 import faker
 import numpy as np
+import pandas as pd
 
 from rdt.errors import TransformerInputError, TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
@@ -111,7 +112,7 @@ class AnonymizedFaker(BaseTransformer):
         super().__init__()
         self._data_cardinality = None
         self.data_length = None
-        self.cardinality_rule = cardinality_rule
+        self.cardinality_rule = cardinality_rule.lower() if cardinality_rule else None
         if enforce_uniqueness:
             warnings.warn(
                 "The 'enforce_uniqueness' parameter is no longer supported. "
@@ -174,7 +175,7 @@ class AnonymizedFaker(BaseTransformer):
         """Return the result of calling the ``faker`` function."""
         if self.cardinality_rule in {'unique', 'match'}:
             faker_attr = self.faker.unique
-        elif self.cardinality_rule is None:
+        elif not self.cardinality_rule:
             faker_attr = self.faker
 
         result = getattr(faker_attr, self.function_name)(**self.function_kwargs)
@@ -206,11 +207,40 @@ class AnonymizedFaker(BaseTransformer):
             self._nan_frequency = data.isna().sum() / len(data)
 
         if self.cardinality_rule == 'match':
-            self._data_cardinality = len(data.unique())
+            # remove nans from data
+            self._data_cardinality = len(data.dropna().unique())
 
     def _transform(self, _data):
         """Drop the input column by returning ``None``."""
         return None
+
+    def _get_unique_categories(self, samples):
+        return np.array([self._function() for _ in range(samples)], dtype=object)
+
+    def _reverse_transform_cardinality_rule_match(self, sample_size):
+        """Reverse transform the data when the cardinality rule is 'match'."""
+        reverse_transformed = np.array([], dtype=object)
+        if self.missing_value_generation == 'random':
+            num_nans = int(self._nan_frequency * sample_size)
+            reverse_transformed = np.concatenate([reverse_transformed, np.full(num_nans, np.nan)])
+        else:
+            num_nans = 0
+
+        if sample_size <= num_nans:
+            return reverse_transformed
+
+        if sample_size < num_nans + self._data_cardinality:
+            unique_categories = self._get_unique_categories(sample_size - num_nans)
+            reverse_transformed = np.concatenate([reverse_transformed, unique_categories])
+        else:
+            unique_categories = self._get_unique_categories(self._data_cardinality)
+            num_copies = sample_size - self._data_cardinality - num_nans
+            copies = np.random.choice(unique_categories, num_copies)
+            reverse_transformed = np.concatenate([reverse_transformed, unique_categories, copies])
+
+        np.random.shuffle(reverse_transformed)
+
+        return reverse_transformed
 
     def _reverse_transform(self, data):
         """Generate new anonymized data using a ``faker.provider.function``.
@@ -229,17 +259,13 @@ class AnonymizedFaker(BaseTransformer):
 
         try:
             if self.cardinality_rule == 'match':
-                unique_categories = np.array([
-                    self._function()
-                    for _ in range(self._data_cardinality)
-                ], dtype=object)
-                reverse_transformed = np.random.choice(unique_categories, sample_size)
-
+                reverse_transformed = self._reverse_transform_cardinality_rule_match(sample_size)
             else:
                 reverse_transformed = np.array([
                     self._function()
                     for _ in range(sample_size)
                 ], dtype=object)
+
         except faker.exceptions.UniquenessException as exception:
             raise TransformerProcessingError(
                 f'The Faker function you specified is not able to generate {sample_size} unique '
@@ -247,7 +273,7 @@ class AnonymizedFaker(BaseTransformer):
                 f"('{self.get_input_column()}')."
             ) from exception
 
-        if self.missing_value_generation == 'random':
+        if self.missing_value_generation == 'random' and not pd.isna(reverse_transformed).any():
             num_nans = int(self._nan_frequency * sample_size)
             nan_indices = np.random.choice(sample_size, num_nans, replace=False)
             reverse_transformed[nan_indices] = np.nan
