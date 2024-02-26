@@ -363,7 +363,6 @@ class TestAnonymizedFaker:
                 'type': 'visa'
             },
             locales=['en_US', 'fr_FR'],
-            cardinality_rule='match',
             enforce_uniqueness=True
         )
 
@@ -374,7 +373,7 @@ class TestAnonymizedFaker:
         assert instance.function_kwargs == {'type': 'visa'}
         assert instance.locales == ['en_US', 'fr_FR']
         mock_faker.Faker.assert_called_once_with(['en_US', 'fr_FR'])
-        assert instance.cardinality_rule == 'match'
+        assert instance.cardinality_rule == 'unique'
         mock_warnings.warn.assert_has_calls([
             call(
                 "The 'enforce_uniqueness' parameter is no longer supported. "

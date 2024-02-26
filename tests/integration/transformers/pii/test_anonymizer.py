@@ -245,7 +245,7 @@ class TestAnonymizedFaker:
         reverse_transform = instance.reverse_transform(transformed)
 
         # Assert
-        assert len(reverse_transform['col'].unique()) <= 3
+        assert len(reverse_transform['col'].unique()) == 3
         assert reverse_transform['col'].isna().sum() == 2
 
 

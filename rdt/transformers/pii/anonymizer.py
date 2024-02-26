@@ -119,6 +119,9 @@ class AnonymizedFaker(BaseTransformer):
                 "Please use the 'cardinality_rule' parameter instead.",
                 FutureWarning
             )
+            if not self.cardinality_rule:
+                self.cardinality_rule = 'unique'
+
         self.provider_name = provider_name if provider_name else 'BaseProvider'
         if self.provider_name != 'BaseProvider' and function_name is None:
             raise TransformerInputError(
