@@ -1,11 +1,9 @@
 import inspect
 import operator
 import os
-import pkg_resources
-import platform
-import re
 import shutil
 import stat
+import sys
 from pathlib import Path
 
 import tomli
