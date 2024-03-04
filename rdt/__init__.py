@@ -7,10 +7,6 @@ __author__ = 'DataCebo, Inc.'
 __email__ = 'info@sdv.dev'
 __version__ = '1.9.3.dev0'
 
-
-import sys
-from operator import attrgetter
-
 import numpy as np
 import pandas as pd
 
