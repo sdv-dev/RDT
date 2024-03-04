@@ -39,6 +39,7 @@ dependencies = [
 [project.urls]
 "Source Code"= "https://github.com/sdv-dev/RDT/"
 "Issue Tracker" = "https://github.com/sdv-dev/RDT/issues"
+"Changes" = "https://github.com/sdv-dev/RDT/blob/main/HISTORY.md"
 "Twitter" = "https://twitter.com/sdv_dev"
 "Chat" = "https://bit.ly/sdv-slack-invite"
 
@@ -58,9 +59,8 @@ test = [
     'pytest-runner >= 2.11.1',
     'tomli>=2.0.0,<3',
 ]
-addons = []
 dev = [
-    'rdt[test, addons]',
+    'rdt[test]',
 
     # general
     'bumpversion>=0.5.3,<0.6',
@@ -116,7 +116,6 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 include = ['rdt', 'rdt.*']
-exclude = ['rdt.transformers.addons.*']
 namespaces = false
 
 [tool.isort]

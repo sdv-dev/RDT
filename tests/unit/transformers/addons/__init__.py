@@ -1,1 +1,0 @@
-"""RDT addons testing module."""

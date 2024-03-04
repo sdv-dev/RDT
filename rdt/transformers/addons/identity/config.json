@@ -1,6 +1,0 @@
-{
-    "name": "rdt_identity",
-    "transformers": [
-        "rdt.transformers.addons.identity.identity.IdentityTransformer"
-    ]
-}
