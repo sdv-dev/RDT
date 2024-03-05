@@ -130,9 +130,7 @@ coverage: ## check code coverage quickly with the default Python
 
 .PHONY: dist
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
-	python rdt/transformers/addons/addons_setup.py
+	python -m build --wheel --sdist
 	ls -l dist
 
 .PHONY: publish-confirm

@@ -2,12 +2,9 @@
 
 import importlib
 import inspect
-import json
-import sys
 from collections import defaultdict
 from copy import deepcopy
 from functools import lru_cache
-from pathlib import Path
 
 from rdt.transformers.base import BaseMultiColumnTransformer, BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
@@ -47,21 +44,6 @@ __all__ = [
     'UniformEncoder',
     'OrderedUniformEncoder',
 ]
-
-
-def _import_addons():
-    """Import all the addon modules."""
-    addons_path = Path(__file__).parent / 'addons'
-    for addon_json_path in addons_path.glob('*/*.json'):
-        with open(addon_json_path, 'r', encoding='utf-8') as addon_json_file:
-            transformers = json.load(addon_json_file).get('transformers', [])
-            for transformer in transformers:
-                module = transformer.rsplit('.', 1)[0]
-                if module not in sys.modules:
-                    importlib.import_module(module)
-
-
-_import_addons()
 
 
 def get_transformer_name(transformer):
