@@ -1,5 +1,22 @@
 # History
 
+## 1.10.0 - 2024-03-13
+
+The `AnonymizedFaker` now supports more options for the cardinality of the generated data. Previously you could make make the generated data be all unique, or not take uniqueness into consideration. Now you can use the `cardinality_rule` parameter to match the cardinality of the original data.
+
+### New Features
+
+* Allow `AnonymizedFaker` to learn cardinality from the real data - Issue [#756](https://github.com/sdv-dev/RDT/issues/756) by @fealho
+
+### Deprecations
+
+The `enforce_uniqueness` parameter of the `AnonymizedFaker` is deprecated in favor of the `cardinality_rule` parameter.
+
+### Maintenance
+
+* Transition from using setup.py to pyproject.toml to specify project metadata - Issue [#763](https://github.com/sdv-dev/RDT/issues/763) by @R-Palazzo
+* Remove bumpversion and use bump-my-version - Issue [#764](https://github.com/sdv-dev/RDT/issues/764) by @R-Palazzo
+
 ## 1.9.2 - 2024-02-13
 
 This release makes a couple improvements to the `RegexGenerator`. Error messaging is improved and it is now capable of generating an unlimited amount of rows even when the `enforce_uniqueness` flag is True. It does this by adding suffixes if the max amount of combinations for the provided regex is met.
