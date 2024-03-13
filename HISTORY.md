@@ -16,6 +16,7 @@ The `enforce_uniqueness` parameter of the `AnonymizedFaker` is deprecated in fav
 
 * Transition from using setup.py to pyproject.toml to specify project metadata - Issue [#763](https://github.com/sdv-dev/RDT/issues/763) by @R-Palazzo
 * Remove bumpversion and use bump-my-version - Issue [#764](https://github.com/sdv-dev/RDT/issues/764) by @R-Palazzo
+* Add build to dev requirements - Issue [#768](https://github.com/sdv-dev/RDT/issues/768) by @amontanez24
 
 ## 1.9.2 - 2024-02-13
 
