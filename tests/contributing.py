@@ -54,9 +54,7 @@ CHECK_DETAILS = {
 # Allowed paths for file modifications
 VALID_PATHS = [
     'rdt/transformers/',
-    'rdt/transformers/addons/',
     'tests/unit/transformers/',
-    'tests/unit/transformers/addons/',
     'tests/integration/transformers/',
     'tests/datasets/'
 ]
