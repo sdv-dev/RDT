@@ -129,7 +129,7 @@ class TestAnonymizedFaker:
         assert len(reverse_transform['cc']) == 5
         assert reverse_transform['cc'].isna().sum() == 1
 
-    def test_enforce_uniqueness(self):
+    def test_cardinality_rule(self):
         """Test that ``AnonymizedFaker`` works with uniqueness.
 
         Also ensure that when we call ``reset_randomization`` the generator will be able to
@@ -139,7 +139,7 @@ class TestAnonymizedFaker:
             'job': np.arange(500)
         })
 
-        instance = AnonymizedFaker('job', 'job', enforce_uniqueness=True)
+        instance = AnonymizedFaker('job', 'job', cardinality_rule='unique')
         transformed = instance.fit_transform(data, 'job')
         reverse_transform = instance.reverse_transform(transformed)
 
@@ -156,6 +156,97 @@ class TestAnonymizedFaker:
 
         instance.reset_randomization()
         instance.reverse_transform(transformed)
+
+    def test_cardinality_rule_match(self):
+        """Test it works with the cardinality rule 'match'."""
+        # Setup
+        data = pd.DataFrame({
+            'col': [1, 2, 3, 1, 2]
+        })
+        instance = AnonymizedFaker(cardinality_rule='match')
+
+        # Run
+        transformed = instance.fit_transform(data, 'col')
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['col'].unique()) == 3
+
+    def test_cardinality_rule_match_nans(self):
+        """Test it works with the cardinality rule 'match' with nans."""
+        # Setup
+        data = pd.DataFrame({
+            'col': [1, 2, 3, 1, 2, None, np.nan, np.nan, 2]
+        })
+        instance = AnonymizedFaker(cardinality_rule='match')
+
+        # Run
+        transformed = instance.fit_transform(data, 'col')
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['col'].unique()) == 4
+        assert reverse_transform['col'].isna().sum() == 3
+
+    def test_cardinality_rule_match_not_enough_unique_values(self):
+        """Test it works with the cardinality rule 'match' and too few values to transform."""
+        # Setup
+        data_fit = pd.DataFrame({
+            'col': [1, 2, 3, 1, 2, None, np.nan, np.nan, 2]
+        })
+        data_transform = pd.DataFrame({
+            'col': [1, 1, 1]
+        })
+        instance = AnonymizedFaker(cardinality_rule='match')
+
+        # Run
+        transformed = instance.fit(data_fit, 'col')
+        transformed = instance.transform(data_transform)
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['col'].unique()) == 3
+        assert reverse_transform['col'].isna().sum() == 1
+
+    def test_cardinality_rule_match_too_many_unique(self):
+        """Test it works with the cardinality rule 'match' and more unique values than samples."""
+        # Setup
+        data_fit = pd.DataFrame({
+            'col': [1, 2, 3, 4, 5, 6]
+        })
+        data_transform = pd.DataFrame({
+            'col': [1, 1, np.nan, 3, 1]
+        })
+        instance = AnonymizedFaker(cardinality_rule='match')
+
+        # Run
+        transformed = instance.fit(data_fit, 'col')
+        transformed = instance.transform(data_transform)
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['col'].unique()) == 5
+        assert reverse_transform['col'].isna().sum() == 0
+
+    def test_cardinality_rule_match_too_many_nans(self):
+        """Test it works with the cardinality rule 'match' and more nans than possible to fit."""
+        # Setup
+        data_fit = pd.DataFrame({
+            'col': [1, 2, 3, np.nan, np.nan, np.nan]
+        })
+        data_transform = pd.DataFrame({
+            'col': [1, 1, 1, 1]
+        })
+        instance = AnonymizedFaker(cardinality_rule='match')
+
+        # Run
+        transformed = instance.fit(data_fit, 'col')
+        transformed = instance.transform(data_transform)
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['col'].unique()) == 3
+        assert reverse_transform['col'].isna().sum() == 2
 
 
 class TestPsuedoAnonymizedFaker:
