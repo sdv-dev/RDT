@@ -116,6 +116,14 @@ class TestAnonymizedFaker:
         function.assert_called_once_with(type='int')
         assert result == 1
 
+    def test__enforce_uniqueness_exists(self):
+        """Test `enforce_uniqueness` attribute exists."""
+        # Run
+        instance = AnonymizedFaker()
+
+        # Assert
+        assert instance.enforce_uniqueness is False
+
     def test__function_cardinality_rule_unique(self):
         """Test that ``_function`` uses the ``faker.unique``.
 
