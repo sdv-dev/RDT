@@ -112,6 +112,7 @@ class AnonymizedFaker(BaseTransformer):
         super().__init__()
         self._data_cardinality = None
         self.data_length = None
+        self.enforce_uniqueness = enforce_uniqueness
         self.cardinality_rule = cardinality_rule.lower() if cardinality_rule else None
         if enforce_uniqueness:
             warnings.warn(
