@@ -1,5 +1,14 @@
 # History
 
+## 1.10.1 - 2024-03-21
+
+This release fixes a bug with loading saved `AnonymizedFaker` transformers from previous versions of RDT.
+
+### Bugs Fixed
+
+* Add `enforce_uniqueness` attribute to `AnonymizedFaker` - PR [#771](https://github.com/sdv-dev/RDT/pull/771) by @fealho
+* Fix backwards compatability for `cardinality_rule`- PR [#772](https://github.com/sdv-dev/RDT/pull/772) by @frances-h
+
 ## 1.10.0 - 2024-03-13
 
 The `AnonymizedFaker` now supports more options for the cardinality of the generated data. Previously you could make make the generated data be all unique, or not take uniqueness into consideration. Now you can use the `cardinality_rule` parameter to match the cardinality of the original data.
