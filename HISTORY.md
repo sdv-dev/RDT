@@ -2,7 +2,7 @@
 
 ## 1.10.1 - 2024-03-21
 
-This release fixes a bug that caused `AnonymizedFaker` to not be compatible with previous versions.
+This release fixes a bug with loading saved `AnonymizedFaker` transformers from previous versions of RDT.
 
 ### Bugs Fixed
 
