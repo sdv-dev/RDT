@@ -27,6 +27,24 @@ class TestAnonymizedFaker:
         pd.testing.assert_frame_equal(transformed, expected_transformed)
         assert len(reverse_transform['username']) == 5
 
+    def test_default_settings_with_locales(self):
+        """End to end test with the default settings and locales of the ``AnonymizedFaker``."""
+        data = pd.DataFrame({
+            'id': [1, 2, 3, 4, 5],
+            'username': ['a', 'b', 'c', 'd', 'e']
+        })
+
+        instance = AnonymizedFaker(locales=['en_US', 'en_CA', 'es_ES'])
+        transformed = instance.fit_transform(data, 'username')
+
+        reverse_transform = instance.reverse_transform(transformed)
+        expected_transformed = pd.DataFrame({
+            'id': [1, 2, 3, 4, 5]
+        })
+
+        pd.testing.assert_frame_equal(transformed, expected_transformed)
+        assert len(reverse_transform['username']) == 5
+
     def test_get_supported_sdtypes(self):
         """Test that the correct supported sdtypes are returned."""
         # Run
