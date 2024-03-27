@@ -248,6 +248,40 @@ class TestAnonymizedFaker:
         assert len(reverse_transform['col'].unique()) == 3
         assert reverse_transform['col'].isna().sum() == 2
 
+    def test_enforce_uniqueness_backwards_compatability(self):
+        """Test that ``AnonymizedFaker`` is backwards compatible with ``enforce_uniqueness``.
+
+        Checks that transformers without the ``cardinality_rule`` attribute still function as
+        expected (can happen when previous transformer version is loaded from a pkl file).
+        """
+        # Setup
+        data = pd.DataFrame({
+            'job': np.arange(500)
+        })
+
+        instance = AnonymizedFaker('job', 'job', cardinality_rule='match')
+        instance.enforce_uniqueness = True
+
+        transformed = instance.fit_transform(data, 'job')
+        delattr(instance, 'cardinality_rule')
+
+        # Run
+        reverse_transform = instance.reverse_transform(transformed)
+
+        # Assert
+        assert len(reverse_transform['job'].unique()) == 500
+
+        error_msg = re.escape(
+            'The Faker function you specified is not able to generate 500 unique '
+            'values. Please use a different Faker function for column '
+            "('job')."
+        )
+        with pytest.raises(TransformerProcessingError, match=error_msg):
+            instance.reverse_transform(transformed)
+
+        instance.reset_randomization()
+        instance.reverse_transform(transformed)
+
 
 class TestPsuedoAnonymizedFaker:
     def test_default_settings(self):
