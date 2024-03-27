@@ -138,7 +138,7 @@ class AnonymizedFaker(BaseTransformer):
         self._faker_random_seed = None
         self.locales = locales
         self.faker = faker.Faker(self.locales)
-        if self.locales:
+        if self.provider_name != 'BaseProvider' and self.locales:
             self._check_locales()
 
         if missing_value_generation not in ['random', None]:
