@@ -44,7 +44,7 @@ dependencies = [
 rdt = { main = 'rdt.cli.__main__:main' }
 
 [project.optional-dependencies]
-copulas = ['copulas>=0.10.0,<0.11',]
+copulas = ['copulas>=0.10.0',]
 test = [
     'rdt[copulas]',
 

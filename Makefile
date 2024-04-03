@@ -223,7 +223,7 @@ endif
 
 .PHONY: check-deps
 check-deps: # Dependency targets
-	$(eval allow_list='numpy=|pandas=|scikit-learn=|scipy=|Faker=')
+	$(eval allow_list='numpy=|pandas=|scikit-learn=|scipy=|Faker=|copulas=')
 	pip freeze | grep -v "RDT.git" | grep -E $(allow_list) | sort > $(OUTPUT_FILEPATH)
 
 .PHONY: check-release
