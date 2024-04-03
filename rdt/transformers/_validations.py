@@ -7,7 +7,7 @@ from rdt.errors import TransformerInputError
 class BaseValidator:
     """Base validation class.
 
-    The validation classes ensure that the input data is compatible with the transformer
+    The validation classes ensure that the input data is compatible with the transformers
     and that they can be imported.
     """
 
