@@ -154,7 +154,7 @@ class GPSValidator(BaseValidator):
         except ModuleNotFoundError:
             raise ImportError(error_message) from None
 
-        required_classes = ['RandomLocationGenerator', 'MetroAeraAnonymizer', 'GPSNoiser']
+        required_classes = ['RandomLocationGenerator', 'MetroAreaAnonymizer', 'GPSNoiser']
         for class_name in required_classes:
             if not hasattr(gps_module, class_name):
                 raise ImportError(error_message)
