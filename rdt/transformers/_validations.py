@@ -47,6 +47,17 @@ class BaseValidator:
         """Check that the transformers can be imported."""
         raise NotImplementedError
 
+    @classmethod
+    def validate(cls, columns_to_sdtypes):
+        """Validate the input data.
+
+        Args:
+            columns_to_sdtypes (dict):
+                Mapping of column names to sdtypes.
+        """
+        cls.validate_sdtypes(columns_to_sdtypes)
+        cls.validate_imports()
+
 
 class AddressValidator(BaseValidator):
     """Validation class for Address data."""

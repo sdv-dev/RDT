@@ -1,10 +1,10 @@
-import sre_parse
-from sre_constants import MAXREPEAT
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
+import sre_parse
+from sre_constants import MAXREPEAT
 
 from rdt.transformers.utils import (
     _any, _max_repeat, check_nan_in_transform, flatten_column_list, learn_rounding_digits,
