@@ -1,9 +1,15 @@
-"""Sdtype validation for multi-column transformers."""
+"""Validations for multi-column transformers."""
+import importlib
+
 from rdt.errors import TransformerInputError
 
 
-class BaseValidation:
-    """Base validation class."""
+class BaseValidator:
+    """Base validation class.
+
+    The validation classes ensure that the input data is compatible with the transformer
+    and that they can be imported.
+    """
 
     SUPPORTED_SDTYPES = []
     VALIDATION_TYPE = None
@@ -36,8 +42,13 @@ class BaseValidation:
             if callable(attr) and attr_name.startswith('_validate_'):
                 attr(columns_to_sdtypes)
 
+    @classmethod
+    def validate_imports(cls):
+        """Check that the transformers can be imported."""
+        raise NotImplementedError
 
-class AddressValidation(BaseValidation):
+
+class AddressValidator(BaseValidator):
     """Validation class for Address data."""
 
     SUPPORTED_SDTYPES = [
@@ -87,8 +98,25 @@ class AddressValidation(BaseValidation):
                 f" or 'administrative_unit'. Please provide address data with valid fields."
             )
 
+    @classmethod
+    def validate_imports(cls):
+        """Check that the address transformers can be imported."""
+        error_message = (
+            'You must have SDV Enterprise with the address add-on to use the address features.'
+        )
 
-class GPSValidation(BaseValidation):
+        try:
+            address_module = importlib.import_module('rdt.transformers.address')
+        except ModuleNotFoundError:
+            raise ImportError(error_message) from None
+
+        required_classes = ['RandomLocationGenerator', 'RegionalAnonymizer']
+        for class_name in required_classes:
+            if not hasattr(address_module, class_name):
+                raise ImportError(error_message)
+
+
+class GPSValidator(BaseValidator):
     """Validation class for GPS data."""
 
     SUPPORTED_SDTYPES = ['latitude', 'longitude']
@@ -102,3 +130,20 @@ class GPSValidation(BaseValidation):
                 'The GPS columns must have one latitude and on longitude columns sdtypes. '
                 'Please provide GPS data with valid fields.'
             )
+
+    @classmethod
+    def validate_imports(cls):
+        """Check that the GPS transformers can be imported."""
+        error_message = (
+            'You must have SDV Enterprise with the gps add-on to use the GPS features.'
+        )
+
+        try:
+            gps_module = importlib.import_module('rdt.transformers.gps')
+        except ModuleNotFoundError:
+            raise ImportError(error_message) from None
+
+        required_classes = ['RandomLocationGenerator', 'MetroAeraAnonymizer', 'GPSNoiser']
+        for class_name in required_classes:
+            if not hasattr(gps_module, class_name):
+                raise ImportError(error_message)
