@@ -35,8 +35,7 @@ class TestBaseValidator:
         with pytest.raises(TransformerInputError, match=expected_message):
             BaseValidator._validate_supported_sdtypes(columns_to_sdtypes_invalid)
 
-    @patch('rdt.transformers._validations.BaseValidator._validate_supported_sdtypes')
-    def test_validate_sdtypes(self, mock_validate_supported_sdtypes):
+    def test_validate_sdtypes(self):
         """Test ``validate_sdtypes`` method."""
         # Setup
         columns_to_sdtypes = {
@@ -44,11 +43,9 @@ class TestBaseValidator:
             'col2': 'categorical',
         }
 
-        # Run
-        BaseValidator.validate_sdtypes(columns_to_sdtypes)
-
-        # Assert
-        mock_validate_supported_sdtypes.assert_called_once_with(columns_to_sdtypes)
+        # Run and Assert
+        with pytest.raises(NotImplementedError):
+            BaseValidator.validate_sdtypes(columns_to_sdtypes)
 
     def test_validate_imports(self):
         """Test ``validate_imports`` method."""

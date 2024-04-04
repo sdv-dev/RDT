@@ -37,10 +37,7 @@ class BaseValidator:
             columns_to_sdtypes (dict):
                 Mapping of column names to sdtypes.
         """
-        for attr_name in dir(cls):
-            attr = getattr(cls, attr_name)
-            if callable(attr) and attr_name.startswith('_validate_'):
-                attr(columns_to_sdtypes)
+        raise NotImplementedError
 
     @classmethod
     def validate_imports(cls):
@@ -110,6 +107,14 @@ class AddressValidator(BaseValidator):
             )
 
     @classmethod
+    def validate_sdtypes(cls, columns_to_sdtypes):
+        """Validate the columns to sdtypes mapping."""
+        cls._validate_supported_sdtypes(columns_to_sdtypes)
+        cls._validate_number_columns(columns_to_sdtypes)
+        cls._validate_uniqueness_sdtype(columns_to_sdtypes)
+        cls._validate_administrative_unit(columns_to_sdtypes)
+
+    @classmethod
     def validate_imports(cls):
         """Check that the address transformers can be imported."""
         error_message = (
@@ -141,6 +146,12 @@ class GPSValidator(BaseValidator):
                 'The GPS columns must have one latitude and on longitude columns sdtypes. '
                 'Please provide GPS data with valid fields.'
             )
+
+    @classmethod
+    def validate_sdtypes(cls, columns_to_sdtypes):
+        """Validate the columns to sdtypes mapping."""
+        cls._validate_supported_sdtypes(columns_to_sdtypes)
+        cls._validate_uniqueness_sdtype(columns_to_sdtypes)
 
     @classmethod
     def validate_imports(cls):
