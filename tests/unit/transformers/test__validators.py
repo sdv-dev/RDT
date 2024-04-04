@@ -4,13 +4,13 @@ from unittest.mock import Mock, patch
 import pytest
 
 from rdt.errors import TransformerInputError
-from rdt.transformers._validations import AddressValidator, BaseValidator, GPSValidator
+from rdt.transformers._validators import AddressValidator, BaseValidator, GPSValidator
 
 
 class TestBaseValidator:
 
-    @patch('rdt.transformers._validations.BaseValidator.SUPPORTED_SDTYPES', ['numerical'])
-    @patch('rdt.transformers._validations.BaseValidator.VALIDATION_TYPE', 'Base')
+    @patch('rdt.transformers._validators.BaseValidator.SUPPORTED_SDTYPES', ['numerical'])
+    @patch('rdt.transformers._validators.BaseValidator.VALIDATION_TYPE', 'Base')
     def test_validate_supported_sdtypes(self):
         """Test ``_validate_supported_sdtypes`` method."""
         # Setup
@@ -53,8 +53,8 @@ class TestBaseValidator:
         with pytest.raises(NotImplementedError):
             BaseValidator.validate_imports()
 
-    @patch('rdt.transformers._validations.BaseValidator.validate_sdtypes')
-    @patch('rdt.transformers._validations.BaseValidator.validate_imports')
+    @patch('rdt.transformers._validators.BaseValidator.validate_sdtypes')
+    @patch('rdt.transformers._validators.BaseValidator.validate_imports')
     def test_validate(self, mock_validate_imports, mock_validate_sdtypes):
         """Test ``validate`` method."""
         # Setup
@@ -203,7 +203,7 @@ class TestAddressValidator:
         with pytest.raises(ImportError, match=expected_message):
             AddressValidator.validate_imports()
 
-    @patch('rdt.transformers._validations.importlib.import_module')
+    @patch('rdt.transformers._validators.importlib.import_module')
     def test__validate_imports_without_premium_features(self, mock_import_module):
         """Test ``validate_imports`` when the user doesn't have the transformers."""
         # Setup
@@ -291,7 +291,7 @@ class TestGPSValidator:
         with pytest.raises(ImportError, match=expected_message):
             GPSValidator.validate_imports()
 
-    @patch('rdt.transformers._validations.importlib.import_module')
+    @patch('rdt.transformers._validators.importlib.import_module')
     def test_validate_import_gps_transformers_without_premium_features(self, mock_import_module):
         """Test ``validate_imports`` when the user doesn't have the transformers."""
         # Setup
