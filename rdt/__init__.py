@@ -10,12 +10,12 @@ __version__ = '1.10.2.dev0'
 
 import sys
 import warnings
+from importlib.metadata import entry_points
 from operator import attrgetter
 from types import ModuleType
 
 import numpy as np
 import pandas as pd
-from pkg_resources import iter_entry_points
 
 from rdt import transformers
 from rdt.hyper_transformer import HyperTransformer
@@ -149,7 +149,13 @@ def _find_addons():
     from top_module.addon_module import x
     """
     group = 'rdt_modules'
-    for entry_point in iter_entry_points(group=group):
+    try:
+        eps = entry_points(group=group)  # pylint: disable=E1123
+    except TypeError:
+        # Load-time selection requires Python >= 3.10 or importlib_metadata >= 3.6
+        eps = entry_points().get(group, [])
+
+    for entry_point in eps:
         try:
             addon = entry_point.load()
         except Exception:  # pylint: disable=broad-exception-caught
