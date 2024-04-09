@@ -1,5 +1,24 @@
 # History
 
+## 1.11.0 - 2024-04-10
+
+This release adds support for Python 3.12! It also fixes a bug that kept certain functions from being used on the `AnonymizedFaker` when locales were provided.
+
+### Maintenance
+
+* Support Python 3.12 - Issue [#744](https://github.com/sdv-dev/RDT/issues/744) by @fealho
+* Add dependency checker - Issue [#777](https://github.com/sdv-dev/RDT/issues/777) by @lajohn4747
+* Add bandit workflow - Issue [#781](https://github.com/sdv-dev/RDT/issues/781) by @R-Palazzo
+
+### Bugs Fixed
+
+* Providing locales to AnonymizedFaker with a function that uses the BaseProvider crashes - Issue [#774](https://github.com/sdv-dev/RDT/issues/774) by @frances-h
+* Fix minimum version workflow when pointing to github branch - Issue [#783](https://github.com/sdv-dev/RDT/issues/783) by @R-Palazzo
+
+### New Features
+
+* Move out sdtype validations from multi-column transformers - Issue [#778](https://github.com/sdv-dev/RDT/issues/778) by @R-Palazzo
+
 ## 1.10.1 - 2024-03-21
 
 This release fixes a bug with loading saved `AnonymizedFaker` transformers from previous versions of RDT.
