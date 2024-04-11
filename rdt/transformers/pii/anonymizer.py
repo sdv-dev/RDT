@@ -112,6 +112,7 @@ class AnonymizedFaker(BaseTransformer):
         super().__init__()
         self._data_cardinality = None
         self.data_length = None
+        self.enforce_uniqueness = enforce_uniqueness
         self.cardinality_rule = cardinality_rule.lower() if cardinality_rule else None
         if enforce_uniqueness:
             warnings.warn(
@@ -137,7 +138,7 @@ class AnonymizedFaker(BaseTransformer):
         self._faker_random_seed = None
         self.locales = locales
         self.faker = faker.Faker(self.locales)
-        if self.locales:
+        if self.provider_name != 'BaseProvider' and self.locales:
             self._check_locales()
 
         if missing_value_generation not in ['random', None]:
@@ -176,10 +177,13 @@ class AnonymizedFaker(BaseTransformer):
 
     def _function(self):
         """Return the result of calling the ``faker`` function."""
-        if self.cardinality_rule in {'unique', 'match'}:
-            faker_attr = self.faker.unique
-        else:
-            faker_attr = self.faker
+        try:
+            if self.cardinality_rule in {'unique', 'match'}:
+                faker_attr = self.faker.unique
+            else:
+                faker_attr = self.faker
+        except AttributeError:
+            faker_attr = self.faker.unique if self.enforce_uniqueness else self.faker
 
         result = getattr(faker_attr, self.function_name)(**self.function_kwargs)
 
@@ -261,7 +265,7 @@ class AnonymizedFaker(BaseTransformer):
             sample_size = self.data_length
 
         try:
-            if self.cardinality_rule == 'match':
+            if hasattr(self, 'cardinality_rule') and self.cardinality_rule == 'match':
                 reverse_transformed = self._reverse_transform_cardinality_rule_match(sample_size)
             else:
                 reverse_transformed = np.array([

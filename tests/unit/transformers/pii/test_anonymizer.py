@@ -116,6 +116,14 @@ class TestAnonymizedFaker:
         function.assert_called_once_with(type='int')
         assert result == 1
 
+    def test___init___enforce_uniqueness_exists(self):
+        """Test `enforce_uniqueness` attribute exists."""
+        # Run
+        instance = AnonymizedFaker()
+
+        # Assert
+        assert instance.enforce_uniqueness is False
+
     def test__function_cardinality_rule_unique(self):
         """Test that ``_function`` uses the ``faker.unique``.
 
@@ -163,6 +171,29 @@ class TestAnonymizedFaker:
         unique_function.return_value = 1
 
         instance.cardinality_rule = 'match'
+        instance.faker.unique.number = unique_function
+        instance.faker.number = function
+        instance.function_name = 'number'
+        instance.function_kwargs = {'type': 'int'}
+
+        # Run
+        result = AnonymizedFaker._function(instance)
+
+        # Assert
+        function.assert_not_called()
+        unique_function.assert_called_once_with(type='int')
+        assert result == 1
+
+    def test__function_cardinality_rule_missing_attribute(self):
+        """Test it when ``cardinality_rule`` attribute is missing."""
+        # setup
+        instance = Mock()
+        function = Mock()
+        unique_function = Mock()
+        unique_function.return_value = 1
+
+        delattr(instance, 'cardinality_rule')
+        instance.enforce_uniqueness = True
         instance.faker.unique.number = unique_function
         instance.faker.number = function
         instance.function_name = 'number'
@@ -593,6 +624,20 @@ class TestAnonymizedFaker:
         # Assert
         assert function.call_args_list == [call(), call(), call()]
         assert set(result) == {'a', 'b', 'c'}
+
+    def test__reverse_transform_cardinality_rule_missing_attribute(self):
+        """Test it when the ``cardinality_rule`` attribute is missing."""
+        # Setup
+        instance = Mock()
+        delattr(instance, 'cardinality_rule')
+
+        instance.data_length = 3
+
+        # Run
+        AnonymizedFaker._reverse_transform(instance, None)
+
+        # Assert
+        assert instance._function.call_count == 3
 
     def test__reverse_transform_with_nans(self):
         """Test that ``_reverse_transform`` generates NaNs."""

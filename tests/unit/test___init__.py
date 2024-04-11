@@ -56,7 +56,7 @@ def test_get_demo_many_rows():
     pd.testing.assert_frame_equal(demo, expected)
 
 
-@patch.object(rdt, 'iter_entry_points')
+@patch.object(rdt, 'entry_points')
 def test__find_addons_module(entry_points_mock, mock_rdt):
     """Test loading an add-on."""
     # Setup
@@ -75,7 +75,25 @@ def test__find_addons_module(entry_points_mock, mock_rdt):
     assert sys.modules['rdt.submodule.entry_name'] == add_on_mock
 
 
-@patch.object(rdt, 'iter_entry_points')
+@patch.object(rdt, 'entry_points')
+def test__find_addons_type_error(entry_points_mock):
+    """Test it when entry_points raises a TypeError (happens for py38, py39)."""
+    # Setup
+    def side_effect(arg=None):
+        if arg == 'rdt_modules':
+            raise TypeError()
+        return {arg: []}
+
+    entry_points_mock.side_effect = side_effect
+
+    # Run
+    _find_addons()
+
+    # Assert
+    entry_points_mock.assert_called_with()
+
+
+@patch.object(rdt, 'entry_points')
 def test__find_addons_object(entry_points_mock, mock_rdt):
     """Test loading an add-on."""
     # Setup
@@ -93,7 +111,7 @@ def test__find_addons_object(entry_points_mock, mock_rdt):
 
 
 @patch('warnings.warn')
-@patch('rdt.iter_entry_points')
+@patch('rdt.entry_points')
 def test__find_addons_bad_addon(entry_points_mock, warning_mock):
     """Test failing to load an add-on generates a warning."""
     # Setup
@@ -116,7 +134,7 @@ def test__find_addons_bad_addon(entry_points_mock, warning_mock):
 
 
 @patch('warnings.warn')
-@patch('rdt.iter_entry_points')
+@patch('rdt.entry_points')
 def test__find_addons_wrong_base(entry_points_mock, warning_mock):
     """Test incorrect add-on name generates a warning."""
     # Setup
@@ -137,7 +155,7 @@ def test__find_addons_wrong_base(entry_points_mock, warning_mock):
 
 
 @patch('warnings.warn')
-@patch('rdt.iter_entry_points')
+@patch('rdt.entry_points')
 def test__find_addons_missing_submodule(entry_points_mock, warning_mock):
     """Test incorrect add-on name generates a warning."""
     # Setup
@@ -158,7 +176,7 @@ def test__find_addons_missing_submodule(entry_points_mock, warning_mock):
 
 
 @patch('warnings.warn')
-@patch('rdt.iter_entry_points')
+@patch('rdt.entry_points')
 def test__find_addons_module_and_object(entry_points_mock, warning_mock):
     """Test incorrect add-on name generates a warning."""
     # Setup
@@ -179,7 +197,7 @@ def test__find_addons_module_and_object(entry_points_mock, warning_mock):
 
 
 @patch('warnings.warn')
-@patch.object(rdt, 'iter_entry_points')
+@patch.object(rdt, 'entry_points')
 def test__find_addons_missing_object(entry_points_mock, warning_mock, mock_rdt):
     """Test incorrect add-on name generates a warning."""
     # Setup

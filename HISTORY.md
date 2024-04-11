@@ -1,5 +1,33 @@
 # History
 
+## 1.11.0 - 2024-04-10
+
+This release adds support for Python 3.12! It also fixes a bug that kept certain functions from being used on the `AnonymizedFaker` when locales were provided.
+
+### Maintenance
+
+* Support Python 3.12 - Issue [#744](https://github.com/sdv-dev/RDT/issues/744) by @fealho
+* Add dependency checker - Issue [#777](https://github.com/sdv-dev/RDT/issues/777) by @lajohn4747
+* Add bandit workflow - Issue [#781](https://github.com/sdv-dev/RDT/issues/781) by @R-Palazzo
+
+### Bugs Fixed
+
+* Providing locales to AnonymizedFaker with a function that uses the BaseProvider crashes - Issue [#774](https://github.com/sdv-dev/RDT/issues/774) by @frances-h
+* Fix minimum version workflow when pointing to github branch - Issue [#783](https://github.com/sdv-dev/RDT/issues/783) by @R-Palazzo
+
+### New Features
+
+* Move out sdtype validations from multi-column transformers - Issue [#778](https://github.com/sdv-dev/RDT/issues/778) by @R-Palazzo
+
+## 1.10.1 - 2024-03-21
+
+This release fixes a bug with loading saved `AnonymizedFaker` transformers from previous versions of RDT.
+
+### Bugs Fixed
+
+* Add `enforce_uniqueness` attribute to `AnonymizedFaker` - PR [#771](https://github.com/sdv-dev/RDT/pull/771) by @fealho
+* Fix backwards compatability for `cardinality_rule`- PR [#772](https://github.com/sdv-dev/RDT/pull/772) by @frances-h
+
 ## 1.10.0 - 2024-03-13
 
 The `AnonymizedFaker` now supports more options for the cardinality of the generated data. Previously you could make make the generated data be all unique, or not take uniqueness into consideration. Now you can use the `cardinality_rule` parameter to match the cardinality of the original data.
