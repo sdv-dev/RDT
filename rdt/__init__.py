@@ -153,7 +153,7 @@ def _find_addons():
         eps = entry_points(group=group)  # pylint: disable=E1123
     except TypeError:
         # Load-time selection requires Python >= 3.10 or importlib_metadata >= 3.6
-        eps = entry_points().get(group, [])
+        eps = entry_points().get(group, [])  # pylint: disable=E1101
 
     for entry_point in eps:
         try:

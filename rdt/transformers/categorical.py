@@ -6,7 +6,6 @@ import warnings
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from pandas.api.types import is_numeric_dtype
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
@@ -56,7 +55,7 @@ class UniformEncoder(BaseTransformer):
         nans = pd.isna(unique_data)
         if self.order_by == 'alphabetical':
             # pylint: disable=invalid-unary-operand-type
-            if any(map(lambda item: not isinstance(item, str), unique_data[~nans])):
+            if any(map(lambda item: not isinstance(item, str), unique_data[~nans])):  # noqa: C417
                 raise TransformerInputError(
                     "The data must be of type string if order_by is 'alphabetical'."
                 )

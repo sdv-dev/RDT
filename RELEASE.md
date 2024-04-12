@@ -72,7 +72,7 @@ And you will see something like this:
 ```
 ================================== 41 passed, 5 skipped in 1.29s ===================================
 flake8 rdt tests examples
-isort -c --recursive rdt tests examples
+isort -c rdt tests examples
 ```
 
 The execution has finished with no errors and 5 tests skipped.
