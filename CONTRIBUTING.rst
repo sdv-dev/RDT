@@ -63,7 +63,7 @@ guidelines. RDT using the following third party libraries to check the code styl
 
 * isort::
 
-    $ isort -c --recursive rdt tests
+    $ isort -c rdt tests
 
 * pylint::
 
