@@ -1,5 +1,13 @@
 # History
 
+## 1.11.1 - 2024-04-16
+
+This release fixes a small bug that caused problems with the latest version of Pandas.
+
+### Bugs Fixed
+
+* Update pandas version and fix _add_columns_to_data - PR [#796](https://github.com/sdv-dev/RDT/pull/796) by @fealho
+
 ## 1.11.0 - 2024-04-10
 
 This release adds support for Python 3.12! It also fixes a bug that kept certain functions from being used on the `AnonymizedFaker` when locales were provided.
