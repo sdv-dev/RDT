@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from rdt.transformers.text import IDGenerator, RegexGenerator
 
@@ -248,13 +249,22 @@ class TestRegexGenerator:
         # Run
         instance = RegexGenerator(
             regex_format='[0-9]',
-            enforce_uniqueness=True
+            enforce_uniqueness=True,
+            generation_order='scrambled'
         )
 
         # Assert
         assert instance.data_length is None
         assert instance.regex_format == '[0-9]'
         assert instance.enforce_uniqueness
+        assert instance._generation_order == 'scrambled'
+
+    def test___init__bad_value_generation_order(self):
+        """Test that an error is raised if a bad value is given for `generation_order`."""
+        # Run and Assert
+        error_message = "generation_order must be one of 'alphanumeric' or 'scrambled'."
+        with pytest.raises(ValueError, match=error_message):
+            RegexGenerator(generation_order='afdsfd')
 
     @patch('rdt.transformers.text.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.text.strings_from_regex')

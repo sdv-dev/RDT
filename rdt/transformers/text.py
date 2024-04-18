@@ -126,6 +126,9 @@ class RegexGenerator(BaseTransformer):
         self.generator = None
         self.generator_size = None
         self.generated = None
+        if generation_order not in ['alphanumeric', 'scrambled']:
+            raise ValueError("generation_order must be one of 'alphanumeric' or 'scrambled'.")
+
         self._generation_order = generation_order
 
     def reset_randomization(self):
