@@ -161,6 +161,7 @@ class TestRegexGenerator:
             'output_properties': {None: {'next_transformer': None}},
             'regex_format': '[A-Za-z]{5}',
             'random_states': mock_random_sates,
+            '_generation_order': 'alphanumeric'
         }
 
     @patch('rdt.transformers.text.strings_from_regex')
@@ -232,6 +233,7 @@ class TestRegexGenerator:
         assert instance.data_length is None
         assert instance.regex_format == '[A-Za-z]{5}'
         assert instance.enforce_uniqueness is False
+        assert instance._generation_order == 'alphanumeric'
 
     def test___init__custom(self):
         """Test the default instantiation of the transformer.
@@ -325,6 +327,29 @@ class TestRegexGenerator:
 
         # Assert
         assert result is None
+
+    @patch('rdt.transformers.text.np.random.shuffle')
+    def test__reverse_transform_generation_order_scrambled(self, shuffle_mock):
+        """Test the ``_reverse_transform`` method with ``_generation_order`` set to scrambled.
+
+        Validate that when ``_generation_order`` is ``'scrambled'``, the data is not in order.
+        """
+        # Setup
+        instance = RegexGenerator('[A-Z]')
+        columns_data = pd.Series()
+        instance.data_length = 3
+        generator = AsciiGenerator(max_size=5)
+        instance.generator = generator
+        instance.generator_size = 5
+        instance.generated = 0
+        instance._generation_order = 'scrambled'
+
+        # Run
+        result = instance._reverse_transform(columns_data)
+
+        # Assert
+        np.testing.assert_array_equal(result, np.array(['A', 'B', 'C']))
+        shuffle_mock.assert_called_once_with(['A', 'B', 'C'])
 
     def test__reverse_transform_generator_size_bigger_than_data_length(self):
         """Test the ``_reverse_transform`` method.
