@@ -162,7 +162,7 @@ class TestRegexGenerator:
             'output_properties': {None: {'next_transformer': None}},
             'regex_format': '[A-Za-z]{5}',
             'random_states': mock_random_sates,
-            '_generation_order': 'alphanumeric'
+            'generation_order': 'alphanumeric'
         }
 
     @patch('rdt.transformers.text.strings_from_regex')
@@ -234,7 +234,7 @@ class TestRegexGenerator:
         assert instance.data_length is None
         assert instance.regex_format == '[A-Za-z]{5}'
         assert instance.enforce_uniqueness is False
-        assert instance._generation_order == 'alphanumeric'
+        assert instance.generation_order == 'alphanumeric'
 
     def test___init__custom(self):
         """Test the default instantiation of the transformer.
@@ -257,7 +257,7 @@ class TestRegexGenerator:
         assert instance.data_length is None
         assert instance.regex_format == '[0-9]'
         assert instance.enforce_uniqueness
-        assert instance._generation_order == 'scrambled'
+        assert instance.generation_order == 'scrambled'
 
     def test___init__bad_value_generation_order(self):
         """Test that an error is raised if a bad value is given for `generation_order`."""
@@ -340,9 +340,9 @@ class TestRegexGenerator:
 
     @patch('rdt.transformers.text.np.random.shuffle')
     def test__reverse_transform_generation_order_scrambled(self, shuffle_mock):
-        """Test the ``_reverse_transform`` method with ``_generation_order`` set to scrambled.
+        """Test the ``_reverse_transform`` method with ``generation_order`` set to scrambled.
 
-        Validate that when ``_generation_order`` is ``'scrambled'``, the data is not in order.
+        Validate that when ``generation_order`` is ``'scrambled'``, the data is not in order.
         """
         # Setup
         instance = RegexGenerator('[A-Z]')
@@ -352,7 +352,7 @@ class TestRegexGenerator:
         instance.generator = generator
         instance.generator_size = 5
         instance.generated = 0
-        instance._generation_order = 'scrambled'
+        instance.generation_order = 'scrambled'
 
         # Run
         result = instance._reverse_transform(columns_data)

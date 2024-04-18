@@ -129,7 +129,7 @@ class RegexGenerator(BaseTransformer):
         if generation_order not in ['alphanumeric', 'scrambled']:
             raise ValueError("generation_order must be one of 'alphanumeric' or 'scrambled'.")
 
-        self._generation_order = generation_order
+        self.generation_order = generation_order
 
     def reset_randomization(self):
         """Create a new generator and reset the generated values counter."""
@@ -232,7 +232,7 @@ class RegexGenerator(BaseTransformer):
                     remaining_samples = sample_size - len(reverse_transformed)
                     reverse_transformed.extend(generated_values[:remaining_samples])
 
-        if self._generation_order == 'scrambled':
+        if self.generation_order == 'scrambled':
             np.random.shuffle(reverse_transformed)
 
         return np.array(reverse_transformed, dtype=object)
