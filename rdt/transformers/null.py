@@ -143,7 +143,7 @@ class NullTransformer():
             data = data.mask(data.isna(), data_mask)
 
         elif isna.any() and self._missing_value_replacement is not None:
-            data = data.infer_objects(copy=False).fillna(self._missing_value_replacement)
+            data = data.infer_objects().fillna(self._missing_value_replacement)
 
         if self._missing_value_generation == 'from_column':
             return pd.concat([data, isna.astype(np.float64)], axis=1).to_numpy()

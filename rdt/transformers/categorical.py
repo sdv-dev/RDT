@@ -351,7 +351,7 @@ class FrequencyEncoder(BaseTransformer):
             dict:
                 intervals for each categorical value (start, end).
         """
-        data = data.infer_objects(copy=False).fillna(np.nan)
+        data = data.infer_objects().fillna(np.nan)
         frequencies = data.value_counts(dropna=False)
         augmented_frequencies = frequencies.to_frame()
         sortable_column_name = f'sortable_{frequencies.name}'
@@ -460,7 +460,7 @@ class FrequencyEncoder(BaseTransformer):
 
     def _transform_by_row(self, data):
         """Transform the data row by row."""
-        data = data.infer_objects(copy=False).fillna(np.nan).apply(self._get_value).to_numpy()
+        data = data.infer_objects().fillna(np.nan).apply(self._get_value).to_numpy()
 
         return data
 
@@ -758,7 +758,7 @@ class LabelEncoder(BaseTransformer):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtype
-        unique_data = pd.unique(data.infer_objects(copy=False).fillna(np.nan))
+        unique_data = pd.unique(data.infer_objects().fillna(np.nan))
         unique_data = self._order_categories(unique_data)
         self.values_to_categories = dict(enumerate(unique_data))
         self.categories_to_values = {
@@ -781,7 +781,7 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pd.Series
         """
-        mapped = data.infer_objects(copy=False).fillna(np.nan).map(self.categories_to_values)
+        mapped = data.infer_objects().fillna(np.nan).map(self.categories_to_values)
         is_null = mapped.isna()
         if is_null.any():
             # Select only the first 5 unseen categories to avoid flooding the console.
@@ -881,7 +881,7 @@ class OrderedLabelEncoder(LabelEncoder):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtype
-        data = data.infer_objects(copy=False).fillna(np.nan)
+        data = data.infer_objects().fillna(np.nan)
 
         missing = list(data[~data.isin(self.order)].unique())
         if len(missing) > 0:
