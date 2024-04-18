@@ -6,7 +6,6 @@ import warnings
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from pandas.api.types import is_numeric_dtype
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
