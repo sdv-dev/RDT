@@ -2189,7 +2189,7 @@ class TestLabelEncoder:
         expected = pd.Series([0., 1., 2.])
         pd.testing.assert_series_equal(transformed[:3], expected)
 
-        assert all([0 <= value < len(fit_data) for value in transformed[3:]])
+        assert all(0 <= value < len(fit_data) for value in transformed[3:])
 
     def test__reverse_transform_clips_values(self):
         """Test the ``_reverse_transform`` method with values not in map.

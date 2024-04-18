@@ -118,7 +118,7 @@ def lint(c):
     c.run('pydocstyle rdt')
     c.run('flake8 tests --ignore=D')
     c.run('pydocstyle tests')
-    c.run('isort -c --recursive rdt tests')
+    c.run('isort -c rdt tests')
     c.run('pylint rdt tests/performance --rcfile=setup.cfg')
     c.run('pytest tests/code_style.py -v --disable-warnings --no-header')
 

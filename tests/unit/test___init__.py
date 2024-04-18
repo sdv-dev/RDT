@@ -11,7 +11,7 @@ import rdt
 from rdt import _find_addons, get_demo
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_rdt():
     rdt_module = sys.modules['rdt']
     rdt_mock = Mock()

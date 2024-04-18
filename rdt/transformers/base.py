@@ -292,10 +292,10 @@ class BaseTransformer:
         Returns:
             ``pandas.DataFrame`` with the new columns added.
         """
-        if isinstance(transformed_data, (pd.Series, np.ndarray)):
-            transformed_data = pd.DataFrame(transformed_data, columns=transformed_names)
-
         if transformed_names:
+            if isinstance(transformed_data, (pd.Series, np.ndarray)):
+                transformed_data = pd.DataFrame(transformed_data, columns=transformed_names)
+
             # When '#' is added to the column_prefix of a transformer
             # the columns of transformed_data and transformed_names don't match
             transformed_data.columns = transformed_names
