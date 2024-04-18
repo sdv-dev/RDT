@@ -170,7 +170,7 @@ def fill_nan_with_none(data):
         data:
             Original data with nan values replaced by None.
     """
-    return data.fillna(np.nan).replace([np.nan], [None])
+    return data.infer_objects().fillna(np.nan).replace([np.nan], [None])
 
 
 def flatten_column_list(column_list):

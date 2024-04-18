@@ -198,6 +198,28 @@ def test_frequency_encoder_numerical_nans():
     pd.testing.assert_frame_equal(reverse, data)
 
 
+def test_frequency_encoder_numerical_nans_no_warning():
+    """Ensure FrequencyEncoder does not emit FutureWarning with nan values.
+
+    Related to Issue #793 (https://github.com/sdv-dev/RDT/issues/793)
+    """
+    # Setup
+    data = pd.DataFrame({
+        'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')
+    })
+    column = 'column_name'
+
+    # Run and Assert
+    transformer = FrequencyEncoder()
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', FutureWarning)
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        reverse = transformer.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(reverse, data)
+
+
 def test_frequency_encoder_unseen_transform_data():
     """Ensure FrequencyEncoder works when data to transform wasn't seen during fit."""
 
@@ -522,6 +544,28 @@ def test_label_numerical_nans():
     pd.testing.assert_frame_equal(reverse, data)
 
 
+def test_label_encoder_numerical_nans_no_warning():
+    """Ensure LabelEncoder does not emit FutureWarning with nan values.
+
+    Related to Issue #793 (https://github.com/sdv-dev/RDT/issues/793)
+    """
+    # Setup
+    data = pd.DataFrame({
+        'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')
+    })
+    column = 'column_name'
+
+    # Run and Assert
+    transformer = LabelEncoder()
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', FutureWarning)
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        reverse = transformer.reverse_transform(transformed)
+
+    pd.testing.assert_frame_equal(reverse, data)
+
+
 def test_label_encoder_order_by_numerical():
     """Test the LabelEncoder appropriately transforms data if `order_by` is 'numerical_value'.
 
@@ -609,4 +653,26 @@ def test_ordered_label_encoder_nans():
 
     expected = pd.DataFrame([2, 3, 1, 4, 0, 4], columns=['column_name'])
     pd.testing.assert_frame_equal(transformed, expected)
+    pd.testing.assert_frame_equal(reverse, data)
+
+
+def test_ordered_label_encoder_numerical_nans_no_warning():
+    """Ensure OrderedLabelEncoder does not emit FutureWarning with nan values.
+
+    Related to Issue #793 (https://github.com/sdv-dev/RDT/issues/793)
+    """
+    # Setup
+    data = pd.DataFrame({
+        'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')
+    })
+    column = 'column_name'
+
+    # Run and Assert
+    transformer = OrderedLabelEncoder(order=[1, 2, np.nan])
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', FutureWarning)
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        reverse = transformer.reverse_transform(transformed)
+
     pd.testing.assert_frame_equal(reverse, data)
