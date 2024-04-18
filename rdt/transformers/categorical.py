@@ -351,7 +351,9 @@ class FrequencyEncoder(BaseTransformer):
             dict:
                 intervals for each categorical value (start, end).
         """
-        data = data.fillna(np.nan)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', FutureWarning)
+            data = data.fillna(np.nan)
         frequencies = data.value_counts(dropna=False)
         augmented_frequencies = frequencies.to_frame()
         sortable_column_name = f'sortable_{frequencies.name}'
@@ -460,7 +462,11 @@ class FrequencyEncoder(BaseTransformer):
 
     def _transform_by_row(self, data):
         """Transform the data row by row."""
-        return data.fillna(np.nan).apply(self._get_value).to_numpy()
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', FutureWarning)
+            data = data.fillna(np.nan).apply(self._get_value).to_numpy()
+
+        return data
 
     def _transform(self, data):
         """Transform the categorical values to float representatives.
@@ -756,7 +762,9 @@ class LabelEncoder(BaseTransformer):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtype
-        unique_data = pd.unique(data.fillna(np.nan))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', FutureWarning)
+            unique_data = pd.unique(data.fillna(np.nan))
         unique_data = self._order_categories(unique_data)
         self.values_to_categories = dict(enumerate(unique_data))
         self.categories_to_values = {
@@ -779,7 +787,9 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pd.Series
         """
-        mapped = data.fillna(np.nan).map(self.categories_to_values)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', FutureWarning)
+            mapped = data.fillna(np.nan).map(self.categories_to_values)
         is_null = mapped.isna()
         if is_null.any():
             # Select only the first 5 unseen categories to avoid flooding the console.
@@ -879,7 +889,10 @@ class OrderedLabelEncoder(LabelEncoder):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtype
-        data = data.fillna(np.nan)
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', FutureWarning)
+            data = data.fillna(np.nan)
+
         missing = list(data[~data.isin(self.order)].unique())
         if len(missing) > 0:
             raise TransformerInputError(

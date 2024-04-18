@@ -1,6 +1,7 @@
 """Transformer for data that contains Null values."""
 
 import logging
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -143,7 +144,9 @@ class NullTransformer():
             data = data.mask(data.isna(), data_mask)
 
         elif isna.any() and self._missing_value_replacement is not None:
-            data = data.fillna(self._missing_value_replacement)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', FutureWarning)
+                data = data.fillna(self._missing_value_replacement)
 
         if self._missing_value_generation == 'from_column':
             return pd.concat([data, isna.astype(np.float64)], axis=1).to_numpy()
