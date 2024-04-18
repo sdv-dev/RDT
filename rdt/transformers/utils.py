@@ -170,11 +170,7 @@ def fill_nan_with_none(data):
         data:
             Original data with nan values replaced by None.
     """
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', category=FutureWarning)
-        data = data.fillna(np.nan).replace([np.nan], [None])
-
-    return data
+    return data.infer_objects(copy=False).fillna(np.nan).replace([np.nan], [None])
 
 
 def flatten_column_list(column_list):
