@@ -1,7 +1,6 @@
 """Transformer for data that contains Null values."""
 
 import logging
-import warnings
 
 import numpy as np
 import pandas as pd
