@@ -10,7 +10,7 @@ from rdt.errors import TransformerInputError
 LOGGER = logging.getLogger(__name__)
 
 
-class NullTransformer():
+class NullTransformer:
     """Transformer for data that contains Null values.
 
     Args:
@@ -36,7 +36,9 @@ class NullTransformer():
     _missing_value_replacement = None
     _null_percentage = None
 
-    def __init__(self, missing_value_replacement=None, missing_value_generation='random'):
+    def __init__(
+        self, missing_value_replacement=None, missing_value_generation='random'
+    ):
         self._missing_value_replacement = missing_value_replacement
         if missing_value_generation not in (None, 'from_column', 'random'):
             raise TransformerInputError(
@@ -76,7 +78,10 @@ class NullTransformer():
         if self._missing_value_replacement is None:
             return None
 
-        if self._missing_value_replacement in {'mean', 'mode', 'random'} and pd.isna(data).all():
+        if (
+            self._missing_value_replacement in {'mean', 'mode', 'random'}
+            and pd.isna(data).all()
+        ):
             msg = (
                 f"'missing_value_replacement' cannot be set to '{self._missing_value_replacement}'"
                 ' when the provided data only contains NaNs. Using 0 instead.'
@@ -101,7 +106,9 @@ class NullTransformer():
             data (pandas.Series):
                 Data to transform.
         """
-        self._missing_value_replacement = self._get_missing_value_replacement(data)
+        self._missing_value_replacement = self._get_missing_value_replacement(
+            data
+        )
         if self._missing_value_replacement == 'random':
             self._min_value = data.min()
             self._max_value = data.max()
@@ -135,18 +142,20 @@ class NullTransformer():
         """
         isna = data.isna()
         if self._missing_value_replacement == 'random':
-            data_mask = list(np.random.uniform(
-                low=self._min_value,
-                high=self._max_value,
-                size=len(data)
-            ))
+            data_mask = list(
+                np.random.uniform(
+                    low=self._min_value, high=self._max_value, size=len(data)
+                )
+            )
             data = data.mask(data.isna(), data_mask)
 
         elif isna.any() and self._missing_value_replacement is not None:
             data = data.infer_objects().fillna(self._missing_value_replacement)
 
         if self._missing_value_generation == 'from_column':
-            return pd.concat([data, isna.astype(np.float64)], axis=1).to_numpy()
+            return pd.concat(
+                [data, isna.astype(np.float64)], axis=1
+            ).to_numpy()
 
         return data.to_numpy()
 
@@ -172,7 +181,7 @@ class NullTransformer():
             data = data[:, 0]
 
         elif self.nulls:
-            isna = np.random.random((len(data), )) < self._null_percentage
+            isna = np.random.random((len(data),)) < self._null_percentage
 
         data = pd.Series(data)
 

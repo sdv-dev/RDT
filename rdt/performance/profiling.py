@@ -10,7 +10,9 @@ from copy import deepcopy
 import pandas as pd
 
 
-def _profile_time(transformer, method_name, dataset, column=None, iterations=10, copy=False):
+def _profile_time(
+    transformer, method_name, dataset, column=None, iterations=10, copy=False
+):
     total_time = 0
     for _ in range(iterations):
         if copy:
@@ -47,14 +49,16 @@ def _profile_memory(method, dataset, column=None):
     peak_memory = ctx.Value('i', 0)
     profiling_process = ctx.Process(
         target=_set_memory_for_method,
-        args=(method, dataset, column, peak_memory)
+        args=(method, dataset, column, peak_memory),
     )
     profiling_process.start()
     profiling_process.join()
     return peak_memory.value
 
 
-def profile_transformer(transformer, dataset_generator, transform_size, fit_size=None):
+def profile_transformer(
+    transformer, dataset_generator, transform_size, fit_size=None
+):
     """Profile a Transformer on a dataset.
 
     This function will get the total time and peak memory
@@ -82,16 +86,24 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
     replace = transform_size > fit_size
     transform_dataset = fit_dataset.sample(transform_size, replace=replace)
 
-    fit_time = _profile_time(transformer, 'fit', fit_dataset, column='test', copy=True)
+    fit_time = _profile_time(
+        transformer, 'fit', fit_dataset, column='test', copy=True
+    )
     fit_memory = _profile_memory(transformer.fit, fit_dataset, column='test')
     transformer.fit(fit_dataset, 'test')
 
     transform_time = _profile_time(transformer, 'transform', transform_dataset)
-    transform_memory = _profile_memory(transformer.transform, transform_dataset)
+    transform_memory = _profile_memory(
+        transformer.transform, transform_dataset
+    )
 
     reverse_dataset = transformer.transform(transform_dataset)
-    reverse_time = _profile_time(transformer, 'reverse_transform', reverse_dataset)
-    reverse_memory = _profile_memory(transformer.reverse_transform, reverse_dataset)
+    reverse_time = _profile_time(
+        transformer, 'reverse_transform', reverse_dataset
+    )
+    reverse_memory = _profile_memory(
+        transformer.reverse_transform, reverse_dataset
+    )
 
     return pd.Series({
         'Fit Time': fit_time,
@@ -99,5 +111,5 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
         'Transform Time': transform_time,
         'Transform Memory': transform_memory,
         'Reverse Transform Time': reverse_time,
-        'Reverse Transform Memory': reverse_memory
+        'Reverse Transform Memory': reverse_memory,
     })

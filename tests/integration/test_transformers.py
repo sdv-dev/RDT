@@ -16,23 +16,13 @@ PRIMARY_SDTYPES = ['boolean', 'categorical', 'datetime', 'numerical']
 TRANSFORMER_ARGS = {
     'BinaryEncoder': {
         'missing_value_replacement': -1,
-        'missing_value_generation': 'from_column'
+        'missing_value_generation': 'from_column',
     },
-    'UnixTimestampEncoder': {
-        'missing_value_generation': 'from_column'
-    },
-    'OptimizedTimestampEncoder': {
-        'missing_value_generation': 'from_column'
-    },
-    'FloatFormatter': {
-        'missing_value_generation': 'from_column'
-    },
-    'GaussianNormalizer': {
-        'missing_value_generation': 'from_column'
-    },
-    'ClusterBasedNormalizer': {
-        'missing_value_generation': 'from_column'
-    },
+    'UnixTimestampEncoder': {'missing_value_generation': 'from_column'},
+    'OptimizedTimestampEncoder': {'missing_value_generation': 'from_column'},
+    'FloatFormatter': {'missing_value_generation': 'from_column'},
+    'GaussianNormalizer': {'missing_value_generation': 'from_column'},
+    'ClusterBasedNormalizer': {'missing_value_generation': 'from_column'},
 }
 
 # Mapping of rdt sdtype to dtype
@@ -68,10 +58,16 @@ def _validate_helper(validator_function, args, steps):
 def _is_valid_transformer(transformer_name):
     """Determine if transformer should be tested or not."""
     invalid_names = [
-        'IdentityTransformer', 'Dummy', 'OrderedLabelEncoder', 'CustomLabelEncoder',
-        'OrderedUniformEncoder', 'BaseMultiColumnTransformer'
+        'IdentityTransformer',
+        'Dummy',
+        'OrderedLabelEncoder',
+        'CustomLabelEncoder',
+        'OrderedUniformEncoder',
+        'BaseMultiColumnTransformer',
     ]
-    return all(invalid_name not in transformer_name for invalid_name in invalid_names)
+    return all(
+        invalid_name not in transformer_name for invalid_name in invalid_names
+    )
 
 
 def _get_all_transformers():
@@ -101,7 +97,9 @@ def _find_dataset_generators(sdtype, generators):
     if sdtype is None:
         primary_generators = []
         for primary_sdtype in PRIMARY_SDTYPES:
-            primary_generators.extend(_find_dataset_generators(primary_sdtype, generators))
+            primary_generators.extend(
+                _find_dataset_generators(primary_sdtype, generators)
+            )
 
         return primary_generators
 
@@ -110,7 +108,9 @@ def _find_dataset_generators(sdtype, generators):
 
 def _validate_dataset_generators(dataset_generators):
     """Check that the number of dataset generators is greater than zero."""
-    assert len(dataset_generators) > 0, 'There are no associated dataset generators.'
+    assert (
+        len(dataset_generators) > 0
+    ), 'There are no associated dataset generators.'
 
 
 def _validate_transformed_data(transformer, transformed_data):
@@ -119,20 +119,32 @@ def _validate_transformed_data(transformer, transformed_data):
     transformed_dtypes = transformed_data.dtypes
 
     for column, expected_sdtype in expected_sdtypes.items():
-        message = f'Column {column} is expected but not found in transformed data.'
+        message = (
+            f'Column {column} is expected but not found in transformed data.'
+        )
         assert column in transformed_data, message
-        message = f'Column {column} is not the expected sdtype {expected_sdtype}'
-        assert transformed_dtypes[column].kind in SDTYPE_TO_DTYPES[expected_sdtype], message
+        message = (
+            f'Column {column} is not the expected sdtype {expected_sdtype}'
+        )
+        assert (
+            transformed_dtypes[column].kind
+            in SDTYPE_TO_DTYPES[expected_sdtype]
+        ), message
 
 
-def _validate_reverse_transformed_data(transformer, reversed_data, input_dtype):
+def _validate_reverse_transformed_data(
+    transformer, reversed_data, input_dtype
+):
     """Check that the reverse transformed data is the expected dtype.
 
     Expect that the dtype is equal to the dtype of the input data.
     """
     expected_sdtype = transformer.get_supported_sdtypes()[0]
     message = f'Reverse transformed data is not the expected sdtype {expected_sdtype}'
-    assert reversed_data.dtypes[TEST_COL].kind in SDTYPE_TO_DTYPES[expected_sdtype], message
+    assert (
+        reversed_data.dtypes[TEST_COL].kind
+        in SDTYPE_TO_DTYPES[expected_sdtype]
+    ), message
 
 
 def _test_transformer_with_dataset(transformer_class, input_data, steps):
@@ -173,20 +185,30 @@ def _test_transformer_with_dataset(transformer_class, input_data, steps):
 
 def _validate_hypertransformer_transformed_data(transformed_data):
     """Check that the transformed data is not null and of type float."""
-    assert transformed_data.notna().all(axis=None), 'Transformed data has nulls.'
+    assert transformed_data.notna().all(
+        axis=None
+    ), 'Transformed data has nulls.'
 
     for dtype in transformed_data.dtypes:
-        assert dtype.kind in SDTYPE_TO_DTYPES['numerical'], 'Transformed data is not numerical.'
+        assert (
+            dtype.kind in SDTYPE_TO_DTYPES['numerical']
+        ), 'Transformed data is not numerical.'
 
 
-def _validate_hypertransformer_reverse_transformed_data(transformer, reversed_data):
+def _validate_hypertransformer_reverse_transformed_data(
+    transformer, reversed_data
+):
     """Check that the reverse transformed data has the same dtype as the input."""
     expected_sdtype = transformer().get_supported_sdtypes()[0]
     message = f'Reversed transformed data is not the expected sdtype {expected_sdtype}'
-    assert reversed_data.dtype.kind in SDTYPE_TO_DTYPES[expected_sdtype], message
+    assert (
+        reversed_data.dtype.kind in SDTYPE_TO_DTYPES[expected_sdtype]
+    ), message
 
 
-def _test_transformer_with_hypertransformer(transformer_class, input_data, steps):
+def _test_transformer_with_hypertransformer(
+    transformer_class, input_data, steps
+):
     """Test the given transformer in the hypertransformer.
 
     Run the provided transformer using the hypertransformer using the provided
@@ -204,31 +226,22 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
     transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
     hypertransformer = HyperTransformer()
     if transformer_args:
-        field_transformers = {
-            TEST_COL: transformer_class(**transformer_args)
-        }
+        field_transformers = {TEST_COL: transformer_class(**transformer_args)}
 
     else:
-        field_transformers = {
-            TEST_COL: transformer_class()
-        }
+        field_transformers = {TEST_COL: transformer_class()}
 
     sdtypes = {}
     for field, transformer in field_transformers.items():
         sdtypes[field] = transformer.get_supported_sdtypes()[0]
 
-    config = {
-        'sdtypes': sdtypes,
-        'transformers': field_transformers
-    }
+    config = {'sdtypes': sdtypes, 'transformers': field_transformers}
     hypertransformer.set_config(config)
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)
     _validate_helper(
-        _validate_hypertransformer_transformed_data,
-        [transformed],
-        steps
+        _validate_hypertransformer_transformed_data, [transformed], steps
     )
 
     out = hypertransformer.reverse_transform(transformed)
@@ -259,9 +272,13 @@ def validate_transformer(transformer, steps=None, subtests=None):
         data = pd.DataFrame({TEST_COL: dg.generate(DATA_SIZE)})
 
         if subtests:
-            with subtests.test(msg=f'test_transformer_with_dataset_{dg}', generator=dg):
+            with subtests.test(
+                msg=f'test_transformer_with_dataset_{dg}', generator=dg
+            ):
                 _test_transformer_with_dataset(transformer, data, steps)
-                _test_transformer_with_hypertransformer(transformer, data, steps)
+                _test_transformer_with_hypertransformer(
+                    transformer, data, steps
+                )
         else:
             _test_transformer_with_dataset(transformer, data, steps)
             _test_transformer_with_hypertransformer(transformer, data, steps)

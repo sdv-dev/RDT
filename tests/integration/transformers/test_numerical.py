@@ -2,11 +2,14 @@ import numpy as np
 import pandas as pd
 from copulas import univariate
 
-from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
+from rdt.transformers.numerical import (
+    ClusterBasedNormalizer,
+    FloatFormatter,
+    GaussianNormalizer,
+)
 
 
 class TestFloatFormatter:
-
     def test_missing_value_generation_from_column(self):
         """Test end to end with ``missing_value_generation`` set to ``from_column``.
 
@@ -115,7 +118,9 @@ class TestFloatFormatter:
         assert list(transformed.iloc[:, 1]) == [0, 0, 0, 0, 1, 0]
         np.testing.assert_array_almost_equal(reverse, data, decimal=2)
 
-    def test_missing_value_replacement_set_to_random_and_model_missing_values(self):
+    def test_missing_value_replacement_set_to_random_and_model_missing_values(
+        self,
+    ):
         """Test that we are still able to use ``missing_value_replacement`` when is ``random``."""
         # Setup
         data = pd.DataFrame({'a': [1, 2, 3, np.nan, np.nan, 4]})
@@ -128,8 +133,8 @@ class TestFloatFormatter:
 
         # Assert
         expected_transformed = pd.DataFrame({
-            'a': [1., 2., 3., 2.617107, 1.614805, 4.],
-            'a.is_null': [0., 0., 0., 1., 1., 0.]
+            'a': [1.0, 2.0, 3.0, 2.617107, 1.614805, 4.0],
+            'a.is_null': [0.0, 0.0, 0.0, 1.0, 1.0, 0.0],
         })
         pd.testing.assert_frame_equal(transformed, expected_transformed)
         pd.testing.assert_frame_equal(reverse, data)
@@ -154,13 +159,16 @@ class TestFloatFormatter:
         expected_transformed = pd.DataFrame({'a': [0.0] * 10})
         expected_reverse_transformed = pd.DataFrame({'a': [np.nan] * 10})
         pd.testing.assert_frame_equal(transformed, expected_transformed)
-        pd.testing.assert_frame_equal(reverse_transformed, expected_reverse_transformed)
+        pd.testing.assert_frame_equal(
+            reverse_transformed, expected_reverse_transformed
+        )
 
 
 class TestGaussianNormalizer:
-
     def test_stats(self):
-        data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['a'])
+        data = pd.DataFrame(
+            np.random.normal(loc=4, scale=4, size=1000), columns=['a']
+        )
         column = 'a'
 
         ct = GaussianNormalizer()
@@ -206,7 +214,9 @@ class TestGaussianNormalizer:
 
         reverse = ct.reverse_transform(transformed)
         expected = pd.DataFrame(
-            [1., 1.9999999510423996, 1., 1.9999999510423996, 1.4, 1.], columns=['a'])
+            [1.0, 1.9999999510423996, 1.0, 1.9999999510423996, 1.4, 1.0],
+            columns=['a'],
+        )
         pd.testing.assert_frame_equal(reverse, expected)
 
     def test_int(self):
@@ -299,7 +309,6 @@ class TestGaussianNormalizer:
 
 
 class TestClusterBasedNormalizer:
-
     def generate_data(self):
         data1 = np.random.normal(loc=5, scale=1, size=100)
         data2 = np.random.normal(loc=-5, scale=1, size=100)
@@ -327,11 +336,13 @@ class TestClusterBasedNormalizer:
         random_state = np.random.get_state()
         np.random.set_state(np.random.RandomState(10).get_state())
         data = self.generate_data()
-        mask = np.random.choice([1, 0], data.shape, p=[.1, .9]).astype(bool)
+        mask = np.random.choice([1, 0], data.shape, p=[0.1, 0.9]).astype(bool)
         data[mask] = np.nan
         column = 'col'
 
-        bgmm_transformer = ClusterBasedNormalizer(missing_value_generation='from_column')
+        bgmm_transformer = ClusterBasedNormalizer(
+            missing_value_generation='from_column'
+        )
         bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
@@ -393,12 +404,17 @@ class TestClusterBasedNormalizer:
         """Test that the reverse transform works when the data is out of bounds GH#672."""
         # Setup
         data = pd.DataFrame({
-            'col': [round(i, 2) for i in np.random.uniform(0, 10, size=100)] + [None]
+            'col': [round(i, 2) for i in np.random.uniform(0, 10, size=100)]
+            + [None]
         })
-        reverse_data = pd.DataFrame(data={
-            'col.normalized': np.random.uniform(-10, 10, size=100),
-            'col.component': np.random.choice([0.0, 1.0, 2.0, 10.0], size=100)
-        })
+        reverse_data = pd.DataFrame(
+            data={
+                'col.normalized': np.random.uniform(-10, 10, size=100),
+                'col.component': np.random.choice(
+                    [0.0, 1.0, 2.0, 10.0], size=100
+                ),
+            }
+        )
         transformer = ClusterBasedNormalizer()
 
         # Run

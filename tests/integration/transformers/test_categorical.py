@@ -6,8 +6,13 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers import (
-    FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder, OrderedUniformEncoder,
-    UniformEncoder)
+    FrequencyEncoder,
+    LabelEncoder,
+    OneHotEncoder,
+    OrderedLabelEncoder,
+    OrderedUniformEncoder,
+    UniformEncoder,
+)
 
 
 class TestUniformEncoder:
@@ -59,7 +64,9 @@ class TestUniformEncoder:
         output = transformer.reverse_transform(transformed)
 
         # Asserts
-        pd.testing.assert_series_equal(output['column_name'], data['column_name'])
+        pd.testing.assert_series_equal(
+            output['column_name'], data['column_name']
+        )
 
     def test__reverse_transform_negative_transformed_values(self):
         """Test the ``reverse_transform``."""
@@ -83,7 +90,18 @@ class TestUniformEncoder:
         """Test ``reverse_transform`` for data with NaNs."""
         # Setup
         data = pd.DataFrame({
-            'column_name': ['a', 'b', 'c', np.nan, 'c', 'b', 'b', 'a', 'b', np.nan]
+            'column_name': [
+                'a',
+                'b',
+                'c',
+                np.nan,
+                'c',
+                'b',
+                'b',
+                'a',
+                'b',
+                np.nan,
+            ]
         })
         column = 'column_name'
 
@@ -101,7 +119,9 @@ class TestUniformEncoder:
         """Ensure UniformEncoder works when np.nan to transform wasn't seen during fit."""
         # Setup
         fit_data = pd.DataFrame([1.0, 2.0, 3.0], columns=['column_name'])
-        transform_data = pd.DataFrame([1, 2, 3, np.nan], columns=['column_name'])
+        transform_data = pd.DataFrame(
+            [1, 2, 3, np.nan], columns=['column_name']
+        )
         column = 'column_name'
 
         transformer = UniformEncoder()
@@ -156,7 +176,9 @@ class TestOrderedUniformEncoder:
     def test_string(self):
         """Test that the transformer works with string labels."""
         # Setup
-        data = pd.DataFrame({'column_name': ['b', 'a', 'c', 'a', np.nan, 'b', 'b']})
+        data = pd.DataFrame({
+            'column_name': ['b', 'a', 'c', 'a', np.nan, 'b', 'b']
+        })
         transformer = OrderedUniformEncoder(order=['a', 'c', np.nan, 'b'])
         column = 'column_name'
 
@@ -223,7 +245,9 @@ def test_frequency_encoder_numerical_nans_no_warning():
 def test_frequency_encoder_unseen_transform_data():
     """Ensure FrequencyEncoder works when data to transform wasn't seen during fit."""
 
-    fit_data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
+    fit_data = pd.DataFrame(
+        [1, 2, float('nan'), np.nan], columns=['column_name']
+    )
     transform_data = pd.DataFrame([1, 2, np.nan, 3], columns=['column_name'])
     column = 'column_name'
 
@@ -415,7 +439,9 @@ def test_frequency_encoder_mixed_more_rows():
     # setup
     data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
     column = 'column_name'
-    transform_data = pd.DataFrame(['a', 1, None, 'a', True, 1], columns=['column_name'])
+    transform_data = pd.DataFrame(
+        ['a', 1, None, 'a', True, 1], columns=['column_name']
+    )
     transformer = FrequencyEncoder()
 
     # run
@@ -439,7 +465,9 @@ def test_frequency_encoder_noise():
         - The reverse transformed data
     """
     # setup
-    data = pd.DataFrame(np.random.choice(a=range(100), size=10000), columns=['column_name'])
+    data = pd.DataFrame(
+        np.random.choice(a=range(100), size=10000), columns=['column_name']
+    )
     column = 'column_name'
     transformer = FrequencyEncoder(add_noise=True)
 
@@ -468,7 +496,9 @@ def test_one_hot_numerical_nans():
 def test_one_hot_doesnt_warn(tmp_path):
     """Ensure OneHotEncoder doesn't warn when saving and loading GH#616."""
     # Setup
-    data = pd.DataFrame({'column_name': [1.0, 2.0, np.nan, 2.0, 3.0, np.nan, 3.0]})
+    data = pd.DataFrame({
+        'column_name': [1.0, 2.0, np.nan, 2.0, 3.0, np.nan, 3.0]
+    })
     ohe = OneHotEncoder()
 
     # Run
@@ -488,9 +518,7 @@ def test_one_hot_doesnt_warn(tmp_path):
 def test_one_hot_categoricals():
     """Ensure OneHotEncoder works on categorical data. GH#751"""
     # Setup
-    test_data = pd.DataFrame(data={
-        'A': ['Yes', 'No', 'Yes', 'Maybe', 'No']
-    })
+    test_data = pd.DataFrame(data={'A': ['Yes', 'No', 'Yes', 'Maybe', 'No']})
     test_data['A'] = test_data['A'].astype('category')
     transformer = OneHotEncoder()
 
@@ -505,7 +533,7 @@ def test_one_hot_categoricals():
             'A.value1': [0, 1, 0, 0, 1],
             'A.value2': [0, 0, 0, 1, 0],
         }),
-        check_dtype=False
+        check_dtype=False,
     )
 
     # Run
@@ -524,7 +552,7 @@ def test_label_numerical_2d_array():
     transformer = LabelEncoder()
     transformer.fit(data, column)
 
-    transformed = pd.DataFrame([0., 1., 2., 3.], columns=['column_name'])
+    transformed = pd.DataFrame([0.0, 1.0, 2.0, 3.0], columns=['column_name'])
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
@@ -576,7 +604,9 @@ def test_label_encoder_order_by_numerical():
         - Transformed data should map labels to values based on numerical order.
     """
 
-    data = pd.DataFrame([5, np.nan, 3.11, 100, 67.8, -2.5], columns=['column_name'])
+    data = pd.DataFrame(
+        [5, np.nan, 3.11, 100, 67.8, -2.5], columns=['column_name']
+    )
 
     transformer = LabelEncoder(order_by='numerical_value')
     transformer.fit(data, 'column_name')
@@ -598,7 +628,9 @@ def test_label_encoder_order_by_alphabetical():
         - Transformed data should map labels to values based on alphabetical order.
     """
 
-    data = pd.DataFrame(['one', 'two', np.nan, 'three', 'four'], columns=['column_name'])
+    data = pd.DataFrame(
+        ['one', 'two', np.nan, 'three', 'four'], columns=['column_name']
+    )
 
     transformer = LabelEncoder(order_by='alphabetical')
     transformer.fit(data, 'column_name')
@@ -644,7 +676,9 @@ def test_ordered_label_encoder_nans():
         - Reverse transformed data should match the input
     """
 
-    data = pd.DataFrame(['two', 3, 1, np.nan, 'zero', None], columns=['column_name'])
+    data = pd.DataFrame(
+        ['two', 3, 1, np.nan, 'zero', None], columns=['column_name']
+    )
     transformer = OrderedLabelEncoder(order=['zero', 1, 'two', 3, None])
     transformer.fit(data, 'column_name')
 

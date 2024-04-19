@@ -5,7 +5,6 @@ from rdt.performance.datasets import numerical
 
 
 class TestRandomIntegerGenerator:
-
     def test(self):
         output = numerical.RandomIntegerGenerator.generate(10)
         assert len(output) == 10
@@ -15,7 +14,6 @@ class TestRandomIntegerGenerator:
 
 
 class TestRandomIntegerNaNsGenerator:
-
     def test(self):
         output = numerical.RandomIntegerNaNsGenerator.generate(10)
         assert len(output) == 10
@@ -25,7 +23,6 @@ class TestRandomIntegerNaNsGenerator:
 
 
 class TestConstantIntegerGenerator:
-
     def test(self):
         output = numerical.ConstantIntegerGenerator.generate(10)
         assert len(output) == 10
@@ -35,7 +32,6 @@ class TestConstantIntegerGenerator:
 
 
 class TestConstantIntegerNaNsGenerator:
-
     def test(self):
         output = numerical.ConstantIntegerNaNsGenerator.generate(10)
         assert len(output) == 10
@@ -45,7 +41,6 @@ class TestConstantIntegerNaNsGenerator:
 
 
 class TestAlmostConstantIntegerGenerator:
-
     def test(self):
         output = numerical.AlmostConstantIntegerGenerator.generate(10)
         assert len(output) == 10
@@ -55,7 +50,6 @@ class TestAlmostConstantIntegerGenerator:
 
 
 class TestAlmostConstantIntegerNaNsGenerator:
-
     def test(self):
         output = numerical.AlmostConstantIntegerNaNsGenerator.generate(10)
         assert len(output) == 10
@@ -65,7 +59,6 @@ class TestAlmostConstantIntegerNaNsGenerator:
 
 
 class TestNormalGenerator:
-
     def test(self):
         output = numerical.NormalGenerator.generate(10)
         assert len(output) == 10
@@ -75,7 +68,6 @@ class TestNormalGenerator:
 
 
 class TestNormalNaNsGenerator:
-
     def test(self):
         output = numerical.NormalNaNsGenerator.generate(10)
         assert len(output) == 10
@@ -85,7 +77,6 @@ class TestNormalNaNsGenerator:
 
 
 class TestBigNormalGenerator:
-
     def test(self):
         output = numerical.BigNormalGenerator.generate(10)
         assert len(output) == 10
@@ -95,7 +86,6 @@ class TestBigNormalGenerator:
 
 
 class TestBigNormalNaNsGenerator:
-
     def test(self):
         output = numerical.BigNormalNaNsGenerator.generate(10)
         assert len(output) == 10

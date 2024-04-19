@@ -5,12 +5,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
+from rdt.transformers.datetime import (
+    OptimizedTimestampEncoder,
+    UnixTimestampEncoder,
+)
 from rdt.transformers.null import NullTransformer
 
 
 class TestUnixTimestampEncoder:
-
     def test___init__(self):
         """Test the ``__init__`` method and the passed arguments are stored as attributes."""
         # Run
@@ -33,7 +35,7 @@ class TestUnixTimestampEncoder:
         transformer = UnixTimestampEncoder(
             missing_value_replacement='mode',
             model_missing_values=False,
-            datetime_format='%M-%d-%Y'
+            datetime_format='%M-%d-%Y',
         )
 
         # Asserts
@@ -62,7 +64,9 @@ class TestUnixTimestampEncoder:
         converted_data = transformer._convert_to_datetime(data)
 
         # Assert
-        expected_data = pd.Series(pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01']))
+        expected_data = pd.Series(
+            pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
+        )
         pd.testing.assert_series_equal(expected_data, converted_data)
 
     def test__convert_to_datetime_format(self):
@@ -89,7 +93,9 @@ class TestUnixTimestampEncoder:
         converted_data = transformer._convert_to_datetime(data)
 
         # Assert
-        expected_data = pd.Series(pd.to_datetime(['01Feb2020', '02Mar2020', '03Jan2010']))
+        expected_data = pd.Series(
+            pd.to_datetime(['01Feb2020', '02Mar2020', '03Jan2010'])
+        )
         pd.testing.assert_series_equal(expected_data, converted_data)
 
     def test__convert_to_datetime_not_convertible_raises_error(self):
@@ -106,11 +112,17 @@ class TestUnixTimestampEncoder:
             - a ``TypeError`` is raised.
         """
         # Setup
-        data = pd.Series(['2020-01-01-can', '2020-02-01-not', '2020-03-01-convert'])
+        data = pd.Series([
+            '2020-01-01-can',
+            '2020-02-01-not',
+            '2020-03-01-convert',
+        ])
         transformer = UnixTimestampEncoder()
 
         # Run
-        error_message = 'Data must be of dtype datetime, or castable to datetime.'
+        error_message = (
+            'Data must be of dtype datetime, or castable to datetime.'
+        )
         with pytest.raises(TypeError, match=error_message):
             transformer._convert_to_datetime(data)
 
@@ -181,9 +193,15 @@ class TestUnixTimestampEncoder:
         transformed = transformer._transform_helper(data)
 
         # Assert
-        np.testing.assert_allclose(transformed, np.array([
-            1.577837e+18, 1.580515e+18, 1.583021e+18,
-        ]), rtol=1e-5)
+        np.testing.assert_allclose(
+            transformed,
+            np.array([
+                1.577837e18,
+                1.580515e18,
+                1.583021e18,
+            ]),
+            rtol=1e-5,
+        )
 
     def test__reverse_transform_helper_nulls(self):
         """Test the ``_reverse_transform_helper`` with null values.
@@ -205,14 +223,18 @@ class TestUnixTimestampEncoder:
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
         transformer = UnixTimestampEncoder(missing_value_replacement='mean')
         transformer.null_transformer = Mock()
-        transformer.null_transformer.reverse_transform.return_value = pd.Series([1, 2, 3])
+        transformer.null_transformer.reverse_transform.return_value = (
+            pd.Series([1, 2, 3])
+        )
 
         # Run
         transformer._reverse_transform_helper(data)
 
         # Assert
         transformer.null_transformer.reverse_transform.assert_called_once()
-        datetimes = transformer.null_transformer.reverse_transform.mock_calls[0][1][0]
+        datetimes = transformer.null_transformer.reverse_transform.mock_calls[
+            0
+        ][1][0]
         np.testing.assert_array_equal(data.to_numpy(), datetimes)
 
     def test__reverse_transform_helper_model_missing_values_true(self):
@@ -235,14 +257,18 @@ class TestUnixTimestampEncoder:
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
         transformer = UnixTimestampEncoder(model_missing_values=True)
         transformer.null_transformer = Mock()
-        transformer.null_transformer.reverse_transform.return_value = pd.Series([1, 2, 3])
+        transformer.null_transformer.reverse_transform.return_value = (
+            pd.Series([1, 2, 3])
+        )
 
         # Run
         transformer._reverse_transform_helper(data)
 
         # Assert
         transformer.null_transformer.reverse_transform.assert_called_once()
-        datetimes = transformer.null_transformer.reverse_transform.mock_calls[0][1][0]
+        datetimes = transformer.null_transformer.reverse_transform.mock_calls[
+            0
+        ][1][0]
         np.testing.assert_array_equal(data.to_numpy(), datetimes)
 
     @patch('rdt.transformers.datetime.NullTransformer')
@@ -266,7 +292,8 @@ class TestUnixTimestampEncoder:
         assert null_transformer_mock.return_value.fit.call_count == 1
         np.testing.assert_allclose(
             null_transformer_mock.return_value.fit.call_args_list[0][0][0],
-            np.array([1.577837e+18, 1.580515e+18, 1.583021e+18]), rtol=1e-5
+            np.array([1.577837e18, 1.580515e18, 1.583021e18]),
+            rtol=1e-5,
         )
 
     def test__fit_enforce_min_max_values(self):
@@ -283,8 +310,8 @@ class TestUnixTimestampEncoder:
         transformer._fit(data)
 
         # Assert
-        assert transformer._min_value == 1.5778368e+18
-        assert transformer._max_value == 1.5830208e+18
+        assert transformer._min_value == 1.5778368e18
+        assert transformer._max_value == 1.5830208e18
 
     def test__fit_calls_transform_helper(self):
         """Test the ``_fit`` method.
@@ -307,7 +334,9 @@ class TestUnixTimestampEncoder:
         }
 
     @patch('rdt.transformers.datetime._guess_datetime_format_for_array')
-    def test__fit_calls_guess_datetime_format(self, mock__guess_datetime_format_for_array):
+    def test__fit_calls_guess_datetime_format(
+        self, mock__guess_datetime_format_for_array
+    ):
         """Test the ``_fit`` method.
 
         The ``_fit`` method should call the ``_transform_helper`` method.
@@ -323,7 +352,7 @@ class TestUnixTimestampEncoder:
         # Assert
         np.testing.assert_array_equal(
             mock__guess_datetime_format_for_array.call_args[0][0],
-            np.array(['2020-02-01', '2020-03-01'])
+            np.array(['2020-02-01', '2020-03-01']),
         )
         assert transformer.datetime_format == '%Y-%m-%d'
 
@@ -334,7 +363,9 @@ class TestUnixTimestampEncoder:
         column.
         """
         # Setup
-        transformer = UnixTimestampEncoder(missing_value_generation='from_column')
+        transformer = UnixTimestampEncoder(
+            missing_value_generation='from_column'
+        )
         data = pd.Series(['2020-02-01', np.nan])
 
         # Run
@@ -364,7 +395,8 @@ class TestUnixTimestampEncoder:
         assert transformer.null_transformer.transform.call_count == 1
         np.testing.assert_allclose(
             transformer.null_transformer.transform.call_args_list[0][0],
-            np.array([[1.577837e+18, 1.580515e+18, 1.583021e+18]]), rtol=1e-5
+            np.array([[1.577837e18, 1.580515e18, 1.583021e18]]),
+            rtol=1e-5,
         )
 
     def test__reverse_transform_all_none(self):
@@ -390,14 +422,16 @@ class TestUnixTimestampEncoder:
         """
         # Setup
         ute = UnixTimestampEncoder()
-        transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
+        transformed = np.array([1.5778368e18, 1.5805152e18, 1.5830208e18])
         ute.null_transformer = NullTransformer('mean')
 
         # Run
         output = ute._reverse_transform(transformed)
 
         # Assert
-        expected = pd.Series(pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01']))
+        expected = pd.Series(
+            pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
+        )
         pd.testing.assert_series_equal(output, expected)
 
     def test__reverse_transform_enforce_min_max_values(self):
@@ -409,19 +443,29 @@ class TestUnixTimestampEncoder:
         # Setup
         ute = UnixTimestampEncoder(enforce_min_max_values=True)
         transformed = np.array([
-            1.5678367e+18, 1.5778368e+18, 1.5805152e+18, 1.5830208e+18, 1.5930209e+18
+            1.5678367e18,
+            1.5778368e18,
+            1.5805152e18,
+            1.5830208e18,
+            1.5930209e18,
         ])
         ute.null_transformer = NullTransformer('mean')
-        ute._min_value = 1.5778368e+18
-        ute._max_value = 1.5830208e+18
+        ute._min_value = 1.5778368e18
+        ute._max_value = 1.5830208e18
 
         # Run
         output = ute._reverse_transform(transformed)
 
         # Assert
-        expected = pd.Series(pd.to_datetime([
-            '2020-01-01', '2020-01-01', '2020-02-01', '2020-03-01', '2020-03-01'
-        ]))
+        expected = pd.Series(
+            pd.to_datetime([
+                '2020-01-01',
+                '2020-01-01',
+                '2020-02-01',
+                '2020-03-01',
+                '2020-03-01',
+            ])
+        )
         pd.testing.assert_series_equal(output, expected)
 
     def test__reverse_transform_datetime_format_dtype_is_datetime(self):
@@ -429,7 +473,7 @@ class TestUnixTimestampEncoder:
         # Setup
         ute = UnixTimestampEncoder()
         ute.datetime_format = '%b %d, %Y'
-        transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
+        transformed = np.array([1.5778368e18, 1.5805152e18, 1.5830208e18])
         ute._dtype = np.dtype('<M8[ns]')
         ute.null_transformer = NullTransformer('mean')
 
@@ -437,7 +481,9 @@ class TestUnixTimestampEncoder:
         output = ute._reverse_transform(transformed)
 
         # Assert
-        expected = pd.Series(pd.to_datetime(['Jan 01, 2020', 'Feb 01, 2020', 'Mar 01, 2020']))
+        expected = pd.Series(
+            pd.to_datetime(['Jan 01, 2020', 'Feb 01, 2020', 'Mar 01, 2020'])
+        )
         pd.testing.assert_series_equal(output, expected)
 
     def test__reverse_transform_datetime_format(self):
@@ -445,7 +491,7 @@ class TestUnixTimestampEncoder:
         # Setup
         ute = UnixTimestampEncoder()
         ute.datetime_format = '%b %d, %Y'
-        transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
+        transformed = np.array([1.5778368e18, 1.5805152e18, 1.5830208e18])
         ute._dtype = 'object'
         ute.null_transformer = NullTransformer('mean')
 
@@ -461,7 +507,7 @@ class TestUnixTimestampEncoder:
         # Setup
         ute = UnixTimestampEncoder()
         ute.datetime_format = '%b %-d, %Y'
-        transformed = np.array([1.5778368e+18, 1.5805152e+18, 1.5830208e+18])
+        transformed = np.array([1.5778368e18, 1.5805152e18, 1.5830208e18])
         ute._dtype = 'object'
         ute.null_transformer = NullTransformer('mean')
 
@@ -478,7 +524,7 @@ class TestUnixTimestampEncoder:
         # Setup
         ute = UnixTimestampEncoder()
         ute.datetime_format = '%b %d, %Y'
-        transformed = np.array([1.5778368e+18, 1.5805152e+18, np.nan])
+        transformed = np.array([1.5778368e18, 1.5805152e18, np.nan])
         ute._dtype = 'object'
         ute.null_transformer = NullTransformer('mean')
 
@@ -506,7 +552,6 @@ class TestUnixTimestampEncoder:
 
 
 class TestOptimizedTimestampEncoder:
-
     def test___init__(self):
         """Test the ``__init__`` method."""
         # Run
@@ -556,9 +601,14 @@ class TestOptimizedTimestampEncoder:
         transformed = transformer._transform_helper(data)
 
         # Assert
-        np.testing.assert_allclose(transformed, np.array([
-            18262., 18293., 18322.,
-        ]))
+        np.testing.assert_allclose(
+            transformed,
+            np.array([
+                18262.0,
+                18293.0,
+                18322.0,
+            ]),
+        )
 
     def test__reverse_transform_helper(self):
         """Test the ``_reverse_transform_helper`` method.
@@ -567,11 +617,13 @@ class TestOptimizedTimestampEncoder:
         smallest non-zero time unit.
         """
         # Setup
-        data = pd.Series([18262., 18293., 18322.])
+        data = pd.Series([18262.0, 18293.0, 18322.0])
         transformer = OptimizedTimestampEncoder()
         transformer.divider = 1000
         transformer.null_transformer = Mock()
-        transformer.null_transformer.reverse_transform.side_effect = lambda x: x
+        transformer.null_transformer.reverse_transform.side_effect = (
+            lambda x: x
+        )
 
         # Run
         multiplied = transformer._reverse_transform_helper(data)

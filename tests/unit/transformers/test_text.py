@@ -31,7 +31,6 @@ class AsciiGenerator:
 
 
 class TestIDGenerator:
-
     def test___init__default(self):
         """Test the ``__init__`` method."""
         # Run
@@ -42,7 +41,9 @@ class TestIDGenerator:
         assert transformer.starting_value == 0
         assert transformer.suffix is None
         assert transformer._counter == 0
-        assert transformer.output_properties == {None: {'next_transformer': None}}
+        assert transformer.output_properties == {
+            None: {'next_transformer': None}
+        }
 
     def test___init__with_parameters(self):
         """Test the ``__init__`` method with paremeters."""
@@ -50,32 +51,42 @@ class TestIDGenerator:
         transformer_prefix = IDGenerator(prefix='prefix_')
         transformer_suffix = IDGenerator(suffix='_suffix')
         transformer_starting_value = IDGenerator(starting_value=10)
-        transformer_all = IDGenerator(prefix='prefix_', starting_value=10, suffix='_suffix')
+        transformer_all = IDGenerator(
+            prefix='prefix_', starting_value=10, suffix='_suffix'
+        )
 
         # Assert
         assert transformer_prefix.prefix == 'prefix_'
         assert transformer_prefix.starting_value == 0
         assert transformer_prefix.suffix is None
         assert transformer_prefix._counter == 0
-        assert transformer_prefix.output_properties == {None: {'next_transformer': None}}
+        assert transformer_prefix.output_properties == {
+            None: {'next_transformer': None}
+        }
 
         assert transformer_suffix.prefix is None
         assert transformer_suffix.starting_value == 0
         assert transformer_suffix.suffix == '_suffix'
         assert transformer_suffix._counter == 0
-        assert transformer_suffix.output_properties == {None: {'next_transformer': None}}
+        assert transformer_suffix.output_properties == {
+            None: {'next_transformer': None}
+        }
 
         assert transformer_starting_value.prefix is None
         assert transformer_starting_value.starting_value == 10
         assert transformer_starting_value.suffix is None
         assert transformer_starting_value._counter == 0
-        assert transformer_starting_value.output_properties == {None: {'next_transformer': None}}
+        assert transformer_starting_value.output_properties == {
+            None: {'next_transformer': None}
+        }
 
         assert transformer_all.prefix == 'prefix_'
         assert transformer_all.starting_value == 10
         assert transformer_all.suffix == '_suffix'
         assert transformer_all._counter == 0
-        assert transformer_all.output_properties == {None: {'next_transformer': None}}
+        assert transformer_all.output_properties == {
+            None: {'next_transformer': None}
+        }
 
     def test_reset_randomization(self):
         """Test the ``reset_randomization`` method."""
@@ -128,14 +139,20 @@ class TestIDGenerator:
     def test__reverse_transform_with_everything(self):
         """Test the ``_reverse_transform`` method with all parameters."""
         # Setup
-        transformer = IDGenerator(prefix='prefix_', starting_value=100, suffix='_suffix')
+        transformer = IDGenerator(
+            prefix='prefix_', starting_value=100, suffix='_suffix'
+        )
 
         # Run
         result = transformer._reverse_transform(np.array([1, 2, 3]))
 
         # Assert
         assert isinstance(result, pd.Series)
-        assert result.tolist() == ['prefix_100_suffix', 'prefix_101_suffix', 'prefix_102_suffix']
+        assert result.tolist() == [
+            'prefix_100_suffix',
+            'prefix_101_suffix',
+            'prefix_102_suffix',
+        ]
         assert transformer._counter == 3
 
 
@@ -162,11 +179,13 @@ class TestRegexGenerator:
             'output_properties': {None: {'next_transformer': None}},
             'regex_format': '[A-Za-z]{5}',
             'random_states': mock_random_sates,
-            'generation_order': 'alphanumeric'
+            'generation_order': 'alphanumeric',
         }
 
     @patch('rdt.transformers.text.strings_from_regex')
-    def test___setstate__generated_and_generator_size(self, mock_strings_from_regex):
+    def test___setstate__generated_and_generator_size(
+        self, mock_strings_from_regex
+    ):
         """Test that ``__setstate__`` will initialize a generator and wind it forward."""
         # Setup
         state = {
@@ -175,7 +194,7 @@ class TestRegexGenerator:
             'generated': 10,
             'generator_size': 380204032,
             'output_properties': {None: {'next_transformer': None}},
-            'regex_format': '[A-Za-z]{5}'
+            'regex_format': '[A-Za-z]{5}',
         }
         generator = AsciiGenerator()
         mock_strings_from_regex.return_value = (generator, 26)
@@ -204,7 +223,7 @@ class TestRegexGenerator:
             'generated': None,
             'generator_size': None,
             'output_properties': {None: {'next_transformer': None}},
-            'regex_format': '[A-Za-z]{5}'
+            'regex_format': '[A-Za-z]{5}',
         }
         generator = AsciiGenerator()
         mock_strings_from_regex.return_value = (generator, 26)
@@ -250,7 +269,7 @@ class TestRegexGenerator:
         instance = RegexGenerator(
             regex_format='[0-9]',
             enforce_uniqueness=True,
-            generation_order='scrambled'
+            generation_order='scrambled',
         )
 
         # Assert
@@ -262,13 +281,17 @@ class TestRegexGenerator:
     def test___init__bad_value_generation_order(self):
         """Test that an error is raised if a bad value is given for `generation_order`."""
         # Run and Assert
-        error_message = "generation_order must be one of 'alphanumeric' or 'scrambled'."
+        error_message = (
+            "generation_order must be one of 'alphanumeric' or 'scrambled'."
+        )
         with pytest.raises(ValueError, match=error_message):
             RegexGenerator(generation_order='afdsfd')
 
     @patch('rdt.transformers.text.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.text.strings_from_regex')
-    def test_reset_randomization(self, mock_strings_from_regex, mock_base_reset):
+    def test_reset_randomization(
+        self, mock_strings_from_regex, mock_base_reset
+    ):
         """Test that this method creates a new generator.
 
         This method should create a new ``instance.generator``, ``instance.generator_size`` and
@@ -421,7 +444,19 @@ class TestRegexGenerator:
         result = instance._reverse_transform(columns_data)
 
         # Assert
-        expected_result = np.array(['A', 'B', 'C', 'D', 'E', 'A', 'B', 'C', 'D', 'E', 'A'])
+        expected_result = np.array([
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'A',
+        ])
         np.testing.assert_array_equal(result, expected_result)
 
     def test__reverse_transform_generator_size_of_input_data(self):
@@ -461,7 +496,9 @@ class TestRegexGenerator:
         assert instance.generated == 4
 
     @patch('rdt.transformers.text.warnings')
-    def test__reverse_transform_not_enough_unique_values_enforce_uniqueness(self, mock_warnings):
+    def test__reverse_transform_not_enough_unique_values_enforce_uniqueness(
+        self, mock_warnings
+    ):
         """Test it when there are not enough unique values to generate."""
         # Setup
         instance = RegexGenerator('[A-E]', enforce_uniqueness=True)
@@ -481,7 +518,9 @@ class TestRegexGenerator:
             "The regex for 'a' can only generate 5 "
             'unique values. Additional values may not exactly follow the provided regex.'
         )
-        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'A(0)']))
+        np.testing.assert_array_equal(
+            out, np.array(['A', 'B', 'C', 'D', 'E', 'A(0)'])
+        )
 
     def test__reverse_transform_not_enough_unique_values(self):
         """Test it when there are not enough unique values to generate."""
@@ -499,10 +538,14 @@ class TestRegexGenerator:
         out = instance._reverse_transform(columns_data)
 
         # Assert
-        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'A']))
+        np.testing.assert_array_equal(
+            out, np.array(['A', 'B', 'C', 'D', 'E', 'A'])
+        )
 
     @patch('rdt.transformers.text.warnings')
-    def test__reverse_transform_not_enough_unique_values_numerical(self, mock_warnings):
+    def test__reverse_transform_not_enough_unique_values_numerical(
+        self, mock_warnings
+    ):
         """Test it when there are not enough unique values to generate."""
         # Setup
         instance = RegexGenerator('[1-3]', enforce_uniqueness=True)
@@ -522,10 +565,14 @@ class TestRegexGenerator:
             "The regex for 'a' can only generate 3 "
             'unique values. Additional values may not exactly follow the provided regex.'
         )
-        np.testing.assert_array_equal(out, np.array(['1', '2', '3', '4', '5', '6']))
+        np.testing.assert_array_equal(
+            out, np.array(['1', '2', '3', '4', '5', '6'])
+        )
 
     @patch('rdt.transformers.text.warnings')
-    def test__reverse_transform_enforce_uniqueness_not_enough_remaining(self, mock_warnings):
+    def test__reverse_transform_enforce_uniqueness_not_enough_remaining(
+        self, mock_warnings
+    ):
         """Test the case when there are not enough unique values remaining."""
         # Setup
         instance = RegexGenerator('[A-Z]', enforce_uniqueness=True)
@@ -545,7 +592,9 @@ class TestRegexGenerator:
             'The regex generator is not able to generate 6 new unique '
             'values (only 1 unique values left).'
         )
-        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'F']))
+        np.testing.assert_array_equal(
+            out, np.array(['A', 'B', 'C', 'D', 'E', 'F'])
+        )
 
     @patch('rdt.transformers.text.LOGGER')
     def test__reverse_transform_info_message(self, mock_logger):
@@ -573,4 +622,6 @@ class TestRegexGenerator:
         )
         expected_args = (6, 'a', 5, 'a')
 
-        mock_logger.info.assert_called_once_with(expected_format, *expected_args)
+        mock_logger.info.assert_called_once_with(
+            expected_format, *expected_args
+        )

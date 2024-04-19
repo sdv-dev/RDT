@@ -9,11 +9,20 @@ from copy import deepcopy
 import pandas as pd
 
 from rdt.errors import (
-    ConfigNotSetError, InvalidConfigError, InvalidDataError, NotFittedError, TransformerInputError,
-    TransformerProcessingError)
+    ConfigNotSetError,
+    InvalidConfigError,
+    InvalidDataError,
+    NotFittedError,
+    TransformerInputError,
+    TransformerProcessingError,
+)
 from rdt.transformers import (
-    BaseMultiColumnTransformer, BaseTransformer, get_class_by_transformer_name,
-    get_default_transformer, get_transformers_by_type)
+    BaseMultiColumnTransformer,
+    BaseTransformer,
+    get_class_by_transformer_name,
+    get_default_transformer,
+    get_transformers_by_type,
+)
 from rdt.transformers.utils import flatten_column_list
 
 LOGGER = logging.getLogger(__name__)
@@ -31,14 +40,18 @@ class Config(dict):
 
         config = {
             'sdtypes': self['sdtypes'],
-            'transformers': {str(k): repr(v) for k, v in self['transformers'].items()}
+            'transformers': {
+                str(k): repr(v) for k, v in self['transformers'].items()
+            },
         }
 
         printed = json.dumps(config, indent=4)
         for transformer in self['transformers'].values():
             quoted_transformer = f'"{transformer}"'
             if quoted_transformer in printed:
-                printed = printed.replace(quoted_transformer, repr(transformer))
+                printed = printed.replace(
+                    quoted_transformer, repr(transformer)
+                )
 
         return printed
 
@@ -59,14 +72,8 @@ class HyperTransformer:
         'b': 'boolean',
         'M': 'datetime',
     }
-    _DEFAULT_OUTPUT_SDTYPES = [
-        'numerical',
-        'float',
-        'integer'
-    ]
-    _REFIT_MESSAGE = (
-        "For this change to take effect, please refit your data using 'fit' or 'fit_transform'."
-    )
+    _DEFAULT_OUTPUT_SDTYPES = ['numerical', 'float', 'integer']
+    _REFIT_MESSAGE = "For this change to take effect, please refit your data using 'fit' or 'fit_transform'."
     _DETECT_CONFIG_MESSAGE = (
         'Nothing to update. Use the `detect_initial_config` method to pre-populate all the '
         'sdtypes and transformers from your dataset.'
@@ -109,9 +116,11 @@ class HyperTransformer:
     def _validate_field_transformers(self):
         for field in self.field_transformers:
             if self._field_in_set(field, self._specified_fields):
-                raise ValueError(f'Multiple transformers specified for the field {field}. '
-                                 'Each field can have at most one transformer defined in '
-                                 'field_transformers.')
+                raise ValueError(
+                    f'Multiple transformers specified for the field {field}. '
+                    'Each field can have at most one transformer defined in '
+                    'field_transformers.'
+                )
 
             self._add_field_to_set(field, self._specified_fields)
 
@@ -131,7 +140,9 @@ class HyperTransformer:
 
     @staticmethod
     def _field_in_data(field, data):
-        all_columns_in_data = isinstance(field, tuple) and all(col in data for col in field)
+        all_columns_in_data = isinstance(field, tuple) and all(
+            col in data for col in field
+        )
         return field in data or all_columns_in_data
 
     @staticmethod
@@ -150,7 +161,7 @@ class HyperTransformer:
         """
         return Config({
             'sdtypes': self.field_sdtypes,
-            'transformers': self.field_transformers
+            'transformers': self.field_transformers,
         })
 
     @staticmethod
@@ -215,7 +226,9 @@ class HyperTransformer:
         sdtype_keys = sdtypes.keys()
         transformer_keys = flatten_column_list(transformers.keys())
 
-        is_transformer_keys_unique = len(transformer_keys) == len(set(transformer_keys))
+        is_transformer_keys_unique = len(transformer_keys) == len(
+            set(transformer_keys)
+        )
         if not is_transformer_keys_unique:
             raise InvalidConfigError(
                 'Error: Invalid config. Please provide unique keys for the sdtypes '
@@ -236,7 +249,11 @@ class HyperTransformer:
             if transformer is None:
                 continue
 
-            columns = column_name if isinstance(column_name, tuple) else [column_name]
+            columns = (
+                column_name
+                if isinstance(column_name, tuple)
+                else [column_name]
+            )
             for column in columns:
                 sdtype = sdtypes.get(column)
                 if sdtype not in transformer.get_supported_sdtypes():
@@ -250,7 +267,9 @@ class HyperTransformer:
 
     def _validate_update_columns(self, update_columns):
         unknown_columns = self._subset(
-            flatten_column_list(update_columns), self.field_sdtypes.keys(), not_in=True
+            flatten_column_list(update_columns),
+            self.field_sdtypes.keys(),
+            not_in=True,
         )
         if unknown_columns:
             raise InvalidConfigError(
@@ -279,7 +298,8 @@ class HyperTransformer:
             warnings.warn(self._REFIT_MESSAGE)
 
     def _validate_update_transformers_by_sdtype(
-            self, sdtype, transformer, transformer_name, transformer_parameters):
+        self, sdtype, transformer, transformer_name, transformer_parameters
+    ):
         if not self.field_sdtypes:
             raise ConfigNotSetError(
                 'Nothing to update. Use the `detect_initial_config` method to '
@@ -288,7 +308,9 @@ class HyperTransformer:
 
         if transformer_name is None:
             if transformer is None:
-                raise InvalidConfigError("Missing required parameter 'transformer_name'.")
+                raise InvalidConfigError(
+                    "Missing required parameter 'transformer_name'."
+                )
 
             if not isinstance(transformer, BaseTransformer):
                 raise InvalidConfigError(
@@ -301,22 +323,32 @@ class HyperTransformer:
                 )
 
         else:
-            if transformer_name not in get_class_by_transformer_name() or sdtype not in \
-                    get_class_by_transformer_name()[transformer_name].get_supported_sdtypes():
+            if (
+                transformer_name not in get_class_by_transformer_name()
+                or sdtype
+                not in get_class_by_transformer_name()[
+                    transformer_name
+                ].get_supported_sdtypes()
+            ):
                 raise InvalidConfigError(
-                    f"Invalid transformer name '{transformer_name}' for the '{sdtype}' sdtype.")
+                    f"Invalid transformer name '{transformer_name}' for the '{sdtype}' sdtype."
+                )
 
             if transformer_parameters is not None:
                 transformer = get_class_by_transformer_name()[transformer_name]
                 valid = inspect.signature(transformer).parameters
-                invalid_parameters = {arg for arg in transformer_parameters if arg not in valid}
+                invalid_parameters = {
+                    arg for arg in transformer_parameters if arg not in valid
+                }
                 if invalid_parameters:
                     raise TransformerInputError(
                         f'Invalid parameters {tuple(sorted(invalid_parameters))} '
                         f"for the '{transformer_name}'."
                     )
 
-    def _warn_update_transformers_by_sdtype(self, transformer, transformer_name):
+    def _warn_update_transformers_by_sdtype(
+        self, transformer, transformer_name
+    ):
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
@@ -325,14 +357,15 @@ class HyperTransformer:
                 warnings.warn(
                     "The 'transformer' parameter will no longer be supported in future versions "
                     "of the RDT. Using the 'transformer_name' parameter instead.",
-                    FutureWarning
+                    FutureWarning,
                 )
 
         else:
             warnings.warn(
                 "The 'transformer' parameter will no longer be supported in future versions "
                 "of the RDT. Please use the 'transformer_name' and 'transformer_parameters' "
-                'parameters instead.', FutureWarning
+                'parameters instead.',
+                FutureWarning,
             )
 
     def _remove_column_in_multi_column_fields(self, column):
@@ -349,13 +382,15 @@ class HyperTransformer:
         new_tuple = tuple(item for item in old_tuple if item != column)
 
         if len(new_tuple) == 1:
-            new_tuple, = new_tuple
+            (new_tuple,) = new_tuple
             self._multi_column_fields.pop(new_tuple, None)
         else:
             for col in new_tuple:
                 self._multi_column_fields[col] = new_tuple
 
-        self.field_transformers[new_tuple] = self.field_transformers.pop(old_tuple)
+        self.field_transformers[new_tuple] = self.field_transformers.pop(
+            old_tuple
+        )
 
     def _update_multi_column_transformer(self):
         """Check that multi-columns mappings are valid and update them otherwise."""
@@ -369,7 +404,7 @@ class HyperTransformer:
 
             columns_to_sdtypes = self._get_columns_to_sdtypes(field)
             try:
-                transformer._validate_sdtypes(   # pylint: disable=protected-access
+                transformer._validate_sdtypes(  # pylint: disable=protected-access
                     columns_to_sdtypes
                 )
             except TransformerInputError:
@@ -379,12 +414,19 @@ class HyperTransformer:
                 )
                 del self.field_transformers[field]
                 for column, sdtype in columns_to_sdtypes.items():
-                    self.field_transformers[column] = deepcopy(get_default_transformer(sdtype))
+                    self.field_transformers[column] = deepcopy(
+                        get_default_transformer(sdtype)
+                    )
 
         self._multi_column_fields = self._create_multi_column_fields()
 
     def update_transformers_by_sdtype(
-            self, sdtype, transformer=None, transformer_name=None, transformer_parameters=None):
+        self,
+        sdtype,
+        transformer=None,
+        transformer_name=None,
+        transformer_parameters=None,
+    ):
         """Update the transformers for the specified ``sdtype``.
 
         Given an ``sdtype`` and a ``transformer``, change all the fields of the ``sdtype``
@@ -403,18 +445,22 @@ class HyperTransformer:
                 A dict of the kwargs of the transformer.
         """
         self._validate_update_transformers_by_sdtype(
-            sdtype, transformer, transformer_name, transformer_parameters)
+            sdtype, transformer, transformer_name, transformer_parameters
+        )
         self._warn_update_transformers_by_sdtype(transformer, transformer_name)
 
         transformer_instance = transformer
 
         if transformer_name is not None:
             if transformer_parameters is not None:
-                transformer_instance = \
-                    get_class_by_transformer_name()[transformer_name](**transformer_parameters)
+                transformer_instance = get_class_by_transformer_name()[
+                    transformer_name
+                ](**transformer_parameters)
 
             else:
-                transformer_instance = get_class_by_transformer_name()[transformer_name]()
+                transformer_instance = get_class_by_transformer_name()[
+                    transformer_name
+                ]()
 
         for field, field_sdtype in self.field_sdtypes.items():
             if field_sdtype == sdtype:
@@ -462,7 +508,9 @@ class HyperTransformer:
             if column in self._multi_column_fields:
                 self._remove_column_in_multi_column_fields(column)
 
-            transformers_to_update[column] = deepcopy(get_default_transformer(sdtype))
+            transformers_to_update[column] = deepcopy(
+                get_default_transformer(sdtype)
+            )
 
         self.field_sdtypes.update(column_name_to_sdtype)
         self.field_transformers.update(transformers_to_update)
@@ -495,11 +543,19 @@ class HyperTransformer:
         self._validate_transformers(column_name_to_transformer)
 
         for column_name, transformer in column_name_to_transformer.items():
-            columns = column_name if isinstance(column_name, tuple) else (column_name,)
+            columns = (
+                column_name
+                if isinstance(column_name, tuple)
+                else (column_name,)
+            )
             for column in columns:
                 if transformer is not None:
                     col_sdtype = self.field_sdtypes.get(column)
-                    if col_sdtype and col_sdtype not in transformer.get_supported_sdtypes():
+                    if (
+                        col_sdtype
+                        and col_sdtype
+                        not in transformer.get_supported_sdtypes()
+                    ):
                         raise InvalidConfigError(
                             f"Column '{column}' is a {col_sdtype} column, which is "
                             f"incompatible with the '{transformer.get_name()}' transformer."
@@ -594,7 +650,9 @@ class HyperTransformer:
                 self._set_field_sdtype(data, field)
             if field not in self.field_transformers:
                 sdtype = self.field_sdtypes[field]
-                self.field_transformers[field] = deepcopy(get_default_transformer(sdtype))
+                self.field_transformers[field] = deepcopy(
+                    get_default_transformer(sdtype)
+                )
 
     def detect_initial_config(self, data):
         """Print the configuration of the data.
@@ -620,7 +678,7 @@ class HyperTransformer:
 
         config = Config({
             'sdtypes': self.field_sdtypes,
-            'transformers': self.field_transformers
+            'transformers': self.field_transformers,
         })
 
         LOGGER.info('Config:')
@@ -675,16 +733,19 @@ class HyperTransformer:
 
             next_transformers = transformer.get_next_transformers()
             for column_name, next_transformer in next_transformers.items():
-
                 # If the column is part of a multi-column field, and at least one column
                 # isn't present in the data, then it should not fit the next transformer
                 if self._field_in_data(column_name, data):
-                    data = self._fit_field_transformer(data, column_name, next_transformer)
+                    data = self._fit_field_transformer(
+                        data, column_name, next_transformer
+                    )
 
         return data
 
     def _validate_all_fields_fitted(self):
-        non_fitted_fields = self._specified_fields.difference(self._fitted_fields)
+        non_fitted_fields = self._specified_fields.difference(
+            self._fitted_fields
+        )
         if non_fitted_fields:
             warnings.warn(
                 'The following fields were specified in the input arguments but not '
@@ -706,7 +767,11 @@ class HyperTransformer:
         missing = any(column not in data.columns for column in fields)
         unknown_columns = self._subset(data.columns, fields, not_in=True)
         if unknown_columns or missing:
-            unknown_text = f' (unknown columns: {unknown_columns})' if unknown_columns else ''
+            unknown_text = (
+                f' (unknown columns: {unknown_columns})'
+                if unknown_columns
+                else ''
+            )
             raise InvalidDataError(
                 'The data you are trying to fit has different columns than the original '
                 f'detected data{unknown_text}. Column names and their '
@@ -746,7 +811,9 @@ class HyperTransformer:
             else:
                 field = column
 
-            data = self._fit_field_transformer(data, field, self.field_transformers[field])
+            data = self._fit_field_transformer(
+                data, field, self.field_transformers[field]
+            )
 
         self._validate_all_fields_fitted()
         self._fitted = True
@@ -762,10 +829,16 @@ class HyperTransformer:
         self._validate_config_exists()
         self._validate_fitted()
 
-        unknown_columns = self._subset(data.columns, self._input_columns, not_in=True)
+        unknown_columns = self._subset(
+            data.columns, self._input_columns, not_in=True
+        )
         if prevent_subset:
-            contained = all(column in self._input_columns for column in data.columns)
-            is_subset = contained and len(data.columns) < len(self._input_columns)
+            contained = all(
+                column in self._input_columns for column in data.columns
+            )
+            is_subset = contained and len(data.columns) < len(
+                self._input_columns
+            )
             if unknown_columns or is_subset:
                 raise InvalidDataError(
                     'The data you are trying to transform has different columns than the original '
@@ -844,9 +917,13 @@ class HyperTransformer:
         self._validate_fitted()
 
         if not isinstance(num_rows, int) or num_rows <= 0:
-            raise ValueError("Parameter 'num_rows' must be an integer greater than 0.")
+            raise ValueError(
+                "Parameter 'num_rows' must be an integer greater than 0."
+            )
 
-        unknown_columns = self._subset(column_names, self._input_columns, not_in=True)
+        unknown_columns = self._subset(
+            column_names, self._input_columns, not_in=True
+        )
         if unknown_columns:
             raise InvalidConfigError(
                 f"Unknown column name {unknown_columns}. Use 'get_config()' to see a "
@@ -875,7 +952,9 @@ class HyperTransformer:
         self._validate_config_exists()
         self._validate_fitted()
 
-        unknown_columns = self._subset(data.columns, self._output_columns, not_in=True)
+        unknown_columns = self._subset(
+            data.columns, self._output_columns, not_in=True
+        )
         if unknown_columns:
             raise InvalidDataError(
                 'There are unexpected column names in the data you are trying to transform. '
@@ -883,8 +962,12 @@ class HyperTransformer:
             )
 
         if prevent_subset:
-            contained = all(column in self._output_columns for column in data.columns)
-            is_subset = contained and len(data.columns) < len(self._output_columns)
+            contained = all(
+                column in self._output_columns for column in data.columns
+            )
+            is_subset = contained and len(data.columns) < len(
+                self._output_columns
+            )
             if is_subset:
                 raise InvalidDataError(
                     'You must provide a transformed dataset with all the columns from the '
@@ -897,7 +980,9 @@ class HyperTransformer:
         else:
             for transformer in reversed(self._transformers_sequence):
                 output_columns = transformer.get_output_columns()
-                if output_columns and set(output_columns).issubset(data.columns):
+                if output_columns and set(output_columns).issubset(
+                    data.columns
+                ):
                     data = transformer.reverse_transform(data)
 
         reversed_columns = self._subset(self._input_columns, data.columns)

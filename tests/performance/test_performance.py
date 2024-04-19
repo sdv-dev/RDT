@@ -9,11 +9,17 @@ from rdt.performance.performance import evaluate_transformer_performance
 from rdt.performance.profiling import profile_transformer
 from rdt.transformers import get_transformers_by_type
 from rdt.transformers.categorical import (
-    CustomLabelEncoder, OrderedLabelEncoder, OrderedUniformEncoder)
+    CustomLabelEncoder,
+    OrderedLabelEncoder,
+    OrderedUniformEncoder,
+)
 from rdt.transformers.numerical import ClusterBasedNormalizer
 
 SANDBOX_TRANSFORMERS = [
-    ClusterBasedNormalizer, OrderedLabelEncoder, CustomLabelEncoder, OrderedUniformEncoder
+    ClusterBasedNormalizer,
+    OrderedLabelEncoder,
+    CustomLabelEncoder,
+    OrderedUniformEncoder,
 ]
 
 
@@ -64,7 +70,9 @@ def validate_performance(performance, dataset_generator, should_assert=False):
         out.append(valid)
 
         if should_assert and not valid:
-            raise AssertionError(f'{function} {metric}: {value} > {expected_metric}')
+            raise AssertionError(
+                f'{function} {metric}: {value} > {expected_metric}'
+            )
 
     return out
 
@@ -84,7 +92,9 @@ def test_performance(transformer, dataset_generator):
         dataset_generator (rdt.tests.dataset.BaseDatasetGenerator):
             The dataset generator to performance tests against.
     """
-    performance = evaluate_transformer_performance(transformer, dataset_generator)
+    performance = evaluate_transformer_performance(
+        transformer, dataset_generator
+    )
     validate_performance(performance, dataset_generator, should_assert=True)
 
 
@@ -101,8 +111,14 @@ def _round_to_magnitude(value):
     raise ValueError('Value is too big')
 
 
-def find_transformer_boundaries(transformer, dataset_generator, fit_size,
-                                transform_size, iterations=1, multiplier=5):
+def find_transformer_boundaries(
+    transformer,
+    dataset_generator,
+    fit_size,
+    transform_size,
+    iterations=1,
+    multiplier=5,
+):
     """Helper function to find valid candidate boundaries for performance tests.
 
     The function works by:
@@ -134,7 +150,9 @@ def find_transformer_boundaries(transformer, dataset_generator, fit_size,
             Candidate values for each metric.
     """
     results = [
-        profile_transformer(transformer, dataset_generator, transform_size, fit_size)
+        profile_transformer(
+            transformer, dataset_generator, transform_size, fit_size
+        )
         for _ in range(iterations)
     ]
     means = pd.DataFrame(results).mean(axis=0)

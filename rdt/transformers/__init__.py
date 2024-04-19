@@ -9,12 +9,28 @@ from functools import lru_cache
 from rdt.transformers.base import BaseMultiColumnTransformer, BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
 from rdt.transformers.categorical import (
-    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder,
-    OrderedUniformEncoder, UniformEncoder)
-from rdt.transformers.datetime import OptimizedTimestampEncoder, UnixTimestampEncoder
+    CustomLabelEncoder,
+    FrequencyEncoder,
+    LabelEncoder,
+    OneHotEncoder,
+    OrderedLabelEncoder,
+    OrderedUniformEncoder,
+    UniformEncoder,
+)
+from rdt.transformers.datetime import (
+    OptimizedTimestampEncoder,
+    UnixTimestampEncoder,
+)
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.numerical import ClusterBasedNormalizer, FloatFormatter, GaussianNormalizer
-from rdt.transformers.pii.anonymizer import AnonymizedFaker, PseudoAnonymizedFaker
+from rdt.transformers.numerical import (
+    ClusterBasedNormalizer,
+    FloatFormatter,
+    GaussianNormalizer,
+)
+from rdt.transformers.pii.anonymizer import (
+    AnonymizedFaker,
+    PseudoAnonymizedFaker,
+)
 from rdt.transformers.text import IDGenerator, RegexGenerator
 
 __all__ = [
@@ -64,7 +80,9 @@ def get_transformer_name(transformer):
     if inspect.isclass(transformer):
         return transformer.__module__ + '.' + transformer.get_name()
 
-    raise ValueError(f'The transformer {transformer} must be passed as a class.')
+    raise ValueError(
+        f'The transformer {transformer} must be passed as a class.'
+    )
 
 
 TRANSFORMERS = {
@@ -95,7 +113,10 @@ def get_class_by_transformer_name():
         BaseTransformer:
             BaseTransformer subclass class object.
     """
-    return {class_.get_name(): class_ for class_ in BaseTransformer.get_subclasses()}
+    return {
+        class_.get_name(): class_
+        for class_ in BaseTransformer.get_subclasses()
+    }
 
 
 def get_transformer_class(transformer):
@@ -144,7 +165,7 @@ def get_default_transformers():
     """
     transformers_by_type = get_transformers_by_type()
     defaults = deepcopy(DEFAULT_TRANSFORMERS)
-    for (sdtype, transformers) in transformers_by_type.items():
+    for sdtype, transformers in transformers_by_type.items():
         if sdtype not in defaults:
             defaults[sdtype] = transformers[0]()
 

@@ -9,7 +9,11 @@ from scipy.stats import norm
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.utils import check_nan_in_transform, fill_nan_with_none, try_convert_to_dtype
+from rdt.transformers.utils import (
+    check_nan_in_transform,
+    fill_nan_with_none,
+    try_convert_to_dtype,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -55,7 +59,9 @@ class UniformEncoder(BaseTransformer):
         nans = pd.isna(unique_data)
         if self.order_by == 'alphabetical':
             # pylint: disable=invalid-unary-operand-type
-            if any(map(lambda item: not isinstance(item, str), unique_data[~nans])):  # noqa: C417
+            if any(
+                map(lambda item: not isinstance(item, str), unique_data[~nans])
+            ):  # noqa: C417
                 raise TransformerInputError(
                     "The data must be of type string if order_by is 'alphabetical'."
                 )
@@ -84,7 +90,9 @@ class UniformEncoder(BaseTransformer):
         """
         categories_to_print = ', '.join(str(x) for x in unseen_categories[:3])
         if len(unseen_categories) > 3:
-            categories_to_print = f'{categories_to_print}, +{len(unseen_categories) - 3} more'
+            categories_to_print = (
+                f'{categories_to_print}, +{len(unseen_categories) - 3} more'
+            )
 
         return categories_to_print
 
@@ -129,7 +137,9 @@ class UniformEncoder(BaseTransformer):
         nan_value = freq[np.nan] if np.nan in freq.index else None
         freq = freq.reindex(labels, fill_value=nan_value).array
 
-        self.frequencies, self.intervals = self._compute_frequencies_intervals(labels, freq)
+        self.frequencies, self.intervals = self._compute_frequencies_intervals(
+            labels, freq
+        )
 
     def _transform(self, data):
         """Map the category to a continuous value.
@@ -149,21 +159,27 @@ class UniformEncoder(BaseTransformer):
         if unseen_indexes.any():
             # Keep the 3 first unseen categories
             unseen_categories = list(data.loc[unseen_indexes].unique())
-            categories_to_print = self._get_message_unseen_categories(unseen_categories)
+            categories_to_print = self._get_message_unseen_categories(
+                unseen_categories
+            )
             warnings.warn(
                 f"The data in column '{self.get_input_column()}' contains new categories "
                 f"that did not appear during 'fit' ({categories_to_print}). Assigning "
                 'them random values. If you want to model new categories, '
                 "please fit the data again using 'fit'.",
-                category=UserWarning
+                category=UserWarning,
             )
 
             choices = list(self.frequencies.keys())
             size = unseen_indexes.size
-            data_with_none[unseen_indexes] = np.random.choice(choices, size=size)
+            data_with_none[unseen_indexes] = np.random.choice(
+                choices, size=size
+            )
 
         def map_labels(label):
-            return np.random.uniform(self.intervals[label][0], self.intervals[label][1])
+            return np.random.uniform(
+                self.intervals[label][0], self.intervals[label][1]
+            )
 
         return data_with_none.map(map_labels).astype(float)
 
@@ -257,16 +273,18 @@ class OrderedUniformEncoder(UniformEncoder):
         data = fill_nan_with_none(data)
         self._check_unknown_categories(data)
 
-        category_not_seen = (set(self.order.dropna()) != set(data.dropna()))
-        nans_not_seen = (pd.isna(self.order).any() and not pd.isna(data).any())
+        category_not_seen = set(self.order.dropna()) != set(data.dropna())
+        nans_not_seen = pd.isna(self.order).any() and not pd.isna(data).any()
         if category_not_seen or nans_not_seen:
             unseen_categories = [x for x in self.order if x not in data.array]
-            categories_to_print = self._get_message_unseen_categories(unseen_categories)
+            categories_to_print = self._get_message_unseen_categories(
+                unseen_categories
+            )
             LOGGER.info(
                 "For column '%s', some of the provided category values were not present in the"
                 ' data during fit: (%s).',
                 self.get_input_column(),
-                categories_to_print
+                categories_to_print,
             )
 
             freq = data.value_counts(normalize=True, dropna=False)
@@ -280,7 +298,9 @@ class OrderedUniformEncoder(UniformEncoder):
         nan_value = freq[np.nan] if np.nan in freq.index else None
         freq = freq.reindex(self.order, fill_value=nan_value).array
 
-        self.frequencies, self.intervals = self._compute_frequencies_intervals(self.order, freq)
+        self.frequencies, self.intervals = self._compute_frequencies_intervals(
+            self.order, freq
+        )
 
     def _transform(self, data):
         """Map the category to a continuous value."""
@@ -333,7 +353,7 @@ class FrequencyEncoder(BaseTransformer):
         warnings.warn(
             "The 'FrequencyEncoder' transformer will no longer be supported in future versions "
             "of the RDT library. Please use the 'UniformEncoder' transformer instead.",
-            FutureWarning
+            FutureWarning,
         )
         super().__init__()
         self.add_noise = add_noise
@@ -363,12 +383,15 @@ class FrequencyEncoder(BaseTransformer):
             if pd.isna(element):
                 return data_is_na.loc[data_is_na == 1].index[0]
 
-            return data_with_new_index.loc[data_with_new_index == element].index[0]
+            return data_with_new_index.loc[
+                data_with_new_index == element
+            ].index[0]
 
-        augmented_frequencies[sortable_column_name] = frequencies.index.map(tie_breaker)
+        augmented_frequencies[sortable_column_name] = frequencies.index.map(
+            tie_breaker
+        )
         augmented_frequencies = augmented_frequencies.sort_values(
-            [column_name, sortable_column_name],
-            ascending=[False, True]
+            [column_name, sortable_column_name], ascending=[False, True]
         )
         sorted_frequencies = augmented_frequencies[column_name]
 
@@ -393,7 +416,9 @@ class FrequencyEncoder(BaseTransformer):
             start = end
 
         means = pd.Series(means, index=list(frequencies.keys()))
-        starts = pd.DataFrame(starts, columns=['category', 'start']).set_index('start')
+        starts = pd.DataFrame(starts, columns=['category', 'start']).set_index(
+            'start'
+        )
 
         return intervals, means, starts
 
@@ -423,7 +448,7 @@ class FrequencyEncoder(BaseTransformer):
 
     def _transform_by_category(self, data):
         """Transform the data by iterating over the different categories."""
-        result = np.empty(shape=(len(data), ), dtype=float)
+        result = np.empty(shape=(len(data),), dtype=float)
 
         # loop over categories
         for category, values in self.intervals.items():
@@ -435,11 +460,14 @@ class FrequencyEncoder(BaseTransformer):
 
             if self.add_noise:
                 result[mask] = norm.rvs(
-                    mean, std,
+                    mean,
+                    std,
                     size=mask.sum(),
-                    random_state=self.random_states['transform']
+                    random_state=self.random_states['transform'],
                 )
-                result[mask] = self._clip_noised_transform(result[mask], start, end)
+                result[mask] = self._clip_noised_transform(
+                    result[mask], start, end
+                )
             else:
                 result[mask] = mean
 
@@ -453,14 +481,21 @@ class FrequencyEncoder(BaseTransformer):
         start, end, mean, std = self.intervals[category]
 
         if self.add_noise:
-            result = norm.rvs(mean, std, random_state=self.random_states['transform'])
+            result = norm.rvs(
+                mean, std, random_state=self.random_states['transform']
+            )
             return self._clip_noised_transform(result, start, end)
 
         return mean
 
     def _transform_by_row(self, data):
         """Transform the data row by row."""
-        data = data.infer_objects().fillna(np.nan).apply(self._get_value).to_numpy()
+        data = (
+            data.infer_objects()
+            .fillna(np.nan)
+            .apply(self._get_value)
+            .to_numpy()
+        )
 
         return data
 
@@ -476,7 +511,9 @@ class FrequencyEncoder(BaseTransformer):
         """
         fit_categories = pd.Series(self.intervals.keys())
         has_nan = pd.isna(fit_categories).any()
-        unseen_indexes = ~(data.isin(fit_categories) | (pd.isna(data) & has_nan))
+        unseen_indexes = ~(
+            data.isin(fit_categories) | (pd.isna(data) & has_nan)
+        )
         if unseen_indexes.any():
             # Select only the first 5 unseen categories to avoid flooding the console.
             unseen_categories = set(data[unseen_indexes][:5])
@@ -487,7 +524,9 @@ class FrequencyEncoder(BaseTransformer):
                 'please fit the transformer again with the new data.'
             )
 
-        data[unseen_indexes] = np.random.choice(fit_categories, size=unseen_indexes.size)
+        data[unseen_indexes] = np.random.choice(
+            fit_categories, size=unseen_indexes.size
+        )
         if len(self.means) < len(data):
             return self._transform_by_category(data)
 
@@ -495,7 +534,7 @@ class FrequencyEncoder(BaseTransformer):
 
     def _reverse_transform_by_category(self, data):
         """Reverse transform the data by iterating over all the categories."""
-        result = np.empty(shape=(len(data), ), dtype=self.dtype)
+        result = np.empty(shape=(len(data),), dtype=self.dtype)
 
         # loop over categories
         for category, values in self.intervals.items():
@@ -644,7 +683,9 @@ class OneHotEncoder(BaseTransformer):
         """
         data = self._prepare_data(data)
         unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
-        unseen_categories = unique_data - {np.nan if pd.isna(x) else x for x in self.dummies}
+        unseen_categories = unique_data - {
+            np.nan if pd.isna(x) else x for x in self.dummies
+        }
         if unseen_categories:
             # Select only the first 5 unseen categories to avoid flooding the console.
             examples_unseen_categories = set(list(unseen_categories)[:5])
@@ -781,7 +822,9 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pd.Series
         """
-        mapped = data.infer_objects().fillna(np.nan).map(self.categories_to_values)
+        mapped = (
+            data.infer_objects().fillna(np.nan).map(self.categories_to_values)
+        )
         is_null = mapped.isna()
         if is_null.any():
             # Select only the first 5 unseen categories to avoid flooding the console.
@@ -794,8 +837,7 @@ class LabelEncoder(BaseTransformer):
             )
 
         mapped[is_null] = np.random.randint(
-            len(self.categories_to_values),
-            size=is_null.sum()
+            len(self.categories_to_values), size=is_null.sum()
         )
 
         if self.add_noise:
@@ -818,7 +860,9 @@ class LabelEncoder(BaseTransformer):
         if self.add_noise:
             data = np.floor(data)
 
-        data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
+        data = data.clip(
+            min(self.values_to_categories), max(self.values_to_categories)
+        )
         data = data.round().map(self.values_to_categories)
         data = try_convert_to_dtype(data, self.dtype)
 
@@ -906,6 +950,7 @@ class CustomLabelEncoder(OrderedLabelEncoder):
     def __init__(self, order, add_noise=False):
         warnings.warn(
             "The 'CustomLabelEncoder' is renamed to 'OrderedLabelEncoder'. Please update the"
-            'name to ensure compatibility with future versions of RDT.', FutureWarning
+            'name to ensure compatibility with future versions of RDT.',
+            FutureWarning,
         )
         super().__init__(order, add_noise)

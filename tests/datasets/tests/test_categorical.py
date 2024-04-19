@@ -5,7 +5,6 @@ from rdt.performance.datasets import categorical
 
 
 class TestRandomIntegerGenerator:
-
     def test(self):
         output = categorical.RandomIntegerGenerator.generate(10)
         assert len(output) == 10
@@ -15,7 +14,6 @@ class TestRandomIntegerGenerator:
 
 
 class TestRandomIntegerNaNsGenerator:
-
     def test(self):
         output = categorical.RandomIntegerNaNsGenerator.generate(10)
         assert len(output) == 10
@@ -25,7 +23,6 @@ class TestRandomIntegerNaNsGenerator:
 
 
 class TestRandomStringGenerator:
-
     def test(self):
         output = categorical.RandomStringGenerator.generate(10)
         assert len(output) == 10
@@ -35,7 +32,6 @@ class TestRandomStringGenerator:
 
 
 class TestRandomStringNaNsGenerator:
-
     def test(self):
         output = categorical.RandomStringNaNsGenerator.generate(10)
         assert len(output) == 10
@@ -45,7 +41,6 @@ class TestRandomStringNaNsGenerator:
 
 
 class TestRandomMixedGenerator:
-
     def test(self):
         output = categorical.RandomMixedGenerator.generate(10)
         assert len(output) == 10
@@ -54,7 +49,6 @@ class TestRandomMixedGenerator:
 
 
 class TestRandomMixedNaNsGenerator:
-
     def test(self):
         output = categorical.RandomMixedNaNsGenerator.generate(10)
         assert len(output) == 10
@@ -63,7 +57,6 @@ class TestRandomMixedNaNsGenerator:
 
 
 class TestSingleIntegerGenerator:
-
     def test(self):
         output = categorical.SingleIntegerGenerator.generate(10)
         assert len(output) == 10
@@ -73,7 +66,6 @@ class TestSingleIntegerGenerator:
 
 
 class TestSingleIntegerNaNsGenerator:
-
     def test(self):
         output = categorical.SingleIntegerNaNsGenerator.generate(10)
         assert len(output) == 10
@@ -83,7 +75,6 @@ class TestSingleIntegerNaNsGenerator:
 
 
 class TestSingleStringGenerator:
-
     def test(self):
         output = categorical.SingleStringGenerator.generate(10)
         assert len(output) == 10
@@ -93,7 +84,6 @@ class TestSingleStringGenerator:
 
 
 class TestSingleStringNaNsGenerator:
-
     def test(self):
         output = categorical.SingleStringNaNsGenerator.generate(10)
         assert len(output) == 10
@@ -103,7 +93,6 @@ class TestSingleStringNaNsGenerator:
 
 
 class TestUniqueIntegerGenerator:
-
     def test(self):
         output = categorical.UniqueIntegerGenerator.generate(10)
         assert len(output) == 10
@@ -113,7 +102,6 @@ class TestUniqueIntegerGenerator:
 
 
 class TestUniqueIntegerNaNsGenerator:
-
     def test(self):
         output = categorical.UniqueIntegerNaNsGenerator.generate(10)
         nulls = np.isnan(output).sum()
@@ -125,7 +113,6 @@ class TestUniqueIntegerNaNsGenerator:
 
 
 class TestUniqueStringGenerator:
-
     def test(self):
         output = categorical.UniqueStringGenerator.generate(10)
         assert len(output) == 10
@@ -135,7 +122,6 @@ class TestUniqueStringGenerator:
 
 
 class TestUniqueStringNaNsGenerator:
-
     def test(self):
         output = categorical.UniqueStringNaNsGenerator.generate(10)
         nulls = sum(pd.isna(output))

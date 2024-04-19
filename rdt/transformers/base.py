@@ -1,4 +1,5 @@
 """BaseTransformer module."""
+
 import abc
 import contextlib
 import hashlib
@@ -45,13 +46,16 @@ def random_state(function):
         function (Callable):
             The function to wrap around.
     """
+
     @wraps(function)
     def wrapper(self, *args, **kwargs):
         if self.random_states is None:
             return function(self, *args, **kwargs)
 
         method_name = function.__name__
-        with set_random_states(self.random_states, method_name, self.set_random_state):
+        with set_random_states(
+            self.random_states, method_name, self.set_random_state
+        ):
             return function(self, *args, **kwargs)
 
     return wrapper
@@ -78,11 +82,13 @@ class BaseTransformer:
     missing_value_generation = None
 
     def __init__(self):
-        self.output_properties = {None: {'sdtype': 'float', 'next_transformer': None}}
+        self.output_properties = {
+            None: {'sdtype': 'float', 'next_transformer': None}
+        }
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
             'transform': None,
-            'reverse_transform': None
+            'reverse_transform': None,
         }
 
     def set_random_state(self, state, method_name):
@@ -106,7 +112,7 @@ class BaseTransformer:
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
             'transform': np.random.RandomState(self.random_seed),
-            'reverse_transform': np.random.RandomState(self.random_seed + 1)
+            'reverse_transform': np.random.RandomState(self.random_seed + 1),
         }
 
     @property
@@ -115,7 +121,7 @@ class BaseTransformer:
         warnings.warn(
             "Future versions of RDT will not support the 'model_missing_values' parameter. "
             "Please switch to using the 'missing_value_generation' parameter instead.",
-            FutureWarning
+            FutureWarning,
         )
         return self.missing_value_generation == 'from_column'
 
@@ -132,18 +138,22 @@ class BaseTransformer:
         warnings.warn(
             "Future versions of RDT will not support the 'model_missing_values' parameter. "
             "Please switch to using the 'missing_value_generation' parameter to select your "
-            'strategy.', FutureWarning
+            'strategy.',
+            FutureWarning,
         )
         if model_missing_values is True:
             self._set_missing_value_generation('from_column')
         elif model_missing_values is False:
             self._set_missing_value_generation('random')
 
-    def _set_missing_value_replacement(self, default, missing_value_replacement):
+    def _set_missing_value_replacement(
+        self, default, missing_value_replacement
+    ):
         if missing_value_replacement is None:
             warnings.warn(
                 "Setting 'missing_value_replacement' to 'None' is no longer supported. "
-                f"Imputing with the '{default}' instead.", FutureWarning
+                f"Imputing with the '{default}' instead.",
+                FutureWarning,
             )
             self.missing_value_replacement = default
         else:
@@ -186,7 +196,7 @@ class BaseTransformer:
         """
         warnings.warn(
             '`get_input_sdtype` is deprecated. Please use `get_supported_sdtypes` instead.',
-            FutureWarning
+            FutureWarning,
         )
         return cls.get_supported_sdtypes()[0]
 
@@ -209,7 +219,9 @@ class BaseTransformer:
             if output_column is None:
                 output[f'{self.column_prefix}'] = properties[property_]
             else:
-                output[f'{self.column_prefix}.{output_column}'] = properties[property_]
+                output[f'{self.column_prefix}.{output_column}'] = properties[
+                    property_
+                ]
 
         return output
 
@@ -294,12 +306,16 @@ class BaseTransformer:
         """
         if transformed_names:
             if isinstance(transformed_data, (pd.Series, np.ndarray)):
-                transformed_data = pd.DataFrame(transformed_data, columns=transformed_names)
+                transformed_data = pd.DataFrame(
+                    transformed_data, columns=transformed_names
+                )
 
             # When '#' is added to the column_prefix of a transformer
             # the columns of transformed_data and transformed_names don't match
             transformed_data.columns = transformed_names
-            data = pd.concat([data, transformed_data.set_index(data.index)], axis=1)
+            data = pd.concat(
+                [data, transformed_data.set_index(data.index)], axis=1
+            )
 
         return data
 
@@ -366,12 +382,16 @@ class BaseTransformer:
         for value in data.head(5):
             hash_value += str(value)
 
-        hash_value = int(hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16)
-        self.random_seed = hash_value % ((2 ** 32) - 1)  # maximum value for a seed
+        hash_value = int(
+            hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16
+        )
+        self.random_seed = hash_value % (
+            (2**32) - 1
+        )  # maximum value for a seed
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
             'transform': np.random.RandomState(self.random_seed),
-            'reverse_transform': np.random.RandomState(self.random_seed + 1)
+            'reverse_transform': np.random.RandomState(self.random_seed + 1),
         }
 
     @random_state
@@ -423,7 +443,9 @@ class BaseTransformer:
         columns_data = self._get_columns_data(data, self.columns)
         transformed_data = self._transform(columns_data)
         data = data.drop(self.columns, axis=1)
-        data = self._add_columns_to_data(data, transformed_data, self.output_columns)
+        data = self._add_columns_to_data(
+            data, transformed_data, self.output_columns
+        )
 
         return data
 
@@ -536,7 +558,9 @@ class BaseMultiColumnTransformer(BaseTransformer):
             if self.column_prefix is None:
                 output[f'{output_column}'] = properties[property_]
             else:
-                output[f'{self.column_prefix}.{output_column}'] = properties[property_]
+                output[f'{self.column_prefix}.{output_column}'] = properties[
+                    property_
+                ]
 
         return output
 
@@ -545,7 +569,9 @@ class BaseMultiColumnTransformer(BaseTransformer):
         missing = set(columns_to_sdtypes.keys()) - set(data.columns)
         if missing:
             missing_to_print = ', '.join(missing)
-            raise ValueError(f'Columns ({missing_to_print}) are not present in the data.')
+            raise ValueError(
+                f'Columns ({missing_to_print}) are not present in the data.'
+            )
 
     @classmethod
     def _validate_sdtypes(cls, columns_to_sdtypes):

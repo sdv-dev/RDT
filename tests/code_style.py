@@ -28,7 +28,9 @@ def validate_transformer_module(transformer):
     elif transformer_folder.parent.match('transformers'):
         is_valid = True
 
-    assert is_valid, 'The transformer module is not placed inside a valid path.'
+    assert (
+        is_valid
+    ), 'The transformer module is not placed inside a valid path.'
 
 
 def validate_transformer_importable_from_parent_module(transformer):
@@ -37,7 +39,9 @@ def validate_transformer_importable_from_parent_module(transformer):
     module = getattr(transformer, '__module__', '')
     module = module.rsplit('.', 1)[0]
     imported_transformer = getattr(importlib.import_module(module), name, None)
-    assert imported_transformer is not None, f'Could not import {name} from {module}'
+    assert (
+        imported_transformer is not None
+    ), f'Could not import {name} from {module}'
 
 
 def get_test_location(transformer):
@@ -48,10 +52,16 @@ def get_test_location(transformer):
 
     test_location = None
     if transformer_folder.match('transformers'):
-        test_location = rdt_unit_test_path / 'transformers' / f'test_{transformer_file.name}'
+        test_location = (
+            rdt_unit_test_path
+            / 'transformers'
+            / f'test_{transformer_file.name}'
+        )
 
     elif transformer_folder.parent.match('transformers'):
-        test_location = rdt_unit_test_path / 'transformers' / transformer_folder.name
+        test_location = (
+            rdt_unit_test_path / 'transformers' / transformer_folder.name
+        )
         test_location = test_location / f'test_{transformer_file.name}'
 
     return test_location
@@ -74,7 +84,9 @@ def _load_module_from_path(path):
     if module_path.name == 'transformers':
         module_path = f'rdt.transformers.{module_name}'
     elif module_path.parent.name == 'transformers':
-        module_path = f'rdt.transformers.{module_path.parent.name}.{module_name}'
+        module_path = (
+            f'rdt.transformers.{module_path.parent.name}.{module_name}'
+        )
 
     spec = importlib.util.spec_from_file_location(module_path, path)
     module = importlib.util.module_from_spec(spec)
@@ -91,11 +103,11 @@ def validate_test_names(transformer):
     test_class = getattr(module, f'Test{transformer.get_name()}', None)
     assert test_class is not None, 'The expected test class was not found.'
 
-    test_functions = inspect.getmembers(test_class, predicate=inspect.isfunction)
+    test_functions = inspect.getmembers(
+        test_class, predicate=inspect.isfunction
+    )
     test_functions = [
-        test
-        for test, _ in test_functions
-        if test.startswith('test')
+        test for test, _ in test_functions if test.startswith('test')
     ]
 
     assert test_functions, 'No test functions found within the test module.'
@@ -110,8 +122,8 @@ def validate_test_names(transformer):
     for test in test_functions:
         count = len(valid_test_functions)
         for transformer_function in transformer_functions:
-            simple_test = fr'test_{transformer_function}'
-            described_test = fr'test_{transformer_function}_'
+            simple_test = rf'test_{transformer_function}'
+            described_test = rf'test_{transformer_function}_'
             if test.startswith(described_test):
                 valid_test_functions.append(test)
             elif test.startswith(simple_test):
@@ -121,7 +133,9 @@ def validate_test_names(transformer):
         assert len(valid_test_functions) > count, fail_message
 
 
-@pytest.mark.parametrize('transformer', TRANSFORMERS.values(), ids=TRANSFORMERS.keys())  # noqa
+@pytest.mark.parametrize(
+    'transformer', TRANSFORMERS.values(), ids=TRANSFORMERS.keys()
+)  # noqa
 def test_transformer_code_style(transformer):
     """Validate a transformer."""
     if not inspect.isclass(transformer):

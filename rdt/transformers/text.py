@@ -1,4 +1,5 @@
 """Transformers for text data."""
+
 import logging
 import warnings
 
@@ -64,7 +65,10 @@ class IDGenerator(BaseTransformer):
         prefix_str = self.prefix if self.prefix is not None else ''
         suffix_str = self.suffix if self.suffix is not None else ''
 
-        values = [f'{prefix_str}{start + idx}{suffix_str}' for idx in range(len(data))]
+        values = [
+            f'{prefix_str}{start + idx}{suffix_str}'
+            for idx in range(len(data))
+        ]
         self._counter += len(data)
 
         return pd.Series(values)
@@ -116,8 +120,12 @@ class RegexGenerator(BaseTransformer):
         state['generator'] = generator
         self.__dict__ = state
 
-    def __init__(self, regex_format='[A-Za-z]{5}', enforce_uniqueness=False,
-                 generation_order='alphanumeric'):
+    def __init__(
+        self,
+        regex_format='[A-Za-z]{5}',
+        enforce_uniqueness=False,
+        generation_order='alphanumeric',
+    ):
         super().__init__()
         self.output_properties = {None: {'next_transformer': None}}
         self.enforce_uniqueness = enforce_uniqueness
@@ -127,14 +135,18 @@ class RegexGenerator(BaseTransformer):
         self.generator_size = None
         self.generated = None
         if generation_order not in ['alphanumeric', 'scrambled']:
-            raise ValueError("generation_order must be one of 'alphanumeric' or 'scrambled'.")
+            raise ValueError(
+                "generation_order must be one of 'alphanumeric' or 'scrambled'."
+            )
 
         self.generation_order = generation_order
 
     def reset_randomization(self):
         """Create a new generator and reset the generated values counter."""
         super().reset_randomization()
-        self.generator, self.generator_size = strings_from_regex(self.regex_format)
+        self.generator, self.generator_size = strings_from_regex(
+            self.regex_format
+        )
         self.generated = 0
 
     def _fit(self, data):
@@ -171,8 +183,10 @@ class RegexGenerator(BaseTransformer):
                 LOGGER.info(
                     "The data has %s rows but the regex for '%s' can only create %s unique values."
                     " Some values in '%s' may be repeated.",
-                    sample_size, self.get_input_column(), self.generator_size,
-                    self.get_input_column()
+                    sample_size,
+                    self.get_input_column(),
+                    self.generator_size,
+                    self.get_input_column(),
                 )
 
         remaining = self.generator_size - self.generated
@@ -205,7 +219,9 @@ class RegexGenerator(BaseTransformer):
             remaining = self.generator_size
 
         if remaining >= sample_size:
-            reverse_transformed = [next(self.generator) for _ in range(sample_size)]
+            reverse_transformed = [
+                next(self.generator) for _ in range(sample_size)
+            ]
             self.generated += sample_size
 
         else:
@@ -216,21 +232,28 @@ class RegexGenerator(BaseTransformer):
                 try:
                     remaining_samples = sample_size - len(reverse_transformed)
                     start = int(generated_values[-1]) + 1
-                    reverse_transformed.extend(
-                        [str(i) for i in range(start, start + remaining_samples)])
+                    reverse_transformed.extend([
+                        str(i) for i in range(start, start + remaining_samples)
+                    ])
 
                 except ValueError:
                     counter = 0
                     while len(reverse_transformed) < sample_size:
-                        remaining_samples = sample_size - len(reverse_transformed)
-                        reverse_transformed.extend(
-                            [f'{i}({counter})' for i in generated_values[:remaining_samples]])
+                        remaining_samples = sample_size - len(
+                            reverse_transformed
+                        )
+                        reverse_transformed.extend([
+                            f'{i}({counter})'
+                            for i in generated_values[:remaining_samples]
+                        ])
                         counter += 1
 
             else:
                 while len(reverse_transformed) < sample_size:
                     remaining_samples = sample_size - len(reverse_transformed)
-                    reverse_transformed.extend(generated_values[:remaining_samples])
+                    reverse_transformed.extend(
+                        generated_values[:remaining_samples]
+                    )
 
         if getattr(self, 'generation_order', 'alphanumeric') == 'scrambled':
             np.random.shuffle(reverse_transformed)

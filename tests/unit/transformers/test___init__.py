@@ -1,8 +1,16 @@
 import pytest
 
 from rdt.transformers import (
-    AnonymizedFaker, BinaryEncoder, FloatFormatter, RegexGenerator, UniformEncoder,
-    UnixTimestampEncoder, get_default_transformers, get_transformer_class, get_transformer_name)
+    AnonymizedFaker,
+    BinaryEncoder,
+    FloatFormatter,
+    RegexGenerator,
+    UniformEncoder,
+    UnixTimestampEncoder,
+    get_default_transformers,
+    get_transformer_class,
+    get_transformer_name,
+)
 
 
 def test_get_transformer_name():

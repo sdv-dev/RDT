@@ -42,25 +42,38 @@ def test_profile_transformer(deepcopy_mock, multiprocessor_mock):
     deepcopy_mock.return_value = transformer_mock.return_value
 
     # Run
-    profiling_results = profile_transformer(transformer_mock.return_value,
-                                            dataset_gen_mock, 100)
+    profiling_results = profile_transformer(
+        transformer_mock.return_value, dataset_gen_mock, 100
+    )
 
     # Assert
     expected_output_columns = [
-        'Fit Time', 'Fit Memory', 'Transform Time', 'Transform Memory',
-        'Reverse Transform Time', 'Reverse Transform Memory'
+        'Fit Time',
+        'Fit Memory',
+        'Transform Time',
+        'Transform Memory',
+        'Reverse Transform Time',
+        'Reverse Transform Memory',
     ]
     assert len(deepcopy_mock.mock_calls) == 10
     assert len(transformer_mock.return_value.fit.mock_calls) == 11
     assert len(transformer_mock.return_value.transform.mock_calls) == 11
-    assert len(transformer_mock.return_value.reverse_transform.mock_calls) == 10
+    assert (
+        len(transformer_mock.return_value.reverse_transform.mock_calls) == 10
+    )
 
-    all(np.testing.assert_array_equal(call[1][0], np.ones(100)) for call
-        in transformer_mock.fit.mock_calls)
-    all(np.testing.assert_array_equal(call[1][0], np.ones(100)) for call
-        in transformer_mock.transform.mock_calls)
-    all(np.testing.assert_array_equal(call[1][0], np.zeros(100)) for call
-        in transformer_mock.reverse_transform.mock_calls)
+    all(
+        np.testing.assert_array_equal(call[1][0], np.ones(100))
+        for call in transformer_mock.fit.mock_calls
+    )
+    all(
+        np.testing.assert_array_equal(call[1][0], np.ones(100))
+        for call in transformer_mock.transform.mock_calls
+    )
+    all(
+        np.testing.assert_array_equal(call[1][0], np.zeros(100))
+        for call in transformer_mock.reverse_transform.mock_calls
+    )
 
     assert expected_output_columns == list(profiling_results.index)
 
@@ -70,11 +83,20 @@ def test_profile_transformer(deepcopy_mock, multiprocessor_mock):
     reverse_transform_call = process_mock.mock_calls[6]
 
     assert fit_call[2]['args'][0] == transformer_mock.return_value.fit
-    pd.testing.assert_frame_equal(fit_call[2]['args'][1], pd.DataFrame({'test': np.ones(100)}))
-    assert transform_call[2]['args'][0] == transformer_mock.return_value.transform
+    pd.testing.assert_frame_equal(
+        fit_call[2]['args'][1], pd.DataFrame({'test': np.ones(100)})
+    )
+    assert (
+        transform_call[2]['args'][0] == transformer_mock.return_value.transform
+    )
     pd.testing.assert_frame_equal(
         transform_call[2]['args'][1].reset_index(drop=True),
-        pd.DataFrame({'test': np.ones(100)})
+        pd.DataFrame({'test': np.ones(100)}),
     )
-    assert reverse_transform_call[2]['args'][0] == transformer_mock.return_value.reverse_transform
-    np.testing.assert_array_equal(reverse_transform_call[2]['args'][1], np.zeros(100))
+    assert (
+        reverse_transform_call[2]['args'][0]
+        == transformer_mock.return_value.reverse_transform
+    )
+    np.testing.assert_array_equal(
+        reverse_transform_call[2]['args'][1], np.zeros(100)
+    )

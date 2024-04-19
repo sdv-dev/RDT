@@ -1,4 +1,5 @@
 """Transformers for numerical data."""
+
 import copy
 import warnings
 
@@ -13,10 +14,10 @@ from rdt.transformers.utils import learn_rounding_digits
 
 EPSILON = np.finfo(np.float32).eps
 INTEGER_BOUNDS = {
-    'Int8': (-2**7, 2**7 - 1),
-    'Int16': (-2**15, 2**15 - 1),
-    'Int32': (-2**31, 2**31 - 1),
-    'Int64': (-2**63, 2**63 - 1),
+    'Int8': (-(2**7), 2**7 - 1),
+    'Int16': (-(2**15), 2**15 - 1),
+    'Int32': (-(2**31), 2**31 - 1),
+    'Int64': (-(2**63), 2**63 - 1),
     'UInt8': (0, 2**8 - 1),
     'UInt16': (0, 2**16 - 1),
     'UInt32': (0, 2**32 - 1),
@@ -73,9 +74,15 @@ class FloatFormatter(BaseTransformer):
     _min_value = None
     _max_value = None
 
-    def __init__(self, missing_value_replacement='mean', model_missing_values=None,
-                 learn_rounding_scheme=False, enforce_min_max_values=False,
-                 computer_representation='Float', missing_value_generation='random'):
+    def __init__(
+        self,
+        missing_value_replacement='mean',
+        model_missing_values=None,
+        learn_rounding_scheme=False,
+        enforce_min_max_values=False,
+        computer_representation='Float',
+        missing_value_generation='random',
+    ):
         super().__init__()
         self.missing_value_replacement = missing_value_replacement
         self._set_missing_value_generation(missing_value_generation)
@@ -87,7 +94,9 @@ class FloatFormatter(BaseTransformer):
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
 
-    def _raise_out_of_bounds_error(self, value, name, bound_type, min_bound, max_bound):
+    def _raise_out_of_bounds_error(
+        self, value, name, bound_type, min_bound, max_bound
+    ):
         raise ValueError(
             f"The {bound_type} value in column '{name}' is {value}."
             f" All values represented by '{self.computer_representation}'"
@@ -108,11 +117,13 @@ class FloatFormatter(BaseTransformer):
             min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
             if min_value < min_bound:
                 self._raise_out_of_bounds_error(
-                    min_value, data.name, 'minimum', min_bound, max_bound)
+                    min_value, data.name, 'minimum', min_bound, max_bound
+                )
 
             if max_value > max_bound:
                 self._raise_out_of_bounds_error(
-                    max_value, data.name, 'maximum', min_bound, max_bound)
+                    max_value, data.name, 'maximum', min_bound, max_bound
+                )
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -132,12 +143,14 @@ class FloatFormatter(BaseTransformer):
             self._rounding_digits = learn_rounding_digits(data)
 
         self.null_transformer = NullTransformer(
-            self.missing_value_replacement,
-            self.missing_value_generation
+            self.missing_value_replacement, self.missing_value_generation
         )
         self.null_transformer.fit(data)
         if self.null_transformer.models_missing_values():
-            self.output_properties['is_null'] = {'sdtype': 'float', 'next_transformer': None}
+            self.output_properties['is_null'] = {
+                'sdtype': 'float',
+                'next_transformer': None,
+            }
 
     def _transform(self, data):
         """Transform numerical data.
@@ -246,13 +259,15 @@ class GaussianNormalizer(FloatFormatter):
     _DEPRECATED_DISTRIBUTIONS_MAPPING = {
         'gaussian': 'norm',
         'student_t': 't',
-        'truncated_gaussian': 'truncnorm'
+        'truncated_gaussian': 'truncnorm',
     }
 
     @staticmethod
     def _get_distributions():
         try:
-            from copulas import univariate  # pylint: disable=import-outside-toplevel
+            from copulas import (
+                univariate,  # pylint: disable=import-outside-toplevel
+            )
         except ImportError as error:
             error.msg += (
                 '\n\nIt seems like `copulas` is not installed.\n'
@@ -270,10 +285,14 @@ class GaussianNormalizer(FloatFormatter):
             'uniform': univariate.UniformUnivariate,
         }
 
-    def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
-                 enforce_min_max_values=False, distribution='truncated_gaussian',
-                 missing_value_generation='random'):
-
+    def __init__(
+        self,
+        model_missing_values=None,
+        learn_rounding_scheme=False,
+        enforce_min_max_values=False,
+        distribution='truncated_gaussian',
+        missing_value_generation='random',
+    ):
         # Using missing_value_replacement='mean' as the default instead of random
         # as this may lead to different outcomes in certain synthesizers
         # affecting the synthesizers directly and this is out of scope for now.
@@ -282,7 +301,7 @@ class GaussianNormalizer(FloatFormatter):
             missing_value_generation=missing_value_generation,
             missing_value_replacement='mean',
             learn_rounding_scheme=learn_rounding_scheme,
-            enforce_min_max_values=enforce_min_max_values
+            enforce_min_max_values=enforce_min_max_values,
         )
 
         self._distributions = self._get_distributions()
@@ -292,9 +311,11 @@ class GaussianNormalizer(FloatFormatter):
                     f"Future versions of RDT will not support '{distribution}' as an option. "
                     f"Please use '{self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]}' "
                     'instead.',
-                    FutureWarning
+                    FutureWarning,
                 )
-                distribution = self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]
+                distribution = self._DEPRECATED_DISTRIBUTIONS_MAPPING[
+                    distribution
+                ]
 
             distribution = self._distributions[distribution]
 
@@ -302,11 +323,17 @@ class GaussianNormalizer(FloatFormatter):
 
     def _get_univariate(self):
         distribution = self._distribution
-        if any(isinstance(distribution, dist) for dist in self._distributions.values()):
+        if any(
+            isinstance(distribution, dist)
+            for dist in self._distributions.values()
+        ):
             return copy.deepcopy(distribution)
         if isinstance(distribution, tuple):
             return distribution[0](**distribution[1])
-        if isinstance(distribution, type) and distribution in self._distributions.values():
+        if (
+            isinstance(distribution, type)
+            and distribution in self._distributions.values()
+        ):
             return distribution()
 
         raise TypeError(f'Invalid distribution: {distribution}')
@@ -423,10 +450,15 @@ class ClusterBasedNormalizer(FloatFormatter):
     _bgm_transformer = None
     valid_component_indicator = None
 
-    def __init__(self, model_missing_values=None, learn_rounding_scheme=False,
-                 enforce_min_max_values=False, max_clusters=10, weight_threshold=0.005,
-                 missing_value_generation='random'):
-
+    def __init__(
+        self,
+        model_missing_values=None,
+        learn_rounding_scheme=False,
+        enforce_min_max_values=False,
+        max_clusters=10,
+        weight_threshold=0.005,
+        missing_value_generation='random',
+    ):
         # Using missing_value_replacement='mean' as the default instead of random
         # as this may lead to different outcomes in certain synthesizers
         # affecting the synthesizers directly and this is out of scope for now.
@@ -435,7 +467,7 @@ class ClusterBasedNormalizer(FloatFormatter):
             missing_value_generation=missing_value_generation,
             missing_value_replacement='mean',
             learn_rounding_scheme=learn_rounding_scheme,
-            enforce_min_max_values=enforce_min_max_values
+            enforce_min_max_values=enforce_min_max_values,
         )
         self.max_clusters = max_clusters
         self.weight_threshold = weight_threshold
@@ -461,7 +493,7 @@ class ClusterBasedNormalizer(FloatFormatter):
             n_components=self.max_clusters,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,
-            random_state=self._get_current_random_seed()
+            random_state=self._get_current_random_seed(),
         )
 
         super()._fit(data)
@@ -473,7 +505,9 @@ class ClusterBasedNormalizer(FloatFormatter):
             warnings.simplefilter('ignore')
             self._bgm_transformer.fit(data.reshape(-1, 1))
 
-        self.valid_component_indicator = self._bgm_transformer.weights_ > self.weight_threshold
+        self.valid_component_indicator = (
+            self._bgm_transformer.weights_ > self.weight_threshold
+        )
 
     def _transform(self, data):
         """Transform the numerical data.
@@ -492,7 +526,10 @@ class ClusterBasedNormalizer(FloatFormatter):
         data = data.reshape((len(data), 1))
         means = self._bgm_transformer.means_.reshape((1, self.max_clusters))
         means = means[:, self.valid_component_indicator]
-        stds = np.sqrt(self._bgm_transformer.covariances_).reshape((1, self.max_clusters))
+        stds = np.sqrt(self._bgm_transformer.covariances_).reshape((
+            1,
+            self.max_clusters,
+        ))
         stds = stds[:, self.valid_component_indicator]
 
         # Multiply stds by 4 so that a value will be in the range [-1,1] with 99.99% probability
@@ -506,15 +543,21 @@ class ClusterBasedNormalizer(FloatFormatter):
             component_prob_t = component_prob_t / component_prob_t.sum()
             selected_component[i] = np.random.choice(
                 np.arange(self.valid_component_indicator.sum()),
-                p=component_prob_t
+                p=component_prob_t,
             )
 
         aranged = np.arange(len(data))
-        normalized = normalized_values[aranged, selected_component].reshape([-1, 1])
-        normalized = np.clip(normalized, -.99, .99)
+        normalized = normalized_values[aranged, selected_component].reshape([
+            -1,
+            1,
+        ])
+        normalized = np.clip(normalized, -0.99, 0.99)
         normalized = normalized[:, 0]
         rows = [normalized, selected_component]
-        if self.null_transformer and self.null_transformer.models_missing_values():
+        if (
+            self.null_transformer
+            and self.null_transformer.models_missing_values()
+        ):
             rows.append(model_missing_values)
 
         return np.stack(rows, axis=1)  # noqa: PD013
@@ -524,7 +567,9 @@ class ClusterBasedNormalizer(FloatFormatter):
         means = self._bgm_transformer.means_.reshape([-1])
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
         selected_component = data[:, 1].round().astype(int)
-        selected_component = selected_component.clip(0, self.valid_component_indicator.sum() - 1)
+        selected_component = selected_component.clip(
+            0, self.valid_component_indicator.sum() - 1
+        )
         std_t = stds[self.valid_component_indicator][selected_component]
         mean_t = means[self.valid_component_indicator][selected_component]
         reversed_data = normalized * self.STD_MULTIPLIER * std_t + mean_t
@@ -545,7 +590,10 @@ class ClusterBasedNormalizer(FloatFormatter):
             data = data.to_numpy()
 
         recovered_data = self._reverse_transform_helper(data)
-        if self.null_transformer and self.null_transformer.models_missing_values():
+        if (
+            self.null_transformer
+            and self.null_transformer.models_missing_values()
+        ):
             recovered_data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
 
         return super()._reverse_transform(recovered_data)

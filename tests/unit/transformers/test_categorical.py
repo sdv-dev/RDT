@@ -8,8 +8,14 @@ import pytest
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.categorical import (
-    CustomLabelEncoder, FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder,
-    OrderedUniformEncoder, UniformEncoder)
+    CustomLabelEncoder,
+    FrequencyEncoder,
+    LabelEncoder,
+    OneHotEncoder,
+    OrderedLabelEncoder,
+    OrderedUniformEncoder,
+    UniformEncoder,
+)
 
 RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
@@ -51,7 +57,9 @@ class TestUniformEncoder:
         ordered = transformer._order_categories(arr)
 
         # Assert
-        np.testing.assert_array_equal(ordered, np.array(['four', 'one', 'three', 'two']))
+        np.testing.assert_array_equal(
+            ordered, np.array(['four', 'one', 'three', 'two'])
+        )
 
     def test__order_categories_alphabetical_with_nans(self):
         """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
@@ -71,7 +79,9 @@ class TestUniformEncoder:
         ordered = transformer._order_categories(arr)
 
         # Assert
-        expected = np.array(['four', 'one', 'three', 'two', np.nan], dtype='object')
+        expected = np.array(
+            ['four', 'one', 'three', 'two', np.nan], dtype='object'
+        )
         pd.testing.assert_series_equal(pd.Series(ordered), pd.Series(expected))
 
     def test__order_categories_alphabetical_float_error(self):
@@ -85,7 +95,9 @@ class TestUniformEncoder:
         arr = np.array([1, 2, 3, 4])
 
         # Run / Assert
-        message = "The data must be of type string if order_by is 'alphabetical'."
+        message = (
+            "The data must be of type string if order_by is 'alphabetical'."
+        )
         with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
@@ -100,7 +112,9 @@ class TestUniformEncoder:
         arr = np.array([True, False, None])
 
         # Run / Assert
-        message = "The data must be of type string if order_by is 'alphabetical'."
+        message = (
+            "The data must be of type string if order_by is 'alphabetical'."
+        )
         with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
@@ -122,7 +136,9 @@ class TestUniformEncoder:
         ordered = transformer._order_categories(arr)
 
         # Assert
-        np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, None]))
+        np.testing.assert_array_equal(
+            ordered, np.array([-2.5, 3.11, 5, 67.8, 100, None])
+        )
 
     def test__order_categories_numerical_error(self):
         """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
@@ -141,7 +157,9 @@ class TestUniformEncoder:
         arr = np.array(['one', 'two', 'three', 'four'])
 
         # Run / Assert
-        message = ("The data must be numerical if order_by is 'numerical_value'.")
+        message = (
+            "The data must be numerical if order_by is 'numerical_value'."
+        )
         with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
@@ -162,7 +180,9 @@ class TestUniformEncoder:
         arr = np.array([True, False, False, True])
 
         # Run / Assert
-        message = ("The data must be numerical if order_by is 'numerical_value'.")
+        message = (
+            "The data must be numerical if order_by is 'numerical_value'."
+        )
         with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
@@ -182,12 +202,12 @@ class TestUniformEncoder:
         expected_frequencies = {
             'foo': 0.5,
             'bar': 0.3333333333333333,
-            'tar': 0.16666666666666666
+            'tar': 0.16666666666666666,
         }
         expected_intervals = {
-            'foo': [0., 0.5],
+            'foo': [0.0, 0.5],
             'bar': [0.5, 0.8333333333333333],
-            'tar': [0.8333333333333333, 1.0]
+            'tar': [0.8333333333333333, 1.0],
         }
         assert transformer.frequencies == expected_frequencies
         assert transformer.intervals == expected_intervals
@@ -204,12 +224,12 @@ class TestUniformEncoder:
         transformer.frequencies = {
             'foo': 0.5,
             'bar': 0.3333333333333333,
-            'tar': 0.16666666666666666
+            'tar': 0.16666666666666666,
         }
         transformer.intervals = {
-            'foo': [0., 0.5],
+            'foo': [0.0, 0.5],
             'bar': [0.5, 0.8333333333333333],
-            'tar': [0.8333333333333333, 1.0]
+            'tar': [0.8333333333333333, 1.0],
         }
 
         # Run
@@ -217,8 +237,12 @@ class TestUniformEncoder:
 
         # Asserts
         for key in transformer.intervals:
-            assert (transformed.loc[data == key] >= transformer.intervals[key][0]).all()
-            assert (transformed.loc[data == key] < transformer.intervals[key][1]).all()
+            assert (
+                transformed.loc[data == key] >= transformer.intervals[key][0]
+            ).all()
+            assert (
+                transformed.loc[data == key] < transformer.intervals[key][1]
+            ).all()
 
     def test__transform_user_warning(self):
         """Test the ``transform`` with unknown data.
@@ -236,15 +260,13 @@ class TestUniformEncoder:
         data_2 = pd.Series([1, 2, 3, 4, 5, 'a', 7, 8, 'b'])
         transformer = UniformEncoder()
         transformer.columns = ['col']
-        transformer.frequencies = {
-            1: 0.25, 2: 0.25, 3: 0.25, 4: 0.25
-        }
+        transformer.frequencies = {1: 0.25, 2: 0.25, 3: 0.25, 4: 0.25}
 
         transformer.intervals = {
             1: [0, 0.25],
             2: [0.25, 0.5],
             3: [0.5, 0.75],
-            4: [0.75, 1]
+            4: [0.75, 1],
         }
 
         # Run
@@ -279,19 +301,35 @@ class TestUniformEncoder:
         data = pd.Series([1, 2, 3, 2, 2, 1, 3, 3, 2])
         transformer = UniformEncoder()
         transformer.dtype = np.int64
-        transformer.frequencies = {
-            1: 0.222222,
-            2: 0.444444,
-            3: 0.333333
-        }
+        transformer.frequencies = {1: 0.222222, 2: 0.444444, 3: 0.333333}
         transformer.intervals = {
             1: [0, 0.222222],
             2: [0.222222, 0.666666],
-            3: [0.666666, 1.0]
+            3: [0.666666, 1.0],
         }
 
-        transformed = pd.Series([0.12, 0.254, 0.789, 0.43, 0.56, 0.08, 0.67, 0.98, 0.36])
-        mock_convert_dtype.return_value = pd.Series([1, 2, 3, 2, 2, 1, 3, 3, 2])
+        transformed = pd.Series([
+            0.12,
+            0.254,
+            0.789,
+            0.43,
+            0.56,
+            0.08,
+            0.67,
+            0.98,
+            0.36,
+        ])
+        mock_convert_dtype.return_value = pd.Series([
+            1,
+            2,
+            3,
+            2,
+            2,
+            1,
+            3,
+            3,
+            2,
+        ])
 
         # Run
         output = transformer._reverse_transform(transformed)
@@ -307,23 +345,40 @@ class TestUniformEncoder:
     def test__reverse_transform_nans(self):
         """Test ``_reverse_transform`` for data with NaNs."""
         # Setup
-        data = pd.Series(['a', 'b', 'NaN', np.nan, 'NaN', 'b', 'b', 'a', 'b', np.nan])
+        data = pd.Series([
+            'a',
+            'b',
+            'NaN',
+            np.nan,
+            'NaN',
+            'b',
+            'b',
+            'a',
+            'b',
+            np.nan,
+        ])
         transformer = UniformEncoder()
         transformer.dtype = object
-        transformer.frequencies = {
-            'a': 0.2,
-            'b': 0.4,
-            'NaN': 0.2,
-            np.nan: 0.2
-        }
+        transformer.frequencies = {'a': 0.2, 'b': 0.4, 'NaN': 0.2, np.nan: 0.2}
         transformer.intervals = {
             'a': [0, 0.2],
             'b': [0.2, 0.6],
             'NaN': [0.6, 0.8],
-            np.nan: [0.8, 1]
+            np.nan: [0.8, 1],
         }
 
-        transformed = pd.Series([0.12, 0.254, 0.789, 0.88, 0.69, 0.53, 0.47, 0.08, 0.39, 0.92])
+        transformed = pd.Series([
+            0.12,
+            0.254,
+            0.789,
+            0.88,
+            0.69,
+            0.53,
+            0.47,
+            0.08,
+            0.39,
+            0.92,
+        ])
 
         # Run
         output = transformer._reverse_transform(transformed)
@@ -369,7 +424,9 @@ class TestOrderedUniformEncoder:
         transformer = OrderedUniformEncoder(order=['b', 'c', 'a', None])
 
         # Asserts
-        pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
+        pd.testing.assert_series_equal(
+            transformer.order, pd.Series(['b', 'c', 'a', np.nan])
+        )
 
     def test___init___duplicate_categories(self):
         """Test the ``__init__`` method errors if duplicate categories provided.
@@ -390,13 +447,17 @@ class TestOrderedUniformEncoder:
         The order should be printed as <CUSTOM> instead of the actual order.
         """
         # Setup
-        transformer = OrderedUniformEncoder(order=['VISA', 'AMEX', 'DISCOVER', None])
+        transformer = OrderedUniformEncoder(
+            order=['VISA', 'AMEX', 'DISCOVER', None]
+        )
 
         # Run
         stringified_transformer = transformer.__repr__()
 
         # Assert
-        assert stringified_transformer == 'OrderedUniformEncoder(order=<CUSTOM>)'
+        assert (
+            stringified_transformer == 'OrderedUniformEncoder(order=<CUSTOM>)'
+        )
 
     def test__fit(self):
         """Test the ``_fit`` method."""
@@ -412,13 +473,13 @@ class TestOrderedUniformEncoder:
             2.0: 0.2857142857142857,
             3.0: 0.14285714285714285,
             None: 0.14285714285714285,
-            1.0: 0.42857142857142855
+            1.0: 0.42857142857142855,
         }
         expected_intervals = {
             2.0: [0.0, 0.2857142857142857],
             3.0: [0.2857142857142857, 0.42857142857142855],
             None: [0.42857142857142855, 0.5714285714285714],
-            1.0: [0.5714285714285714, 1.0]
+            1.0: [0.5714285714285714, 1.0],
         }
         assert transformer.frequencies == expected_frequencies
         assert transformer.intervals == expected_intervals
@@ -502,8 +563,12 @@ class TestOrderedUniformEncoder:
 
         # Asserts
         for key in transformer.intervals:
-            assert (transformed.loc[data == key] >= transformer.intervals[key][0]).all()
-            assert (transformed.loc[data == key] < transformer.intervals[key][1]).all()
+            assert (
+                transformed.loc[data == key] >= transformer.intervals[key][0]
+            ).all()
+            assert (
+                transformed.loc[data == key] < transformer.intervals[key][1]
+            ).all()
 
     def test__transform_error(self):
         """Test the ``_transform`` method checks that data is in ``self.order``.
@@ -524,7 +589,6 @@ class TestOrderedUniformEncoder:
 
 
 class TestFrequencyEncoder:
-
     def test___setstate__(self):
         """Test the ``__set_state__`` method.
 
@@ -540,11 +604,7 @@ class TestFrequencyEncoder:
         transformer = FrequencyEncoder()
 
         # Run
-        transformer.__setstate__({
-            'intervals': {
-                None: 'abc'
-            }
-        })
+        transformer.__setstate__({'intervals': {None: 'abc'}})
 
         # Assert
         assert transformer.__dict__['intervals'][np.nan] == 'abc'
@@ -580,33 +640,28 @@ class TestFrequencyEncoder:
 
         # Asserts
         expected_intervals = {
-            'foo': (
-                0,
-                0.5,
-                0.25,
-                0.5 / 6
-            ),
+            'foo': (0, 0.5, 0.25, 0.5 / 6),
             'bar': (
                 0.5,
                 0.8333333333333333,
                 0.6666666666666666,
-                0.05555555555555555
+                0.05555555555555555,
             ),
             'tar': (
                 0.8333333333333333,
                 0.9999999999999999,
                 0.9166666666666666,
-                0.027777777777777776
-            )
+                0.027777777777777776,
+            ),
         }
         expected_means = pd.Series({
             'foo': 0.25,
             'bar': 0.6666666666666666,
-            'tar': 0.9166666666666666
+            'tar': 0.9166666666666666,
         })
         expected_starts = pd.DataFrame({
             'category': ['foo', 'bar', 'tar'],
-            'start': [0, 0.5, 0.8333333333333333]
+            'start': [0, 0.5, 0.8333333333333333],
         }).set_index('start')
 
         assert result[0] == expected_intervals
@@ -634,33 +689,28 @@ class TestFrequencyEncoder:
 
         # Assert
         expected_intervals = {
-            'foo': (
-                0,
-                0.5,
-                0.25,
-                0.5 / 6
-            ),
+            'foo': (0, 0.5, 0.25, 0.5 / 6),
             np.nan: (
                 0.5,
                 0.8333333333333333,
                 0.6666666666666666,
-                0.05555555555555555
+                0.05555555555555555,
             ),
             'tar': (
                 0.8333333333333333,
                 0.9999999999999999,
                 0.9166666666666666,
-                0.027777777777777776
-            )
+                0.027777777777777776,
+            ),
         }
         expected_means = pd.Series({
             'foo': 0.25,
             np.nan: 0.6666666666666666,
-            'tar': 0.9166666666666666
+            'tar': 0.9166666666666666,
         })
         expected_starts = pd.DataFrame({
             'category': ['foo', np.nan, 'tar'],
-            'start': [0, 0.5, 0.8333333333333333]
+            'start': [0, 0.5, 0.8333333333333333],
         }).set_index('start')
 
         assert result[0] == expected_intervals
@@ -677,33 +727,28 @@ class TestFrequencyEncoder:
 
         # Asserts
         expected_intervals = {
-            'foo': (
-                0,
-                0.5,
-                0.25,
-                0.5 / 6
-            ),
+            'foo': (0, 0.5, 0.25, 0.5 / 6),
             'bar': (
                 0.5,
                 0.8333333333333333,
                 0.6666666666666666,
-                0.05555555555555555
+                0.05555555555555555,
             ),
             'tar': (
                 0.8333333333333333,
                 0.9999999999999999,
                 0.9166666666666666,
-                0.027777777777777776
-            )
+                0.027777777777777776,
+            ),
         }
         expected_means = pd.Series({
             'foo': 0.25,
             'bar': 0.6666666666666666,
-            'tar': 0.9166666666666666
+            'tar': 0.9166666666666666,
         })
         expected_starts = pd.DataFrame({
             'category': ['foo', 'bar', 'tar'],
-            'start': [0, 0.5, 0.8333333333333333]
+            'start': [0, 0.5, 0.8333333333333333],
         }).set_index('start')
 
         assert transformer.intervals == expected_intervals
@@ -763,24 +808,19 @@ class TestFrequencyEncoder:
         pd.testing.assert_series_equal(mock_input_data, rt_data)
         assert mock_input_dtype == transformer.dtype
         expected_intervals = {
-            'foo': (
-                0,
-                0.5,
-                0.25,
-                0.5 / 6
-            ),
+            'foo': (0, 0.5, 0.25, 0.5 / 6),
             'bar': (
                 0.5,
                 0.8333333333333333,
                 0.6666666666666666,
-                0.05555555555555555
+                0.05555555555555555,
             ),
             'tar': (
                 0.8333333333333333,
                 0.9999999999999999,
                 0.9166666666666666,
-                0.027777777777777776
-            )
+                0.027777777777777776,
+            ),
         }
 
         assert transformer.intervals == expected_intervals
@@ -855,14 +895,26 @@ class TestFrequencyEncoder:
         data = pd.Series([1, 3, 3, 2, 1])
 
         categorical_transformer_mock = Mock()
-        categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
+        categorical_transformer_mock.means = pd.Series([
+            0.125,
+            0.375,
+            0.625,
+            0.875,
+        ])
 
         # Run
-        transformed = FrequencyEncoder._transform(categorical_transformer_mock, data)
+        transformed = FrequencyEncoder._transform(
+            categorical_transformer_mock, data
+        )
 
         # Asserts
-        categorical_transformer_mock._transform_by_category.assert_called_once_with(data)
-        assert transformed == categorical_transformer_mock._transform_by_category.return_value
+        categorical_transformer_mock._transform_by_category.assert_called_once_with(
+            data
+        )
+        assert (
+            transformed
+            == categorical_transformer_mock._transform_by_category.return_value
+        )
 
     def test__transform_by_category(self):
         """Test the `_transform_by_category` method with numerical data.
@@ -950,6 +1002,7 @@ class TestFrequencyEncoder:
             - ``rvs_mock`` should be called four times, one for each element of the
             intervals dictionary.
         """
+
         # Setup
         def rvs_mock_func(loc, scale, **kwargs):
             return loc
@@ -974,10 +1027,30 @@ class TestFrequencyEncoder:
         expected = np.array([0.875, 0.375, 0.375, 0.625, 0.875])
         assert (transformed == expected).all()
         norm_mock.rvs.assert_has_calls([
-            call(0.125, 0.041666666666666664, size=0, random_state=transform_random_state_mock),
-            call(0.375, 0.041666666666666664, size=2, random_state=transform_random_state_mock),
-            call(0.625, 0.041666666666666664, size=1, random_state=transform_random_state_mock),
-            call(0.875, 0.041666666666666664, size=2, random_state=transform_random_state_mock),
+            call(
+                0.125,
+                0.041666666666666664,
+                size=0,
+                random_state=transform_random_state_mock,
+            ),
+            call(
+                0.375,
+                0.041666666666666664,
+                size=2,
+                random_state=transform_random_state_mock,
+            ),
+            call(
+                0.625,
+                0.041666666666666664,
+                size=1,
+                random_state=transform_random_state_mock,
+            ),
+            call(
+                0.875,
+                0.041666666666666664,
+                size=2,
+                random_state=transform_random_state_mock,
+            ),
         ])
 
     def test__transform_by_row_called(self):
@@ -999,14 +1072,26 @@ class TestFrequencyEncoder:
         data = pd.Series([1, 2, 3, 4])
 
         categorical_transformer_mock = Mock()
-        categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
+        categorical_transformer_mock.means = pd.Series([
+            0.125,
+            0.375,
+            0.625,
+            0.875,
+        ])
 
         # Run
-        transformed = FrequencyEncoder._transform(categorical_transformer_mock, data)
+        transformed = FrequencyEncoder._transform(
+            categorical_transformer_mock, data
+        )
 
         # Asserts
-        categorical_transformer_mock._transform_by_row.assert_called_once_with(data)
-        assert transformed == categorical_transformer_mock._transform_by_row.return_value
+        categorical_transformer_mock._transform_by_row.assert_called_once_with(
+            data
+        )
+        assert (
+            transformed
+            == categorical_transformer_mock._transform_by_row.return_value
+        )
 
     def test__transform_by_row(self):
         """Test the `_transform_by_row` method with numerical data.
@@ -1056,16 +1141,27 @@ class TestFrequencyEncoder:
         transform_data = pd.Series([1, 3, 3, 2, 1])
 
         categorical_transformer_mock = Mock()
-        categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
+        categorical_transformer_mock.means = pd.Series([
+            0.125,
+            0.375,
+            0.625,
+            0.875,
+        ])
 
         # Run
         reverse = FrequencyEncoder._reverse_transform(
-            categorical_transformer_mock, transform_data)
+            categorical_transformer_mock, transform_data
+        )
 
         # Asserts
-        reverse_arg = categorical_transformer_mock._reverse_transform_by_category.call_args[0][0]
+        reverse_arg = categorical_transformer_mock._reverse_transform_by_category.call_args[
+            0
+        ][0]
         np.testing.assert_array_equal(reverse_arg, transform_data.clip(0, 1))
-        assert reverse == categorical_transformer_mock._reverse_transform_by_category.return_value
+        assert (
+            reverse
+            == categorical_transformer_mock._reverse_transform_by_category.return_value
+        )
 
     def test__reverse_transform_by_category(self):
         """Test the _reverse_transform_by_category method with numerical data.
@@ -1084,7 +1180,9 @@ class TestFrequencyEncoder:
         transformed = pd.Series([0.875, 0.375, 0.375, 0.625, 0.875])
 
         transformer = FrequencyEncoder()
-        transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1])
+        transformer.means = pd.Series(
+            [0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1]
+        )
         transformer.intervals = {
             4: (0, 0.25, 0.125, 0.041666666666666664),
             3: (0.25, 0.5, 0.375, 0.041666666666666664),
@@ -1114,7 +1212,7 @@ class TestFrequencyEncoder:
         transformer = FrequencyEncoder()
         transformer.starts = pd.DataFrame({
             'start': [0.0, 0.5, 0.7],
-            'category': ['a', 'b', 'c']
+            'category': ['a', 'b', 'c'],
         }).set_index('start')
 
         # Run
@@ -1142,18 +1240,33 @@ class TestFrequencyEncoder:
         data = pd.Series([1, 2, 3, 4])
 
         categorical_transformer_mock = Mock()
-        categorical_transformer_mock.means = pd.Series([0.125, 0.375, 0.625, 0.875])
+        categorical_transformer_mock.means = pd.Series([
+            0.125,
+            0.375,
+            0.625,
+            0.875,
+        ])
         categorical_transformer_mock.starts = pd.DataFrame(
-            [0., 0.25, 0.5, 0.75], index=[4, 3, 2, 1], columns=['category'])
+            [0.0, 0.25, 0.5, 0.75], index=[4, 3, 2, 1], columns=['category']
+        )
         categorical_transformer_mock._normalize.return_value = data
 
         # Run
-        reverse = FrequencyEncoder._reverse_transform(categorical_transformer_mock, data)
+        reverse = FrequencyEncoder._reverse_transform(
+            categorical_transformer_mock, data
+        )
 
         # Asserts
-        reverse_arg = categorical_transformer_mock._reverse_transform_by_row.call_args[0][0]
+        reverse_arg = (
+            categorical_transformer_mock._reverse_transform_by_row.call_args[
+                0
+            ][0]
+        )
         np.testing.assert_array_equal(reverse_arg, data.clip(0, 1))
-        assert reverse == categorical_transformer_mock._reverse_transform_by_row.return_value
+        assert (
+            reverse
+            == categorical_transformer_mock._reverse_transform_by_row.return_value
+        )
 
     @patch('rdt.transformers.categorical.check_nan_in_transform')
     def test__reverse_transform_by_row(self, mock_check_nan):
@@ -1174,9 +1287,12 @@ class TestFrequencyEncoder:
         transformed = pd.Series([0.875, 0.625, 0.375, 0.125])
 
         transformer = FrequencyEncoder()
-        transformer.means = pd.Series([0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1])
+        transformer.means = pd.Series(
+            [0.125, 0.375, 0.625, 0.875], index=[4, 3, 2, 1]
+        )
         transformer.starts = pd.DataFrame(
-            [4, 3, 2, 1], index=[0., 0.25, 0.5, 0.75], columns=['category'])
+            [4, 3, 2, 1], index=[0.0, 0.25, 0.5, 0.75], columns=['category']
+        )
         transformer.intervals = {
             4: (0, 0.25, 0.125, 0.041666666666666664),
             3: (0.25, 0.5, 0.375, 0.041666666666666664),
@@ -1197,7 +1313,6 @@ class TestFrequencyEncoder:
 
 
 class TestOneHotEncoder:
-
     def test__prepare_data_empty_lists(self):
         # Setup
         ohe = OneHotEncoder()
@@ -1414,11 +1529,7 @@ class TestOneHotEncoder:
         out = ohe._transform_helper(data)
 
         # Assert
-        expected = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ])
+        expected = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_no_nan_categorical(self):
@@ -1445,11 +1556,7 @@ class TestOneHotEncoder:
         out = ohe._transform_helper(data)
 
         # Assert
-        expected = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ])
+        expected = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_nans_encoded(self):
@@ -1475,12 +1582,7 @@ class TestOneHotEncoder:
         out = ohe._transform_helper(data)
 
         # Assert
-        expected = np.array([
-            [0, 0, 1],
-            [0, 0, 1],
-            [1, 0, 0],
-            [0, 1, 0]
-        ])
+        expected = np.array([[0, 0, 1], [0, 0, 1], [1, 0, 0], [0, 1, 0]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_nans_categorical(self):
@@ -1509,12 +1611,7 @@ class TestOneHotEncoder:
         out = ohe._transform_helper(data)
 
         # Assert
-        expected = np.array([
-            [0, 0, 1],
-            [0, 0, 1],
-            [1, 0, 0],
-            [0, 1, 0]
-        ])
+        expected = np.array([[0, 0, 1], [0, 0, 1], [1, 0, 0], [0, 1, 0]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_single_column(self):
@@ -1539,11 +1636,7 @@ class TestOneHotEncoder:
         out = ohe._transform_helper(data)
 
         # Assert
-        expected = np.array([
-            [1],
-            [1],
-            [1]
-        ])
+        expected = np.array([[1], [1], [1]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_single_categorical(self):
@@ -1571,11 +1664,7 @@ class TestOneHotEncoder:
         out = ohe._transform_helper(data)
 
         # Assert
-        expected = np.array([
-            [1],
-            [1],
-            [1]
-        ])
+        expected = np.array([[1], [1], [1]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_zeros(self):
@@ -1600,11 +1689,7 @@ class TestOneHotEncoder:
         out = ohe._transform_helper(pd.Series(['b', 'b', 'b']))
 
         # Assert
-        expected = np.array([
-            [0],
-            [0],
-            [0]
-        ])
+        expected = np.array([[0], [0], [0]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_zeros_categorical(self):
@@ -1632,11 +1717,7 @@ class TestOneHotEncoder:
         out = ohe._transform_helper(pd.Series(['b', 'b', 'b']))
 
         # Assert
-        expected = np.array([
-            [0],
-            [0],
-            [0]
-        ])
+        expected = np.array([[0], [0], [0]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_unknown_nan(self):
@@ -1662,11 +1743,7 @@ class TestOneHotEncoder:
         out = ohe._transform_helper(pd.Series(['b', 'b', np.nan]))
 
         # Assert
-        expected = np.array([
-            [0, 0],
-            [0, 0],
-            [0, 1]
-        ])
+        expected = np.array([[0, 0], [0, 0], [0, 1]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_no_nans(self):
@@ -1689,11 +1766,7 @@ class TestOneHotEncoder:
         out = ohe._transform(data)
 
         # Assert
-        expected = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ])
+        expected = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_nans(self):
@@ -1716,11 +1789,7 @@ class TestOneHotEncoder:
         out = ohe._transform(data)
 
         # Assert
-        expected = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ])
+        expected = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_single_column_filled_with_ones(self):
@@ -1743,11 +1812,7 @@ class TestOneHotEncoder:
         out = ohe._transform(data)
 
         # Assert
-        expected = np.array([
-            [1],
-            [1],
-            [1]
-        ])
+        expected = np.array([[1], [1], [1]])
         np.testing.assert_array_equal(out, expected)
 
     def test__transform_unknown(self):
@@ -1782,7 +1847,7 @@ class TestOneHotEncoder:
             [1, 0, 0, 0],
             [0, 1, 0, 0],
             [0, 0, 0, 1],
-            [0, 0, 0, 0]
+            [0, 0, 0, 0],
         ])
         np.testing.assert_array_equal(out, expected)
 
@@ -1816,7 +1881,9 @@ class TestOneHotEncoder:
 
     @patch('rdt.transformers.categorical.check_nan_in_transform')
     @patch('rdt.transformers.categorical.try_convert_to_dtype')
-    def test__reverse_transform_no_nans(self, mock_convert_dtype, mock_check_nan):
+    def test__reverse_transform_no_nans(
+        self, mock_convert_dtype, mock_check_nan
+    ):
         # Setup
         ohe = OneHotEncoder()
         data = pd.Series(['a', 'b', 'c'])
@@ -1824,11 +1891,7 @@ class TestOneHotEncoder:
         mock_convert_dtype.return_value = data
 
         # Run
-        transformed = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ])
+        transformed = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         out = ohe._reverse_transform(transformed)
 
         # Assert
@@ -1847,11 +1910,7 @@ class TestOneHotEncoder:
         ohe._fit(data)
 
         # Run
-        transformed = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1]
-        ])
+        transformed = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         out = ohe._reverse_transform(transformed)
 
         # Assert
@@ -1865,11 +1924,7 @@ class TestOneHotEncoder:
         ohe._fit(data)
 
         # Run
-        transformed = np.array([
-            [1],
-            [1],
-            [1]
-        ])
+        transformed = np.array([[1], [1], [1]])
         out = ohe._reverse_transform(transformed)
 
         # Assert
@@ -1892,11 +1947,12 @@ class TestOneHotEncoder:
 
 
 class TestLabelEncoder:
-
     def test___init__(self):
         """Passed arguments must be stored as attributes."""
         # Run
-        transformer = LabelEncoder(add_noise='add_noise_value', order_by='alphabetical')
+        transformer = LabelEncoder(
+            add_noise='add_noise_value', order_by='alphabetical'
+        )
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
@@ -1939,7 +1995,9 @@ class TestLabelEncoder:
         ordered = transformer._order_categories(arr)
 
         # Assert
-        np.testing.assert_array_equal(ordered, np.array(['four', 'one', 'three', 'two']))
+        np.testing.assert_array_equal(
+            ordered, np.array(['four', 'one', 'three', 'two'])
+        )
 
     def test__order_categories_alphabetical_with_nans(self):
         """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
@@ -1961,7 +2019,9 @@ class TestLabelEncoder:
         ordered = transformer._order_categories(arr)
 
         # Assert
-        expected = np.array(['four', 'one', 'three', 'two', np.nan], dtype='object')
+        expected = np.array(
+            ['four', 'one', 'three', 'two', np.nan], dtype='object'
+        )
         pd.testing.assert_series_equal(pd.Series(ordered), pd.Series(expected))
 
     def test__order_categories_alphabetical_error(self):
@@ -1984,7 +2044,9 @@ class TestLabelEncoder:
         arr = np.array([1, 2, 3, 4])
 
         # Run / Assert
-        message = "The data must be of type string if order_by is 'alphabetical'."
+        message = (
+            "The data must be of type string if order_by is 'alphabetical'."
+        )
         with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
@@ -2008,7 +2070,9 @@ class TestLabelEncoder:
         ordered = transformer._order_categories(arr)
 
         # Assert
-        np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, np.nan]))
+        np.testing.assert_array_equal(
+            ordered, np.array([-2.5, 3.11, 5, 67.8, 100, np.nan])
+        )
 
     def test__order_categories_numerical_error(self):
         """Test the ``_order_categories`` method when ``order_by`` is 'numerical_value'.
@@ -2030,7 +2094,9 @@ class TestLabelEncoder:
         arr = np.array(['one', 'two', 'three', 'four'])
 
         # Run / Assert
-        message = ("The data must be numerical if order_by is 'numerical_value'.")
+        message = (
+            "The data must be numerical if order_by is 'numerical_value'."
+        )
         with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
@@ -2054,7 +2120,9 @@ class TestLabelEncoder:
         arr = np.array([True, False, False, True])
 
         # Run / Assert
-        message = ("The data must be numerical if order_by is 'numerical_value'.")
+        message = (
+            "The data must be numerical if order_by is 'numerical_value'."
+        )
         with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
@@ -2122,7 +2190,7 @@ class TestLabelEncoder:
             transformed = transformer._transform(data)
 
         # Assert
-        expected = pd.Series([0., 1., 2.])
+        expected = pd.Series([0.0, 1.0, 2.0])
         pd.testing.assert_series_equal(transformed[:-1], expected)
 
         assert 0 <= transformed[3] <= 2
@@ -2182,11 +2250,21 @@ class TestLabelEncoder:
 
         # Run
         with pytest.warns(UserWarning):
-            transform_data = pd.Series(['a', 2, True, np.nan, np.nan, np.nan, 'b', False, 3])
+            transform_data = pd.Series([
+                'a',
+                2,
+                True,
+                np.nan,
+                np.nan,
+                np.nan,
+                'b',
+                False,
+                3,
+            ])
             transformed = transformer._transform(transform_data)
 
         # Assert
-        expected = pd.Series([0., 1., 2.])
+        expected = pd.Series([0.0, 1.0, 2.0])
         pd.testing.assert_series_equal(transformed[:3], expected)
 
         assert all(0 <= value < len(fit_data) for value in transformed[3:])
@@ -2216,7 +2294,9 @@ class TestLabelEncoder:
 
     @patch('rdt.transformers.categorical.check_nan_in_transform')
     @patch('rdt.transformers.categorical.try_convert_to_dtype')
-    def test__reverse_transform_add_noise(self, mock_convert_dtype, mock_check_nan):
+    def test__reverse_transform_add_noise(
+        self, mock_convert_dtype, mock_check_nan
+    ):
         """Test the ``_reverse_transform`` method with ``add_noise``.
 
         Test that the method correctly reverse transforms the data
@@ -2264,18 +2344,21 @@ class TestLabelEncoder:
 
 
 class TestOrderedLabelEncoder:
-
     def test___init__(self):
         """The the ``__init__`` method.
 
         Passed arguments must be stored as attributes.
         """
         # Run
-        transformer = OrderedLabelEncoder(order=['b', 'c', 'a', None], add_noise='add_noise_value')
+        transformer = OrderedLabelEncoder(
+            order=['b', 'c', 'a', None], add_noise='add_noise_value'
+        )
 
         # Asserts
         assert transformer.add_noise == 'add_noise_value'
-        pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
+        pd.testing.assert_series_equal(
+            transformer.order, pd.Series(['b', 'c', 'a', np.nan])
+        )
 
     def test___init___duplicate_categories(self):
         """The the ``__init__`` method with duplicate categories in the order parameter.
@@ -2288,7 +2371,9 @@ class TestOrderedLabelEncoder:
             'Please drop the duplicates to proceed.'
         )
         with pytest.raises(TransformerInputError, match=expected_msg):
-            OrderedLabelEncoder(order=['b', 'c', 'a', 'a'], add_noise='add_noise_value')
+            OrderedLabelEncoder(
+                order=['b', 'c', 'a', 'a'], add_noise='add_noise_value'
+            )
 
     def test___repr___default(self):
         """Test that the ``__repr__`` method prints the custom order.
@@ -2296,7 +2381,9 @@ class TestOrderedLabelEncoder:
         The order should be printed as <CUSTOM> instead of the actual order.
         """
         # Setup
-        transformer = OrderedLabelEncoder(order=['VISA', 'AMEX', 'DISCOVER', None])
+        transformer = OrderedLabelEncoder(
+            order=['VISA', 'AMEX', 'DISCOVER', None]
+        )
 
         # Run
         stringified_transformer = transformer.__repr__()
@@ -2311,13 +2398,18 @@ class TestOrderedLabelEncoder:
         is provided, it should be printed too.
         """
         # Setup
-        transformer = OrderedLabelEncoder(order=['VISA', 'AMEX', 'DISCOVER', None], add_noise=True)
+        transformer = OrderedLabelEncoder(
+            order=['VISA', 'AMEX', 'DISCOVER', None], add_noise=True
+        )
 
         # Run
         stringified_transformer = transformer.__repr__()
 
         # Assert
-        assert stringified_transformer == 'OrderedLabelEncoder(order=<CUSTOM>, add_noise=True)'
+        assert (
+            stringified_transformer
+            == 'OrderedLabelEncoder(order=<CUSTOM>, add_noise=True)'
+        )
 
     def test__fit(self):
         """Test the ``_fit`` method.
@@ -2348,10 +2440,14 @@ class TestOrderedLabelEncoder:
         expected_values_to_categories = {0: 2, 1: 3, 2: np.nan, 3: 1}
         expected_categories_to_values = {2: 0, 3: 1, 1: 3, np.nan: 2}
         for key, value in transformer.values_to_categories.items():
-            assert value == expected_values_to_categories[key] or pd.isna(value)
+            assert value == expected_values_to_categories[key] or pd.isna(
+                value
+            )
 
         for key, value in transformer.categories_to_values.items():
-            assert value == expected_categories_to_values.get(key) or pd.isna(key)
+            assert value == expected_categories_to_values.get(key) or pd.isna(
+                key
+            )
 
     def test__fit_error(self):
         """Test the ``_fit`` method checks that data is in ``self.order``.
@@ -2382,7 +2478,6 @@ class TestOrderedLabelEncoder:
 
 
 class TestCustomLabelEncoder:
-
     def test___init__(self):
         """Test the warning message for  backwards compatibility of ``CustomLabelEncoder``."""
         # Setup / Run / Assert
