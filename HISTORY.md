@@ -1,5 +1,21 @@
 # History
 
+## 1.12.0 - 2024-04-19
+
+This release adds a new parameter to the `RegexGenerator` called `generation_order`. This parameter let's users change if they want the generated values for the regex to come out in alphanumeric or scrambled order. Additionally, warnings that were disrupting the progress bar are handled.
+
+### Bugs Fixed
+
+* Pandas FutureWarnings are disrupting tqdm progress bars - Issue [#793](https://github.com/sdv-dev/RDT/issues/793) by @frances-h
+
+### New Features
+
+* In `RegexGenerator`, provide the ability to scramble the keys - Issue [#800](https://github.com/sdv-dev/RDT/issues/800) by @amontanez24
+
+### Maintenance
+
+* Cleanup automated PR workflows - Issue [#803](https://github.com/sdv-dev/RDT/issues/803) by @R-Palazzo
+
 ## 1.11.1 - 2024-04-16
 
 This release fixes a small bug that caused problems with the latest version of Pandas.
