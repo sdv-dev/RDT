@@ -2,7 +2,7 @@
 
 ## 1.12.0 - 2024-04-19
 
-This release adds a new parameter to the `RegexGenerator` called `generation_order`. This parameter let's users change if they want the generated values for the regex to come out in alphanumeric or scrambled order. Additionally, warnings that were disrupting the progress bar are handled.
+This release adds a new parameter to the `RegexGenerator` called `generation_order`. This parameter lets users change if they want the generated values for the regex to come out in alphanumeric or scrambled order. Additionally, warnings that were disrupting the progress bar are handled.
 
 ### Bugs Fixed
 
