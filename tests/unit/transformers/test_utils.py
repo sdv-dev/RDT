@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 
 from rdt.transformers.utils import (
-    _any, _max_repeat, check_nan_in_transform, flatten_column_list, learn_rounding_digits,
-    strings_from_regex, try_convert_to_dtype)
+    _any, _max_repeat, check_nan_in_transform, fill_nan_with_none, flatten_column_list,
+    learn_rounding_digits, strings_from_regex, try_convert_to_dtype)
 
 
 def test_strings_from_regex_literal():
@@ -73,6 +73,23 @@ def test_flatten_column_list():
     # Assert
     expected_flattened_list = ['column1', 'column2', 'column3', 'column4', 'column5', 'column6']
     assert flattened_list == expected_flattened_list
+
+
+@pytest.mark.filterwarnings('error')
+def test_fill_nan_with_none_no_warning():
+    """Test the `fill_nan_with_none`` does not generate a FutureWarning.
+
+    Based on the issue [#793](https://github.com/sdv-dev/RDT/issues/793).
+    """
+    # Setup
+    series = pd.Series([1.0, 2.0, 3.0, np.nan], dtype='object')
+
+    # Run
+    result = fill_nan_with_none(series)
+
+    # Assert
+    expected = pd.Series([1.0, 2.0, 3.0, None], dtype='object')
+    pd.testing.assert_series_equal(result, expected)
 
 
 def test_check_nan_in_transform():

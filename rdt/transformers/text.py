@@ -83,6 +83,11 @@ class RegexGenerator(BaseTransformer):
             Whether or not to ensure that the new generated data is all unique. If it isn't
             possible to create the requested number of rows, then an error will be raised.
             Defaults to ``False``.
+        generation_order (str):
+            String defining how to generate the output. If set to ``alphanumeric``, it will
+            generate the output in alphanumeric order (ie. 'aaa', 'aab' or '1', '2'...). If
+            set to ``scrambled``, the the output will be scrambled in order. Defaults to
+            ``alphanumeric``.
     """
 
     IS_GENERATOR = True
@@ -111,7 +116,8 @@ class RegexGenerator(BaseTransformer):
         state['generator'] = generator
         self.__dict__ = state
 
-    def __init__(self, regex_format='[A-Za-z]{5}', enforce_uniqueness=False):
+    def __init__(self, regex_format='[A-Za-z]{5}', enforce_uniqueness=False,
+                 generation_order='alphanumeric'):
         super().__init__()
         self.output_properties = {None: {'next_transformer': None}}
         self.enforce_uniqueness = enforce_uniqueness
@@ -120,6 +126,10 @@ class RegexGenerator(BaseTransformer):
         self.generator = None
         self.generator_size = None
         self.generated = None
+        if generation_order not in ['alphanumeric', 'scrambled']:
+            raise ValueError("generation_order must be one of 'alphanumeric' or 'scrambled'.")
+
+        self.generation_order = generation_order
 
     def reset_randomization(self):
         """Create a new generator and reset the generated values counter."""
@@ -221,5 +231,8 @@ class RegexGenerator(BaseTransformer):
                 while len(reverse_transformed) < sample_size:
                     remaining_samples = sample_size - len(reverse_transformed)
                     reverse_transformed.extend(generated_values[:remaining_samples])
+
+        if getattr(self, 'generation_order', 'alphanumeric') == 'scrambled':
+            np.random.shuffle(reverse_transformed)
 
         return np.array(reverse_transformed, dtype=object)
