@@ -114,12 +114,8 @@ def readme(c):
 @task
 def lint(c):
     check_dependencies(c)
-    c.run('flake8 rdt')
-    c.run('pydocstyle rdt')
-    c.run('flake8 tests --ignore=D')
-    c.run('pydocstyle tests')
-    c.run('isort -c rdt tests')
-    c.run('pylint rdt tests/performance --rcfile=setup.cfg')
+    c.run('ruff check .')
+    c.run('ruff format .  --check')
     c.run('pytest tests/code_style.py -v --disable-warnings --no-header')
 
 
