@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from rdt.transformers.text import IDGenerator, RegexGenerator
 
@@ -161,6 +162,7 @@ class TestRegexGenerator:
             'output_properties': {None: {'next_transformer': None}},
             'regex_format': '[A-Za-z]{5}',
             'random_states': mock_random_sates,
+            'generation_order': 'alphanumeric'
         }
 
     @patch('rdt.transformers.text.strings_from_regex')
@@ -232,6 +234,7 @@ class TestRegexGenerator:
         assert instance.data_length is None
         assert instance.regex_format == '[A-Za-z]{5}'
         assert instance.enforce_uniqueness is False
+        assert instance.generation_order == 'alphanumeric'
 
     def test___init__custom(self):
         """Test the default instantiation of the transformer.
@@ -246,13 +249,22 @@ class TestRegexGenerator:
         # Run
         instance = RegexGenerator(
             regex_format='[0-9]',
-            enforce_uniqueness=True
+            enforce_uniqueness=True,
+            generation_order='scrambled'
         )
 
         # Assert
         assert instance.data_length is None
         assert instance.regex_format == '[0-9]'
         assert instance.enforce_uniqueness
+        assert instance.generation_order == 'scrambled'
+
+    def test___init__bad_value_generation_order(self):
+        """Test that an error is raised if a bad value is given for `generation_order`."""
+        # Run and Assert
+        error_message = "generation_order must be one of 'alphanumeric' or 'scrambled'."
+        with pytest.raises(ValueError, match=error_message):
+            RegexGenerator(generation_order='afdsfd')
 
     @patch('rdt.transformers.text.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.text.strings_from_regex')
@@ -325,6 +337,29 @@ class TestRegexGenerator:
 
         # Assert
         assert result is None
+
+    @patch('rdt.transformers.text.np.random.shuffle')
+    def test__reverse_transform_generation_order_scrambled(self, shuffle_mock):
+        """Test the ``_reverse_transform`` method with ``generation_order`` set to scrambled.
+
+        Validate that when ``generation_order`` is ``'scrambled'``, the data is not in order.
+        """
+        # Setup
+        instance = RegexGenerator('[A-Z]')
+        columns_data = pd.Series()
+        instance.data_length = 3
+        generator = AsciiGenerator(max_size=5)
+        instance.generator = generator
+        instance.generator_size = 5
+        instance.generated = 0
+        instance.generation_order = 'scrambled'
+
+        # Run
+        result = instance._reverse_transform(columns_data)
+
+        # Assert
+        np.testing.assert_array_equal(result, np.array(['A', 'B', 'C']))
+        shuffle_mock.assert_called_once_with(['A', 'B', 'C'])
 
     def test__reverse_transform_generator_size_bigger_than_data_length(self):
         """Test the ``_reverse_transform`` method.
