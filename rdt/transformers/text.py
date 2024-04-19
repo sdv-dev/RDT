@@ -232,7 +232,7 @@ class RegexGenerator(BaseTransformer):
                     remaining_samples = sample_size - len(reverse_transformed)
                     reverse_transformed.extend(generated_values[:remaining_samples])
 
-        if self.generation_order == 'scrambled':
+        if getattr(self, 'generation_order', 'alphanumeric') == 'scrambled':
             np.random.shuffle(reverse_transformed)
 
         return np.array(reverse_transformed, dtype=object)
