@@ -76,10 +76,7 @@ def test_strings_from_regex_very_large_regex():
     very_large_regex = '[0-9a-zA-Z]{9}-[0-9a-zA-Z]{4}-[0-9a-zA-Z]{9}-[0-9a-zA-Z]{9}-[0-9a-z]{12}'
     generator, size = strings_from_regex(very_large_regex, max_repeat=16)
 
-    assert (
-        size
-        == 173689027553046619421110743915454114823342474255318764491341273608665169920
-    )
+    assert size == 173689027553046619421110743915454114823342474255318764491341273608665169920
     [next(generator) for _ in range(100_000)]
 
 
@@ -176,14 +173,10 @@ def test_try_convert_to_dtype():
     # Run
     output_convertibe = try_convert_to_dtype(data_int_with_nan, 'str')
     output_int_with_nan = try_convert_to_dtype(data_int_with_nan, 'int')
-    with pytest.raises(
-        ValueError, match="could not convert string to float: 'a'"
-    ):
+    with pytest.raises(ValueError, match="could not convert string to float: 'a'"):
         try_convert_to_dtype(data_not_convertible, 'int')
 
-    with pytest.raises(
-        ValueError, match="could not convert string to float: 'a'"
-    ):
+    with pytest.raises(ValueError, match="could not convert string to float: 'a'"):
         try_convert_to_dtype(data_not_convertible, 'float')
 
     # Assert

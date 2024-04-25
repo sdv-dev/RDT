@@ -108,9 +108,7 @@ class RandomSkewedBooleanNaNsGenerator(BooleanGenerator):
     def generate(num_rows):
         """Generate a ``num_rows`` number of rows."""
         percent_null = np.random.randint(MIN_PERCENT, MAX_PERCENT_NULL)
-        percent_true = np.random.randint(
-            MIN_PERCENT, 100 - percent_null - MIN_PERCENT
-        )
+        percent_true = np.random.randint(MIN_PERCENT, 100 - percent_null - MIN_PERCENT)
         percent_false = 100 - percent_null - percent_true
 
         return np.random.choice(

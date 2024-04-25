@@ -92,22 +92,16 @@ class UnixTimestampEncoder(BaseTransformer):
             try:
                 pandas_datetime_format = None
                 if self.datetime_format:
-                    pandas_datetime_format = self.datetime_format.replace(
-                        '%-', '%'
-                    )
+                    pandas_datetime_format = self.datetime_format.replace('%-', '%')
 
                 data = pd.to_datetime(data, format=pandas_datetime_format)
 
             except ValueError as error:
-                if 'Unknown string' in str(
-                    error
-                ) or 'Unknown datetime string' in str(error):
+                if 'Unknown string' in str(error) or 'Unknown datetime string' in str(error):
                     message = 'Data must be of dtype datetime, or castable to datetime.'
                     raise TypeError(message) from None
 
-                raise ValueError(
-                    'Data does not match specified datetime format.'
-                ) from None
+                raise ValueError('Data does not match specified datetime format.') from None
 
         return data
 
@@ -115,11 +109,7 @@ class UnixTimestampEncoder(BaseTransformer):
         """Transform datetime values to integer."""
         datetimes = self._convert_to_datetime(datetimes)
         nulls = datetimes.isna()
-        integers = (
-            pd.to_numeric(datetimes, errors='coerce')
-            .to_numpy()
-            .astype(np.float64)
-        )
+        integers = pd.to_numeric(datetimes, errors='coerce').to_numpy().astype(np.float64)
         integers[nulls] = np.nan
         transformed = pd.Series(integers)
 
@@ -144,9 +134,7 @@ class UnixTimestampEncoder(BaseTransformer):
         self._dtype = data.dtype
         if self.datetime_format is None:
             datetime_array = data[data.notna()].astype(str).to_numpy()
-            self.datetime_format = _guess_datetime_format_for_array(
-                datetime_array
-            )
+            self.datetime_format = _guess_datetime_format_for_array(datetime_array)
 
         transformed = self._transform_helper(data)
         if self.enforce_min_max_values:
@@ -192,22 +180,15 @@ class UnixTimestampEncoder(BaseTransformer):
         data = self._reverse_transform_helper(data)
         datetime_data = pd.to_datetime(data)
         if self.datetime_format:
-            if (
-                is_datetime64_dtype(self._dtype)
-                and '.%f' not in self.datetime_format
-            ):
+            if is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
                 datetime_data = pd.to_datetime(
                     datetime_data.dt.strftime(self.datetime_format),
                     format=self.datetime_format,
                 )
             else:
-                datetime_data = datetime_data.dt.strftime(
-                    self.datetime_format
-                ).astype(self._dtype)
+                datetime_data = datetime_data.dt.strftime(self.datetime_format).astype(self._dtype)
         elif is_numeric_dtype(self._dtype):
-            datetime_data = pd.to_numeric(
-                datetime_data.astype('object'), errors='coerce'
-            )
+            datetime_data = pd.to_numeric(datetime_data.astype('object'), errors='coerce')
             datetime_data = datetime_data.astype(self._dtype)
 
         return datetime_data

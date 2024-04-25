@@ -119,9 +119,7 @@ class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
         today = datetime.datetime.today()
         delta = datetime.timedelta
 
-        today = min(
-            datetime.datetime.today(), pd.Timestamp.max - delta(num_rows)
-        )
+        today = min(datetime.datetime.today(), pd.Timestamp.max - delta(num_rows))
         dates = [delta(i) + today for i in range(num_rows)]
 
         return np.array(dates, dtype='datetime64')
@@ -149,10 +147,7 @@ class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
         delta = datetime.timedelta
 
         today = datetime.datetime.today()
-        dates = [
-            min(delta(weeks=i) + today, pd.Timestamp.max)
-            for i in range(num_rows)
-        ]
+        dates = [min(delta(weeks=i) + today, pd.Timestamp.max) for i in range(num_rows)]
 
         return np.array(dates, dtype='datetime64')
 

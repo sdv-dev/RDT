@@ -57,18 +57,12 @@ def _get_minimum_versions(dependencies, python_version):
         req = Requirement(dependency)
         if ';' in dependency:
             marker = req.marker
-            if marker and not marker.evaluate({
-                'python_version': python_version
-            }):
+            if marker and not marker.evaluate({'python_version': python_version}):
                 continue  # Skip this dependency if the marker does not apply to the current Python version
 
         if req.name not in min_versions:
             min_version = next(
-                (
-                    spec.version
-                    for spec in req.specifier
-                    if spec.operator in ('>=', '==')
-                ),
+                (spec.version for spec in req.specifier if spec.operator in ('>=', '==')),
                 None,
             )
             if min_version:
@@ -77,11 +71,7 @@ def _get_minimum_versions(dependencies, python_version):
         elif '@' not in min_versions[req.name]:
             existing_version = Version(min_versions[req.name].split('==')[1])
             new_version = next(
-                (
-                    spec.version
-                    for spec in req.specifier
-                    if spec.operator in ('>=', '==')
-                ),
+                (spec.version for spec in req.specifier if spec.operator in ('>=', '==')),
                 existing_version,
             )
             if new_version > existing_version:

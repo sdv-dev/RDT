@@ -29,18 +29,14 @@ def _in(options, max_repeat):
         generators.append(generator)
         sizes.append(size)
 
-    return (value for generator in generators for value in generator), np.sum(
-        sizes
-    )
+    return (value for generator in generators for value in generator), np.sum(sizes)
 
 
 def _range(options, max_repeat):
     del max_repeat
     min_value, max_value = options
     max_value += 1
-    return (
-        chr(value) for value in range(min_value, max_value)
-    ), max_value - min_value
+    return (chr(value) for value in range(min_value, max_value)), max_value - min_value
 
 
 def _any(options, max_repeat):
@@ -63,14 +59,13 @@ def _max_repeat(options, max_repeat):
         if repeat:
             sizes.append(pow(int(size), repeat, 2**63 - 1))
             repeat_generators = [
-                (_GENERATORS[option](args, max_repeat)[0], option, args)
-                for _ in range(repeat)
+                (_GENERATORS[option](args, max_repeat)[0], option, args) for _ in range(repeat)
             ]
             generators.append(_from_generators(repeat_generators, max_repeat))
 
-    return (value for generator in generators for value in generator), np.sum(
-        sizes
-    ) + int(min_ == 0)
+    return (value for generator in generators for value in generator), np.sum(sizes) + int(
+        min_ == 0
+    )
 
 
 def _category_chars(regex):
@@ -159,9 +154,7 @@ def strings_from_regex(regex, max_repeat=16):
             generators.append((generator, option, args))
             sizes.append(size)
 
-    return _from_generators(generators, max_repeat), np.prod(
-        sizes, dtype=np.complex128
-    ).real
+    return _from_generators(generators, max_repeat), np.prod(sizes, dtype=np.complex128).real
 
 
 def fill_nan_with_none(data):

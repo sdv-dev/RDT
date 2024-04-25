@@ -159,16 +159,12 @@ class TestFloatFormatter:
         expected_transformed = pd.DataFrame({'a': [0.0] * 10})
         expected_reverse_transformed = pd.DataFrame({'a': [np.nan] * 10})
         pd.testing.assert_frame_equal(transformed, expected_transformed)
-        pd.testing.assert_frame_equal(
-            reverse_transformed, expected_reverse_transformed
-        )
+        pd.testing.assert_frame_equal(reverse_transformed, expected_reverse_transformed)
 
 
 class TestGaussianNormalizer:
     def test_stats(self):
-        data = pd.DataFrame(
-            np.random.normal(loc=4, scale=4, size=1000), columns=['a']
-        )
+        data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['a'])
         column = 'a'
 
         ct = GaussianNormalizer()
@@ -340,9 +336,7 @@ class TestClusterBasedNormalizer:
         data[mask] = np.nan
         column = 'col'
 
-        bgmm_transformer = ClusterBasedNormalizer(
-            missing_value_generation='from_column'
-        )
+        bgmm_transformer = ClusterBasedNormalizer(missing_value_generation='from_column')
         bgmm_transformer.fit(data, column)
         transformed = bgmm_transformer.transform(data)
 
@@ -404,15 +398,12 @@ class TestClusterBasedNormalizer:
         """Test that the reverse transform works when the data is out of bounds GH#672."""
         # Setup
         data = pd.DataFrame({
-            'col': [round(i, 2) for i in np.random.uniform(0, 10, size=100)]
-            + [None]
+            'col': [round(i, 2) for i in np.random.uniform(0, 10, size=100)] + [None]
         })
         reverse_data = pd.DataFrame(
             data={
                 'col.normalized': np.random.uniform(-10, 10, size=100),
-                'col.component': np.random.choice(
-                    [0.0, 1.0, 2.0, 10.0], size=100
-                ),
+                'col.component': np.random.choice([0.0, 1.0, 2.0, 10.0], size=100),
             }
         )
         transformer = ClusterBasedNormalizer()

@@ -73,9 +73,7 @@ class TestBinaryEncoder:
         # Setup
         data = pd.DataFrame([True, True, None, False], columns=['bool'])
         column = 'bool'
-        transformer = BinaryEncoder(
-            missing_value_replacement='mode', missing_value_generation=None
-        )
+        transformer = BinaryEncoder(missing_value_replacement='mode', missing_value_generation=None)
 
         # Run
         transformer.fit(data, column)
@@ -86,6 +84,4 @@ class TestBinaryEncoder:
         expected_transformed = pd.DataFrame({'bool': [1.0, 1.0, 1.0, 0.0]})
         expected_reversed = pd.DataFrame({'bool': [True, True, True, False]})
         pd.testing.assert_frame_equal(transformed, expected_transformed)
-        pd.testing.assert_frame_equal(
-            reverse, expected_reversed, check_dtype=False
-        )
+        pd.testing.assert_frame_equal(reverse, expected_reversed, check_dtype=False)

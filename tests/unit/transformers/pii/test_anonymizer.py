@@ -23,9 +23,7 @@ class TestAnonymizedFaker:
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.getattr')
     @patch('rdt.transformers.pii.anonymizer.attrgetter')
-    def test_check_provider_function_baseprovider(
-        self, mock_attrgetter, mock_getattr, mock_faker
-    ):
+    def test_check_provider_function_baseprovider(self, mock_attrgetter, mock_getattr, mock_faker):
         """Test that ``getattr`` is being called with ``BaseProvider`` and ``function_name``.
 
         Mock:
@@ -37,15 +35,11 @@ class TestAnonymizedFaker:
         mock_getattr.side_effect = ['provider', None]
 
         # Run
-        AnonymizedFaker.check_provider_function(
-            'BaseProvider', 'function_name'
-        )
+        AnonymizedFaker.check_provider_function('BaseProvider', 'function_name')
 
         # Assert
         assert mock_attrgetter.call_args_list[0] == call('BaseProvider')
-        assert mock_getattr.call_args_list[0] == call(
-            'module', 'function_name'
-        )
+        assert mock_getattr.call_args_list[0] == call('module', 'function_name')
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.getattr')
@@ -64,16 +58,12 @@ class TestAnonymizedFaker:
         mock_getattr.side_effect = ['provider_class', None]
 
         # Run
-        AnonymizedFaker.check_provider_function(
-            'provider_name', 'function_name'
-        )
+        AnonymizedFaker.check_provider_function('provider_name', 'function_name')
 
         # Assert
         assert mock_attrgetter.call_args_list[0] == call('provider_name')
         assert mock_getattr.call_args_list[0] == call('module', 'Provider')
-        assert mock_getattr.call_args_list[1] == call(
-            'provider_class', 'function_name'
-        )
+        assert mock_getattr.call_args_list[1] == call('provider_class', 'function_name')
 
     def test_check_provider_function_raise_attribute_error(self):
         """Test that ``check_provider_function`` raises an ``AttributeError``.
@@ -90,9 +80,7 @@ class TestAnonymizedFaker:
 
         # Run
         with pytest.raises(TransformerProcessingError, match=expected_message):
-            AnonymizedFaker.check_provider_function(
-                'TestProvider', 'TestFunction'
-            )
+            AnonymizedFaker.check_provider_function('TestProvider', 'TestFunction')
 
     def test__function_cardinality_rule_none(self):
         """Test that ``_function`` does not use ``faker.unique``.
@@ -274,9 +262,7 @@ class TestAnonymizedFaker:
 
     @patch('rdt.transformers.pii.anonymizer.importlib')
     @patch('rdt.transformers.pii.anonymizer.warnings')
-    def test__check_locales_provider_ending_with_locale(
-        self, mock_warnings, mock_importlib
-    ):
+    def test__check_locales_provider_ending_with_locale(self, mock_warnings, mock_importlib):
         """Test that check locales does not warn the user if the provider ends with the locale.
 
         Mock:
@@ -298,9 +284,7 @@ class TestAnonymizedFaker:
 
     @patch('rdt.transformers.pii.anonymizer.importlib')
     @patch('rdt.transformers.pii.anonymizer.warnings')
-    def test__check_locales_provider_ending_with_wrong_locale(
-        self, mock_warnings, mock_importlib
-    ):
+    def test__check_locales_provider_ending_with_wrong_locale(self, mock_warnings, mock_importlib):
         """Test that check locales warns the user.
 
         If the provider ends with the given locale but is not separated by a dot this will warn
@@ -330,9 +314,7 @@ class TestAnonymizedFaker:
         mock_warnings.warn.assert_called_once_with(expected_message)
 
     @patch('rdt.transformers.pii.anonymizer.faker')
-    @patch(
-        'rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function'
-    )
+    @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
     def test___init__default(self, mock_check_provider_function, mock_faker):
         """Test the default instantiation of the transformer.
 
@@ -358,9 +340,7 @@ class TestAnonymizedFaker:
         instance = AnonymizedFaker()
 
         # Assert
-        mock_check_provider_function.assert_called_once_with(
-            'BaseProvider', 'lexify'
-        )
+        mock_check_provider_function.assert_called_once_with('BaseProvider', 'lexify')
         assert instance.provider_name == 'BaseProvider'
         assert instance.function_name == 'lexify'
         assert instance.function_kwargs == {}
@@ -386,13 +366,9 @@ class TestAnonymizedFaker:
             AnonymizedFaker(missing_value_generation='invalid')
 
     @patch('rdt.transformers.pii.anonymizer.faker')
-    @patch(
-        'rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function'
-    )
+    @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
     @patch('rdt.transformers.pii.anonymizer.warnings')
-    def test___init__custom(
-        self, mock_warnings, mock_check_provider_function, mock_faker
-    ):
+    def test___init__custom(self, mock_warnings, mock_check_provider_function, mock_faker):
         """Test the instantiation of the transformer with custom parameters.
 
         Test that the transformer can be instantiated with a custom provider and function, and
@@ -424,9 +400,7 @@ class TestAnonymizedFaker:
         )
 
         # Assert
-        mock_check_provider_function.assert_called_once_with(
-            'credit_card', 'credit_card_full'
-        )
+        mock_check_provider_function.assert_called_once_with('credit_card', 'credit_card_full')
         assert instance.provider_name == 'credit_card'
         assert instance.function_name == 'credit_card_full'
         assert instance.function_kwargs == {'type': 'visa'}
@@ -451,13 +425,10 @@ class TestAnonymizedFaker:
         """
         # Run / Assert
         expected_message = (
-            'Please specify the function name to use from the '
-            "'credit_card' provider."
+            'Please specify the function name to use from the ' "'credit_card' provider."
         )
         with pytest.raises(TransformerInputError, match=expected_message):
-            AnonymizedFaker(
-                provider_name='credit_card', locales=['en_US', 'fr_FR']
-            )
+            AnonymizedFaker(provider_name='credit_card', locales=['en_US', 'fr_FR'])
 
     @patch('rdt.transformers.pii.anonymizer.issubclass')
     @patch('rdt.transformers.pii.anonymizer.BaseTransformer')
@@ -502,9 +473,7 @@ class TestAnonymizedFaker:
             'text',
         ])
 
-    @patch(
-        'rdt.transformers.pii.anonymizer.BaseTransformer.reset_randomization'
-    )
+    @patch('rdt.transformers.pii.anonymizer.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.pii.anonymizer.faker')
     def test_reset_randomization(self, mock_faker, mock_base_reset):
         """Test that this function creates a new faker instance."""
@@ -544,9 +513,7 @@ class TestAnonymizedFaker:
 
         # Assert
         assert transformer.data_length == 5
-        assert transformer.output_properties == {
-            None: {'next_transformer': None}
-        }
+        assert transformer.output_properties == {None: {'next_transformer': None}}
         assert transformer._nan_frequency == 0.4
         assert transformer._data_cardinality == 3
 
@@ -616,9 +583,7 @@ class TestAnonymizedFaker:
         AnonymizedFaker._reverse_transform(instance, None)
 
         # Assert
-        instance._reverse_transform_cardinality_rule_match.assert_called_once_with(
-            3
-        )
+        instance._reverse_transform_cardinality_rule_match.assert_called_once_with(3)
 
     def test__reverse_transform_cardinality_rule_match_only_nans(self):
         """Test it with only nans."""
@@ -718,9 +683,7 @@ class TestAnonymizedFaker:
             - Raises an error.
         """
         # Setup
-        instance = AnonymizedFaker(
-            'misc', 'boolean', cardinality_rule='unique'
-        )
+        instance = AnonymizedFaker('misc', 'boolean', cardinality_rule='unique')
         data = pd.Series(['a', 'b', 'c', 'd'])
         instance.columns = ['a']
 
@@ -819,12 +782,8 @@ class TestPseudoAnonymizedFaker:
         mock_warnings.warn.assert_called_once_with(expected_warning_msg)
 
     @patch('rdt.transformers.pii.anonymizer.faker')
-    @patch(
-        'rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function'
-    )
-    def test___init__super_attrs(
-        self, mock_check_provider_function, mock_faker
-    ):
+    @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
+    def test___init__super_attrs(self, mock_check_provider_function, mock_faker):
         """Test that initializing an instance is calling properly the ``super`` class.
 
         Mock:
@@ -857,9 +816,7 @@ class TestPseudoAnonymizedFaker:
         mock_faker.Faker.assert_called_once_with(None)
 
     @patch('rdt.transformers.pii.anonymizer.faker')
-    @patch(
-        'rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function'
-    )
+    @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
     def test___init__custom(self, mock_check_provider_function, mock_faker):
         """Test the instantiation of the transformer with custom parameters.
 
@@ -893,9 +850,7 @@ class TestPseudoAnonymizedFaker:
         # Assert
         assert instance._mapping_dict == {}
         assert instance._reverse_mapping_dict == {}
-        mock_check_provider_function.assert_called_once_with(
-            'credit_card', 'credit_card_full'
-        )
+        mock_check_provider_function.assert_called_once_with('credit_card', 'credit_card_full')
         assert instance.provider_name == 'credit_card'
         assert instance.function_name == 'credit_card_full'
         assert instance.function_kwargs == {'type': 'visa'}
@@ -1030,9 +985,7 @@ class TestPseudoAnonymizedFaker:
         result = instance._transform(data)
 
         # Assert
-        pd.testing.assert_series_equal(
-            result, pd.Series(['z', 'y', 'x'], name='col')
-        )
+        pd.testing.assert_series_equal(result, pd.Series(['z', 'y', 'x'], name='col'))
 
     def test__transform_with_new_values(self):
         """Test the ``_transform`` method.
@@ -1095,6 +1048,4 @@ class TestPseudoAnonymizedFaker:
         reverse_transformed = instance._reverse_transform(data)
 
         # Assert
-        pd.testing.assert_series_equal(
-            reverse_transformed, pd.Series(['a', 'b', 'c'], name='col')
-        )
+        pd.testing.assert_series_equal(reverse_transformed, pd.Series(['a', 'b', 'c'], name='col'))

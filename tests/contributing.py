@@ -83,9 +83,7 @@ def validate_transformer_integration(transformer):
     if isinstance(transformer, str):
         transformer = get_transformer_class(transformer)
 
-    print(
-        f'Validating Integration Tests for transformer {transformer.get_name()}\n'
-    )
+    print(f'Validating Integration Tests for transformer {transformer.get_name()}\n')
 
     steps = []
     validation_error = None
@@ -94,9 +92,7 @@ def validate_transformer_integration(transformer):
     try:
         validate_transformer(transformer, steps=steps)
     except Exception as error:
-        error_trace = ''.join(
-            traceback.TracebackException.from_exception(error).format()
-        )
+        error_trace = ''.join(traceback.TracebackException.from_exception(error).format())
 
         for check in CHECK_DETAILS:
             if check in error_trace:
@@ -125,9 +121,7 @@ def validate_transformer_integration(transformer):
         else:
             result_summaries.append([check, 'Yes', details])
 
-    summary = pd.DataFrame(
-        result_summaries, columns=['Check', 'Correct', 'Details']
-    )
+    summary = pd.DataFrame(result_summaries, columns=['Check', 'Correct', 'Details'])
     print(tabulate(summary, headers='keys', showindex=False))
 
     return validation_error is None and error_trace is None
@@ -138,9 +132,7 @@ def _validate_third_party_code_style(
 ):
     run_command = command.split(' ')
     run_command.append(transformer_path)
-    output_capture = subprocess.run(
-        run_command, capture_output=True
-    ).stdout.decode()
+    output_capture = subprocess.run(run_command, capture_output=True).stdout.decode()
     if output_capture:
         return {
             'Check': tag,
@@ -156,9 +148,7 @@ def _validate_third_party_code_style(
     }
 
 
-def _custom_validation(
-    function, tag, success_message, error_message, transformer
-):
+def _custom_validation(function, tag, success_message, error_message, transformer):
     try:
         function(transformer)
         return {
@@ -346,13 +336,9 @@ def validate_transformer_unit_tests(transformer):
     score = cov.report(show_missing=True)
     rounded_score = round(score / 100, 3)
     if rounded_score < 1.0:
-        print(
-            f'\nERROR: The unit tests only cover {round(score, 3)}% of your code.'
-        )
+        print(f'\nERROR: The unit tests only cover {round(score, 3)}% of your code.')
     else:
-        print(
-            f'\nSUCCESS: The unit tests cover {round(score, 3)}% of your code.'
-        )
+        print(f'\nSUCCESS: The unit tests cover {round(score, 3)}% of your code.')
 
     cov.html_report()
     print('\nFull coverage report here:\n')
@@ -390,9 +376,7 @@ def validate_transformer_performance(transformer):
     total_results = pd.DataFrame()
     for current_transformer in transformers:
         for dataset_generator in dataset_generators:
-            performance = evaluate_transformer_performance(
-                current_transformer, dataset_generator
-            )
+            performance = evaluate_transformer_performance(current_transformer, dataset_generator)
             valid = validate_performance(performance, dataset_generator)
 
             results = pd.DataFrame({
@@ -409,14 +393,10 @@ def validate_transformer_performance(transformer):
     else:
         print('ERROR: One or more Performance Tests were NOT successful.')
 
-    other_results = total_results[
-        total_results.transformer != transformer.get_name()
-    ]
+    other_results = total_results[total_results.transformer != transformer.get_name()]
     average = other_results.groupby('Evaluation Metric')['Value'].mean()
 
-    total_results = total_results[
-        total_results.transformer == transformer.get_name()
-    ]
+    total_results = total_results[total_results.transformer == transformer.get_name()]
     final_results = total_results.groupby('Evaluation Metric').agg({
         'Value': 'mean',
         'Valid': 'any',
@@ -427,9 +407,7 @@ def validate_transformer_performance(transformer):
         's / row',
         'B / row',
     )
-    final_results['Acceptable'] = np.where(
-        final_results['Acceptable'], 'Yes', 'No'
-    )
+    final_results['Acceptable'] = np.where(final_results['Acceptable'], 'Yes', 'No')
     final_results['Compared to Average'] = (
         final_results['Value'].div(average).replace(np.inf, np.nan)
     )
@@ -450,9 +428,7 @@ def check_clean_repository():
             if any other file has been modified outside of that range.
     """
     run_command = 'git diff --name-only main'.split(' ')
-    output_capture = subprocess.run(
-        run_command, capture_output=True
-    ).stdout.decode()
+    output_capture = subprocess.run(run_command, capture_output=True).stdout.decode()
     output_capture = output_capture.splitlines()
 
     validated_paths = []
@@ -557,9 +533,7 @@ def validate_pull_request(transformer):
 
     if success:
         print('\nSUCCESS: The Pull Request can be made!')
-        print(
-            'You can now commit all your changes, push to GitHub and create a Pull Request.'
-        )
+        print('You can now commit all your changes, push to GitHub and create a Pull Request.')
     else:
         print('\nERROR: The Pull Request can not be made!')
         print('Fix the reported errors and try again.')

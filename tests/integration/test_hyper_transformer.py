@@ -367,9 +367,7 @@ class TestHyperTransformer:
         assert isinstance(ht.field_transformers['float'], FloatFormatter)
         assert isinstance(ht.field_transformers['categorical'], UniformEncoder)
         assert isinstance(ht.field_transformers['bool'], UniformEncoder)
-        assert isinstance(
-            ht.field_transformers['datetime'], UnixTimestampEncoder
-        )
+        assert isinstance(ht.field_transformers['datetime'], UnixTimestampEncoder)
         assert isinstance(ht.field_transformers['names'], UniformEncoder)
 
         get_default_transformers.cache_clear()
@@ -451,9 +449,7 @@ class TestHyperTransformer:
 
         # Run
         ht.detect_initial_config(data)
-        ht.update_transformers(
-            column_name_to_transformer={'a': OneHotEncoder()}
-        )
+        ht.update_transformers(column_name_to_transformer={'a': OneHotEncoder()})
         ht.fit(data)
         transformed = ht.transform(data)
         reverse = ht.reverse_transform(transformed)
@@ -946,9 +942,7 @@ class TestHyperTransformer:
         # Run
         ht.fit(customers)
         transformed = ht.transform(customers)
-        reverse_transformed = ht.reverse_transform_subset(
-            transformed[['last_login']]
-        )
+        reverse_transformed = ht.reverse_transform_subset(transformed[['last_login']])
 
         # Assert
         expected_transformed_columns = [
@@ -1042,9 +1036,7 @@ class TestHyperTransformer:
 
             def _reverse_transform(self, data):
                 new_data = pd.DataFrame()
-                new_data[f'{self.column_prefix}'] = data[
-                    f'{self.column_prefix}.a'
-                ].str[:-1]
+                new_data[f'{self.column_prefix}'] = data[f'{self.column_prefix}.a'].str[:-1]
                 return new_data
 
         class CD(BaseTransformer):
@@ -1064,9 +1056,7 @@ class TestHyperTransformer:
 
             def _reverse_transform(self, data):
                 new_data = pd.DataFrame()
-                new_data[f'{self.column_prefix}'] = data[
-                    f'{self.column_prefix}.c'
-                ].str[:-1]
+                new_data[f'{self.column_prefix}'] = data[f'{self.column_prefix}.c'].str[:-1]
                 return new_data
 
         class E(BaseTransformer):
@@ -1085,9 +1075,7 @@ class TestHyperTransformer:
 
             def _reverse_transform(self, data):
                 new_data = pd.DataFrame()
-                new_data[f'{self.column_prefix}'] = data[
-                    f'{self.column_prefix}.e'
-                ].str[:-1]
+                new_data[f'{self.column_prefix}'] = data[f'{self.column_prefix}.e'].str[:-1]
                 return new_data
 
         ht = HyperTransformer()
@@ -1163,9 +1151,7 @@ class TestHyperTransformer:
         transformer = ht.get_config()['transformers']['col']
         assert transformer is fe
 
-        ht.update_transformers_by_sdtype(
-            'categorical', transformer_name='FrequencyEncoder'
-        )
+        ht.update_transformers_by_sdtype('categorical', transformer_name='FrequencyEncoder')
         transformer = ht.get_config()['transformers']['col']
         transformer.new_attribute3 = 'abc'
         ht.fit(data)
@@ -1186,9 +1172,7 @@ class TestHyperTransformer:
             'signup_day': 'datetime',
         })
         ht.update_transformers({
-            'credit_card': AnonymizedFaker(
-                'credit_card', 'credit_card_number'
-            ),
+            'credit_card': AnonymizedFaker('credit_card', 'credit_card_number'),
             'balance': ClusterBasedNormalizer(max_clusters=3),
             'name': RegexGenerator(),
         })
@@ -1292,15 +1276,9 @@ class TestHyperTransformer:
         first_transformed2 = ht2.transform(data)
         second_transformed1 = ht1.transform(data)
 
-        pd.testing.assert_frame_equal(
-            first_transformed1, expected_first_transformed
-        )
-        pd.testing.assert_frame_equal(
-            first_transformed2, expected_first_transformed
-        )
-        pd.testing.assert_frame_equal(
-            second_transformed1, expected_second_transformed
-        )
+        pd.testing.assert_frame_equal(first_transformed1, expected_first_transformed)
+        pd.testing.assert_frame_equal(first_transformed2, expected_first_transformed)
+        pd.testing.assert_frame_equal(second_transformed1, expected_second_transformed)
 
         # test reverse transforming multiple times with different tranformers
         expected_first_reverse = pd.DataFrame({
@@ -1354,9 +1332,7 @@ class TestHyperTransformer:
         ht1.reset_randomization()
 
         transformed_post_reset = ht1.reverse_transform(first_transformed1)
-        pd.testing.assert_frame_equal(
-            transformed_post_reset, expected_first_reverse
-        )
+        pd.testing.assert_frame_equal(transformed_post_reset, expected_first_reverse)
 
     def test_cluster_based_normalizer_randomization(self):
         """Test that the ``ClusterBasedNormalizer`` handles randomization correctly.
@@ -1374,9 +1350,7 @@ class TestHyperTransformer:
         transformed1 = ht.transform(data)
         transformed2 = ht.transform(data)
 
-        assert any(
-            transformed1['age.normalized'] != transformed2['age.normalized']
-        )
+        assert any(transformed1['age.normalized'] != transformed2['age.normalized'])
 
         ht2 = HyperTransformer()
         ht2.detect_initial_config(data)
@@ -1409,28 +1383,16 @@ class TestHyperTransformer:
         reverse_transformed1 = ht.reverse_transform(transformed)
 
         # Assert
-        assert (
-            reverse_transformed1['id1'].tolist()
-            != reverse_transformed1['id2'].tolist()
-        )
+        assert reverse_transformed1['id1'].tolist() != reverse_transformed1['id2'].tolist()
 
         # Run - make sure transforming again returns different values than the original transform
         transformed = ht.transform(data)
         reverse_transformed2 = ht.reverse_transform(transformed)
 
         # Assert
-        assert (
-            reverse_transformed2['id1'].tolist()
-            != reverse_transformed2['id2'].tolist()
-        )
-        assert (
-            reverse_transformed1['id1'].tolist()
-            != reverse_transformed2['id1'].tolist()
-        )
-        assert (
-            reverse_transformed1['id2'].tolist()
-            != reverse_transformed2['id2'].tolist()
-        )
+        assert reverse_transformed2['id1'].tolist() != reverse_transformed2['id2'].tolist()
+        assert reverse_transformed1['id1'].tolist() != reverse_transformed2['id1'].tolist()
+        assert reverse_transformed1['id2'].tolist() != reverse_transformed2['id2'].tolist()
 
         # Run - make sure resetting randomization works
         ht.reset_randomization()
@@ -1438,9 +1400,7 @@ class TestHyperTransformer:
         reverse_transformed3 = ht.reverse_transform(transformed)
 
         # Assert
-        pd.testing.assert_frame_equal(
-            reverse_transformed1, reverse_transformed3
-        )
+        pd.testing.assert_frame_equal(reverse_transformed1, reverse_transformed3)
 
     def test_anonymized_faker_text(self):
         """Test ``AnonymizedFaker`` with text column."""
@@ -1463,9 +1423,7 @@ class TestHyperTransformer:
         reverse_transformed = ht.reverse_transform(transformed)
 
         # Assert
-        assert all(
-            reverse_transformed['info'].apply(lambda s: isinstance(s, str))
-        )
+        assert all(reverse_transformed['info'].apply(lambda s: isinstance(s, str)))
 
     def test_pseudo_anonymized_faker(self):
         """Test ``PseudoAnonymizedFaker`` generates different values for different columns."""
@@ -1488,10 +1446,7 @@ class TestHyperTransformer:
         reverse_transformed1 = ht.reverse_transform(transformed)
 
         # Assert
-        assert (
-            reverse_transformed1['id1'].tolist()
-            != reverse_transformed1['id2'].tolist()
-        )
+        assert reverse_transformed1['id1'].tolist() != reverse_transformed1['id2'].tolist()
 
         # Run - run it again on the exact same data
         ht = HyperTransformer()
@@ -1506,10 +1461,7 @@ class TestHyperTransformer:
         reverse_transformed2 = ht.reverse_transform(transformed)
 
         # Assert - different instances of the same transformer should return the same result
-        assert (
-            reverse_transformed1['id1'].tolist()
-            == reverse_transformed2['id1'].tolist()
-        )
+        assert reverse_transformed1['id1'].tolist() == reverse_transformed2['id1'].tolist()
 
     def test_anonymized_faker_different_tables(self):
         """Test ``AnonymizedFaker`` generates different values for columns with same name."""
@@ -1547,14 +1499,8 @@ class TestHyperTransformer:
         reverse_transformed2 = ht.reverse_transform(transformed)
 
         # Assert
-        assert (
-            reverse_transformed1['id1'].tolist()
-            != reverse_transformed2['id1'].tolist()
-        )
-        assert (
-            reverse_transformed1['id2'].tolist()
-            != reverse_transformed2['id2'].tolist()
-        )
+        assert reverse_transformed1['id1'].tolist() != reverse_transformed2['id1'].tolist()
+        assert reverse_transformed1['id2'].tolist() != reverse_transformed2['id2'].tolist()
 
     def test_random_seed(self):
         # Setup
@@ -1612,26 +1558,11 @@ class TestHyperTransformer:
         reversed1 = ht.reverse_transform(transformed1)
 
         # Assert
-        assert (
-            reversed1['num1'].isna().tolist()
-            != reversed1['num2'].isna().tolist()
-        )
-        assert (
-            reversed1['num3'].isna().tolist()
-            != reversed1['num4'].isna().tolist()
-        )
-        assert (
-            reversed1['num5'].isna().tolist()
-            != reversed1['num6'].isna().tolist()
-        )
-        assert (
-            reversed1['date1'].isna().tolist()
-            != reversed1['date2'].isna().tolist()
-        )
-        assert (
-            reversed1['date3'].isna().tolist()
-            != reversed1['date4'].isna().tolist()
-        )
+        assert reversed1['num1'].isna().tolist() != reversed1['num2'].isna().tolist()
+        assert reversed1['num3'].isna().tolist() != reversed1['num4'].isna().tolist()
+        assert reversed1['num5'].isna().tolist() != reversed1['num6'].isna().tolist()
+        assert reversed1['date1'].isna().tolist() != reversed1['date2'].isna().tolist()
+        assert reversed1['date3'].isna().tolist() != reversed1['date4'].isna().tolist()
 
         # Run
         ht.reset_randomization()
@@ -1679,9 +1610,7 @@ class TestHyperTransformer:
             ],
         })
 
-        pd.testing.assert_frame_equal(
-            transformed_data, expected_transformed_data
-        )
+        pd.testing.assert_frame_equal(transformed_data, expected_transformed_data)
         pd.testing.assert_frame_equal(reverse_transformed_data, data_test)
 
     def test_hypertransformer_with_mutli_column_transformer_and_single_column(
@@ -1725,9 +1654,7 @@ class TestHyperTransformer:
             ],
         })
 
-        pd.testing.assert_frame_equal(
-            transformed_data, expected_transformed_data
-        )
+        pd.testing.assert_frame_equal(transformed_data, expected_transformed_data)
         pd.testing.assert_frame_equal(reverse_transformed_data, data_test)
 
     def test_update_transformers_single_to_multi_column(self):
@@ -1853,9 +1780,7 @@ class TestHyperTransformer:
         ht.set_config(config)
 
         # Run
-        ht.update_transformers_by_sdtype(
-            'boolean', transformer_name='LabelEncoder'
-        )
+        ht.update_transformers_by_sdtype('boolean', transformer_name='LabelEncoder')
         new_config = ht.get_config()
 
         # Assert
@@ -2024,9 +1949,7 @@ class TestHyperTransformer:
         ht.set_config({
             'sdtypes': {'A': 'pii'},
             'transformers': {
-                'A': AnonymizedFaker(
-                    provider_name='currency', function_name='currency'
-                )
+                'A': AnonymizedFaker(provider_name='currency', function_name='currency')
             },
         })
 
@@ -2101,12 +2024,8 @@ class TestHyperTransformer:
         ),
     ]
 
-    @pytest.mark.parametrize(
-        ('method_name', 'method_input', 'expected_result'), parametrization
-    )
-    def test_invalid_multi_column(
-        self, method_name, method_input, expected_result
-    ):
+    @pytest.mark.parametrize(('method_name', 'method_input', 'expected_result'), parametrization)
+    def test_invalid_multi_column(self, method_name, method_input, expected_result):
         """Test the ``update`` and ``remove`` methods with invalid multi column transformer.
 
         When a multi column is no longer valid, all these methods should raise a warning
@@ -2114,9 +2033,7 @@ class TestHyperTransformer:
         """
 
         # Setup
-        class BadDummyMultiColumnTransformer(
-            DummyMultiColumnTransformerNumerical
-        ):
+        class BadDummyMultiColumnTransformer(DummyMultiColumnTransformerNumerical):
             @classmethod
             def _validate_sdtypes(cls, columns_to_sdtype):
                 raise TransformerInputError('Invalid sdtype')

@@ -42,9 +42,7 @@ def get_demo(num_rows=5):
         ['2021-06-26', '2021-02-10', 'NAT', '2020-09-26', '2020-12-22'],
         dtype='datetime64[ns]',
     )
-    email_optin = pd.Series(
-        [False, False, False, True, np.nan], dtype='object'
-    )
+    email_optin = pd.Series([False, False, False, True, np.nan], dtype='object')
     credit_card = ['VISA', 'VISA', 'AMEX', np.nan, 'DISCOVER']
     age = [29, 18, 21, 45, 32]
     dollars_spent = [99.99, np.nan, 2.50, 25.00, 19.99]
@@ -68,27 +66,20 @@ def get_demo(num_rows=5):
 
         login_dates = np.array(
             [
-                np.datetime64('2000-01-01')
-                + np.timedelta64(np.random.randint(0, 10000), 'D')
+                np.datetime64('2000-01-01') + np.timedelta64(np.random.randint(0, 10000), 'D')
                 for _ in range(num_rows)
             ],
             dtype='datetime64[ns]',
         )
-        login_dates[np.random.random(size=num_rows) > 0.8] = np.datetime64(
-            'NaT'
-        )
+        login_dates[np.random.random(size=num_rows) > 0.8] = np.datetime64('NaT')
 
         email_optin = pd.Series([True, False, np.nan], dtype='object').sample(
             num_rows, replace=True
         )
-        credit_card = np.random.choice(
-            ['VISA', 'AMEX', np.nan, 'DISCOVER'], size=num_rows
-        )
+        credit_card = np.random.choice(['VISA', 'AMEX', np.nan, 'DISCOVER'], size=num_rows)
         age = np.random.randint(18, 100, size=num_rows)
 
-        dollars_spent = np.around(
-            np.random.uniform(0, 100, size=num_rows), decimals=2
-        )
+        dollars_spent = np.around(np.random.uniform(0, 100, size=num_rows), decimals=2)
         dollars_spent[np.random.random(size=num_rows) > 0.8] = np.nan
 
     finally:

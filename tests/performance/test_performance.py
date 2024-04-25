@@ -70,9 +70,7 @@ def validate_performance(performance, dataset_generator, should_assert=False):
         out.append(valid)
 
         if should_assert and not valid:
-            raise AssertionError(
-                f'{function} {metric}: {value} > {expected_metric}'
-            )
+            raise AssertionError(f'{function} {metric}: {value} > {expected_metric}')
 
     return out
 
@@ -92,9 +90,7 @@ def test_performance(transformer, dataset_generator):
         dataset_generator (rdt.tests.dataset.BaseDatasetGenerator):
             The dataset generator to performance tests against.
     """
-    performance = evaluate_transformer_performance(
-        transformer, dataset_generator
-    )
+    performance = evaluate_transformer_performance(transformer, dataset_generator)
     validate_performance(performance, dataset_generator, should_assert=True)
 
 
@@ -150,9 +146,7 @@ def find_transformer_boundaries(
             Candidate values for each metric.
     """
     results = [
-        profile_transformer(
-            transformer, dataset_generator, transform_size, fit_size
-        )
+        profile_transformer(transformer, dataset_generator, transform_size, fit_size)
         for _ in range(iterations)
     ]
     means = pd.DataFrame(results).mean(axis=0)

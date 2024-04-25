@@ -17,9 +17,7 @@ class TestBinaryEncoder(TestCase):
         error_message = 'Unexpected missing_value_replacement'
         error_generation = 'Unexpected missing_value_generation'
         assert transformer.missing_value_replacement == 'mode', error_message
-        assert (
-            transformer.missing_value_generation == 'random'
-        ), error_generation
+        assert transformer.missing_value_generation == 'random', error_generation
 
     def test___init___model_missing_value_passed(self):
         """Test when model missing value is passed to the init."""
@@ -40,9 +38,7 @@ class TestBinaryEncoder(TestCase):
 
         # Asserts
         error_msg = 'Unexpected fill value'
-        assert (
-            transformer.null_transformer._missing_value_replacement == 0
-        ), error_msg
+        assert transformer.null_transformer._missing_value_replacement == 0, error_msg
 
     def test__fit_array(self):
         """Test _fit with numpy.array"""
@@ -55,9 +51,7 @@ class TestBinaryEncoder(TestCase):
 
         # Asserts
         error_msg = 'Unexpected fill value'
-        assert (
-            transformer.null_transformer._missing_value_replacement == 0
-        ), error_msg
+        assert transformer.null_transformer._missing_value_replacement == 0, error_msg
 
     def test__fit_missing_value_generation_from_column(self):
         """Test output_properties contains 'is_null' column.
@@ -92,10 +86,7 @@ class TestBinaryEncoder(TestCase):
         expect_call_args = pd.Series([0.0, 1.0, None, 1.0, 0.0], dtype=float)
 
         error_msg = 'NullTransformer.transform must be called one time'
-        assert (
-            transformer.null_transformer.transform.call_count
-            == expect_call_count
-        ), error_msg
+        assert transformer.null_transformer.transform.call_count == expect_call_count, error_msg
         pd.testing.assert_series_equal(
             transformer.null_transformer.transform.call_args[0][0],
             expect_call_args,
@@ -115,10 +106,7 @@ class TestBinaryEncoder(TestCase):
         expect_call_args = pd.Series([0.0, 1.0, None, 1.0, 0.0], dtype=float)
 
         error_msg = 'NullTransformer.transform must be called one time'
-        assert (
-            transformer.null_transformer.transform.call_count
-            == expect_call_count
-        ), error_msg
+        assert transformer.null_transformer.transform.call_count == expect_call_count, error_msg
         pd.testing.assert_series_equal(
             transformer.null_transformer.transform.call_args[0][0],
             expect_call_args,
@@ -133,9 +121,7 @@ class TestBinaryEncoder(TestCase):
         # Run
         transformer = Mock()
         transformer.missing_value_replacement = 0
-        transformer.null_transformer.reverse_transform.return_value = (
-            transformed_data
-        )
+        transformer.null_transformer.reverse_transform.return_value = transformed_data
 
         result = BinaryEncoder._reverse_transform(transformer, data)
 
@@ -149,9 +135,7 @@ class TestBinaryEncoder(TestCase):
             'NullTransformer.reverse_transform should not be called when '
             'missing_value_replacement is ignore'
         )
-        reverse_transform_call_count = (
-            transformer.null_transformer.reverse_transform.call_count
-        )
+        reverse_transform_call_count = transformer.null_transformer.reverse_transform.call_count
         assert reverse_transform_call_count == expect_call_count, error_msg
 
     def test__reverse_transform_series(self):

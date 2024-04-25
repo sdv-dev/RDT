@@ -23,7 +23,9 @@ class BaseValidator:
                 message += f"Column '{column}' has an unsupported sdtype '{sdtype}'.\n"
 
         if message:
-            message += f'Please provide a column that is compatible with {cls.VALIDATION_TYPE} data.'
+            message += (
+                f'Please provide a column that is compatible with {cls.VALIDATION_TYPE} data.'
+            )
             raise TransformerInputError(message)
 
     @classmethod
@@ -88,18 +90,14 @@ class AddressValidator(BaseValidator):
             sdtypes_to_columns[sdtype].append(column)
 
         duplicate_fields = {
-            value: keys
-            for value, keys in sdtypes_to_columns.items()
-            if len(keys) > 1
+            value: keys for value, keys in sdtypes_to_columns.items() if len(keys) > 1
         }
 
         if duplicate_fields:
             message = ''
             for sdtype, columns in duplicate_fields.items():
                 to_print = "', '".join(columns)
-                message += (
-                    f"Columns '{to_print}' have the same sdtype '{sdtype}'.\n"
-                )
+                message += f"Columns '{to_print}' have the same sdtype '{sdtype}'.\n"
 
             message += 'Your address data cannot have duplicate fields.'
             raise TransformerInputError(message)
@@ -107,9 +105,7 @@ class AddressValidator(BaseValidator):
     @classmethod
     def _validate_administrative_unit(cls, columns_to_sdtypes):
         num_column_administrative_unit = sum(
-            1
-            for itm in columns_to_sdtypes.values()
-            if itm in ['administrative_unit', 'state']
+            1 for itm in columns_to_sdtypes.values() if itm in ['administrative_unit', 'state']
         )
         if num_column_administrative_unit > 1:
             raise TransformerInputError(
@@ -128,12 +124,12 @@ class AddressValidator(BaseValidator):
     @classmethod
     def validate_imports(cls):
         """Check that the address transformers can be imported."""
-        error_message = 'You must have SDV Enterprise with the address add-on to use the address features.'
+        error_message = (
+            'You must have SDV Enterprise with the address add-on to use the address features.'
+        )
 
         try:
-            address_module = importlib.import_module(
-                'rdt.transformers.address'
-            )
+            address_module = importlib.import_module('rdt.transformers.address')
         except ModuleNotFoundError:
             raise ImportError(error_message) from None
 
@@ -151,9 +147,7 @@ class GPSValidator(BaseValidator):
 
     @staticmethod
     def _validate_uniqueness_sdtype(columns_to_sdtypes):
-        sdtypes_to_columns = {
-            sdtype: column for column, sdtype in columns_to_sdtypes.items()
-        }
+        sdtypes_to_columns = {sdtype: column for column, sdtype in columns_to_sdtypes.items()}
         if len(sdtypes_to_columns) != 2:
             raise TransformerInputError(
                 'The GPS columns must have one latitude and on longitude columns sdtypes. '

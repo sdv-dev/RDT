@@ -20,9 +20,7 @@ from rdt.transformers.numerical import (
 class TestFloatFormatter(TestCase):
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
-        nt = FloatFormatter(
-            missing_value_replacement='mode', missing_value_generation='random'
-        )
+        nt = FloatFormatter(missing_value_replacement='mode', missing_value_generation='random')
 
         assert nt.missing_value_replacement == 'mode'
         assert nt.missing_value_generation == 'random'
@@ -136,9 +134,7 @@ class TestFloatFormatter(TestCase):
         """
         # Setup
         data = pd.Series([1.5, None, 2.5])
-        transformer = FloatFormatter(
-            missing_value_replacement='missing_value_replacement'
-        )
+        transformer = FloatFormatter(missing_value_replacement='missing_value_replacement')
         transformer._validate_values_within_bounds = Mock()
 
         # Run
@@ -146,16 +142,12 @@ class TestFloatFormatter(TestCase):
 
         # Asserts
         expected = 'missing_value_replacement'
-        assert (
-            transformer.null_transformer._missing_value_replacement == expected
-        )
+        assert transformer.null_transformer._missing_value_replacement == expected
         assert is_float_dtype(transformer._dtype)
         assert transformer.output_properties == {
             None: {'sdtype': 'float', 'next_transformer': None}
         }
-        transformer._validate_values_within_bounds.assert_called_once_with(
-            data
-        )
+        transformer._validate_values_within_bounds.assert_called_once_with(data)
         assert transformer.output_properties == {
             None: {'sdtype': 'float', 'next_transformer': None},
         }
@@ -211,9 +203,7 @@ class TestFloatFormatter(TestCase):
         ])
 
         # Run
-        transformer = FloatFormatter(
-            missing_value_replacement='mean', learn_rounding_scheme=True
-        )
+        transformer = FloatFormatter(missing_value_replacement='mean', learn_rounding_scheme=True)
         transformer._fit(data)
 
         # Asserts
@@ -237,9 +227,7 @@ class TestFloatFormatter(TestCase):
         data = pd.Series([0.000000000000001])
 
         # Run
-        transformer = FloatFormatter(
-            missing_value_replacement='mean', learn_rounding_scheme=True
-        )
+        transformer = FloatFormatter(missing_value_replacement='mean', learn_rounding_scheme=True)
         transformer._fit(data)
 
         # Asserts
@@ -262,9 +250,7 @@ class TestFloatFormatter(TestCase):
         data = pd.Series([15000, 4000, 60000, np.inf])
 
         # Run
-        transformer = FloatFormatter(
-            missing_value_replacement='mean', learn_rounding_scheme=True
-        )
+        transformer = FloatFormatter(missing_value_replacement='mean', learn_rounding_scheme=True)
         transformer._fit(data)
 
         # Asserts
@@ -285,9 +271,7 @@ class TestFloatFormatter(TestCase):
         data = pd.Series([0, 0, 0])
 
         # Run
-        transformer = FloatFormatter(
-            missing_value_replacement='mean', learn_rounding_scheme=True
-        )
+        transformer = FloatFormatter(missing_value_replacement='mean', learn_rounding_scheme=True)
         transformer._fit(data)
 
         # Asserts
@@ -309,9 +293,7 @@ class TestFloatFormatter(TestCase):
         data = pd.Series([1.5, None, 2.5])
 
         # Run
-        transformer = FloatFormatter(
-            missing_value_replacement='mean', enforce_min_max_values=False
-        )
+        transformer = FloatFormatter(missing_value_replacement='mean', enforce_min_max_values=False)
         transformer._fit(data)
 
         # Asserts
@@ -333,9 +315,7 @@ class TestFloatFormatter(TestCase):
         data = pd.Series([-100, -5000, 0, None, 100, 4000])
 
         # Run
-        transformer = FloatFormatter(
-            missing_value_replacement='mean', enforce_min_max_values=True
-        )
+        transformer = FloatFormatter(missing_value_replacement='mean', enforce_min_max_values=True)
         transformer._fit(data)
 
         # Asserts
@@ -386,9 +366,7 @@ class TestFloatFormatter(TestCase):
         transformer._transform(data)
 
         # Assert
-        transformer._validate_values_within_bounds.assert_called_once_with(
-            data
-        )
+        transformer._validate_values_within_bounds.assert_called_once_with(data)
         assert transformer.null_transformer.transform.call_count == 1
 
     def test__reverse_transform_learn_rounding_scheme_false(self):
@@ -650,9 +628,7 @@ class TestFloatFormatter(TestCase):
         result = transformer._reverse_transform(data)
 
         # Asserts
-        np.testing.assert_array_equal(
-            result, np.array([-300, -300, -300, -250, 0, 125, 400, 400])
-        )
+        np.testing.assert_array_equal(result, np.array([-300, -300, -300, -250, 0, 125, 400, 400]))
 
     def test__reverse_transform_enforce_min_max_values_with_nulls(self):
         """Test ``_reverse_transform`` with nulls and ``enforce_min_max_values`` set to ``True``.
@@ -694,15 +670,11 @@ class TestFloatFormatter(TestCase):
         transformer._min_value = -300
         transformer.enforce_min_max_values = True
         transformer.null_transformer = Mock()
-        transformer.null_transformer.reverse_transform.return_value = (
-            expected_data
-        )
+        transformer.null_transformer.reverse_transform.return_value = expected_data
         result = transformer._reverse_transform(data)
 
         # Asserts
-        null_transformer_calls = (
-            transformer.null_transformer.reverse_transform.mock_calls
-        )
+        null_transformer_calls = transformer.null_transformer.reverse_transform.mock_calls
         np.testing.assert_array_equal(null_transformer_calls[0][1][0], data)
         np.testing.assert_array_equal(result, expected_data)
 
@@ -802,9 +774,7 @@ class TestGaussianNormalizer:
             return __py_import__(name, *args)
 
         with patch('builtins.__import__', side_effect=custom_import):
-            with pytest.raises(
-                ImportError, match=r'pip install rdt\[copulas\]'
-            ):
+            with pytest.raises(ImportError, match=r'pip install rdt\[copulas\]'):
                 GaussianNormalizer._get_distributions()
 
     def test__get_distributions(self):
@@ -954,9 +924,7 @@ class TestGaussianNormalizer:
         # Assert
         ct._get_univariate.return_value.fit.assert_called_once()
         call_value = ct._get_univariate.return_value.fit.call_args_list[0]
-        np.testing.assert_array_equal(
-            call_value[0][0], np.array([0.0, 0.5, 1.0])
-        )
+        np.testing.assert_array_equal(call_value[0][0], np.array([0.0, 0.5, 1.0]))
         assert ct.output_properties == {
             None: {'sdtype': 'float', 'next_transformer': None},
         }
@@ -977,9 +945,7 @@ class TestGaussianNormalizer:
         # Assert
         ct._get_univariate.return_value.fit.assert_called_once()
         call_value = ct._get_univariate.return_value.fit.call_args_list[0]
-        np.testing.assert_array_equal(
-            call_value[0][0], np.array([0.0, 0.5, 1.0])
-        )
+        np.testing.assert_array_equal(call_value[0][0], np.array([0.0, 0.5, 1.0]))
         assert ct.output_properties == {
             None: {'sdtype': 'float', 'next_transformer': None},
             'is_null': {'sdtype': 'float', 'next_transformer': None},
@@ -1053,9 +1019,7 @@ class TestGaussianNormalizer:
         ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
-        ct.null_transformer = NullTransformer(
-            'mean', missing_value_generation='from_column'
-        )
+        ct.null_transformer = NullTransformer('mean', missing_value_generation='from_column')
         ct.null_transformer.fit(data)
 
         # Run
@@ -1076,9 +1040,7 @@ class TestGaussianNormalizer:
         ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.cdf.return_value = np.array([0.25, 0.5, 0.75, 0.5])
-        ct.null_transformer = NullTransformer(
-            'mean', missing_value_generation='random'
-        )
+        ct.null_transformer = NullTransformer('mean', missing_value_generation='random')
 
         # Run
         ct.null_transformer.fit(data)
@@ -1127,9 +1089,7 @@ class TestGaussianNormalizer:
         ct = GaussianNormalizer()
         ct._univariate = Mock()
         ct._univariate.ppf.return_value = np.array([0.0, 1.0, 2.0, 1.0])
-        ct.null_transformer = NullTransformer(
-            None, missing_value_generation='random'
-        )
+        ct.null_transformer = NullTransformer(None, missing_value_generation='random')
 
         # Run
         ct.null_transformer.fit(expected)
@@ -1143,9 +1103,7 @@ class TestClusterBasedNormalizer(TestCase):
     def test__get_current_random_seed_random_states_is_none(self):
         """Test that the method returns 0 if ``instance.random_states`` is None."""
         # Setup
-        transformer = ClusterBasedNormalizer(
-            max_clusters=10, weight_threshold=0.005
-        )
+        transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
         transformer.random_states = None
 
         # Run
@@ -1176,9 +1134,7 @@ class TestClusterBasedNormalizer(TestCase):
         # Setup
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
-        transformer = ClusterBasedNormalizer(
-            max_clusters=10, weight_threshold=0.005
-        )
+        transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
         mock_state = Mock()
         transformer.random_states['fit'] = mock_state
         mock_state.get_state.return_value = [None, [0]]
@@ -1255,9 +1211,7 @@ class TestClusterBasedNormalizer(TestCase):
         # Setup
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
-        transformer = ClusterBasedNormalizer(
-            max_clusters=10, weight_threshold=0.005
-        )
+        transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
         data = pd.Series(np.random.random(size=100))
 
         # Run
@@ -1347,9 +1301,7 @@ class TestClusterBasedNormalizer(TestCase):
             0.10703034,
             0.05709835,
         ])
-        np.testing.assert_allclose(
-            output[:, 0], expected_normalized, rtol=1e-3
-        )
+        np.testing.assert_allclose(output[:, 0], expected_normalized, rtol=1e-3)
 
         expected_component = np.array([
             1.0,
@@ -1415,9 +1367,7 @@ class TestClusterBasedNormalizer(TestCase):
         transformer._bgm_transformer.predict_proba.return_value = probabilities
 
         transformer.valid_component_indicator = np.array([True, True, False])
-        transformer.null_transformer = NullTransformer(
-            0.0, missing_value_generation='from_column'
-        )
+        transformer.null_transformer = NullTransformer(0.0, missing_value_generation='from_column')
         data = pd.Series([
             0.01,
             np.nan,
@@ -1450,9 +1400,7 @@ class TestClusterBasedNormalizer(TestCase):
             -0.046177,
             0.1226,
         ])
-        np.testing.assert_allclose(
-            output[:, 0], expected_normalized, rtol=1e-3
-        )
+        np.testing.assert_allclose(output[:, 0], expected_normalized, rtol=1e-3)
 
         expected_component = np.array([
             0.0,
@@ -1585,9 +1533,7 @@ class TestClusterBasedNormalizer(TestCase):
             0.97,
         ])
         transformer.null_transformer = Mock()
-        transformer.null_transformer.reverse_transform.return_value = (
-            reversed_data
-        )
+        transformer.null_transformer.reverse_transform.return_value = reversed_data
         transformer._reverse_transform_helper = Mock()
         transformer._reverse_transform_helper.return_value = reversed_data
 
@@ -1641,9 +1587,7 @@ class TestClusterBasedNormalizer(TestCase):
             ],
             [1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
         ]).transpose()
-        np.testing.assert_allclose(
-            transformer._reverse_transform_helper.call_args[0][0], call_data
-        )
+        np.testing.assert_allclose(transformer._reverse_transform_helper.call_args[0][0], call_data)
 
     def test__reverse_transform_missing_value_replacement_missing_value_replacement_from_col(
         self,
@@ -1654,9 +1598,7 @@ class TestClusterBasedNormalizer(TestCase):
         appropriate output when passed a numpy array containing ``np.nan`` values.
         """
         # Setup
-        transformer = ClusterBasedNormalizer(
-            missing_value_generation='from_column', max_clusters=3
-        )
+        transformer = ClusterBasedNormalizer(missing_value_generation='from_column', max_clusters=3)
         transformer.output_columns = ['col.normalized', 'col.component']
         transformer._reverse_transform_helper = Mock()
         transformer._reverse_transform_helper.return_value = np.array([
@@ -1740,9 +1682,7 @@ class TestClusterBasedNormalizer(TestCase):
         appropriate output when passed a numpy array containing ``np.nan`` values.
         """
         # Setup
-        transformer = ClusterBasedNormalizer(
-            missing_value_generation='from_column', max_clusters=3
-        )
+        transformer = ClusterBasedNormalizer(missing_value_generation='from_column', max_clusters=3)
         transformer.output_columns = ['col.normalized', 'col.component']
         transformer._reverse_transform_helper = Mock()
         transformer._reverse_transform_helper.return_value = np.array([
@@ -1758,9 +1698,7 @@ class TestClusterBasedNormalizer(TestCase):
             0.62239389,
         ])
 
-        transformer.null_transformer = NullTransformer(
-            'mean', missing_value_generation='random'
-        )
+        transformer.null_transformer = NullTransformer('mean', missing_value_generation='random')
         transformer.null_transformer.fit(pd.Series([0, np.nan]))
         transformer.null_transformer.reverse_transform = Mock()
         transformer.null_transformer.reverse_transform.return_value = np.array([

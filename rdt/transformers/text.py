@@ -65,10 +65,7 @@ class IDGenerator(BaseTransformer):
         prefix_str = self.prefix if self.prefix is not None else ''
         suffix_str = self.suffix if self.suffix is not None else ''
 
-        values = [
-            f'{prefix_str}{start + idx}{suffix_str}'
-            for idx in range(len(data))
-        ]
+        values = [f'{prefix_str}{start + idx}{suffix_str}' for idx in range(len(data))]
         self._counter += len(data)
 
         return pd.Series(values)
@@ -135,18 +132,14 @@ class RegexGenerator(BaseTransformer):
         self.generator_size = None
         self.generated = None
         if generation_order not in ['alphanumeric', 'scrambled']:
-            raise ValueError(
-                "generation_order must be one of 'alphanumeric' or 'scrambled'."
-            )
+            raise ValueError("generation_order must be one of 'alphanumeric' or 'scrambled'.")
 
         self.generation_order = generation_order
 
     def reset_randomization(self):
         """Create a new generator and reset the generated values counter."""
         super().reset_randomization()
-        self.generator, self.generator_size = strings_from_regex(
-            self.regex_format
-        )
+        self.generator, self.generator_size = strings_from_regex(self.regex_format)
         self.generated = 0
 
     def _fit(self, data):
@@ -219,9 +212,7 @@ class RegexGenerator(BaseTransformer):
             remaining = self.generator_size
 
         if remaining >= sample_size:
-            reverse_transformed = [
-                next(self.generator) for _ in range(sample_size)
-            ]
+            reverse_transformed = [next(self.generator) for _ in range(sample_size)]
             self.generated += sample_size
 
         else:
@@ -239,21 +230,16 @@ class RegexGenerator(BaseTransformer):
                 except ValueError:
                     counter = 0
                     while len(reverse_transformed) < sample_size:
-                        remaining_samples = sample_size - len(
-                            reverse_transformed
-                        )
+                        remaining_samples = sample_size - len(reverse_transformed)
                         reverse_transformed.extend([
-                            f'{i}({counter})'
-                            for i in generated_values[:remaining_samples]
+                            f'{i}({counter})' for i in generated_values[:remaining_samples]
                         ])
                         counter += 1
 
             else:
                 while len(reverse_transformed) < sample_size:
                     remaining_samples = sample_size - len(reverse_transformed)
-                    reverse_transformed.extend(
-                        generated_values[:remaining_samples]
-                    )
+                    reverse_transformed.extend(generated_values[:remaining_samples])
 
         if getattr(self, 'generation_order', 'alphanumeric') == 'scrambled':
             np.random.shuffle(reverse_transformed)

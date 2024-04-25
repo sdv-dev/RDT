@@ -59,9 +59,7 @@ class UniformEncoder(BaseTransformer):
         nans = pd.isna(unique_data)
         if self.order_by == 'alphabetical':
             # pylint: disable=invalid-unary-operand-type
-            if any(
-                map(lambda item: not isinstance(item, str), unique_data[~nans])
-            ):  # noqa: C417
+            if any(map(lambda item: not isinstance(item, str), unique_data[~nans])):  # noqa: C417
                 raise TransformerInputError(
                     "The data must be of type string if order_by is 'alphabetical'."
                 )
@@ -90,9 +88,7 @@ class UniformEncoder(BaseTransformer):
         """
         categories_to_print = ', '.join(str(x) for x in unseen_categories[:3])
         if len(unseen_categories) > 3:
-            categories_to_print = (
-                f'{categories_to_print}, +{len(unseen_categories) - 3} more'
-            )
+            categories_to_print = f'{categories_to_print}, +{len(unseen_categories) - 3} more'
 
         return categories_to_print
 
@@ -137,9 +133,7 @@ class UniformEncoder(BaseTransformer):
         nan_value = freq[np.nan] if np.nan in freq.index else None
         freq = freq.reindex(labels, fill_value=nan_value).array
 
-        self.frequencies, self.intervals = self._compute_frequencies_intervals(
-            labels, freq
-        )
+        self.frequencies, self.intervals = self._compute_frequencies_intervals(labels, freq)
 
     def _transform(self, data):
         """Map the category to a continuous value.
@@ -159,9 +153,7 @@ class UniformEncoder(BaseTransformer):
         if unseen_indexes.any():
             # Keep the 3 first unseen categories
             unseen_categories = list(data.loc[unseen_indexes].unique())
-            categories_to_print = self._get_message_unseen_categories(
-                unseen_categories
-            )
+            categories_to_print = self._get_message_unseen_categories(unseen_categories)
             warnings.warn(
                 f"The data in column '{self.get_input_column()}' contains new categories "
                 f"that did not appear during 'fit' ({categories_to_print}). Assigning "
@@ -172,14 +164,10 @@ class UniformEncoder(BaseTransformer):
 
             choices = list(self.frequencies.keys())
             size = unseen_indexes.size
-            data_with_none[unseen_indexes] = np.random.choice(
-                choices, size=size
-            )
+            data_with_none[unseen_indexes] = np.random.choice(choices, size=size)
 
         def map_labels(label):
-            return np.random.uniform(
-                self.intervals[label][0], self.intervals[label][1]
-            )
+            return np.random.uniform(self.intervals[label][0], self.intervals[label][1])
 
         return data_with_none.map(map_labels).astype(float)
 
@@ -277,9 +265,7 @@ class OrderedUniformEncoder(UniformEncoder):
         nans_not_seen = pd.isna(self.order).any() and not pd.isna(data).any()
         if category_not_seen or nans_not_seen:
             unseen_categories = [x for x in self.order if x not in data.array]
-            categories_to_print = self._get_message_unseen_categories(
-                unseen_categories
-            )
+            categories_to_print = self._get_message_unseen_categories(unseen_categories)
             LOGGER.info(
                 "For column '%s', some of the provided category values were not present in the"
                 ' data during fit: (%s).',
@@ -298,9 +284,7 @@ class OrderedUniformEncoder(UniformEncoder):
         nan_value = freq[np.nan] if np.nan in freq.index else None
         freq = freq.reindex(self.order, fill_value=nan_value).array
 
-        self.frequencies, self.intervals = self._compute_frequencies_intervals(
-            self.order, freq
-        )
+        self.frequencies, self.intervals = self._compute_frequencies_intervals(self.order, freq)
 
     def _transform(self, data):
         """Map the category to a continuous value."""
@@ -383,13 +367,9 @@ class FrequencyEncoder(BaseTransformer):
             if pd.isna(element):
                 return data_is_na.loc[data_is_na == 1].index[0]
 
-            return data_with_new_index.loc[
-                data_with_new_index == element
-            ].index[0]
+            return data_with_new_index.loc[data_with_new_index == element].index[0]
 
-        augmented_frequencies[sortable_column_name] = frequencies.index.map(
-            tie_breaker
-        )
+        augmented_frequencies[sortable_column_name] = frequencies.index.map(tie_breaker)
         augmented_frequencies = augmented_frequencies.sort_values(
             [column_name, sortable_column_name], ascending=[False, True]
         )
@@ -416,9 +396,7 @@ class FrequencyEncoder(BaseTransformer):
             start = end
 
         means = pd.Series(means, index=list(frequencies.keys()))
-        starts = pd.DataFrame(starts, columns=['category', 'start']).set_index(
-            'start'
-        )
+        starts = pd.DataFrame(starts, columns=['category', 'start']).set_index('start')
 
         return intervals, means, starts
 
@@ -465,9 +443,7 @@ class FrequencyEncoder(BaseTransformer):
                     size=mask.sum(),
                     random_state=self.random_states['transform'],
                 )
-                result[mask] = self._clip_noised_transform(
-                    result[mask], start, end
-                )
+                result[mask] = self._clip_noised_transform(result[mask], start, end)
             else:
                 result[mask] = mean
 
@@ -481,21 +457,14 @@ class FrequencyEncoder(BaseTransformer):
         start, end, mean, std = self.intervals[category]
 
         if self.add_noise:
-            result = norm.rvs(
-                mean, std, random_state=self.random_states['transform']
-            )
+            result = norm.rvs(mean, std, random_state=self.random_states['transform'])
             return self._clip_noised_transform(result, start, end)
 
         return mean
 
     def _transform_by_row(self, data):
         """Transform the data row by row."""
-        data = (
-            data.infer_objects()
-            .fillna(np.nan)
-            .apply(self._get_value)
-            .to_numpy()
-        )
+        data = data.infer_objects().fillna(np.nan).apply(self._get_value).to_numpy()
 
         return data
 
@@ -511,9 +480,7 @@ class FrequencyEncoder(BaseTransformer):
         """
         fit_categories = pd.Series(self.intervals.keys())
         has_nan = pd.isna(fit_categories).any()
-        unseen_indexes = ~(
-            data.isin(fit_categories) | (pd.isna(data) & has_nan)
-        )
+        unseen_indexes = ~(data.isin(fit_categories) | (pd.isna(data) & has_nan))
         if unseen_indexes.any():
             # Select only the first 5 unseen categories to avoid flooding the console.
             unseen_categories = set(data[unseen_indexes][:5])
@@ -524,9 +491,7 @@ class FrequencyEncoder(BaseTransformer):
                 'please fit the transformer again with the new data.'
             )
 
-        data[unseen_indexes] = np.random.choice(
-            fit_categories, size=unseen_indexes.size
-        )
+        data[unseen_indexes] = np.random.choice(fit_categories, size=unseen_indexes.size)
         if len(self.means) < len(data):
             return self._transform_by_category(data)
 
@@ -683,9 +648,7 @@ class OneHotEncoder(BaseTransformer):
         """
         data = self._prepare_data(data)
         unique_data = {np.nan if pd.isna(x) else x for x in pd.unique(data)}
-        unseen_categories = unique_data - {
-            np.nan if pd.isna(x) else x for x in self.dummies
-        }
+        unseen_categories = unique_data - {np.nan if pd.isna(x) else x for x in self.dummies}
         if unseen_categories:
             # Select only the first 5 unseen categories to avoid flooding the console.
             examples_unseen_categories = set(list(unseen_categories)[:5])
@@ -803,8 +766,7 @@ class LabelEncoder(BaseTransformer):
         unique_data = self._order_categories(unique_data)
         self.values_to_categories = dict(enumerate(unique_data))
         self.categories_to_values = {
-            category: value
-            for value, category in self.values_to_categories.items()
+            category: value for value, category in self.values_to_categories.items()
         }
 
     def _transform(self, data):
@@ -822,9 +784,7 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pd.Series
         """
-        mapped = (
-            data.infer_objects().fillna(np.nan).map(self.categories_to_values)
-        )
+        mapped = data.infer_objects().fillna(np.nan).map(self.categories_to_values)
         is_null = mapped.isna()
         if is_null.any():
             # Select only the first 5 unseen categories to avoid flooding the console.
@@ -836,9 +796,7 @@ class LabelEncoder(BaseTransformer):
                 'please fit the transformer again with the new data.'
             )
 
-        mapped[is_null] = np.random.randint(
-            len(self.categories_to_values), size=is_null.sum()
-        )
+        mapped[is_null] = np.random.randint(len(self.categories_to_values), size=is_null.sum())
 
         if self.add_noise:
             mapped = mapped.astype(float)
@@ -860,9 +818,7 @@ class LabelEncoder(BaseTransformer):
         if self.add_noise:
             data = np.floor(data)
 
-        data = data.clip(
-            min(self.values_to_categories), max(self.values_to_categories)
-        )
+        data = data.clip(min(self.values_to_categories), max(self.values_to_categories))
         data = data.round().map(self.values_to_categories)
         data = try_convert_to_dtype(data, self.dtype)
 
@@ -936,8 +892,7 @@ class OrderedLabelEncoder(LabelEncoder):
 
         self.values_to_categories = dict(enumerate(self.order))
         self.categories_to_values = {
-            category: value
-            for value, category in self.values_to_categories.items()
+            category: value for value, category in self.values_to_categories.items()
         }
 
 

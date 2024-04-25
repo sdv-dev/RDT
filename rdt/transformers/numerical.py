@@ -94,9 +94,7 @@ class FloatFormatter(BaseTransformer):
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
 
-    def _raise_out_of_bounds_error(
-        self, value, name, bound_type, min_bound, max_bound
-    ):
+    def _raise_out_of_bounds_error(self, value, name, bound_type, min_bound, max_bound):
         raise ValueError(
             f"The {bound_type} value in column '{name}' is {value}."
             f" All values represented by '{self.computer_representation}'"
@@ -313,9 +311,7 @@ class GaussianNormalizer(FloatFormatter):
                     'instead.',
                     FutureWarning,
                 )
-                distribution = self._DEPRECATED_DISTRIBUTIONS_MAPPING[
-                    distribution
-                ]
+                distribution = self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]
 
             distribution = self._distributions[distribution]
 
@@ -323,17 +319,11 @@ class GaussianNormalizer(FloatFormatter):
 
     def _get_univariate(self):
         distribution = self._distribution
-        if any(
-            isinstance(distribution, dist)
-            for dist in self._distributions.values()
-        ):
+        if any(isinstance(distribution, dist) for dist in self._distributions.values()):
             return copy.deepcopy(distribution)
         if isinstance(distribution, tuple):
             return distribution[0](**distribution[1])
-        if (
-            isinstance(distribution, type)
-            and distribution in self._distributions.values()
-        ):
+        if isinstance(distribution, type) and distribution in self._distributions.values():
             return distribution()
 
         raise TypeError(f'Invalid distribution: {distribution}')
@@ -505,9 +495,7 @@ class ClusterBasedNormalizer(FloatFormatter):
             warnings.simplefilter('ignore')
             self._bgm_transformer.fit(data.reshape(-1, 1))
 
-        self.valid_component_indicator = (
-            self._bgm_transformer.weights_ > self.weight_threshold
-        )
+        self.valid_component_indicator = self._bgm_transformer.weights_ > self.weight_threshold
 
     def _transform(self, data):
         """Transform the numerical data.
@@ -554,10 +542,7 @@ class ClusterBasedNormalizer(FloatFormatter):
         normalized = np.clip(normalized, -0.99, 0.99)
         normalized = normalized[:, 0]
         rows = [normalized, selected_component]
-        if (
-            self.null_transformer
-            and self.null_transformer.models_missing_values()
-        ):
+        if self.null_transformer and self.null_transformer.models_missing_values():
             rows.append(model_missing_values)
 
         return np.stack(rows, axis=1)  # noqa: PD013
@@ -567,9 +552,7 @@ class ClusterBasedNormalizer(FloatFormatter):
         means = self._bgm_transformer.means_.reshape([-1])
         stds = np.sqrt(self._bgm_transformer.covariances_).reshape([-1])
         selected_component = data[:, 1].round().astype(int)
-        selected_component = selected_component.clip(
-            0, self.valid_component_indicator.sum() - 1
-        )
+        selected_component = selected_component.clip(0, self.valid_component_indicator.sum() - 1)
         std_t = stds[self.valid_component_indicator][selected_component]
         mean_t = means[self.valid_component_indicator][selected_component]
         reversed_data = normalized * self.STD_MULTIPLIER * std_t + mean_t
@@ -590,10 +573,7 @@ class ClusterBasedNormalizer(FloatFormatter):
             data = data.to_numpy()
 
         recovered_data = self._reverse_transform_helper(data)
-        if (
-            self.null_transformer
-            and self.null_transformer.models_missing_values()
-        ):
+        if self.null_transformer and self.null_transformer.models_missing_values():
             recovered_data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
 
         return super()._reverse_transform(recovered_data)

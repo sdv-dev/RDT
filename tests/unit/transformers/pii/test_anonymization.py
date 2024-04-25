@@ -31,9 +31,7 @@ class TestAnonimization:
         assert state_provider == 'address.en_US'
 
     @patch('rdt.transformers.pii.anonymization.AnonymizedFaker')
-    def test_get_anonymized_transformer_with_existing_sdtype(
-        self, mock_anonymized_faker
-    ):
+    def test_get_anonymized_transformer_with_existing_sdtype(self, mock_anonymized_faker):
         """Test the ``get_anonymized_transformer`` method.
 
         Test that when calling with an existing ``sdtype`` / ``function_name`` from the
@@ -71,9 +69,7 @@ class TestAnonimization:
         )
 
     @patch('rdt.transformers.pii.anonymization.AnonymizedFaker')
-    def test_get_anonymized_transformer_with_custom_sdtype(
-        self, mock_anonymized_faker
-    ):
+    def test_get_anonymized_transformer_with_custom_sdtype(self, mock_anonymized_faker):
         """Test the ``get_anonymized_transformer`` method.
 
         Test that when calling with a custom ``sdtype`` / ``function_name`` that does not belong

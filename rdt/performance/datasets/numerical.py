@@ -42,9 +42,7 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
     @staticmethod
     def generate(num_rows):
         """Generate a ``num_rows`` number of rows."""
-        return add_nans(
-            RandomIntegerGenerator.generate(num_rows).astype(float)
-        )
+        return add_nans(RandomIntegerGenerator.generate(num_rows).astype(float))
 
     @staticmethod
     def get_performance_thresholds():
@@ -88,9 +86,7 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
     @staticmethod
     def generate(num_rows):
         """Generate a ``num_rows`` number of rows."""
-        return add_nans(
-            ConstantIntegerGenerator.generate(num_rows).astype(float)
-        )
+        return add_nans(ConstantIntegerGenerator.generate(num_rows).astype(float))
 
     @staticmethod
     def get_performance_thresholds():

@@ -46,12 +46,8 @@ def test_set_random_states(mock_numpy):
         call(initial_state_value),
         call(first_state),
     ])
-    my_function.assert_called_once_with(
-        mock_numpy.random.RandomState.return_value, 'fit'
-    )
-    mock_numpy.random.RandomState.return_value.set_state.assert_called_with(
-        second_state
-    )
+    my_function.assert_called_once_with(mock_numpy.random.RandomState.return_value, 'fit')
+    mock_numpy.random.RandomState.return_value.set_state.assert_called_with(second_state)
 
 
 @patch('rdt.transformers.base.set_random_states')
@@ -74,9 +70,7 @@ def test_random_state(mock_set_random_states):
     wrapped_function(instance)
 
     # Assert
-    mock_set_random_states.assert_called_once_with(
-        {}, 'name', mock_set_random_state
-    )
+    mock_set_random_states.assert_called_once_with({}, 'name', mock_set_random_state)
     my_function.assert_called_once()
 
 
@@ -176,8 +170,7 @@ class TestBaseTransformer:
 
         # Run
         expected_message = (
-            '`get_input_sdtype` is deprecated. Please use '
-            '`get_supported_sdtypes` instead.'
+            '`get_input_sdtype` is deprecated. Please use ' '`get_supported_sdtypes` instead.'
         )
         with pytest.warns(FutureWarning, match=expected_message):
             input_sdtype = BaseTransformer.get_input_sdtype()
@@ -260,12 +253,8 @@ class TestBaseTransformer:
 
         # Run
         BaseTransformer._set_missing_value_generation(instance_none, None)
-        BaseTransformer._set_missing_value_generation(
-            instance_random, 'random'
-        )
-        BaseTransformer._set_missing_value_generation(
-            instance_from_column, 'from_column'
-        )
+        BaseTransformer._set_missing_value_generation(instance_random, 'random')
+        BaseTransformer._set_missing_value_generation(instance_from_column, 'from_column')
 
         # Assert
         assert instance_none.missing_value_generation is None
@@ -326,9 +315,7 @@ class TestBaseTransformer:
             ),
             FutureWarning,
         )
-        instance._set_missing_value_generation.assert_called_once_with(
-            'from_column'
-        )
+        instance._set_missing_value_generation.assert_called_once_with('from_column')
 
     @patch('rdt.transformers.base.warnings')
     def test__set_model_missing_values_false(self, mock_warnings):
@@ -347,9 +334,7 @@ class TestBaseTransformer:
             ),
             FutureWarning,
         )
-        instance._set_missing_value_generation.assert_called_once_with(
-            'random'
-        )
+        instance._set_missing_value_generation.assert_called_once_with('random')
 
     def test___repr___no_parameters(self):
         """Test that the ``__str__`` method returns the class name.
@@ -446,9 +431,7 @@ class TestBaseTransformer:
             column_prefix = 'column_name'
 
             def __init__(self):
-                self.output_properties = {
-                    None: {'next_transformer': transformer}
-                }
+                self.output_properties = {None: {'next_transformer': transformer}}
 
         dummy_transformer = Dummy()
 
@@ -742,14 +725,10 @@ class TestBaseTransformer:
         columns_data = pd.Series([7, 8, 9], name='c')
 
         # Run
-        result = BaseTransformer._add_columns_to_data(
-            data, columns_data, columns
-        )
+        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
 
         # Assert
-        expected = pd.DataFrame(
-            {'a': [1, 2, 3], 'b': [4, 5, 6], 'c': [7, 8, 9]}, index=[2, 0, 1]
-        )
+        expected = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6], 'c': [7, 8, 9]}, index=[2, 0, 1])
         pd.testing.assert_frame_equal(result, expected)
 
     def test__add_columns_to_data_dataframe(self):
@@ -779,9 +758,7 @@ class TestBaseTransformer:
         columns_data = pd.DataFrame({'c': [7, 8, 9], 'd': [10, 11, 12]})
 
         # Run
-        result = BaseTransformer._add_columns_to_data(
-            data, columns_data, columns
-        )
+        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame(
@@ -822,14 +799,10 @@ class TestBaseTransformer:
         columns_data = np.array([7, 8, 9], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._add_columns_to_data(
-            data, columns_data, columns
-        )
+        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
 
         # Assert
-        expected = pd.DataFrame(
-            {'a': [1, 2, 3], 'b': [4, 5, 6], 'c': [7, 8, 9]}, index=[2, 0, 1]
-        )
+        expected = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6], 'c': [7, 8, 9]}, index=[2, 0, 1])
         pd.testing.assert_frame_equal(result, expected)
 
     def test__add_columns_to_data_2d_array(self):
@@ -853,14 +826,10 @@ class TestBaseTransformer:
         columns_data = np.array([[7, 1], [8, 5], [9, 9]], dtype=np.int64)
 
         # Run
-        result = BaseTransformer._add_columns_to_data(
-            data, columns_data, columns
-        )
+        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
 
         # Assert
-        expected = pd.DataFrame(
-            {'a': [1, 2, 3], 'b': [7, 8, 9], 'c': [1, 5, 9]}, index=[2, 0, 1]
-        )
+        expected = pd.DataFrame({'a': [1, 2, 3], 'b': [7, 8, 9], 'c': [1, 5, 9]}, index=[2, 0, 1])
         pd.testing.assert_frame_equal(result, expected)
 
     def test__add_columns_to_data_none(self):
@@ -881,9 +850,7 @@ class TestBaseTransformer:
         columns_data = None
 
         # Run
-        result = BaseTransformer._add_columns_to_data(
-            data, columns_data, columns
-        )
+        result = BaseTransformer._add_columns_to_data(data, columns_data, columns)
 
         # Assert
         expected = pd.DataFrame(
@@ -1040,9 +1007,7 @@ class TestBaseTransformer:
         # Assert
         expected_data = pd.Series([1, 2, 3], name='a')
         assert dummy_transformer.columns == ['a']
-        pd.testing.assert_series_equal(
-            dummy_transformer._passed_data, expected_data
-        )
+        pd.testing.assert_series_equal(dummy_transformer._passed_data, expected_data)
         assert dummy_transformer.column_prefix == 'a'
         assert dummy_transformer.output_columns == ['a', 'a.is_null']
 
@@ -1082,9 +1047,7 @@ class TestBaseTransformer:
         dummy_transformer = Dummy()
 
         # Run
-        dummy_transformer.set_random_state(
-            np.random.RandomState(42), 'transform'
-        )
+        dummy_transformer.set_random_state(np.random.RandomState(42), 'transform')
         transformed_data = dummy_transformer.transform(data)
 
         # Assert
@@ -1127,9 +1090,7 @@ class TestBaseTransformer:
         dummy_transformer = Dummy()
 
         # Run
-        dummy_transformer.set_random_state(
-            np.random.RandomState(42), 'transform'
-        )
+        dummy_transformer.set_random_state(np.random.RandomState(42), 'transform')
         transformed_data = dummy_transformer.transform(data)
 
         # Assert
@@ -1137,9 +1098,7 @@ class TestBaseTransformer:
             'a': [1, 2, 3],
             'b': [4, 5, 6],
         })
-        pd.testing.assert_frame_equal(
-            dummy_transformer._passed_data, expected_passed
-        )
+        pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
 
         expected_transformed = pd.DataFrame({
             'c': [7, 8, 9],
@@ -1215,9 +1174,7 @@ class TestBaseTransformer:
         dummy_transformer = Dummy()
 
         # Run
-        dummy_transformer.set_random_state(
-            np.random.RandomState(42), 'reverse_transform'
-        )
+        dummy_transformer.set_random_state(np.random.RandomState(42), 'reverse_transform')
         transformed_data = dummy_transformer.reverse_transform(data)
 
         # Assert
@@ -1248,9 +1205,7 @@ class TestBaseTransformer:
 
         # Run
         dummy_transformer = Dummy()
-        dummy_transformer.set_random_state(
-            np.random.RandomState(42), 'reverse_transform'
-        )
+        dummy_transformer.set_random_state(np.random.RandomState(42), 'reverse_transform')
         transformed_data = dummy_transformer.reverse_transform(data)
 
         # Assert
@@ -1258,9 +1213,7 @@ class TestBaseTransformer:
             'a': [1, 2, 3],
             'b.is_null': [4, 5, 6],
         })
-        pd.testing.assert_frame_equal(
-            dummy_transformer._passed_data, expected_passed
-        )
+        pd.testing.assert_frame_equal(dummy_transformer._passed_data, expected_passed)
 
         expected_transformed = pd.DataFrame({
             'c': [7, 8, 9],
@@ -1411,13 +1364,9 @@ class TestBaseMultiColumnTransformer:
             'b': 'categorical',
             'd': 'boolean',
         }
-        expected_error_msg = re.escape(
-            'Columns (d) are not present in the data.'
-        )
+        expected_error_msg = re.escape('Columns (d) are not present in the data.')
         with pytest.raises(ValueError, match=expected_error_msg):
-            transformer._validate_columns_to_sdtypes(
-                data, wrong_columns_to_sdtypes
-            )
+            transformer._validate_columns_to_sdtypes(data, wrong_columns_to_sdtypes)
 
     def test__validate_sdtypes(self):
         """Test the ``_validate_sdtypes`` method."""
@@ -1463,9 +1412,7 @@ class TestBaseMultiColumnTransformer:
         transformer.fit(data, columns_to_sdtypes)
 
         # Assert
-        transformer._validate_columns_to_sdtypes.assert_called_once_with(
-            data, columns_to_sdtypes
-        )
+        transformer._validate_columns_to_sdtypes.assert_called_once_with(data, columns_to_sdtypes)
         transformer._store_columns.assert_called_once_with(['a', 'b'], data)
         transformer._set_seed.assert_called_once_with(data)
         transformer._get_columns_data.assert_called_once_with(data, ['a', 'b'])

@@ -141,12 +141,8 @@ def test_multi_column_transformer_same_number_of_columns_input_output():
         def _fit(self, columns_data):
             self.output_properties = {
                 f'{self.columns[0]}': {'sdtype': 'numerical'},
-                f'{self.columns[0]}+{self.columns[1]}': {
-                    'sdtype': 'numerical'
-                },
-                f'{self.columns[0]}+{self.columns[1]}+{self.columns[2]}': {
-                    'sdtype': 'numerical'
-                },
+                f'{self.columns[0]}+{self.columns[1]}': {'sdtype': 'numerical'},
+                f'{self.columns[0]}+{self.columns[1]}+{self.columns[2]}': {'sdtype': 'numerical'},
             }
 
         def _get_prefix(self):
@@ -218,14 +214,10 @@ def test_multi_column_transformer_less_output_than_input_columns():
             column_names = list(data.columns)
 
             col1, col2 = column_names[0].split('#')
-            result[[col1, col2]] = result[column_names[0]].str.split(
-                '#', expand=True
-            )
+            result[[col1, col2]] = result[column_names[0]].str.split('#', expand=True)
 
             col3, col4 = column_names[1].split('#')
-            result[[col3, col4]] = result[column_names[1]].str.split(
-                '#', expand=True
-            )
+            result[[col3, col4]] = result[column_names[1]].str.split('#', expand=True)
 
             return result.drop(columns=column_names)
 
@@ -283,12 +275,8 @@ def test_multi_column_transformer_more_output_than_input_columns():
 
         def _reverse_transform(self, data):
             result = data.copy()
-            reverse_1 = (
-                result[self.output_columns[0]] + result[self.output_columns[1]]
-            )
-            reverse_2 = (
-                result[self.output_columns[2]] + result[self.output_columns[3]]
-            )
+            reverse_1 = result[self.output_columns[0]] + result[self.output_columns[1]]
+            reverse_2 = result[self.output_columns[2]] + result[self.output_columns[3]]
             result[self.columns[0]] = reverse_1
             result[self.columns[1]] = reverse_2
 

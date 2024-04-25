@@ -43,10 +43,7 @@ class TestNullTransformer:
         transformer = NullTransformer('a_missing_value_replacement', None)
 
         # Assert
-        assert (
-            transformer._missing_value_replacement
-            == 'a_missing_value_replacement'
-        )
+        assert transformer._missing_value_replacement == 'a_missing_value_replacement'
         assert transformer._missing_value_generation is None
         assert transformer._min_value is None
         assert transformer._max_value is None
@@ -70,9 +67,7 @@ class TestNullTransformer:
         ``True``.
         """
         # Setup
-        transformer = NullTransformer(
-            'something', missing_value_generation='from_column'
-        )
+        transformer = NullTransformer('something', missing_value_generation='from_column')
 
         # Run
         models_missing_values = transformer.models_missing_values()
@@ -87,18 +82,12 @@ class TestNullTransformer:
         ``False``.
         """
         # Setup
-        none_transformer = NullTransformer(
-            'something', missing_value_generation=None
-        )
-        random_transformer = NullTransformer(
-            'something', missing_value_generation='random'
-        )
+        none_transformer = NullTransformer('something', missing_value_generation=None)
+        random_transformer = NullTransformer('something', missing_value_generation='random')
 
         # Run
         none_models_missing_values = none_transformer.models_missing_values()
-        random_models_missing_values = (
-            random_transformer.models_missing_values()
-        )
+        random_models_missing_values = random_transformer.models_missing_values()
 
         # Assert
         assert none_models_missing_values is False
@@ -126,9 +115,7 @@ class TestNullTransformer:
 
         # Run
         data = pd.Series([1, np.nan, 3], name='abc')
-        missing_value_replacement = transformer._get_missing_value_replacement(
-            data
-        )
+        missing_value_replacement = transformer._get_missing_value_replacement(data)
 
         # Assert
         assert missing_value_replacement == 'a_missing_value_replacement'
@@ -155,9 +142,7 @@ class TestNullTransformer:
 
         # Run
         data = pd.Series([1, 2, np.nan], name='abc')
-        missing_value_replacement = transformer._get_missing_value_replacement(
-            data
-        )
+        missing_value_replacement = transformer._get_missing_value_replacement(data)
 
         # Assert
         assert missing_value_replacement == 1.5
@@ -184,9 +169,7 @@ class TestNullTransformer:
 
         # Run
         data = pd.Series(['a', 'b', 'b', np.nan], name='abc')
-        missing_value_replacement = transformer._get_missing_value_replacement(
-            data
-        )
+        missing_value_replacement = transformer._get_missing_value_replacement(data)
 
         # Assert
         assert missing_value_replacement == 'b'
@@ -213,9 +196,7 @@ class TestNullTransformer:
 
         # Run
         data = pd.Series([1, 2, np.nan], name='abc')
-        missing_value_replacement = transformer._get_missing_value_replacement(
-            data
-        )
+        missing_value_replacement = transformer._get_missing_value_replacement(data)
 
         # Assert
         assert missing_value_replacement == 1.5
@@ -228,9 +209,7 @@ class TestNullTransformer:
         data = pd.Series([float('nan'), None, np.nan], name='abc')
 
         # Run
-        missing_value_replacement = transformer._get_missing_value_replacement(
-            data
-        )
+        missing_value_replacement = transformer._get_missing_value_replacement(data)
 
         # Assert
         logger_mock.info.assert_called_once_with(
@@ -261,9 +240,7 @@ class TestNullTransformer:
 
         # Run
         data = pd.Series([1, 2, 2, np.nan], name='abc')
-        missing_value_replacement = transformer._get_missing_value_replacement(
-            data
-        )
+        missing_value_replacement = transformer._get_missing_value_replacement(data)
 
         # Assert
         assert missing_value_replacement == 2
@@ -276,9 +253,7 @@ class TestNullTransformer:
         data = pd.Series([float('nan'), None, np.nan], name='abc')
 
         # Run
-        missing_value_replacement = transformer._get_missing_value_replacement(
-            data
-        )
+        missing_value_replacement = transformer._get_missing_value_replacement(data)
 
         # Assert
         logger_mock.info.assert_called_once_with(
@@ -382,61 +357,29 @@ class TestNullTransformer:
         missing_value_generation_none_str.fit(nulls_str)
 
         # Assert
-        assert (
-            missing_value_generation_random_nulls._missing_value_generation
-            == 'random'
-        )
+        assert missing_value_generation_random_nulls._missing_value_generation == 'random'
         assert missing_value_generation_random_nulls.nulls
-        assert (
-            missing_value_generation_random_nulls._missing_value_replacement
-            == 'b'
-        )
+        assert missing_value_generation_random_nulls._missing_value_replacement == 'b'
 
-        assert (
-            missing_value_generation_random_no_nulls._missing_value_generation
-            == 'random'
-        )
+        assert missing_value_generation_random_no_nulls._missing_value_generation == 'random'
         assert not missing_value_generation_random_no_nulls.nulls
-        assert (
-            missing_value_generation_random_no_nulls._missing_value_replacement
-            == 'b'
-        )
+        assert missing_value_generation_random_no_nulls._missing_value_replacement == 'b'
 
-        assert (
-            missing_value_generation_column_nulls._missing_value_generation
-            == 'from_column'
-        )
+        assert missing_value_generation_column_nulls._missing_value_generation == 'from_column'
         assert missing_value_generation_column_nulls.nulls
-        assert (
-            missing_value_generation_column_nulls._missing_value_replacement
-            == 2
-        )
+        assert missing_value_generation_column_nulls._missing_value_replacement == 2
 
-        assert (
-            missing_value_generation_column_no_nulls._missing_value_generation
-            is None
-        )
+        assert missing_value_generation_column_no_nulls._missing_value_generation is None
         assert not missing_value_generation_column_no_nulls.nulls
-        assert (
-            missing_value_generation_column_no_nulls._missing_value_replacement
-            == 2.5
-        )
+        assert missing_value_generation_column_no_nulls._missing_value_replacement == 2.5
 
-        assert (
-            missing_value_generation_none_int._missing_value_generation is None
-        )
+        assert missing_value_generation_none_int._missing_value_generation is None
         assert missing_value_generation_none_int.nulls is None
-        assert (
-            missing_value_generation_none_int._missing_value_replacement == 2
-        )
+        assert missing_value_generation_none_int._missing_value_replacement == 2
 
-        assert (
-            missing_value_generation_none_str._missing_value_generation is None
-        )
+        assert missing_value_generation_none_str._missing_value_generation is None
         assert missing_value_generation_none_str.nulls is None
-        assert (
-            missing_value_generation_none_str._missing_value_replacement == 'b'
-        )
+        assert missing_value_generation_none_str._missing_value_replacement == 'b'
 
     def test_transform__missing_value_generation_from_column(self):
         """Test transform when ``_missing_value_generation`` is set to ``from_column``.
@@ -487,9 +430,7 @@ class TestNullTransformer:
         pd.testing.assert_series_equal(modified_input_data, input_data)
 
     @patch('rdt.transformers.null.np.random.uniform')
-    def test_transform__missing_value_replacement_random(
-        self, mock_np_random_uniform
-    ):
+    def test_transform__missing_value_replacement_random(self, mock_np_random_uniform):
         """Test transform when ``_missing_value_replacement`` is set to ``random``."""
         # Setup
         transformer = NullTransformer(missing_value_replacement='random')
@@ -564,9 +505,7 @@ class TestNullTransformer:
         pd.testing.assert_series_equal(expected_output, output)
 
     @patch('rdt.transformers.null.np.random')
-    def test_reverse_transform__missing_value_generation_random_with_nulls(
-        self, random_mock
-    ):
+    def test_reverse_transform__missing_value_generation_random_with_nulls(self, random_mock):
         """Test reverse_transform when ``missing_value_generation`` is ``random`` and nulls.
 
         When ``missing_value_generation`` is ``random`` and there are nulls, a ``_null_percentage``

@@ -199,9 +199,7 @@ class TestAnonymizedFaker:
     def test_cardinality_rule_match_not_enough_unique_values(self):
         """Test it works with the cardinality rule 'match' and too few values to transform."""
         # Setup
-        data_fit = pd.DataFrame({
-            'col': [1, 2, 3, 1, 2, None, np.nan, np.nan, 2]
-        })
+        data_fit = pd.DataFrame({'col': [1, 2, 3, 1, 2, None, np.nan, np.nan, 2]})
         data_transform = pd.DataFrame({'col': [1, 1, 1]})
         instance = AnonymizedFaker(cardinality_rule='match')
 
@@ -295,9 +293,7 @@ class TestPsuedoAnonymizedFaker:
             data['animals'],
         )
         unique_animals = set(reverse_transformed['animals'])
-        assert (
-            unique_animals.intersection(set(instance._mapping_dict)) == set()
-        )
+        assert unique_animals.intersection(set(instance._mapping_dict)) == set()
         assert len(reverse_transformed) == len(transformed) == 4
 
     def test_with_nans(self):
@@ -315,9 +311,7 @@ class TestPsuedoAnonymizedFaker:
             data['animals'],
         )
         unique_animals = set(reverse_transformed['animals'])
-        assert (
-            unique_animals.intersection(set(instance._mapping_dict)) == set()
-        )
+        assert unique_animals.intersection(set(instance._mapping_dict)) == set()
         assert len(reverse_transformed) == len(transformed) == 4
 
     def test_with_custom_provider(self):
@@ -335,7 +329,5 @@ class TestPsuedoAnonymizedFaker:
             data['animals'],
         )
         unique_animals = set(reverse_transformed['animals'])
-        assert (
-            unique_animals.intersection(set(instance._mapping_dict)) == set()
-        )
+        assert unique_animals.intersection(set(instance._mapping_dict)) == set()
         assert len(reverse_transformed) == len(transformed) == 4

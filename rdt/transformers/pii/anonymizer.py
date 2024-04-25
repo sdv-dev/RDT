@@ -87,18 +87,14 @@ class AnonymizedFaker(BaseTransformer):
 
     def _check_locales(self):
         """Check if the locales exist for the provided provider."""
-        locales = (
-            self.locales if isinstance(self.locales, list) else [self.locales]
-        )
+        locales = self.locales if isinstance(self.locales, list) else [self.locales]
         missed_locales = []
         for locale in locales:
             provider_name = self.provider_name
             if self.provider_name.endswith(f'.{locale}'):
                 provider_name = self.provider_name.replace(f'.{locale}', '')
 
-            spec = importlib.util.find_spec(
-                f'faker.providers.{provider_name}.{locale}'
-            )
+            spec = importlib.util.find_spec(f'faker.providers.{provider_name}.{locale}')
             if spec is None and locale != 'en_US':
                 missed_locales.append(locale)
 
@@ -124,9 +120,7 @@ class AnonymizedFaker(BaseTransformer):
         self._data_cardinality = None
         self.data_length = None
         self.enforce_uniqueness = enforce_uniqueness
-        self.cardinality_rule = (
-            cardinality_rule.lower() if cardinality_rule else None
-        )
+        self.cardinality_rule = cardinality_rule.lower() if cardinality_rule else None
         if enforce_uniqueness:
             warnings.warn(
                 "The 'enforce_uniqueness' parameter is no longer supported. "
@@ -144,9 +138,7 @@ class AnonymizedFaker(BaseTransformer):
             )
 
         self.function_name = function_name if function_name else 'lexify'
-        self.function_kwargs = (
-            deepcopy(function_kwargs) if function_kwargs else {}
-        )
+        self.function_kwargs = deepcopy(function_kwargs) if function_kwargs else {}
         self.check_provider_function(self.provider_name, self.function_name)
         self.output_properties = {None: {'next_transformer': None}}
 
@@ -202,13 +194,9 @@ class AnonymizedFaker(BaseTransformer):
             else:
                 faker_attr = self.faker
         except AttributeError:
-            faker_attr = (
-                self.faker.unique if self.enforce_uniqueness else self.faker
-            )
+            faker_attr = self.faker.unique if self.enforce_uniqueness else self.faker
 
-        result = getattr(faker_attr, self.function_name)(
-            **self.function_kwargs
-        )
+        result = getattr(faker_attr, self.function_name)(**self.function_kwargs)
 
         if isinstance(result, Iterable) and not isinstance(result, str):
             result = ', '.join(map(str, result))
@@ -220,12 +208,8 @@ class AnonymizedFaker(BaseTransformer):
         for value in data.head(5):
             hash_value += str(value)
 
-        hash_value = int(
-            hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16
-        )
-        self._faker_random_seed = hash_value % (
-            (2**32) - 1
-        )  # maximum value for a seed
+        hash_value = int(hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16)
+        self._faker_random_seed = hash_value % ((2**32) - 1)  # maximum value for a seed
         self.faker.seed_instance(self._faker_random_seed)
 
     def _fit(self, data):
@@ -249,9 +233,7 @@ class AnonymizedFaker(BaseTransformer):
         return None
 
     def _get_unique_categories(self, samples):
-        return np.array(
-            [self._function() for _ in range(samples)], dtype=object
-        )
+        return np.array([self._function() for _ in range(samples)], dtype=object)
 
     def _reverse_transform_cardinality_rule_match(self, sample_size):
         """Reverse transform the data when the cardinality rule is 'match'."""
@@ -269,17 +251,13 @@ class AnonymizedFaker(BaseTransformer):
             return reverse_transformed
 
         if sample_size < num_nans + self._data_cardinality:
-            unique_categories = self._get_unique_categories(
-                sample_size - num_nans
-            )
+            unique_categories = self._get_unique_categories(sample_size - num_nans)
             reverse_transformed = np.concatenate([
                 reverse_transformed,
                 unique_categories,
             ])
         else:
-            unique_categories = self._get_unique_categories(
-                self._data_cardinality
-            )
+            unique_categories = self._get_unique_categories(self._data_cardinality)
             num_copies = sample_size - self._data_cardinality - num_nans
             copies = np.random.choice(unique_categories, num_copies)
             reverse_transformed = np.concatenate([
@@ -308,13 +286,8 @@ class AnonymizedFaker(BaseTransformer):
             sample_size = self.data_length
 
         try:
-            if (
-                hasattr(self, 'cardinality_rule')
-                and self.cardinality_rule == 'match'
-            ):
-                reverse_transformed = (
-                    self._reverse_transform_cardinality_rule_match(sample_size)
-                )
+            if hasattr(self, 'cardinality_rule') and self.cardinality_rule == 'match':
+                reverse_transformed = self._reverse_transform_cardinality_rule_match(sample_size)
             else:
                 reverse_transformed = np.array(
                     [self._function() for _ in range(sample_size)],
@@ -328,14 +301,9 @@ class AnonymizedFaker(BaseTransformer):
                 f"('{self.get_input_column()}')."
             ) from exception
 
-        if (
-            self.missing_value_generation == 'random'
-            and not pd.isna(reverse_transformed).any()
-        ):
+        if self.missing_value_generation == 'random' and not pd.isna(reverse_transformed).any():
             num_nans = int(self._nan_frequency * sample_size)
-            nan_indices = np.random.choice(
-                sample_size, num_nans, replace=False
-            )
+            nan_indices = np.random.choice(sample_size, num_nans, replace=False)
             reverse_transformed[nan_indices] = np.nan
 
         return reverse_transformed
@@ -439,9 +407,7 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         unique_values = columns_data[columns_data.notna()].unique()
         unique_data_length = len(unique_values)
         try:
-            generated_values = [
-                self._function() for _ in range(unique_data_length)
-            ]
+            generated_values = [self._function() for _ in range(unique_data_length)]
         except faker.exceptions.UniquenessException as exception:
             raise TransformerProcessingError(
                 'The Faker function you specified is not able to generate '
