@@ -10,41 +10,23 @@ from faker.config import AVAILABLE_LOCALES
 from rdt.transformers import AnonymizedFaker
 
 SDTYPE_ANONYMIZERS = {
-    'address': {
-        'provider_name': 'address',
-        'function_name': 'address'
-    },
-    'email': {
-        'provider_name': 'internet',
-        'function_name': 'email'
-    },
-    'ipv4_address': {
-        'provider_name': 'internet',
-        'function_name': 'ipv4'
-    },
-    'ipv6_address': {
-        'provider_name': 'internet',
-        'function_name': 'ipv6'
-    },
+    'address': {'provider_name': 'address', 'function_name': 'address'},
+    'email': {'provider_name': 'internet', 'function_name': 'email'},
+    'ipv4_address': {'provider_name': 'internet', 'function_name': 'ipv4'},
+    'ipv6_address': {'provider_name': 'internet', 'function_name': 'ipv6'},
     'mac_address': {
         'provider_name': 'internet',
-        'function_name': 'mac_address'
+        'function_name': 'mac_address',
     },
-    'name': {
-        'provider_name': 'person',
-        'function_name': 'name'
-    },
+    'name': {'provider_name': 'person', 'function_name': 'name'},
     'phone_number': {
         'provider_name': 'phone_number',
-        'function_name': 'phone_number'
+        'function_name': 'phone_number',
     },
-    'ssn': {
-        'provider_name': 'ssn',
-        'function_name': 'ssn'
-    },
+    'ssn': {'provider_name': 'ssn', 'function_name': 'ssn'},
     'user_agent_string': {
         'provider_name': 'user_agent',
-        'function_name': 'user_agent'
+        'function_name': 'user_agent',
     },
 }
 
@@ -102,7 +84,7 @@ def get_anonymized_transformer(function_name, transformer_kwargs=None):
     provider_name = _detect_provider_name(function_name, locales=locales)
     transformer_kwargs.update({
         'function_name': function_name,
-        'provider_name': provider_name
+        'provider_name': provider_name,
     })
 
     return AnonymizedFaker(**transformer_kwargs)

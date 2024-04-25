@@ -1,4 +1,5 @@
 """BaseTransformer module."""
+
 import abc
 import contextlib
 import hashlib
@@ -45,6 +46,7 @@ def random_state(function):
         function (Callable):
             The function to wrap around.
     """
+
     @wraps(function)
     def wrapper(self, *args, **kwargs):
         if self.random_states is None:
@@ -82,7 +84,7 @@ class BaseTransformer:
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
             'transform': None,
-            'reverse_transform': None
+            'reverse_transform': None,
         }
 
     def set_random_state(self, state, method_name):
@@ -106,7 +108,7 @@ class BaseTransformer:
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
             'transform': np.random.RandomState(self.random_seed),
-            'reverse_transform': np.random.RandomState(self.random_seed + 1)
+            'reverse_transform': np.random.RandomState(self.random_seed + 1),
         }
 
     @property
@@ -115,7 +117,7 @@ class BaseTransformer:
         warnings.warn(
             "Future versions of RDT will not support the 'model_missing_values' parameter. "
             "Please switch to using the 'missing_value_generation' parameter instead.",
-            FutureWarning
+            FutureWarning,
         )
         return self.missing_value_generation == 'from_column'
 
@@ -132,7 +134,8 @@ class BaseTransformer:
         warnings.warn(
             "Future versions of RDT will not support the 'model_missing_values' parameter. "
             "Please switch to using the 'missing_value_generation' parameter to select your "
-            'strategy.', FutureWarning
+            'strategy.',
+            FutureWarning,
         )
         if model_missing_values is True:
             self._set_missing_value_generation('from_column')
@@ -143,7 +146,8 @@ class BaseTransformer:
         if missing_value_replacement is None:
             warnings.warn(
                 "Setting 'missing_value_replacement' to 'None' is no longer supported. "
-                f"Imputing with the '{default}' instead.", FutureWarning
+                f"Imputing with the '{default}' instead.",
+                FutureWarning,
             )
             self.missing_value_replacement = default
         else:
@@ -186,7 +190,7 @@ class BaseTransformer:
         """
         warnings.warn(
             '`get_input_sdtype` is deprecated. Please use `get_supported_sdtypes` instead.',
-            FutureWarning
+            FutureWarning,
         )
         return cls.get_supported_sdtypes()[0]
 
@@ -367,11 +371,11 @@ class BaseTransformer:
             hash_value += str(value)
 
         hash_value = int(hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16)
-        self.random_seed = hash_value % ((2 ** 32) - 1)  # maximum value for a seed
+        self.random_seed = hash_value % ((2**32) - 1)  # maximum value for a seed
         self.random_states = {
             'fit': self.INITIAL_FIT_STATE,
             'transform': np.random.RandomState(self.random_seed),
-            'reverse_transform': np.random.RandomState(self.random_seed + 1)
+            'reverse_transform': np.random.RandomState(self.random_seed + 1),
         }
 
     @random_state

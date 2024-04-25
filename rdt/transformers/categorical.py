@@ -9,7 +9,11 @@ from scipy.stats import norm
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.utils import check_nan_in_transform, fill_nan_with_none, try_convert_to_dtype
+from rdt.transformers.utils import (
+    check_nan_in_transform,
+    fill_nan_with_none,
+    try_convert_to_dtype,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -155,7 +159,7 @@ class UniformEncoder(BaseTransformer):
                 f"that did not appear during 'fit' ({categories_to_print}). Assigning "
                 'them random values. If you want to model new categories, '
                 "please fit the data again using 'fit'.",
-                category=UserWarning
+                category=UserWarning,
             )
 
             choices = list(self.frequencies.keys())
@@ -257,8 +261,8 @@ class OrderedUniformEncoder(UniformEncoder):
         data = fill_nan_with_none(data)
         self._check_unknown_categories(data)
 
-        category_not_seen = (set(self.order.dropna()) != set(data.dropna()))
-        nans_not_seen = (pd.isna(self.order).any() and not pd.isna(data).any())
+        category_not_seen = set(self.order.dropna()) != set(data.dropna())
+        nans_not_seen = pd.isna(self.order).any() and not pd.isna(data).any()
         if category_not_seen or nans_not_seen:
             unseen_categories = [x for x in self.order if x not in data.array]
             categories_to_print = self._get_message_unseen_categories(unseen_categories)
@@ -266,7 +270,7 @@ class OrderedUniformEncoder(UniformEncoder):
                 "For column '%s', some of the provided category values were not present in the"
                 ' data during fit: (%s).',
                 self.get_input_column(),
-                categories_to_print
+                categories_to_print,
             )
 
             freq = data.value_counts(normalize=True, dropna=False)
@@ -333,7 +337,7 @@ class FrequencyEncoder(BaseTransformer):
         warnings.warn(
             "The 'FrequencyEncoder' transformer will no longer be supported in future versions "
             "of the RDT library. Please use the 'UniformEncoder' transformer instead.",
-            FutureWarning
+            FutureWarning,
         )
         super().__init__()
         self.add_noise = add_noise
@@ -367,8 +371,7 @@ class FrequencyEncoder(BaseTransformer):
 
         augmented_frequencies[sortable_column_name] = frequencies.index.map(tie_breaker)
         augmented_frequencies = augmented_frequencies.sort_values(
-            [column_name, sortable_column_name],
-            ascending=[False, True]
+            [column_name, sortable_column_name], ascending=[False, True]
         )
         sorted_frequencies = augmented_frequencies[column_name]
 
@@ -423,7 +426,7 @@ class FrequencyEncoder(BaseTransformer):
 
     def _transform_by_category(self, data):
         """Transform the data by iterating over the different categories."""
-        result = np.empty(shape=(len(data), ), dtype=float)
+        result = np.empty(shape=(len(data),), dtype=float)
 
         # loop over categories
         for category, values in self.intervals.items():
@@ -435,9 +438,10 @@ class FrequencyEncoder(BaseTransformer):
 
             if self.add_noise:
                 result[mask] = norm.rvs(
-                    mean, std,
+                    mean,
+                    std,
                     size=mask.sum(),
-                    random_state=self.random_states['transform']
+                    random_state=self.random_states['transform'],
                 )
                 result[mask] = self._clip_noised_transform(result[mask], start, end)
             else:
@@ -495,7 +499,7 @@ class FrequencyEncoder(BaseTransformer):
 
     def _reverse_transform_by_category(self, data):
         """Reverse transform the data by iterating over all the categories."""
-        result = np.empty(shape=(len(data), ), dtype=self.dtype)
+        result = np.empty(shape=(len(data),), dtype=self.dtype)
 
         # loop over categories
         for category, values in self.intervals.items():
@@ -762,8 +766,7 @@ class LabelEncoder(BaseTransformer):
         unique_data = self._order_categories(unique_data)
         self.values_to_categories = dict(enumerate(unique_data))
         self.categories_to_values = {
-            category: value
-            for value, category in self.values_to_categories.items()
+            category: value for value, category in self.values_to_categories.items()
         }
 
     def _transform(self, data):
@@ -793,10 +796,7 @@ class LabelEncoder(BaseTransformer):
                 'please fit the transformer again with the new data.'
             )
 
-        mapped[is_null] = np.random.randint(
-            len(self.categories_to_values),
-            size=is_null.sum()
-        )
+        mapped[is_null] = np.random.randint(len(self.categories_to_values), size=is_null.sum())
 
         if self.add_noise:
             mapped = mapped.astype(float)
@@ -892,8 +892,7 @@ class OrderedLabelEncoder(LabelEncoder):
 
         self.values_to_categories = dict(enumerate(self.order))
         self.categories_to_values = {
-            category: value
-            for value, category in self.values_to_categories.items()
+            category: value for value, category in self.values_to_categories.items()
         }
 
 
@@ -906,6 +905,7 @@ class CustomLabelEncoder(OrderedLabelEncoder):
     def __init__(self, order, add_noise=False):
         warnings.warn(
             "The 'CustomLabelEncoder' is renamed to 'OrderedLabelEncoder'. Please update the"
-            'name to ensure compatibility with future versions of RDT.', FutureWarning
+            'name to ensure compatibility with future versions of RDT.',
+            FutureWarning,
         )
         super().__init__(order, add_noise)

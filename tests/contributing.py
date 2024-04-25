@@ -15,9 +15,14 @@ from rdt.performance import evaluate_transformer_performance
 from rdt.performance.datasets import get_dataset_generators_by_type
 from rdt.transformers import get_transformer_class, get_transformers_by_type
 from tests.code_style import (
-    get_test_location, validate_test_location, validate_test_names, validate_transformer_addon,
-    validate_transformer_importable_from_parent_module, validate_transformer_module,
-    validate_transformer_subclass)
+    get_test_location,
+    validate_test_location,
+    validate_test_names,
+    validate_transformer_addon,
+    validate_transformer_importable_from_parent_module,
+    validate_transformer_module,
+    validate_transformer_subclass,
+)
 from tests.integration.test_transformers import validate_transformer
 from tests.performance import validate_performance
 
@@ -56,7 +61,7 @@ VALID_PATHS = [
     'rdt/transformers/',
     'tests/unit/transformers/',
     'tests/integration/transformers/',
-    'tests/datasets/'
+    'tests/datasets/',
 ]
 
 
@@ -122,8 +127,9 @@ def validate_transformer_integration(transformer):
     return validation_error is None and error_trace is None
 
 
-def _validate_third_party_code_style(command, tag, success_message,
-                                     error_message, transformer_path):
+def _validate_third_party_code_style(
+    command, tag, success_message, error_message, transformer_path
+):
     run_command = command.split(' ')
     run_command.append(transformer_path)
     output_capture = subprocess.run(run_command, capture_output=True).stdout.decode()
@@ -156,7 +162,7 @@ def _custom_validation(function, tag, success_message, error_message, transforme
             'Check': tag,
             'Correct': 'No',
             'Details': error_message,
-            'output_capture': error
+            'output_capture': error,
         }
 
 
@@ -167,29 +173,29 @@ def _validate_third_party_checks(transformer_path):
             'flake8',
             'Code follows PEP8 standards.',
             'Code must follow PEP8 standards.',
-            transformer_path
+            transformer_path,
         ),
         _validate_third_party_code_style(
             'isort -c',
             'isort',
             'Imports are properly sorted.',
             'Imports are not properly sorted.',
-            transformer_path
+            transformer_path,
         ),
         _validate_third_party_code_style(
             'pylint --rcfile=setup.cfg ',
             'pylint',
             'Code is properly formatted and structured.',
             'Code is not properly formatted and structured.',
-            transformer_path
+            transformer_path,
         ),
         _validate_third_party_code_style(
             'pydocstyle',
             'pydocstyle',
             'The docstrings are properly written.',
             'The docstrings are not properly written.',
-            transformer_path
-        )
+            transformer_path,
+        ),
     ]
 
     return results
@@ -202,43 +208,43 @@ def _validate_custom_checks(transformer):
             'Transformer is subclass',
             'The transformer is subclass of ``BaseTransformer``.',
             'The transformer must be a subclass of ``BaseTransformer``.',
-            transformer
+            transformer,
         ),
         _custom_validation(
             validate_transformer_module,
             'Valid module',
             'The transformer is placed inside a valid module.',
             'The transformer is not placed inside a valid module.',
-            transformer
+            transformer,
         ),
         _custom_validation(
             validate_test_location,
             'Valid test module',
             'The transformer tests are placed inside the valid module.',
             'The transformer tests are not placed inside the valid module.',
-            transformer
+            transformer,
         ),
         _custom_validation(
             validate_test_names,
             'Valid test function names',
             'The transformer tests are named correctly.',
             'The transformer tests are not named properly.',
-            transformer
+            transformer,
         ),
         _custom_validation(
             validate_transformer_addon,
             'Valid transformer addon',
             'The addon is configured properly.',
             'The addon is not configured properly.',
-            transformer
+            transformer,
         ),
         _custom_validation(
             validate_transformer_importable_from_parent_module,
             'Importable from module',
             'The transformer can be imported from the parent module.',
             'The transformer can not be imported from the parent module.',
-            transformer
-        )
+            transformer,
+        ),
     ]
 
     return results
@@ -265,7 +271,7 @@ def validate_transformer_code_style(transformer):
     transformer_path = inspect.getfile(transformer)
     print(f'Validating source file {transformer_path}')
 
-    results = (_validate_third_party_checks(transformer_path))
+    results = _validate_third_party_checks(transformer_path)
     results.extend(_validate_custom_checks(transformer))
 
     errors = [
@@ -393,7 +399,7 @@ def validate_transformer_performance(transformer):
     total_results = total_results[total_results.transformer == transformer.get_name()]
     final_results = total_results.groupby('Evaluation Metric').agg({
         'Value': 'mean',
-        'Valid': 'any'
+        'Valid': 'any',
     })
     final_results = final_results.rename(columns={'Valid': 'Acceptable'})
     final_results['Units'] = np.where(
@@ -402,8 +408,9 @@ def validate_transformer_performance(transformer):
         'B / row',
     )
     final_results['Acceptable'] = np.where(final_results['Acceptable'], 'Yes', 'No')
-    final_results['Compared to Average'] = final_results['Value'].div(average).replace(
-        np.inf, np.nan)
+    final_results['Compared to Average'] = (
+        final_results['Value'].div(average).replace(np.inf, np.nan)
+    )
 
     return final_results.reset_index()
 
@@ -432,7 +439,7 @@ def check_clean_repository():
             if any([
                 file_path.match(valid_path),
                 file_path.parent.match(valid_path),
-                file_path.parent.parent.match(valid_path)
+                file_path.parent.parent.match(valid_path),
             ]):
                 validated_paths.append(True)
 
@@ -483,13 +490,13 @@ def validate_pull_request(transformer):
             'Code Style',
             code_style,
             'Code Style is acceptable.',
-            'Code Style is unacceptable!'
+            'Code Style is unacceptable!',
         ),
         _build_validation_dict(
             'Unit Tests',
             unit_bool,
             'The unit tests are correct and run successfully.',
-            'The unit tests did not run successfully or the coverage is not a 100%.'
+            'The unit tests did not run successfully or the coverage is not a 100%.',
         ),
         _build_validation_dict(
             'Integration tests',
@@ -501,15 +508,14 @@ def validate_pull_request(transformer):
             'Performance Tests',
             performance_bool,
             'The performance of the transformer is acceptable.',
-            'The performance of the transformer is unacceptable!'
+            'The performance of the transformer is unacceptable!',
         ),
         _build_validation_dict(
             'Clean Repository',
             clean_repository,
             'There are no unexpected changes in the repository.',
-            'There are unexpected changes in the repository!'
+            'There are unexpected changes in the repository!',
         ),
-
     ]
 
     results = pd.DataFrame(results)
@@ -519,7 +525,7 @@ def validate_pull_request(transformer):
         unit_bool,
         integration_tests,
         performance_bool,
-        clean_repository
+        clean_repository,
     ])
 
     print('\n')

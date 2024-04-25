@@ -8,7 +8,6 @@ from rdt.transformers import BinaryEncoder
 
 
 class TestBinaryEncoder(TestCase):
-
     def test___init__(self):
         """Test default instance"""
         # Run
@@ -84,13 +83,13 @@ class TestBinaryEncoder(TestCase):
 
         # Asserts
         expect_call_count = 1
-        expect_call_args = pd.Series([0., 1., None, 1., 0.], dtype=float)
+        expect_call_args = pd.Series([0.0, 1.0, None, 1.0, 0.0], dtype=float)
 
         error_msg = 'NullTransformer.transform must be called one time'
         assert transformer.null_transformer.transform.call_count == expect_call_count, error_msg
         pd.testing.assert_series_equal(
             transformer.null_transformer.transform.call_args[0][0],
-            expect_call_args
+            expect_call_args,
         )
 
     def test__transform_array(self):
@@ -104,13 +103,13 @@ class TestBinaryEncoder(TestCase):
 
         # Asserts
         expect_call_count = 1
-        expect_call_args = pd.Series([0., 1., None, 1., 0.], dtype=float)
+        expect_call_args = pd.Series([0.0, 1.0, None, 1.0, 0.0], dtype=float)
 
         error_msg = 'NullTransformer.transform must be called one time'
         assert transformer.null_transformer.transform.call_count == expect_call_count, error_msg
         pd.testing.assert_series_equal(
             transformer.null_transformer.transform.call_args[0][0],
-            expect_call_args
+            expect_call_args,
         )
 
     def test__reverse_transform_missing_value_replacement_not_ignore(self):
@@ -142,7 +141,7 @@ class TestBinaryEncoder(TestCase):
     def test__reverse_transform_series(self):
         """Test when data is a Series."""
         # Setup
-        data = pd.Series([1., 0., 1.])
+        data = pd.Series([1.0, 0.0, 1.0])
 
         # Run
         transformer = Mock()
@@ -157,7 +156,7 @@ class TestBinaryEncoder(TestCase):
     def test__reverse_transform_not_null_values(self):
         """Test _reverse_transform not null values correctly"""
         # Setup
-        data = np.array([1., 0., 1.])
+        data = np.array([1.0, 0.0, 1.0])
 
         # Run
         transformer = Mock()
@@ -174,7 +173,7 @@ class TestBinaryEncoder(TestCase):
     def test__reverse_transform_2d_ndarray(self):
         """Test _reverse_transform not null values correctly"""
         # Setup
-        data = np.array([[1.], [0.], [1.]])
+        data = np.array([[1.0], [0.0], [1.0]])
 
         # Run
         transformer = Mock()

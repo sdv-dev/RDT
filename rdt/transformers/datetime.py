@@ -1,4 +1,5 @@
 """Transformer for datetime data."""
+
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_dtype, is_numeric_dtype
@@ -49,9 +50,14 @@ class UnixTimestampEncoder(BaseTransformer):
     _min_value = None
     _max_value = None
 
-    def __init__(self, missing_value_replacement='mean', model_missing_values=None,
-                 datetime_format=None, missing_value_generation='random',
-                 enforce_min_max_values=False):
+    def __init__(
+        self,
+        missing_value_replacement='mean',
+        model_missing_values=None,
+        datetime_format=None,
+        missing_value_generation='random',
+        enforce_min_max_values=False,
+    ):
         super().__init__()
         self._set_missing_value_replacement('mean', missing_value_replacement)
         self._set_missing_value_generation(missing_value_generation)
@@ -136,12 +142,14 @@ class UnixTimestampEncoder(BaseTransformer):
             self._max_value = transformed.max()
 
         self.null_transformer = NullTransformer(
-            self.missing_value_replacement,
-            self.missing_value_generation
+            self.missing_value_replacement, self.missing_value_generation
         )
         self.null_transformer.fit(transformed)
         if self.null_transformer.models_missing_values():
-            self.output_properties['is_null'] = {'sdtype': 'float', 'next_transformer': None}
+            self.output_properties['is_null'] = {
+                'sdtype': 'float',
+                'next_transformer': None,
+            }
 
     def _transform(self, data):
         """Transform datetime values to float values.
@@ -229,14 +237,21 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
 
     divider = None
 
-    def __init__(self, missing_value_replacement=None, model_missing_values=None,
-                 datetime_format=None, missing_value_generation='random',
-                 enforce_min_max_values=False):
-        super().__init__(missing_value_replacement=missing_value_replacement,
-                         missing_value_generation=missing_value_generation,
-                         enforce_min_max_values=enforce_min_max_values,
-                         model_missing_values=model_missing_values,
-                         datetime_format=datetime_format)
+    def __init__(
+        self,
+        missing_value_replacement=None,
+        model_missing_values=None,
+        datetime_format=None,
+        missing_value_generation='random',
+        enforce_min_max_values=False,
+    ):
+        super().__init__(
+            missing_value_replacement=missing_value_replacement,
+            missing_value_generation=missing_value_generation,
+            enforce_min_max_values=enforce_min_max_values,
+            model_missing_values=model_missing_values,
+            datetime_format=datetime_format,
+        )
 
     def _find_divider(self, transformed):
         self.divider = 1

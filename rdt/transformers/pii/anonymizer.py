@@ -106,9 +106,16 @@ class AnonymizedFaker(BaseTransformer):
                 'information: https://faker.readthedocs.io/en/master/locales.html'
             )
 
-    def __init__(self, provider_name=None, function_name=None, function_kwargs=None,
-                 locales=None, cardinality_rule=None, enforce_uniqueness=False,
-                 missing_value_generation='random'):
+    def __init__(
+        self,
+        provider_name=None,
+        function_name=None,
+        function_kwargs=None,
+        locales=None,
+        cardinality_rule=None,
+        enforce_uniqueness=False,
+        missing_value_generation='random',
+    ):
         super().__init__()
         self._data_cardinality = None
         self.data_length = None
@@ -118,7 +125,7 @@ class AnonymizedFaker(BaseTransformer):
             warnings.warn(
                 "The 'enforce_uniqueness' parameter is no longer supported. "
                 "Please use the 'cardinality_rule' parameter instead.",
-                FutureWarning
+                FutureWarning,
             )
             if not self.cardinality_rule:
                 self.cardinality_rule = 'unique'
@@ -159,7 +166,11 @@ class AnonymizedFaker(BaseTransformer):
                 Accepted input sdtypes of the transformer.
         """
         unsupported_sdtypes = {
-            'numerical', 'datetime', 'categorical', 'boolean', None
+            'numerical',
+            'datetime',
+            'categorical',
+            'boolean',
+            None,
         }
         all_sdtypes = {cls.INPUT_SDTYPE}
         for transformer in BaseTransformer.get_subclasses():
@@ -198,7 +209,7 @@ class AnonymizedFaker(BaseTransformer):
             hash_value += str(value)
 
         hash_value = int(hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16)
-        self._faker_random_seed = hash_value % ((2 ** 32) - 1)  # maximum value for a seed
+        self._faker_random_seed = hash_value % ((2**32) - 1)  # maximum value for a seed
         self.faker.seed_instance(self._faker_random_seed)
 
     def _fit(self, data):
@@ -229,7 +240,10 @@ class AnonymizedFaker(BaseTransformer):
         reverse_transformed = np.array([], dtype=object)
         if self.missing_value_generation == 'random':
             num_nans = int(self._nan_frequency * sample_size)
-            reverse_transformed = np.concatenate([reverse_transformed, np.full(num_nans, np.nan)])
+            reverse_transformed = np.concatenate([
+                reverse_transformed,
+                np.full(num_nans, np.nan),
+            ])
         else:
             num_nans = 0
 
@@ -238,12 +252,19 @@ class AnonymizedFaker(BaseTransformer):
 
         if sample_size < num_nans + self._data_cardinality:
             unique_categories = self._get_unique_categories(sample_size - num_nans)
-            reverse_transformed = np.concatenate([reverse_transformed, unique_categories])
+            reverse_transformed = np.concatenate([
+                reverse_transformed,
+                unique_categories,
+            ])
         else:
             unique_categories = self._get_unique_categories(self._data_cardinality)
             num_copies = sample_size - self._data_cardinality - num_nans
             copies = np.random.choice(unique_categories, num_copies)
-            reverse_transformed = np.concatenate([reverse_transformed, unique_categories, copies])
+            reverse_transformed = np.concatenate([
+                reverse_transformed,
+                unique_categories,
+                copies,
+            ])
 
         np.random.shuffle(reverse_transformed)
 
@@ -268,10 +289,10 @@ class AnonymizedFaker(BaseTransformer):
             if hasattr(self, 'cardinality_rule') and self.cardinality_rule == 'match':
                 reverse_transformed = self._reverse_transform_cardinality_rule_match(sample_size)
             else:
-                reverse_transformed = np.array([
-                    self._function()
-                    for _ in range(sample_size)
-                ], dtype=object)
+                reverse_transformed = np.array(
+                    [self._function() for _ in range(sample_size)],
+                    dtype=object,
+                )
 
         except faker.exceptions.UniquenessException as exception:
             raise TransformerProcessingError(
@@ -334,26 +355,37 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
 
     def __getstate__(self):
         """Return a dictionary representation of the instance and warn the user when pickling."""
-        warnings.warn((
-            'You are saving the mapping information, which includes the original data. '
-            'Sharing this object with others will also give them access to the original data '
-            'used with this transformer.'
-        ))
+        warnings.warn(
+            (
+                'You are saving the mapping information, which includes the original data. '
+                'Sharing this object with others will also give them access to the original data '
+                'used with this transformer.'
+            )
+        )
 
         return self.__dict__
 
-    def __init__(self, provider_name=None, function_name=None, function_kwargs=None, locales=None):
+    def __init__(
+        self,
+        provider_name=None,
+        function_name=None,
+        function_kwargs=None,
+        locales=None,
+    ):
         super().__init__(
             provider_name=provider_name,
             function_name=function_name,
             function_kwargs=function_kwargs,
             locales=locales,
-            cardinality_rule='unique'
+            cardinality_rule='unique',
         )
         self._mapping_dict = {}
         self._reverse_mapping_dict = {}
         self.output_properties = {
-            None: {'sdtype': 'categorical', 'next_transformer': LabelEncoder(add_noise=True)}
+            None: {
+                'sdtype': 'categorical',
+                'next_transformer': LabelEncoder(add_noise=True),
+            }
         }
 
     def get_mapping(self):
