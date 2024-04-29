@@ -189,6 +189,9 @@ class RegexGenerator(BaseTransformer):
                 f'values (only {max(remaining, 0)} unique values left).'
             )
 
+    def _get_remaining_generator_values(self):
+        return list(self.generator)
+
     def _reverse_transform(self, data):
         """Generate new data using the provided ``regex_format``.
 
@@ -216,9 +219,9 @@ class RegexGenerator(BaseTransformer):
             self.generated += sample_size
 
         else:
-            generated_values = list(self.generator)
+            generated_values = self._get_remaining_generator_values()
             reverse_transformed = generated_values[:]
-            self.generated = self.generator_size
+            self.generated += len(generated_values)
             if self.enforce_uniqueness:
                 try:
                     remaining_samples = sample_size - len(reverse_transformed)
