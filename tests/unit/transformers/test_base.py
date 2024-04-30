@@ -1419,6 +1419,40 @@ class TestBaseMultiColumnTransformer:
         transformer._fit.assert_called_once_with(data_transformer)
         transformer._build_output_columns.assert_called_once_with(data)
 
+    def test_fit_numerical_columns(self):
+        """Test the ``fit`` method."""
+        # Setup
+        transformer = BaseMultiColumnTransformer()
+        data = pd.DataFrame({
+            1: [1, 2, 3],
+            2: ['a', 'b', 'c'],
+        })
+        data_transformer = pd.DataFrame({
+            1: [1, 2, 3],
+            2: ['a', 'b', 'c'],
+        })
+        columns_to_sdtypes = {
+            1: 'numerical',
+            2: 'categorical',
+        }
+        transformer.columns = [1, 2]
+
+        transformer._validate_columns_to_sdtypes = Mock()
+        transformer._store_columns = Mock()
+        transformer._get_columns_data = Mock(return_value=data_transformer)
+        transformer._fit = Mock()
+        transformer.get_output_columns = Mock(return_value=data)
+
+        # Run
+        transformer.fit(data, columns_to_sdtypes)
+
+        # Assert
+        transformer._validate_columns_to_sdtypes.assert_called_once_with(data, columns_to_sdtypes)
+        transformer._store_columns.assert_called_once_with([1, 2], data)
+        transformer._get_columns_data.assert_called_once_with(data, [1, 2])
+        transformer._fit.assert_called_once_with(data_transformer)
+        transformer.get_output_columns.assert_called_once()
+
     def test_fit_transform(self):
         """Test the ``fit_transform`` method."""
         # Setup
