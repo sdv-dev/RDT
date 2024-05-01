@@ -57,18 +57,15 @@ def _max_repeat(options, max_repeat):
     sizes = []
     for repeat in range(min_, max_ + 1):
         if repeat:
-            sizes.append(pow(int(size), repeat, 2 ** 63 - 1))
+            sizes.append(pow(int(size), repeat, 2**63 - 1))
             repeat_generators = [
-                (_GENERATORS[option](args, max_repeat)[0], option, args)
-                for _ in range(repeat)
+                (_GENERATORS[option](args, max_repeat)[0], option, args) for _ in range(repeat)
             ]
             generators.append(_from_generators(repeat_generators, max_repeat))
 
-    return (
-        value
-        for generator in generators
-        for value in generator
-    ), np.sum(sizes) + int(min_ == 0)
+    return (value for generator in generators for value in generator), np.sum(sizes) + int(
+        min_ == 0
+    )
 
 
 def _category_chars(regex):
@@ -113,7 +110,7 @@ def _from_generators(generators, max_repeat):
                 value = next(generator)
                 generated.append(value)
                 previous[index] = value
-                generated.extend(previous[index + 1:])
+                generated.extend(previous[index + 1 :])
                 break
             except StopIteration:
                 generator = _GENERATORS[option](args, max_repeat)[0]
@@ -273,5 +270,8 @@ def learn_rounding_digits(data):
                 return decimal
 
     # Can't round, not equal after MAX_DECIMALS digits of precision
-    LOGGER.info("No rounding scheme detected for column '%s'. Data will not be rounded.", name)
+    LOGGER.info(
+        "No rounding scheme detected for column '%s'. Data will not be rounded.",
+        name,
+    )
     return None

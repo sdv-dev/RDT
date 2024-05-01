@@ -80,14 +80,13 @@ install-develop: clean-build clean-pyc ## install the package in editable mode a
 # LINT TARGETS
 
 .PHONY: lint
-lint: ## check style with flake8 and isort
+lint:  ## Run all code style checks
 	invoke lint
 
 .PHONY: fix-lint
-fix-lint: ## fix lint issues using autoflake, autopep8, and isort
-	find rdt tests -name '*.py' | xargs autoflake --in-place --remove-all-unused-imports --remove-unused-variables
-	autopep8 --in-place --recursive --aggressive rdt tests
-	isort --apply --atomic rdt tests
+fix-lint: ## fix lint issues using ruff
+	ruff check --fix .
+	ruff format .
 
 
 # TEST TARGETS

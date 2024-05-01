@@ -6,8 +6,13 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers import (
-    FrequencyEncoder, LabelEncoder, OneHotEncoder, OrderedLabelEncoder, OrderedUniformEncoder,
-    UniformEncoder)
+    FrequencyEncoder,
+    LabelEncoder,
+    OneHotEncoder,
+    OrderedLabelEncoder,
+    OrderedUniformEncoder,
+    UniformEncoder,
+)
 
 
 class TestUniformEncoder:
@@ -83,7 +88,18 @@ class TestUniformEncoder:
         """Test ``reverse_transform`` for data with NaNs."""
         # Setup
         data = pd.DataFrame({
-            'column_name': ['a', 'b', 'c', np.nan, 'c', 'b', 'b', 'a', 'b', np.nan]
+            'column_name': [
+                'a',
+                'b',
+                'c',
+                np.nan,
+                'c',
+                'b',
+                'b',
+                'a',
+                'b',
+                np.nan,
+            ]
         })
         column = 'column_name'
 
@@ -204,9 +220,7 @@ def test_frequency_encoder_numerical_nans_no_warning():
     Related to Issue #793 (https://github.com/sdv-dev/RDT/issues/793)
     """
     # Setup
-    data = pd.DataFrame({
-        'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')
-    })
+    data = pd.DataFrame({'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')})
     column = 'column_name'
 
     # Run and Assert
@@ -488,9 +502,7 @@ def test_one_hot_doesnt_warn(tmp_path):
 def test_one_hot_categoricals():
     """Ensure OneHotEncoder works on categorical data. GH#751"""
     # Setup
-    test_data = pd.DataFrame(data={
-        'A': ['Yes', 'No', 'Yes', 'Maybe', 'No']
-    })
+    test_data = pd.DataFrame(data={'A': ['Yes', 'No', 'Yes', 'Maybe', 'No']})
     test_data['A'] = test_data['A'].astype('category')
     transformer = OneHotEncoder()
 
@@ -505,7 +517,7 @@ def test_one_hot_categoricals():
             'A.value1': [0, 1, 0, 0, 1],
             'A.value2': [0, 0, 0, 1, 0],
         }),
-        check_dtype=False
+        check_dtype=False,
     )
 
     # Run
@@ -524,7 +536,7 @@ def test_label_numerical_2d_array():
     transformer = LabelEncoder()
     transformer.fit(data, column)
 
-    transformed = pd.DataFrame([0., 1., 2., 3.], columns=['column_name'])
+    transformed = pd.DataFrame([0.0, 1.0, 2.0, 3.0], columns=['column_name'])
     reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
@@ -550,9 +562,7 @@ def test_label_encoder_numerical_nans_no_warning():
     Related to Issue #793 (https://github.com/sdv-dev/RDT/issues/793)
     """
     # Setup
-    data = pd.DataFrame({
-        'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')
-    })
+    data = pd.DataFrame({'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')})
     column = 'column_name'
 
     # Run and Assert
@@ -662,9 +672,7 @@ def test_ordered_label_encoder_numerical_nans_no_warning():
     Related to Issue #793 (https://github.com/sdv-dev/RDT/issues/793)
     """
     # Setup
-    data = pd.DataFrame({
-        'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')
-    })
+    data = pd.DataFrame({'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')})
     column = 'column_name'
 
     # Run and Assert

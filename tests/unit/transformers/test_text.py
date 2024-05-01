@@ -31,7 +31,6 @@ class AsciiGenerator:
 
 
 class TestIDGenerator:
-
     def test___init__default(self):
         """Test the ``__init__`` method."""
         # Run
@@ -135,7 +134,11 @@ class TestIDGenerator:
 
         # Assert
         assert isinstance(result, pd.Series)
-        assert result.tolist() == ['prefix_100_suffix', 'prefix_101_suffix', 'prefix_102_suffix']
+        assert result.tolist() == [
+            'prefix_100_suffix',
+            'prefix_101_suffix',
+            'prefix_102_suffix',
+        ]
         assert transformer._counter == 3
 
 
@@ -162,7 +165,7 @@ class TestRegexGenerator:
             'output_properties': {None: {'next_transformer': None}},
             'regex_format': '[A-Za-z]{5}',
             'random_states': mock_random_sates,
-            'generation_order': 'alphanumeric'
+            'generation_order': 'alphanumeric',
         }
 
     @patch('rdt.transformers.text.strings_from_regex')
@@ -175,7 +178,7 @@ class TestRegexGenerator:
             'generated': 10,
             'generator_size': 380204032,
             'output_properties': {None: {'next_transformer': None}},
-            'regex_format': '[A-Za-z]{5}'
+            'regex_format': '[A-Za-z]{5}',
         }
         generator = AsciiGenerator()
         mock_strings_from_regex.return_value = (generator, 26)
@@ -204,7 +207,7 @@ class TestRegexGenerator:
             'generated': None,
             'generator_size': None,
             'output_properties': {None: {'next_transformer': None}},
-            'regex_format': '[A-Za-z]{5}'
+            'regex_format': '[A-Za-z]{5}',
         }
         generator = AsciiGenerator()
         mock_strings_from_regex.return_value = (generator, 26)
@@ -250,7 +253,7 @@ class TestRegexGenerator:
         instance = RegexGenerator(
             regex_format='[0-9]',
             enforce_uniqueness=True,
-            generation_order='scrambled'
+            generation_order='scrambled',
         )
 
         # Assert
@@ -421,7 +424,19 @@ class TestRegexGenerator:
         result = instance._reverse_transform(columns_data)
 
         # Assert
-        expected_result = np.array(['A', 'B', 'C', 'D', 'E', 'A', 'B', 'C', 'D', 'E', 'A'])
+        expected_result = np.array([
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'A',
+            'B',
+            'C',
+            'D',
+            'E',
+            'A',
+        ])
         np.testing.assert_array_equal(result, expected_result)
 
     def test__reverse_transform_generator_size_of_input_data(self):

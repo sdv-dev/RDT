@@ -47,7 +47,7 @@ def _profile_memory(method, dataset, column=None):
     peak_memory = ctx.Value('i', 0)
     profiling_process = ctx.Process(
         target=_set_memory_for_method,
-        args=(method, dataset, column, peak_memory)
+        args=(method, dataset, column, peak_memory),
     )
     profiling_process.start()
     profiling_process.join()
@@ -99,5 +99,5 @@ def profile_transformer(transformer, dataset_generator, transform_size, fit_size
         'Transform Time': transform_time,
         'Transform Memory': transform_memory,
         'Reverse Transform Time': reverse_time,
-        'Reverse Transform Memory': reverse_memory
+        'Reverse Transform Memory': reverse_memory,
     })

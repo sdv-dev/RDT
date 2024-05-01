@@ -7,7 +7,6 @@ from rdt.performance.datasets import datetime
 
 
 class TestRandomGapDatetimeGenerator:
-
     def test(self):
         output = datetime.RandomGapDatetimeGenerator.generate(10)
         assert len(output) == 10
@@ -17,7 +16,6 @@ class TestRandomGapDatetimeGenerator:
 
 
 class TestRandomGapSecondsDatetimeGenerator:
-
     def test(self):
         output = datetime.RandomGapSecondsDatetimeGenerator.generate(10)
         assert len(output) == 10
@@ -27,7 +25,6 @@ class TestRandomGapSecondsDatetimeGenerator:
 
 
 class TestRandomGapDatetimeNaNsGenerator:
-
     def test(self):
         output = datetime.RandomGapDatetimeNaNsGenerator.generate(10)
         assert len(output) == 10
@@ -37,7 +34,6 @@ class TestRandomGapDatetimeNaNsGenerator:
 
 
 class TestEqualGapHoursDatetimeGenerator:
-
     def test(self):
         output = datetime.EqualGapHoursDatetimeGenerator.generate(10)
         assert len(output) == 10
@@ -47,7 +43,6 @@ class TestEqualGapHoursDatetimeGenerator:
 
 
 class TestEqualGapDaysDatetimeGenerator:
-
     def test(self):
         output = datetime.EqualGapDaysDatetimeGenerator.generate(10)
         assert len(output) == 10
@@ -57,7 +52,6 @@ class TestEqualGapDaysDatetimeGenerator:
 
 
 class TestEqualGapWeeksDatetimeGenerator:
-
     def test(self):
         output = datetime.EqualGapWeeksDatetimeGenerator.generate(10)
         assert len(output) == 10

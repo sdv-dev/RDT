@@ -6,7 +6,6 @@ NUM_ROWS = 50
 
 
 class TestRandomBooleanGenerator:
-
     def test_generate(self):
         """Test the `RandomBooleanGenerator.generate` method.
 
@@ -26,7 +25,6 @@ class TestRandomBooleanGenerator:
 
 
 class TestRandomBooleanNaNsGenerator:
-
     def test_generate(self):
         """Test the `RandomBooleanNaNsGenerator.generate` method.
 
@@ -46,7 +44,6 @@ class TestRandomBooleanNaNsGenerator:
 
 
 class TestRandomSkewedBooleanGenerator:
-
     def test_generate(self):
         """Test the `RandomSkewedBooleanGenerator.generate` method.
 
@@ -66,7 +63,6 @@ class TestRandomSkewedBooleanGenerator:
 
 
 class TestRandomSkewedBooleanNaNsGenerator:
-
     def test_generate(self):
         """Test the `RandomSkewedBooleanNaNsGenerator.generate` method.
 
@@ -87,7 +83,6 @@ class TestRandomSkewedBooleanNaNsGenerator:
 
 
 class TestConstantBooleanGenerator:
-
     def test_generate(self):
         """Test the `ConstantBooleanGenerator.generate` method.
 
@@ -108,7 +103,6 @@ class TestConstantBooleanGenerator:
 
 
 class TestConstantBooleanNaNsGenerator:
-
     def test(self):
         output = boolean.ConstantBooleanNaNsGenerator.generate(NUM_ROWS)
         assert len(output) == NUM_ROWS

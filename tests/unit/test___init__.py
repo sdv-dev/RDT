@@ -1,4 +1,3 @@
-
 import sys
 from types import ModuleType
 from unittest.mock import Mock, patch
@@ -25,7 +24,11 @@ def test_get_demo():
     demo = get_demo()
 
     assert list(demo.columns) == [
-        'last_login', 'email_optin', 'credit_card', 'age', 'dollars_spent'
+        'last_login',
+        'email_optin',
+        'credit_card',
+        'age',
+        'dollars_spent',
     ]
     assert len(demo) == 5
     assert list(demo.isna().sum(axis=0)) == [1, 1, 1, 0, 1]
@@ -34,23 +37,65 @@ def test_get_demo():
 def test_get_demo_many_rows():
     demo = get_demo(10)
 
-    login_dates = pd.Series([
-        '2021-06-26', '2021-02-10', 'NaT', '2020-09-26', '2020-12-22', '2019-11-27',
-        '2002-05-10', '2014-10-04', '2014-03-19', '2015-09-13'
-    ], dtype='datetime64[ns]')
-    email_optin = [False, False, False, True, np.nan, np.nan, False, True, False, False]
+    login_dates = pd.Series(
+        [
+            '2021-06-26',
+            '2021-02-10',
+            'NaT',
+            '2020-09-26',
+            '2020-12-22',
+            '2019-11-27',
+            '2002-05-10',
+            '2014-10-04',
+            '2014-03-19',
+            '2015-09-13',
+        ],
+        dtype='datetime64[ns]',
+    )
+    email_optin = [
+        False,
+        False,
+        False,
+        True,
+        np.nan,
+        np.nan,
+        False,
+        True,
+        False,
+        False,
+    ]
     credit_card = [
-        'VISA', 'VISA', 'AMEX', np.nan, 'DISCOVER', 'AMEX', 'AMEX', 'DISCOVER', 'DISCOVER', 'VISA'
+        'VISA',
+        'VISA',
+        'AMEX',
+        np.nan,
+        'DISCOVER',
+        'AMEX',
+        'AMEX',
+        'DISCOVER',
+        'DISCOVER',
+        'VISA',
     ]
     age = [29, 18, 21, 45, 32, 50, 93, 75, 39, 66]
-    dollars_spent = [99.99, np.nan, 2.50, 25.00, 19.99, 52.48, 39.99, 4.67, np.nan, 23.28]
+    dollars_spent = [
+        99.99,
+        np.nan,
+        2.50,
+        25.00,
+        19.99,
+        52.48,
+        39.99,
+        4.67,
+        np.nan,
+        23.28,
+    ]
 
     expected = pd.DataFrame({
         'last_login': login_dates,
         'email_optin': email_optin,
         'credit_card': credit_card,
         'age': age,
-        'dollars_spent': dollars_spent
+        'dollars_spent': dollars_spent,
     })
 
     pd.testing.assert_frame_equal(demo, expected)
@@ -78,6 +123,7 @@ def test__find_addons_module(entry_points_mock, mock_rdt):
 @patch.object(rdt, 'entry_points')
 def test__find_addons_type_error(entry_points_mock):
     """Test it when entry_points raises a TypeError (happens for py38, py39)."""
+
     # Setup
     def side_effect(arg=None):
         if arg == 'rdt_modules':
@@ -114,13 +160,14 @@ def test__find_addons_object(entry_points_mock, mock_rdt):
 @patch('rdt.entry_points')
 def test__find_addons_bad_addon(entry_points_mock, warning_mock):
     """Test failing to load an add-on generates a warning."""
+
     # Setup
     def entry_point_error():
         raise ValueError()
 
     bad_entry_point = Mock()
     bad_entry_point.name = 'bad_entry_point'
-    bad_entry_point.version = 'bad_module'
+    bad_entry_point.value = 'bad_module'
     bad_entry_point.load.side_effect = entry_point_error
     entry_points_mock.return_value = [bad_entry_point]
     msg = 'Failed to load "bad_entry_point" from "bad_module".'
@@ -204,7 +251,7 @@ def test__find_addons_missing_object(entry_points_mock, warning_mock, mock_rdt):
     bad_entry_point = Mock()
     bad_entry_point.name = 'rdt.submodule:missing_object.new_method'
     entry_points_mock.return_value = [bad_entry_point]
-    msg = ("Failed to set 'rdt.submodule:missing_object.new_method': missing_object.")
+    msg = "Failed to set 'rdt.submodule:missing_object.new_method': missing_object."
 
     del mock_rdt.submodule.missing_object
 

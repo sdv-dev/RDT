@@ -5,7 +5,6 @@ from rdt.transformers import BinaryEncoder
 
 
 class TestBinaryEncoder:
-
     def test_boolean_some_nans(self):
         """Test BinaryEncoder on input with some nan values.
 
@@ -50,7 +49,7 @@ class TestBinaryEncoder:
         column = 'bool'
         transformer = BinaryEncoder(
             missing_value_replacement='mode',
-            missing_value_generation='from_column'
+            missing_value_generation='from_column',
         )
 
         # Run
@@ -60,8 +59,8 @@ class TestBinaryEncoder:
 
         # Assert
         expected_transformed = pd.DataFrame({
-            'bool': [1., 1., 1., 0.],
-            'bool.is_null': [0., 0., 1., 0.]
+            'bool': [1.0, 1.0, 1.0, 0.0],
+            'bool.is_null': [0.0, 0.0, 1.0, 0.0],
         })
         pd.testing.assert_frame_equal(transformed, expected_transformed)
         pd.testing.assert_frame_equal(reverse, data)
@@ -74,10 +73,7 @@ class TestBinaryEncoder:
         # Setup
         data = pd.DataFrame([True, True, None, False], columns=['bool'])
         column = 'bool'
-        transformer = BinaryEncoder(
-            missing_value_replacement='mode',
-            missing_value_generation=None
-        )
+        transformer = BinaryEncoder(missing_value_replacement='mode', missing_value_generation=None)
 
         # Run
         transformer.fit(data, column)
@@ -85,7 +81,7 @@ class TestBinaryEncoder:
         reverse = transformer.reverse_transform(transformed)
 
         # Assert
-        expected_transformed = pd.DataFrame({'bool': [1., 1., 1., 0.]})
+        expected_transformed = pd.DataFrame({'bool': [1.0, 1.0, 1.0, 0.0]})
         expected_reversed = pd.DataFrame({'bool': [True, True, True, False]})
         pd.testing.assert_frame_equal(transformed, expected_transformed)
         pd.testing.assert_frame_equal(reverse, expected_reversed, check_dtype=False)

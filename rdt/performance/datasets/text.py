@@ -27,18 +27,12 @@ class RandomStringGenerator(RegexGeneratorGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-05,
-                'memory': 500.0
-            },
-            'transform': {
-                'time': 1e-05,
-                'memory': 500.0
-            },
+            'fit': {'time': 1e-05, 'memory': 500.0},
+            'transform': {'time': 1e-05, 'memory': 500.0},
             'reverse_transform': {
                 'time': 2e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -54,16 +48,10 @@ class RandomStringNaNsGenerator(RegexGeneratorGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-05,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 1e-05,
-                'memory': 1000.0
-            },
+            'fit': {'time': 1e-05, 'memory': 400.0},
+            'transform': {'time': 1e-05, 'memory': 1000.0},
             'reverse_transform': {
                 'time': 2e-05,
                 'memory': 1000.0,
-            }
+            },
         }

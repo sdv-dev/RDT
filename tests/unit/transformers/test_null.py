@@ -12,7 +12,6 @@ from rdt.transformers import NullTransformer
 
 
 class TestNullTransformer:
-
     def test___init__default(self):
         """Test the initialization without passing any default arguments.
 
@@ -271,8 +270,7 @@ class TestNullTransformer:
         """
         # Setup
         transformer = NullTransformer(
-            missing_value_replacement='mean',
-            missing_value_generation=None
+            missing_value_replacement='mean', missing_value_generation=None
         )
 
         # Run
@@ -324,29 +322,25 @@ class TestNullTransformer:
         """
         # Setup
         missing_value_generation_random_nulls = NullTransformer(
-            missing_value_replacement='mode',
-            missing_value_generation='random'
+            missing_value_replacement='mode', missing_value_generation='random'
         )
         missing_value_generation_random_no_nulls = NullTransformer(
-            missing_value_replacement='mode',
-            missing_value_generation='random'
+            missing_value_replacement='mode', missing_value_generation='random'
         )
         missing_value_generation_column_nulls = NullTransformer(
             missing_value_replacement='mean',
-            missing_value_generation='from_column'
+            missing_value_generation='from_column',
         )
         missing_value_generation_column_no_nulls = NullTransformer(
             missing_value_replacement='mean',
-            missing_value_generation='from_column'
+            missing_value_generation='from_column',
         )
 
         missing_value_generation_none_int = NullTransformer(
-            missing_value_replacement='mean',
-            missing_value_generation=None
+            missing_value_replacement='mean', missing_value_generation=None
         )
         missing_value_generation_none_str = NullTransformer(
-            missing_value_replacement='mode',
-            missing_value_generation=None
+            missing_value_replacement='mode', missing_value_generation=None
         )
 
         nulls_str = pd.Series(['a', 'b', 'b', np.nan])
@@ -404,11 +398,14 @@ class TestNullTransformer:
         output = transformer.transform(input_data)
 
         # Assert
-        expected_output = np.array([
-            ['a', 0.0],
-            ['b', 0.0],
-            ['c', 1.0],
-        ], dtype=object)
+        expected_output = np.array(
+            [
+                ['a', 0.0],
+                ['b', 0.0],
+                ['c', 1.0],
+            ],
+            dtype=object,
+        )
         np.testing.assert_equal(expected_output, output)
 
     def test_transform__missing_value_generation_random(self):
@@ -453,7 +450,9 @@ class TestNullTransformer:
         pd.testing.assert_series_equal(modified_input_data, input_data)
         mock_np_random_uniform.assert_called_once_with(low=1, high=2, size=3)
 
-    def test_reverse_transform__missing_value_generation_from_column_with_nulls(self):
+    def test_reverse_transform__missing_value_generation_from_column_with_nulls(
+        self,
+    ):
         """Test reverse_transform when ``missing_value_generation`` is ``from_column`` and nulls.
 
         When ``missing_value_generation`` is ``from_column`` and there are nulls, the second column
@@ -478,7 +477,9 @@ class TestNullTransformer:
         expected_output = pd.Series([0.0, 0.2, 0.4, np.nan, np.nan])
         pd.testing.assert_series_equal(expected_output, output)
 
-    def test_reverse_transform__missing_value_generation_from_column_no_nulls(self):
+    def test_reverse_transform__missing_value_generation_from_column_no_nulls(
+        self,
+    ):
         """Test reverse_transform when ``missing_value_generation`` is ``from_column``, no nulls.
 
         When ``missing_value_generation`` is ``from_column`` but no nulls are found, the second

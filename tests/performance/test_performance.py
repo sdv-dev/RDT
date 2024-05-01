@@ -9,11 +9,17 @@ from rdt.performance.performance import evaluate_transformer_performance
 from rdt.performance.profiling import profile_transformer
 from rdt.transformers import get_transformers_by_type
 from rdt.transformers.categorical import (
-    CustomLabelEncoder, OrderedLabelEncoder, OrderedUniformEncoder)
+    CustomLabelEncoder,
+    OrderedLabelEncoder,
+    OrderedUniformEncoder,
+)
 from rdt.transformers.numerical import ClusterBasedNormalizer
 
 SANDBOX_TRANSFORMERS = [
-    ClusterBasedNormalizer, OrderedLabelEncoder, CustomLabelEncoder, OrderedUniformEncoder
+    ClusterBasedNormalizer,
+    OrderedLabelEncoder,
+    CustomLabelEncoder,
+    OrderedUniformEncoder,
 ]
 
 
@@ -101,8 +107,14 @@ def _round_to_magnitude(value):
     raise ValueError('Value is too big')
 
 
-def find_transformer_boundaries(transformer, dataset_generator, fit_size,
-                                transform_size, iterations=1, multiplier=5):
+def find_transformer_boundaries(
+    transformer,
+    dataset_generator,
+    fit_size,
+    transform_size,
+    iterations=1,
+    multiplier=5,
+):
     """Helper function to find valid candidate boundaries for performance tests.
 
     The function works by:

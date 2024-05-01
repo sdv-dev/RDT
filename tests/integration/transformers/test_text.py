@@ -7,14 +7,13 @@ from rdt import HyperTransformer, get_demo
 from rdt.transformers.text import IDGenerator, RegexGenerator
 
 
-class TestIDGenerator():
-
+class TestIDGenerator:
     def test_end_to_end(self):
         """End to end test of the ``IDGenerator``."""
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', 'b', 'c', 'd', 'e']
+            'username': ['a', 'b', 'c', 'd', 'e'],
         })
 
         # Run
@@ -26,18 +25,16 @@ class TestIDGenerator():
         reverse_transform_3 = transformer.reverse_transform(transformed)
 
         # Assert
-        expected_transformed = pd.DataFrame({
-            'username': ['a', 'b', 'c', 'd', 'e']
-        })
+        expected_transformed = pd.DataFrame({'username': ['a', 'b', 'c', 'd', 'e']})
 
         expected_reverse_transform = pd.DataFrame({
             'username': ['a', 'b', 'c', 'd', 'e'],
-            'id': ['id_100_X', 'id_101_X', 'id_102_X', 'id_103_X', 'id_104_X']
+            'id': ['id_100_X', 'id_101_X', 'id_102_X', 'id_103_X', 'id_104_X'],
         })
 
         expected_reverse_transform_2 = pd.DataFrame({
             'username': ['a', 'b', 'c', 'd', 'e'],
-            'id': ['id_105_X', 'id_106_X', 'id_107_X', 'id_108_X', 'id_109_X']
+            'id': ['id_105_X', 'id_106_X', 'id_107_X', 'id_108_X', 'id_109_X'],
         })
 
         pd.testing.assert_frame_equal(transformed, expected_transformed)
@@ -46,13 +43,13 @@ class TestIDGenerator():
         pd.testing.assert_frame_equal(reverse_transform_3, expected_reverse_transform)
 
 
-class TestRegexGenerator():
+class TestRegexGenerator:
     def test_regexgenerator(self):
         """Test ``RegexGenerator`` with the default parameters."""
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', 'b', 'c', 'd', 'e']
+            'username': ['a', 'b', 'c', 'd', 'e'],
         })
 
         # Run
@@ -61,9 +58,7 @@ class TestRegexGenerator():
         reverse_transform = instance.reverse_transform(transformed)
 
         # Assert
-        expected_transformed = pd.DataFrame({
-            'username': ['a', 'b', 'c', 'd', 'e']
-        })
+        expected_transformed = pd.DataFrame({'username': ['a', 'b', 'c', 'd', 'e']})
         expected_reverse_transformed = pd.DataFrame({
             'username': ['a', 'b', 'c', 'd', 'e'],
             'id': ['AAAAA', 'AAAAB', 'AAAAC', 'AAAAD', 'AAAAE'],
@@ -103,7 +98,7 @@ class TestRegexGenerator():
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', np.nan, 'c', 'd', 'e']
+            'username': ['a', np.nan, 'c', 'd', 'e'],
         })
 
         # Run
@@ -129,7 +124,7 @@ class TestRegexGenerator():
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', np.nan, 'c', 'd', 'e']
+            'username': ['a', np.nan, 'c', 'd', 'e'],
         })
 
         # Run
@@ -155,7 +150,7 @@ class TestRegexGenerator():
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', 'b', 'c', 'd', 'e']
+            'username': ['a', 'b', 'c', 'd', 'e'],
         })
 
         # Run
@@ -184,7 +179,7 @@ class TestRegexGenerator():
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', np.nan, 'c', 'd', 'e']
+            'username': ['a', np.nan, 'c', 'd', 'e'],
         })
 
         instance = RegexGenerator('[a-c]')
@@ -240,9 +235,7 @@ class TestRegexGenerator():
         second_reverse_transform = generator.reverse_transform(transformed_data.head(5))
 
         # Assert
-        expected_first_reverse_transform = pd.DataFrame({
-            'my_column': ['AAAAA', 'AAAAB', 'AAAAC']
-        })
+        expected_first_reverse_transform = pd.DataFrame({'my_column': ['AAAAA', 'AAAAB', 'AAAAC']})
         expected_second_reverse_transform = pd.DataFrame({
             'my_column': ['AAAAD', 'AAAAE', 'AAAAF', 'AAAAG', 'AAAAH']
         })
@@ -254,7 +247,7 @@ class TestRegexGenerator():
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', 'b', 'c', 'd', 'e']
+            'username': ['a', 'b', 'c', 'd', 'e'],
         })
 
         # Run
@@ -276,7 +269,13 @@ class TestRegexGenerator():
         """Test the ``RegexGenerator`` with regex containing many possibilities."""
         # Setup
         data = pd.DataFrame({
-            'id': ['a' * 50, 'a' * 49 + 'b', 'a' * 49 + 'c', 'a' * 49 + 'd', 'a' * 49 + 'e'],
+            'id': [
+                'a' * 50,
+                'a' * 49 + 'b',
+                'a' * 49 + 'c',
+                'a' * 49 + 'd',
+                'a' * 49 + 'e',
+            ],
             'username': ['aa', 'bb', 'cc', 'dd', 'ee'],
         })
 
@@ -292,7 +291,13 @@ class TestRegexGenerator():
 
         expected_reverse_transformed = pd.DataFrame({
             'username': ['aa', 'bb', 'cc', 'dd', 'ee'],
-            'id': ['a' * 50, 'a' * 49 + 'b', 'a' * 49 + 'c', 'a' * 49 + 'd', 'a' * 49 + 'e'],
+            'id': [
+                'a' * 50,
+                'a' * 49 + 'b',
+                'a' * 49 + 'c',
+                'a' * 49 + 'd',
+                'a' * 49 + 'e',
+            ],
         })
 
         pd.testing.assert_frame_equal(transformed, expected_transformed)
@@ -345,7 +350,8 @@ class TestHyperTransformer:
         ht.detect_initial_config(customers)
         ht.update_sdtypes({'id': 'text'})
         ht.update_transformers({
-            'id': RegexGenerator(regex_format='id_[a-z]', generation_order='scrambled')})
+            'id': RegexGenerator(regex_format='id_[a-z]', generation_order='scrambled')
+        })
 
         # Run
         ht.fit(customers)

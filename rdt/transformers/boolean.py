@@ -39,8 +39,12 @@ class BinaryEncoder(BaseTransformer):
     INPUT_SDTYPE = 'boolean'
     null_transformer = None
 
-    def __init__(self, missing_value_replacement='mode', model_missing_values=None,
-                 missing_value_generation='random'):
+    def __init__(
+        self,
+        missing_value_replacement='mode',
+        model_missing_values=None,
+        missing_value_generation='random',
+    ):
         super().__init__()
         self._set_missing_value_generation(missing_value_generation)
         self._set_missing_value_replacement('random', missing_value_replacement)
@@ -55,12 +59,14 @@ class BinaryEncoder(BaseTransformer):
                 Data to fit to.
         """
         self.null_transformer = NullTransformer(
-            self.missing_value_replacement,
-            self.missing_value_generation
+            self.missing_value_replacement, self.missing_value_generation
         )
         self.null_transformer.fit(data)
         if self.null_transformer.models_missing_values():
-            self.output_properties['is_null'] = {'sdtype': 'float', 'next_transformer': None}
+            self.output_properties['is_null'] = {
+                'sdtype': 'float',
+                'next_transformer': None,
+            }
 
     def _transform(self, data):
         """Transform boolean to float.
