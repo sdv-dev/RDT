@@ -216,7 +216,7 @@ class RegexGenerator(BaseTransformer):
             try:
                 generated_values.append(next(self.generator))
                 self.generated += 1
-            except Exception:  # pylint: disable=broad-exception-caught
+            except StopIteration:
                 # Can't generate more rows without collision so breaking out of loop
                 break
 
