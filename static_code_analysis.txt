@@ -4,7 +4,7 @@ Test results:
 	No issues identified.
 
 Code scanned:
-	Total lines of code: 5503
+	Total lines of code: 5515
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
