@@ -211,14 +211,18 @@ class RegexGenerator(BaseTransformer):
             self.reset_randomization()
             remaining = self.generator_size
 
-        if remaining >= sample_size:
-            reverse_transformed = [next(self.generator) for _ in range(sample_size)]
-            self.generated += sample_size
+        generated_values = []
+        while len(generated_values) < sample_size:
+            try:
+                generated_values.append(next(self.generator))
+                self.generated += 1
+            except (RuntimeError, StopIteration):
+                # Can't generate more rows without collision so breaking out of loop
+                break
 
-        else:
-            generated_values = list(self.generator)
-            reverse_transformed = generated_values[:]
-            self.generated = self.generator_size
+        reverse_transformed = generated_values[:]
+
+        if len(reverse_transformed) < sample_size:
             if self.enforce_uniqueness:
                 try:
                     remaining_samples = sample_size - len(reverse_transformed)
