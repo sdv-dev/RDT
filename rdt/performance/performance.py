@@ -11,23 +11,13 @@ DATASET_SIZES = [1000, 10000, 100000]
 TRANSFORMER_ARGS = {
     'BinaryEncoder': {
         'missing_value_replacement': -1,
-        'missing_value_generation': 'from_column'
+        'missing_value_generation': 'from_column',
     },
-    'UnixTimestampEncoder': {
-        'missing_value_generation': 'from_column'
-    },
-    'OptimizedTimestampEncoder': {
-        'missing_value_generation': 'from_column'
-    },
-    'FloatFormatter': {
-        'missing_value_generation': 'from_column'
-    },
-    'GaussianNormalizer': {
-        'missing_value_generation': 'from_column'
-    },
-    'ClusterBasedNormalizer': {
-        'missing_value_generation': 'from_column'
-    },
+    'UnixTimestampEncoder': {'missing_value_generation': 'from_column'},
+    'OptimizedTimestampEncoder': {'missing_value_generation': 'from_column'},
+    'FloatFormatter': {'missing_value_generation': 'from_column'},
+    'GaussianNormalizer': {'missing_value_generation': 'from_column'},
+    'ClusterBasedNormalizer': {'missing_value_generation': 'from_column'},
 }
 
 
@@ -91,7 +81,7 @@ def evaluate_transformer_performance(transformer, dataset_generator, verbose=Fal
             performance['Number of fit rows'] = fit_size
             performance['Number of transform rows'] = transform_size
             performance['Dataset'] = dataset_generator.__name__
-            performance['Transformer'] = f'{transformer.__module__ }.{transformer.get_name()}'
+            performance['Transformer'] = f'{transformer.__module__}.{transformer.get_name()}'
 
         out.append(performance)
 

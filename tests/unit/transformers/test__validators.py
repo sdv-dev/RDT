@@ -4,12 +4,18 @@ from unittest.mock import Mock, patch
 import pytest
 
 from rdt.errors import TransformerInputError
-from rdt.transformers._validators import AddressValidator, BaseValidator, GPSValidator
+from rdt.transformers._validators import (
+    AddressValidator,
+    BaseValidator,
+    GPSValidator,
+)
 
 
 class TestBaseValidator:
-
-    @patch('rdt.transformers._validators.BaseValidator.SUPPORTED_SDTYPES', ['numerical'])
+    @patch(
+        'rdt.transformers._validators.BaseValidator.SUPPORTED_SDTYPES',
+        ['numerical'],
+    )
     @patch('rdt.transformers._validators.BaseValidator.VALIDATION_TYPE', 'Base')
     def test_validate_supported_sdtypes(self):
         """Test ``_validate_supported_sdtypes`` method."""
@@ -87,7 +93,7 @@ class TestAddressValidator:
             'col_5': 'street_address',
             'col_6': 'secondary_address',
             'col_7': 'country_code',
-            'col_8': 'administrative_unit'
+            'col_8': 'administrative_unit',
         }
 
         # Run and Assert
@@ -111,7 +117,7 @@ class TestAddressValidator:
             'col_1': 'country_code',
             'col_2': 'country_code',
             'col_3': 'city',
-            'col_4': 'city'
+            'col_4': 'city',
         }
 
         # Run and Assert
@@ -158,7 +164,7 @@ class TestAddressValidator:
         }
         columns_to_sdtypes_invalid = {
             'col_1': 'administrative_unit',
-            'col_2': 'state'
+            'col_2': 'state',
         }
 
         # Run and Assert
@@ -190,9 +196,7 @@ class TestAddressValidator:
         AddressValidator._validate_number_columns.assert_called_once_with(columns_to_sdtypes)
         AddressValidator._validate_uniqueness_sdtype.assert_called_once_with(columns_to_sdtypes)
         AddressValidator._validate_supported_sdtypes.assert_called_once_with(columns_to_sdtypes)
-        AddressValidator._validate_administrative_unit.assert_called_once_with(
-            columns_to_sdtypes
-        )
+        AddressValidator._validate_administrative_unit.assert_called_once_with(columns_to_sdtypes)
 
     def test__validate_imports_without_address_module(self):
         """Test ``validate_imports`` when address module doesn't exist."""

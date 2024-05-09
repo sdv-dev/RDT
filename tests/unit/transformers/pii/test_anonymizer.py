@@ -11,7 +11,10 @@ import pytest
 
 from rdt.errors import TransformerInputError, TransformerProcessingError
 from rdt.transformers.categorical import LabelEncoder
-from rdt.transformers.pii.anonymizer import AnonymizedFaker, PseudoAnonymizedFaker
+from rdt.transformers.pii.anonymizer import (
+    AnonymizedFaker,
+    PseudoAnonymizedFaker,
+)
 
 
 class TestAnonymizedFaker:
@@ -41,8 +44,9 @@ class TestAnonymizedFaker:
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.getattr')
     @patch('rdt.transformers.pii.anonymizer.attrgetter')
-    def test_check_provider_function_other_providers(self, mock_attrgetter, mock_getattr,
-                                                     mock_faker):
+    def test_check_provider_function_other_providers(
+        self, mock_attrgetter, mock_getattr, mock_faker
+    ):
         """Test that ``getattr`` is being called with ``provider_name`` and ``function_name``.
 
         Mock:
@@ -390,11 +394,9 @@ class TestAnonymizedFaker:
         instance = AnonymizedFaker(
             provider_name='credit_card',
             function_name='credit_card_full',
-            function_kwargs={
-                'type': 'visa'
-            },
+            function_kwargs={'type': 'visa'},
             locales=['en_US', 'fr_FR'],
-            enforce_uniqueness=True
+            enforce_uniqueness=True,
         )
 
         # Assert
@@ -409,7 +411,7 @@ class TestAnonymizedFaker:
             call(
                 "The 'enforce_uniqueness' parameter is no longer supported. "
                 "Please use the 'cardinality_rule' parameter instead.",
-                FutureWarning
+                FutureWarning,
             )
         ])
 
@@ -423,8 +425,7 @@ class TestAnonymizedFaker:
         """
         # Run / Assert
         expected_message = (
-            'Please specify the function name to use from the '
-            "'credit_card' provider."
+            'Please specify the function name to use from the ' "'credit_card' provider."
         )
         with pytest.raises(TransformerInputError, match=expected_message):
             AnonymizedFaker(provider_name='credit_card', locales=['en_US', 'fr_FR'])
@@ -442,7 +443,10 @@ class TestAnonymizedFaker:
         datetime_mock = Mock()
         datetime_mock.get_supported_sdtypes.return_value = ['datetime']
         boolean_mock = Mock()
-        boolean_mock.get_supported_sdtypes.return_value = ['boolean', 'categorical']
+        boolean_mock.get_supported_sdtypes.return_value = [
+            'boolean',
+            'categorical',
+        ]
         text_mock = Mock()
         text_mock.get_supported_sdtypes.return_value = ['text']
         phone_mock = Mock()
@@ -456,14 +460,18 @@ class TestAnonymizedFaker:
             boolean_mock,
             text_mock,
             phone_mock,
-            pii_mock
+            pii_mock,
         ]
 
         # Run
         supported_sdtypes = AnonymizedFaker.get_supported_sdtypes()
 
         # Assert
-        assert sorted(supported_sdtypes) == sorted(['phone_number', 'pii', 'text'])
+        assert sorted(supported_sdtypes) == sorted([
+            'phone_number',
+            'pii',
+            'text',
+        ])
 
     @patch('rdt.transformers.pii.anonymizer.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.pii.anonymizer.faker')
@@ -835,10 +843,8 @@ class TestPseudoAnonymizedFaker:
         instance = PseudoAnonymizedFaker(
             provider_name='credit_card',
             function_name='credit_card_full',
-            function_kwargs={
-                'type': 'visa'
-            },
-            locales=['en_US', 'fr_FR']
+            function_kwargs={'type': 'visa'},
+            locales=['en_US', 'fr_FR'],
         )
 
         # Assert
@@ -910,7 +916,10 @@ class TestPseudoAnonymizedFaker:
         assert instance._mapping_dict == {'a': 1, 'b': 2, 'c': 3}
         assert instance._reverse_mapping_dict == {1: 'a', 2: 'b', 3: 'c'}
         assert list(instance.output_properties) == [None]
-        assert list(instance.output_properties[None]) == ['sdtype', 'next_transformer']
+        assert list(instance.output_properties[None]) == [
+            'sdtype',
+            'next_transformer',
+        ]
         assert instance.output_properties[None]['sdtype'] == 'categorical'
 
         transformer = instance.output_properties[None]['next_transformer']

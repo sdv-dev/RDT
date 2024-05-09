@@ -13,16 +13,14 @@ class TestAnonymizedFaker:
         """End to end test with the default settings of the ``AnonymizedFaker``."""
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', 'b', 'c', 'd', 'e']
+            'username': ['a', 'b', 'c', 'd', 'e'],
         })
 
         instance = AnonymizedFaker()
         transformed = instance.fit_transform(data, 'username')
 
         reverse_transform = instance.reverse_transform(transformed)
-        expected_transformed = pd.DataFrame({
-            'id': [1, 2, 3, 4, 5]
-        })
+        expected_transformed = pd.DataFrame({'id': [1, 2, 3, 4, 5]})
 
         pd.testing.assert_frame_equal(transformed, expected_transformed)
         assert len(reverse_transform['username']) == 5
@@ -31,16 +29,14 @@ class TestAnonymizedFaker:
         """End to end test with the default settings and locales of the ``AnonymizedFaker``."""
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', 'b', 'c', 'd', 'e']
+            'username': ['a', 'b', 'c', 'd', 'e'],
         })
 
         instance = AnonymizedFaker(locales=['en_US', 'en_CA', 'es_ES'])
         transformed = instance.fit_transform(data, 'username')
 
         reverse_transform = instance.reverse_transform(transformed)
-        expected_transformed = pd.DataFrame({
-            'id': [1, 2, 3, 4, 5]
-        })
+        expected_transformed = pd.DataFrame({'id': [1, 2, 3, 4, 5]})
 
         pd.testing.assert_frame_equal(transformed, expected_transformed)
         assert len(reverse_transform['username']) == 5
@@ -63,8 +59,8 @@ class TestAnonymizedFaker:
                 '4149498289355',
                 '213144860944676',
                 '4514775286178',
-                '213133122335401'
-            ]
+                '213133122335401',
+            ],
         })
 
         instance = AnonymizedFaker('credit_card', 'credit_card_number')
@@ -83,7 +79,7 @@ class TestAnonymizedFaker:
         """Test with the default settings of the ``AnonymizedFaker`` with ``nan`` values."""
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', np.nan, 'c', 'd', 'e']
+            'username': ['a', np.nan, 'c', 'd', 'e'],
         })
 
         instance = AnonymizedFaker()
@@ -102,7 +98,7 @@ class TestAnonymizedFaker:
         """End to end test settings missing_value_generation=None."""
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
-            'username': ['a', np.nan, 'c', 'd', 'e']
+            'username': ['a', np.nan, 'c', 'd', 'e'],
         })
 
         instance = AnonymizedFaker(missing_value_generation=None)
@@ -127,8 +123,8 @@ class TestAnonymizedFaker:
                 np.nan,
                 '213144860944676',
                 '4514775286178',
-                '213133122335401'
-            ]
+                '213133122335401',
+            ],
         })
 
         instance = AnonymizedFaker(
@@ -153,9 +149,7 @@ class TestAnonymizedFaker:
         Also ensure that when we call ``reset_randomization`` the generator will be able to
         create values again.
         """
-        data = pd.DataFrame({
-            'job': np.arange(500)
-        })
+        data = pd.DataFrame({'job': np.arange(500)})
 
         instance = AnonymizedFaker('job', 'job', cardinality_rule='unique')
         transformed = instance.fit_transform(data, 'job')
@@ -178,9 +172,7 @@ class TestAnonymizedFaker:
     def test_cardinality_rule_match(self):
         """Test it works with the cardinality rule 'match'."""
         # Setup
-        data = pd.DataFrame({
-            'col': [1, 2, 3, 1, 2]
-        })
+        data = pd.DataFrame({'col': [1, 2, 3, 1, 2]})
         instance = AnonymizedFaker(cardinality_rule='match')
 
         # Run
@@ -193,9 +185,7 @@ class TestAnonymizedFaker:
     def test_cardinality_rule_match_nans(self):
         """Test it works with the cardinality rule 'match' with nans."""
         # Setup
-        data = pd.DataFrame({
-            'col': [1, 2, 3, 1, 2, None, np.nan, np.nan, 2]
-        })
+        data = pd.DataFrame({'col': [1, 2, 3, 1, 2, None, np.nan, np.nan, 2]})
         instance = AnonymizedFaker(cardinality_rule='match')
 
         # Run
@@ -209,12 +199,8 @@ class TestAnonymizedFaker:
     def test_cardinality_rule_match_not_enough_unique_values(self):
         """Test it works with the cardinality rule 'match' and too few values to transform."""
         # Setup
-        data_fit = pd.DataFrame({
-            'col': [1, 2, 3, 1, 2, None, np.nan, np.nan, 2]
-        })
-        data_transform = pd.DataFrame({
-            'col': [1, 1, 1]
-        })
+        data_fit = pd.DataFrame({'col': [1, 2, 3, 1, 2, None, np.nan, np.nan, 2]})
+        data_transform = pd.DataFrame({'col': [1, 1, 1]})
         instance = AnonymizedFaker(cardinality_rule='match')
 
         # Run
@@ -229,12 +215,8 @@ class TestAnonymizedFaker:
     def test_cardinality_rule_match_too_many_unique(self):
         """Test it works with the cardinality rule 'match' and more unique values than samples."""
         # Setup
-        data_fit = pd.DataFrame({
-            'col': [1, 2, 3, 4, 5, 6]
-        })
-        data_transform = pd.DataFrame({
-            'col': [1, 1, np.nan, 3, 1]
-        })
+        data_fit = pd.DataFrame({'col': [1, 2, 3, 4, 5, 6]})
+        data_transform = pd.DataFrame({'col': [1, 1, np.nan, 3, 1]})
         instance = AnonymizedFaker(cardinality_rule='match')
 
         # Run
@@ -249,12 +231,8 @@ class TestAnonymizedFaker:
     def test_cardinality_rule_match_too_many_nans(self):
         """Test it works with the cardinality rule 'match' and more nans than possible to fit."""
         # Setup
-        data_fit = pd.DataFrame({
-            'col': [1, 2, 3, np.nan, np.nan, np.nan]
-        })
-        data_transform = pd.DataFrame({
-            'col': [1, 1, 1, 1]
-        })
+        data_fit = pd.DataFrame({'col': [1, 2, 3, np.nan, np.nan, np.nan]})
+        data_transform = pd.DataFrame({'col': [1, 1, 1, 1]})
         instance = AnonymizedFaker(cardinality_rule='match')
 
         # Run
@@ -273,9 +251,7 @@ class TestAnonymizedFaker:
         expected (can happen when previous transformer version is loaded from a pkl file).
         """
         # Setup
-        data = pd.DataFrame({
-            'job': np.arange(500)
-        })
+        data = pd.DataFrame({'job': np.arange(500)})
 
         instance = AnonymizedFaker('job', 'job', cardinality_rule='match')
         instance.enforce_uniqueness = True
@@ -304,9 +280,7 @@ class TestAnonymizedFaker:
 class TestPsuedoAnonymizedFaker:
     def test_default_settings(self):
         """End to end test with the default settings of the ``PseudoAnonymizedFaker``."""
-        data = pd.DataFrame({
-            'animals': ['cat', 'dog', 'parrot', 'monkey']
-        })
+        data = pd.DataFrame({'animals': ['cat', 'dog', 'parrot', 'monkey']})
 
         instance = PseudoAnonymizedFaker()
 
@@ -316,7 +290,7 @@ class TestPsuedoAnonymizedFaker:
         assert transformed.columns == ['animals']
         pd.testing.assert_series_equal(
             reverse_transformed['animals'].map(instance._reverse_mapping_dict),
-            data['animals']
+            data['animals'],
         )
         unique_animals = set(reverse_transformed['animals'])
         assert unique_animals.intersection(set(instance._mapping_dict)) == set()
@@ -324,9 +298,7 @@ class TestPsuedoAnonymizedFaker:
 
     def test_with_nans(self):
         """Test with the default settings of the ``PseudoAnonymizedFaker`` and ``nans``."""
-        data = pd.DataFrame({
-            'animals': ['cat', 'dog', np.nan, 'monkey']
-        })
+        data = pd.DataFrame({'animals': ['cat', 'dog', np.nan, 'monkey']})
 
         instance = PseudoAnonymizedFaker()
 
@@ -336,7 +308,7 @@ class TestPsuedoAnonymizedFaker:
         assert transformed.columns == ['animals']
         pd.testing.assert_series_equal(
             reverse_transformed['animals'].map(instance._reverse_mapping_dict),
-            data['animals']
+            data['animals'],
         )
         unique_animals = set(reverse_transformed['animals'])
         assert unique_animals.intersection(set(instance._mapping_dict)) == set()
@@ -344,9 +316,7 @@ class TestPsuedoAnonymizedFaker:
 
     def test_with_custom_provider(self):
         """End to end test with custom settings of the ``PseudoAnonymizedFaker``."""
-        data = pd.DataFrame({
-            'animals': ['cat', 'dog', np.nan, 'monkey']
-        })
+        data = pd.DataFrame({'animals': ['cat', 'dog', np.nan, 'monkey']})
 
         instance = PseudoAnonymizedFaker('credit_card', 'credit_card_number')
 
@@ -356,7 +326,7 @@ class TestPsuedoAnonymizedFaker:
         assert transformed.columns == ['animals']
         pd.testing.assert_series_equal(
             reverse_transformed['animals'].map(instance._reverse_mapping_dict),
-            data['animals']
+            data['animals'],
         )
         unique_animals = set(reverse_transformed['animals'])
         assert unique_animals.intersection(set(instance._mapping_dict)) == set()

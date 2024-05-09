@@ -27,18 +27,12 @@ class RandomIntegerGenerator(NumericalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-03,
-                'memory': 2500.0
-            },
-            'transform': {
-                'time': 5e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 1e-03, 'memory': 2500.0},
+            'transform': {'time': 5e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 400.0,
-            }
+            },
         }
 
 
@@ -54,18 +48,12 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-03,
-                'memory': 2500.0
-            },
-            'transform': {
-                'time': 4e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 1e-03, 'memory': 2500.0},
+            'transform': {'time': 4e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 2e-05,
                 'memory': 350.0,
-            }
+            },
         }
 
 
@@ -83,18 +71,12 @@ class ConstantIntegerGenerator(NumericalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-03,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 1e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 1e-03, 'memory': 400.0},
+            'transform': {'time': 1e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 400.0,
-            }
+            },
         }
 
 
@@ -110,18 +92,12 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-03,
-                'memory': 600.0
-            },
-            'transform': {
-                'time': 3e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 1e-03, 'memory': 600.0},
+            'transform': {'time': 3e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 2e-05,
                 'memory': 350.0,
-            }
+            },
         }
 
 
@@ -142,18 +118,12 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-03,
-                'memory': 2500.0
-            },
-            'transform': {
-                'time': 1e-05,
-                'memory': 2000.0
-            },
+            'fit': {'time': 1e-03, 'memory': 2500.0},
+            'transform': {'time': 1e-05, 'memory': 2000.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 2000.0,
-            }
+            },
         }
 
 
@@ -174,18 +144,12 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-03,
-                'memory': 2500.0
-            },
-            'transform': {
-                'time': 3e-05,
-                'memory': 1000.0
-            },
+            'fit': {'time': 1e-03, 'memory': 2500.0},
+            'transform': {'time': 3e-05, 'memory': 1000.0},
             'reverse_transform': {
                 'time': 2e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -201,18 +165,12 @@ class NormalGenerator(NumericalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-03,
-                'memory': 2500.0
-            },
-            'transform': {
-                'time': 1e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 1e-03, 'memory': 2500.0},
+            'transform': {'time': 1e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 400.0,
-            }
+            },
         }
 
 
@@ -228,18 +186,12 @@ class NormalNaNsGenerator(NumericalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-03,
-                'memory': 2500.0
-            },
-            'transform': {
-                'time': 4e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 1e-03, 'memory': 2500.0},
+            'transform': {'time': 4e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 350.0,
-            }
+            },
         }
 
 
@@ -255,18 +207,12 @@ class BigNormalGenerator(NumericalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-03,
-                'memory': 2500.0
-            },
-            'transform': {
-                'time': 5e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 1e-03, 'memory': 2500.0},
+            'transform': {'time': 5e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 400.0,
-            }
+            },
         }
 
 
@@ -282,16 +228,10 @@ class BigNormalNaNsGenerator(NumericalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 1e-03,
-                'memory': 2500.0
-            },
-            'transform': {
-                'time': 3e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 1e-03, 'memory': 2500.0},
+            'transform': {'time': 3e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 2e-05,
                 'memory': 350.0,
-            }
+            },
         }

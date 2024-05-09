@@ -1,11 +1,14 @@
 from unittest.mock import Mock, patch
 
 from rdt.transformers.pii.anonymization import (
-    _detect_provider_name, get_anonymized_transformer, get_faker_instance, is_faker_function)
+    _detect_provider_name,
+    get_anonymized_transformer,
+    get_faker_instance,
+    is_faker_function,
+)
 
 
 class TestAnonimization:
-
     def test__detect_provider_name(self):
         """Test the ``_detect_provider_name`` method.
 
@@ -48,9 +51,13 @@ class TestAnonimization:
             - The return value must be the instance of ``AnonymizedFaker``.
         """
         # Setup
-        output = get_anonymized_transformer('email', transformer_kwargs={
-            'function_kwargs': {'domain': '@gmail.com'}, 'locales': ['en_CA', 'fr_CA']
-        })
+        output = get_anonymized_transformer(
+            'email',
+            transformer_kwargs={
+                'function_kwargs': {'domain': '@gmail.com'},
+                'locales': ['en_CA', 'fr_CA'],
+            },
+        )
 
         # Assert
         assert output == mock_anonymized_faker.return_value
@@ -58,7 +65,7 @@ class TestAnonimization:
             provider_name='internet',
             function_name='email',
             function_kwargs={'domain': '@gmail.com'},
-            locales=['en_CA', 'fr_CA']
+            locales=['en_CA', 'fr_CA'],
         )
 
     @patch('rdt.transformers.pii.anonymization.AnonymizedFaker')
@@ -82,9 +89,13 @@ class TestAnonimization:
             - The return value must be the instance of ``AnonymizedFaker``.
         """
         # Setup
-        output = get_anonymized_transformer('color', transformer_kwargs={
-            'function_kwargs': {'hue': 'red'}, 'locales': ['en_CA', 'fr_CA']
-        })
+        output = get_anonymized_transformer(
+            'color',
+            transformer_kwargs={
+                'function_kwargs': {'hue': 'red'},
+                'locales': ['en_CA', 'fr_CA'],
+            },
+        )
 
         # Assert
         assert output == mock_anonymized_faker.return_value
@@ -92,7 +103,7 @@ class TestAnonimization:
             provider_name='color',
             function_name='color',
             function_kwargs={'hue': 'red'},
-            locales=['en_CA', 'fr_CA']
+            locales=['en_CA', 'fr_CA'],
         )
 
     @patch('rdt.transformers.pii.anonymization.Faker')

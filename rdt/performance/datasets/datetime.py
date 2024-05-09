@@ -31,18 +31,12 @@ class RandomGapDatetimeGenerator(DatetimeGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 5e-05,
-                'memory': 500.0
-            },
-            'transform': {
-                'time': 5e-05,
-                'memory': 350.0
-            },
+            'fit': {'time': 5e-05, 'memory': 500.0},
+            'transform': {'time': 5e-05, 'memory': 350.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -61,18 +55,12 @@ class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 5e-05,
-                'memory': 500.0
-            },
-            'transform': {
-                'time': 5e-05,
-                'memory': 350.0
-            },
+            'fit': {'time': 5e-05, 'memory': 500.0},
+            'transform': {'time': 5e-05, 'memory': 350.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -89,18 +77,12 @@ class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 5e-05,
-                'memory': 500.0
-            },
-            'transform': {
-                'time': 5e-05,
-                'memory': 1000.0
-            },
+            'fit': {'time': 5e-05, 'memory': 500.0},
+            'transform': {'time': 5e-05, 'memory': 1000.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -119,18 +101,12 @@ class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 5e-05,
-                'memory': 500.0
-            },
-            'transform': {
-                'time': 5e-05,
-                'memory': 350.0
-            },
+            'fit': {'time': 5e-05, 'memory': 500.0},
+            'transform': {'time': 5e-05, 'memory': 350.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -152,18 +128,12 @@ class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 5e-05,
-                'memory': 500.0
-            },
-            'transform': {
-                'time': 5e-05,
-                'memory': 350.0
-            },
+            'fit': {'time': 5e-05, 'memory': 500.0},
+            'transform': {'time': 5e-05, 'memory': 350.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -185,16 +155,10 @@ class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 5e-05,
-                'memory': 500.0
-            },
-            'transform': {
-                'time': 5e-05,
-                'memory': 350.0
-            },
+            'fit': {'time': 5e-05, 'memory': 500.0},
+            'transform': {'time': 5e-05, 'memory': 350.0},
             'reverse_transform': {
                 'time': 5e-05,
                 'memory': 1000.0,
-            }
+            },
         }

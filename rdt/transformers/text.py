@@ -1,4 +1,5 @@
 """Transformers for text data."""
+
 import logging
 import warnings
 
@@ -116,8 +117,12 @@ class RegexGenerator(BaseTransformer):
         state['generator'] = generator
         self.__dict__ = state
 
-    def __init__(self, regex_format='[A-Za-z]{5}', enforce_uniqueness=False,
-                 generation_order='alphanumeric'):
+    def __init__(
+        self,
+        regex_format='[A-Za-z]{5}',
+        enforce_uniqueness=False,
+        generation_order='alphanumeric',
+    ):
         super().__init__()
         self.output_properties = {None: {'next_transformer': None}}
         self.enforce_uniqueness = enforce_uniqueness
@@ -171,8 +176,10 @@ class RegexGenerator(BaseTransformer):
                 LOGGER.info(
                     "The data has %s rows but the regex for '%s' can only create %s unique values."
                     " Some values in '%s' may be repeated.",
-                    sample_size, self.get_input_column(), self.generator_size,
-                    self.get_input_column()
+                    sample_size,
+                    self.get_input_column(),
+                    self.generator_size,
+                    self.get_input_column(),
                 )
 
         remaining = self.generator_size - self.generated
@@ -204,27 +211,33 @@ class RegexGenerator(BaseTransformer):
             self.reset_randomization()
             remaining = self.generator_size
 
-        if remaining >= sample_size:
-            reverse_transformed = [next(self.generator) for _ in range(sample_size)]
-            self.generated += sample_size
+        generated_values = []
+        while len(generated_values) < sample_size:
+            try:
+                generated_values.append(next(self.generator))
+                self.generated += 1
+            except (RuntimeError, StopIteration):
+                # Can't generate more rows without collision so breaking out of loop
+                break
 
-        else:
-            generated_values = list(self.generator)
-            reverse_transformed = generated_values[:]
-            self.generated = self.generator_size
+        reverse_transformed = generated_values[:]
+
+        if len(reverse_transformed) < sample_size:
             if self.enforce_uniqueness:
                 try:
                     remaining_samples = sample_size - len(reverse_transformed)
                     start = int(generated_values[-1]) + 1
-                    reverse_transformed.extend(
-                        [str(i) for i in range(start, start + remaining_samples)])
+                    reverse_transformed.extend([
+                        str(i) for i in range(start, start + remaining_samples)
+                    ])
 
                 except ValueError:
                     counter = 0
                     while len(reverse_transformed) < sample_size:
                         remaining_samples = sample_size - len(reverse_transformed)
-                        reverse_transformed.extend(
-                            [f'{i}({counter})' for i in generated_values[:remaining_samples]])
+                        reverse_transformed.extend([
+                            f'{i}({counter})' for i in generated_values[:remaining_samples]
+                        ])
                         counter += 1
 
             else:

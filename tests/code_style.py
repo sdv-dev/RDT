@@ -92,11 +92,7 @@ def validate_test_names(transformer):
     assert test_class is not None, 'The expected test class was not found.'
 
     test_functions = inspect.getmembers(test_class, predicate=inspect.isfunction)
-    test_functions = [
-        test
-        for test, _ in test_functions
-        if test.startswith('test')
-    ]
+    test_functions = [test for test, _ in test_functions if test.startswith('test')]
 
     assert test_functions, 'No test functions found within the test module.'
 
@@ -110,8 +106,8 @@ def validate_test_names(transformer):
     for test in test_functions:
         count = len(valid_test_functions)
         for transformer_function in transformer_functions:
-            simple_test = fr'test_{transformer_function}'
-            described_test = fr'test_{transformer_function}_'
+            simple_test = rf'test_{transformer_function}'
+            described_test = rf'test_{transformer_function}_'
             if test.startswith(described_test):
                 valid_test_functions.append(test)
             elif test.startswith(simple_test):

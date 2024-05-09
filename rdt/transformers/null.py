@@ -10,7 +10,7 @@ from rdt.errors import TransformerInputError
 LOGGER = logging.getLogger(__name__)
 
 
-class NullTransformer():
+class NullTransformer:
     """Transformer for data that contains Null values.
 
     Args:
@@ -135,11 +135,9 @@ class NullTransformer():
         """
         isna = data.isna()
         if self._missing_value_replacement == 'random':
-            data_mask = list(np.random.uniform(
-                low=self._min_value,
-                high=self._max_value,
-                size=len(data)
-            ))
+            data_mask = list(
+                np.random.uniform(low=self._min_value, high=self._max_value, size=len(data))
+            )
             data = data.mask(data.isna(), data_mask)
 
         elif isna.any() and self._missing_value_replacement is not None:
@@ -172,7 +170,7 @@ class NullTransformer():
             data = data[:, 0]
 
         elif self.nulls:
-            isna = np.random.random((len(data), )) < self._null_percentage
+            isna = np.random.random((len(data),)) < self._null_percentage
 
         data = pd.Series(data)
 

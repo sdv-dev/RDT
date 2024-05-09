@@ -28,18 +28,12 @@ class RandomIntegerGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 2e-05,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 5e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 2e-05, 'memory': 400.0},
+            'transform': {'time': 5e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -55,18 +49,12 @@ class RandomIntegerNaNsGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 2e-05,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 5e-05,
-                'memory': 1000.0
-            },
+            'fit': {'time': 2e-05, 'memory': 400.0},
+            'transform': {'time': 5e-05, 'memory': 1000.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -83,18 +71,12 @@ class RandomStringGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 2e-05,
-                'memory': 500.0
-            },
-            'transform': {
-                'time': 1e-05,
-                'memory': 500.0
-            },
+            'fit': {'time': 2e-05, 'memory': 500.0},
+            'transform': {'time': 1e-05, 'memory': 500.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -110,18 +92,12 @@ class RandomStringNaNsGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 2e-05,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 1e-05,
-                'memory': 1000.0
-            },
+            'fit': {'time': 2e-05, 'memory': 400.0},
+            'transform': {'time': 1e-05, 'memory': 1000.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 1000.0,
-            }
+            },
         }
 
 
@@ -136,12 +112,13 @@ class RandomMixedGenerator(CategoricalGenerator):
         """Generate a ``num_rows`` number of rows."""
         cat_size = 5
         categories = np.hstack([
-            cat.astype('O') for cat in [
+            cat.astype('O')
+            for cat in [
                 RandomGapDatetimeGenerator.generate(cat_size),
                 np.random.randint(0, 100, cat_size),
                 np.random.uniform(0, 100, cat_size),
                 np.arange(cat_size).astype(str),
-                np.array([True, False])
+                np.array([True, False]),
             ]
         ])
 
@@ -151,18 +128,12 @@ class RandomMixedGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 2e-05,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 1e-05,
-                'memory': 1000.0
-            },
+            'fit': {'time': 2e-05, 'memory': 400.0},
+            'transform': {'time': 1e-05, 'memory': 1000.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 2000.0,
-            }
+            },
         }
 
 
@@ -189,18 +160,12 @@ class RandomMixedNaNsGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 2e-05,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 1e-05,
-                'memory': 2000.0
-            },
+            'fit': {'time': 2e-05, 'memory': 400.0},
+            'transform': {'time': 1e-05, 'memory': 2000.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 2000.0,
-            }
+            },
         }
 
 
@@ -217,18 +182,12 @@ class SingleIntegerGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 2e-05,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 3e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 2e-05, 'memory': 400.0},
+            'transform': {'time': 3e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 400.0,
-            }
+            },
         }
 
 
@@ -244,18 +203,12 @@ class SingleIntegerNaNsGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 2e-05,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 3e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 2e-05, 'memory': 400.0},
+            'transform': {'time': 3e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 500.0,
-            }
+            },
         }
 
 
@@ -272,18 +225,12 @@ class SingleStringGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 2e-05,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 4e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 2e-05, 'memory': 400.0},
+            'transform': {'time': 4e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 400.0,
-            }
+            },
         }
 
 
@@ -299,18 +246,12 @@ class SingleStringNaNsGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 2e-05,
-                'memory': 400.0
-            },
-            'transform': {
-                'time': 3e-05,
-                'memory': 400.0
-            },
+            'fit': {'time': 2e-05, 'memory': 400.0},
+            'transform': {'time': 3e-05, 'memory': 400.0},
             'reverse_transform': {
                 'time': 1e-05,
                 'memory': 500.0,
-            }
+            },
         }
 
 
@@ -326,18 +267,12 @@ class UniqueIntegerGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 0.0004,
-                'memory': 2000.0
-            },
-            'transform': {
-                'time': 0.0004,
-                'memory': 500000.0
-            },
+            'fit': {'time': 0.0004, 'memory': 2000.0},
+            'transform': {'time': 0.0004, 'memory': 500000.0},
             'reverse_transform': {
                 'time': 0.0005,
                 'memory': 1000000.0,
-            }
+            },
         }
 
 
@@ -353,18 +288,12 @@ class UniqueIntegerNaNsGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 0.0004,
-                'memory': 1000.0
-            },
-            'transform': {
-                'time': 0.0004,
-                'memory': 1000000.0
-            },
+            'fit': {'time': 0.0004, 'memory': 1000.0},
+            'transform': {'time': 0.0004, 'memory': 1000000.0},
             'reverse_transform': {
                 'time': 0.0005,
                 'memory': 1000000.0,
-            }
+            },
         }
 
 
@@ -380,18 +309,12 @@ class UniqueStringGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 0.002,
-                'memory': 2000.0
-            },
-            'transform': {
-                'time': 0.0004,
-                'memory': 500000.0
-            },
+            'fit': {'time': 0.002, 'memory': 2000.0},
+            'transform': {'time': 0.0004, 'memory': 500000.0},
             'reverse_transform': {
                 'time': 0.0005,
                 'memory': 1000000.0,
-            }
+            },
         }
 
 
@@ -407,16 +330,10 @@ class UniqueStringNaNsGenerator(CategoricalGenerator):
     def get_performance_thresholds():
         """Return the expected threseholds."""
         return {
-            'fit': {
-                'time': 0.001,
-                'memory': 1000.0
-            },
-            'transform': {
-                'time': 0.0005,
-                'memory': 1000000.0
-            },
+            'fit': {'time': 0.001, 'memory': 1000.0},
+            'transform': {'time': 0.0005, 'memory': 1000000.0},
             'reverse_transform': {
                 'time': 0.0005,
                 'memory': 1000000.0,
-            }
+            },
         }

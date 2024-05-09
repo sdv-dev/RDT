@@ -7,8 +7,15 @@ import pandas as pd
 import pytest
 
 from rdt.transformers.utils import (
-    _any, _max_repeat, check_nan_in_transform, fill_nan_with_none, flatten_column_list,
-    learn_rounding_digits, strings_from_regex, try_convert_to_dtype)
+    _any,
+    _max_repeat,
+    check_nan_in_transform,
+    fill_nan_with_none,
+    flatten_column_list,
+    learn_rounding_digits,
+    strings_from_regex,
+    try_convert_to_dtype,
+)
 
 
 def test_strings_from_regex_literal():
@@ -22,7 +29,18 @@ def test_strings_from_regex_digit():
     generator, size = strings_from_regex('[0-9]')
 
     assert size == 10
-    assert list(generator) == ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    assert list(generator) == [
+        '0',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+    ]
 
 
 def test_strings_from_regex_repeat_literal():
@@ -65,13 +83,26 @@ def test_strings_from_regex_very_large_regex():
 def test_flatten_column_list():
     """Test `flatten_column_list` function."""
     # Setup
-    column_list = ['column1', ('column2', 'column3'), 'column4', ('column5',), 'column6']
+    column_list = [
+        'column1',
+        ('column2', 'column3'),
+        'column4',
+        ('column5',),
+        'column6',
+    ]
 
     # Run
     flattened_list = flatten_column_list(column_list)
 
     # Assert
-    expected_flattened_list = ['column1', 'column2', 'column3', 'column4', 'column5', 'column6']
+    expected_flattened_list = [
+        'column1',
+        'column2',
+        'column3',
+        'column4',
+        'column5',
+        'column6',
+    ]
     assert flattened_list == expected_flattened_list
 
 
@@ -99,7 +130,15 @@ def test_check_nan_in_transform():
     If the data was integer, it should be converted to float.
     """
     # Setup
-    transformed = pd.Series([0.1026, 0.1651, np.nan, 0.3116, 0.6546, 0.8541, 0.7041])
+    transformed = pd.Series([
+        0.1026,
+        0.1651,
+        np.nan,
+        0.3116,
+        0.6546,
+        0.8541,
+        0.7041,
+    ])
     data_without_nans = pd.DataFrame({
         'col 1': [1, 2, 3],
         'col 2': [4, 5, 6],
@@ -177,7 +216,7 @@ def test_learn_rounding_digits_less_than_15_decimals():
     Output:
     - 3
     """
-    data = pd.Series(np.array([10, 0., 0.1, 0.12, 0.123, np.nan]))
+    data = pd.Series(np.array([10, 0.0, 0.1, 0.12, 0.123, np.nan]))
 
     output = learn_rounding_digits(data)
 
@@ -192,7 +231,7 @@ def test_learn_rounding_digits_negative_decimals_float():
     Input:
     - An array that contains floats that are multiples of powers of 10, 100 and 1000 and a NaN.
     """
-    data = pd.Series(np.array([1230., 12300., 123000., np.nan]))
+    data = pd.Series(np.array([1230.0, 12300.0, 123000.0, np.nan]))
 
     output = learn_rounding_digits(data)
 

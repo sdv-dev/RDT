@@ -16,23 +16,13 @@ PRIMARY_SDTYPES = ['boolean', 'categorical', 'datetime', 'numerical']
 TRANSFORMER_ARGS = {
     'BinaryEncoder': {
         'missing_value_replacement': -1,
-        'missing_value_generation': 'from_column'
+        'missing_value_generation': 'from_column',
     },
-    'UnixTimestampEncoder': {
-        'missing_value_generation': 'from_column'
-    },
-    'OptimizedTimestampEncoder': {
-        'missing_value_generation': 'from_column'
-    },
-    'FloatFormatter': {
-        'missing_value_generation': 'from_column'
-    },
-    'GaussianNormalizer': {
-        'missing_value_generation': 'from_column'
-    },
-    'ClusterBasedNormalizer': {
-        'missing_value_generation': 'from_column'
-    },
+    'UnixTimestampEncoder': {'missing_value_generation': 'from_column'},
+    'OptimizedTimestampEncoder': {'missing_value_generation': 'from_column'},
+    'FloatFormatter': {'missing_value_generation': 'from_column'},
+    'GaussianNormalizer': {'missing_value_generation': 'from_column'},
+    'ClusterBasedNormalizer': {'missing_value_generation': 'from_column'},
 }
 
 # Mapping of rdt sdtype to dtype
@@ -68,8 +58,12 @@ def _validate_helper(validator_function, args, steps):
 def _is_valid_transformer(transformer_name):
     """Determine if transformer should be tested or not."""
     invalid_names = [
-        'IdentityTransformer', 'Dummy', 'OrderedLabelEncoder', 'CustomLabelEncoder',
-        'OrderedUniformEncoder', 'BaseMultiColumnTransformer'
+        'IdentityTransformer',
+        'Dummy',
+        'OrderedLabelEncoder',
+        'CustomLabelEncoder',
+        'OrderedUniformEncoder',
+        'BaseMultiColumnTransformer',
     ]
     return all(invalid_name not in transformer_name for invalid_name in invalid_names)
 
@@ -204,32 +198,21 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
     transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
     hypertransformer = HyperTransformer()
     if transformer_args:
-        field_transformers = {
-            TEST_COL: transformer_class(**transformer_args)
-        }
+        field_transformers = {TEST_COL: transformer_class(**transformer_args)}
 
     else:
-        field_transformers = {
-            TEST_COL: transformer_class()
-        }
+        field_transformers = {TEST_COL: transformer_class()}
 
     sdtypes = {}
     for field, transformer in field_transformers.items():
         sdtypes[field] = transformer.get_supported_sdtypes()[0]
 
-    config = {
-        'sdtypes': sdtypes,
-        'transformers': field_transformers
-    }
+    config = {'sdtypes': sdtypes, 'transformers': field_transformers}
     hypertransformer.set_config(config)
     hypertransformer.fit(input_data)
 
     transformed = hypertransformer.transform(input_data)
-    _validate_helper(
-        _validate_hypertransformer_transformed_data,
-        [transformed],
-        steps
-    )
+    _validate_helper(_validate_hypertransformer_transformed_data, [transformed], steps)
 
     out = hypertransformer.reverse_transform(transformed)
     _validate_helper(

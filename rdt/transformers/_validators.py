@@ -1,4 +1,5 @@
 """Validations for multi-column transformers."""
+
 import importlib
 
 from rdt.errors import TransformerInputError
@@ -60,8 +61,14 @@ class AddressValidator(BaseValidator):
     """Validation class for Address data."""
 
     SUPPORTED_SDTYPES = [
-        'country_code', 'administrative_unit', 'city', 'postcode',
-        'street_address', 'secondary_address', 'state', 'state_abbr'
+        'country_code',
+        'administrative_unit',
+        'city',
+        'postcode',
+        'street_address',
+        'secondary_address',
+        'state',
+        'state_abbr',
     ]
     VALIDATION_TYPE = 'Address'
 
@@ -156,16 +163,18 @@ class GPSValidator(BaseValidator):
     @classmethod
     def validate_imports(cls):
         """Check that the GPS transformers can be imported."""
-        error_message = (
-            'You must have SDV Enterprise with the gps add-on to use the GPS features.'
-        )
+        error_message = 'You must have SDV Enterprise with the gps add-on to use the GPS features.'
 
         try:
             gps_module = importlib.import_module('rdt.transformers.gps')
         except ModuleNotFoundError:
             raise ImportError(error_message) from None
 
-        required_classes = ['RandomLocationGenerator', 'MetroAreaAnonymizer', 'GPSNoiser']
+        required_classes = [
+            'RandomLocationGenerator',
+            'MetroAreaAnonymizer',
+            'GPSNoiser',
+        ]
         for class_name in required_classes:
             if not hasattr(gps_module, class_name):
                 raise ImportError(error_message)
