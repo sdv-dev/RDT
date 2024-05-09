@@ -197,8 +197,7 @@ class UniformEncoder(BaseTransformer):
                 labels.append(key)
 
         result = pd.cut(data, bins=bins, labels=labels, include_lowest=True)
-        current_categories = result.cat.categories
-        if nan_name in current_categories:
+        if nan_name in result.cat.categories:
             result = result.cat.remove_categories(nan_name)
 
         result = try_convert_to_dtype(result, self.dtype)
