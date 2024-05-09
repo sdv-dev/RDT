@@ -113,6 +113,30 @@ class TestUniformEncoder:
         # Asserts
         pd.testing.assert_series_equal(output[column], data[column])
 
+    def test__reverse_transform_nans_pandas_warning(self):
+        """Test ``_reverse_transform`` for data with NaNs.
+
+        Here we check that no pandas warning is raised.
+        """
+        # Setup
+        intervals = {'United-States': [0.0, 0.8], None: [0.8, 0.9], 'Jamaica': [0.9, 0.99]}
+        data = pd.Series([0.107995, 0.148025, 0.632702], name='native-country', dtype=float)
+        transformer = UniformEncoder()
+        transformer.intervals = intervals
+        transformer.dtype = 'O'
+
+        # Run
+        with warnings.catch_warnings(record=True) as w:
+            result = transformer._reverse_transform(data)
+
+            assert len(w) == 0
+
+        # Asserts
+        expected_result = pd.Series(
+            ['United-States', 'United-States', 'United-States'], name='native-country'
+        )
+        pd.testing.assert_series_equal(result, expected_result)
+
     def test_uniform_encoder_unseen_transform_nan(self):
         """Ensure UniformEncoder works when np.nan to transform wasn't seen during fit."""
         # Setup
