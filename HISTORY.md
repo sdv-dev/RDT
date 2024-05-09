@@ -1,5 +1,22 @@
 # History
 
+## 1.12.1 - 2024-05-09
+
+This release handles a pandas warning that was showing up in the `UniformEncoder`.
+
+### Bugs Fixed
+
+* Fix pandas FutureWarning in UniformEncoder - Issue [#819](https://github.com/sdv-dev/RDT/issues/819) by @R-Palazzo
+
+### Maintenance
+
+* Switch to using ruff for Python linting and code formatting - Issue [#765](https://github.com/sdv-dev/RDT/issues/765) by @gsheni
+* Only run unit and integration tests on oldest and latest python versions for macos - Issue [#812](https://github.com/sdv-dev/RDT/issues/812) by @R-Palazzo
+
+### Internal
+
+* Refactoring code for Enterprise issue #529 - PR[#815](https://github.com/sdv-dev/RDT/pull/815) by @amontanez24
+
 ## 1.12.0 - 2024-04-19
 
 This release adds a new parameter to the `RegexGenerator` called `generation_order`. This parameter lets users change if they want the generated values for the regex to come out in alphanumeric or scrambled order. Additionally, warnings that were disrupting the progress bar are handled.
