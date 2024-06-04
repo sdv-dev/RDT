@@ -135,6 +135,24 @@ class UniformEncoder(BaseTransformer):
 
         self.frequencies, self.intervals = self._compute_frequencies_intervals(labels, freq)
 
+    def set_fitted_parameters(self, column_name, intervals, dtype='object'):
+        """Manually set the parameters on the transformer to get it into a fitted state.
+
+        Args:
+            column_name (str):
+                The name of the column for this transformer.
+            intervals (dict[str, tuple]):
+                A dictionary mapping categories to the interval in the range [0, 1]
+                it should map to.
+            dtype (str or dtype, optional):
+                The dtype to convert the reverse transformed data back to. Defaults to object.
+        """
+        self.reset_randomization()
+        self.columns = [column_name]
+        self.output_columns = [column_name]
+        self.intervals = intervals
+        self.dtype = dtype
+
     def _transform(self, data):
         """Map the category to a continuous value.
 
