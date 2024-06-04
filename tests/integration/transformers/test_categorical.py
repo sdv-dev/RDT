@@ -67,7 +67,7 @@ class TestUniformEncoder:
         pd.testing.assert_series_equal(output['column_name'], data['column_name'])
 
     def test__reverse_transform_from_manually_set_parameters(self):
-        """Test the ``reverse_transform``."""
+        """Test the ``reverse_transform`` after manually setting parameters."""
         # Setup
         data = pd.DataFrame({'column_name': [1, 2, 3, 2, 2, 1, 3, 3, 2]})
         transformed = pd.DataFrame({
@@ -77,7 +77,7 @@ class TestUniformEncoder:
         transformer = UniformEncoder()
 
         # Run
-        transformer.set_fitted_parameters(
+        transformer._set_fitted_parameters(
             column_name='column_name',
             intervals={1: (0, 0.33), 2: (0.33, 0.66), 3: (0.66, 1)},
             dtype='int64',

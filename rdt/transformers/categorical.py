@@ -135,7 +135,7 @@ class UniformEncoder(BaseTransformer):
 
         self.frequencies, self.intervals = self._compute_frequencies_intervals(labels, freq)
 
-    def set_fitted_parameters(self, column_name, intervals, dtype='object'):
+    def _set_fitted_parameters(self, column_name, intervals, dtype='object'):
         """Manually set the parameters on the transformer to get it into a fitted state.
 
         Args:
