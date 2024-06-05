@@ -144,8 +144,8 @@ class UniformEncoder(BaseTransformer):
             intervals (dict[str, tuple]):
                 A dictionary mapping categories to the interval in the range [0, 1]
                 it should map to.
-            dtype (str or dtype, optional):
-                The dtype to convert the reverse transformed data back to. Defaults to object.
+            dtype (str, optional):
+                The dtype to convert the reverse transformed data back to. Defaults to 'object'.
         """
         self.reset_randomization()
         self.columns = [column_name]
