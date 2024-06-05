@@ -198,6 +198,25 @@ class TestUniformEncoder:
         assert transformer.frequencies == expected_frequencies
         assert transformer.intervals == expected_intervals
 
+    def test__set_fitted_parameters(self):
+        """Test the ``_set_fitted_parameters`` method."""
+        # Setup
+        transformer = UniformEncoder()
+        intervals = {
+            'foo': [0.0, 0.5],
+            'bar': [0.5, 0.8333333333333333],
+            'tar': [0.8333333333333333, 1.0],
+        }
+
+        # Run
+        transformer._set_fitted_parameters('column_name', intervals, dtype='object')
+
+        # Asserts
+        assert transformer.intervals == intervals
+        assert transformer.columns == ['column_name']
+        assert transformer.output_columns == ['column_name']
+        assert transformer.dtype == 'object'
+
     def test__transform(self):
         """Test the ``_transform`` method.
 
