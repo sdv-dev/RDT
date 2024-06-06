@@ -8,6 +8,7 @@ import pandas as pd
 import scipy
 from sklearn.mixture import BayesianGaussianMixture
 
+from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.utils import learn_rounding_digits
@@ -223,6 +224,9 @@ class FloatFormatter(BaseTransformer):
         self.null_transformer = null_transformer
         self.columns = [column_name]
         self.output_columns = [column_name]
+        if self.enforce_min_max_values:
+            if not min_max_values:
+                raise TransformerInputError('Must provide min and max values for this transformer.')
         if min_max_values:
             self._min_value = min(min_max_values)
             self._max_value = max(min_max_values)

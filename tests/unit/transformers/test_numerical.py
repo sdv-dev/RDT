@@ -9,6 +9,7 @@ import pytest
 from copulas import univariate
 from pandas.api.types import is_float_dtype
 
+from rdt.errors import TransformerInputError
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
     ClusterBasedNormalizer,
@@ -715,14 +716,23 @@ class TestFloatFormatter(TestCase):
     def test__set_fitted_parameters(self):
         """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
         # Setup
-        transformer = FloatFormatter()
+        transformer = FloatFormatter(enforce_min_max_values=True)
         column_name = 'mock'
         null_transformer = NullTransformer(False)
         min_max_value = (0.0, 100.0)
         rounding_digits = 3
         dtype = 'Float'
 
+        error_msg = re.escape('Must provide min and max values for this transformer.')
         # Run
+        with pytest.raises(TransformerInputError, match=error_msg):
+            transformer._set_fitted_parameters(
+                column_name=column_name,
+                null_transformer=null_transformer,
+                rounding_digits=rounding_digits,
+                dtype=dtype,
+            )
+
         transformer._set_fitted_parameters(
             column_name=column_name,
             null_transformer=null_transformer,
