@@ -276,6 +276,28 @@ class TestAnonymizedFaker:
         instance.reset_randomization()
         instance.reverse_transform(transformed)
 
+    def test__reverse_transform_from_manually_set_parameters(self):
+        """Test the ``reverse_transform`` after manually setting parameters."""
+        # Setup
+        data = pd.DataFrame({
+            'id': [1, 2, 3, 4, 5],
+        })
+        transformer = AnonymizedFaker(cardinality_rule='match')
+        column_name = 'id'
+        freq = 0.6
+        cardinality = 5
+
+        # Run
+        transformer.reset_randomization()
+        transformer._set_fitted_parameters(
+            column_name=column_name, cardinality=cardinality, nan_frequency=freq
+        )
+        output = transformer.reverse_transform(data)
+        missing_values = output.isna().sum().sum()
+
+        # Assert
+        assert missing_values / output.size == freq
+
 
 class TestPsuedoAnonymizedFaker:
     def test_default_settings(self):

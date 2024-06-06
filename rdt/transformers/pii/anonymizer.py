@@ -313,14 +313,15 @@ class AnonymizedFaker(BaseTransformer):
         Args:
             column_name (str):
                 The name of the column to use for the transformer.
-            cardinality (int or None):
-                The number of unique values to generate if cardinality rule is set to
-                'match'.
             nan_frequency (float):
                 The fraction of values that should be replaced with nan values
                 if self.missing_value_generation is 'random'.
+            cardinality (int or None):
+                The number of unique values to generate if cardinality rule is set to
+                'match'.
         """
         self.columns = [column_name]
+        self.output_columns = [column_name]
         if self.cardinality_rule == 'match':
             if not cardinality:
                 raise TransformerInputError(
