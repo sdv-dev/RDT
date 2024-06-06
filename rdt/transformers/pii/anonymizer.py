@@ -469,3 +469,16 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             pandas.Series
         """
         return columns_data
+
+    def _set_fitted_parameters(self, column_name, cardinality):
+        """Manually set the parameters on the transformer to get it into a fitted state.
+        Args:
+            column_name [str]:
+                The name of the column to use for the transformer.
+            cardinality [int]:
+                The number of unique values to generate.
+            nan_frequency [float]:
+                The fraction of values that should be replaced with nan values
+                if self.missing_value_generation is 'random'.
+        """
+        pass
