@@ -174,7 +174,7 @@ class TestFloatFormatter:
         null_transformer = NullTransformer('mean')
         min_max_value = (0.0, 100.0)
         rounding_digits = 3
-        dtype = 'int'
+        dtype = 'int64'
 
         # Run
         transformer.reset_randomization()
