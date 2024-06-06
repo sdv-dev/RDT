@@ -227,11 +227,14 @@ class FloatFormatter(BaseTransformer):
         if self.enforce_min_max_values:
             if not min_max_values:
                 raise TransformerInputError('Must provide min and max values for this transformer.')
+
         if min_max_values:
             self._min_value = min(min_max_values)
             self._max_value = max(min_max_values)
+
         if rounding_digits:
             self._rounding_digits = rounding_digits
+
         self._dtype = dtype
 
 
