@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from copulas import univariate
 
+from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
     ClusterBasedNormalizer,
     FloatFormatter,
@@ -160,6 +161,34 @@ class TestFloatFormatter:
         expected_reverse_transformed = pd.DataFrame({'a': [np.nan] * 10})
         pd.testing.assert_frame_equal(transformed, expected_transformed)
         pd.testing.assert_frame_equal(reverse_transformed, expected_reverse_transformed)
+
+    def test__reverse_transform_from_manually_set_parameters(self):
+        """Test the ``reverse_transform`` after manually setting parameters."""
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 2, 1, 3, 12, 9, 8]})
+        transformed = pd.DataFrame({
+            'column_name': [1.000, 2.000, 1.000, 3.000, 12.000, 9.000, 8.000]
+        })
+        transformer = FloatFormatter()
+        column_name = 'column_name'
+        null_transformer = NullTransformer('mean')
+        min_max_value = (0.0, 100.0)
+        rounding_digits = 3
+        dtype = 'int'
+
+        # Run
+        transformer.reset_randomization()
+        transformer._set_fitted_parameters(
+            column_name=column_name,
+            null_transformer=null_transformer,
+            rounding_digits=rounding_digits,
+            min_max_values=min_max_value,
+            dtype=dtype,
+        )
+        output = transformer.reverse_transform(transformed)
+
+        # Assert
+        pd.testing.assert_series_equal(output['column_name'], data['column_name'])
 
 
 class TestGaussianNormalizer:

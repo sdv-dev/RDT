@@ -718,7 +718,7 @@ class TestFloatFormatter(TestCase):
         # Setup
         transformer = FloatFormatter(enforce_min_max_values=True)
         column_name = 'mock'
-        null_transformer = NullTransformer(False)
+        null_transformer = NullTransformer('mean')
         min_max_value = (0.0, 100.0)
         rounding_digits = 3
         dtype = 'Float'
