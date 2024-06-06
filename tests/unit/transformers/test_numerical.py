@@ -712,6 +712,33 @@ class TestFloatFormatter(TestCase):
             np.array([-128, np.nan, -128, -128, -100, 0, 125, 127, 127]),
         )
 
+    def test__set_fitted_parameters(self):
+        """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
+        # Setup
+        transformer = FloatFormatter()
+        column_name = 'mock'
+        null_transformer = NullTransformer(False)
+        min_max_value = (0.0, 100.0)
+        rounding_digits = 3
+        dtype = 'Float'
+
+        # Run
+        transformer._set_fitted_parameters(
+            column_name=column_name,
+            null_transformer=null_transformer,
+            rounding_digits=rounding_digits,
+            min_max_values=min_max_value,
+            dtype=dtype,
+        )
+
+        # Assert
+        assert transformer.columns == [column_name]
+        assert transformer.null_transformer == null_transformer
+        assert transformer._min_value == 0.0
+        assert transformer._max_value == 100.0
+        assert transformer._rounding_digits == rounding_digits
+        assert transformer._dtype == dtype
+
 
 class TestGaussianNormalizer:
     def test___init__super_attrs(self):
