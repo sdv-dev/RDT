@@ -115,9 +115,7 @@ class BinaryEncoder(BaseTransformer):
         """Manually set the parameters on the transformer to get it into a fitted state.
         Args:
             column_names [str or list]:
-                The name of the column(s) to use for the transformer. Should match the
-                self.columns and self._output_columns attribute on the null_transformer.
-                Used to set self.columns and self.output_columns.
+                The name of the column(s) to use for the transformer.
             null_transformer [a NullTransformer instance]:
                 A fitted null transformer instance that can be used to generate
                 null values for the column.
