@@ -528,6 +528,27 @@ class TestUnixTimestampEncoder:
         expected = pd.Series([np.nan, np.nan, np.nan])
         pd.testing.assert_series_equal(output, expected)
 
+    def test__set_fitted_parameters(self):
+        """Test the ``_set_fitted_parameters`` method."""
+        # Setup
+        transformer = UnixTimestampEncoder()
+
+        # Run
+        transformer._set_fitted_parameters(
+            'column_name',
+            (pd.to_datetime('2022-01-02'), pd.to_datetime('2022-01-03')),
+            NullTransformer(),
+            dtype='object',
+        )
+
+        # Asserts
+        assert transformer._min_value == pd.to_datetime('2022-01-02')
+        assert transformer._max_value == pd.to_datetime('2022-01-03')
+        assert isinstance(transformer.null_transformer, NullTransformer)
+        assert transformer.columns == ['column_name']
+        assert transformer.output_columns == ['column_name']
+        assert transformer._dtype == 'object'
+
 
 class TestOptimizedTimestampEncoder:
     def test___init__(self):

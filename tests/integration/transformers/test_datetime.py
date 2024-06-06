@@ -5,6 +5,7 @@ from rdt.transformers.datetime import (
     OptimizedTimestampEncoder,
     UnixTimestampEncoder,
 )
+from rdt.transformers.null import NullTransformer
 
 
 class TestUnixTimestampEncoder:
@@ -173,6 +174,42 @@ class TestUnixTimestampEncoder:
         assert ute._min_value == min_val
         assert ute._max_value == max_val
         pd.testing.assert_frame_equal(reverted, data)
+
+    def test__reverse_transform_from_manually_set_parameters(self):
+        """Test the ``reverse_transform`` after manually setting parameters."""
+        # Setup
+        data = pd.DataFrame({
+            'column_name': pd.to_datetime([
+                '2021-01-01',
+                '2022-01-02',
+                '2023-01-03',
+                '2024-01-04',
+                '2025-01-05',
+                '2026-01-06',
+            ])
+        })
+        transformed = pd.DataFrame({
+            'column_name': [
+                1609459200000000000,
+                1641081600000000000,
+                1672704000000000000,
+                1704326400000000000,
+                1736035200000000000,
+                1767657600000000000,
+            ]
+        })
+        transformer = UnixTimestampEncoder()
+
+        # Run
+        transformer._set_fitted_parameters(
+            column_name='column_name',
+            min_max_values=None,
+            null_transformer=NullTransformer(),
+        )
+        output = transformer.reverse_transform(transformed)
+
+        # Asserts
+        pd.testing.assert_series_equal(output['column_name'], data['column_name'])
 
 
 class TestOptimizedTimestampEncoder:
