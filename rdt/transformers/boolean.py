@@ -111,20 +111,15 @@ class BinaryEncoder(BaseTransformer):
 
         return data
 
-    def _set_fitted_parameters(self, column_names, null_transformer):
+    def _set_fitted_parameters(self, column_name, null_transformer):
         """Manually set the parameters on the transformer to get it into a fitted state.
         Args:
-            column_names (str or list[str]):
+            column_names (str):
                 The name of the column(s) to use for the transformer.
             null_transformer (NullTransformer):
                 A fitted null transformer instance that can be used to generate
                 null values for the column.
         """
-        if isinstance(column_names, list):
-            self.columns = column_names
-            self.output_columns = column_names
-        else:
-            self.columns = [column_names]
-            self.output_columns = [column_names]
-
+        self.columns = [column_name]
+        self.output_columns = [column_name]
         self.null_transformer = null_transformer
