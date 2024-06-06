@@ -727,6 +727,29 @@ class TestAnonymizedFaker:
         assert function.call_args_list == [call(), call(), call()]
         np.testing.assert_array_equal(result, np.array(['a', 'b', 'c']))
 
+    def test__set_fitted_parameters(self):
+        """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
+        # Setup
+        transformer = AnonymizedFaker()
+        transformer.cardinality_rule = 'match'
+        frequency = 0.30
+        cardinality = 3
+        column_name = 'mock'
+        error_msg = re.escape('Cardinality "match" rule must specify a cardinality value.')
+
+        # Run
+        with pytest.raises(TransformerInputError, match=error_msg):
+            transformer._set_fitted_parameters(column_name, nan_frequency=frequency)
+
+        transformer._set_fitted_parameters(
+            column_name, nan_frequency=frequency, cardinality=cardinality
+        )
+
+        # Assert
+        assert transformer._nan_frequency == frequency
+        assert transformer._data_cardinality == cardinality
+        assert transformer.columns == [column_name]
+
     def test___repr__default(self):
         """Test the ``__repr__`` method.
 

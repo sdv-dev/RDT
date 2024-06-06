@@ -308,6 +308,27 @@ class AnonymizedFaker(BaseTransformer):
 
         return reverse_transformed
 
+    def _set_fitted_parameters(self, column_name, nan_frequency=0.0, cardinality=None):
+        """Manually set the parameters on the transformer to get it into a fitted state.
+        Args:
+            column_name (str):
+                The name of the column to use for the transformer.
+            cardinality (int or None):
+                The number of unique values to generate if cardinality rule is set to
+                'match'.
+            nan_frequency (float):
+                The fraction of values that should be replaced with nan values
+                if self.missing_value_generation is 'random'.
+        """
+        self.columns = [column_name]
+        if self.cardinality_rule == 'match':
+            if not cardinality:
+                raise TransformerInputError(
+                    'Cardinality "match" rule must specify a cardinality value.'
+                )
+        self._data_cardinality = cardinality
+        self._nan_frequency = nan_frequency
+
     def __repr__(self):
         """Represent initialization of transformer as text.
 
@@ -469,16 +490,3 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
             pandas.Series
         """
         return columns_data
-
-    def _set_fitted_parameters(self, column_name, cardinality):
-        """Manually set the parameters on the transformer to get it into a fitted state.
-        Args:
-            column_name [str]:
-                The name of the column to use for the transformer.
-            cardinality [int]:
-                The number of unique values to generate.
-            nan_frequency [float]:
-                The fraction of values that should be replaced with nan values
-                if self.missing_value_generation is 'random'.
-        """
-        pass
