@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers import BinaryEncoder
+from rdt.transformers.null import NullTransformer
 
 
 class TestBinaryEncoder(TestCase):
@@ -264,3 +265,18 @@ class TestBinaryEncoder(TestCase):
         # Asserts
         assert np.isnan(result[1])
         assert isinstance(result[1], float)
+
+    def test__set_fitted_parameters(self):
+        """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
+        # Setup
+        transformer = BinaryEncoder()
+        column_names = ['col_1', 'col_2']
+        null_transformer = NullTransformer('mean')
+
+        # Run
+        transformer._set_fitted_parameters(column_names, null_transformer)
+
+        # Assert
+        assert transformer.columns == column_names
+        assert transformer.output_columns == column_names
+        assert transformer.null_transformer == null_transformer
