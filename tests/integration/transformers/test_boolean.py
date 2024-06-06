@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers import BinaryEncoder
+from rdt.transformers.null import NullTransformer
 
 
 class TestBinaryEncoder:
@@ -85,3 +86,24 @@ class TestBinaryEncoder:
         expected_reversed = pd.DataFrame({'bool': [True, True, True, False]})
         pd.testing.assert_frame_equal(transformed, expected_transformed)
         pd.testing.assert_frame_equal(reverse, expected_reversed, check_dtype=False)
+
+    def test__reverse_transform_from_manually_set_parameters(self):
+        """Test the ``reverse_transform`` after manually setting parameters."""
+        # Setup
+        data = pd.DataFrame([True, True, None, False], columns=['bool'])
+        transformed = pd.DataFrame({
+            'bool': [1.0, 1.0, 1.0, 0.0],
+            'bool.is_null': [0.0, 0.0, 1.0, 0.0],
+        })
+        column_name = 'bool'
+        transformer = BinaryEncoder()
+
+        # Run
+        null_transformer = NullTransformer('mode')
+        transformer.reset_randomization()
+        transformer._set_fitted_parameters(column_name, null_transformer)
+        reverse = transformer.reverse_transform(transformed)
+        reverse[column_name] = np.where(reverse['bool.is_null'] == 1.0, None, reverse[column_name])
+
+        # Assert
+        pd.testing.assert_frame_equal(reverse[column_name].to_frame(), data)
