@@ -269,14 +269,22 @@ class TestBinaryEncoder(TestCase):
     def test__set_fitted_parameters(self):
         """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
         # Setup
-        transformer = BinaryEncoder()
+        transformer_list = BinaryEncoder()
         column_names = ['col_1', 'col_2']
-        null_transformer = NullTransformer('mean')
+        null_transformer_list = NullTransformer('mean')
+
+        transformer = BinaryEncoder()
+        column_name = 'single_col'
+        null_transformer = NullTransformer('mode')
 
         # Run
-        transformer._set_fitted_parameters(column_names, null_transformer)
+        transformer_list._set_fitted_parameters(column_names, null_transformer_list)
+        transformer._set_fitted_parameters(column_name, null_transformer)
 
         # Assert
-        assert transformer.columns == column_names
-        assert transformer.output_columns == column_names
+        assert transformer_list.columns == column_names
+        assert transformer_list.output_columns == column_names
+        assert transformer_list.null_transformer == null_transformer_list
+        assert transformer.columns == [column_name]
+        assert transformer.output_columns == [column_name]
         assert transformer.null_transformer == null_transformer
