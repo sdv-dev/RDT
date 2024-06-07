@@ -123,3 +123,5 @@ class BinaryEncoder(BaseTransformer):
         self.columns = [column_name]
         self.output_columns = [column_name]
         self.null_transformer = null_transformer
+        if self.null_transformer.models_missing_values():
+            self.output_columns.append(column_name + '.is_null')

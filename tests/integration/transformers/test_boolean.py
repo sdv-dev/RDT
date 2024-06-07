@@ -99,11 +99,11 @@ class TestBinaryEncoder:
         transformer = BinaryEncoder()
 
         # Run
-        null_transformer = NullTransformer('mode')
+        null_transformer = NullTransformer('mode', missing_value_generation='from_column')
+        null_transformer._set_fitted_parameters(0.25)
         transformer.reset_randomization()
         transformer._set_fitted_parameters(column_name, null_transformer)
         reverse = transformer.reverse_transform(transformed)
-        reverse[column_name] = np.where(reverse['bool.is_null'] == 1.0, None, reverse[column_name])
 
         # Assert
-        pd.testing.assert_frame_equal(reverse[column_name].to_frame(), data)
+        pd.testing.assert_frame_equal(reverse, data)
