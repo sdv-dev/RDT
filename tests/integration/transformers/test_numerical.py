@@ -218,6 +218,37 @@ class TestFloatFormatter:
         # Assert
         pd.testing.assert_series_equal(output['column_name'], data['column_name'])
 
+    def test__reverse_transform_from_manually_set_parameters_random(self):
+        """Test the ``reverse_transform`` after manually setting parameters."""
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 2, 1, 3, 12, 9, 8, 4]})
+        transformed = pd.DataFrame({
+            'column_name': [1.000, 2.000, 1.000, 3.000, 12.000, 9.000, 8.000, 4.000]
+        })
+        transformer = FloatFormatter()
+        column_name = 'column_name'
+        null_transformer = NullTransformer('mean', 'random')
+        null_transformer._set_fitted_parameters(0.2)
+        min_max_value = (0.0, 100.0)
+        rounding_digits = 3
+        dtype = 'int64'
+
+        # Run
+        transformer._set_fitted_parameters(
+            column_name=column_name,
+            null_transformer=null_transformer,
+            rounding_digits=rounding_digits,
+            min_max_values=min_max_value,
+            dtype=dtype,
+        )
+        output = transformer.reverse_transform(transformed)
+        nan_indices = output[output.isna().any(axis=1)].index
+        compare_data = data.drop(index=nan_indices)
+        compare_output = output.drop(index=nan_indices).astype('int64')
+
+        # Assert
+        pd.testing.assert_series_equal(compare_output['column_name'], compare_data['column_name'])
+
 
 class TestGaussianNormalizer:
     def test_stats(self):
