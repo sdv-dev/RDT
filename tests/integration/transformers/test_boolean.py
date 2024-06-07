@@ -121,7 +121,6 @@ class TestBinaryEncoder:
         # Run
         null_transformer = NullTransformer('mode', missing_value_generation='random')
         null_transformer._set_fitted_parameters(0.2)
-        transformer.reset_randomization()
         transformer._set_fitted_parameters(column_name, null_transformer)
         reverse = transformer.reverse_transform(transformed)
 

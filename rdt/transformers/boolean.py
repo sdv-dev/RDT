@@ -120,6 +120,7 @@ class BinaryEncoder(BaseTransformer):
                 A fitted null transformer instance that can be used to generate
                 null values for the column.
         """
+        self.reset_randomization()
         self.columns = [column_name]
         self.output_columns = [column_name]
         self.null_transformer = null_transformer
