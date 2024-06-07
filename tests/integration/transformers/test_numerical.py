@@ -177,7 +177,6 @@ class TestFloatFormatter:
         dtype = 'int64'
 
         # Run
-        transformer.reset_randomization()
         transformer._set_fitted_parameters(
             column_name=column_name,
             null_transformer=null_transformer,

@@ -221,6 +221,7 @@ class FloatFormatter(BaseTransformer):
             dtype (str):
                 The pandas dtype the reversed data should be converted to
         """
+        self.reset_randomization()
         self.null_transformer = null_transformer
         self.columns = [column_name]
         self.output_columns = [column_name]
