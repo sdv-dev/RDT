@@ -121,6 +121,20 @@ class NullTransformer:
             if self._missing_value_generation == 'random':
                 self._null_percentage = null_values.sum() / len(data)
 
+    def _set_fitted_parameters(self, null_ratio):
+        """Manually set the parameters on the transformer to get it into a fitted state.
+
+        Args:
+            null_ratio (float):
+                The fraction of values to replace with null values.
+        """
+        if null_ratio < 0 or null_ratio > 1.0:
+            raise ValueError('null_ratio should be a value between 0 and 1.')
+
+        if null_ratio != 0:
+            self.nulls = True
+            self._null_percentage = null_ratio
+
     def transform(self, data):
         """Replace null values with the indicated ``missing_value_replacement``.
 
