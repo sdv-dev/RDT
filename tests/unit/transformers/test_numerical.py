@@ -749,6 +749,33 @@ class TestFloatFormatter(TestCase):
         assert transformer._rounding_digits == rounding_digits
         assert transformer._dtype == dtype
 
+    def test__set_fitted_parameters_from_column(self):
+        """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
+        # Setup
+        transformer = FloatFormatter(enforce_min_max_values=False)
+        column_name = 'mock'
+        bool_col_name = column_name + '.is_null'
+        null_transformer = NullTransformer('mean', 'from_column')
+        rounding_digits = 3
+        dtype = 'Float'
+
+        # Run
+        transformer._set_fitted_parameters(
+            column_name=column_name,
+            null_transformer=null_transformer,
+            rounding_digits=rounding_digits,
+            dtype=dtype,
+        )
+
+        # Assert
+        assert transformer.columns == [column_name]
+        assert transformer.output_columns == [column_name, bool_col_name]
+        assert transformer.null_transformer == null_transformer
+        assert transformer._min_value is None
+        assert transformer._max_value is None
+        assert transformer._rounding_digits == rounding_digits
+        assert transformer._dtype == dtype
+
 
 class TestGaussianNormalizer:
     def test___init__super_attrs(self):

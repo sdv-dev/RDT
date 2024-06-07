@@ -219,7 +219,7 @@ class FloatFormatter(BaseTransformer):
             rounding_digits (int or None):
                 The number of digits to round to.
             dtype (str):
-                The pandas dtype the reversed data should be converted to
+                The pandas dtype the reversed data will be converted into.
         """
         self.reset_randomization()
         self.null_transformer = null_transformer
@@ -235,6 +235,9 @@ class FloatFormatter(BaseTransformer):
 
         if rounding_digits:
             self._rounding_digits = rounding_digits
+
+        if self.null_transformer.models_missing_values():
+            self.output_columns.append(column_name + '.is_null')
 
         self._dtype = dtype
 
