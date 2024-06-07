@@ -8,7 +8,7 @@ from rdt.transformers.pii.anonymization import (
 )
 
 
-class TestAnonimization:
+class TestAnonymization:
     def test__detect_provider_name(self):
         """Test the ``_detect_provider_name`` method.
 
