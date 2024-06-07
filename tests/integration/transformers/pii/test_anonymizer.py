@@ -288,7 +288,6 @@ class TestAnonymizedFaker:
         cardinality = 5
 
         # Run
-        transformer.reset_randomization()
         transformer._set_fitted_parameters(
             column_name=column_name, cardinality=cardinality, nan_frequency=freq
         )

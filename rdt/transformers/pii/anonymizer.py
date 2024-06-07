@@ -320,6 +320,7 @@ class AnonymizedFaker(BaseTransformer):
                 The number of unique values to generate if cardinality rule is set to
                 'match'.
         """
+        self.reset_randomization()
         self.columns = [column_name]
         self.output_columns = [column_name]
         if self.cardinality_rule == 'match':
