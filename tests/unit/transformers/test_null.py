@@ -405,7 +405,7 @@ class TestNullTransformer:
         int_series = pd.Series([1, 2, 3, 4])
 
         # Run
-        with pytest.raises(ValueError, match='null_percentage should be a value between 0 and 1.'):
+        with pytest.raises(ValueError, match='null_ratio should be a value between 0 and 1.'):
             missing_value_generation._set_fitted_parameters(10)
 
         missing_value_generation._set_fitted_parameters(0.5)
