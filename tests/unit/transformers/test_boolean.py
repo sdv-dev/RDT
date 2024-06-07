@@ -280,3 +280,19 @@ class TestBinaryEncoder(TestCase):
         assert transformer.columns == [column_name]
         assert transformer.output_columns == [column_name]
         assert transformer.null_transformer == null_transformer
+
+    def test__set_fitted_parameters_from_column(self):
+        """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
+        # Setup
+        transformer = BinaryEncoder()
+        column_name = 'single_col'
+        bool_col_name = column_name + '.is_null'
+        null_transformer = NullTransformer('mode', 'from_column')
+
+        # Run
+        transformer._set_fitted_parameters(column_name, null_transformer)
+
+        # Assert
+        assert transformer.columns == [column_name]
+        assert transformer.output_columns == [column_name, bool_col_name]
+        assert transformer.null_transformer == null_transformer
