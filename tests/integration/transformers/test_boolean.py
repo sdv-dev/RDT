@@ -74,7 +74,8 @@ class TestBinaryEncoder:
         # Setup
         data = pd.DataFrame([True, True, None, False], columns=['bool'])
         column = 'bool'
-        transformer = BinaryEncoder(missing_value_replacement='mode', missing_value_generation=None)
+        transformer = BinaryEncoder(missing_value_replacement='mode',
+                                    missing_value_generation=None)
 
         # Run
         transformer.fit(data, column)
@@ -101,7 +102,6 @@ class TestBinaryEncoder:
         # Run
         null_transformer = NullTransformer('mode', missing_value_generation='from_column')
         null_transformer._set_fitted_parameters(0.25)
-        transformer.reset_randomization()
         transformer._set_fitted_parameters(column_name, null_transformer)
         reverse = transformer.reverse_transform(transformed)
 
@@ -129,7 +129,10 @@ class TestBinaryEncoder:
         nan_indices_reverse = reverse[reverse.isna().any(axis=1)].index
         nan_indices = nan_indices_data.union(nan_indices_reverse)
         compare_data = data.drop(index=nan_indices)
-        compare_reverse = data.drop(index=nan_indices)
+        compare_reverse = reverse.drop(index=nan_indices)
+        expected_reverse = pd.DataFrame(
+            {'bool': [np.nan, True, np.nan, False, False, True, False, False]})
 
         # Assert
+        pd.testing.assert_frame_equal(expected_reverse, reverse)
         pd.testing.assert_frame_equal(compare_data, compare_reverse)
