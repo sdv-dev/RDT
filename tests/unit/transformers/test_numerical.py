@@ -9,6 +9,7 @@ import pytest
 from copulas import univariate
 from pandas.api.types import is_float_dtype
 
+from rdt.errors import TransformerInputError
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
     ClusterBasedNormalizer,
@@ -711,6 +712,69 @@ class TestFloatFormatter(TestCase):
             result,
             np.array([-128, np.nan, -128, -128, -100, 0, 125, 127, 127]),
         )
+
+    def test__set_fitted_parameters(self):
+        """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
+        # Setup
+        transformer = FloatFormatter(enforce_min_max_values=True)
+        column_name = 'mock'
+        null_transformer = NullTransformer('mean')
+        min_max_value = (0.0, 100.0)
+        rounding_digits = 3
+        dtype = 'Float'
+
+        error_msg = re.escape('Must provide min and max values for this transformer.')
+        # Run
+        with pytest.raises(TransformerInputError, match=error_msg):
+            transformer._set_fitted_parameters(
+                column_name=column_name,
+                null_transformer=null_transformer,
+                rounding_digits=rounding_digits,
+                dtype=dtype,
+            )
+
+        transformer._set_fitted_parameters(
+            column_name=column_name,
+            null_transformer=null_transformer,
+            rounding_digits=rounding_digits,
+            min_max_values=min_max_value,
+            dtype=dtype,
+        )
+
+        # Assert
+        assert transformer.columns == [column_name]
+        assert transformer.null_transformer == null_transformer
+        assert transformer._min_value == 0.0
+        assert transformer._max_value == 100.0
+        assert transformer._rounding_digits == rounding_digits
+        assert transformer._dtype == dtype
+
+    def test__set_fitted_parameters_from_column(self):
+        """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
+        # Setup
+        transformer = FloatFormatter(enforce_min_max_values=False)
+        column_name = 'mock'
+        bool_col_name = column_name + '.is_null'
+        null_transformer = NullTransformer('mean', 'from_column')
+        rounding_digits = 3
+        dtype = 'Float'
+
+        # Run
+        transformer._set_fitted_parameters(
+            column_name=column_name,
+            null_transformer=null_transformer,
+            rounding_digits=rounding_digits,
+            dtype=dtype,
+        )
+
+        # Assert
+        assert transformer.columns == [column_name]
+        assert transformer.output_columns == [column_name, bool_col_name]
+        assert transformer.null_transformer == null_transformer
+        assert transformer._min_value is None
+        assert transformer._max_value is None
+        assert transformer._rounding_digits == rounding_digits
+        assert transformer._dtype == dtype
 
 
 class TestGaussianNormalizer:
