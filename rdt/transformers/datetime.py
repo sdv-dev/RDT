@@ -152,19 +152,22 @@ class UnixTimestampEncoder(BaseTransformer):
                 'next_transformer': None,
             }
 
-    def _set_fitted_parameters(self, column_name, min_max_values, null_transformer, dtype='object'):
+    def _set_fitted_parameters(
+        self, column_name, null_transformer, min_max_values=None, dtype='object'
+    ):
         """Manually set the parameters on the transformer to get it into a fitted state.
 
         Args:
             column_name (str):
                 The name of the column for this transformer.
+            null_transformer (NullTransformer):
+                A fitted null transformer instance that can be used to generate
+                null values for the column.
             min_max_values (tuple or None):
                 None or a tuple containing the (min, max) values for the transformer.
                 Should be used to set self._min_value and self._max_value and must be
                 provided if self.enforce_min_max_values is True.
-            null_transformer (NullTransformer):
-                A fitted null transformer instance that can be used to generate
-                null values for the column.
+                Defaults to None.
             dtype (str, optional):
                 The dtype to convert the reverse transformed data back to. Defaults to 'object'.
         """
@@ -172,13 +175,17 @@ class UnixTimestampEncoder(BaseTransformer):
         self.columns = [column_name]
         self.output_columns = [column_name]
         self._dtype = dtype
-        self.null_transformer = null_transformer
+
         if self.enforce_min_max_values and not min_max_values:
             raise TransformerInputError('Must provide min and max values for this transformer.')
 
         if min_max_values:
             self._min_value = min_max_values[0]
             self._max_value = min_max_values[1]
+
+        self.null_transformer = null_transformer
+        if self.null_transformer.models_missing_values():
+            self.output_columns.append(column_name + '.is_null')
 
     def _transform(self, data):
         """Transform datetime values to float values.
