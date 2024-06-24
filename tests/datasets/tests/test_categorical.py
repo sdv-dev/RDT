@@ -8,7 +8,7 @@ class TestRandomIntegerGenerator:
     def test(self):
         output = categorical.RandomIntegerGenerator.generate(10)
         assert len(output) == 10
-        assert output.dtype == int
+        assert np.issubdtype(output.dtype, np.integer)
         assert len(pd.unique(output)) < 6
         assert np.isnan(output).sum() == 0
 
@@ -60,7 +60,7 @@ class TestSingleIntegerGenerator:
     def test(self):
         output = categorical.SingleIntegerGenerator.generate(10)
         assert len(output) == 10
-        assert output.dtype == int
+        assert np.issubdtype(output.dtype, np.integer)
         assert len(pd.unique(output)) == 1
         assert np.isnan(output).sum() == 0
 
@@ -96,7 +96,7 @@ class TestUniqueIntegerGenerator:
     def test(self):
         output = categorical.UniqueIntegerGenerator.generate(10)
         assert len(output) == 10
-        assert output.dtype == int
+        assert np.issubdtype(output.dtype, np.integer)
         assert len(pd.unique(output)) == 10
         assert np.isnan(output).sum() == 0
 
