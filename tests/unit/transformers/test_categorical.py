@@ -1791,12 +1791,12 @@ class TestOneHotEncoder:
         # Run
         warning_msg = re.escape(
             'The data contains 1 new categories that were not '
-            'seen in the original data (examples: {np.float64(4.0)}). Creating '
+            "seen in the original data (examples: {'4'}). Creating "
             'a vector of all 0s. If you want to model new categories, '
             'please fit the transformer again with the new data.'
         )
         with pytest.warns(UserWarning, match=warning_msg):
-            transform_data = pd.Series([1, 2, np.nan, 4])
+            transform_data = pd.Series([1, 2, np.nan, '4'])
             out = ohe._transform(transform_data)
 
         # Assert
