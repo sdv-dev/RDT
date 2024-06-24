@@ -216,13 +216,7 @@ class UnixTimestampEncoder(BaseTransformer):
         data = self._reverse_transform_helper(data)
         datetime_data = pd.to_datetime(data)
         if self.datetime_format:
-            if is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
-                datetime_data = pd.to_datetime(
-                    datetime_data.dt.strftime(self.datetime_format),
-                    format=self.datetime_format,
-                )
-            else:
-                datetime_data = datetime_data.dt.strftime(self.datetime_format).astype(self._dtype)
+            datetime_data = datetime_data.dt.strftime(self.datetime_format).astype(self._dtype)
         elif is_numeric_dtype(self._dtype):
             datetime_data = pd.to_numeric(datetime_data.astype('object'), errors='coerce')
             datetime_data = datetime_data.astype(self._dtype)
