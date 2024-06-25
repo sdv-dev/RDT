@@ -567,7 +567,7 @@ class TestOrderedUniformEncoder:
         If the data being transformed is not in ``self.order`` an error should be raised.
         """
         # Setup
-        data = pd.Series(['1', '2', '3', '2', '1', '4'])
+        data = pd.Series(['1', '2', '3', '2', '1', '4'], dtype='object')
         transformer = OrderedUniformEncoder(order=['2', '1'])
 
         # Run / Assert
@@ -2377,7 +2377,7 @@ class TestOrderedLabelEncoder:
         If the data being fit is not in ``self.order`` an error should be raised.
         """
         # Setup
-        data = pd.Series(['1', '2', '3', '2', '1', '4'])
+        data = pd.Series(['1', '2', '3', '2', '1', '4'], dtype='object')
         transformer = OrderedLabelEncoder(order=['2', '1'])
 
         # Run / Assert
