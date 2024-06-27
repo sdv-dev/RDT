@@ -485,12 +485,12 @@ class TestOrderedUniformEncoder:
         If the data being fit is not in ``self.order`` an error should be raised.
         """
         # Setup
-        data = pd.Series([1, 2, 3, 2, 1, 4])
-        transformer = OrderedUniformEncoder(order=[2, 1])
+        data = pd.Series(['1', '2', '3', '2', '1', '4'], dtype='object')
+        transformer = OrderedUniformEncoder(order=['2', '1'])
 
         # Run / Assert
         message = re.escape(
-            "Unknown categories '[3, 4]'. All possible categories must be defined in the "
+            "Unknown categories '['3', '4']'. All possible categories must be defined in the "
             "'order' parameter."
         )
         with pytest.raises(TransformerInputError, match=message):
@@ -567,12 +567,12 @@ class TestOrderedUniformEncoder:
         If the data being transformed is not in ``self.order`` an error should be raised.
         """
         # Setup
-        data = pd.Series([1, 2, 3, 2, 1, 4])
-        transformer = OrderedUniformEncoder(order=[2, 1])
+        data = pd.Series(['1', '2', '3', '2', '1', '4'], dtype='object')
+        transformer = OrderedUniformEncoder(order=['2', '1'])
 
         # Run / Assert
         message = re.escape(
-            "Unknown categories '[3, 4]'. All possible categories must be defined in the "
+            "Unknown categories '['3', '4']'. All possible categories must be defined in the "
             "'order' parameter."
         )
         with pytest.raises(TransformerInputError, match=message):
@@ -1791,12 +1791,12 @@ class TestOneHotEncoder:
         # Run
         warning_msg = re.escape(
             'The data contains 1 new categories that were not '
-            'seen in the original data (examples: {4.0}). Creating '
+            "seen in the original data (examples: {'4'}). Creating "
             'a vector of all 0s. If you want to model new categories, '
             'please fit the transformer again with the new data.'
         )
         with pytest.warns(UserWarning, match=warning_msg):
-            transform_data = pd.Series([1, 2, np.nan, 4])
+            transform_data = pd.Series([1, 2, np.nan, '4'], dtype='object')
             out = ohe._transform(transform_data)
 
         # Assert
@@ -2375,24 +2375,14 @@ class TestOrderedLabelEncoder:
         """Test the ``_fit`` method checks that data is in ``self.order``.
 
         If the data being fit is not in ``self.order`` an error should be raised.
-
-        Setup:
-            - create an instance of the ``OrderedLabelEncoder``.
-
-        Input:
-            - a pandas series.
-
-        Side effects:
-            - set the ``values_to_categories`` dictionary to the appropriate value.
-            - set ``categories_to_values`` dictionary to the appropriate value.
         """
         # Setup
-        data = pd.Series([1, 2, 3, 2, 1, 4])
-        transformer = OrderedLabelEncoder(order=[2, 1])
+        data = pd.Series(['1', '2', '3', '2', '1', '4'], dtype='object')
+        transformer = OrderedLabelEncoder(order=['2', '1'])
 
         # Run / Assert
         message = re.escape(
-            "Unknown categories '[3, 4]'. All possible categories must be defined in the "
+            "Unknown categories '['3', '4']'. All possible categories must be defined in the "
             "'order' parameter."
         )
         with pytest.raises(TransformerInputError, match=message):
