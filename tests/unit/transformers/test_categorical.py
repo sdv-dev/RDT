@@ -485,12 +485,12 @@ class TestOrderedUniformEncoder:
         If the data being fit is not in ``self.order`` an error should be raised.
         """
         # Setup
-        data = pd.Series([1, 2, 3, 2, 1, 4])
-        transformer = OrderedUniformEncoder(order=[2, 1])
+        data = pd.Series(['1', '2', '3', '2', '1', '4'], dtype='object')
+        transformer = OrderedUniformEncoder(order=['2', '1'])
 
         # Run / Assert
         message = re.escape(
-            "Unknown categories '[3, 4]'. All possible categories must be defined in the "
+            "Unknown categories '['3', '4']'. All possible categories must be defined in the "
             "'order' parameter."
         )
         with pytest.raises(TransformerInputError, match=message):
@@ -567,12 +567,12 @@ class TestOrderedUniformEncoder:
         If the data being transformed is not in ``self.order`` an error should be raised.
         """
         # Setup
-        data = pd.Series([1, 2, 3, 2, 1, 4])
-        transformer = OrderedUniformEncoder(order=[2, 1])
+        data = pd.Series(['1', '2', '3', '2', '1', '4'], dtype='object')
+        transformer = OrderedUniformEncoder(order=['2', '1'])
 
         # Run / Assert
         message = re.escape(
-            "Unknown categories '[3, 4]'. All possible categories must be defined in the "
+            "Unknown categories '['3', '4']'. All possible categories must be defined in the "
             "'order' parameter."
         )
         with pytest.raises(TransformerInputError, match=message):
@@ -2377,12 +2377,12 @@ class TestOrderedLabelEncoder:
         If the data being fit is not in ``self.order`` an error should be raised.
         """
         # Setup
-        data = pd.Series([1, 2, 3, 2, 1, 4])
-        transformer = OrderedLabelEncoder(order=[2, 1])
+        data = pd.Series(['1', '2', '3', '2', '1', '4'], dtype='object')
+        transformer = OrderedLabelEncoder(order=['2', '1'])
 
         # Run / Assert
         message = re.escape(
-            "Unknown categories '[3, 4]'. All possible categories must be defined in the "
+            "Unknown categories '['3', '4']'. All possible categories must be defined in the "
             "'order' parameter."
         )
         with pytest.raises(TransformerInputError, match=message):
