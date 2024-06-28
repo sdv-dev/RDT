@@ -308,7 +308,7 @@ class BaseTransformer:
         return data
 
     def _build_output_columns(self, data):
-        self.column_prefix = '#'.join(self.columns)
+        self.column_prefix = '#'.join(map(str, self.columns))
         self.output_columns = self.get_output_columns()
 
         # make sure none of the generated `output_columns` exists in the data,
@@ -366,7 +366,7 @@ class BaseTransformer:
         raise NotImplementedError()
 
     def _set_seed(self, data):
-        hash_value = self.columns[0]
+        hash_value = str(self.columns[0])
         for value in data.head(5):
             hash_value += str(value)
 
