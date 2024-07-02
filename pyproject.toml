@@ -179,12 +179,13 @@ line-length = 100
 indent-width = 4
 src = ["rdt"]
 exclude = [
-    "docs",
-    ".tox",
-    ".git",
-    "__pycache__",
-    ".ipynb_checkpoints",
-    "tasks.py",
+    'docs',
+    '.tox',
+    '.git',
+    '__pycache__',
+    '.ipynb_checkpoints',
+    'tasks.py',
+    'tests/contributing.py'
 ]
 
 [tool.ruff.lint]
