@@ -2301,7 +2301,7 @@ class TestHyperTransformer(TestCase):
         assert ht._multi_column_fields == expected_column_in_tuple
 
     def test_update_transformers_by_sdtype_with_multi_column_transformer(self):
-        """Test ``update_transformers_by_sdtype`` with columns use with a multicolumn transformer"""
+        """Test with columns use with a multi-column transformer."""
         # Setup
         ht = HyperTransformer()
         ht.field_transformers = {
