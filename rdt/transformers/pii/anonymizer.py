@@ -310,6 +310,7 @@ class AnonymizedFaker(BaseTransformer):
 
     def _set_fitted_parameters(self, column_name, nan_frequency=0.0, cardinality=None):
         """Manually set the parameters on the transformer to get it into a fitted state.
+
         Args:
             column_name (str):
                 The name of the column to use for the transformer.

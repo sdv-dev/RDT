@@ -80,13 +80,12 @@ install-develop: clean-build clean-pyc ## install the package in editable mode a
 # LINT TARGETS
 
 .PHONY: lint
-lint:  ## Run all code style checks
+lint:
 	invoke lint
 
 .PHONY: fix-lint
-fix-lint: ## fix lint issues using ruff
-	ruff check --fix .
-	ruff format .
+fix-lint:
+	invoke fix-lint
 
 
 # TEST TARGETS

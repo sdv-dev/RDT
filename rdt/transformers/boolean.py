@@ -78,7 +78,7 @@ class BinaryEncoder(BaseTransformer):
             data (pandas.Series):
                 Data to transform.
 
-        Returns
+        Returns:
             np.ndarray
         """
         data = pd.to_numeric(data, errors='coerce')
@@ -113,6 +113,7 @@ class BinaryEncoder(BaseTransformer):
 
     def _set_fitted_parameters(self, column_name, null_transformer):
         """Manually set the parameters on the transformer to get it into a fitted state.
+
         Args:
             column_name (str):
                 The name of the column to use for the transformer.
