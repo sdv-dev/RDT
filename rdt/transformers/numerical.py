@@ -208,6 +208,7 @@ class FloatFormatter(BaseTransformer):
         dtype='object',
     ):
         """Manually set the parameters on the transformer to get it into a fitted state.
+
         Args:
             column_name (str):
                 The name of the column to use for the transformer.

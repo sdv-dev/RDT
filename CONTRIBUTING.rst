@@ -56,23 +56,10 @@ Code Style
 RDT follows certain coding style guidelines. Any change made should conform to these
 guidelines. RDT using the following third party libraries to check the code style.
 
-* flake8::
+* ruff::
 
-    $ flake8 rdt
-    $ flake8 tests --ignore=D
-
-* isort::
-
-    $ isort -c rdt tests
-
-* pylint::
-
-    $ pylint rdt tests/performance --rcfile=setup.cfg
-
-* pydocstyle::
-
-    $ pydocstyle rdt
-    $ pydocstyle tests
+    $ ruff check rdt/ tests/
+    $ ruff format --check --diff rdt/ tests/
 
 To run all of the code style checks in RDT, use the following command::
 
@@ -211,10 +198,8 @@ check and whether or not it passed.
 
    Check                      Correct    Details
    -------------------------  ---------  ---------------------------------------------------------
-   flake8                     Yes        Code follows PEP8 standards.
-   isort                      Yes        Imports are properly sorted.
-   pylint                     Yes        Code is properly formatted and structured.
-   pydocstyle                 Yes        The docstrings are properly written.
+   ruff_lint                  Yes        Code follows PEP8 standards.
+   ruff_format                Yes        Imports are properly sorted.
    Transformer is subclass    Yes        The transformer is subclass of ``BaseTransformer``.
    Valid module               Yes        The transformer is placed inside a valid module.
    Valid test module          Yes        The transformer tests are placed inside the valid module.
@@ -297,7 +282,7 @@ for each transformer that validate the following checks:
 6. The HyperTransformer is able to reverse the data that has previously transformed,
    and restore the original sdtype.
 
-If you wish to test any specific end-to-end scenarios that were not covered in the above checks, 
+If you wish to test any specific end-to-end scenarios that were not covered in the above checks,
 add a new integration test. Integration tests can be added under
 ``tests/integration/path/to/test_a_module.py``.
 
@@ -353,7 +338,7 @@ Creating Dataset Generators
 ***************************
 
 In order to test performance, we have a class that is responsible for generating data to test
-the transformer methods against. Each subclass implements two static methods, ``generate`` 
+the transformer methods against. Each subclass implements two static methods, ``generate``
 and ``get_performance_thresholds``.
 
 1. ``generate`` takes in the number of rows to generate, and outputs the expected number
