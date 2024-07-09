@@ -1,5 +1,23 @@
 # History
 
+## v1.12.2 - 2024-07-09
+
+This release adds support for NumPy 2.0!
+
+### Internal
+
+* Add `_set_fitted_parameters` method to `AnonymizedFaker` - Issue [#831](https://github.com/sdv-dev/RDT/issues/831) by @lajohn4747
+* Add `_set_fitted_parameters` method to `BinaryEncoder` - Issue [#830](https://github.com/sdv-dev/RDT/issues/830) by @lajohn4747
+* Add `_set_fitted_parameters` method to `FloatFormatter` - Issue [#829](https://github.com/sdv-dev/RDT/issues/829) by @lajohn4747
+* Add `_set_fitted_parameters` method to `UnixTimestampEncoder` - Issue [#828](https://github.com/sdv-dev/RDT/issues/828) by @fealho
+*  Add `_set_fitted_parameters` method to `NullTransformer` - Issue [#827](https://github.com/sdv-dev/RDT/issues/827) by @frances-h
+* Add `_set_fitted_parameters` method to `UniformEncoder` - Issue [#826](https://github.com/sdv-dev/RDT/issues/826) by @frances-h
+
+### Bugs Fixed
+
+* Add support for numpy 2.0.0 - Issue [#843](https://github.com/sdv-dev/RDT/issues/843) by @R-Palazzo
+* Cap numpy to less than 2.0.0 until RDT supports - Issue [#842](https://github.com/sdv-dev/RDT/issues/842) by @gsheni
+
 ## 1.12.1 - 2024-05-09
 
 This release handles a pandas warning that was showing up in the `UniformEncoder`.
