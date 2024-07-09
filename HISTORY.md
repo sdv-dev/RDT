@@ -10,7 +10,7 @@ This release adds support for NumPy 2.0!
 * Add `_set_fitted_parameters` method to `BinaryEncoder` - Issue [#830](https://github.com/sdv-dev/RDT/issues/830) by @lajohn4747
 * Add `_set_fitted_parameters` method to `FloatFormatter` - Issue [#829](https://github.com/sdv-dev/RDT/issues/829) by @lajohn4747
 * Add `_set_fitted_parameters` method to `UnixTimestampEncoder` - Issue [#828](https://github.com/sdv-dev/RDT/issues/828) by @fealho
-*  Add `_set_fitted_parameters` method to `NullTransformer` - Issue [#827](https://github.com/sdv-dev/RDT/issues/827) by @frances-h
+* Add `_set_fitted_parameters` method to `NullTransformer` - Issue [#827](https://github.com/sdv-dev/RDT/issues/827) by @frances-h
 * Add `_set_fitted_parameters` method to `UniformEncoder` - Issue [#826](https://github.com/sdv-dev/RDT/issues/826) by @frances-h
 
 ### Bugs Fixed
