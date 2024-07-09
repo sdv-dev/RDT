@@ -78,7 +78,7 @@ class BinaryEncoder(BaseTransformer):
             data (pandas.Series):
                 Data to transform.
 
-        Returns
+        Returns:
             np.ndarray
         """
         data = pd.to_numeric(data, errors='coerce')
@@ -110,3 +110,20 @@ class BinaryEncoder(BaseTransformer):
         data[isna] = np.nan
 
         return data
+
+    def _set_fitted_parameters(self, column_name, null_transformer):
+        """Manually set the parameters on the transformer to get it into a fitted state.
+
+        Args:
+            column_name (str):
+                The name of the column to use for the transformer.
+            null_transformer (NullTransformer):
+                A fitted null transformer instance that can be used to generate
+                null values for the column.
+        """
+        self.reset_randomization()
+        self.columns = [column_name]
+        self.output_columns = [column_name]
+        self.null_transformer = null_transformer
+        if self.null_transformer.models_missing_values():
+            self.output_columns.append(column_name + '.is_null')

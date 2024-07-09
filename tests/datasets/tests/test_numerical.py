@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_integer_dtype
 
 from rdt.performance.datasets import numerical
 
@@ -8,7 +9,7 @@ class TestRandomIntegerGenerator:
     def test(self):
         output = numerical.RandomIntegerGenerator.generate(10)
         assert len(output) == 10
-        assert output.dtype == int
+        assert is_integer_dtype(output.dtype)
         assert len(pd.unique(output)) > 1
         assert np.isnan(output).sum() == 0
 
@@ -26,7 +27,7 @@ class TestConstantIntegerGenerator:
     def test(self):
         output = numerical.ConstantIntegerGenerator.generate(10)
         assert len(output) == 10
-        assert output.dtype == int
+        assert is_integer_dtype(output.dtype)
         assert len(pd.unique(output)) == 1
         assert np.isnan(output).sum() == 0
 
@@ -44,7 +45,7 @@ class TestAlmostConstantIntegerGenerator:
     def test(self):
         output = numerical.AlmostConstantIntegerGenerator.generate(10)
         assert len(output) == 10
-        assert output.dtype == int
+        assert is_integer_dtype(output.dtype)
         assert len(pd.unique(output)) == 2
         assert np.isnan(output).sum() == 0
 

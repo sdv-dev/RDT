@@ -1,5 +1,6 @@
 """Unit tests for the NullTransformer."""
 
+import contextlib
 import re
 from unittest.mock import patch
 
@@ -9,6 +10,19 @@ import pytest
 
 from rdt.errors import TransformerInputError
 from rdt.transformers import NullTransformer
+
+
+@contextlib.contextmanager
+def set_random_state():
+    """Context manager for managing the random state."""
+    original_np_state = np.random.get_state()
+    random_np_state = np.random.RandomState(38)
+    np.random.set_state(random_np_state.get_state())
+
+    try:
+        yield
+    finally:
+        np.random.set_state(original_np_state)
 
 
 class TestNullTransformer:
@@ -380,6 +394,31 @@ class TestNullTransformer:
         assert missing_value_generation_none_str._missing_value_generation is None
         assert missing_value_generation_none_str.nulls is None
         assert missing_value_generation_none_str._missing_value_replacement == 'b'
+
+    def test__set_fitted_parameters(self):
+        """Test ``_set_fitted_parameters`` sets the required parameters for reverse transform."""
+        # Setup
+        missing_value_generation = NullTransformer(missing_value_generation='random')
+        no_value_generation = NullTransformer(missing_value_generation='random')
+
+        str_series = pd.Series(['a', 'b', 'b', 'c'])
+        int_series = pd.Series([1, 2, 3, 4])
+
+        # Run
+        with pytest.raises(ValueError, match='null_ratio should be a value between 0 and 1.'):
+            missing_value_generation._set_fitted_parameters(10)
+
+        missing_value_generation._set_fitted_parameters(0.5)
+        no_value_generation._set_fitted_parameters(0.0)
+        with set_random_state():
+            transformed_str = missing_value_generation.reverse_transform(str_series)
+            transformed_int = missing_value_generation.reverse_transform(int_series)
+
+        # Assert
+        assert missing_value_generation.nulls is True
+        assert no_value_generation.nulls is None
+        pd.testing.assert_series_equal(transformed_int, pd.Series([1, 2, np.nan, np.nan]))
+        pd.testing.assert_series_equal(transformed_str, pd.Series([np.nan, 'b', 'b', 'c']))
 
     def test_transform__missing_value_generation_from_column(self):
         """Test transform when ``_missing_value_generation`` is set to ``from_column``.

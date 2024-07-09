@@ -71,12 +71,14 @@ And you will see something like this:
 
 ```
 ================================== 41 passed, 5 skipped in 1.29s ===================================
-flake8 rdt tests examples
-isort -c rdt tests examples
+invoke lint
+No broken requirements found.
+All checks passed!
+73 files already formatted
 ```
 
 The execution has finished with no errors and 5 tests skipped.
-		
+
 ## Documentation
 
 The documentation must be up to date and generated with:
@@ -115,19 +117,19 @@ Make sure HISTORY.md is updated with the issues of the milestone:
 
 ```
 # History
-	
+
 ## X.Y.Z (YYYY-MM-DD)
-	
+
 ### New Features
-	
+
 * <ISSUE TITLE> - [Issue #<issue>](https://github.com/sdv-dev/RDT/issues/<issue>) by @resolver
-	
+
 ### General Improvements
-	
+
 * <ISSUE TITLE> - [Issue #<issue>](https://github.com/sdv-dev/RDT/issues/<issue>) by @resolver
-	
+
 ### Bug Fixed
-	
+
 * <ISSUE TITLE> - [Issue #<issue>](https://github.com/sdv-dev/RDT/issues/<issue>) by @resolver
 ```
 

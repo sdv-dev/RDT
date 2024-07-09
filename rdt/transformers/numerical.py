@@ -8,6 +8,7 @@ import pandas as pd
 import scipy
 from sklearn.mixture import BayesianGaussianMixture
 
+from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.utils import learn_rounding_digits
@@ -197,6 +198,49 @@ class FloatFormatter(BaseTransformer):
             return data
 
         return data.astype(self._dtype)
+
+    def _set_fitted_parameters(
+        self,
+        column_name,
+        null_transformer,
+        rounding_digits=None,
+        min_max_values=None,
+        dtype='object',
+    ):
+        """Manually set the parameters on the transformer to get it into a fitted state.
+
+        Args:
+            column_name (str):
+                The name of the column to use for the transformer.
+            null_transformer (NullTransformer):
+                A fitted null transformer instance that can be used to generate
+                null values for the column.
+            min_max_values (Tuple(float) or None):
+                None or a tuple containing the (min, max) values for the transformer.
+            rounding_digits (int or None):
+                The number of digits to round to.
+            dtype (str):
+                The pandas dtype the reversed data will be converted into.
+        """
+        self.reset_randomization()
+        self.null_transformer = null_transformer
+        self.columns = [column_name]
+        self.output_columns = [column_name]
+        if self.enforce_min_max_values:
+            if not min_max_values:
+                raise TransformerInputError('Must provide min and max values for this transformer.')
+
+        if min_max_values:
+            self._min_value = min(min_max_values)
+            self._max_value = max(min_max_values)
+
+        if rounding_digits:
+            self._rounding_digits = rounding_digits
+
+        if self.null_transformer.models_missing_values():
+            self.output_columns.append(column_name + '.is_null')
+
+        self._dtype = dtype
 
 
 class GaussianNormalizer(FloatFormatter):

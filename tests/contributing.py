@@ -169,32 +169,18 @@ def _custom_validation(function, tag, success_message, error_message, transforme
 def _validate_third_party_checks(transformer_path):
     results = [
         _validate_third_party_code_style(
-            'flake8',
-            'flake8',
-            'Code follows PEP8 standards.',
-            'Code must follow PEP8 standards.',
-            transformer_path,
+            'ruff check .',
+            'ruff_lint',
+            success_message='Code follows PEP8 standards, imports are properly sorted, and docstrings are properly written.',
+            error_message='Code must follow PEP8 standards, imports may not be properly sorted, or docstrings are not properly written.',
+            transformer_path=transformer_path,
         ),
         _validate_third_party_code_style(
-            'isort -c',
-            'isort',
-            'Imports are properly sorted.',
-            'Imports are not properly sorted.',
-            transformer_path,
-        ),
-        _validate_third_party_code_style(
-            'pylint --rcfile=setup.cfg ',
-            'pylint',
-            'Code is properly formatted and structured.',
-            'Code is not properly formatted and structured.',
-            transformer_path,
-        ),
-        _validate_third_party_code_style(
-            'pydocstyle',
-            'pydocstyle',
-            'The docstrings are properly written.',
-            'The docstrings are not properly written.',
-            transformer_path,
+            'ruff format --check --diff .',
+            'ruff_format',
+            success_message='Code follows PEP8 standards, imports are properly sorted, and docstrings are properly written.',
+            error_message='Code must follow PEP8 standards, imports may not be properly sorted, or docstrings are not properly written.',
+            transformer_path=transformer_path,
         ),
     ]
 

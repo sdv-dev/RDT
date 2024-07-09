@@ -1,10 +1,12 @@
 import platform
+import re
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 
+from rdt.errors import TransformerInputError
 from rdt.transformers.datetime import (
     OptimizedTimestampEncoder,
     UnixTimestampEncoder,
@@ -527,6 +529,60 @@ class TestUnixTimestampEncoder:
         # Assert
         expected = pd.Series([np.nan, np.nan, np.nan])
         pd.testing.assert_series_equal(output, expected)
+
+    def test__set_fitted_parameters(self):
+        """Test the ``_set_fitted_parameters`` method."""
+        # Setup
+        transformer = UnixTimestampEncoder()
+
+        # Run
+        transformer._set_fitted_parameters(
+            'column_name',
+            NullTransformer(),
+            (pd.to_datetime('2022-01-02'), pd.to_datetime('2022-01-03')),
+            dtype='object',
+        )
+
+        # Asserts
+        assert transformer._min_value == pd.to_datetime('2022-01-02')
+        assert transformer._max_value == pd.to_datetime('2022-01-03')
+        assert isinstance(transformer.null_transformer, NullTransformer)
+        assert transformer.columns == ['column_name']
+        assert transformer.output_columns == ['column_name']
+        assert transformer._dtype == 'object'
+
+    def test__set_fitted_parameters_no_min_max(self):
+        """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
+        # Setup
+        transformer = UnixTimestampEncoder(enforce_min_max_values=True)
+        error_msg = re.escape('Must provide min and max values for this transformer.')
+        # Run
+        with pytest.raises(TransformerInputError, match=error_msg):
+            transformer._set_fitted_parameters(
+                'column_name',
+                null_transformer=NullTransformer(),
+                dtype='object',
+            )
+
+    def test__set_fitted_parameters_from_column(self):
+        """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
+        # Setup
+        transformer = UnixTimestampEncoder()
+        null_transformer = NullTransformer(missing_value_generation='from_column')
+
+        # Run
+        transformer._set_fitted_parameters(
+            'column_name',
+            null_transformer=null_transformer,
+        )
+
+        # Assert
+        assert transformer.columns == ['column_name']
+        assert transformer.output_columns == ['column_name', 'column_name.is_null']
+        assert transformer.null_transformer == null_transformer
+        assert transformer._min_value is None
+        assert transformer._max_value is None
+        assert transformer._dtype == 'object'
 
 
 class TestOptimizedTimestampEncoder:
