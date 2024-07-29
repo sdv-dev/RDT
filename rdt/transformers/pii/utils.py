@@ -7,6 +7,7 @@ from faker import Faker
 FAKER_INSTANCE = Faker()
 FAKER_METHODS = set(dir(FAKER_INSTANCE))
 
+
 def is_faker_function(function_name):
     """Return whether or not the function name is a valid Faker function.
 
