@@ -4,6 +4,8 @@ import inspect
 
 from faker import Faker
 
+FAKER_INSTANCE = Faker()
+FAKER_METHODS = set(dir(FAKER_INSTANCE))
 
 def is_faker_function(function_name):
     """Return whether or not the function name is a valid Faker function.
@@ -15,12 +17,7 @@ def is_faker_function(function_name):
     Returns:
         True if the ``function_name`` is know to ``Faker``, otherwise False.
     """
-    try:
-        getattr(Faker(), function_name)
-    except AttributeError:
-        return False
-
-    return True
+    return function_name in FAKER_METHODS
 
 
 def get_provider_name(function_name):
