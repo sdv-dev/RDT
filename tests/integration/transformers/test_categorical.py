@@ -678,7 +678,7 @@ def test_label_encoder_add_noise():
     },
     'transformers': {
         'A': LabelEncoder(add_noise=True),
-    } 
+    }
     })
 
     # Run
@@ -687,6 +687,12 @@ def test_label_encoder_add_noise():
 
     # Assert
     assert transformed['A'].between(0, 3).all()
+
+    # Run
+    reverse = transformer.reverse_transform(transformed)
+
+    # Assert
+    pd.testing.assert_frame_equal(reverse, data_test)
 
 
 def test_ordered_label_encoder():
