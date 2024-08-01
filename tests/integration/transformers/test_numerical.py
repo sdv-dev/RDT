@@ -165,7 +165,7 @@ class TestFloatFormatter:
     def test__reverse_transform_from_manually_set_parameters(self):
         """Test the ``reverse_transform`` after manually setting parameters."""
         # Setup
-        data = pd.DataFrame({'column_name': [1, 2, 1, 3, 12, 9, 8]})
+        data = pd.DataFrame({'column_name': pd.Series([1, 2, 1, 3, 12, 9, 8], dtype='int64')})
         transformed = pd.DataFrame({
             'column_name': [1.000, 2.000, 1.000, 3.000, 12.000, 9.000, 8.000]
         })
@@ -192,7 +192,9 @@ class TestFloatFormatter:
     def test__reverse_transform_from_manually_set_parameters_from_column(self):
         """Test the ``reverse_transform`` after manually setting parameters."""
         # Setup
-        data = pd.DataFrame({'column_name': [1, 2, np.nan, 3, 12, np.nan, 8]})
+        data = pd.DataFrame({
+            'column_name': pd.Series([1, 2, np.nan, 3, 12, np.nan, 8], dtype='Int64')
+        })
         transformed = pd.DataFrame({
             'column_name': [1.000, 2.000, 1.000, 3.000, 12.000, 9.000, 8.000],
             'column_name.is_null': [0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0],
@@ -203,7 +205,7 @@ class TestFloatFormatter:
         null_transformer._set_fitted_parameters(0.2)
         min_max_value = (0.0, 100.0)
         rounding_digits = 3
-        dtype = 'int64'
+        dtype = 'Int64'
 
         # Run
         transformer._set_fitted_parameters(
@@ -221,7 +223,7 @@ class TestFloatFormatter:
     def test__reverse_transform_from_manually_set_parameters_random(self):
         """Test the ``reverse_transform`` after manually setting parameters."""
         # Setup
-        data = pd.DataFrame({'column_name': [1, 2, 1, 3, 12, 9, 8, 4]})
+        data = pd.DataFrame({'column_name': pd.Series([1, 2, 1, 3, 12, 9, 8, 4], dtype='Int64')})
         transformed = pd.DataFrame({
             'column_name': [1.000, 2.000, 1.000, 3.000, 12.000, 9.000, 8.000, 4.000]
         })
@@ -231,7 +233,7 @@ class TestFloatFormatter:
         null_transformer._set_fitted_parameters(0.2)
         min_max_value = (0.0, 100.0)
         rounding_digits = 3
-        dtype = 'int64'
+        dtype = 'Int64'
 
         # Run
         transformer._set_fitted_parameters(
@@ -244,10 +246,33 @@ class TestFloatFormatter:
         output = transformer.reverse_transform(transformed)
         nan_indices = output[output.isna().any(axis=1)].index
         compare_data = data.drop(index=nan_indices)
-        compare_output = output.drop(index=nan_indices).astype('int64')
+        compare_output = output.drop(index=nan_indices)
 
         # Assert
         pd.testing.assert_series_equal(compare_output['column_name'], compare_data['column_name'])
+
+    def test__support_new_pandas_dtypes(self):
+        """Test that the transformer supports the new pandas dtypes."""
+        # Setup
+        data = pd.DataFrame({
+            'Int8': pd.Series([1, 2, -3, np.nan, None, np.nan], dtype='Int8'),
+            'Int16': pd.Series([1, 2, -3, np.nan, None, np.nan], dtype='Int16'),
+            'Int32': pd.Series([1, 2, -3, np.nan, None, np.nan], dtype='Int32'),
+            'Int64': pd.Series([1, 2, -3, np.nan, None, np.nan], dtype='Int64'),
+            'Float32': pd.Series([1.1, 2.2, 3.3, np.nan, None, np.nan], dtype='Float32'),
+            'Float64': pd.Series([1.1, 2.2, 3.3, np.nan, None, np.nan], dtype='Float64'),
+        })
+        ff = FloatFormatter()
+
+        # Run and Assert
+        for column in data.columns:
+            ff.fit(data, column)
+            transformed = ff.transform(data)
+            reverse_transformed = ff.reverse_transform(transformed)
+
+            assert transformed[column].dtype == 'float64'
+            assert reverse_transformed[column].dtype == data[column].dtype
+            assert reverse_transformed[column].isna().any()
 
 
 class TestGaussianNormalizer:
