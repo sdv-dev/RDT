@@ -188,13 +188,14 @@ class FloatFormatter(BaseTransformer):
             min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
             data = data.clip(min_bound, max_bound)
 
-        is_integer = np.dtype(self._dtype).kind == 'i'
+        is_integer = pd.api.types.is_integer_dtype(self._dtype)
+        is_pandas_instance = isinstance(data, (pd.Series, pd.DataFrame))
         if self.learn_rounding_scheme and self._rounding_digits is not None:
             data = data.round(self._rounding_digits)
         elif is_integer:
             data = data.round(0)
 
-        if pd.isna(data).any() and is_integer:
+        if pd.isna(data).any() and is_integer and not is_pandas_instance:
             return data
 
         return data.astype(self._dtype)
