@@ -252,8 +252,7 @@ def learn_rounding_digits(data):
     """
     # check if data has any decimals
     name = data.name
-    data = np.array(data)
-    roundable_data = data[~(np.isinf(data) | pd.isna(data))]
+    roundable_data = data[~(np.isinf(data.astype(float)) | pd.isna(data))]
 
     # Doesn't contain numbers
     if len(roundable_data) == 0:
