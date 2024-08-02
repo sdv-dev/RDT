@@ -255,12 +255,12 @@ class TestFloatFormatter:
         """Test that the transformer supports the new pandas dtypes."""
         # Setup
         data = pd.DataFrame({
-            'Int8': pd.Series([1, 2, -3, np.nan, None, np.nan], dtype='Int8'),
-            'Int16': pd.Series([1, 2, -3, np.nan, None, np.nan], dtype='Int16'),
-            'Int32': pd.Series([1, 2, -3, np.nan, None, np.nan], dtype='Int32'),
-            'Int64': pd.Series([1, 2, -3, np.nan, None, np.nan], dtype='Int64'),
-            'Float32': pd.Series([1.1, 2.2, 3.3, np.nan, None, np.nan], dtype='Float32'),
-            'Float64': pd.Series([1.1, 2.2, 3.3, np.nan, None, np.nan], dtype='Float64'),
+            'Int8': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int8'),
+            'Int16': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int16'),
+            'Int32': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int32'),
+            'Int64': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int64'),
+            'Float32': pd.Series([1.1, 2.2, 3.3, pd.NA, None, pd.NA], dtype='Float32'),
+            'Float64': pd.Series([1.1, 2.2, 3.3, pd.NA, None, pd.NA], dtype='Float64'),
         })
         ff = FloatFormatter()
 
