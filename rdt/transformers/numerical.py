@@ -103,7 +103,7 @@ class FloatFormatter(BaseTransformer):
         )
 
     def _validate_values_within_bounds(self, data):
-        if self.computer_representation != 'Float':
+        if not self.computer_representation.startswith('Float'):
             fractions = data[~data.isna() & data % 1 != 0]
             if not fractions.empty:
                 raise ValueError(
@@ -184,7 +184,7 @@ class FloatFormatter(BaseTransformer):
         data = self.null_transformer.reverse_transform(data)
         if self.enforce_min_max_values:
             data = data.clip(self._min_value, self._max_value)
-        elif self.computer_representation != 'Float':
+        elif not self.computer_representation.startswith('Float'):
             min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
             data = data.clip(min_bound, max_bound)
 

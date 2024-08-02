@@ -262,7 +262,6 @@ class TestFloatFormatter:
             'Float32': pd.Series([1.123, 2.23, 3.3, pd.NA, None, pd.NA], dtype='Float32'),
             'Float64': pd.Series([1.1234, 2.234, 3.33, pd.NA, None, pd.NA], dtype='Float64'),
         })
-        ff = FloatFormatter(learn_rounding_scheme=True)
         expected_rounding_digits = {
             'Int8': 0,
             'Int16': 0,
@@ -274,6 +273,7 @@ class TestFloatFormatter:
 
         # Run and Assert
         for column in data.columns:
+            ff = FloatFormatter(learn_rounding_scheme=True, computer_representation=column)
             ff.fit(data, column)
             transformed = ff.transform(data)
             reverse_transformed = ff.reverse_transform(transformed)
