@@ -259,10 +259,18 @@ class TestFloatFormatter:
             'Int16': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int16'),
             'Int32': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int32'),
             'Int64': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int64'),
-            'Float32': pd.Series([1.1, 2.2, 3.3, pd.NA, None, pd.NA], dtype='Float32'),
-            'Float64': pd.Series([1.1, 2.2, 3.3, pd.NA, None, pd.NA], dtype='Float64'),
+            'Float32': pd.Series([1.123, 2.23, 3.3, pd.NA, None, pd.NA], dtype='Float32'),
+            'Float64': pd.Series([1.1234, 2.234, 3.33, pd.NA, None, pd.NA], dtype='Float64'),
         })
-        ff = FloatFormatter()
+        ff = FloatFormatter(learn_rounding_scheme=True)
+        expected_rounding_digits = {
+            'Int8': 0,
+            'Int16': 0,
+            'Int32': 0,
+            'Int64': 0,
+            'Float32': 3,
+            'Float64': 4,
+        }
 
         # Run and Assert
         for column in data.columns:
@@ -273,6 +281,11 @@ class TestFloatFormatter:
             assert transformed[column].dtype == 'float64'
             assert reverse_transformed[column].dtype == data[column].dtype
             assert reverse_transformed[column].isna().any()
+            assert ff._rounding_digits == expected_rounding_digits[column]
+            pd.testing.assert_series_equal(
+                reverse_transformed[column],
+                reverse_transformed[column].round(expected_rounding_digits[column]),
+            )
 
 
 class TestGaussianNormalizer:
