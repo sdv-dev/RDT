@@ -251,8 +251,8 @@ class TestFloatFormatter:
         # Assert
         pd.testing.assert_series_equal(compare_output['column_name'], compare_data['column_name'])
 
-    def test__support_new_pandas_dtypes(self):
-        """Test that the transformer supports the new pandas dtypes."""
+    def test__support__nullable_numerical_pandas_dtypes(self):
+        """Test that the transformer supports the nullable numerical pandas dtypes."""
         # Setup
         data = pd.DataFrame({
             'Int8': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int8'),

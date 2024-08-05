@@ -271,8 +271,8 @@ def test_learn_rounding_digits_all_missing_value_replacements():
     assert output is None
 
 
-def test_learn_rounding_digits_new_pandas_dtypes():
-    """Test that ``learn_rounding_digits`` supports the new pandas dtypes."""
+def test_learn_rounding_digits_nullable_numerical_pandas_dtypes():
+    """Test that ``learn_rounding_digits`` supports the nullable numerical pandas dtypes."""
     # Setup
     data = pd.DataFrame({
         'Int8': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int8'),
