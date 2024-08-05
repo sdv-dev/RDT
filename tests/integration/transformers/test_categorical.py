@@ -669,16 +669,13 @@ def test_label_encoder_order_by_alphabetical():
 def test_label_encoder_add_noise():
     """Test the LabelEncoder with ``add_noise``."""
     # Setup
-    data_test = pd.DataFrame({'A': ['a', 'b', 'a', 'a', 'c']})
-    data_test = data_test.astype('category')
+    data_test = pd.DataFrame({'A': pd.Series(['a', 'b', 'a', 'a', 'c'], dtype='category')})
     transformer = HyperTransformer()
     transformer.set_config({
-    'sdtypes': {
-        'A': "categorical"
-    },
-    'transformers': {
-        'A': LabelEncoder(add_noise=True),
-    }
+        'sdtypes': {'A': 'categorical'},
+        'transformers': {
+            'A': LabelEncoder(add_noise=True),
+        },
     })
 
     # Run
