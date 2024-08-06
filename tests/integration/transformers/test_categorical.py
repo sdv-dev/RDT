@@ -5,6 +5,7 @@ from io import BytesIO
 import numpy as np
 import pandas as pd
 
+from rdt.hyper_transformer import HyperTransformer
 from rdt.transformers import (
     FrequencyEncoder,
     LabelEncoder,
@@ -663,6 +664,32 @@ def test_label_encoder_order_by_alphabetical():
     expected = pd.DataFrame([1, 3, 4, 2, 0], columns=['column_name'])
     pd.testing.assert_frame_equal(transformed, expected)
     pd.testing.assert_frame_equal(reverse, data)
+
+
+def test_label_encoder_add_noise():
+    """Test the LabelEncoder with ``add_noise``."""
+    # Setup
+    data_test = pd.DataFrame({'A': pd.Series(['a', 'b', 'a', 'a', 'c'], dtype='category')})
+    transformer = HyperTransformer()
+    transformer.set_config({
+        'sdtypes': {'A': 'categorical'},
+        'transformers': {
+            'A': LabelEncoder(add_noise=True),
+        },
+    })
+
+    # Run
+    transformer.fit(data_test)
+    transformed = transformer.transform(data_test)
+
+    # Assert
+    assert transformed['A'].between(0, 3).all()
+
+    # Run
+    reverse = transformer.reverse_transform(transformed)
+
+    # Assert
+    pd.testing.assert_frame_equal(reverse, data_test)
 
 
 def test_ordered_label_encoder():
