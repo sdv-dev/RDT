@@ -189,16 +189,13 @@ class FloatFormatter(BaseTransformer):
             data = data.clip(min_bound, max_bound)
 
         is_integer = pd.api.types.is_integer_dtype(self._dtype)
-        is_pandas_instance = isinstance(data, (pd.Series, pd.DataFrame))
+        np_integer_with_nans = isinstance(data, np.ndarray) and is_integer and pd.isna(data).any()
         if self.learn_rounding_scheme and self._rounding_digits is not None:
             data = data.round(self._rounding_digits)
         elif is_integer:
             data = data.round(0)
 
-        if pd.isna(data).any() and is_integer and not is_pandas_instance:
-            return data
-
-        return data.astype(self._dtype)
+        return data.astype(self._dtype if not np_integer_with_nans else 'float64')
 
     def _set_fitted_parameters(
         self,
