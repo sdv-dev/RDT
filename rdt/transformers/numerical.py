@@ -2,6 +2,7 @@
 
 import copy
 import warnings
+from importlib import import_module
 
 import numpy as np
 import pandas as pd
@@ -520,9 +521,9 @@ class ClusterBasedNormalizer(FloatFormatter):
             data (pandas.Series):
                 Data to fit to.
         """
-        from sklearn.mixture import BayesianGaussianMixture
+        sm = import_module('sklearn.mixture')
 
-        self._bgm_transformer = BayesianGaussianMixture(
+        self._bgm_transformer = sm.BayesianGaussianMixture(
             n_components=self.max_clusters,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,

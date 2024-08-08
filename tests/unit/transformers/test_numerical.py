@@ -1176,8 +1176,8 @@ class TestClusterBasedNormalizer(TestCase):
         # Assert
         assert random_seed == 0
 
-    @patch('rdt.transformers.numerical.BayesianGaussianMixture')
-    def test__fit(self, mock_bgm):
+    @patch('rdt.transformers.numerical.import_module')
+    def test__fit(self, mock_import_module):
         """Test ``_fit``.
 
         Validate that the method sets the internal variables to the correct values
@@ -1196,6 +1196,8 @@ class TestClusterBasedNormalizer(TestCase):
             (the number of ``weights_`` greater than the threshold).
         """
         # Setup
+        mock_sklearn_mixture = mock_import_module.return_value
+        mock_bgm = mock_sklearn_mixture.BayesianGaussianMixture
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
         transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
@@ -1221,14 +1223,16 @@ class TestClusterBasedNormalizer(TestCase):
             random_state=0,
         )
 
-    @patch('rdt.transformers.numerical.BayesianGaussianMixture')
-    def test__fit_missing_value_replacement(self, mock_bgm):
+    @patch('rdt.transformers.numerical.import_module')
+    def test__fit_missing_value_replacement(self, mock_import_module):
         """Test ``_fit`` with ``np.nan`` values.
 
         Validate that the method sets the internal variables to the correct values
         when given a pandas Series containing ``np.nan`` values.
         """
         # Setup
+        mock_sklearn_mixture = mock_import_module.return_value
+        mock_bgm = mock_sklearn_mixture.BayesianGaussianMixture
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
         transformer = ClusterBasedNormalizer(
@@ -1254,9 +1258,9 @@ class TestClusterBasedNormalizer(TestCase):
             'is_null': {'sdtype': 'float', 'next_transformer': None},
         }
 
-    @patch('rdt.transformers.numerical.BayesianGaussianMixture')
+    @patch('rdt.transformers.numerical.import_module')
     @patch('rdt.transformers.numerical.warnings')
-    def test__fit_catch_warnings(self, mock_warnings, mock_bgm):
+    def test__fit_catch_warnings(self, mock_warnings, mock_import_module):
         """Test ``_fit`` with ``np.nan`` values.
 
         Validate that ``_fit`` uses ``catch_warnings`` and ``warnings.simplefilter``.
@@ -1273,6 +1277,8 @@ class TestClusterBasedNormalizer(TestCase):
             - call the `warnings.simplefilter`` method.
         """
         # Setup
+        mock_sklearn_mixture = mock_import_module.return_value
+        mock_bgm = mock_sklearn_mixture.BayesianGaussianMixture
         bgm_instance = mock_bgm.return_value
         bgm_instance.weights_ = np.array([10.0, 5.0, 0.0])
         transformer = ClusterBasedNormalizer(max_clusters=10, weight_threshold=0.005)
