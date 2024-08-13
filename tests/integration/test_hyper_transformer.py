@@ -2102,7 +2102,6 @@ class TestHyperTransformer:
             assert sdtype == 'numerical'
             assert config['transformers'][column_name].__class__.__name__ == 'FloatFormatter'
 
-
     def test_numerical_dtype_handling(self):
         """Test that the HyperTransformer correctly handle all numerical dtypes."""
         # Setup
@@ -2140,7 +2139,6 @@ class TestHyperTransformer:
         assert transformed_data.dtypes.unique() == 'float'
         for column in original_data.columns:
             assert reverse_transformed_data[column].dtype == column
-
 
     def test_numerical_handling_with_nans(self):
         """Test all numerical dtypes handling when there is NaN in the transformed data."""
