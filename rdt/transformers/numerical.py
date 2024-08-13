@@ -189,7 +189,11 @@ class FloatFormatter(BaseTransformer):
             data = data.clip(min_bound, max_bound)
 
         is_integer = pd.api.types.is_integer_dtype(self._dtype)
-        np_integer_with_nans = isinstance(data, np.ndarray) and is_integer and pd.isna(data).any()
+        np_integer_with_nans = (
+            not pd.api.types.is_extension_array_dtype(self._dtype)
+            and is_integer
+            and pd.isna(data).any()
+        )
         if self.learn_rounding_scheme and self._rounding_digits is not None:
             data = data.round(self._rounding_digits)
         elif is_integer:
