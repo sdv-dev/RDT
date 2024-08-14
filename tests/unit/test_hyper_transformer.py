@@ -131,6 +131,34 @@ class TestHyperTransformer(TestCase):
         assert ht._modified_config is False
         validation_mock.assert_called_once()
 
+    def test__set_field_sdtype_numerical(self):
+        """Test the ``_set_field_sdtype`` method for numerical data."""
+        # Setup
+        data = pd.DataFrame({
+            'Int8': pd.Series([1, 2, -3, pd.NA], dtype='Int8'),
+            'Int16': pd.Series([1, 2, -3, pd.NA], dtype='Int16'),
+            'Int32': pd.Series([1, 2, -3, pd.NA], dtype='Int32'),
+            'Int64': pd.Series([1, 2, -3, pd.NA], dtype='Int64'),
+            'UInt8': pd.Series([1, 2, 3, pd.NA], dtype='UInt8'),
+            'UInt16': pd.Series([1, 2, 3, pd.NA], dtype='UInt16'),
+            'UInt32': pd.Series([1, 2, 3, pd.NA], dtype='UInt32'),
+            'UInt64': pd.Series([1, 2, 3, pd.NA], dtype='UInt64'),
+            'Float32': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float32'),
+            'Float64': pd.Series([1.1, 2.2, 3.3, pd.NA], dtype='Float64'),
+            'uint8': np.array([1, 2, 3, 4], dtype='uint8'),
+            'uint16': np.array([1, 2, 3, 4], dtype='uint16'),
+            'uint32': np.array([1, 2, 3, 4], dtype='uint32'),
+            'uint64': np.array([1, 2, 3, 4], dtype='uint64'),
+        })
+        ht = HyperTransformer()
+
+        # Run
+        for column in data.columns:
+            ht._set_field_sdtype(data, column)
+
+        # Assert
+        assert ht.field_sdtypes == {column: 'numerical' for column in data.columns}
+
     def test__unfit(self):
         """Test the ``_unfit`` method.
 
