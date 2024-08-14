@@ -62,6 +62,7 @@ class HyperTransformer:
     # pylint: disable=too-many-instance-attributes
 
     _DTYPES_TO_SDTYPES = {
+        'u': 'numerical',
         'i': 'numerical',
         'f': 'numerical',
         'O': 'categorical',

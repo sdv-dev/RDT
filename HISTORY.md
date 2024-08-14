@@ -1,5 +1,23 @@
 # History
 
+## v1.12.3 - 2024-08-14
+
+This release improves RDT's import time by lazy importing a dependency in the `ClusterBasedNormalizer`.
+
+### Bugs Fixed
+
+* HyperTransformer can’t detect UInt or uint - Issue [#865](https://github.com/sdv-dev/RDT/issues/865) by @R-Palazzo
+
+### Maintenance
+
+* Lazy import BayesianGaussianMixture from sklearn - Issue [#861](https://github.com/sdv-dev/RDT/issues/861) by @amontanez24
+* [dtype] Make `learn_rounding_digits()` work with new pandas dtypes - Issue [#858](https://github.com/sdv-dev/RDT/issues/858) by @R-Palazzo
+
+### Internal
+
+* [dtypes] `FloatFormatter` reverse transform does not support new pandas dtypes - Issue [#855](https://github.com/sdv-dev/RDT/issues/855) by @R-Palazzo
+* Remove ``is_faker_function`` from ``rdt/transformers/pii/utils.py`` - Issue [#853](https://github.com/sdv-dev/RDT/issues/853) by @R-Palazzo
+
 ## v1.12.2 - 2024-07-09
 
 This release adds support for NumPy 2.0!

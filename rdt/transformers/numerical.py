@@ -2,11 +2,11 @@
 
 import copy
 import warnings
+from importlib import import_module
 
 import numpy as np
 import pandas as pd
 import scipy
-from sklearn.mixture import BayesianGaussianMixture
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
@@ -103,7 +103,7 @@ class FloatFormatter(BaseTransformer):
         )
 
     def _validate_values_within_bounds(self, data):
-        if self.computer_representation != 'Float':
+        if not self.computer_representation.startswith('Float'):
             fractions = data[~data.isna() & data % 1 != 0]
             if not fractions.empty:
                 raise ValueError(
@@ -184,20 +184,22 @@ class FloatFormatter(BaseTransformer):
         data = self.null_transformer.reverse_transform(data)
         if self.enforce_min_max_values:
             data = data.clip(self._min_value, self._max_value)
-        elif self.computer_representation != 'Float':
+        elif not self.computer_representation.startswith('Float'):
             min_bound, max_bound = INTEGER_BOUNDS[self.computer_representation]
             data = data.clip(min_bound, max_bound)
 
-        is_integer = np.dtype(self._dtype).kind == 'i'
+        is_integer = pd.api.types.is_integer_dtype(self._dtype)
+        np_integer_with_nans = (
+            not pd.api.types.is_extension_array_dtype(self._dtype)
+            and is_integer
+            and pd.isna(data).any()
+        )
         if self.learn_rounding_scheme and self._rounding_digits is not None:
             data = data.round(self._rounding_digits)
         elif is_integer:
             data = data.round(0)
 
-        if pd.isna(data).any() and is_integer:
-            return data
-
-        return data.astype(self._dtype)
+        return data.astype(self._dtype if not np_integer_with_nans else 'float64')
 
     def _set_fitted_parameters(
         self,
@@ -523,7 +525,9 @@ class ClusterBasedNormalizer(FloatFormatter):
             data (pandas.Series):
                 Data to fit to.
         """
-        self._bgm_transformer = BayesianGaussianMixture(
+        sm = import_module('sklearn.mixture')
+
+        self._bgm_transformer = sm.BayesianGaussianMixture(
             n_components=self.max_clusters,
             weight_concentration_prior_type='dirichlet_process',
             weight_concentration_prior=0.001,

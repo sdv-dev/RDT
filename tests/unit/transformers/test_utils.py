@@ -269,3 +269,29 @@ def test_learn_rounding_digits_all_missing_value_replacements():
     output = learn_rounding_digits(data)
 
     assert output is None
+
+
+def test_learn_rounding_digits_nullable_numerical_pandas_dtypes():
+    """Test that ``learn_rounding_digits`` supports the nullable numerical pandas dtypes."""
+    # Setup
+    data = pd.DataFrame({
+        'Int8': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int8'),
+        'Int16': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int16'),
+        'Int32': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int32'),
+        'Int64': pd.Series([1, 2, -3, pd.NA, None, pd.NA], dtype='Int64'),
+        'Float32': pd.Series([1.12, 2.23, 3.33, pd.NA, None, pd.NA], dtype='Float32'),
+        'Float64': pd.Series([1.1234, 2.2345, 3.323, pd.NA, None, pd.NA], dtype='Float64'),
+    })
+    expected_output = {
+        'Int8': 0,
+        'Int16': 0,
+        'Int32': 0,
+        'Int64': 0,
+        'Float32': 2,
+        'Float64': 4,
+    }
+
+    # Run and Assert
+    for column in data.columns:
+        output = learn_rounding_digits(data[column])
+        assert output == expected_output[column]
