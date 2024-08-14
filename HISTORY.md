@@ -1,8 +1,12 @@
 # History
 
-## v1.12.3 - 2024-08-13
+## v1.12.3 - 2024-08-14
 
 This release improves RDT's import time by lazy importing a dependency in the `ClusterBasedNormalizer`.
+
+### Bugs Fixed
+
+* HyperTransformer can’t detect UInt or uint - Issue [#865](https://github.com/sdv-dev/RDT/issues/865) by @R-Palazzo
 
 ### Maintenance
 
