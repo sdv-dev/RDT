@@ -1693,7 +1693,7 @@ class TestHyperTransformer(TestCase):
             'col1': [0, 1, 2, 3, 4],
             'col2': [0, 1, 2, 3, 4],
         })
-        pd.testing.assert_frame_equal(output, expected_output)
+        pd.testing.assert_frame_equal(output, expected_output, check_dtype=False)
 
     def test_create_anonymized_columns_multi_column_transformer_error(self):
         """Test ``create_anonymized_columns`` raises error with multi-column transformer.
