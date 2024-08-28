@@ -236,8 +236,9 @@ class FloatFormatter(BaseTransformer):
             self._min_value = min(min_max_values)
             self._max_value = max(min_max_values)
 
-        if rounding_digits:
+        if rounding_digits is not None:
             self._rounding_digits = rounding_digits
+            self.learn_rounding_scheme = True
 
         if self.null_transformer.models_missing_values():
             self.output_columns.append(column_name + '.is_null')

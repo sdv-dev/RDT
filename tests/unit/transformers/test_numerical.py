@@ -748,6 +748,7 @@ class TestFloatFormatter(TestCase):
         assert transformer._max_value == 100.0
         assert transformer._rounding_digits == rounding_digits
         assert transformer._dtype == dtype
+        assert transformer.learn_rounding_scheme is True
 
     def test__set_fitted_parameters_from_column(self):
         """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""

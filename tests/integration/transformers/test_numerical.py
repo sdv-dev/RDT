@@ -287,6 +287,26 @@ class TestFloatFormatter:
                 reverse_transformed[column].round(expected_rounding_digits[column]),
             )
 
+    def test__set_fitted_parameter_rounding_to_integer(self):
+        """Test the ``_set_fitted_parameters`` method with rounding_digits set to 0."""
+        # Setup
+        data = pd.DataFrame({
+            'col 1': 100 * np.random.random(10),
+        })
+        transformer = FloatFormatter()
+
+        # Run
+        transformer._set_fitted_parameters(
+            column_name='col 1',
+            null_transformer=NullTransformer(),
+            rounding_digits=0,
+            dtype='float',
+        )
+        reverse_transformed_data = transformer.reverse_transform(data)
+
+        # Assert
+        pd.testing.assert_frame_equal(reverse_transformed_data, data.round(0))
+
 
 class TestGaussianNormalizer:
     def test_stats(self):
