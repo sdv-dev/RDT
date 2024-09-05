@@ -1,5 +1,17 @@
 # History
 
+## v1.12.4 - 2024-09-05
+
+This release enables the `create_anonymized_columns` method to support multi-column transformers.
+
+### Bugs Fixed
+
+* FloatFormatter does not round the data correctly for integer columns when using _set_fitted_parameters - Issue [#874](https://github.com/sdv-dev/RDT/issues/874) by @R-Palazzo
+
+### New Features
+
+* Make create_anonymized_columns work with multi columns transformer - Issue [#871](https://github.com/sdv-dev/RDT/issues/871) by @R-Palazzo
+
 ## v1.12.3 - 2024-08-14
 
 This release improves RDT's import time by lazy importing a dependency in the `ClusterBasedNormalizer`.
