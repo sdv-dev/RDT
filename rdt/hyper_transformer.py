@@ -871,8 +871,23 @@ class HyperTransformer:
                 'list of valid column names.'
             )
 
+        columns_to_generate = set()
+        for column in column_names:
+            if column not in self._multi_column_fields:
+                columns_to_generate.add(column)
+                continue
+
+            multi_columns = self._multi_column_fields[column]
+            if any(col not in column_names for col in multi_columns):
+                raise InvalidConfigError(
+                    f"Column '{column}' is part of a multi-column field. You must include all "
+                    'columns inside the multi-column field to generate the anonymized columns.'
+                )
+
+            columns_to_generate.add(multi_columns)
+
         transformers = []
-        for column_name in column_names:
+        for column_name in sorted(columns_to_generate):
             transformer = self.field_transformers.get(column_name)
             if not transformer.is_generator():
                 raise TransformerProcessingError(
