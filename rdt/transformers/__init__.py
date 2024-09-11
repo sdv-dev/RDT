@@ -21,6 +21,7 @@ from rdt.transformers.datetime import (
     OptimizedTimestampEncoder,
     UnixTimestampEncoder,
 )
+from rdt.transformers.id import IDGenerator, RegexGenerator
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
     ClusterBasedNormalizer,
@@ -31,7 +32,6 @@ from rdt.transformers.pii.anonymizer import (
     AnonymizedFaker,
     PseudoAnonymizedFaker,
 )
-from rdt.transformers.text import IDGenerator, RegexGenerator
 
 __all__ = [
     'BaseTransformer',
@@ -90,12 +90,13 @@ TRANSFORMERS = {
 
 
 DEFAULT_TRANSFORMERS = {
-    'numerical': FloatFormatter(),
-    'categorical': UniformEncoder(),
     'boolean': UniformEncoder(),
+    'categorical': UniformEncoder(),
     'datetime': UnixTimestampEncoder(),
-    'text': RegexGenerator(),
+    'id': RegexGenerator(),
+    'numerical': FloatFormatter(),
     'pii': AnonymizedFaker(),
+    'text': RegexGenerator(),
 }
 
 

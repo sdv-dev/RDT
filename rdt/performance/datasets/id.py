@@ -1,4 +1,4 @@
-"""Dataset Generators for Text transformers."""
+"""Dataset Generators for ID transformers."""
 
 from abc import ABC
 
@@ -9,9 +9,9 @@ from rdt.performance.datasets.utils import add_nans
 
 
 class RegexGeneratorGenerator(BaseDatasetGenerator, ABC):
-    """Base class for generators that generate PII data."""
+    """Base class for generators that generate ID data."""
 
-    SDTYPE = 'text'
+    SDTYPE = 'id'
 
 
 class RandomStringGenerator(RegexGeneratorGenerator):

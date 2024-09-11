@@ -98,7 +98,7 @@ def test_get_default_transformers():
         'categorical': UniformEncoder,
         'boolean': UniformEncoder,
         'datetime': UnixTimestampEncoder,
-        'text': RegexGenerator,
+        'id': RegexGenerator,
         'pii': AnonymizedFaker,
     }
 

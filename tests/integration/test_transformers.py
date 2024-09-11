@@ -34,7 +34,7 @@ SDTYPE_TO_DTYPES = {
     'integer': ['i'],
     'float': ['f', 'i'],
     'pii': ['O', 'i', 'f'],
-    'text': ['O', 'i', 'f'],
+    'id': ['O', 'i', 'f'],
 }
 
 
@@ -71,7 +71,11 @@ def _is_valid_transformer(transformer_name):
 def _get_all_transformers():
     """Get all transformers to be tested."""
     all_transformers = BaseTransformer.get_subclasses()
-    return [t for t in all_transformers if _is_valid_transformer(t.__name__)]
+    return [
+        transformer
+        for transformer in all_transformers
+        if _is_valid_transformer(transformer.__name__)
+    ]
 
 
 def _build_generator_map():

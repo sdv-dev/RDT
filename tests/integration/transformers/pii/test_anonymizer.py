@@ -47,7 +47,7 @@ class TestAnonymizedFaker:
         supported_sdtypes = AnonymizedFaker.get_supported_sdtypes()
 
         # Assert
-        assert sorted(supported_sdtypes) == sorted(['pii', 'text'])
+        assert sorted(supported_sdtypes) == sorted(['pii', 'text', 'id'])
 
     def test_custom_provider(self):
         """End to end test with a custom provider and function for the ``AnonymizedFaker``."""
