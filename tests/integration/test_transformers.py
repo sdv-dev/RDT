@@ -30,11 +30,12 @@ SDTYPE_TO_DTYPES = {
     'boolean': ['b', 'O'],
     'categorical': ['O', 'i', 'f'],
     'datetime': ['M'],
-    'numerical': ['f', 'i'],
-    'integer': ['i'],
     'float': ['f', 'i'],
-    'pii': ['O', 'i', 'f'],
     'id': ['O', 'i', 'f'],
+    'integer': ['i'],
+    'numerical': ['f', 'i'],
+    'pii': ['O', 'i', 'f'],
+    'text': ['O', 'i', 'f'],
 }
 
 
