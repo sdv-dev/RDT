@@ -305,10 +305,7 @@ def test_warn_dict():
     instance['text'] = 'text_transformer'
 
     # Run
-    warning_msg = (
-        "The sdtype 'text' is deprecated and will be phased out. Please use 'id' instead."
-    )
-
+    warning_msg = "The sdtype 'text' is deprecated and will be phased out. Please use 'id' instead."
     with pytest.warns(DeprecationWarning, match=warning_msg):
         result_access = instance['text']
 
