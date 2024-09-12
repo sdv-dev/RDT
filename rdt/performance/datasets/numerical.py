@@ -25,7 +25,7 @@ class RandomIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-03, 'memory': 2500.0},
             'transform': {'time': 5e-05, 'memory': 400.0},
@@ -46,7 +46,7 @@ class RandomIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-03, 'memory': 2500.0},
             'transform': {'time': 4e-05, 'memory': 400.0},
@@ -69,7 +69,7 @@ class ConstantIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-03, 'memory': 400.0},
             'transform': {'time': 1e-05, 'memory': 400.0},
@@ -90,7 +90,7 @@ class ConstantIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-03, 'memory': 600.0},
             'transform': {'time': 3e-05, 'memory': 400.0},
@@ -116,7 +116,7 @@ class AlmostConstantIntegerGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-03, 'memory': 2500.0},
             'transform': {'time': 1e-05, 'memory': 2000.0},
@@ -142,7 +142,7 @@ class AlmostConstantIntegerNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-03, 'memory': 2500.0},
             'transform': {'time': 3e-05, 'memory': 1000.0},
@@ -163,7 +163,7 @@ class NormalGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-03, 'memory': 2500.0},
             'transform': {'time': 1e-05, 'memory': 400.0},
@@ -184,7 +184,7 @@ class NormalNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-03, 'memory': 2500.0},
             'transform': {'time': 4e-05, 'memory': 400.0},
@@ -205,7 +205,7 @@ class BigNormalGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-03, 'memory': 2500.0},
             'transform': {'time': 5e-05, 'memory': 400.0},
@@ -226,7 +226,7 @@ class BigNormalNaNsGenerator(NumericalGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-03, 'memory': 2500.0},
             'transform': {'time': 3e-05, 'memory': 400.0},

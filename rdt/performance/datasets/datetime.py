@@ -29,7 +29,7 @@ class RandomGapDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 5e-05, 'memory': 500.0},
             'transform': {'time': 5e-05, 'memory': 350.0},
@@ -53,7 +53,7 @@ class RandomGapSecondsDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 5e-05, 'memory': 500.0},
             'transform': {'time': 5e-05, 'memory': 350.0},
@@ -75,7 +75,7 @@ class RandomGapDatetimeNaNsGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 5e-05, 'memory': 500.0},
             'transform': {'time': 5e-05, 'memory': 1000.0},
@@ -99,7 +99,7 @@ class EqualGapHoursDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 5e-05, 'memory': 500.0},
             'transform': {'time': 5e-05, 'memory': 350.0},
@@ -126,7 +126,7 @@ class EqualGapDaysDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 5e-05, 'memory': 500.0},
             'transform': {'time': 5e-05, 'memory': 350.0},
@@ -153,7 +153,7 @@ class EqualGapWeeksDatetimeGenerator(DatetimeGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 5e-05, 'memory': 500.0},
             'transform': {'time': 5e-05, 'memory': 350.0},
