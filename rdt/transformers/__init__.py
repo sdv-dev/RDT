@@ -2,6 +2,7 @@
 
 import importlib
 import inspect
+import warnings
 from collections import defaultdict
 from copy import deepcopy
 from functools import lru_cache
@@ -32,6 +33,7 @@ from rdt.transformers.pii.anonymizer import (
     AnonymizedFaker,
     PseudoAnonymizedFaker,
 )
+from rdt.transformers.utils import WarnDict
 
 __all__ = [
     'BaseTransformer',
@@ -88,16 +90,15 @@ TRANSFORMERS = {
     for transformer in BaseTransformer.get_subclasses()
 }
 
-
-DEFAULT_TRANSFORMERS = {
-    'boolean': UniformEncoder(),
-    'categorical': UniformEncoder(),
-    'datetime': UnixTimestampEncoder(),
-    'id': RegexGenerator(),
-    'numerical': FloatFormatter(),
-    'pii': AnonymizedFaker(),
-    'text': RegexGenerator(),
-}
+DEFAULT_TRANSFORMERS = WarnDict(
+    boolean=UniformEncoder(),
+    categorical=UniformEncoder(),
+    datetime=UnixTimestampEncoder(),
+    id=RegexGenerator(),
+    numerical=FloatFormatter(),
+    pii=AnonymizedFaker(),
+    text=RegexGenerator(),
+)
 
 
 @lru_cache()

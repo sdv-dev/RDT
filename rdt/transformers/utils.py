@@ -274,3 +274,37 @@ def learn_rounding_digits(data):
         name,
     )
     return None
+
+
+class WarnDict(dict):
+    """Custom dictionary to raise a deprecation warning."""
+
+    def get(self, key):
+        """Retrun the value for key if key is in the dictionary, else default.
+
+        If the key is `text` raises a `DeprecationWarning` stating that it will be
+        phased out.
+        """
+        if key == 'text':
+            warnings.warn(
+                "The sdtype 'text' is deprecated and will be phased out. "
+                "Please use 'id' instead.",
+                DeprecationWarning,
+            )
+
+        return super().get(key)
+
+    def __getitem__(self, key):
+        """Retrun the value for key if key is in the dictionary.
+
+        If the key is `text` raises a `DeprecationWarning` stating that it will be
+        phased out.
+        """
+        if key == 'text':
+            warnings.warn(
+                "The sdtype 'text' is deprecated and will be phased out. "
+                "Please use 'id' instead.",
+                DeprecationWarning,
+            )
+
+        return super().__getitem__(key)

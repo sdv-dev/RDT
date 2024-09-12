@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from rdt.transformers.utils import (
+    WarnDict,
     _any,
     _max_repeat,
     check_nan_in_transform,
@@ -295,3 +296,25 @@ def test_learn_rounding_digits_nullable_numerical_pandas_dtypes():
     for column in data.columns:
         output = learn_rounding_digits(data[column])
         assert output == expected_output[column]
+
+
+def test_warn_dict():
+    """Test that ``WarnDict`` will raise a warning when called with `text`."""
+    # Setup
+    instance = WarnDict()
+    instance['text'] = 'text_transformer'
+
+    # Run
+    warning_msg = (
+        "The sdtype 'text' is deprecated and will be phased out. Please use 'id' instead."
+    )
+
+    with pytest.warns(DeprecationWarning, match=warning_msg):
+        result_access = instance['text']
+
+    with pytest.warns(DeprecationWarning, match=warning_msg):
+        result_get = instance.get('text')
+
+    # Assert
+    assert result_access == 'text_transformer'
+    assert result_get == 'text_transformer'
