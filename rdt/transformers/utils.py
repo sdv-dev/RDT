@@ -5,6 +5,7 @@ import re
 import string
 import sys
 import warnings
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -14,6 +15,7 @@ import sre_parse  # isort:skip
 LOGGER = logging.getLogger(__name__)
 
 MAX_DECIMALS = sys.float_info.dig - 1
+DEPRECATED_SDTYPES_MAPPING = {'text': 'id'}
 
 
 def _literal(character, max_repeat):
@@ -279,32 +281,40 @@ def learn_rounding_digits(data):
 class WarnDict(dict):
     """Custom dictionary to raise a deprecation warning."""
 
-    def get(self, key):
-        """Retrun the value for key if key is in the dictionary, else default.
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._warned = defaultdict()
 
-        If the key is `text` raises a `DeprecationWarning` stating that it will be
+    def get(self, sdtype):
+        """Retrun the value for sdtype if sdtype is in the dictionary, else default.
+
+        If the sdtype is `text` raises a `DeprecationWarning` stating that it will be
         phased out.
         """
-        if key == 'text':
+        if sdtype in DEPRECATED_SDTYPES_MAPPING and not self._warned.get(sdtype):
+            new_sdtype = DEPRECATED_SDTYPES_MAPPING.get(sdtype)
             warnings.warn(
-                "The sdtype 'text' is deprecated and will be phased out. "
-                "Please use 'id' instead.",
+                f"The sdtype '{sdtype}' is deprecated and will be phased out. "
+                f"Please use '{new_sdtype}' instead.",
                 DeprecationWarning,
             )
+            self._warned[sdtype] = True
 
-        return super().get(key)
+        return super().get(sdtype)
 
-    def __getitem__(self, key):
-        """Retrun the value for key if key is in the dictionary.
+    def __getitem__(self, sdtype):
+        """Retrun the value for sdtype if sdtype is in the dictionary.
 
-        If the key is `text` raises a `DeprecationWarning` stating that it will be
+        If the sdtype is `text` raises a `DeprecationWarning` stating that it will be
         phased out.
         """
-        if key == 'text':
+        if sdtype in DEPRECATED_SDTYPES_MAPPING and not self._warned.get(sdtype):
+            new_sdtype = DEPRECATED_SDTYPES_MAPPING.get(sdtype)
             warnings.warn(
-                "The sdtype 'text' is deprecated and will be phased out. "
-                "Please use 'id' instead.",
+                f"The sdtype '{sdtype}' is deprecated and will be phased out. "
+                f"Please use '{new_sdtype}' instead.",
                 DeprecationWarning,
             )
+            self._warned[sdtype] = True
 
-        return super().__getitem__(key)
+        return super().get(sdtype)

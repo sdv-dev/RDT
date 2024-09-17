@@ -1,4 +1,5 @@
 import sre_parse
+import warnings
 from sre_constants import MAXREPEAT
 from unittest.mock import patch
 
@@ -309,9 +310,13 @@ def test_warn_dict():
     with pytest.warns(DeprecationWarning, match=warning_msg):
         result_access = instance['text']
 
-    with pytest.warns(DeprecationWarning, match=warning_msg):
-        result_get = instance.get('text')
+    # Run second time and no warning gets shown
+    with warnings.catch_warnings(record=True) as record:
+        result_access_no_warn = instance['text']
+        result_get_no_warn = instance.get('text')
 
     # Assert
+    assert len(record) == 0
     assert result_access == 'text_transformer'
-    assert result_get == 'text_transformer'
+    assert result_access_no_warn == 'text_transformer'
+    assert result_get_no_warn == 'text_transformer'
