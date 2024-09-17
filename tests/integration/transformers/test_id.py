@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from rdt import HyperTransformer, get_demo
-from rdt.transformers.text import IDGenerator, RegexGenerator
+from rdt.transformers.id import IDGenerator, RegexGenerator
 
 
 class TestIDGenerator:
@@ -348,7 +348,7 @@ class TestHyperTransformer:
         customers['id'] = ['id_a', 'id_b', 'id_c', 'id_d', 'id_e']
         ht = HyperTransformer()
         ht.detect_initial_config(customers)
-        ht.update_sdtypes({'id': 'text'})
+        ht.update_sdtypes({'id': 'id'})
         ht.update_transformers({
             'id': RegexGenerator(regex_format='id_[a-z]', generation_order='scrambled')
         })

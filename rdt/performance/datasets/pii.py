@@ -25,7 +25,7 @@ class RandomStringGenerator(PIIGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-05, 'memory': 500.0},
             'transform': {'time': 1e-05, 'memory': 500.0},
@@ -46,7 +46,7 @@ class RandomStringNaNsGenerator(PIIGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-05, 'memory': 400.0},
             'transform': {'time': 1e-05, 'memory': 1000.0},

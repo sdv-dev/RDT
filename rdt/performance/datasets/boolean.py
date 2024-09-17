@@ -34,7 +34,7 @@ class RandomBooleanGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 2e-5, 'memory': 400.0},
             'transform': {'time': 1e-5, 'memory': 400.0},
@@ -63,7 +63,7 @@ class RandomBooleanNaNsGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 2e-5, 'memory': 400.0},
             'transform': {'time': 1e-5, 'memory': 1000.0},
@@ -90,7 +90,7 @@ class RandomSkewedBooleanGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-5, 'memory': 400.0},
             'transform': {'time': 1e-5, 'memory': 400.0},
@@ -119,7 +119,7 @@ class RandomSkewedBooleanNaNsGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-5, 'memory': 400.0},
             'transform': {'time': 1e-5, 'memory': 1000.0},
@@ -141,7 +141,7 @@ class ConstantBooleanGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-5, 'memory': 400.0},
             'transform': {'time': 1e-5, 'memory': 400.0},
@@ -169,7 +169,7 @@ class ConstantBooleanNaNsGenerator(BooleanGenerator):
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {'time': 1e-5, 'memory': 400.0},
             'transform': {'time': 1e-5, 'memory': 1000.0},
