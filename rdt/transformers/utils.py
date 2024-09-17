@@ -286,7 +286,7 @@ class WarnDict(dict):
         self._warned = defaultdict()
 
     def get(self, sdtype):
-        """Retrun the value for sdtype if sdtype is in the dictionary, else default.
+        """Return the value for sdtype if sdtype is in the dictionary, else default.
 
         If the sdtype is `text` raises a `DeprecationWarning` stating that it will be
         phased out.
@@ -303,7 +303,7 @@ class WarnDict(dict):
         return super().get(sdtype)
 
     def __getitem__(self, sdtype):
-        """Retrun the value for sdtype if sdtype is in the dictionary.
+        """Return the value for sdtype if sdtype is in the dictionary.
 
         If the sdtype is `text` raises a `DeprecationWarning` stating that it will be
         phased out.
