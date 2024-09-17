@@ -308,13 +308,4 @@ class WarnDict(dict):
         If the sdtype is `text` raises a `DeprecationWarning` stating that it will be
         phased out.
         """
-        if sdtype in DEPRECATED_SDTYPES_MAPPING and not self._warned.get(sdtype):
-            new_sdtype = DEPRECATED_SDTYPES_MAPPING.get(sdtype)
-            warnings.warn(
-                f"The sdtype '{sdtype}' is deprecated and will be phased out. "
-                f"Please use '{new_sdtype}' instead.",
-                DeprecationWarning,
-            )
-            self._warned[sdtype] = True
-
-        return super().get(sdtype)
+        return self.get(sdtype)

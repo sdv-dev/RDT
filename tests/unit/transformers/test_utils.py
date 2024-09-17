@@ -320,3 +320,26 @@ def test_warn_dict():
     assert result_access == 'text_transformer'
     assert result_access_no_warn == 'text_transformer'
     assert result_get_no_warn == 'text_transformer'
+
+
+def test_warn_dict_get():
+    """Test that ``WarnDict`` will raise a warning when called with `text`."""
+    # Setup
+    instance = WarnDict()
+    instance['text'] = 'text_transformer'
+
+    # Run
+    warning_msg = "The sdtype 'text' is deprecated and will be phased out. Please use 'id' instead."
+    with pytest.warns(DeprecationWarning, match=warning_msg):
+        result_access = instance.get('text')
+
+    # Run second time and no warning gets shown
+    with warnings.catch_warnings(record=True) as record:
+        result_access_no_warn = instance['text']
+        result_get_no_warn = instance.get('text')
+
+    # Assert
+    assert len(record) == 0
+    assert result_access == 'text_transformer'
+    assert result_access_no_warn == 'text_transformer'
+    assert result_get_no_warn == 'text_transformer'
