@@ -58,7 +58,7 @@ test = [
     'rundoc>=0.4.3,<0.5',
     'pytest-subtests>=0.5,<1.0',
     'pytest-runner >= 2.11.1',
-    'pyarrow',
+    'pyarrow >= 17.0.0',
     'tomli>=2.0.0,<3',
 ]
 dev = [
