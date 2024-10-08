@@ -1,5 +1,15 @@
 # History
 
+## v1.13.0 - 2024-10-08
+
+### New Features
+
+* Align text/id sdtypes to the SDV library - Issue [#880](https://github.com/sdv-dev/RDT/issues/880)
+
+### Internal
+
+* Add workflow to generate release notes - Issue [#889](https://github.com/sdv-dev/RDT/issues/889) by @amontanez24
+
 ## v1.12.4 - 2024-09-05
 
 This release enables the `create_anonymized_columns` method to support multi-column transformers.
