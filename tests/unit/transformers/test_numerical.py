@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import copulas
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pytest
 from copulas import univariate
 from pandas.api.types import is_float_dtype
@@ -38,6 +39,16 @@ class TestFloatFormatter(TestCase):
         """
         # Setup
         data = pd.Series([15, None, 25])
+        transformer = FloatFormatter()
+        transformer.computer_representation = 'UInt8'
+
+        # Run
+        transformer._validate_values_within_bounds(data)
+
+    def test__validate_values_within_bounds_pyarrow(self):
+        """Test it works with pyarrow."""
+        # Setup
+        data = pd.Series(range(10), dtype='int64[pyarrow]')
         transformer = FloatFormatter()
         transformer.computer_representation = 'UInt8'
 
