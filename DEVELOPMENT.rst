@@ -349,7 +349,7 @@ method. The times are specified in seconds and the memory in bytes.
 
     @staticmethod
     def get_performance_thresholds():
-        """Return the expected threseholds."""
+        """Return the expected thresholds."""
         return {
             'fit': {
                 'time': 1,

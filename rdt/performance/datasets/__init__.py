@@ -6,6 +6,7 @@ from rdt.performance.datasets import (
     boolean,
     categorical,
     datetime,
+    id,
     numerical,
     pii,
     text,
@@ -16,9 +17,10 @@ __all__ = [
     'boolean',
     'categorical',
     'datetime',
+    'id',
     'numerical',
-    'text',
     'pii',
+    'text',
     'BaseDatasetGenerator',
 ]
 

@@ -5,6 +5,7 @@ import re
 import string
 import sys
 import warnings
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -14,6 +15,7 @@ import sre_parse  # isort:skip
 LOGGER = logging.getLogger(__name__)
 
 MAX_DECIMALS = sys.float_info.dig - 1
+DEPRECATED_SDTYPES_MAPPING = {'text': 'id'}
 
 
 def _literal(character, max_repeat):
@@ -274,3 +276,36 @@ def learn_rounding_digits(data):
         name,
     )
     return None
+
+
+class WarnDict(dict):
+    """Custom dictionary to raise a deprecation warning."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._warned = defaultdict()
+
+    def get(self, sdtype):
+        """Return the value for sdtype if sdtype is in the dictionary, else default.
+
+        If the sdtype is `text` raises a `DeprecationWarning` stating that it will be
+        phased out.
+        """
+        if sdtype in DEPRECATED_SDTYPES_MAPPING and not self._warned.get(sdtype):
+            new_sdtype = DEPRECATED_SDTYPES_MAPPING.get(sdtype)
+            warnings.warn(
+                f"The sdtype '{sdtype}' is deprecated and will be phased out. "
+                f"Please use '{new_sdtype}' instead.",
+                DeprecationWarning,
+            )
+            self._warned[sdtype] = True
+
+        return super().get(sdtype)
+
+    def __getitem__(self, sdtype):
+        """Return the value for sdtype if sdtype is in the dictionary.
+
+        If the sdtype is `text` raises a `DeprecationWarning` stating that it will be
+        phased out.
+        """
+        return self.get(sdtype)
