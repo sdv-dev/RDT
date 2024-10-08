@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
-import pyarrow as pa
 import pytest
 
 from rdt.transformers.utils import (
@@ -236,6 +235,18 @@ def test_learn_rounding_digits_pyarrow():
 
     # Assert
     assert output == 0
+
+
+def test_learn_rounding_digits_pyarrow_float():
+    """Test it learns the proper amount of digits with pyarrow."""
+    # Setup
+    data = pd.Series([0.5, 0.19, 3], dtype='float64[pyarrow]')
+
+    # Run
+    output = learn_rounding_digits(data)
+
+    # Assert
+    assert output == 2
 
 
 def test_learn_rounding_digits_negative_decimals_float():

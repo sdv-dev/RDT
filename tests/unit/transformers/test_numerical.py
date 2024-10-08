@@ -5,7 +5,6 @@ from unittest.mock import Mock, patch
 import copulas
 import numpy as np
 import pandas as pd
-import pyarrow as pa
 import pytest
 from copulas import univariate
 from pandas.api.types import is_float_dtype
