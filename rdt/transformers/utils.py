@@ -252,6 +252,7 @@ def learn_rounding_digits(data):
         int or None:
             Number of digits to round to.
     """
+    # check it ends with pyarrow
     if str(data.dtype).endswith("[pyarrow]"):
         data = data.to_numpy()
 
