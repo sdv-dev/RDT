@@ -1,33 +1,22 @@
-Run started:2024-10-08 22:02:08.144929
+Run started:2024-10-09 15:39:00.488390
 
 Test results:
->> Issue: [B105:hardcoded_password_string] Possible hardcoded password: '# HISTORY
-
-'
-   Severity: Low   Confidence: Medium
-   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
-   More Info: https://bandit.readthedocs.io/en/1.7.7/plugins/b105_hardcoded_password_string.html
-   Location: ./scripts/release_notes_generator.py:134:12
-133	
-134	    token = '# HISTORY\n\n'
-135	    split_index = history.find(token) + len(token) + 1
-
---------------------------------------------------
+	No issues identified.
 
 Code scanned:
-	Total lines of code: 5749
+	Total lines of code: 5629
 	Total lines skipped (#nosec): 0
 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
 
 Run metrics:
 	Total issues (by severity):
 		Undefined: 0
-		Low: 1
+		Low: 0
 		Medium: 0
 		High: 0
 	Total issues (by confidence):
 		Undefined: 0
 		Low: 0
-		Medium: 1
+		Medium: 0
 		High: 0
 Files skipped (0):
