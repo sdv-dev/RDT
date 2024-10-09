@@ -252,8 +252,7 @@ def learn_rounding_digits(data):
         int or None:
             Number of digits to round to.
     """
-    name = data.name
-    if isinstance(data.dtype, pd.ArrowDtype):
+    if str(data.dtype).endswith("[pyarrow]"):
         data = data.to_numpy()
 
     # check if data has any decimals
@@ -276,7 +275,7 @@ def learn_rounding_digits(data):
     # Can't round, not equal after MAX_DECIMALS digits of precision
     LOGGER.info(
         "No rounding scheme detected for column '%s'. Data will not be rounded.",
-        name,
+        data.name,
     )
     return None
 
