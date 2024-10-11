@@ -1,7 +1,7 @@
 import sre_parse
 import warnings
 from sre_constants import MAXREPEAT
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -327,6 +327,20 @@ def test_learn_rounding_digits_nullable_numerical_pandas_dtypes():
     for column in data.columns:
         output = learn_rounding_digits(data[column])
         assert output == expected_output[column]
+
+
+def test_learn_rounding_digits_pyarrow_to_numpy():
+    """Test that ``learn_rounding_digits`` works with pyarrow to numpy conversion."""
+    # Setup
+    data = Mock()
+    data.dtype = 'int64[pyarrow]'
+    data.to_numpy.return_value = np.array([1, 2, 3])
+
+    # Run
+    learn_rounding_digits(data)
+
+    # Assert
+    assert data.to_numpy.called
 
 
 def test_warn_dict():
