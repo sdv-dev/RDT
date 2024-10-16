@@ -104,7 +104,7 @@ class FloatFormatter(BaseTransformer):
 
     def _validate_values_within_bounds(self, data):
         if not self.computer_representation.startswith('Float'):
-            fractions = data[~data.isna() & data % 1 != 0]
+            fractions = data[~data.isna() & (data != (data // 1))]
             if not fractions.empty:
                 raise ValueError(
                     f"The column '{data.name}' contains float values {fractions.tolist()}. "

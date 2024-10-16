@@ -254,6 +254,8 @@ def learn_rounding_digits(data):
     """
     # check if data has any decimals
     name = data.name
+    if str(data.dtype).endswith('[pyarrow]'):
+        data = data.to_numpy()
     roundable_data = data[~(np.isinf(data.astype(float)) | pd.isna(data))]
 
     # Doesn't contain numbers
@@ -261,7 +263,7 @@ def learn_rounding_digits(data):
         return None
 
     # Doesn't contain decimal digits
-    if ((roundable_data % 1) == 0).all():
+    if (roundable_data == roundable_data.astype(int)).all():
         return 0
 
     # Try to round to fewer digits
