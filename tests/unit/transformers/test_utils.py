@@ -1,7 +1,7 @@
 import sre_parse
 import warnings
 from sre_constants import MAXREPEAT
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -225,6 +225,36 @@ def test_learn_rounding_digits_less_than_15_decimals():
     assert output == 3
 
 
+def test_learn_rounding_digits_pyarrow():
+    """Test it works with pyarrow."""
+    # Setup
+    try:
+        data = pd.Series(range(10), dtype='int64[pyarrow]')
+    except TypeError:
+        pytest.skip("Skipping as old numpy/pandas versions don't support arrow")
+
+    # Run
+    output = learn_rounding_digits(data)
+
+    # Assert
+    assert output == 0
+
+
+def test_learn_rounding_digits_pyarrow_float():
+    """Test it learns the proper amount of digits with pyarrow."""
+    # Setup
+    try:
+        data = pd.Series([0.5, 0.19, 3], dtype='float64[pyarrow]')
+    except TypeError:
+        pytest.skip("Skipping as old numpy/pandas versions don't support arrow")
+
+    # Run
+    output = learn_rounding_digits(data)
+
+    # Assert
+    assert output == 2
+
+
 def test_learn_rounding_digits_negative_decimals_float():
     """Test the learn_rounding_digits method with floats multiples of powers of 10.
 
@@ -297,6 +327,20 @@ def test_learn_rounding_digits_nullable_numerical_pandas_dtypes():
     for column in data.columns:
         output = learn_rounding_digits(data[column])
         assert output == expected_output[column]
+
+
+def test_learn_rounding_digits_pyarrow_to_numpy():
+    """Test that ``learn_rounding_digits`` works with pyarrow to numpy conversion."""
+    # Setup
+    data = Mock()
+    data.dtype = 'int64[pyarrow]'
+    data.to_numpy.return_value = np.array([1, 2, 3])
+
+    # Run
+    learn_rounding_digits(data)
+
+    # Assert
+    assert data.to_numpy.called
 
 
 def test_warn_dict():
