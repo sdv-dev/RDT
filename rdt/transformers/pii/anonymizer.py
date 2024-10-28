@@ -133,8 +133,7 @@ class AnonymizedFaker(BaseTransformer):
         self.provider_name = provider_name if provider_name else 'BaseProvider'
         if self.provider_name != 'BaseProvider' and function_name is None:
             raise TransformerInputError(
-                'Please specify the function name to use from the '
-                f"'{self.provider_name}' provider."
+                f"Please specify the function name to use from the '{self.provider_name}' provider."
             )
 
         self.function_name = function_name if function_name else 'lexify'
