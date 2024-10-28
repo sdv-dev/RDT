@@ -425,7 +425,7 @@ class TestAnonymizedFaker:
         """
         # Run / Assert
         expected_message = (
-            'Please specify the function name to use from the ' "'credit_card' provider."
+            "Please specify the function name to use from the 'credit_card' provider."
         )
         with pytest.raises(TransformerInputError, match=expected_message):
             AnonymizedFaker(provider_name='credit_card', locales=['en_US', 'fr_FR'])
