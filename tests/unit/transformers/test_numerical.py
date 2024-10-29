@@ -44,6 +44,19 @@ class TestFloatFormatter(TestCase):
         # Run
         transformer._validate_values_within_bounds(data)
 
+    def test__validate_values_within_bounds_pyarrow(self):
+        """Test it works with pyarrow."""
+        # Setup
+        try:
+            data = pd.Series(range(10), dtype='int64[pyarrow]')
+        except TypeError:
+            pytest.skip("Skipping as old numpy/pandas versions don't support arrow")
+        transformer = FloatFormatter()
+        transformer.computer_representation = 'UInt8'
+
+        # Run
+        transformer._validate_values_within_bounds(data)
+
     def test__validate_values_within_bounds_under_minimum(self):
         """Test the ``_validate_values_within_bounds`` method.
 

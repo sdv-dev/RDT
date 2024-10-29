@@ -49,7 +49,9 @@ rdt = { main = 'rdt.cli.__main__:main' }
 
 [project.optional-dependencies]
 copulas = ['copulas>=0.11.0',]
+pyarrow = ['pyarrow>=17.0.0']
 test = [
+    'rdt[pyarrow]',
     'rdt[copulas]',
 
     'pytest>=3.4.2',
