@@ -367,9 +367,8 @@ class BaseTransformer:
 
     def _set_seed(self, data):
         hash_value = self.columns[0]
-        for value in data.head(5):
-            hash_value += str(value)
-
+        for _, row in data.head(5).iterrows():
+            hash_value += str(row[self.columns[0]])
         hash_value = int(hashlib.sha256(hash_value.encode('utf-8')).hexdigest(), 16)
         self.random_seed = hash_value % ((2**32) - 1)  # maximum value for a seed
         self.random_states = {
