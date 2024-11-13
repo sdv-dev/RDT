@@ -1176,6 +1176,18 @@ class TestGaussianNormalizer:
         # Assert
         np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
 
+    def test_print(self, capsys):
+        """Test the class can be printed. GH#883"""
+        # Setup
+        transformer = GaussianNormalizer()
+
+        # Run
+        print(transformer)  # noqa: T201 `print` found
+
+        # Assert
+        captured = capsys.readouterr()
+        assert captured.out == 'GaussianNormalizer()\n'
+
 
 class TestClusterBasedNormalizer(TestCase):
     def test__get_current_random_seed_random_states_is_none(self):
