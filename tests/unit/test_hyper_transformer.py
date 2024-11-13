@@ -553,7 +553,7 @@ class TestHyperTransformer(TestCase):
 
         # Run
         error_msg = re.escape(
-            'Error: Invalid config. Please provide unique keys for the sdtypes ' 'and transformers.'
+            'Error: Invalid config. Please provide unique keys for the sdtypes and transformers.'
         )
         with pytest.raises(InvalidConfigError, match=error_msg):
             HyperTransformer._validate_config(config)
@@ -858,8 +858,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         expected_warnings_msg = (
-            'For this change to take effect, please refit your data using '
-            "'fit' or 'fit_transform'."
+            "For this change to take effect, please refit your data using 'fit' or 'fit_transform'."
         )
         mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
 
@@ -2511,8 +2510,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         expected_message = (
-            "For this change to take effect, please refit your data using 'fit' "
-            "or 'fit_transform'."
+            "For this change to take effect, please refit your data using 'fit' or 'fit_transform'."
         )
 
         mock_warnings.warn.assert_called_once_with(expected_message)
@@ -2921,8 +2919,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         expected_message = (
-            "For this change to take effect, please refit your data using 'fit' "
-            "or 'fit_transform'."
+            "For this change to take effect, please refit your data using 'fit' or 'fit_transform'."
         )
         user_message = (
             'The transformers for these columns may change based on the new sdtype.\n'
@@ -3470,8 +3467,7 @@ class TestHyperTransformer(TestCase):
 
         # Assert
         expected_warnings_msg = (
-            'For this change to take effect, please refit your data using '
-            "'fit' or 'fit_transform'."
+            "For this change to take effect, please refit your data using 'fit' or 'fit_transform'."
         )
         mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
         assert ht.field_transformers == {
@@ -3558,8 +3554,7 @@ class TestHyperTransformer(TestCase):
             'column3': None,
         }
         expected_warnings_msg = (
-            'For this change to take effect, please refit your data using '
-            "'fit' or 'fit_transform'."
+            "For this change to take effect, please refit your data using 'fit' or 'fit_transform'."
         )
         mock_warnings.warn.assert_called_once_with(expected_warnings_msg)
 

@@ -343,7 +343,7 @@ class BaseTransformer:
         instanced = {
             key: getattr(self, key)
             for key in keys
-            if key != 'model_missing_values'  # Remove after deprecation
+            if key != 'model_missing_values' and hasattr(self, key)  # Remove after deprecation
         }
 
         if defaults == instanced:
