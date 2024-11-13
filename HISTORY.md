@@ -1,5 +1,12 @@
 # History
 
+## v1.13.1 - 2024-11-13
+
+### Bugs Fixed
+
+* [PyArrow] `NotImplementedError` when using `FloatFormatter` with numerical data types during fit. - Issue [#886](https://github.com/sdv-dev/RDT/issues/886) by @fealho
+* Trying to `print()` a GaussianNormalizer instance throws an error - Issue [#883](https://github.com/sdv-dev/RDT/issues/883) by @fealho
+
 ## v1.13.0 - 2024-10-08
 
 ### New Features
