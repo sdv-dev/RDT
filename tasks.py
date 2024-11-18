@@ -32,13 +32,13 @@ def check_dependencies(c):
 def unit(c):
     c.run(
         'python -m pytest ./tests/unit ./tests/performance/tests ./tests/datasets/tests '
-        '--cov=rdt --cov-report=xml --cov-fail-under=100'
+        '--cov=rdt --cov-fail-under=100 --cov-report=xml:./unit_cov.xml'
     )
 
 
 @task
 def integration(c):
-    c.run('python -m pytest ./tests/integration')
+    c.run('python -m pytest ./tests/integration --cov=rdt --cov-report=xml:./integration_cov.xml')
 
 
 @task
