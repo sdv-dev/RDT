@@ -30,7 +30,7 @@ jobs:
     - name: Run integration tests
       run: invoke integration
 
-    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.9
+    - if: matrix.os == 'ubuntu-latest' && matrix.python-version == 3.12
       name: Upload integration codecov report
       uses: codecov/codecov-action@v4
       with:
