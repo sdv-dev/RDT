@@ -35,5 +35,6 @@ jobs:
       uses: codecov/codecov-action@v4
       with:
         flags: integration
-        file: ${{ github.workspace }}./integration_cov.xml
+        file: ${{ github.workspace }}/integration_cov.xml
+        fail_ci_if_error: true
         token: ${{ secrets.CODECOV_TOKEN }}
