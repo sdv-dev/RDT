@@ -205,7 +205,6 @@ class TestHyperTransformer:
 
         Input:
             - A dataframe with every sdtype.
-            - A fixed random seed to guarantee the samle values are null.
 
         Expected behavior:
             - The transformed data should contain all the ML ready data.
