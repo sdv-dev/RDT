@@ -134,7 +134,7 @@ class TestFloatFormatter:
 
         # Assert
         expected_transformed = pd.DataFrame({
-            'a': [1.0, 2.0, 3.0, 2.617107, 1.614805, 4.0],
+            'a': [1.0, 2.0, 3.0, 3.465976493452848, 1.5297519377926643, 4.0],
             'a.is_null': [0.0, 0.0, 0.0, 1.0, 1.0, 0.0],
         })
         pd.testing.assert_frame_equal(transformed, expected_transformed)
@@ -356,7 +356,7 @@ class TestGaussianNormalizer:
 
         reverse = ct.reverse_transform(transformed)
         expected = pd.DataFrame(
-            [1.0, 1.9999999510423996, 1.0, 1.9999999510423996, 1.4, 1.0],
+            [1.0, 1.9999999510423996, 1.0, 1.9999999510423996, 1.4, np.nan],
             columns=['a'],
         )
         pd.testing.assert_frame_equal(reverse, expected)
