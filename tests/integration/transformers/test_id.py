@@ -359,5 +359,5 @@ class TestHyperTransformer:
         reverse_transformed = ht.reverse_transform(transformed)
 
         # Assert
-        expected_id = pd.Series(['id_b', 'id_a', 'id_c', 'id_e', 'id_d'], name='id')
+        expected_id = pd.Series(['id_b', 'id_c', 'id_a', 'id_d', 'id_e'], name='id')
         pd.testing.assert_series_equal(reverse_transformed['id'], expected_id)

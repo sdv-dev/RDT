@@ -4,6 +4,7 @@ from io import BytesIO
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from rdt.hyper_transformer import HyperTransformer
 from rdt.transformers import (
@@ -193,6 +194,29 @@ class TestUniformEncoder:
 
         # Assert
         pd.testing.assert_frame_equal(out, data)
+
+    def test_fit_transform_random_seeds(self):
+        """Test identical data has identical transforms, while different data does not."""
+        # Setup
+        data1 = pd.DataFrame({
+            'a': [1, 2, 3],
+        })
+        data2 = pd.DataFrame({
+            'a': [1, 2, 4],
+        })
+        transformer1 = UniformEncoder()
+        transformer2 = UniformEncoder()
+        transformer3 = UniformEncoder()
+
+        # Run
+        transform1 = transformer1.fit_transform(data1, 'a')
+        transform2 = transformer2.fit_transform(data1, 'a')
+        transform3 = transformer3.fit_transform(data2, 'a')
+
+        # Assert
+        pd.testing.assert_frame_equal(transform1, transform2)
+        with pytest.raises(AssertionError):
+            pd.testing.assert_frame_equal(transform1, transform3)
 
 
 class TestOrderedUniformEncoder:
