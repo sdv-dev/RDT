@@ -1,5 +1,11 @@
 # History
 
+## v1.13.2 - 2024-12-13
+
+### Bugs Fixed
+
+* Wrong code in _set_seed of BaseTransformer? - Issue [#906](https://github.com/sdv-dev/RDT/issues/906) by @fealho
+
 ## v1.13.1 - 2024-11-13
 
 ### Bugs Fixed
