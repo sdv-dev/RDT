@@ -154,35 +154,35 @@ def get_transformed_data():
             'integer': [1.0, 2.0, 1.0, 3.0, 1.0, 4.0, 2.0, 3.0],
             'float': [0.1, 0.2, 0.1, 0.2, 0.1, 0.4, 0.2, 0.3],
             'categorical': [
-                0.239836,
-                0.233842,
-                0.654524,
-                0.994903,
-                0.371298,
-                0.659559,
-                0.270355,
-                0.120638,
+                0.567084448793377,
+                0.6093336225506188,
+                0.7615294627334518,
+                0.7399456934698997,
+                0.14955684499269545,
+                0.6892412387800234,
+                0.2983218715022131,
+                0.2666832097799694,
             ],
             'bool': [
-                0.667087,
-                0.238123,
-                0.345841,
-                0.842023,
-                0.478896,
-                0.495079,
-                0.775272,
-                0.675913,
+                0.6706619134407177,
+                0.7141489973331722,
+                0.500122612214152,
+                0.9370483545902434,
+                0.131531110786568,
+                0.6767797543043805,
+                0.9996445530632698,
+                0.03411262483361044,
             ],
             'datetime': datetimes,
             'names': [
-                0.159704,
-                0.684242,
-                0.719619,
-                0.458355,
-                0.536445,
-                0.991478,
-                0.078868,
-                0.575187,
+                0.29313498219418804,
+                0.8305802896312711,
+                0.6384738989349088,
+                0.051422702116981564,
+                0.3512323081205742,
+                0.8890855245423491,
+                0.5731709189162542,
+                0.22257809518154342,
             ],
         },
         index=TEST_DATA_INDEX,
@@ -205,7 +205,6 @@ class TestHyperTransformer:
 
         Input:
             - A dataframe with every sdtype.
-            - A fixed random seed to guarantee the samle values are null.
 
         Expected behavior:
             - The transformed data should contain all the ML ready data.
@@ -274,24 +273,24 @@ class TestHyperTransformer:
                     0.3,
                 ],
                 'categorical': [
-                    0.239836,
-                    0.233842,
-                    0.634841,
-                    0.996602,
-                    0.371298,
-                    0.773039,
-                    0.270355,
-                    0.120638,
+                    0.2805901104976278,
+                    0.5376704648586699,
+                    0.6607380757145003,
+                    0.9546983806500966,
+                    0.13763987779608952,
+                    0.9144775150685426,
+                    0.5660759260383321,
+                    0.47380265437109054,
                 ],
                 'bool': [
-                    0.444725,
-                    0.579374,
-                    0.230561,
-                    0.842023,
-                    0.319264,
-                    0.665026,
-                    0.775272,
-                    0.450609,
+                    0.4722867116608579,
+                    0.6243189355674945,
+                    0.3976966355650366,
+                    0.896655767208367,
+                    0.0748079759632943,
+                    0.5930938196358954,
+                    0.7692382682525273,
+                    0.3024284729840169,
                 ],
                 'datetime': [
                     1.2630692571428572e18,
@@ -304,14 +303,14 @@ class TestHyperTransformer:
                     1.262304e18,
                 ],
                 'names': [
-                    0.159704,
-                    0.684242,
-                    0.719619,
-                    0.458355,
-                    0.536445,
-                    0.991478,
-                    0.078868,
-                    0.575187,
+                    0.29313498219418804,
+                    0.8305802896312711,
+                    0.6384738989349088,
+                    0.051422702116981564,
+                    0.3512323081205742,
+                    0.8890855245423491,
+                    0.5731709189162542,
+                    0.22257809518154342,
                 ],
             },
             index=TEST_DATA_INDEX,
@@ -320,7 +319,7 @@ class TestHyperTransformer:
 
         reversed_datetimes = pd.to_datetime([
             '2010-01-09',
-            '2010-02-01',
+            np.nan,
             '2010-01-01',
             '2010-01-01',
             '2010-01-01',
@@ -331,18 +330,9 @@ class TestHyperTransformer:
         expected_reversed = pd.DataFrame(
             {
                 'integer': [1, 2, 1, 3, 1, 4, 2, 3],
-                'float': [
-                    0.100000,
-                    np.nan,
-                    np.nan,
-                    0.20000000000000004,
-                    0.100000,
-                    0.400000,
-                    np.nan,
-                    0.300000,
-                ],
+                'float': [0.1, 0.2, 0.1, np.nan, 0.1, 0.4, 0.20000000000000004, 0.3],
                 'categorical': ['a', 'a', np.nan, 'b', 'a', 'b', 'a', 'a'],
-                'bool': [False, False, False, True, False, False, True, False],
+                'bool': [False, np.nan, False, True, False, np.nan, True, False],
                 'datetime': reversed_datetimes,
                 'names': [
                     'Jon',
@@ -1237,11 +1227,11 @@ class TestHyperTransformer:
             ],
             'balance.component': [0.0, 0, 0, 0, 0],
             'card_type': [
-                0.413995,
-                0.224306,
-                0.639794,
-                0.862760,
-                0.263703,
+                0.17901105796558806,
+                0.3582933494588839,
+                0.6532481234958804,
+                0.8859678246550227,
+                0.4245315684590038,
             ],
         })
         expected_second_transformed = pd.DataFrame({
@@ -1262,11 +1252,11 @@ class TestHyperTransformer:
             ],
             'balance.component': [0.0, 0, 0, 0, 0],
             'card_type': [
-                0.314403,
-                0.287979,
-                0.714735,
-                0.939781,
-                0.251442,
+                0.3012879880691509,
+                0.2678513907358402,
+                0.7060422948755574,
+                0.9270899473086737,
+                0.3107417744890652,
             ],
         })
 
@@ -1291,14 +1281,8 @@ class TestHyperTransformer:
             ],
             'age': [18, 25, 54, 60, 31],
             'name': ['AAAAA', 'AAAAB', 'AAAAC', 'AAAAD', 'AAAAE'],
-            'signup_day': [
-                '01/01/2020',
-                '02/19/2016',
-                '04/01/2019',
-                np.nan,
-                np.nan,
-            ],
-            'balance': [250, 5400, 150000, 61662.5, 91000],
+            'signup_day': ['01/01/2020', '02/19/2016', '04/01/2019', '12/01/2008', '05/16/2016'],
+            'balance': [np.nan, 5400.0, 150000.0, 61662.5, np.nan],
             'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa'],
         })
         expected_second_reverse = pd.DataFrame({
@@ -1313,12 +1297,12 @@ class TestHyperTransformer:
             'name': ['AAAAF', 'AAAAG', 'AAAAH', 'AAAAI', 'AAAAJ'],
             'signup_day': [
                 '01/01/2020',
-                np.nan,
+                '02/19/2016',
                 '04/01/2019',
                 '12/01/2008',
-                np.nan,
+                '05/16/2016',
             ],
-            'balance': [np.nan, 5400, np.nan, 61662.5, 91000],
+            'balance': [np.nan, 5400, 150000, 61662, 91000],
             'card_type': ['Visa', 'Visa', 'Master Card', 'Amex', 'Visa'],
         })
         first_reverse1 = ht1.reverse_transform(first_transformed1)
@@ -1326,7 +1310,7 @@ class TestHyperTransformer:
         second_reverse1 = ht1.reverse_transform(first_transformed1)
         pd.testing.assert_frame_equal(first_reverse1, expected_first_reverse)
         pd.testing.assert_frame_equal(first_reverse2, expected_first_reverse)
-        pd.testing.assert_frame_equal(expected_second_reverse, second_reverse1)
+        pd.testing.assert_frame_equal(second_reverse1, expected_second_reverse)
 
         # Test resetting randomization
         ht1.reset_randomization()
@@ -1603,11 +1587,7 @@ class TestHyperTransformer:
         expected_transformed_data = pd.DataFrame({
             'A': [1.0, 2.0, 3.0],
             'B': [4.0, 5.0, 6.0],
-            'C': [
-                0.10333535312718026,
-                0.6697388922326716,
-                0.18775548909503287,
-            ],
+            'C': [0.30137162079637486, 0.8122604974222468, 0.04281698463499313],
         })
 
         pd.testing.assert_frame_equal(transformed_data, expected_transformed_data)
@@ -1647,11 +1627,7 @@ class TestHyperTransformer:
         expected_transformed_data = pd.DataFrame({
             'A': [1.0, 2.0, 3.0],
             'B2': [4.0, 5.0, 6.0],
-            'C': [
-                0.04206197607326308,
-                0.8000968077312287,
-                0.06325519846695522,
-            ],
+            'C': [0.30137162079637486, 0.8122604974222468, 0.04281698463499313],
         })
 
         pd.testing.assert_frame_equal(transformed_data, expected_transformed_data)

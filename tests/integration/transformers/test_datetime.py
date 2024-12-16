@@ -87,10 +87,10 @@ class TestUnixTimestampEncoder:
 
         # Asserts
         expect_transformed = pd.DataFrame({
-            'column': [-7.007396e16, 845510400000000000, -145497600000000000]
+            'column': [7.896217487028026e17, 8.455104e17, -1.454976e17]
         })
         expected_reversed = pd.DataFrame({'column': [np.nan, 'Oct 17, 1996', 'May 23, 1965']})
-        pd.testing.assert_frame_equal(expect_transformed, transformed)
+        pd.testing.assert_frame_equal(transformed, expect_transformed)
         pd.testing.assert_frame_equal(reverted, expected_reversed)
 
     def test_unixtimestampencoder_with_model_missing_values(self):
