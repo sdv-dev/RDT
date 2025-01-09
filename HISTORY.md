@@ -1,5 +1,11 @@
 # History
 
+## v1.13.3 - 2025-01-09
+
+### Maintenance
+
+* Combine  `static_code_analysis.yml` with `release_notes.yml` - Issue [#915](https://github.com/sdv-dev/RDT/issues/915) by @R-Palazzo
+
 ## v1.13.2 - 2024-12-16
 
 ### Bugs Fixed
