@@ -23,6 +23,7 @@ TRANSFORMER_ARGS = {
     'FloatFormatter': {'missing_value_generation': 'from_column'},
     'GaussianNormalizer': {'missing_value_generation': 'from_column'},
     'ClusterBasedNormalizer': {'missing_value_generation': 'from_column'},
+    'LogScaler': {'constant': -40000000000, 'missing_value_generation': 'from_column'},
 }
 
 # Mapping of rdt sdtype to dtype
