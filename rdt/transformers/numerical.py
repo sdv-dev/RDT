@@ -698,6 +698,7 @@ class LogScaler(FloatFormatter):
     def _fit(self, data):
         super()._fit(data)
         data = super()._transform(data)
+
         if data.ndim > 1:
             self._validate_data(data[:, 0])
         else:

@@ -1945,47 +1945,63 @@ class TestLogScaler:
         mock_validate.assert_called_once()
         call_value = mock_validate.call_args_list[0]
         np.testing.assert_array_equal(call_value[0][0], np.array([0.5, 0.75, 1.0]))
+        assert isinstance(ls.null_transformer, NullTransformer)
 
     def test__transform(self):
         """Test the ``_transform`` method."""
         # Setup
         ls = LogScaler()
-        ls.fit(pd.DataFrame({'test': [0.25, 0.5, 0.75]}), 'test')
-        data = pd.DataFrame({'test': [0.1, 1.0, 2.0]})
+        ls._validate_data = Mock()
+        ls.null_transformer = NullTransformer(
+            missing_value_replacement='mean', missing_value_generation='from_column')
+        data = pd.Series([0.1, 1.0, 2.0], name='test')
+        ls.null_transformer.fit(data)
+        expected = np.array([-2.30259, 0, 0.69314])
 
         # Run
-        transformed_data = ls.transform(data)
+        transformed_data = ls._transform(data)
 
         # Assert
-        expected = np.array([-2.30259, 0, 0.69314])
-        np.testing.assert_allclose(transformed_data['test'], expected, rtol=1e-3)
+        ls._validate_data.assert_called_once()
+        call_value = ls._validate_data.call_args_list[0]
+        np.testing.assert_array_equal(call_value[0][0], np.array([0.1, 1.0, 2.0]))
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
 
     def test__transform_invert(self):
         """Test the ``_transform`` method with ``invert=True``"""
         # Setup
-        ls = LogScaler(constant=3, invert=True)
-        ls.fit(pd.DataFrame({'test': [0.25, 0.5, 0.75]}), 'test')
-        data = pd.DataFrame({'test': [0.1, 1.0, 2.0]})
+        ls = LogScaler(constant=3, invert=True, missing_value_replacement='from_column')
+        ls._validate_data = Mock()
+        ls.null_transformer = NullTransformer(
+            missing_value_replacement='mean', missing_value_generation='from_column')
+        ls.null_transformer.fit(pd.Series([0.25, 0.5, 0.75], name='test'))
+        data = pd.Series([0.1, 1.0, 2.0], name='test')
+        expected = np.array([1.06471, 0.69315, 0])
 
         # Run
-        transformed_data = ls.transform(data)
+        transformed_data = ls._transform(data)
 
         # Assert
-        expected = np.array([1.06471, 0.69315, 0])
-        np.testing.assert_allclose(transformed_data['test'], expected, rtol=1e-3)
+        ls._validate_data.assert_called_once()
+        call_value = ls._validate_data.call_args_list[0]
+        np.testing.assert_array_equal(call_value[0][0], np.array([0.1, 1.0, 2.0]))
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
 
     def test__transform_invalid_data(self):
         # Setup
-        ls = LogScaler()
-        ls.fit(pd.DataFrame({'test': [0.25, 0.5, 0.75]}), 'test')
-        data = pd.DataFrame({'test': [-0.1, 1.0, 2.0]})
+        ls = LogScaler(missing_value_replacement='from_column')
+        data = pd.Series([-0.1, 1.0, 2.0], name='test')
+        ls.columns = ['test']
+        ls.null_transformer = NullTransformer(
+            missing_value_replacement='mean', missing_value_generation='from_column')
+        ls.null_transformer.fit(pd.Series([0.25, 0.5, 0.75], name='test'))
         message = (
             "Unable to apply a log transform to column 'test' due to constant being too large."
         )
 
         # Run and Assert
         with pytest.raises(InvalidDataError, match=message):
-            ls.transform(data)
+            ls._transform(data)
 
     def test__transform_missing_value_generation_is_random(self):
         """Test the ``_transform`` method.
