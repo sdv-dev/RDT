@@ -1,5 +1,6 @@
 import sre_parse
 import warnings
+from decimal import Decimal
 from sre_constants import MAXREPEAT
 from unittest.mock import Mock, patch
 
@@ -10,14 +11,47 @@ import pytest
 from rdt.transformers.utils import (
     WarnDict,
     _any,
+    _cast_to_type,
     _max_repeat,
     check_nan_in_transform,
     fill_nan_with_none,
     flatten_column_list,
     learn_rounding_digits,
+    logit,
+    sigmoid,
     strings_from_regex,
     try_convert_to_dtype,
 )
+
+
+def test__cast_to_type():
+    """Test the ``_cast_to_type`` function.
+
+    Given ``pd.Series``, ``np.array`` or just a numeric value, it should
+    cast it to the given ``type``.
+
+    Input:
+        - pd.Series
+        - np.array
+        - numeric
+        - Type
+    Output:
+        The values should be casted to the expected ``type``.
+    """
+    # Setup
+    value = 88
+    series = pd.Series([1, 2, 3])
+    array = np.array([1, 2, 3])
+
+    # Run
+    res_value = _cast_to_type(value, float)
+    res_series = _cast_to_type(series, float)
+    res_array = _cast_to_type(array, float)
+
+    # Assert
+    assert isinstance(res_value, float)
+    assert res_series.dtype == float
+    assert res_array.dtype == float
 
 
 def test_strings_from_regex_literal():
@@ -341,6 +375,61 @@ def test_learn_rounding_digits_pyarrow_to_numpy():
 
     # Assert
     assert data.to_numpy.called
+
+
+def test_logit():
+    """Test the ``logit`` function.
+
+    Setup:
+        - Compute ``expected_res`` with the ``high`` and ``low`` values.
+    Input:
+        - ``data`` a number.
+        - ``low`` and ``high`` numbers.
+    Output:
+        The result of the scaled logit.
+    """
+    # Setup
+    high, low = 100, 49
+    _data = (88 - low) / (high - low)
+    _data = Decimal(_data) * Decimal(0.95) + Decimal(0.025)
+    _data = float(_data)
+    expected_res = np.log(_data / (1.0 - _data))
+
+    data = 88
+
+    # Run
+    res = logit(data, low, high)
+
+    # Assert
+
+    assert res == expected_res
+
+
+def test_sigmoid():
+    """Test the ``sigmoid`` function.
+
+    Setup:
+        - Compute ``expected_res`` with the ``high`` and ``low`` values.
+    Input:
+        - ``data`` a number.
+        - ``low`` and ``high`` numbers.
+    Output:
+        The result of sigmoid.
+    """
+    # Setup
+    high, low = 100, 49
+    _data = data = 1.1064708752806303
+
+    _data = 1 / (1 + np.exp(-data))
+    _data = (Decimal(_data) - Decimal(0.025)) / Decimal(0.95)
+    _data = float(_data)
+    expected_res = _data * (high - low) + low
+
+    # Run
+    res = sigmoid(data, low, high)
+
+    # Assert
+    assert res == expected_res
 
 
 def test_warn_dict():
