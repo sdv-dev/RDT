@@ -631,8 +631,7 @@ class ClusterBasedNormalizer(FloatFormatter):
 class LogScaler(FloatFormatter):
     """Transformer for numerical data using log.
 
-    This transformer replaces integer values with their float equivalent.
-    Non null float values are not modified.
+    This transformer scales numerical values using log and an optional constant.
 
     Null values are replaced using a ``NullTransformer``.
 
