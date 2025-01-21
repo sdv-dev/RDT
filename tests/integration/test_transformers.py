@@ -13,7 +13,7 @@ TEST_COL = 'test_col'
 
 PRIMARY_SDTYPES = ['boolean', 'categorical', 'datetime', 'numerical']
 
-INT32_MIN = np.iinfo(np.int32).min
+INT64_MIN = np.iinfo(np.int64).min
 
 # Additional arguments for transformers
 TRANSFORMER_ARGS = {
@@ -26,7 +26,7 @@ TRANSFORMER_ARGS = {
     'FloatFormatter': {'missing_value_generation': 'from_column'},
     'GaussianNormalizer': {'missing_value_generation': 'from_column'},
     'ClusterBasedNormalizer': {'missing_value_generation': 'from_column'},
-    'LogScaler': {'constant': INT32_MIN, 'missing_value_generation': 'from_column'},
+    'LogScaler': {'constant': INT64_MIN, 'missing_value_generation': 'from_column'},
 }
 
 # Mapping of rdt sdtype to dtype
