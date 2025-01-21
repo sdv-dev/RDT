@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -12,6 +13,8 @@ TEST_COL = 'test_col'
 
 PRIMARY_SDTYPES = ['boolean', 'categorical', 'datetime', 'numerical']
 
+INT32_MIN = np.iinfo(np.int32).min
+
 # Additional arguments for transformers
 TRANSFORMER_ARGS = {
     'BinaryEncoder': {
@@ -23,7 +26,7 @@ TRANSFORMER_ARGS = {
     'FloatFormatter': {'missing_value_generation': 'from_column'},
     'GaussianNormalizer': {'missing_value_generation': 'from_column'},
     'ClusterBasedNormalizer': {'missing_value_generation': 'from_column'},
-    'LogScaler': {'constant': -40000000000, 'missing_value_generation': 'from_column'},
+    'LogScaler': {'constant': INT32_MIN, 'missing_value_generation': 'from_column'},
 }
 
 # Mapping of rdt sdtype to dtype
