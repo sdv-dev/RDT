@@ -2015,7 +2015,7 @@ class TestLogScaler:
         )
         data = pd.Series([0.1, 1.0, np.nan], name='test')
         ls.null_transformer.fit(data)
-        expected = np.array([[-2.30259, 0], [0, 0], [-.597837, 1]])
+        expected = np.array([[-2.30259, 0], [0, 0], [-0.597837, 1]])
 
         # Run
         transformed_data = ls._transform(data)
