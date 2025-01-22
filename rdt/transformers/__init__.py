@@ -28,6 +28,7 @@ from rdt.transformers.numerical import (
     ClusterBasedNormalizer,
     FloatFormatter,
     GaussianNormalizer,
+    LogitScaler,
 )
 from rdt.transformers.pii.anonymizer import (
     AnonymizedFaker,

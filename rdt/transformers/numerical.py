@@ -702,9 +702,23 @@ class LogitScaler(FloatFormatter):
 
     def _transform(self, data):
         transformed = super()._transform(data)
-        self._validate_logit_inputs(transformed)
-        return logit(transformed, self.min_value, self.max_value)
+        transformed_vals = transformed if transformed.ndim == 1 else transformed[:, 0]
+        self._validate_logit_inputs(transformed_vals)
+        logit_vals = logit(transformed_vals, self.min_value, self.max_value)
+        if transformed.ndim == 1:
+            return logit_vals
+        else:
+            transformed[:, 0] = logit_vals
+            return transformed
 
     def _reverse_transform(self, data):
-        reversed = sigmoid(data, self.min_value, self.max_value)
-        return super()._reverse_transform(reversed)
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
+        sampled_vals = data if data.ndim == 1 else data[:, 0]
+        reversed = sigmoid(sampled_vals, self.min_value, self.max_value)
+        if data.ndim == 1:
+            return super()._reverse_transform(reversed)
+        else:
+            data[:, 0] = reversed
+            return super()._reverse_transform(data)

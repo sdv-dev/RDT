@@ -1961,6 +1961,28 @@ class TestLogitScaler:
         mock_logit.assert_called_once_with(data, ls.min_value, ls.max_value)
         assert transformed == mock_logit.return_value
 
+    @patch('rdt.transformers.numerical.logit')
+    def test__transform_multi_column(self, mock_logit):
+        """Test the ``transform`` method with multiple columns."""
+        # Setup
+        min_value = (1.0,)
+        max_value = 50.0
+        ls = LogitScaler(min_value=min_value, max_value=max_value)
+        ls._validate_logit_inputs = Mock()
+        data = pd.Series([1.0, 1.1, 1.2, 1.3, 2.0, 3.0, 4.0])
+        null_transformer_mock = Mock()
+        is_null = np.array([0, 0, 0, 1, 0, 1, 0])
+        null_transformer_mock.transform.return_value = np.array([data.to_numpy(), is_null]).T
+        ls.null_transformer = null_transformer_mock
+        logit_values = np.array([0.0, 0.1, 0.2, 0.3, 0.3, 1.4, 2.5])
+        mock_logit.return_value = logit_values
+
+        # Run
+        transformed = ls._transform(data)
+
+        # Assert
+        np.testing.assert_array_equal(transformed, np.array([logit_values, is_null]).T)
+
     @patch('rdt.transformers.numerical.FloatFormatter._reverse_transform')
     @patch('rdt.transformers.numerical.sigmoid')
     def test__reverse_transform(self, mock_sigmoid, ff_reverse_transform_mock):
@@ -1978,6 +2000,37 @@ class TestLogitScaler:
         reversed = ls._reverse_transform(data)
 
         # Assert
-        mock_sigmoid.assert_called_once_with(data, ls.min_value, ls.max_value)
+        mock_sigmoid_args = mock_sigmoid.call_args[0]
+        np.testing.assert_array_equal(mock_sigmoid_args[0], data.to_numpy())
+        assert mock_sigmoid_args[1] == ls.min_value
+        assert mock_sigmoid_args[2] == ls.max_value
         ff_reverse_transform_mock.assert_called_once_with(mock_sigmoid.return_value)
+        assert reversed == ff_reverse_transform_mock.return_value
+
+    @patch('rdt.transformers.numerical.FloatFormatter._reverse_transform')
+    @patch('rdt.transformers.numerical.sigmoid')
+    def test__reverse_transform_multi_column(self, mock_sigmoid, ff_reverse_transform_mock):
+        """Test the ``transform`` method with multiple columns."""
+        # Setup
+        min_value = (1.0,)
+        max_value = 50.0
+        ls = LogitScaler(min_value=min_value, max_value=max_value)
+        sampled_data = np.array([1.0, 1.1, 1.2, 1.3, 2.0, 3.0, 4.0])
+        is_null = np.array([0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0])
+        data = pd.DataFrame({'column': sampled_data, 'column.is_null': is_null})
+        null_transformer_mock = Mock()
+        reversed = np.array([1.0, 1.1, np.nan, np.nan, 2.0, np.nan, np.nan])
+        null_transformer_mock.reverse_transform.return_value = reversed
+        ls.null_transformer = null_transformer_mock
+        sigmoid_vals = np.array([3.0, 3.1, 3.3, 3.4, 2.1, 4.0, 4.6])
+        mock_sigmoid.return_value = sigmoid_vals
+
+        # Run
+        reversed = ls._reverse_transform(data)
+
+        # Assert
+        ff_reverse_transform_args = ff_reverse_transform_mock.call_args[0]
+        np.testing.assert_array_equal(
+            ff_reverse_transform_args[0], np.array([sigmoid_vals, is_null]).T
+        )
         assert reversed == ff_reverse_transform_mock.return_value

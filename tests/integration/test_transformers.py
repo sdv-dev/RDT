@@ -25,10 +25,11 @@ TRANSFORMER_ARGS = {
     'GaussianNormalizer': {'missing_value_generation': 'from_column'},
     'ClusterBasedNormalizer': {'missing_value_generation': 'from_column'},
     'LogitScaler': {
+        'missing_value_generation': 'from_column',
         'FROM_DATA': {
-            'min_value': lambda x: np.nanmin(x) - 1,
-            'max_value': lambda x: np.nanmax(x) + 1,
-        }
+            'min_value': lambda x: np.nanmin(x) - 0.01,
+            'max_value': lambda x: np.nanmax(x) + 0.01,
+        },
     },
 }
 
