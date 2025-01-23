@@ -47,6 +47,28 @@ SDTYPE_TO_DTYPES = {
 }
 
 
+def _create_transformer_args_from_data(transformer_args, data):
+    """Helper to extract transformer arguments that are data-dependent.
+
+    Args:
+        transformer_args (dict):
+            The transformer arguments.
+        data (pd.Series):
+            The data for the transformer.
+
+    Returns:
+        dict:
+            The transformer arguments with data-specific arguments added.
+    """
+    if 'FROM_DATA' in transformer_args:
+        transformer_args = {**transformer_args}
+        args = transformer_args.pop('FROM_DATA')
+        for arg, arg_func in args.items():
+            transformer_args[arg] = arg_func(data)
+
+    return transformer_args
+
+
 def _validate_helper(validator_function, args, steps):
     """Wrap around validation functions to either return a boolean or assert.
 
@@ -157,11 +179,7 @@ def _test_transformer_with_dataset(transformer_class, input_data, steps):
     """
 
     transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
-    if 'FROM_DATA' in transformer_args:
-        transformer_args = {**transformer_args}
-        args = transformer_args.pop('FROM_DATA')
-        for arg, arg_func in args.items():
-            transformer_args[arg] = arg_func(input_data[TEST_COL])
+    transformer_args = _create_transformer_args_from_data(transformer_args, input_data[TEST_COL])
 
     transformer = transformer_class(**transformer_args)
     # Fit
@@ -217,12 +235,9 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
     transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
     hypertransformer = HyperTransformer()
     if transformer_args:
-        if 'FROM_DATA' in transformer_args:
-            transformer_args = {**transformer_args}
-            args = transformer_args.pop('FROM_DATA')
-            for arg, arg_func in args.items():
-                transformer_args[arg] = arg_func(input_data[TEST_COL])
-
+        transformer_args = _create_transformer_args_from_data(
+            transformer_args, input_data[TEST_COL]
+        )
         field_transformers = {TEST_COL: transformer_class(**transformer_args)}
 
     else:

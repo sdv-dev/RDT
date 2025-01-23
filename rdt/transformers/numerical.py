@@ -670,6 +670,10 @@ class LogitScaler(FloatFormatter):
         max_value=1.0,
         learn_rounding_scheme=False,
     ):
+        if min_value == max_value:
+            error_msg = 'The min_value and max_value for the logit function cannot be equal.'
+            raise TransformerInputError(error_msg)
+
         super().__init__(
             missing_value_replacement=missing_value_replacement,
             missing_value_generation=missing_value_generation,
@@ -707,18 +711,18 @@ class LogitScaler(FloatFormatter):
         logit_vals = logit(transformed_vals, self.min_value, self.max_value)
         if transformed.ndim == 1:
             return logit_vals
-        else:
-            transformed[:, 0] = logit_vals
-            return transformed
+
+        transformed[:, 0] = logit_vals
+        return transformed
 
     def _reverse_transform(self, data):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
         sampled_vals = data if data.ndim == 1 else data[:, 0]
-        reversed = sigmoid(sampled_vals, self.min_value, self.max_value)
+        reversed_values = sigmoid(sampled_vals, self.min_value, self.max_value)
         if data.ndim == 1:
-            return super()._reverse_transform(reversed)
-        else:
-            data[:, 0] = reversed
-            return super()._reverse_transform(data)
+            return super()._reverse_transform(reversed_values)
+
+        data[:, 0] = reversed_values
+        return super()._reverse_transform(data)
