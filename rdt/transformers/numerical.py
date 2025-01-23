@@ -704,36 +704,37 @@ class LogScaler(FloatFormatter):
         else:
             self._validate_data(data)
 
+    def _log_transform(self, data):
+        if self.invert:
+            return np.log(self.constant - data)
+        else:
+            return np.log(data - self.constant)
+
     def _transform(self, data):
         data = super()._transform(data)
 
         if data.ndim > 1:
             self._validate_data(data[:, 0])
-            if self.invert:
-                data[:, 0] = np.log(self.constant - data[:, 0])
-            else:
-                data[:, 0] = np.log(data[:, 0] - self.constant)
+            data[:, 0] = self._log_transform(data[:, 0])
         else:
             self._validate_data(data)
-            if self.invert:
-                data = np.log(self.constant - data)
-            else:
-                data = np.log(data - self.constant)
+            data = self._log_transform(data)
+
         return data
+
+    def _reverse_log(self, data):
+        if self.invert:
+            return self.constant - np.exp(data)
+        else:
+            return np.exp(data) + self.constant
 
     def _reverse_transform(self, data):
         if not isinstance(data, np.ndarray):
             data = data.to_numpy()
 
         if data.ndim > 1:
-            if self.invert:
-                data[:, 0] = self.constant - np.exp(data[:, 0])
-            else:
-                data[:, 0] = np.exp(data[:, 0]) + self.constant
+            data[:, 0] = self._reverse_log(data[:, 0])
         else:
-            if self.invert:
-                data = self.constant - np.exp(data)
-            else:
-                data = np.exp(data) + self.constant
+            data = self._reverse_log(data)
 
         return super()._reverse_transform(data)
