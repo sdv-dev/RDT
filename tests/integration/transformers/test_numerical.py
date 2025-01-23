@@ -565,6 +565,7 @@ class TestClusterBasedNormalizer:
 
 class TestLogScaler:
     def test_learn_rounding(self):
+        """Test that transformer learns rounding scheme from data."""
         # Setup
         data = pd.DataFrame({'test': [1.0, np.nan, 1.5]})
         transformer = LogScaler(
@@ -583,6 +584,7 @@ class TestLogScaler:
         np.testing.assert_array_equal(reversed, expected)
 
     def test_missing_value_generation_from_column(self):
+        """Test from_column missing value generation with nans present."""
         # Setup
         data = pd.DataFrame({'test': [1.0, np.nan, 1.5]})
         transformer = LogScaler(
@@ -599,6 +601,7 @@ class TestLogScaler:
         np.testing.assert_array_equal(reversed, data)
 
     def test_missing_value_generation_random(self):
+        """Test random missing_value_generation with nans present."""
         # Setup
         data = pd.DataFrame({'test': [1.0, np.nan, 1.5, 1.5]})
         transformer = LogScaler(

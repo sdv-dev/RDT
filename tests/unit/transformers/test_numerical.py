@@ -1868,7 +1868,7 @@ class TestClusterBasedNormalizer(TestCase):
 
 class TestLogScaler:
     def test___init__super_attrs(self):
-        """super() arguments are properly passed and set as attributes."""
+        """Test super() arguments are properly passed and set as attributes."""
         ls = LogScaler(
             missing_value_generation='random',
             learn_rounding_scheme=False,
