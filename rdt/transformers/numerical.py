@@ -668,12 +668,19 @@ class LogScaler(FloatFormatter):
         self,
         missing_value_replacement='mean',
         missing_value_generation='random',
-        constant: float = 0,
+        constant: float = 0.0,
         invert: bool = False,
         learn_rounding_scheme: bool = False,
     ):
-        self.constant = constant
-        self.invert = invert
+        if isinstance(constant, float):
+            self.constant = constant
+        else:
+            raise ValueError('The constant parameter must be a float.')
+        if isinstance(invert, bool):
+            self.invert = invert
+        else:
+            raise ValueError('The invert parameter must be a bool.')
+
         super().__init__(
             missing_value_replacement=missing_value_replacement,
             missing_value_generation=missing_value_generation,

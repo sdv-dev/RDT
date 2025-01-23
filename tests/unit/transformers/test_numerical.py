@@ -1888,6 +1888,14 @@ class TestLogScaler:
         assert ls_set.constant == 2.5
         assert ls_default.constant == 0.0
 
+    def test__init__validates_constant(self):
+        """Test __init__ validates constat parameter."""
+        # Setup
+        message = 'The constant parameter must be a float.'
+        # Run and Assert
+        with pytest.raises(ValueError, match=message):
+            LogScaler(constant=2)
+
     def test___init__invert(self):
         """Test invert parameter is set as an attribute."""
         # Setup
@@ -1897,6 +1905,14 @@ class TestLogScaler:
         # Test
         assert ls_set.invert
         assert not ls_default.invert
+
+    def test__init__validates_invert(self):
+        """Test __init__ validates constat parameter."""
+        # Setup
+        message = 'The invert parameter must be a bool.'
+        # Run and Assert
+        with pytest.raises(ValueError, match=message):
+            LogScaler(invert=2)
 
     def test__validate_data(self):
         """Test the ``_validate_data`` method"""
@@ -1987,7 +2003,7 @@ class TestLogScaler:
     def test__transform_invert(self):
         """Test the ``_transform`` method with ``invert=True``"""
         # Setup
-        ls = LogScaler(constant=3, invert=True, missing_value_replacement='from_column')
+        ls = LogScaler(constant=3.0, invert=True, missing_value_replacement='from_column')
         ls._validate_data = Mock()
         ls.null_transformer = NullTransformer(
             missing_value_replacement='mean', missing_value_generation='from_column'
@@ -2027,7 +2043,7 @@ class TestLogScaler:
     def test__transform_null_values_invert(self):
         """Test the ``_transform`` method with ``invert=True``"""
         # Setup
-        ls = LogScaler(constant=3, invert=True, missing_value_replacement='from_column')
+        ls = LogScaler(constant=3.0, invert=True, missing_value_replacement='from_column')
         ls._validate_data = Mock()
         ls.null_transformer = NullTransformer(
             missing_value_replacement='mean', missing_value_generation='from_column'
@@ -2117,7 +2133,7 @@ class TestLogScaler:
             [0, 0, 1.0],
         ]).T
         expected = pd.Series([0.1, 1.0, np.nan])
-        ls = LogScaler(constant=3, invert=True)
+        ls = LogScaler(constant=3.0, invert=True)
         ls.null_transformer = NullTransformer(
             missing_value_replacement='mean',
             missing_value_generation='from_column',
@@ -2158,7 +2174,7 @@ class TestLogScaler:
         # Setup
         data = np.array([1.06471, 0.69315, 0])
         expected = pd.Series([0.1, 1.0, 2.0])
-        ls = LogScaler(constant=3, invert=True)
+        ls = LogScaler(constant=3.0, invert=True)
         ls.null_transformer = NullTransformer(None, missing_value_generation='random')
 
         # Run

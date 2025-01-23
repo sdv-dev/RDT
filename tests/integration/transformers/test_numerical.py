@@ -608,7 +608,7 @@ class TestLogScaler:
             missing_value_generation='random',
             missing_value_replacement='mode',
             invert=True,
-            constant=3,
+            constant=3.0,
         )
         expected = pd.DataFrame({'test': [np.nan, 1.5, 1.5, 1.5]})
 
