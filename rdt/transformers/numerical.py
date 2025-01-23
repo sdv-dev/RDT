@@ -651,7 +651,7 @@ class LogScaler(FloatFormatter):
                 * ``None``: Do nothing with the missing values on the reverse transform. Simply
                   pass whatever data we get through.
          constant (float):
-            The constant to set as the 0-value for the log-based transform. Default to 0
+            The constant to set as the 0-value for the log-based transform. Defaults to 0
             (do not modify the 0-value of the data).
         invert (bool):
             Whether to invert the data with respect to the constant value. If False, do not
