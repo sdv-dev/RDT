@@ -670,6 +670,11 @@ class LogitScaler(FloatFormatter):
         max_value=1.0,
         learn_rounding_scheme=False,
     ):
+        if not (isinstance(min_value, int) or isinstance(min_value, float)) or not (
+            isinstance(max_value, int) or isinstance(max_value, float)
+        ):
+            error_msg = 'The min_value and max_value must be of type int or float.'
+            raise TransformerInputError(error_msg)
         if min_value == max_value:
             error_msg = 'The min_value and max_value for the logit function cannot be equal.'
             raise TransformerInputError(error_msg)

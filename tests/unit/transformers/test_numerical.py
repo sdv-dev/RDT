@@ -1892,13 +1892,19 @@ class TestLogitScaler:
     def test___init___invalid_inputs(self):
         """Test super() arguments are properly passed and set as attributes."""
         # Setup
-        min_value = 10.0
-        max_value = 10.0
+        same_min_value = 10.0
+        same_max_value = 10.0
+        bad_min_value = '10.0'
+        bad_max_value = (100.0,)
 
         # Run / Assert
         expected_msg = 'The min_value and max_value for the logit function cannot be equal.'
         with pytest.raises(TransformerInputError, match=re.escape(expected_msg)):
-            LogitScaler(max_value=max_value, min_value=min_value)
+            LogitScaler(max_value=same_max_value, min_value=same_min_value)
+
+        expected_msg = 'The min_value and max_value must be of type int or float.'
+        with pytest.raises(TransformerInputError, match=re.escape(expected_msg)):
+            LogitScaler(max_value=bad_max_value, min_value=bad_min_value)
 
     def test__validate_logit_inputs_with_default_settings(self):
         """Test validating data against input arguments."""

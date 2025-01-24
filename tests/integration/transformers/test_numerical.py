@@ -7,6 +7,7 @@ from rdt.transformers.numerical import (
     ClusterBasedNormalizer,
     FloatFormatter,
     GaussianNormalizer,
+    LogitScaler,
 )
 
 
@@ -560,3 +561,59 @@ class TestClusterBasedNormalizer:
 
         # Assert
         assert isinstance(reverse, pd.DataFrame)
+
+
+class TestLogitScaler:
+    def test_learn_rounding(self):
+        """Test that transformer learns rounding scheme from data."""
+        # Setup
+        data = pd.DataFrame({'test': [0.2, np.nan, 1.0]})
+        transformer = LogitScaler(
+            missing_value_generation=None,
+            missing_value_replacement='mean',
+            learn_rounding_scheme=True,
+        )
+        expected = pd.DataFrame({'test': [0.2, 0.6, 1.0]})
+
+        # Run
+        transformer.fit(data, 'test')
+        transformed = transformer.transform(data)
+        reversed_values = transformer.reverse_transform(transformed)
+
+        # Assert
+        np.testing.assert_array_equal(reversed_values, expected)
+
+    def test_missing_value_generation_from_column(self):
+        """Test from_column missing value generation with nans."""
+        # Setup
+        data = pd.DataFrame({'test': [0.2, np.nan, 1.0]})
+        transformer = LogitScaler(
+            missing_value_generation='from_column',
+            missing_value_replacement='mean',
+        )
+
+        # Run
+        transformer.fit(data, 'test')
+        transformed = transformer.transform(data)
+        reversed_values = transformer.reverse_transform(transformed)
+
+        # Assert
+        np.testing.assert_array_almost_equal(reversed_values, data)
+
+    def test_missing_value_generation_random(self):
+        """Test random missing_value_generation with nans."""
+        # Setup
+        data = pd.DataFrame({'test': [0.2, np.nan, 1.0, 1.0]})
+        transformer = LogitScaler(
+            missing_value_generation='random',
+            missing_value_replacement='mode',
+        )
+        expected = pd.DataFrame({'test': [0.2, np.nan, 1.0, np.nan]})
+
+        # Run
+        transformer.fit(data, 'test')
+        transformed = transformer.transform(data)
+        reversed_values = transformer.reverse_transform(transformed)
+
+        # Assert
+        np.testing.assert_array_almost_equal(reversed_values, expected)
