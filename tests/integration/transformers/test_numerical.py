@@ -578,10 +578,10 @@ class TestLogScaler:
         # Run
         transformer.fit(data, 'test')
         transformed = transformer.transform(data)
-        reversed = transformer.reverse_transform(transformed)
+        reversed_values = transformer.reverse_transform(transformed)
 
         # Assert
-        np.testing.assert_array_equal(reversed, expected)
+        np.testing.assert_array_equal(reversed_values, expected)
 
     def test_missing_value_generation_from_column(self):
         """Test from_column missing value generation with nans present."""
@@ -595,10 +595,10 @@ class TestLogScaler:
         # Run
         transformer.fit(data, 'test')
         transformed = transformer.transform(data)
-        reversed = transformer.reverse_transform(transformed)
+        reversed_values = transformer.reverse_transform(transformed)
 
         # Assert
-        np.testing.assert_array_equal(reversed, data)
+        np.testing.assert_array_equal(reversed_values, data)
 
     def test_missing_value_generation_random(self):
         """Test random missing_value_generation with nans present."""
@@ -615,7 +615,7 @@ class TestLogScaler:
         # Run
         transformer.fit(data, 'test')
         transformed = transformer.transform(data)
-        reversed = transformer.reverse_transform(transformed)
+        reversed_values = transformer.reverse_transform(transformed)
 
         # Assert
-        np.testing.assert_array_equal(reversed, expected)
+        np.testing.assert_array_equal(reversed_values, expected)
