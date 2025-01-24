@@ -712,6 +712,8 @@ class LogScaler(FloatFormatter):
             self._validate_data(data)
 
     def _log_transform(self, data):
+        self._validate_data(data)
+
         if self.invert:
             return np.log(self.constant - data)
         else:
@@ -721,10 +723,8 @@ class LogScaler(FloatFormatter):
         data = super()._transform(data)
 
         if data.ndim > 1:
-            self._validate_data(data[:, 0])
             data[:, 0] = self._log_transform(data[:, 0])
         else:
-            self._validate_data(data)
             data = self._log_transform(data)
 
         return data
