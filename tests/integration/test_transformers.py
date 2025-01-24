@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -23,6 +24,13 @@ TRANSFORMER_ARGS = {
     'FloatFormatter': {'missing_value_generation': 'from_column'},
     'GaussianNormalizer': {'missing_value_generation': 'from_column'},
     'ClusterBasedNormalizer': {'missing_value_generation': 'from_column'},
+    'LogitScaler': {
+        'missing_value_generation': 'from_column',
+        'FROM_DATA': {
+            'min_value': lambda x: np.nanmin(x) - 0.01,
+            'max_value': lambda x: np.nanmax(x) + 0.01,
+        },
+    },
 }
 
 # Mapping of rdt sdtype to dtype
@@ -37,6 +45,28 @@ SDTYPE_TO_DTYPES = {
     'pii': ['O', 'i', 'f'],
     'text': ['O', 'i', 'f'],
 }
+
+
+def _create_transformer_args_from_data(transformer_args, data):
+    """Helper to extract transformer arguments that are data-dependent.
+
+    Args:
+        transformer_args (dict):
+            The transformer arguments.
+        data (pd.Series):
+            The data for the transformer.
+
+    Returns:
+        dict:
+            The transformer arguments with data-specific arguments added.
+    """
+    if 'FROM_DATA' in transformer_args:
+        transformer_args = {**transformer_args}
+        args = transformer_args.pop('FROM_DATA')
+        for arg, arg_func in args.items():
+            transformer_args[arg] = arg_func(data)
+
+    return transformer_args
 
 
 def _validate_helper(validator_function, args, steps):
@@ -149,6 +179,8 @@ def _test_transformer_with_dataset(transformer_class, input_data, steps):
     """
 
     transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
+    transformer_args = _create_transformer_args_from_data(transformer_args, input_data[TEST_COL])
+
     transformer = transformer_class(**transformer_args)
     # Fit
     transformer.fit(input_data, [TEST_COL])
@@ -203,6 +235,9 @@ def _test_transformer_with_hypertransformer(transformer_class, input_data, steps
     transformer_args = TRANSFORMER_ARGS.get(transformer_class.__name__, {})
     hypertransformer = HyperTransformer()
     if transformer_args:
+        transformer_args = _create_transformer_args_from_data(
+            transformer_args, input_data[TEST_COL]
+        )
         field_transformers = {TEST_COL: transformer_class(**transformer_args)}
 
     else:

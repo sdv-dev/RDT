@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 import scipy
 
-from rdt.errors import TransformerInputError
+from rdt.errors import InvalidDataError, TransformerInputError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.utils import learn_rounding_digits
+from rdt.transformers.utils import learn_rounding_digits, logit, sigmoid
 
 EPSILON = np.finfo(np.float32).eps
 INTEGER_BOUNDS = {
@@ -626,3 +626,108 @@ class ClusterBasedNormalizer(FloatFormatter):
             recovered_data = np.stack([recovered_data, data[:, -1]], axis=1)  # noqa: PD013
 
         return super()._reverse_transform(recovered_data)
+
+
+class LogitScaler(FloatFormatter):
+    """Transformer for numerical data by applying a logit function.
+
+    This transformer works by replacing the values with a scaled
+    version and then applying a logit function. The reverse transform
+    applies a sigmoid to the data and then scales it back to the original space.
+
+    Null values are replaced using a ``NullTransformer``.
+
+    Args:
+        missing_value_replacement (object):
+            Indicate what to replace the null values with. If an integer or float is given,
+            replace them with the given value. If the strings ``'mean'`` or ``'mode'``
+            are given, replace them with the corresponding aggregation and if ``'random'``
+            replace each null value with a random value in the data range. Defaults to ``mean``.
+        missing_value_generation (str or None):
+            The way missing values are being handled. There are three strategies:
+
+                * ``random``: Randomly generates missing values based on the percentage of
+                  missing values.
+                * ``from_column``: Creates a binary column that describes whether the original
+                  value was missing. Then use it to recreate missing values.
+                * ``None``: Do nothing with the missing values on the reverse transform. Simply
+                  pass whatever data we get through.
+        min_value (float):
+            The min value for the logit function. Defaults to 0.
+        max_value (float):
+            max_value (float): The max value for the logit function. Defaults to 1.0.
+        learn_rounding_scheme (bool):
+            Whether or not to learn what place to round to based on the data seen during ``fit``.
+            If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
+            Defaults to ``False``.
+    """
+
+    def __init__(
+        self,
+        missing_value_replacement='mean',
+        missing_value_generation='random',
+        min_value=0.0,
+        max_value=1.0,
+        learn_rounding_scheme=False,
+    ):
+        if not (isinstance(min_value, int) or isinstance(min_value, float)) or not (
+            isinstance(max_value, int) or isinstance(max_value, float)
+        ):
+            error_msg = 'The min_value and max_value must be of type int or float.'
+            raise TransformerInputError(error_msg)
+        if min_value == max_value:
+            error_msg = 'The min_value and max_value for the logit function cannot be equal.'
+            raise TransformerInputError(error_msg)
+
+        super().__init__(
+            missing_value_replacement=missing_value_replacement,
+            missing_value_generation=missing_value_generation,
+            learn_rounding_scheme=learn_rounding_scheme,
+        )
+        self.min_value = min_value
+        self.max_value = max_value
+
+    def _validate_logit_inputs(self, data):
+        out_of_range_vals = data[(data < self.min_value) | (data > self.max_value)]
+        if len(out_of_range_vals) > 0:
+            num_vals_to_print = 5
+            out_of_range_vals = [str(x) for x in sorted(out_of_range_vals, key=lambda x: str(x))]
+            if len(out_of_range_vals) > 5:
+                extra_missing_vals = f'+ {len(out_of_range_vals) - num_vals_to_print} more'
+                out_of_range_vals = (
+                    f'[{", ".join(out_of_range_vals[:num_vals_to_print])} {extra_missing_vals}]'
+                )
+            else:
+                out_of_range_vals = f'[{", ".join(out_of_range_vals)}]'
+
+            raise InvalidDataError(
+                f"Unable to apply logit function to column '{self.columns[0]}' due to out of "
+                f'range values ({out_of_range_vals}).'
+            )
+
+    def _fit(self, data):
+        self._validate_logit_inputs(data)
+        return super()._fit(data)
+
+    def _transform(self, data):
+        transformed = super()._transform(data)
+        transformed_vals = transformed if transformed.ndim == 1 else transformed[:, 0]
+        self._validate_logit_inputs(transformed_vals)
+        logit_vals = logit(transformed_vals, self.min_value, self.max_value)
+        if transformed.ndim == 1:
+            return logit_vals
+
+        transformed[:, 0] = logit_vals
+        return transformed
+
+    def _reverse_transform(self, data):
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
+        sampled_vals = data if data.ndim == 1 else data[:, 0]
+        reversed_values = sigmoid(sampled_vals, self.min_value, self.max_value)
+        if data.ndim == 1:
+            return super()._reverse_transform(reversed_values)
+
+        data[:, 0] = reversed_values
+        return super()._reverse_transform(data)
