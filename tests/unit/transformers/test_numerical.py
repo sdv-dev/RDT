@@ -1891,10 +1891,12 @@ class TestLogScaler:
     def test__init__validates_constant(self):
         """Test __init__ validates constat parameter."""
         # Setup
-        message = 'The constant parameter must be a float.'
+        message = 'The constant parameter must be a float or int.'
         # Run and Assert
         with pytest.raises(ValueError, match=message):
-            LogScaler(constant=2)
+            LogScaler(constant='2')
+
+        LogScaler(constant=2)
 
     def test___init__invert(self):
         """Test invert parameter is set as an attribute."""

@@ -672,10 +672,10 @@ class LogScaler(FloatFormatter):
         invert: bool = False,
         learn_rounding_scheme: bool = False,
     ):
-        if isinstance(constant, float):
+        if isinstance(constant, (int, float)):
             self.constant = constant
         else:
-            raise ValueError('The constant parameter must be a float.')
+            raise ValueError('The constant parameter must be a float or int.')
         if isinstance(invert, bool):
             self.invert = invert
         else:
