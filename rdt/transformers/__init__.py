@@ -28,6 +28,7 @@ from rdt.transformers.numerical import (
     ClusterBasedNormalizer,
     FloatFormatter,
     GaussianNormalizer,
+    LogScaler,
     LogitScaler,
 )
 from rdt.transformers.pii.anonymizer import (
@@ -47,6 +48,7 @@ __all__ = [
     'FrequencyEncoder',
     'GaussianNormalizer',
     'LabelEncoder',
+    'LogScaler',
     'NullTransformer',
     'OneHotEncoder',
     'OptimizedTimestampEncoder',

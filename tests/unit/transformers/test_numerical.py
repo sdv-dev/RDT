@@ -16,6 +16,7 @@ from rdt.transformers.numerical import (
     FloatFormatter,
     GaussianNormalizer,
     LogitScaler,
+    LogScaler,
 )
 
 
@@ -2060,3 +2061,331 @@ class TestLogitScaler:
             ff_reverse_transform_args[0], np.array([sigmoid_vals, is_null]).T
         )
         assert reversed_values == ff_reverse_transform_mock.return_value
+
+
+class TestLogScaler:
+    def test___init__super_attrs(self):
+        """Test super() arguments are properly passed and set as attributes."""
+        ls = LogScaler(
+            missing_value_generation='random',
+            learn_rounding_scheme=False,
+        )
+
+        assert ls.missing_value_replacement == 'mean'
+        assert ls.missing_value_generation == 'random'
+        assert ls.learn_rounding_scheme is False
+
+    def test___init__constant(self):
+        """Test constant parameter is set as an attribute."""
+        # Setup
+        ls_set = LogScaler(constant=2.5)
+        ls_default = LogScaler()
+
+        # Test
+        assert ls_set.constant == 2.5
+        assert ls_default.constant == 0.0
+
+    def test__init__validates_constant(self):
+        """Test __init__ validates constat parameter."""
+        # Setup
+        message = 'The constant parameter must be a float or int.'
+        # Run and Assert
+        with pytest.raises(ValueError, match=message):
+            LogScaler(constant='2')
+
+        LogScaler(constant=2)
+
+    def test___init__invert(self):
+        """Test invert parameter is set as an attribute."""
+        # Setup
+        ls_set = LogScaler(invert=True)
+        ls_default = LogScaler()
+
+        # Test
+        assert ls_set.invert
+        assert not ls_default.invert
+
+    def test__init__validates_invert(self):
+        """Test __init__ validates constat parameter."""
+        # Setup
+        message = 'The invert parameter must be a bool.'
+        # Run and Assert
+        with pytest.raises(ValueError, match=message):
+            LogScaler(invert=2)
+
+    def test__validate_data(self):
+        """Test the ``_validate_data`` method"""
+        # Setup
+        ls = LogScaler()
+        ls.columns = ['test_col']
+        valid_data = pd.Series([1, 2, 3])
+        invalid_data = pd.Series([-1, 2, 4])
+        message = (
+            "Unable to apply a log transform to column 'test_col' due to constant being too large."
+        )
+        # Run and Assert
+        ls._validate_data(valid_data)
+
+        with pytest.raises(InvalidDataError, match=message):
+            ls._validate_data(invalid_data)
+
+    def test__validate_data_invert(self):
+        """Test the ``_validate_data`` method"""
+        # Setup
+        ls = LogScaler(invert=True)
+        ls.columns = ['test']
+        valid_data = pd.Series([-1, -2, -3])
+        invalid_data = pd.Series([-1, 2, 4])
+        message = (
+            "Unable to apply a log transform to column 'test' due to constant being too small."
+        )
+
+        # Run and Assert
+        ls._validate_data(valid_data)
+
+        with pytest.raises(InvalidDataError, match=message):
+            ls._validate_data(invalid_data)
+
+    @patch('rdt.transformers.LogScaler._validate_data')
+    def test__fit(self, mock_validate):
+        """Test the ``_fit`` method."""
+        # Setup
+        data = pd.Series([0.5, np.nan, 1.0])
+        ls = LogScaler()
+
+        # Run
+        ls._fit(data)
+
+        # Assert
+        mock_validate.assert_called_once()
+        call_value = mock_validate.call_args_list[0]
+        np.testing.assert_array_equal(call_value[0][0], np.array([0.5, 0.75, 1.0]))
+        assert isinstance(ls.null_transformer, NullTransformer)
+
+    @patch('rdt.transformers.LogScaler._validate_data')
+    def test__fit_from_column(self, mock_validate):
+        """Test the ``_fit`` method."""
+        # Setup
+        data = pd.Series([0.5, np.nan, 1.0])
+        ls = LogScaler(missing_value_generation='from_column')
+
+        # Run
+        ls._fit(data)
+
+        # Assert
+        mock_validate.assert_called_once()
+        call_value = mock_validate.call_args_list[0]
+        np.testing.assert_array_equal(call_value[0][0], np.array([0.5, 0.75, 1.0]))
+        assert isinstance(ls.null_transformer, NullTransformer)
+
+    def test__transform(self):
+        """Test the ``_transform`` method."""
+        # Setup
+        ls = LogScaler()
+        ls._validate_data = Mock()
+        ls.null_transformer = NullTransformer(
+            missing_value_replacement='mean', missing_value_generation='from_column'
+        )
+        data = pd.Series([0.1, 1.0, 2.0], name='test')
+        ls.null_transformer.fit(data)
+        expected = np.array([-2.30259, 0, 0.69314])
+
+        # Run
+        transformed_data = ls._transform(data)
+
+        # Assert
+        ls._validate_data.assert_called_once()
+        call_value = ls._validate_data.call_args_list[0]
+        np.testing.assert_array_equal(call_value[0][0], np.array([0.1, 1.0, 2.0]))
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__transform_invert(self):
+        """Test the ``_transform`` method with ``invert=True``"""
+        # Setup
+        ls = LogScaler(constant=3.0, invert=True, missing_value_replacement='from_column')
+        ls._validate_data = Mock()
+        ls.null_transformer = NullTransformer(
+            missing_value_replacement='mean', missing_value_generation='from_column'
+        )
+        ls.null_transformer.fit(pd.Series([0.25, 0.5, 0.75], name='test'))
+        data = pd.Series([0.1, 1.0, 2.0], name='test')
+        expected = np.array([1.06471, 0.69315, 0])
+
+        # Run
+        transformed_data = ls._transform(data)
+
+        # Assert
+        ls._validate_data.assert_called_once()
+        call_value = ls._validate_data.call_args_list[0]
+        np.testing.assert_array_equal(call_value[0][0], np.array([0.1, 1.0, 2.0]))
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__transform_null_values(self):
+        """Test the ``_transform`` method with ``invert=True``"""
+        # Setup
+        ls = LogScaler()
+        ls._validate_data = Mock()
+        ls.null_transformer = NullTransformer(
+            missing_value_replacement='mean', missing_value_generation='from_column'
+        )
+        data = pd.Series([0.1, 1.0, np.nan], name='test')
+        ls.null_transformer.fit(data)
+        expected = np.array([[-2.30259, 0], [0, 0], [-0.597837, 1]])
+
+        # Run
+        transformed_data = ls._transform(data)
+
+        # Assert
+        ls._validate_data.assert_called_once()
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__transform_null_values_invert(self):
+        """Test the ``_transform`` method with ``invert=True``"""
+        # Setup
+        ls = LogScaler(constant=3.0, invert=True, missing_value_replacement='from_column')
+        ls._validate_data = Mock()
+        ls.null_transformer = NullTransformer(
+            missing_value_replacement='mean', missing_value_generation='from_column'
+        )
+        ls.null_transformer.fit(pd.Series([0.25, 0.5, np.nan], name='test'))
+        data = pd.Series([0.1, 1.0, np.nan], name='test')
+        expected = np.array([[1.06471, 0], [0.69315, 0], [0.96508, 1]])
+
+        # Run
+        transformed_data = ls._transform(data)
+
+        # Assert
+        ls._validate_data.assert_called_once()
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__transform_invalid_data(self):
+        # Setup
+        ls = LogScaler(missing_value_replacement='from_column')
+        data = pd.Series([-0.1, 1.0, 2.0], name='test')
+        ls.columns = ['test']
+        ls.null_transformer = NullTransformer(
+            missing_value_replacement='mean', missing_value_generation='from_column'
+        )
+        ls.null_transformer.fit(pd.Series([0.25, 0.5, 0.75], name='test'))
+        message = (
+            "Unable to apply a log transform to column 'test' due to constant being too large."
+        )
+
+        # Run and Assert
+        with pytest.raises(InvalidDataError, match=message):
+            ls._transform(data)
+
+    def test__transform_missing_value_generation_is_random(self):
+        """Test the ``_transform`` method.
+        Validate that ``_transform`` produces the correct values when ``missing_value_generation``
+        is ``random``.
+        """
+        # Setup
+        data = pd.Series([1.0, 2.0, 1.0])
+        ls = LogScaler()
+        ls.columns = ['test']
+        ls.null_transformer = NullTransformer('mean', missing_value_generation='random')
+
+        # Run
+        ls.null_transformer.fit(data)
+        transformed_data = ls._transform(data)
+
+        # Assert
+        expected = np.array([0, 0.69315, 0])
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__reverse_transform(self):
+        """Test the ``_reverse_transform`` method.
+        Validate that ``_reverse_transform`` produces the correct values when
+        ``missing_value_generation`` is 'from_column'.
+        """
+        # Setup
+        data = np.array([
+            [0, 0.6931471805599453, 0],
+            [0, 0, 1.0],
+        ]).T
+        expected = pd.Series([1.0, 2.0, np.nan])
+        ls = LogScaler()
+        ls.null_transformer = NullTransformer(
+            missing_value_replacement='mean',
+            missing_value_generation='from_column',
+        )
+
+        # Run
+        ls.null_transformer.fit(expected)
+        transformed_data = ls._reverse_transform(data)
+
+        # Assert
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__reverse_transform_invert(self):
+        """Test the ``_reverse_transform`` method.
+        Validate that ``_reverse_transform`` produces the correct values when
+        ``missing_value_generation`` is 'from_column'.
+        """
+        # Setup
+        data = pd.DataFrame([
+            [1.06471, 0.69315, 0],
+            [0, 0, 1.0],
+        ]).T
+        expected = pd.Series([0.1, 1.0, np.nan])
+        ls = LogScaler(constant=3.0, invert=True)
+        ls.null_transformer = NullTransformer(
+            missing_value_replacement='mean',
+            missing_value_generation='from_column',
+        )
+
+        # Run
+        ls.null_transformer.fit(expected)
+        transformed_data = ls._reverse_transform(data)
+
+        # Assert
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__reverse_transform_missing_value_generation(self):
+        """Test the ``_reverse_transform`` method.
+        Validate that ``_reverse_transform`` produces the correct values when
+        ``missing_value_generation`` is 'random'.
+        """
+        # Setup
+        data = np.array([0, 0.6931471805599453, 0])
+        expected = pd.Series([1.0, 2.0, 1.0])
+        ls = LogScaler()
+        ls.null_transformer = NullTransformer(None, missing_value_generation='random')
+
+        # Run
+        ls.null_transformer.fit(expected)
+        transformed_data = ls._reverse_transform(data)
+
+        # Assert
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test__reverse_transform_invert_missing_value_generation(self):
+        """Test the ``_reverse_transform`` method.
+        Validate that ``_reverse_transform`` produces the correct values when
+        ``missing_value_generation`` is 'random'.
+        """
+        # Setup
+        data = np.array([1.06471, 0.69315, 0])
+        expected = pd.Series([0.1, 1.0, 2.0])
+        ls = LogScaler(constant=3.0, invert=True)
+        ls.null_transformer = NullTransformer(None, missing_value_generation='random')
+
+        # Run
+        ls.null_transformer.fit(expected)
+        transformed_data = ls._reverse_transform(data)
+
+        # Assert
+        np.testing.assert_allclose(transformed_data, expected, rtol=1e-3)
+
+    def test_print(self, capsys):
+        """Test the class can be printed. GH#883"""
+        # Setup
+        transformer = LogScaler()
+
+        # Run
+        print(transformer)  # noqa: T201 `print` found
+
+        # Assert
+        captured = capsys.readouterr()
+        assert captured.out == 'LogScaler()\n'
