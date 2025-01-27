@@ -731,3 +731,120 @@ class LogitScaler(FloatFormatter):
 
         data[:, 0] = reversed_values
         return super()._reverse_transform(data)
+
+
+class LogScaler(FloatFormatter):
+    """Transformer for numerical data using log.
+
+    This transformer scales numerical values using log and an optional constant.
+    Null values are replaced using a ``NullTransformer``.
+
+    Args:
+        missing_value_replacement (object):
+            Indicate what to replace the null values with. If an integer or float is given,
+            replace them with the given value. If the strings ``'mean'`` or ``'mode'``
+            are given, replace them with the corresponding aggregation and if ``'random'``
+            replace each null value with a random value in the data range. Defaults to ``mean``.
+        missing_value_generation (str or None):
+            The way missing values are being handled. There are three strategies:
+                * ``random``: Randomly generates missing values based on the percentage of
+                  missing values.
+                * ``from_column``: Creates a binary column that describes whether the original
+                  value was missing. Then use it to recreate missing values.
+                * ``None``: Do nothing with the missing values on the reverse transform. Simply
+                  pass whatever data we get through.
+        constant (float):
+            The constant to set as the 0-value for the log-based transform. Defaults to 0
+            (do not modify the 0-value of the data).
+        invert (bool):
+            Whether to invert the data with respect to the constant value. If False, do not
+            invert the data (all values will be greater than the constant value). If True,
+            invert the data (all the values will be less than the constant value).
+            Defaults to False.
+        learn_rounding_scheme (bool):
+            Whether or not to learn what place to round to based on the data seen during ``fit``.
+            If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
+            Defaults to ``False``.
+    """
+
+    def __init__(
+        self,
+        missing_value_replacement='mean',
+        missing_value_generation='random',
+        constant: float = 0.0,
+        invert: bool = False,
+        learn_rounding_scheme: bool = False,
+    ):
+        if isinstance(constant, (int, float)):
+            self.constant = constant
+        else:
+            raise ValueError('The constant parameter must be a float or int.')
+        if isinstance(invert, bool):
+            self.invert = invert
+        else:
+            raise ValueError('The invert parameter must be a bool.')
+
+        super().__init__(
+            missing_value_replacement=missing_value_replacement,
+            missing_value_generation=missing_value_generation,
+            learn_rounding_scheme=learn_rounding_scheme,
+        )
+
+    def _validate_data(self, data: pd.Series):
+        column_name = self.get_input_column()
+        if self.invert:
+            if not all(data < self.constant):
+                raise InvalidDataError(
+                    f"Unable to apply a log transform to column '{column_name}' due to constant"
+                    ' being too small.'
+                )
+        else:
+            if not all(data > self.constant):
+                raise InvalidDataError(
+                    f"Unable to apply a log transform to column '{column_name}' due to constant"
+                    ' being too large.'
+                )
+
+    def _fit(self, data):
+        super()._fit(data)
+        data = super()._transform(data)
+
+        if data.ndim > 1:
+            self._validate_data(data[:, 0])
+        else:
+            self._validate_data(data)
+
+    def _log_transform(self, data):
+        self._validate_data(data)
+
+        if self.invert:
+            return np.log(self.constant - data)
+        else:
+            return np.log(data - self.constant)
+
+    def _transform(self, data):
+        data = super()._transform(data)
+
+        if data.ndim > 1:
+            data[:, 0] = self._log_transform(data[:, 0])
+        else:
+            data = self._log_transform(data)
+
+        return data
+
+    def _reverse_log(self, data):
+        if self.invert:
+            return self.constant - np.exp(data)
+        else:
+            return np.exp(data) + self.constant
+
+    def _reverse_transform(self, data):
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
+        if data.ndim > 1:
+            data[:, 0] = self._reverse_log(data[:, 0])
+        else:
+            data = self._reverse_log(data)
+
+        return super()._reverse_transform(data)
