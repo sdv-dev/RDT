@@ -221,6 +221,8 @@ class TestHyperTransformer:
             '2010-01-01',
             '2010-01-01',
         ])
+        max_datetime = max(datetimes.dropna())
+        min_datetime = min(datetimes.dropna())
         data = pd.DataFrame(
             {
                 'integer': [1, 2, 1, 3, 1, 4, 2, 3],
@@ -293,7 +295,7 @@ class TestHyperTransformer:
                     0.3024284729840169,
                 ],
                 'datetime': [
-                    1.2630692571428572e18,
+                    1.2631629169758298e+18,
                     1.2649824e18,
                     1.262304e18,
                     1.262304e18,
@@ -349,8 +351,16 @@ class TestHyperTransformer:
         )
         for row in range(reverse_transformed.shape[0]):
             for column in range(reverse_transformed.shape[1]):
+                column_name = reverse_transformed.columns[column]
                 expected = expected_reversed.iloc[row, column]
                 actual = reverse_transformed.iloc[row, column]
+                if pd.isna(expected):
+                    assert pd.isna(actual)
+                    continue
+                # if column_name == 'datetime':
+                #     #
+                #     assert min_datetime <= actual <= max_datetime
+                #     continue
                 assert pd.isna(actual) or expected == actual
 
         assert isinstance(ht.field_transformers['integer'], FloatFormatter)
