@@ -16,7 +16,7 @@ class BinaryEncoder(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        missing_value_replacement (object):
+        missing_value_replacement (object, str):
             Indicate what to replace the null values with. If the string ``'mode'`` is given,
             replace them with the most common value.
             Defaults to ``mode``.

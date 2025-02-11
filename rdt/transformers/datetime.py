@@ -19,7 +19,7 @@ class UnixTimestampEncoder(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        missing_value_replacement (str, object):
+        missing_value_replacement (object, str):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation, if ``'random'``, use
             random values from the dataset to fill the nan values.
@@ -244,7 +244,7 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
     This class behaves exactly as the ``UnixTimestampEncoder`` except with the optimization.
 
     Args:
-        missing_value_replacement (object):
+        missing_value_replacement (object, str):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation, if ``'random'``, use
             random values from the dataset to fill the nan values.

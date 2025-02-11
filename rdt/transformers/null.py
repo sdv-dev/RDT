@@ -14,7 +14,7 @@ class NullTransformer:
     """Transformer for data that contains Null values.
 
     Args:
-        missing_value_replacement (object or None):
+        missing_value_replacement (object, str, or None):
             Indicate what to do with the null values. If an integer, float or string is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'`` are given,
             replace them with the corresponding aggregation (``'mean'`` only works for numerical

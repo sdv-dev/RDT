@@ -35,7 +35,7 @@ class FloatFormatter(BaseTransformer):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        missing_value_replacement (object):
+        missing_value_replacement (object, str):
             Indicate what to replace the null values with. If an integer or float is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation and if ``'random'``
@@ -638,7 +638,7 @@ class LogitScaler(FloatFormatter):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        missing_value_replacement (object):
+        missing_value_replacement (object, str):
             Indicate what to replace the null values with. If an integer or float is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation and if ``'random'``
@@ -740,7 +740,7 @@ class LogScaler(FloatFormatter):
     Null values are replaced using a ``NullTransformer``.
 
     Args:
-        missing_value_replacement (object):
+        missing_value_replacement (object, str):
             Indicate what to replace the null values with. If an integer or float is given,
             replace them with the given value. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation and if ``'random'``
