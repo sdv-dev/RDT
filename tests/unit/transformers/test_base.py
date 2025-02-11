@@ -285,6 +285,7 @@ class TestBaseTransformer:
         transformer._set_missing_value_replacement(default=default, missing_value_replacement=None)
 
         # Assert
+        assert transformer.missing_value_replacement == default
         mock_warnings.warn.assert_called_once_with(
             (
                 "Setting 'missing_value_replacement' to 'None' is no longer supported. "
