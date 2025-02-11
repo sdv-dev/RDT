@@ -1,5 +1,18 @@
 # History
 
+## v1.14.0 - 2025-02-11
+
+### New Features
+
+* Add `LogScaler` transformer - Issue [#930](https://github.com/sdv-dev/RDT/issues/930) by @rwedge
+* Add `LogitScaler` transformer - Issue [#929](https://github.com/sdv-dev/RDT/issues/929) by @frances-h
+
+### Maintenance
+
+* Cancel previous workflow runs on a new push - Issue [#927](https://github.com/sdv-dev/RDT/issues/927) by @R-Palazzo
+* Combine  `static_code_analysis.yml` with `release_notes.yml` - Issue [#915](https://github.com/sdv-dev/RDT/issues/915) by @R-Palazzo
+* Support Python 3.13 - Issue [#899](https://github.com/sdv-dev/RDT/issues/899) by @rwedge
+
 ## v1.13.2 - 2024-12-16
 
 ### Bugs Fixed
