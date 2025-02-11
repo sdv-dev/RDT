@@ -23,7 +23,7 @@ class UnixTimestampEncoder(BaseTransformer):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation, if ``'random'``, use
             random values from the dataset to fill the nan values.
-            Defaults to ``mean``.
+            Defaults to ``random``.
         model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
             not. The column will be created only if there are null values. If ``True``, create
@@ -53,14 +53,14 @@ class UnixTimestampEncoder(BaseTransformer):
 
     def __init__(
         self,
-        missing_value_replacement='mean',
+        missing_value_replacement='random',
         model_missing_values=None,
         datetime_format=None,
         missing_value_generation='random',
         enforce_min_max_values=False,
     ):
         super().__init__()
-        self._set_missing_value_replacement('mean', missing_value_replacement)
+        self._set_missing_value_replacement('random', missing_value_replacement)
         self._set_missing_value_generation(missing_value_generation)
         self.enforce_min_max_values = enforce_min_max_values
         if model_missing_values is not None:
@@ -248,7 +248,7 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
             Indicate what to replace the null values with. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation, if ``'random'``, use
             random values from the dataset to fill the nan values.
-            Defaults to ``mean``.
+            Defaults to ``random``.
         model_missing_values (bool):
             **DEPRECATED** Whether to create a new column to indicate which values were null or
             not. The column will be created only if there are null values. If ``True``, create
@@ -275,7 +275,7 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
 
     def __init__(
         self,
-        missing_value_replacement=None,
+        missing_value_replacement='random',
         model_missing_values=None,
         datetime_format=None,
         missing_value_generation='random',

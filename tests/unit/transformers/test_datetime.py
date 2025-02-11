@@ -45,6 +45,14 @@ class TestUnixTimestampEncoder:
         assert transformer.missing_value_generation == 'random'
         assert transformer.datetime_format == '%M-%d-%Y'
 
+    def test_default_missing_value_replacement(self):
+        """Test the default value of missing_value_replacement is 'random'"""
+        # Run
+        transformer = UnixTimestampEncoder()
+
+        # Assert
+        assert transformer.missing_value_replacement == 'random'
+
     def test__convert_to_datetime(self):
         """Test the ``_convert_to_datetime`` method.
 
@@ -270,7 +278,7 @@ class TestUnixTimestampEncoder:
         """
         # Setup
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
-        transformer = UnixTimestampEncoder()
+        transformer = UnixTimestampEncoder(missing_value_replacement='mean')
 
         # Run
         transformer._fit(data)
@@ -603,6 +611,14 @@ class TestOptimizedTimestampEncoder:
         assert transformer.datetime_format == '%M-%d-%Y'
         assert transformer.divider is None
         assert transformer.null_transformer is None
+
+    def test_default_missing_value_replacement(self):
+        """Test the default value of missing_value_replacement is 'random'"""
+        # Run
+        transformer = OptimizedTimestampEncoder()
+
+        # Assert
+        assert transformer.missing_value_replacement == 'random'
 
     def test__find_divider(self):
         """Test the ``_find_divider`` method.
