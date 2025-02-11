@@ -32,7 +32,7 @@ def check_dependencies(c):
 def unit(c):
     c.run(
         'python -m pytest ./tests/unit ./tests/performance/tests ./tests/datasets/tests '
-        '--cov=rdt --cov-fail-under=100 --cov-report=xml:./unit_cov.xml'
+        '--cov=rdt --cov-fail-under=100 --cov-report term-missing --cov-report=xml:./unit_cov.xml'
     )
 
 

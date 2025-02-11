@@ -275,6 +275,25 @@ class TestBaseTransformer:
             BaseTransformer._set_missing_value_generation(instance, 'None')
 
     @patch('rdt.transformers.base.warnings')
+    def test__set_missing_value_replacement(self, mock_warnings):
+        """Test that ``_set_missing_value_replacement`` raises a warning if value is None."""
+        # Setup
+        transformer = BaseTransformer()
+        default = 'random'
+
+        # Run
+        transformer._set_missing_value_replacement(default=default, missing_value_replacement=None)
+
+        # Assert
+        mock_warnings.warn.assert_called_once_with(
+            (
+                "Setting 'missing_value_replacement' to 'None' is no longer supported. "
+                f"Imputing with the '{default}' instead."
+            ),
+            FutureWarning,
+        )
+
+    @patch('rdt.transformers.base.warnings')
     def test_model_missing_values(self, mock_warnings):
         """Test ``model_missing_values`` property.
 
