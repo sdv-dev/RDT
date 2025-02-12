@@ -142,17 +142,6 @@ class BaseTransformer:
         elif model_missing_values is False:
             self._set_missing_value_generation('random')
 
-    def _set_missing_value_replacement(self, default, missing_value_replacement):
-        if missing_value_replacement is None:
-            warnings.warn(
-                "Setting 'missing_value_replacement' to 'None' is no longer supported. "
-                f"Imputing with the '{default}' instead.",
-                FutureWarning,
-            )
-            self.missing_value_replacement = default
-        else:
-            self.missing_value_replacement = missing_value_replacement
-
     @classmethod
     def get_name(cls):
         """Return transformer name.
@@ -478,7 +467,18 @@ class BaseTransformer:
 
         data = data.copy()
         columns_data = self._get_columns_data(data, self.output_columns)
+        original_missing_values = self.missing_value_generation
+        if self.missing_value_generation is not None and pd.isna(columns_data).any().any():
+            warnings.warn(
+                "The 'missing_value_generation' parameter is set to '"
+                f"{self.missing_value_generation}' but the data already contains missing values."
+                ' Missing value generation will be skipped.',
+                UserWarning,
+            )
+            self.missing_value_generation = None
+
         reversed_data = self._reverse_transform(columns_data)
+        self.missing_value_generation = original_missing_values
         data = data.drop(self.output_columns, axis=1)
         data = self._add_columns_to_data(data, reversed_data, self.columns)
 

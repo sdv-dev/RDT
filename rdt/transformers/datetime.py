@@ -60,7 +60,7 @@ class UnixTimestampEncoder(BaseTransformer):
         enforce_min_max_values=False,
     ):
         super().__init__()
-        self._set_missing_value_replacement('mean', missing_value_replacement)
+        self.missing_value_replacement = missing_value_replacement
         self._set_missing_value_generation(missing_value_generation)
         self.enforce_min_max_values = enforce_min_max_values
         if model_missing_values is not None:
@@ -275,7 +275,7 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
 
     def __init__(
         self,
-        missing_value_replacement=None,
+        missing_value_replacement='mean',
         model_missing_values=None,
         datetime_format=None,
         missing_value_generation='random',
