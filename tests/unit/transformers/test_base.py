@@ -1222,6 +1222,34 @@ class TestBaseTransformer:
         })
         pd.testing.assert_frame_equal(transformed_data, expected_transformed)
 
+    def test_reverse_transforn_with_nan(self):
+        """Test ``reverse_transform`` with NaNs but `missing_value_generation` is not None."""
+        # Setup
+        data = pd.DataFrame({
+            'col1': [1, 2, 3, np.nan],
+            'col2': ['a', 'b', 'c', 'd'],
+        })
+        transformer = BaseTransformer()
+        transformer.output_columns = ['col1']
+        transformer.columns = ['col1']
+        transformer.missing_value_generation = 'from_column'
+        transformer._reverse_transform = Mock(return_value=data[['col1']])
+
+        expected_warning = re.escape(
+            "The 'missing_value_generation' parameter is set to '"
+            "from_column' but the data already contains missing values."
+            ' Missing value generation will be skipped.'
+        )
+        transformer.set_random_state(np.random.RandomState(42), 'reverse_transform')
+
+        # Run
+        with pytest.warns(UserWarning, match=expected_warning):
+            result = transformer.reverse_transform(data)
+
+        # Assert
+        assert transformer.missing_value_generation == 'from_column'
+        pd.testing.assert_frame_equal(result[['col1', 'col2']], data)
+
 
 class TestBaseMultiColumnTransformer:
     def test___init__(self):

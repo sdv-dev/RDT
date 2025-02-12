@@ -472,7 +472,8 @@ class BaseTransformer:
             warnings.warn(
                 "The 'missing_value_generation' parameter is set to '"
                 f"{self.missing_value_generation}' but the data already contains missing values."
-                ' Missing value generation will be skipped.'
+                ' Missing value generation will be skipped.',
+                UserWarning,
             )
             self.missing_value_generation = None
 
