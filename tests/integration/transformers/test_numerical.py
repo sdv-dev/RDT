@@ -1,5 +1,8 @@
+import re
+
 import numpy as np
 import pandas as pd
+import pytest
 from copulas import univariate
 
 from rdt.transformers.null import NullTransformer
@@ -102,6 +105,32 @@ class TestFloatFormatter:
         assert isinstance(transformed, pd.DataFrame)
         assert transformed.shape == (6, 1)
         assert transformed['a'].iloc[5] == 1.4
+
+    def test_missing_value_generation_random_and_nans(self):
+        """Test when ``missing_value_generation`` is ``random`` and there are NaNs in the data."""
+        # Setup
+        data = pd.DataFrame({
+            'col1': [1, 2, 1, 2, 1, np.nan],
+            'col2': ['a', 'b', 'c', 'd', 'e', np.nan],
+        })
+        transformer = FloatFormatter(learn_rounding_scheme=True, missing_value_generation='random')
+        transformer.fit(data, 'col1')
+        transformed_data = pd.DataFrame({
+            'col1': [1.2, 2.3, 1.4, 2.3, 1.1, np.nan],
+            'col2': ['a', 'b', 'c', 'd', 'e', np.nan],
+        })
+        expected_warning = re.escape(
+            "The 'missing_value_generation' parameter is set to '"
+            "random' but the data already contains missing values."
+            ' Missing value generation will be skipped.'
+        )
+
+        # Run
+        with pytest.warns(UserWarning, match=expected_warning):
+            result = transformer.reverse_transform(transformed_data)
+
+        # Assert
+        pd.testing.assert_frame_equal(result[['col1', 'col2']], data)
 
     def test_model_missing_value(self):
         """Test that we are still able to use ``model_missing_value``."""
