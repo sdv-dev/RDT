@@ -240,6 +240,45 @@ class TestRegexGenerator:
         assert instance.cardinality_rule is None
         assert instance.generation_order == 'alphanumeric'
 
+    def test__set_cardinality_rule(self):
+        """Test the ``_set_cardinality_rule`` method."""
+        # Setup
+        instance = RegexGenerator()
+        expected_error = re.escape("`cardinality_rule must` be one of 'unique' or None.")
+
+        # Run
+        instance._set_cardinality_rule('unique')
+        with pytest.raises(ValueError, match=expected_error):
+            instance._set_cardinality_rule('not_unique')
+
+        # Assert
+        assert instance.cardinality_rule == 'unique'
+
+    def test__set_enforce_uniqueness(self):
+        """Test the ``_set_enforce_uniqueness`` method."""
+        # Setup
+        instance = RegexGenerator()
+        instance._set_cardinality_rule = Mock()
+        expected_warning_1 = re.escape(
+            "The 'enforce_uniqueness' parameter has been deprecated.\n"
+            "Please use 'cardinality_rule' instead and set it to 'unique'."
+        )
+        expected_warning_2 = re.escape(
+            "The 'enforce_uniqueness' parameter has been deprecated.\n"
+            "Please use 'cardinality_rule' instead and set it to 'None'."
+        )
+
+        # Run and Assert
+        with pytest.warns(FutureWarning, match=expected_warning_1):
+            instance._set_enforce_uniqueness(True)
+
+        instance._set_cardinality_rule.assert_called_once_with('unique')
+
+        with pytest.warns(FutureWarning, match=expected_warning_2):
+            instance._set_enforce_uniqueness(False)
+
+        instance._set_cardinality_rule.assert_called_with(None)
+
     def test___init__custom(self):
         """Test __init__ with custom parameters."""
         # Run
