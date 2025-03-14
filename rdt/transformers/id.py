@@ -10,6 +10,7 @@ from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import strings_from_regex
 
 LOGGER = logging.getLogger(__name__)
+_CARDINALITY_RULE_SENTINEL = object()
 
 
 class IDGenerator(BaseTransformer):
@@ -123,48 +124,41 @@ class RegexGenerator(BaseTransformer):
         state['generator'] = generator
         self.__dict__ = state
 
-    def _set_cardinality_rule(self, cardinality_rule):
-        """Set the ``cardinality_rule`` parameter.
+    def _set_cardinality_rule(
+        self, cardinality_rule, enforce_uniqueness, cardinality_rule_provided
+    ):
+        """Set the ``cardinality_rule`` parameter."""
+        if enforce_uniqueness is not None:
+            warn_message = "The 'enforce_uniqueness' parameter has been deprecated.\n"
+            if not cardinality_rule_provided:
+                cardinality_rule = 'unique' if enforce_uniqueness else None
+                warn_message += (
+                    "Please use 'cardinality_rule' instead and set it to '"
+                    f"{str(cardinality_rule)}'."
+                )
 
-        Args:
-            cardinality_rule (str):
-                Rule that the generated data must follow. If set to ``unique``, the generated
-                data must be unique. If set to ``None``, then the generated data may contain
-                duplicates.
-        """
+            warnings.warn(warn_message, FutureWarning)
+
         if cardinality_rule not in {None, 'unique'}:
-            raise ValueError("`cardinality_rule must` be one of 'unique' or None.")
+            raise ValueError("`cardinality_rule` must be one of 'unique' or None.")
 
         self.cardinality_rule = cardinality_rule
-
-    def _set_enforce_uniqueness(self, enforce_uniqueness):
-        """Set the ``enforce_uniqueness`` parameter.
-
-        Args:
-            enforce_uniqueness (bool):
-                Whether or not to ensure that the new generated data is all unique.
-        """
-        warn_message = "The 'enforce_uniqueness' parameter has been deprecated.\n"
-        cardinality_rule = 'unique' if enforce_uniqueness else None
-        to_print = 'unique' if enforce_uniqueness else 'None'
-        warn_message += f"Please use 'cardinality_rule' instead and set it to '{to_print}'."
-        warnings.warn(warn_message, FutureWarning)
-        self._set_cardinality_rule(cardinality_rule)
 
     def __init__(
         self,
         regex_format='[A-Za-z]{5}',
-        enforce_uniqueness=None,
-        cardinality_rule=None,
+        cardinality_rule=_CARDINALITY_RULE_SENTINEL,
         generation_order='alphanumeric',
+        enforce_uniqueness=None,
     ):
         super().__init__()
         self.output_properties = {None: {'next_transformer': None}}
         self.regex_format = regex_format
-        self._set_cardinality_rule(cardinality_rule)
-        if enforce_uniqueness is not None:
-            self._set_enforce_uniqueness(enforce_uniqueness)
+        cardinality_rule_provided = cardinality_rule is not _CARDINALITY_RULE_SENTINEL
+        if not cardinality_rule_provided:
+            cardinality_rule = None
 
+        self._set_cardinality_rule(cardinality_rule, enforce_uniqueness, cardinality_rule_provided)
         self.data_length = None
         self.generator = None
         self.generator_size = None
