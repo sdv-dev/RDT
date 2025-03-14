@@ -46,8 +46,8 @@ class BinaryEncoder(BaseTransformer):
         missing_value_generation='random',
     ):
         super().__init__()
+        self.missing_value_replacement = missing_value_replacement
         self._set_missing_value_generation(missing_value_generation)
-        self._set_missing_value_replacement('random', missing_value_replacement)
         if model_missing_values is not None:
             self._set_model_missing_values(model_missing_values)
 

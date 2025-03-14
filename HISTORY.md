@@ -1,5 +1,11 @@
 # History
 
+## v1.15.0 - 2025-03-14
+
+### New Features
+
+* Allow me to opt out of replacing missing values (`missing_value_replacement=None`) - Issue [#938](https://github.com/sdv-dev/RDT/issues/938) by @R-Palazzo
+
 ## v1.14.0 - 2025-02-11
 
 ### New Features
