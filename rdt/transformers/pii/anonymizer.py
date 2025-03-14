@@ -264,8 +264,7 @@ class AnonymizedFaker(BaseTransformer):
 
     def _generate_cardinality_match_values(self, remaining_samples):
         """Generate sampled values while ensuring each unique category appears at least once."""
-        # Backwards compatibility requires us to generate the values
-        # before we sample, they will be generated during fit otherwise.
+        # Backwards compatibility requires us to generate the values at this point
         if self._unique_categories is None:
             self._unique_categories = self._get_unique_categories(self._data_cardinality)
 
