@@ -297,6 +297,30 @@ class TestAnonymizedFaker:
         # Assert
         assert missing_values / output.size == freq
 
+    def test_anonymized_faker_produces_only_n_values_for_each_reverse_transform_cardinality_match(
+        self,
+    ):
+        """Test `AnonymizedFaker` when `cardinality_rule` is set to `match`.
+
+        Ensure that the AnonymizedFaker transformer with `cardinality_rule='match'`
+        maintains the correct number of unique values across multiple `reverse_transform` calls.
+        """
+        # Setup
+        data = pd.DataFrame(data={'name': ['Amy'] * 10 + ['Bob'] * 20 + ['Carla'] * 50})
+        transformer = AnonymizedFaker(
+            provider_name='person', function_name='name', cardinality_rule='match'
+        )
+
+        # Run
+        transformed_data = transformer.fit_transform(data, 'name')
+        first_reverse_transformed = transformer.reverse_transform(transformed_data)
+
+        transformed_again = transformer.transform(first_reverse_transformed)
+        second_reverse_transformed = transformer.reverse_transform(transformed_again)
+
+        # Assert
+        assert set(first_reverse_transformed['name']) == set(second_reverse_transformed['name'])
+
 
 class TestPsuedoAnonymizedFaker:
     def test_default_settings(self):
