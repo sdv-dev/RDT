@@ -240,44 +240,6 @@ class TestRegexGenerator:
         assert instance.cardinality_rule is None
         assert instance.generation_order == 'alphanumeric'
 
-    def test__set_cardinality_rule(self):
-        """Test the ``_set_cardinality_rule`` method."""
-        # Setup
-        instance = RegexGenerator()
-        expected_error = re.escape("`cardinality_rule` must be one of 'unique' or None.")
-        expected_message_1 = re.escape("The 'enforce_uniqueness' parameter has been deprecated.\n")
-        expected_message_2 = re.escape(
-            "The 'enforce_uniqueness' parameter has been deprecated.\n"
-            "Please use 'cardinality_rule' instead and set it to 'unique'."
-        )
-        expected_message_3 = re.escape(
-            "The 'enforce_uniqueness' parameter has been deprecated.\n"
-            "Please use 'cardinality_rule' instead and set it to 'None'."
-        )
-
-        # Run and Assert
-        instance._set_cardinality_rule('unique', None, True)
-        assert instance.cardinality_rule == 'unique'
-
-        with pytest.warns(FutureWarning, match=expected_message_1):
-            instance._set_cardinality_rule(None, True, True)
-        assert instance.cardinality_rule is None
-
-        with pytest.warns(FutureWarning, match=expected_message_1):
-            instance._set_cardinality_rule('unique', False, True)
-        assert instance.cardinality_rule == 'unique'
-
-        with pytest.warns(FutureWarning, match=expected_message_2):
-            instance._set_cardinality_rule(None, True, False)
-        assert instance.cardinality_rule == 'unique'
-
-        with pytest.warns(FutureWarning, match=expected_message_3):
-            instance._set_cardinality_rule(None, False, False)
-        assert instance.cardinality_rule is None
-
-        with pytest.raises(ValueError, match=expected_error):
-            instance._set_cardinality_rule('not_unique', None, True)
-
     def test___init__custom(self):
         """Test __init__ with custom parameters."""
         # Run
@@ -303,27 +265,22 @@ class TestRegexGenerator:
     def test__init__with_enforce_uniqueness(self):
         """Test that the ``enforce_uniqueness`` parameter is deprecated."""
         # Setup
-        expected_message_1 = re.escape("The 'enforce_uniqueness' parameter has been deprecated.\n")
-        expected_message_2 = re.escape(
-            "The 'enforce_uniqueness' parameter has been deprecated.\n"
-            "Please use 'cardinality_rule' instead and set it to 'unique'."
-        )
-        expected_message_3 = re.escape(
-            "The 'enforce_uniqueness' parameter has been deprecated.\n"
-            "Please use 'cardinality_rule' instead and set it to 'None'."
+        expected_message = re.escape(
+            "The 'enforce_uniqueness' parameter is no longer supported. "
+            "Please use the 'cardinality_rule' parameter instead."
         )
 
         # Run
-        with pytest.warns(FutureWarning, match=expected_message_1):
+        with pytest.warns(FutureWarning, match=expected_message):
             instance_1 = RegexGenerator(enforce_uniqueness=True, cardinality_rule='unique')
 
-        with pytest.warns(FutureWarning, match=expected_message_1):
+        with pytest.warns(FutureWarning, match=expected_message):
             RegexGenerator('A-Za-z', None, 'alphanumeric', True)
 
-        with pytest.warns(FutureWarning, match=expected_message_2):
+        with pytest.warns(FutureWarning, match=expected_message):
             instance_2 = RegexGenerator(enforce_uniqueness=True)
 
-        with pytest.warns(FutureWarning, match=expected_message_3):
+        with pytest.warns(FutureWarning, match=expected_message):
             instance_3 = RegexGenerator(enforce_uniqueness=False)
 
         # Assert

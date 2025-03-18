@@ -7,11 +7,12 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.utils import strings_from_regex
+from rdt.transformers.utils import (
+    _handle_enforce_uniqueness_and_cardinality_rule,
+    strings_from_regex,
+)
 
 LOGGER = logging.getLogger(__name__)
-_CARDINALITY_RULE_SENTINEL = object()
-
 
 class IDGenerator(BaseTransformer):
     """Generate an ID column.
@@ -124,41 +125,19 @@ class RegexGenerator(BaseTransformer):
         state['generator'] = generator
         self.__dict__ = state
 
-    def _set_cardinality_rule(
-        self, cardinality_rule, enforce_uniqueness, cardinality_rule_provided
-    ):
-        """Set the ``cardinality_rule`` parameter."""
-        if enforce_uniqueness is not None:
-            warn_message = "The 'enforce_uniqueness' parameter has been deprecated.\n"
-            if not cardinality_rule_provided:
-                cardinality_rule = 'unique' if enforce_uniqueness else None
-                warn_message += (
-                    "Please use 'cardinality_rule' instead and set it to '"
-                    f"{str(cardinality_rule)}'."
-                )
-
-            warnings.warn(warn_message, FutureWarning)
-
-        if cardinality_rule not in {None, 'unique'}:
-            raise ValueError("`cardinality_rule` must be one of 'unique' or None.")
-
-        self.cardinality_rule = cardinality_rule
-
     def __init__(
         self,
         regex_format='[A-Za-z]{5}',
-        cardinality_rule=_CARDINALITY_RULE_SENTINEL,
+        cardinality_rule=None,
         generation_order='alphanumeric',
         enforce_uniqueness=None,
     ):
         super().__init__()
         self.output_properties = {None: {'next_transformer': None}}
         self.regex_format = regex_format
-        cardinality_rule_provided = cardinality_rule is not _CARDINALITY_RULE_SENTINEL
-        if not cardinality_rule_provided:
-            cardinality_rule = None
-
-        self._set_cardinality_rule(cardinality_rule, enforce_uniqueness, cardinality_rule_provided)
+        self.cardinality_rule = _handle_enforce_uniqueness_and_cardinality_rule(
+            enforce_uniqueness, cardinality_rule
+        )
         self.data_length = None
         self.generator = None
         self.generator_size = None
