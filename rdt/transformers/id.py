@@ -14,6 +14,7 @@ from rdt.transformers.utils import (
 
 LOGGER = logging.getLogger(__name__)
 
+
 class IDGenerator(BaseTransformer):
     """Generate an ID column.
 
