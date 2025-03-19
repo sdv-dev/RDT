@@ -168,16 +168,18 @@ class RegexGenerator(BaseTransformer):
         """Drop the input column by returning ``None``."""
         return None
 
-    def _warn_not_enough_unique_values(self, sample_size):
+    def _warn_not_enough_unique_values(self, sample_size, unique_condition):
         """Warn the user that the regex cannot generate enough unique values.
 
         Args:
             sample_size (int):
                 Number of samples to be generated.
+            unique_condition (bool):
+                Whether or not to enforce uniqueness.
         """
         warned = False
         if sample_size > self.generator_size:
-            if self.cardinality_rule == 'unique':
+            if unique_condition:
                 warnings.warn(
                     f"The regex for '{self.get_input_column()}' can only generate "
                     f'{self.generator_size} unique values. Additional values may not exactly '
@@ -195,7 +197,7 @@ class RegexGenerator(BaseTransformer):
                 )
 
         remaining = self.generator_size - self.generated
-        if sample_size > remaining and self.cardinality_rule == 'unique' and not warned:
+        if sample_size > remaining and unique_condition and not warned:
             warnings.warn(
                 f'The regex generator is not able to generate {sample_size} new unique '
                 f'values (only {max(remaining, 0)} unique values left).'
@@ -211,12 +213,17 @@ class RegexGenerator(BaseTransformer):
         Returns:
             pandas.Series
         """
+        if hasattr(self, 'cardinality_rule'):
+            unique_condition = self.cardinality_rule == 'unique'
+        else:
+            unique_condition = self.enforce_uniqueness
+
         if data is not None and len(data):
             sample_size = len(data)
         else:
             sample_size = self.data_length
 
-        self._warn_not_enough_unique_values(sample_size)
+        self._warn_not_enough_unique_values(sample_size, unique_condition)
 
         remaining = self.generator_size - self.generated
         if sample_size > remaining:
@@ -235,7 +242,7 @@ class RegexGenerator(BaseTransformer):
         reverse_transformed = generated_values[:]
 
         if len(reverse_transformed) < sample_size:
-            if self.cardinality_rule == 'unique':
+            if unique_condition:
                 try:
                     remaining_samples = sample_size - len(reverse_transformed)
                     start = int(generated_values[-1]) + 1
