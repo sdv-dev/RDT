@@ -591,6 +591,8 @@ class TestRegexGenerator:
         """
         # Setup
         instance = RegexGenerator('[A-Z]', cardinality_rule=None)
+        del instance.cardinality_rule  # coverage and backwards compatibility
+        instance.enforce_uniqueness = False
         instance.data_length = 6
         instance.generator_size = 5
         instance.generated = 0
