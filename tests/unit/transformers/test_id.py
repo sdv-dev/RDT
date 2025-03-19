@@ -586,12 +586,16 @@ class TestRegexGenerator:
         """Test the ``_reverse_transform`` method.
 
         Validate that the ``_reverse_transform`` method logs an info message when
-        ``cardinality_rule`` is ``None`` and the ``instance.data_length`` is bigger than
+        ``enforce_uniqueness`` is ``False`` and the ``instance.data_length`` is bigger than
         ``instance.generator_size``.
+
+        In this test we also test the backward compatibility, so when the transformer
+        does not have the ``cardinality_rule`` attribute, it should use the ``enforce_uniqueness``
+        attribute. This is necessary to keep a coverage of 100%.
         """
         # Setup
         instance = RegexGenerator('[A-Z]', cardinality_rule=None)
-        del instance.cardinality_rule  # coverage and backwards compatibility
+        del instance.cardinality_rule
         instance.enforce_uniqueness = False
         instance.data_length = 6
         instance.generator_size = 5
