@@ -1,5 +1,6 @@
 """Test for ID transformers."""
 
+import re
 from string import ascii_uppercase
 from unittest.mock import Mock, patch
 
@@ -159,7 +160,7 @@ class TestRegexGenerator:
         # Assert
         assert state == {
             'data_length': None,
-            'enforce_uniqueness': False,
+            'cardinality_rule': None,
             'generated': 0,
             'generator_size': 380204032,
             'output_properties': {None: {'next_transformer': None}},
@@ -174,7 +175,7 @@ class TestRegexGenerator:
         # Setup
         state = {
             'data_length': None,
-            'enforce_uniqueness': False,
+            'cardinality_rule': None,
             'generated': 10,
             'generator_size': 380204032,
             'output_properties': {None: {'next_transformer': None}},
@@ -203,7 +204,7 @@ class TestRegexGenerator:
         # Setup
         state = {
             'data_length': None,
-            'enforce_uniqueness': False,
+            'cardinality_rule': None,
             'generated': None,
             'generator_size': None,
             'output_properties': {None: {'next_transformer': None}},
@@ -236,30 +237,22 @@ class TestRegexGenerator:
         # Assert
         assert instance.data_length is None
         assert instance.regex_format == '[A-Za-z]{5}'
-        assert instance.enforce_uniqueness is False
+        assert instance.cardinality_rule is None
         assert instance.generation_order == 'alphanumeric'
 
     def test___init__custom(self):
-        """Test the default instantiation of the transformer.
-
-        Test that when creating an instance of ``RegexGenerator`` and passing a
-        ``regex_format`` this is being stored.
-
-        Side effects:
-            - the ``instance.regex_format`` is ``'[A-Za-z]{5}'``'.
-            - ``instance.enforce_uniqueness`` is ``True``.
-        """
+        """Test __init__ with custom parameters."""
         # Run
         instance = RegexGenerator(
             regex_format='[0-9]',
-            enforce_uniqueness=True,
+            cardinality_rule='unique',
             generation_order='scrambled',
         )
 
         # Assert
         assert instance.data_length is None
         assert instance.regex_format == '[0-9]'
-        assert instance.enforce_uniqueness
+        assert instance.cardinality_rule == 'unique'
         assert instance.generation_order == 'scrambled'
 
     def test___init__bad_value_generation_order(self):
@@ -268,6 +261,32 @@ class TestRegexGenerator:
         error_message = "generation_order must be one of 'alphanumeric' or 'scrambled'."
         with pytest.raises(ValueError, match=error_message):
             RegexGenerator(generation_order='afdsfd')
+
+    def test__init__with_enforce_uniqueness(self):
+        """Test that the ``enforce_uniqueness`` parameter is deprecated."""
+        # Setup
+        expected_message = re.escape(
+            "The 'enforce_uniqueness' parameter is no longer supported. "
+            "Please use the 'cardinality_rule' parameter instead."
+        )
+
+        # Run
+        with pytest.warns(FutureWarning, match=expected_message):
+            instance_1 = RegexGenerator(enforce_uniqueness=True, cardinality_rule='unique')
+
+        with pytest.warns(FutureWarning, match=expected_message):
+            RegexGenerator('A-Za-z', None, 'alphanumeric', True)
+
+        with pytest.warns(FutureWarning, match=expected_message):
+            instance_2 = RegexGenerator(enforce_uniqueness=True)
+
+        with pytest.warns(FutureWarning, match=expected_message):
+            instance_3 = RegexGenerator(enforce_uniqueness=False)
+
+        # Assert
+        assert instance_1.cardinality_rule == 'unique'
+        assert instance_2.cardinality_rule == 'unique'
+        assert instance_3.cardinality_rule is None
 
     @patch('rdt.transformers.id.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.id.strings_from_regex')
@@ -398,8 +417,8 @@ class TestRegexGenerator:
         """Test the ``_reverse_transform`` method.
 
         Validate that the ``_reverse_transform`` method uses the ``instance.generator``
-        to generate the ``instance.data_length`` number of data when ``enforce_uniqueness`` is
-        ``False`` but the data to be created is bigger.
+        to generate the ``instance.data_length`` number of data when ``cardinality_rule`` is
+        ``unique`` but the data to be created is bigger.
 
         Setup:
             - Initialize a ``RegexGenerator`` instance.
@@ -410,7 +429,7 @@ class TestRegexGenerator:
             - A ``numpy.array`` with the first five letters from the generator repeated.
         """
         # Setup
-        instance = RegexGenerator('[A-Z]', enforce_uniqueness=False)
+        instance = RegexGenerator('[A-Z]', cardinality_rule=None)
         columns_data = pd.Series()
         instance.reset_randomization = Mock()
         instance.data_length = 11
@@ -443,8 +462,8 @@ class TestRegexGenerator:
         """Test the ``_reverse_transform`` method.
 
         Validate that the ``_reverse_transform`` method uses the ``instance.generator``
-        to generate the ``instance.data_length`` number of data when ``enforce_uniqueness`` is
-        ``False`` but the data to be created is bigger.
+        to generate the ``instance.data_length`` number of data when ``cardinality_rule`` is
+        ``None`` but the data to be created is bigger.
 
         Setup:
             - Initialize a ``RegexGenerator`` instance.
@@ -476,10 +495,10 @@ class TestRegexGenerator:
         assert instance.generated == 4
 
     @patch('rdt.transformers.id.warnings')
-    def test__reverse_transform_not_enough_unique_values_enforce_uniqueness(self, mock_warnings):
+    def test__reverse_transform_not_enough_unique_values_cardniality_rule(self, mock_warnings):
         """Test it when there are not enough unique values to generate."""
         # Setup
-        instance = RegexGenerator('[A-E]', enforce_uniqueness=True)
+        instance = RegexGenerator('[A-E]', cardinality_rule='unique')
         instance.data_length = 6
         generator = AsciiGenerator(5)
         instance.generator = generator
@@ -501,7 +520,7 @@ class TestRegexGenerator:
     def test__reverse_transform_not_enough_unique_values(self):
         """Test it when there are not enough unique values to generate."""
         # Setup
-        instance = RegexGenerator('[A-E]', enforce_uniqueness=False)
+        instance = RegexGenerator('[A-E]', cardinality_rule=None)
         instance.data_length = 6
         generator = AsciiGenerator(5)
         instance.generator = generator
@@ -520,7 +539,7 @@ class TestRegexGenerator:
     def test__reverse_transform_not_enough_unique_values_numerical(self, mock_warnings):
         """Test it when there are not enough unique values to generate."""
         # Setup
-        instance = RegexGenerator('[1-3]', enforce_uniqueness=True)
+        instance = RegexGenerator('[1-3]', cardinality_rule='unique')
         instance.data_length = 6
         generator = AsciiGenerator(5)
         instance.generator = generator
@@ -540,10 +559,10 @@ class TestRegexGenerator:
         np.testing.assert_array_equal(out, np.array(['1', '2', '3', '4', '5', '6']))
 
     @patch('rdt.transformers.id.warnings')
-    def test__reverse_transform_enforce_uniqueness_not_enough_remaining(self, mock_warnings):
+    def test__reverse_transform_unique_not_enough_remaining(self, mock_warnings):
         """Test the case when there are not enough unique values remaining."""
         # Setup
-        instance = RegexGenerator('[A-Z]', enforce_uniqueness=True)
+        instance = RegexGenerator('[A-Z]', cardinality_rule='unique')
         instance.data_length = 6
         generator = AsciiGenerator(10)
         instance.generator = generator
@@ -569,9 +588,15 @@ class TestRegexGenerator:
         Validate that the ``_reverse_transform`` method logs an info message when
         ``enforce_uniqueness`` is ``False`` and the ``instance.data_length`` is bigger than
         ``instance.generator_size``.
+
+        In this test we also test the backward compatibility, so when the transformer
+        does not have the ``cardinality_rule`` attribute, it should use the ``enforce_uniqueness``
+        attribute. This is necessary to keep a coverage of 100%.
         """
         # Setup
-        instance = RegexGenerator('[A-Z]', enforce_uniqueness=False)
+        instance = RegexGenerator('[A-Z]', cardinality_rule=None)
+        del instance.cardinality_rule
+        instance.enforce_uniqueness = False
         instance.data_length = 6
         instance.generator_size = 5
         instance.generated = 0
