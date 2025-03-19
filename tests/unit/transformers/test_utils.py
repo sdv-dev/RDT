@@ -1,3 +1,4 @@
+import re
 import sre_parse
 import warnings
 from decimal import Decimal
@@ -12,6 +13,7 @@ from rdt.transformers.utils import (
     WarnDict,
     _any,
     _cast_to_type,
+    _handle_enforce_uniqueness_and_cardinality_rule,
     _max_repeat,
     check_nan_in_transform,
     fill_nan_with_none,
@@ -467,3 +469,27 @@ def test_warn_dict_get():
     assert result_access == 'text_transformer'
     assert result_access_no_warn == 'text_transformer'
     assert result_get_no_warn == 'text_transformer'
+
+
+def test__handle_enforce_uniqueness_and_cardinality_rule():
+    """Test that ``_handle_enforce_uniqueness_and_cardinality_rule`` works as expected."""
+    # Setup
+    enforce_uniqueness = None
+    cardinality_rule = None
+    expected_message = re.escape(
+        "The 'enforce_uniqueness' parameter is no longer supported. "
+        "Please use the 'cardinality_rule' parameter instead."
+    )
+
+    # Run
+    result_1 = _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinality_rule)
+    with pytest.warns(FutureWarning, match=expected_message):
+        result_2 = _handle_enforce_uniqueness_and_cardinality_rule(True, None)
+
+    with pytest.warns(FutureWarning, match=expected_message):
+        result_3 = _handle_enforce_uniqueness_and_cardinality_rule(True, 'other')
+
+    # Assert
+    assert result_1 is None
+    assert result_2 == 'unique'
+    assert result_3 == 'other'
