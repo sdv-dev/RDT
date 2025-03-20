@@ -147,7 +147,7 @@ class TestIDGenerator:
     def test___init__(self):
         """Test the warning message for ``IDGenerator``."""
         msg = re.escape(
-            "The 'IDGenerator' is renamed to 'IndexGenerator'. Please update the"
+            "The 'IDGenerator' has been renamed to 'IndexGenerator'. Please update the"
             'name to ensure compatibility with future versions of RDT.'
         )
         with pytest.warns(FutureWarning, match=msg):
