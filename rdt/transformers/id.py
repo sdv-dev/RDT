@@ -80,7 +80,7 @@ class IDGenerator(IndexGenerator):
 
     def __init__(self, prefix=None, starting_value=0, suffix=None):
         warnings.warn(
-            "The 'IDGenerator' is renamed to 'IndexGenerator'. Please update the"
+            "The 'IDGenerator' has been renamed to 'IndexGenerator'. Please update the"
             'name to ensure compatibility with future versions of RDT.',
             FutureWarning,
         )
