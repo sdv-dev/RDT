@@ -278,9 +278,10 @@ def learn_rounding_digits(data):
     highest_int = int(np.max(np.abs(roundable_data)))
     most_digits = len(str(highest_int)) if highest_int != 0 else 0
     max_decimals = max(0, MAX_DECIMALS - most_digits)
-    for decimal in range(max_decimals + 1):
-        if (roundable_data == roundable_data.round(decimal)).all():
-            return decimal
+    if (roundable_data == roundable_data.round(max_decimals)).all():
+        for decimal in range(max_decimals + 1):
+            if (roundable_data == roundable_data.round(decimal)).all():
+                return decimal
 
     # Can't round, not equal after MAX_DECIMALS digits of precision
     LOGGER.info(
