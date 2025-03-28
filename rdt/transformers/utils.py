@@ -270,22 +270,17 @@ def learn_rounding_digits(data):
         data = data.to_numpy()
     roundable_data = data[~(np.isinf(data.astype(float)) | pd.isna(data))]
 
-    # Doesn't contain numbers
+    # Empty dataset
     if len(roundable_data) == 0:
         return None
 
-    # Doesn't contain decimal digits
-    if (roundable_data == roundable_data.astype(int)).all():
-        return 0
-
     # Try to round to fewer digits
-    num_digits = len(str(int(np.max(np.abs(roundable_data)))))
-    max_rounding = MAX_DECIMALS - num_digits
-    rounded_data = roundable_data.round(max_rounding)
-    if np.isclose(roundable_data, rounded_data, atol=10**(-max_rounding - 1)).all():
-        for decimal in range(1, max_rounding + 1):
-            if (roundable_data == roundable_data.round(decimal)).all():
-                return decimal
+    highest_int = int(np.max(np.abs(roundable_data)))
+    most_digits = len(str(highest_int)) if highest_int != 0 else 0
+    max_decimals = max(0, MAX_DECIMALS - most_digits)
+    for decimal in range(max_decimals + 1):
+        if (roundable_data == roundable_data.round(decimal)).all():
+            return decimal
 
     # Can't round, not equal after MAX_DECIMALS digits of precision
     LOGGER.info(

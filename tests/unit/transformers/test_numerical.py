@@ -226,21 +226,9 @@ class TestFloatFormatter(TestCase):
         assert transformer._rounding_digits == 4
 
     def test__fit_learn_rounding_scheme_true_max_decimals(self):
-        """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``.
-
-        If the ``learn_rounding_scheme`` parameter is set to ``True``, ``_fit`` should learn
-        the ``_rounding_digits`` to be the max number of decimal places seen in the data.
-        The max amount of decimals that floats can be accurately compared with is 15.
-        If the input data has values with more than 14 decimals, we will not be able to
-        accurately learn the number of decimal places required, so we do not round.
-
-        Input:
-        - Series with a value that has 15 decimals
-        Side Effect:
-        - ``_rounding_digits`` is set to None
-        """
+        """Test ``_fit`` with ``learn_rounding_scheme`` set to ``True``."""
         # Setup
-        data = pd.Series([0.000000000000001])
+        data = pd.Series([0.0000000000000001])
 
         # Run
         transformer = FloatFormatter(missing_value_replacement='mean', learn_rounding_scheme=True)
