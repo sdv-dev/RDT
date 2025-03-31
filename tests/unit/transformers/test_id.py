@@ -255,6 +255,21 @@ class TestRegexGenerator:
         assert instance.cardinality_rule == 'unique'
         assert instance.generation_order == 'scrambled'
 
+    def test___init__cardinality_rule_match(self):
+        """Test it when cardinality_rule is 'match'."""
+        # Run
+        instance = RegexGenerator(
+            regex_format='[0-9]',
+            cardinality_rule='match',
+        )
+
+        # Assert
+        assert instance.data_length is None
+        assert instance.regex_format == '[0-9]'
+        assert instance.cardinality_rule == 'match'
+        assert instance._data_cardinality is None
+        assert instance._unique_regex_values is None
+
     def test___init__bad_value_generation_order(self):
         """Test that an error is raised if a bad value is given for `generation_order`."""
         # Run and Assert
@@ -334,6 +349,21 @@ class TestRegexGenerator:
 
         # Assert
         assert instance.data_length == 3
+        assert instance.output_properties == {None: {'next_transformer': None}}
+
+    def test__fit_cardinality_rule_match(self):
+        """Test it when cardinality_rule is 'match'."""
+        # Setup
+        instance = RegexGenerator(cardinality_rule='match')
+        columns_data = pd.Series(['1', '2', '3', '2', '1'])
+
+        # Run
+        instance._fit(columns_data)
+
+        # Assert
+        assert instance.data_length == 3
+        assert instance._data_cardinality == 3
+        assert instance._unique_regex_values == ['1', '2', '3']
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__transform(self):
@@ -614,3 +644,42 @@ class TestRegexGenerator:
         expected_args = (6, 'a', 5, 'a')
 
         mock_logger.info.assert_called_once_with(expected_format, *expected_args)
+
+    def test__reverse_transform_match_not_enough_remaining(self):
+        """Test the case when there are not enough unique values remaining."""
+        # Setup
+        instance = RegexGenerator('[A-Z]', cardinality_rule='match')
+        instance.data_length = 6
+        generator = AsciiGenerator(10)
+        instance.generator = generator
+        instance.generator_size = 10
+        instance.generated = 9
+        instance.columns = ['a']
+        columns_data = pd.Series()
+
+        # Run
+        out = instance._reverse_transform(columns_data)
+
+        # Assert
+        warn_msg = 'The regex generator is not able to generate 6 new unique values (only 1 unique values left).'
+        with pytest.warns(UserWarning, match=warn_msg):
+            instance._reverse_transform(columns_data)
+        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'F']))
+
+    def test__reverse_transform_match(self, ):
+        """Test it when cardinality_rule is 'match'."""
+        # Setup
+        instance = RegexGenerator('[1-3]', cardinality_rule='match')
+        instance.data_length = 6
+        generator = AsciiGenerator(5)
+        instance.generator = generator
+        instance.generator_size = 3
+        instance.generated = 0
+        instance.columns = ['a']
+        columns_data = pd.Series()
+
+        # Run
+        out = instance._reverse_transform(columns_data)
+
+        # Assert
+        np.testing.assert_array_equal(out, np.array(['1', '2', '3', '4', '5', '6']))

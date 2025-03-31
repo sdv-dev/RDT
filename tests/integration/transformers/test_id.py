@@ -335,6 +335,25 @@ class TestRegexGenerator:
         expected = pd.DataFrame({'id': ['2', '3', '4', '5', '6']}, dtype=object)
         pd.testing.assert_frame_equal(reverse_transform, expected)
 
+    def test_called_multiple_times_cardinality_rule_match(self):
+        """Test calling multiple times when ``cardinality_rule`` is ``match``."""
+        # Setup
+        data = pd.DataFrame({'my_column': np.arange(10)})
+        generator = RegexGenerator(cardinality_rule='match')
+
+        # Run
+        transformed_data = generator.fit_transform(data, 'my_column')
+        first_reverse_transform = generator.reverse_transform(transformed_data.head(3))
+        second_reverse_transform = generator.reverse_transform(transformed_data.head(5))
+
+        # Assert
+        expected_first_reverse_transform = pd.DataFrame({'my_column': ['AAAAA', 'AAAAB', 'AAAAC']})
+        expected_second_reverse_transform = pd.DataFrame({
+            'my_column': ['AAAAD', 'AAAAE', 'AAAAF', 'AAAAG', 'AAAAH']
+        })
+        pd.testing.assert_frame_equal(first_reverse_transform, expected_first_reverse_transform)
+        pd.testing.assert_frame_equal(second_reverse_transform, expected_second_reverse_transform)
+
 
 class TestHyperTransformer:
     def test_end_to_end_scrambled(self):
