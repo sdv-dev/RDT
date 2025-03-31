@@ -4,12 +4,12 @@ import numpy as np
 import pandas as pd
 
 from rdt import HyperTransformer, get_demo
-from rdt.transformers.id import IndexGenerator, RegexGenerator
+from rdt.transformers.id import IDGenerator, RegexGenerator
 
 
-class TestIndexGenerator:
+class TestIDGenerator:
     def test_end_to_end(self):
-        """End to end test of the ``IndexGenerator``."""
+        """End to end test of the ``IDGenerator``."""
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
@@ -17,7 +17,7 @@ class TestIndexGenerator:
         })
 
         # Run
-        transformer = IndexGenerator(prefix='id_', starting_value=100, suffix='_X')
+        transformer = IDGenerator(prefix='id_', starting_value=100, suffix='_X')
         transformed = transformer.fit_transform(data, 'id')
         reverse_transform = transformer.reverse_transform(transformed)
         reverse_transform_2 = transformer.reverse_transform(transformed)

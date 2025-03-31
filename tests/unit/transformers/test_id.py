@@ -1,6 +1,5 @@
 """Test for ID transformers."""
 
-import re
 from string import ascii_uppercase
 from unittest.mock import Mock, patch
 
@@ -8,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.id import IDGenerator, IndexGenerator, RegexGenerator
+from rdt.transformers.id import IDGenerator, RegexGenerator
 
 
 class AsciiGenerator:
@@ -31,11 +30,11 @@ class AsciiGenerator:
         return char
 
 
-class TestIndexGenerator:
+class TestIDGenerator:
     def test___init__default(self):
         """Test the ``__init__`` method."""
         # Run
-        transformer = IndexGenerator()
+        transformer = IDGenerator()
 
         # Assert
         assert transformer.prefix is None
@@ -47,10 +46,10 @@ class TestIndexGenerator:
     def test___init__with_parameters(self):
         """Test the ``__init__`` method with paremeters."""
         # Run
-        transformer_prefix = IndexGenerator(prefix='prefix_')
-        transformer_suffix = IndexGenerator(suffix='_suffix')
-        transformer_starting_value = IndexGenerator(starting_value=10)
-        transformer_all = IndexGenerator(prefix='prefix_', starting_value=10, suffix='_suffix')
+        transformer_prefix = IDGenerator(prefix='prefix_')
+        transformer_suffix = IDGenerator(suffix='_suffix')
+        transformer_starting_value = IDGenerator(starting_value=10)
+        transformer_all = IDGenerator(prefix='prefix_', starting_value=10, suffix='_suffix')
 
         # Assert
         assert transformer_prefix.prefix == 'prefix_'
@@ -80,7 +79,7 @@ class TestIndexGenerator:
     def test_reset_randomization(self):
         """Test the ``reset_randomization`` method."""
         # Setup
-        transformer = IndexGenerator()
+        transformer = IDGenerator()
         transformer._counter = 10
 
         # Run
@@ -92,7 +91,7 @@ class TestIndexGenerator:
     def test__fit(self):
         """Test the ``_fit`` method."""
         # Setup
-        transformer = IndexGenerator()
+        transformer = IDGenerator()
 
         # Run
         transformer._fit(None)
@@ -103,7 +102,7 @@ class TestIndexGenerator:
     def test__transform(self):
         """Test the ``_transform`` method."""
         # Setup
-        transformer = IndexGenerator()
+        transformer = IDGenerator()
 
         # Run
         result = transformer._transform(None)
@@ -114,7 +113,7 @@ class TestIndexGenerator:
     def test__reverse_transform(self):
         """Test the ``_reverse_transform`` method."""
         # Setup
-        transformer = IndexGenerator()
+        transformer = IDGenerator()
         transformer._counter = 10
 
         # Run
@@ -128,7 +127,7 @@ class TestIndexGenerator:
     def test__reverse_transform_with_everything(self):
         """Test the ``_reverse_transform`` method with all parameters."""
         # Setup
-        transformer = IndexGenerator(prefix='prefix_', starting_value=100, suffix='_suffix')
+        transformer = IDGenerator(prefix='prefix_', starting_value=100, suffix='_suffix')
 
         # Run
         result = transformer._reverse_transform(np.array([1, 2, 3]))
@@ -141,17 +140,6 @@ class TestIndexGenerator:
             'prefix_102_suffix',
         ]
         assert transformer._counter == 3
-
-
-class TestIDGenerator:
-    def test___init__(self):
-        """Test the warning message for ``IDGenerator``."""
-        msg = re.escape(
-            "The 'IDGenerator' has been renamed to 'IndexGenerator'. Please update the"
-            'name to ensure compatibility with future versions of RDT.'
-        )
-        with pytest.warns(FutureWarning, match=msg):
-            IDGenerator(prefix='prefix_', starting_value=100, suffix='_suffix')
 
 
 class TestRegexGenerator:
