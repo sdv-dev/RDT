@@ -22,7 +22,7 @@ from rdt.transformers.datetime import (
     OptimizedTimestampEncoder,
     UnixTimestampEncoder,
 )
-from rdt.transformers.id import IDGenerator, RegexGenerator
+from rdt.transformers.id import IDGenerator, IndexGenerator, RegexGenerator
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
     ClusterBasedNormalizer,
@@ -57,6 +57,7 @@ __all__ = [
     'AnonymizedFaker',
     'PseudoAnonymizedFaker',
     'IDGenerator',
+    'IndexGenerator',
     'get_transformer_name',
     'get_transformer_class',
     'get_transformers_by_type',
