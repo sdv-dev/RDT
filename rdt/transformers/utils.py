@@ -15,7 +15,7 @@ import sre_parse  # isort:skip
 
 LOGGER = logging.getLogger(__name__)
 
-MAX_DECIMALS = sys.float_info.dig - 1
+MAX_DECIMALS = sys.float_info.dig
 DEPRECATED_SDTYPES_MAPPING = {'text': 'id'}
 
 
@@ -270,17 +270,16 @@ def learn_rounding_digits(data):
         data = data.to_numpy()
     roundable_data = data[~(np.isinf(data.astype(float)) | pd.isna(data))]
 
-    # Doesn't contain numbers
+    # Empty dataset
     if len(roundable_data) == 0:
         return None
 
-    # Doesn't contain decimal digits
-    if (roundable_data == roundable_data.astype(int)).all():
-        return 0
-
     # Try to round to fewer digits
-    if (roundable_data == roundable_data.round(MAX_DECIMALS)).all():
-        for decimal in range(MAX_DECIMALS + 1):
+    highest_int = int(np.max(np.abs(roundable_data)))
+    most_digits = len(str(highest_int)) if highest_int != 0 else 0
+    max_decimals = max(0, MAX_DECIMALS - most_digits)
+    if (roundable_data == roundable_data.round(max_decimals)).all():
+        for decimal in range(max_decimals + 1):
             if (roundable_data == roundable_data.round(decimal)).all():
                 return decimal
 
