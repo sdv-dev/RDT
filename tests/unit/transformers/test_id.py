@@ -823,3 +823,22 @@ class TestRegexGenerator:
         np.testing.assert_array_equal(
             out, np.array(['A', 'B', 'C', 'A', 'B', 'C', 'A', 'B', 'C', 'A'])
         )
+
+    def test__reverse_transform_no_unique_regex_values_attribute(self):
+        """Test it without the _unique_regex_values attribute."""
+        # Setup
+        instance = RegexGenerator('[A-E]')
+        delattr(instance, '_unique_regex_values')
+        instance.data_length = 6
+        generator = AsciiGenerator(5)
+        instance.generator = generator
+        instance.generator_size = 5
+        instance.generated = 0
+        instance.columns = ['a']
+        columns_data = pd.Series()
+
+        # Run
+        out = instance._reverse_transform(columns_data)
+
+        # Assert
+        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'A']))
