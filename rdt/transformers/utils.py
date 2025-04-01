@@ -274,6 +274,9 @@ def learn_rounding_digits(data):
     if len(roundable_data) == 0:
         return None
 
+    if roundable_data.dtype == 'object':
+        roundable_data = roundable_data.astype(float)
+
     # Try to round to fewer digits
     highest_int = int(np.max(np.abs(roundable_data)))
     most_digits = len(str(highest_int)) if highest_int != 0 else 0
