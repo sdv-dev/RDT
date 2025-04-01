@@ -126,7 +126,7 @@ class TestAnonymizedFaker:
         instance = AnonymizedFaker()
 
         # Assert
-        assert instance.enforce_uniqueness is False
+        assert instance.enforce_uniqueness is None
 
     def test__function_cardinality_rule_unique(self):
         """Test that ``_function`` uses the ``faker.unique``.
@@ -367,8 +367,8 @@ class TestAnonymizedFaker:
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
-    @patch('rdt.transformers.pii.anonymizer.warnings')
-    def test___init__custom(self, mock_warnings, mock_check_provider_function, mock_faker):
+    @patch('rdt.transformers.pii.anonymizer._handle_enforce_uniqueness_and_cardinality_rule')
+    def test___init__custom(self, mock__handle, mock_check_provider_function, mock_faker):
         """Test the instantiation of the transformer with custom parameters.
 
         Test that the transformer can be instantiated with a custom provider and function, and
@@ -390,6 +390,9 @@ class TestAnonymizedFaker:
               ``credit_card_full``.
             - the ``instance._function`` is ``instance.faker.credit_card_full``.
         """
+        # Setup
+        mock__handle.return_value = 'unique'
+
         # Run
         instance = AnonymizedFaker(
             provider_name='credit_card',
@@ -407,13 +410,7 @@ class TestAnonymizedFaker:
         assert instance.locales == ['en_US', 'fr_FR']
         mock_faker.Faker.assert_called_once_with(['en_US', 'fr_FR'])
         assert instance.cardinality_rule == 'unique'
-        mock_warnings.warn.assert_has_calls([
-            call(
-                "The 'enforce_uniqueness' parameter is no longer supported. "
-                "Please use the 'cardinality_rule' parameter instead.",
-                FutureWarning,
-            )
-        ])
+        mock__handle.assert_called_once_with(True, None)
 
     def test___init__no_function_name(self):
         """Test the instantiation of the transformer with custom parameters.
