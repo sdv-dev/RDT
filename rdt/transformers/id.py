@@ -82,7 +82,7 @@ class RegexGenerator(BaseTransformer):
     ``regex`` format.
 
     Args:
-        regex (str):
+        regex_format (str):
             String representing the regex function.
         enforce_uniqueness (bool):
             **DEPRECATED** Whether or not to ensure that the new generated data is all unique.
@@ -159,6 +159,25 @@ class RegexGenerator(BaseTransformer):
         self.generator, self.generator_size = strings_from_regex(self.regex_format)
         self.generated = 0
 
+    def _generate_fallback_samples(self, sample_size, generated_values, samples):
+        """Generate the remaining values such that they are all unique, disregarding the regex."""
+        try:
+            # Integer-based fallback: attempts to convert the last generated value to an integer
+            # and then generate the remaining values in a sequential manner.
+            remaining_samples = sample_size - len(samples)
+            start = int(generated_values[-1]) + 1
+            samples.extend([str(i) for i in range(start, start + remaining_samples)])
+        except ValueError:
+            # String-based fallback: if the integer conversion fails, it uses the last generated
+            # value as a base and appends a counter to make each value unique.
+            counter = 0
+            while len(samples) < sample_size:
+                remaining_samples = sample_size - len(samples)
+                samples.extend([f'{i}({counter})' for i in generated_values[:remaining_samples]])
+                counter += 1
+
+        return samples
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -170,13 +189,19 @@ class RegexGenerator(BaseTransformer):
         self.data_length = len(data)
 
         if self.cardinality_rule == 'match':
-            self._data_cardinality = data.nunique()  # TODO: How are nans supposed to be handled?
+            is_nan = int(pd.isna(data).any())  # nans count as a unique value
+            self._data_cardinality = data.nunique() + is_nan
             self._unique_regex_values = []
             while len(self._unique_regex_values) < self._data_cardinality:
                 try:
                     self._unique_regex_values.append(next(self.generator))
-                except (RuntimeError, StopIteration):  # TODO: why do this instead of using self.generator_size?
-                    break
+                except (RuntimeError, StopIteration):
+                    unique_samples = self._generate_fallback_samples(
+                        sample_size=self._data_cardinality,
+                        generated_values=self._unique_regex_values,
+                        samples=self._unique_regex_values[:],
+                    )
+                    self._unique_regex_values = unique_samples
 
     def _transform(self, _data):
         """Drop the input column by returning ``None``."""
@@ -194,13 +219,14 @@ class RegexGenerator(BaseTransformer):
                 Whether or not to match the cardinality of the data.
         """
         warned = False
+        warn_msg = (
+            f"The regex for '{self.get_input_column()}' can only generate "
+            f'{int(self.generator_size)} unique values. Additional values may not exactly '
+            'follow the provided regex.'
+        )
         if sample_size > self.generator_size:
             if unique_condition:
-                warnings.warn(
-                    f"The regex for '{self.get_input_column()}' can only generate "
-                    f'{self.generator_size} unique values. Additional values may not exactly '
-                    'follow the provided regex.'
-                )
+                warnings.warn(warn_msg)
                 warned = True
             else:
                 LOGGER.info(
@@ -220,19 +246,53 @@ class RegexGenerator(BaseTransformer):
             )
 
         if match_cardinality:
-            if self._data_cardinality > self.generator_size:
-                warnings.warn(
-                    f"The regex for '{self.get_input_column()}' can only generate "
-                    f'{self.generator_size} unique values. Additional values may not exactly '
-                    'follow the provided regex.'
-                )
-                warned = True
             if self._data_cardinality > sample_size:
                 warnings.warn(
-                    f"Only '{sample_size}' values can be generated. Cannot match the cardinality "
-                    f"of the data, it requires '{self._data_cardinality}' values."
+                    f'Only {sample_size} values can be generated. Cannot match the cardinality '
+                    f'of the data, it requires {self._data_cardinality} values.'
                 )
-                warned = True
+            if sample_size > self.generator_size and self._data_cardinality > self.generator_size:
+                warnings.warn(warn_msg)
+
+    def _generate_match_cardinality(self, sample_size):
+        """Generate values until the sample size is reached."""
+        generated_values = self._unique_regex_values[:sample_size]
+        samples = generated_values[:]
+        while len(samples) < sample_size:
+            remaining_samples = sample_size - len(samples)
+            samples.extend(generated_values[:remaining_samples])
+
+        return samples
+
+    def _generate_as_many_as_possible(self, sample_size):
+        """Generate samples.
+
+        Generate values following the regex until either the sample size is reached or
+        the generator is exhausted.
+        """
+        generated_values = []
+        while len(generated_values) < sample_size:
+            try:
+                generated_values.append(next(self.generator))
+                self.generated += 1
+            except (RuntimeError, StopIteration):
+                break
+
+        return generated_values
+
+    def _generate_remaining_values(self, sample_size, generated_values, unique_condition):
+        """Generate values until the sample size is reached."""
+        samples = generated_values[:]
+        if unique_condition:
+            samples = self._generate_fallback_samples(
+                sample_size=sample_size, generated_values=generated_values, samples=samples
+            )
+        else:
+            while len(samples) < sample_size:
+                remaining_samples = sample_size - len(samples)
+                samples.extend(generated_values[:remaining_samples])
+
+        return samples
 
     def _reverse_transform(self, data):
         """Generate new data using the provided ``regex_format``.
@@ -249,70 +309,34 @@ class RegexGenerator(BaseTransformer):
         else:
             unique_condition = self.enforce_uniqueness
 
-        regex = self._unique_regex_values if hasattr(self, '_unique_regex_values') else None
+        if hasattr(self, '_unique_regex_values'):
+            match_cardinality_values = self._unique_regex_values
+        else:
+            match_cardinality_values = None
 
         if data is not None and len(data):
             sample_size = len(data)
         else:
             sample_size = self.data_length
 
-        self._warn_not_enough_unique_values(sample_size, unique_condition, regex is not None)
+        self._warn_not_enough_unique_values(
+            sample_size, unique_condition, match_cardinality_values is not None
+        )
 
-        if sample_size > self.generator_size - self.generated:  # TODO: Is this needed?
-            self.reset_randomization()
-
-        if regex:
-            generated_values = self._unique_regex_values[:sample_size]
-            reverse_transformed = generated_values[:]
-            while len(reverse_transformed) < sample_size:
-                remaining_samples = sample_size - len(reverse_transformed)
-                reverse_transformed.extend(generated_values[:remaining_samples])
-
+        if match_cardinality_values is not None:
+            generated_values = self._generate_match_cardinality(sample_size)
         else:
-            # Generate values following the regex until either the sample size is reached or
-            # the generator is exhausted.
-            generated_values = []
-            while len(generated_values) < sample_size:
-                try:
-                    generated_values.append(next(self.generator))
-                    self.generated += 1
-                except (RuntimeError, StopIteration):  # TODO: why do this instead of using self.generator_size?
-                    break
+            # If there aren't enough values left in the generator, reset it
+            if sample_size > self.generator_size - self.generated:
+                self.reset_randomization()
 
-            # If less than sample_size values were generated, generate the remaining values.
-            reverse_transformed = generated_values[:]
-            if len(reverse_transformed) < sample_size:
-
-                # Generate the remaining values such that they are all unique, disregarding the regex.
-                if unique_condition:
-
-                    # Integer-based fallback: attempts to convert the last generated value to an integer
-                    # and then generate the remaining values in a sequential manner.
-                    try:
-                        remaining_samples = sample_size - len(reverse_transformed)
-                        start = int(generated_values[-1]) + 1
-                        reverse_transformed.extend([
-                            str(i) for i in range(start, start + remaining_samples)
-                        ])
-
-                    # String-based fallback: if the integer conversion fails, it uses the last generated
-                    # value as a base and appends a counter to make each value unique.
-                    except ValueError:
-                        counter = 0
-                        while len(reverse_transformed) < sample_size:
-                            remaining_samples = sample_size - len(reverse_transformed)
-                            reverse_transformed.extend([
-                                f'{i}({counter})' for i in generated_values[:remaining_samples]
-                            ])
-                            counter += 1
-
-                # Add copies of the existing generated values until the sample size is reached.
-                else:
-                    while len(reverse_transformed) < sample_size:
-                        remaining_samples = sample_size - len(reverse_transformed)
-                        reverse_transformed.extend(generated_values[:remaining_samples])
+            generated_values = self._generate_as_many_as_possible(sample_size)
+            if len(generated_values) < sample_size:
+                generated_values = self._generate_remaining_values(
+                    sample_size, generated_values, unique_condition
+                )
 
         if getattr(self, 'generation_order', 'alphanumeric') == 'scrambled':
-            np.random.shuffle(reverse_transformed)
+            np.random.shuffle(generated_values)
 
-        return np.array(reverse_transformed, dtype=object)
+        return np.array(generated_values, dtype=object)
