@@ -413,7 +413,7 @@ class TestRegexGenerator:
         assert instance._unique_regex_values == ['1', '2', '3', '4']
         assert instance.output_properties == {None: {'next_transformer': None}}
 
-    def test__fit_cardinality_rule_match_with_nans_too_many_values_str(self):
+    def test__fit_cardinality_rule_match_with_too_many_values_str(self):
         """Test it when cardinality_rule is 'match'."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match', regex_format='[a-b]{1}')

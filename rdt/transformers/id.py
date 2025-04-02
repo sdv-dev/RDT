@@ -276,13 +276,16 @@ class RegexGenerator(BaseTransformer):
         return generated_values
 
     def _generate_num_samples(self, num_samples, template_samples):
-        """Generate num_samples values from template_samples."""
-        samples = []
-        while num_samples > 0:
-            samples.extend(template_samples[:num_samples])
-            num_samples -= len(template_samples)
+        """Generate num_samples values from template_samples.
 
-        return samples
+        Eg: num_samples = 5, template_samples = ['a', 'b']
+        The output will be ['a', 'b', 'a', 'b', 'a']
+        """
+        if num_samples <= 0:
+            return []
+
+        repeats = num_samples // len(template_samples) + 1
+        return np.tile(template_samples, repeats)[:num_samples].tolist()
 
     def _generate_match_cardinality(self, num_samples):
         """Generate values until the sample size is reached, while respecting the cardinality."""

@@ -404,6 +404,28 @@ class TestRegexGenerator:
         pd.testing.assert_frame_equal(third_reverse_transform, expected_third_reverse_transform)
         pd.testing.assert_frame_equal(fourth_reverse_transform, expected_fourth_reverse_transform)
 
+    def test_cardinality_rule_match_empty_regex(self):
+        """Test with cardinality_rule='match' but insufficient regex values."""
+        # Setup
+        data = pd.DataFrame({'id': [1, 2, 3, 4, 5]})
+        instance_unique = RegexGenerator('', cardinality_rule='unique')
+        instance_match = RegexGenerator('', cardinality_rule='match')
+        instance_none = RegexGenerator('')
+
+        # Run
+        transformed_unique = instance_unique.fit_transform(data, 'id')
+        transformed_match = instance_match.fit_transform(data, 'id')
+        transformed_none = instance_none.fit_transform(data, 'id')
+        reverse_transform_unique = instance_unique.reverse_transform(transformed_unique)
+        reverse_transform_match = instance_match.reverse_transform(transformed_match)
+        reverse_transform_none = instance_none.reverse_transform(transformed_none)
+
+        # Assert
+        expected = pd.DataFrame({'id': ['', '', '', '', '']})
+        pd.testing.assert_frame_equal(reverse_transform_unique, expected)
+        pd.testing.assert_frame_equal(reverse_transform_match, expected)
+        pd.testing.assert_frame_equal(reverse_transform_none, expected)
+
 
 class TestHyperTransformer:
     def test_end_to_end_scrambled(self):
