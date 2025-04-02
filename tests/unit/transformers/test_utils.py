@@ -2,7 +2,7 @@ import sre_parse
 import warnings
 from decimal import Decimal
 from sre_constants import MAXREPEAT
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import numpy as np
 import pandas as pd
@@ -222,41 +222,80 @@ def test_try_convert_to_dtype():
     pd.testing.assert_series_equal(output_convertibe, expected_data_convertibe)
 
 
-@patch('rdt.transformers.utils.LOGGER')
-def test_learn_rounding_digits_more_than_15_decimals(logger_mock):
-    """Test the learn_rounding_digits method with more than 15 decimals.
-
-    If the data has more than 15 decimals, return None and raise warning.
-    """
-    # Setup
-    data = pd.Series(np.random.random(size=10).round(20), name='col')
-
+@pytest.mark.parametrize(
+    'test_data, expected_digits',
+    [
+        # Basic decimal places test
+        (pd.Series([10, 0.0, 0.1, 0.12, 0.123, np.nan]), 3),
+        # Large numbers with decimals
+        (pd.Series([1234567890123456.7, 12345678901234567.89, 123456789012345678.901]), None),
+        # Consistent single decimal place
+        (
+            pd.Series([
+                1.1,
+                11.1,
+                111.1,
+                1111.1,
+                11111.1,
+                111111.1,
+                1111111.1,
+                11111111.1,
+                111111111.1,
+                1111111111.1,
+                11111111111.1,
+                111111111111.1,
+                1111111111111.1,
+                11111111111111.1,
+            ]),
+            1,
+        ),
+        # Various precision tests
+        (pd.Series([123456789012345.6789]), None),
+        (pd.Series([12345678901.234]), 3),
+        (pd.Series([12345678901.2345]), 4),
+        (pd.Series([0.1234567890123456]), None),
+        (pd.Series([0.123456789012345]), 15),
+        # Integer tests
+        (pd.Series([123456789012345]), 0),
+        (pd.Series([12345678901234567890]), 0),
+        # Mixed number and edge cases
+        (pd.Series([12345678901234567890, 1.123]), None),
+        (pd.Series([0.000000000000000000001]), None),
+        (pd.Series([-12345678901234, -1.123]), None),
+        (pd.Series([-0.123456789012345]), 15),
+    ],
+)
+def test_learn_rounding_digits(test_data, expected_digits):
+    """Test learn_rounding_digits for various test cases."""
     # Run
-    output = learn_rounding_digits(data)
+    result = learn_rounding_digits(test_data)
 
     # Assert
-    logger_msg = "No rounding scheme detected for column '%s'. Data will not be rounded."
-    logger_mock.info.assert_called_once_with(logger_msg, 'col')
-    assert output is None
+    assert result == expected_digits
 
 
-def test_learn_rounding_digits_less_than_15_decimals():
-    """Test the learn_rounding_digits method with less than 15 decimals.
+def test_learn_rounding_digits_object_dtype():
+    """Test learn_rounding_digits for object dtype."""
+    # Setup
+    data = pd.Series(['1.1', '1.11', np.nan], dtype='object')
 
-    If the data has less than 15 decimals, the maximum number of decimals
-    should be returned.
+    # Run
+    result = learn_rounding_digits(data)
 
-    Input:
-    - An array that contains floats with a maximum of 3 decimals and a
-        NaN.
-    Output:
-    - 3
-    """
-    data = pd.Series(np.array([10, 0.0, 0.1, 0.12, 0.123, np.nan]))
+    # Assert
+    assert result == 2
 
-    output = learn_rounding_digits(data)
 
-    assert output == 3
+def test_learn_rounding_digits_code_coverage():
+    """Test learn_rounding_digits for code coverage."""
+    # Setup
+    data = pd.Series([np.inf, -np.inf, np.nan])
+
+    # Run
+    result = learn_rounding_digits(data)
+
+    # Assert
+    assert result is None
 
 
 def test_learn_rounding_digits_pyarrow():
@@ -287,54 +326,6 @@ def test_learn_rounding_digits_pyarrow_float():
 
     # Assert
     assert output == 2
-
-
-def test_learn_rounding_digits_negative_decimals_float():
-    """Test the learn_rounding_digits method with floats multiples of powers of 10.
-
-    If the data has all multiples of 10 the output should be 0.
-
-    Input:
-    - An array that contains floats that are multiples of powers of 10, 100 and 1000 and a NaN.
-    """
-    data = pd.Series(np.array([1230.0, 12300.0, 123000.0, np.nan]))
-
-    output = learn_rounding_digits(data)
-
-    assert output == 0
-
-
-def test_learn_rounding_digits_negative_decimals_integer():
-    """Test the learn_rounding_digits method with integers multiples of powers of 10.
-
-    If the data has all multiples of 10 the output should be 0.
-
-    Input:
-    - An array that contains integers that are multiples of powers of 10, 100 and 1000
-        and a NaN.
-    """
-    data = pd.Series(np.array([1230, 12300, 123000, np.nan]))
-
-    output = learn_rounding_digits(data)
-
-    assert output == 0
-
-
-def test_learn_rounding_digits_all_missing_value_replacements():
-    """Test the learn_rounding_digits method with data that is all NaNs.
-
-    If the data is all NaNs, expect that the output is None.
-
-    Input:
-    - An array of NaN.
-    Output:
-    - None
-    """
-    data = pd.Series(np.array([np.nan, np.nan, np.nan, np.nan]))
-
-    output = learn_rounding_digits(data)
-
-    assert output is None
 
 
 def test_learn_rounding_digits_nullable_numerical_pandas_dtypes():

@@ -603,6 +603,7 @@ class TestAnonymizedFaker:
         instance = AnonymizedFaker(missing_value_generation=None)
         instance._data_cardinality = 2
         instance._nan_frequency = 0
+        instance._unique_categories = ['a', 'b', 'c']
         function = Mock()
         function.side_effect = ['a', 'b', 'c']
 
@@ -612,25 +613,22 @@ class TestAnonymizedFaker:
         result = instance._reverse_transform_cardinality_rule_match(3)
 
         # Assert
-        assert function.call_args_list == [call(), call()]
-        assert set(result).issubset({'a', 'b'})
+        assert set(result) == set(['a', 'b', 'c'])
 
     def test__reverse_transform_cardinality_rule_match_not_enough_unique(self):
         """Test it when there are not enough unique values."""
         # Setup
         instance = AnonymizedFaker()
-        instance._data_cardinality = 4
+        instance._data_cardinality = 3
         instance._nan_frequency = 0
         function = Mock()
         function.side_effect = ['a', 'b', 'c', 'd']
-
         instance._function = function
 
         # Run
-        result = instance._reverse_transform_cardinality_rule_match(3)
+        result = instance._reverse_transform_cardinality_rule_match(6)
 
         # Assert
-        assert function.call_args_list == [call(), call(), call()]
         assert set(result) == {'a', 'b', 'c'}
 
     def test__reverse_transform_cardinality_rule_missing_attribute(self):

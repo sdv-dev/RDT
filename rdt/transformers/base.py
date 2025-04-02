@@ -327,19 +327,19 @@ class BaseTransformer:
         custom_args = []
         args = inspect.getfullargspec(self.__init__)
         keys = args.args[1:]
-        defaults = args.defaults or []
-        defaults = dict(zip(keys, defaults))
         instanced = {
             key: getattr(self, key)
             for key in keys
             if key != 'model_missing_values' and hasattr(self, key)  # Remove after deprecation
         }
 
+        defaults = args.defaults or []
+        defaults = dict(zip(keys, defaults))
         if defaults == instanced:
             return f'{class_name}()'
 
         for arg, value in instanced.items():
-            if defaults[arg] != value:
+            if arg not in defaults or defaults[arg] != value:
                 custom_args.append(f'{arg}={repr(value)}')
 
         args_string = ', '.join(custom_args)

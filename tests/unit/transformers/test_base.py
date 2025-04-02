@@ -364,18 +364,19 @@ class TestBaseTransformer:
 
         # Setup
         class Dummy(BaseTransformer):
-            def __init__(self, param1=None, param2=None, param3=None):
+            def __init__(self, param0, param1=None, param2=None, param3=None):
+                self.param0 = param0
                 self.param1 = param1
                 self.param2 = param2
                 self.param3 = param3
 
-        transformer = Dummy(param2='value', param3=True)
+        transformer = Dummy(param0='required', param2='value', param3=True)
 
         # Run
         text = repr(transformer)
 
         # Assert
-        assert text == "Dummy(param2='value', param3=True)"
+        assert text == "Dummy(param0='required', param2='value', param3=True)"
 
     def test__str__(self):
         """Test the ``__str__`` method.
