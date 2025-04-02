@@ -274,6 +274,18 @@ def test_learn_rounding_digits(test_data, expected_digits):
     assert result == expected_digits
 
 
+def test_learn_rounding_digits_object_dtype():
+    """Test learn_rounding_digits for object dtype."""
+    # Setup
+    data = pd.Series(['1.1', '1.11', np.nan], dtype='object')
+
+    # Run
+    result = learn_rounding_digits(data)
+
+    # Assert
+    assert result == 2
+
+
 def test_learn_rounding_digits_code_coverage():
     """Test learn_rounding_digits for code coverage."""
     # Setup
