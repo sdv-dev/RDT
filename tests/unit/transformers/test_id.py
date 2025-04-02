@@ -169,6 +169,7 @@ class TestRegexGenerator:
             'generation_order': 'alphanumeric',
             '_unique_regex_values': None,
             '_data_cardinality': None,
+            '_data_cardinality_scale': None,
         }
 
     @patch('rdt.transformers.id.strings_from_regex')
@@ -426,6 +427,23 @@ class TestRegexGenerator:
         assert instance.data_length == 6
         assert instance._data_cardinality == 5
         assert instance._unique_regex_values == ['a', 'b', 'a(0)', 'b(0)', 'a(1)']
+        assert instance.output_properties == {None: {'next_transformer': None}}
+
+    def test__fit_cardinality_rule_scale(self):
+        """Test it when cardinality_rule is 'scale'."""
+        # Setup
+        instance = RegexGenerator(cardinality_rule='scale')
+        columns_data = pd.Series(['1', '2', '3', '4', '5', '5', '6', '6', '7', '7', '7', '7'])
+
+        # Run
+        instance._fit(columns_data)
+
+        # Assert
+        assert instance.data_length == 12
+        assert instance._data_cardinality_scale == {
+            'num_repetitions': [1, 2, 4],
+            'frequency': [4 / 7, 2 / 7, 1 / 7]
+        }
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__transform(self):

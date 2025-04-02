@@ -12,6 +12,8 @@ from rdt.transformers.utils import (
     strings_from_regex,
 )
 
+from collections import Counter
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -91,8 +93,10 @@ class RegexGenerator(BaseTransformer):
         cardinality_rule (str):
             Rule that the generated data must follow.
             - If set to 'unique', the generated data must be unique.
-            - If set to 'match', the generated data must have the exact same cardinality
-              (# of unique values) as the real data.
+            - If set to 'match', the generated data will have the exact same cardinality
+              (number of unique values) as the real data.
+            - If set to 'scale', the generated data will match the number of repetitions that
+              each value is allowed to have.
             - If set to ``None``, then the generated data may contain duplicates.
             Defaults to ``None``.
         generation_order (str):
@@ -144,6 +148,7 @@ class RegexGenerator(BaseTransformer):
         )
         self._data_cardinality = None
         self._unique_regex_values = None
+        self._data_cardinality_scale = None
         self.data_length = None
         self.generator = None
         self.generator_size = None
@@ -193,6 +198,20 @@ class RegexGenerator(BaseTransformer):
 
         return regex_values
 
+    def _get_cardinality_frequency(self, data):
+        """Get number of repetitions and their frequencies."""
+        repetitions = data.value_counts(dropna=False).to_numpy()
+        repetitions_counter = Counter(repetitions)
+        total_repetitions = sum(repetitions_counter.values())
+        normalized_frequency = {
+            repetition: freq / total_repetitions
+            for repetition, freq in repetitions_counter.items()
+        }
+        sorted_repetitions = sorted(normalized_frequency.keys())
+        sorted_frequencies = [normalized_frequency[repetition] for repetition in sorted_repetitions]
+
+        return sorted_repetitions, sorted_frequencies
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -207,6 +226,13 @@ class RegexGenerator(BaseTransformer):
             is_nan = int(pd.isna(data).any())  # nans count as a unique value
             self._data_cardinality = data.nunique() + is_nan
             self._unique_regex_values = self._generate_unique_regex_values()
+
+        elif self.cardinality_rule == 'scale':
+            sorted_counts, sorted_frequencies = self._get_cardinality_frequency(data)
+            self._data_cardinality_scale = {
+                'num_repetitions': sorted_counts,
+                'frequency': sorted_frequencies
+            }
 
     def _transform(self, _data):
         """Drop the input column by returning ``None``."""
@@ -294,10 +320,24 @@ class RegexGenerator(BaseTransformer):
 
         return template_samples + samples
 
+    def _generate_scaled_cardinality(self, num_samples):
+        """Generate values until the sample size is reached, while respecting the cardinality."""
+        return np.random.choice(
+            self._data_cardinality_scale['num_repetitions'],
+            size=num_samples,
+            p=self._data_cardinality_scale['frequency']
+        )
+
     def _generate_samples(self, num_samples, match_cardinality_values, unique_condition):
         """Generate samples until the sample size is reached."""
+        if num_samples <= 0:
+            return []
+
         if match_cardinality_values is not None:
             return self._generate_match_cardinality(num_samples)
+
+        if self._data_cardinality_scale is not None:
+            return self._generate_scaled_cardinality(num_samples)
 
         # If there aren't enough values left in the generator, reset it
         if num_samples > self.generator_size - self.generated:
