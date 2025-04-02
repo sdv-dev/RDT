@@ -1,5 +1,17 @@
 # History
 
+## v1.15.1 - 2025-04-02
+
+### Bugs Fixed
+
+* `learn_rounding_digits` should work for numerical data of `object` dtype - Issue [#972](https://github.com/sdv-dev/RDT/issues/972) by @fealho
+* `BaseTransformer.__repr__` errors if transformer has required arguments - Issue [#961](https://github.com/sdv-dev/RDT/issues/961) by @fealho
+* The `AnonymizedFaker` does not match cardinality across multiple applications of `reverse_transform` - Issue [#951](https://github.com/sdv-dev/RDT/issues/951) by @pvk-developer
+
+### Maintenance
+
+* All bump-version commands are failing - Issue [#974](https://github.com/sdv-dev/RDT/issues/974) by @amontanez24
+
 ## v1.15.0 - 2025-03-14
 
 ### New Features
