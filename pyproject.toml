@@ -54,7 +54,7 @@ rdt = { main = 'rdt.cli.__main__:main' }
 
 [project.optional-dependencies]
 copulas = ['copulas>=0.12.1',]
-pyarrow = ['pyarrow>=17.0.0']
+pyarrow = ['pyarrow>=17.0.0',]
 test = [
     'rdt[pyarrow]',
     'rdt[copulas]',
@@ -62,7 +62,6 @@ test = [
     'pytest>=3.4.2',
     'pytest-cov>=2.6.0',
     'jupyter>=1.0.0,<2',
-    'rundoc>=0.4.3,<0.5',
     'pytest-subtests>=0.5,<1.0',
     'pytest-runner >= 2.11.1',
     'tomli>=2.0.0,<3',
@@ -72,7 +71,7 @@ dev = [
 
     # general
     'build>=1.0.0,<2',
-    'bump-my-version>=0.18.3,<1',
+    'bump-my-version>=0.18.3',
     'pip>=9.0.1',
     'watchdog>=1.0.1,<5',
 
@@ -80,7 +79,7 @@ dev = [
     'ruff>=0.3.2,<1',
 
     # distribute on PyPI
-    'twine>=1.10.0,<6',
+    'twine>=1.10.0',
     'wheel>=0.30.0',
 
     # Advanced testing
@@ -89,8 +88,9 @@ dev = [
     'tabulate>=0.8.9,<1',
 
     # Invoking test commands
-    'invoke'
+    'invoke',
 ]
+readme = ['rundoc>=0.4.3,<0.5',]
 
 [tool.setuptools]
 include-package-data = true
