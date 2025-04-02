@@ -2,6 +2,7 @@
 
 import logging
 import warnings
+from collections import Counter
 
 import numpy as np
 import pandas as pd
@@ -11,8 +12,6 @@ from rdt.transformers.utils import (
     _handle_enforce_uniqueness_and_cardinality_rule,
     strings_from_regex,
 )
-
-from collections import Counter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -149,6 +148,7 @@ class RegexGenerator(BaseTransformer):
         self._data_cardinality = None
         self._unique_regex_values = None
         self._data_cardinality_scale = None
+        self._remaining_samples = {'value': None, 'repetitions': 0}
         self.data_length = None
         self.generator = None
         self.generator_size = None
@@ -204,8 +204,7 @@ class RegexGenerator(BaseTransformer):
         repetitions_counter = Counter(repetitions)
         total_repetitions = sum(repetitions_counter.values())
         normalized_frequency = {
-            repetition: freq / total_repetitions
-            for repetition, freq in repetitions_counter.items()
+            repetition: freq / total_repetitions for repetition, freq in repetitions_counter.items()
         }
         sorted_repetitions = sorted(normalized_frequency.keys())
         sorted_frequencies = [normalized_frequency[repetition] for repetition in sorted_repetitions]
@@ -231,7 +230,7 @@ class RegexGenerator(BaseTransformer):
             sorted_counts, sorted_frequencies = self._get_cardinality_frequency(data)
             self._data_cardinality_scale = {
                 'num_repetitions': sorted_counts,
-                'frequency': sorted_frequencies
+                'frequency': sorted_frequencies,
             }
 
     def _transform(self, _data):
@@ -320,13 +319,48 @@ class RegexGenerator(BaseTransformer):
 
         return template_samples + samples
 
+    def _generate_value_with_repetitions(self, num_samples, value):
+        repetitions = np.random.choice(
+            self._data_cardinality_scale['num_repetitions'],
+            size=1,
+            p=self._data_cardinality_scale['frequency'],
+        )
+        if repetitions <= num_samples:
+            new_samples = [value] * repetitions
+            num_samples -= repetitions
+        else:
+            new_samples = [value] * num_samples
+            num_samples = 0
+
+        return new_samples, num_samples
+
     def _generate_scaled_cardinality(self, num_samples):
         """Generate values until the sample size is reached, while respecting the cardinality."""
-        return np.random.choice(
-            self._data_cardinality_scale['num_repetitions'],
-            size=num_samples,
-            p=self._data_cardinality_scale['frequency']
-        )
+        if self._remaining_samples['repetitions'] > num_samples:
+            self._remaining_samples['repetitions'] -= num_samples
+            return [self._remaining_samples['value']] * num_samples
+
+        samples = [self._remaining_samples['value']] * self._remaining_samples['repetitions']
+        num_samples -= self._remaining_samples['repetitions']
+        self._remaining_samples['repetitions'] = 0
+
+        while num_samples > 0:
+            try:
+                value = next(self.generator)
+            except (RuntimeError, StopIteration):
+                break
+
+            new_samples, num_samples = self._generate_value_with_repetitions(num_samples, value)
+            samples.extend(new_samples)
+
+        if num_samples > 0:
+            values = self._generate_fallback_samples(num_samples, samples)
+            while num_samples > 0:
+                value = values.pop(0)
+                new_samples, num_samples = self._generate_value_with_repetitions(num_samples, value)
+                samples.extend(new_samples)
+
+        return samples
 
     def _generate_samples(self, num_samples, match_cardinality_values, unique_condition):
         """Generate samples until the sample size is reached."""

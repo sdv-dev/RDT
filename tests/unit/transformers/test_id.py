@@ -170,6 +170,7 @@ class TestRegexGenerator:
             '_unique_regex_values': None,
             '_data_cardinality': None,
             '_data_cardinality_scale': None,
+            '_remaining_samples': {'value': None, 'repetitions': 0},
         }
 
     @patch('rdt.transformers.id.strings_from_regex')
@@ -442,7 +443,7 @@ class TestRegexGenerator:
         assert instance.data_length == 12
         assert instance._data_cardinality_scale == {
             'num_repetitions': [1, 2, 4],
-            'frequency': [4 / 7, 2 / 7, 1 / 7]
+            'frequency': [4 / 7, 2 / 7, 1 / 7],
         }
         assert instance.output_properties == {None: {'next_transformer': None}}
 
