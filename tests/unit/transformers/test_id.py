@@ -447,6 +447,40 @@ class TestRegexGenerator:
         }
         assert instance.output_properties == {None: {'next_transformer': None}}
 
+    def test__fit_cardinality_rule_scale_nans(self):
+        """Test it when cardinality_rule is 'scale'."""
+        # Setup
+        instance = RegexGenerator(cardinality_rule='scale')
+        columns_data = pd.Series([np.nan, np.nan, None, None, '1', 2])
+
+        # Run
+        instance._fit(columns_data)
+
+        # Assert
+        assert instance.data_length == 6
+        assert instance._data_cardinality_scale == {
+            'num_repetitions': [1, 4],
+            'frequency': [2 / 3, 1 / 3],
+        }
+        assert instance.output_properties == {None: {'next_transformer': None}}
+
+    def test__fit_cardinality_rule_scale_only_nans(self):
+        """Test it when cardinality_rule is 'scale'."""
+        # Setup
+        instance = RegexGenerator(cardinality_rule='scale')
+        columns_data = pd.Series([np.nan, np.nan, None, None, float('nan'), float('nan')])
+
+        # Run
+        instance._fit(columns_data)
+
+        # Assert
+        assert instance.data_length == 6
+        assert instance._data_cardinality_scale == {
+            'num_repetitions': [6],
+            'frequency': [1],
+        }
+        assert instance.output_properties == {None: {'next_transformer': None}}
+
     def test__transform(self):
         """Test the ``_transform`` method.
 

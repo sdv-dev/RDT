@@ -200,7 +200,11 @@ class RegexGenerator(BaseTransformer):
 
     def _get_cardinality_frequency(self, data):
         """Get number of repetitions and their frequencies."""
-        repetitions = data.value_counts(dropna=False).to_numpy()
+        repetitions = data.value_counts().to_numpy()
+        num_nans = sum(pd.isna(data))
+        if num_nans > 0:
+            repetitions = np.concatenate([repetitions, [num_nans]])
+
         repetitions_counter = Counter(repetitions)
         total_repetitions = sum(repetitions_counter.values())
         normalized_frequency = {
@@ -283,6 +287,8 @@ class RegexGenerator(BaseTransformer):
                 )
             if sample_size > self.generator_size and self._data_cardinality > self.generator_size:
                 warnings.warn(warn_msg)
+
+        # TODO: implement warnings
 
     def _generate_as_many_as_possible(self, num_samples):
         """Generate samples.
