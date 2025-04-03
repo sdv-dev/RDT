@@ -326,9 +326,9 @@ class RegexGenerator(BaseTransformer):
         return template_samples + samples
 
     def _generate_value_with_repetitions(self, num_samples, value):
+        """Note: this does not store remaining values after generator is exhausted."""
         repetitions = np.random.choice(
             self._data_cardinality_scale['num_repetitions'],
-            size=1,
             p=self._data_cardinality_scale['frequency'],
         )
         if repetitions <= num_samples:
@@ -350,9 +350,11 @@ class RegexGenerator(BaseTransformer):
         num_samples -= self._remaining_samples['repetitions']
         self._remaining_samples['repetitions'] = 0
 
+        template_samples = []
         while num_samples > 0:
             try:
                 value = next(self.generator)
+                template_samples.append(value)
             except (RuntimeError, StopIteration):
                 break
 
@@ -360,7 +362,7 @@ class RegexGenerator(BaseTransformer):
             samples.extend(new_samples)
 
         if num_samples > 0:
-            values = self._generate_fallback_samples(num_samples, samples)
+            values = self._generate_fallback_samples(num_samples, template_samples)
             while num_samples > 0:
                 value = values.pop(0)
                 new_samples, num_samples = self._generate_value_with_repetitions(num_samples, value)
