@@ -6,7 +6,7 @@ from collections import Counter
 
 import numpy as np
 import pandas as pd
-import string
+
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import (
     _handle_enforce_uniqueness_and_cardinality_rule,
@@ -294,8 +294,6 @@ class RegexGenerator(BaseTransformer):
             if sample_size > self.generator_size and self._data_cardinality > self.generator_size:
                 warnings.warn(warn_msg)
 
-        # TODO: implement warnings
-
     def _generate_as_many_as_possible(self, num_samples):
         """Generate samples.
 
@@ -342,6 +340,8 @@ class RegexGenerator(BaseTransformer):
             num_samples -= repetitions
         else:
             new_samples = [value] * num_samples
+            self._remaining_samples['repetitions'] = repetitions - num_samples
+            self._remaining_samples['value'] = value
             num_samples = 0
 
         return new_samples, num_samples
@@ -362,12 +362,20 @@ class RegexGenerator(BaseTransformer):
                 value = next(self.generator)
                 template_samples.append(value)
             except (RuntimeError, StopIteration):
-                break
+                if len(template_samples) == 0:
+                    self.reset_randomization()
+                    continue
+                else:
+                    break
 
             new_samples, num_samples = self._generate_value_with_repetitions(num_samples, value)
             samples.extend(new_samples)
 
         if num_samples > 0:
+            warnings.warn(
+                f"The regex for '{self.get_input_column()}' cannot generate enough samples. "
+                'Additional values may not exactly follow the provided regex.'
+            )
             values = self._generate_fallback_samples(num_samples, template_samples)
             while num_samples > 0:
                 value = values.pop(0)

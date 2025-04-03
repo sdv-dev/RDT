@@ -1,4 +1,5 @@
 import pickle
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -433,8 +434,12 @@ class TestRegexGenerator:
         instance = RegexGenerator(regex_format='[a-z]', cardinality_rule='scale')
 
         # Run
-        transformed = instance.fit_transform(data, 'col')
-        out = instance.reverse_transform(transformed)
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            transformed = instance.fit_transform(data, 'col')
+            out = instance.reverse_transform(transformed)
+
+            assert len(recorded_warnings) == 0
 
         # Assert
         assert set(out['col']).issubset({'a', 'b', 'c'})
@@ -453,8 +458,12 @@ class TestRegexGenerator:
         instance = RegexGenerator(regex_format='[a-z]', cardinality_rule='scale')
 
         # Run
-        transformed = instance.fit_transform(data, 'col')
-        out = instance.reverse_transform(transformed)
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            transformed = instance.fit_transform(data, 'col')
+            out = instance.reverse_transform(transformed)
+
+            assert len(recorded_warnings) == 0
 
         # Assert
         assert set(out['col']).issubset({'a', 'b', 'c'})
@@ -473,8 +482,12 @@ class TestRegexGenerator:
         instance = RegexGenerator(regex_format='[A-Z]', cardinality_rule='scale')
 
         # Run
-        transformed = instance.fit_transform(data, 'col')
-        out = instance.reverse_transform(transformed)
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            transformed = instance.fit_transform(data, 'col')
+            out = instance.reverse_transform(transformed)
+
+            assert len(recorded_warnings) == 0
 
         # Assert
         pd.testing.assert_frame_equal(out, data)
@@ -486,8 +499,12 @@ class TestRegexGenerator:
         instance = RegexGenerator(regex_format='[A-Z]', cardinality_rule='scale')
 
         # Run
-        instance.fit_transform(data, 'col')
-        out = instance.reverse_transform(pd.DataFrame(index=range(200)))
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            instance.fit_transform(data, 'col')
+            out = instance.reverse_transform(pd.DataFrame(index=range(200)))
+
+            assert len(recorded_warnings) == 0
 
         # Assert
         expected = pd.DataFrame({'col': ['A'] * 50 + ['B'] * 50 + ['C'] * 50 + ['D'] * 50})
@@ -500,8 +517,12 @@ class TestRegexGenerator:
         instance = RegexGenerator(regex_format='[a-z]', cardinality_rule='scale')
 
         # Run
-        transformed = instance.fit_transform(data, 'col')
-        out = instance.reverse_transform(transformed)
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            transformed = instance.fit_transform(data, 'col')
+            out = instance.reverse_transform(transformed)
+
+            assert len(recorded_warnings) == 0
 
         # Assert
         pd.testing.assert_frame_equal(out, data, check_dtype=False)
@@ -580,8 +601,17 @@ class TestRegexGenerator:
         instance = RegexGenerator(regex_format='[1-3]', cardinality_rule='scale')
 
         # Run
-        transformed = instance.fit_transform(data, 'col')
-        out = instance.reverse_transform(transformed)
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            transformed = instance.fit_transform(data, 'col')
+            out = instance.reverse_transform(transformed)
+
+            assert len(recorded_warnings) == 1
+            warn_msg = (
+                "The regex for 'col' cannot generate enough samples. Additional values "
+                'may not exactly follow the provided regex.'
+            )
+            assert warn_msg == str(recorded_warnings[0].message)
 
         # Assert
         self.assert_proportions(out, 3000)
@@ -593,14 +623,18 @@ class TestRegexGenerator:
         twice = [i // 2 for i in range(2000, 3000)]
         thrice = [i // 3 for i in range(4500, 5500)]
         data = pd.DataFrame({'col': once + twice + thrice})
-        instance = RegexGenerator(cardinality_rule='scale')
+        instance = RegexGenerator(cardinality_rule='scale', generation_order='alphanumeric')
 
         # Run
-        transformed_data = instance.fit_transform(data, 'col')
-        first_reverse_transform = instance.reverse_transform(transformed_data.head(500))
-        second_reverse_transform = instance.reverse_transform(transformed_data.head(1000))
-        third_reverse_transform = instance.reverse_transform(transformed_data.head(2000))
-        fourth_reverse_transform = instance.reverse_transform(transformed_data.head(1111))
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            transformed_data = instance.fit_transform(data, 'col')
+            first_reverse_transform = instance.reverse_transform(transformed_data.head(500))
+            second_reverse_transform = instance.reverse_transform(transformed_data.head(1000))
+            third_reverse_transform = instance.reverse_transform(transformed_data.head(2000))
+            fourth_reverse_transform = instance.reverse_transform(transformed_data.head(1111))
+
+            assert len(recorded_warnings) == 0
 
         # Assert
         self.assert_proportions(first_reverse_transform, 500)
@@ -608,12 +642,15 @@ class TestRegexGenerator:
         self.assert_proportions(third_reverse_transform, 2000)
         self.assert_proportions(fourth_reverse_transform, 1111)
 
-        assert set(first_reverse_transform['col']).isdisjoint(set(second_reverse_transform['col']))
-        assert set(first_reverse_transform['col']).isdisjoint(set(third_reverse_transform['col']))
-        assert set(first_reverse_transform['col']).isdisjoint(set(fourth_reverse_transform['col']))
-        assert set(second_reverse_transform['col']).isdisjoint(set(third_reverse_transform['col']))
-        assert set(second_reverse_transform['col']).isdisjoint(set(fourth_reverse_transform['col']))
-        assert set(third_reverse_transform['col']).isdisjoint(set(fourth_reverse_transform['col']))
+        first_set = set(first_reverse_transform['col'])
+        second_set = set(second_reverse_transform['col'])
+        third_set = set(third_reverse_transform['col'])
+        assert first_set.isdisjoint(set(second_reverse_transform['col'][200:]))
+        assert first_set.isdisjoint(set(third_reverse_transform['col'][200:]))
+        assert first_set.isdisjoint(set(fourth_reverse_transform['col'][200:]))
+        assert second_set.isdisjoint(set(third_reverse_transform['col'][200:]))
+        assert second_set.isdisjoint(set(fourth_reverse_transform['col'][200:]))
+        assert third_set.isdisjoint(set(fourth_reverse_transform['col'][200:]))
 
     def test_cardinality_rule_scale_called_multiple_times_not_enough_regex(self):
         """Test calling multiple times when ``cardinality_rule`` is ``scale``."""
@@ -625,11 +662,21 @@ class TestRegexGenerator:
         instance = RegexGenerator(regex_format='[1-3]', cardinality_rule='scale')
 
         # Run
-        transformed_data = instance.fit_transform(data, 'col')
-        first_reverse_transform = instance.reverse_transform(transformed_data.head(500))
-        second_reverse_transform = instance.reverse_transform(transformed_data.head(1000))
-        third_reverse_transform = instance.reverse_transform(transformed_data.head(2000))
-        fourth_reverse_transform = instance.reverse_transform(transformed_data.head(1111))
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            transformed_data = instance.fit_transform(data, 'col')
+            first_reverse_transform = instance.reverse_transform(transformed_data.head(500))
+            second_reverse_transform = instance.reverse_transform(transformed_data.head(1000))
+            third_reverse_transform = instance.reverse_transform(transformed_data.head(2000))
+            fourth_reverse_transform = instance.reverse_transform(transformed_data.head(1111))
+
+            assert len(recorded_warnings) == 4
+            warn_msg = (
+                "The regex for 'col' cannot generate enough samples. Additional values "
+                'may not exactly follow the provided regex.'
+            )
+            for warning in recorded_warnings:
+                assert warn_msg == str(warning.message)
 
         # Assert
         self.assert_proportions(first_reverse_transform, 500)
@@ -637,12 +684,71 @@ class TestRegexGenerator:
         self.assert_proportions(third_reverse_transform, 2000)
         self.assert_proportions(fourth_reverse_transform, 1111)
 
-        assert set(first_reverse_transform['col']).isdisjoint(set(second_reverse_transform['col']))
-        assert set(first_reverse_transform['col']).isdisjoint(set(third_reverse_transform['col']))
-        assert set(first_reverse_transform['col']).isdisjoint(set(fourth_reverse_transform['col']))
-        assert set(second_reverse_transform['col']).isdisjoint(set(third_reverse_transform['col']))
-        assert set(second_reverse_transform['col']).isdisjoint(set(fourth_reverse_transform['col']))
-        assert set(third_reverse_transform['col']).isdisjoint(set(fourth_reverse_transform['col']))
+    def test_cardinality_rule_scale_called_multiple_times_not_enough_regex_categorical(self):
+        """Test calling multiple times when ``cardinality_rule`` is ``scale``."""
+        # Setup
+        once = list(range(1000))
+        twice = [i // 2 for i in range(2000, 3000)]
+        thrice = [i // 3 for i in range(4500, 5500)]
+        data = pd.DataFrame({'col': once + twice + thrice})
+        instance = RegexGenerator(regex_format='[a-z]', cardinality_rule='scale')
+
+        # Run
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            transformed_data = instance.fit_transform(data, 'col')
+            first_reverse_transform = instance.reverse_transform(transformed_data.head(500))
+            second_reverse_transform = instance.reverse_transform(transformed_data.head(1000))
+            third_reverse_transform = instance.reverse_transform(transformed_data.head(2000))
+            fourth_reverse_transform = instance.reverse_transform(transformed_data.head(1111))
+
+            assert len(recorded_warnings) == 4
+            warn_msg = (
+                "The regex for 'col' cannot generate enough samples. Additional values "
+                'may not exactly follow the provided regex.'
+            )
+            for warning in recorded_warnings:
+                assert warn_msg == str(warning.message)
+
+        # Assert
+        self.assert_proportions(first_reverse_transform, 500)
+        self.assert_proportions(second_reverse_transform, 1000)
+        self.assert_proportions(third_reverse_transform, 2000)
+        self.assert_proportions(fourth_reverse_transform, 1111)
+
+    def test_cardinality_rule_scale_called_multiple_times_remaining_samples(self):
+        """Test calling multiple times when ``cardinality_rule`` is ``scale``."""
+        # Setup
+        hundred = [i // 100 for i in range(1000)]
+        two_hundred = [i // 200 for i in range(2000, 3000)]
+        data = pd.DataFrame({'col': hundred + two_hundred})
+        instance = RegexGenerator(
+            regex_format='[a-f]', cardinality_rule='scale', generation_order='alphanumeric'
+        )
+
+        # Run
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            transformed_data = instance.fit_transform(data, 'col')
+            first_out = instance.reverse_transform(transformed_data.head(250))
+            second_out = instance.reverse_transform(transformed_data.head(3_000))
+
+            assert len(recorded_warnings) == 1
+            warn_msg = (
+                "The regex for 'col' cannot generate enough samples. Additional values "
+                'may not exactly follow the provided regex.'
+            )
+            assert warn_msg == str(recorded_warnings[0].message)
+
+        # Assert
+        assert len(first_out) == 250
+        assert len(set(first_out['col'][200:])) == 1
+        pd.testing.assert_series_equal(
+            first_out['col'][200:],
+            second_out['col'][:50],
+            check_index=False,
+        )
+        assert second_out['col'][0] not in second_out['col'][50:]
 
 
 class TestHyperTransformer:
