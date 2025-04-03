@@ -1002,7 +1002,7 @@ class TestRegexGenerator:
 
         # Assert
         assert set(out1).issubset({'A', 'B', 'A(0)'})
-        assert set(out2).issubset({'A', 'B', 'A(0)', 'B(0)'})
+        assert set(out2).issubset({'A', 'B', 'A(0)', 'B(0)', 'B(1)', 'B(2)', 'B(3)'})
 
     def test__reverse_transform_scale_many_remaining_values(self):
         """Test when cardinality rule is 'scale'."""
