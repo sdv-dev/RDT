@@ -6,7 +6,7 @@ from collections import Counter
 
 import numpy as np
 import pandas as pd
-
+import string
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import (
     _handle_enforce_uniqueness_and_cardinality_rule,
@@ -145,18 +145,24 @@ class RegexGenerator(BaseTransformer):
         self.cardinality_rule = _handle_enforce_uniqueness_and_cardinality_rule(
             enforce_uniqueness, cardinality_rule
         )
-        self._data_cardinality = None
-        self._unique_regex_values = None
-        self._data_cardinality_scale = None
-        self._remaining_samples = {'value': None, 'repetitions': 0}
         self.data_length = None
         self.generator = None
-        self.generator_size = None
-        self.generated = None
         if generation_order not in ['alphanumeric', 'scrambled']:
             raise ValueError("generation_order must be one of 'alphanumeric' or 'scrambled'.")
 
         self.generation_order = generation_order
+
+        # Used when cardinality_rule is 'scale'
+        self._data_cardinality_scale = None
+        self._remaining_samples = {'value': None, 'repetitions': 0}
+
+        # Used when cardinality_rule is 'match'
+        self._data_cardinality = None
+        self._unique_regex_values = None
+
+        # Used otherwise
+        self.generator_size = None
+        self.generated = None
 
     def reset_randomization(self):
         """Create a new generator and reset the generated values counter."""
