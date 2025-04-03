@@ -1,6 +1,7 @@
 """Test for ID transformers."""
 
 import re
+import warnings
 from string import ascii_uppercase
 from unittest.mock import Mock, patch
 
@@ -915,3 +916,105 @@ class TestRegexGenerator:
         assert value_counts.get('C', 0) in {0, 50}
 
         assert value_counts.sum() == 150
+
+    def test__reverse_transform_scale_empty_data(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': []})
+        instance = RegexGenerator(regex_format='[A-Z]', cardinality_rule='scale')
+        instance.fit(data, 'col')
+
+        # Run
+        out = instance._reverse_transform(data)
+
+        # Assert
+        assert isinstance(out, np.ndarray)
+        assert out.size == 0
+
+    def test__reverse_transform_scale_not_enough_regex(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 50 + ['B'] * 50 + ['C'] * 50})
+        instance = RegexGenerator(regex_format='[A-B]', cardinality_rule='scale')
+        instance.fit(data, 'col')
+
+        # Run
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            out = instance._reverse_transform(data)
+
+            assert len(recorded_warnings) == 1
+            assert str(recorded_warnings[0].message) == (
+                "The regex for 'col' cannot generate enough samples. Additional values "
+                'may not exactly follow the provided regex.'
+            )
+
+        # Assert
+        assert set(out).issubset({'A', 'B', 'A(0)'})
+
+        value_counts = pd.Series(out).value_counts()
+        assert value_counts['A'] in {50, 100, 150}
+        assert value_counts.get('B', 0) in {0, 50, 100}
+        assert value_counts.get('A(0)', 0) in {0, 50}
+
+        assert value_counts.sum() == 150
+
+    def test__reverse_transform_scale_not_enough_regex_multiple_calls(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 50 + ['B'] * 50 + ['C'] * 50})
+        instance = RegexGenerator(regex_format='[A-B]', cardinality_rule='scale')
+        instance.fit(data, 'col')
+
+        # Run
+        with warnings.catch_warnings(record=True) as recorded_warnings:
+            warnings.simplefilter('always')
+            out1 = instance._reverse_transform(data)
+            out2 = instance._reverse_transform(data)
+
+            assert len(recorded_warnings) == 2
+            assert str(recorded_warnings[0].message) == (
+                "The regex for 'col' cannot generate enough samples. Additional values "
+                'may not exactly follow the provided regex.'
+            )
+
+        # Assert
+        assert set(out1) == {'A', 'B', 'A(0)'}
+        assert set(out2) == {'A', 'B', 'A(0)'}
+
+        for out in [out1, out2]:
+            value_counts = pd.Series(out).value_counts()
+            assert value_counts['A'] in {50, 100, 150}
+            assert value_counts.get('B', 0) in {0, 50, 100}
+            assert value_counts.get('A(0)', 0) in {0, 50}
+            assert value_counts.sum() == 150
+
+    def test__reverse_transform_scale_remaining_values(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 10 + ['B'] * 3})
+        instance = RegexGenerator(regex_format='[A-B]', cardinality_rule='scale')
+        instance.fit(data, 'col')
+
+        # Run
+        out1 = instance._reverse_transform(data.head(8))
+        out2 = instance._reverse_transform(data)
+
+        # Assert
+        assert set(out1).issubset({'A', 'B', 'A(0)'})
+        assert set(out2).issubset({'A', 'B', 'A(0)', 'B(0)'})
+
+    def test__reverse_transform_scale_many_remaining_values(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 100})
+        instance = RegexGenerator(regex_format='[A-B]', cardinality_rule='scale')
+        instance.fit(data, 'col')
+
+        # Run
+        out1 = instance._reverse_transform(data.head(10))
+        out2 = instance._reverse_transform(data.head(10))
+
+        # Assert
+        assert np.array_equal(out1, np.array(['A'] * 10))
+        assert np.array_equal(out2, np.array(['A'] * 10))
