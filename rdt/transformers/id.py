@@ -330,7 +330,6 @@ class RegexGenerator(BaseTransformer):
         return template_samples + samples
 
     def _generate_value_with_repetitions(self, num_samples, value):
-        """Note: this does not store remaining values after generator is exhausted."""
         repetitions = np.random.choice(
             self._data_cardinality_scale['num_repetitions'],
             p=self._data_cardinality_scale['frequency'],

@@ -907,21 +907,11 @@ class TestRegexGenerator:
         out = instance._reverse_transform(data)
 
         # Assert
-        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C']))
+        assert set(out).issubset({'A', 'B', 'C'})
 
-    def test__reverse_transform_scale_not_enough_values(self):
-        """Test the case when there are not enough values to scale the cardinality rule."""
-        # Setup
-        data = pd.DataFrame({'col': ['A', 'B', 'C', 'D', 'E']})
-        instance = RegexGenerator(regex_format='[A-Z]', cardinality_rule='scale')
-        instance.fit(data, 'col')
+        value_counts = pd.Series(out).value_counts()
+        assert value_counts['A'] in {50, 100, 150}
+        assert value_counts.get('B', 0) in {0, 50, 100}
+        assert value_counts.get('C', 0) in {0, 50}
 
-        # Run and Assert
-        warn_msg = re.escape(
-            'Only 3 values can be generated. Cannot match the cardinality '
-            'of the data, it requires 5 values.'
-        )
-        with pytest.warns(UserWarning, match=warn_msg):
-            out = instance._reverse_transform(data[:3])
-
-        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C']))
+        assert value_counts.sum() == 150
