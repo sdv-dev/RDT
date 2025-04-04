@@ -530,6 +530,27 @@ class TestUnixTimestampEncoder:
         expected = pd.Series([np.nan, np.nan, np.nan])
         pd.testing.assert_series_equal(output, expected)
 
+    def test__reverse_transform_missing_value_generation_from_column(self):
+        """Test ``_reverse_transform`` method with `missing_value_generation` is `from_column`."""
+        # Setup
+        transformer = UnixTimestampEncoder(missing_value_generation='from_column')
+        transformed = pd.DataFrame({
+            'date': [1.5778368e18, 1.5805152e18, 1.5830208e18],
+            'date.is_null': [0.1, 0.6, 0.1],
+        })
+        transformer._min_value = 1.5778368e18
+        transformer._max_value = 1.5830208e18
+        transformer.null_transformer = NullTransformer(missing_value_generation='from_column')
+        transformer.null_transformer.nulls = True
+        transformer.enforce_min_max_values = True
+
+        # Run
+        result = transformer._reverse_transform(transformed)
+
+        # Assert
+        expected = pd.Series(pd.to_datetime(['2020-01-01', np.nan, '2020-03-01']))
+        pd.testing.assert_series_equal(result, expected)
+
     def test__set_fitted_parameters(self):
         """Test the ``_set_fitted_parameters`` method."""
         # Setup
