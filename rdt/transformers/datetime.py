@@ -210,10 +210,10 @@ class UnixTimestampEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
+        data = self._reverse_transform_helper(data)
         if self.enforce_min_max_values:
             data = data.clip(self._min_value, self._max_value)
 
-        data = self._reverse_transform_helper(data)
         datetime_data = pd.to_datetime(data)
         if self.datetime_format:
             if is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
