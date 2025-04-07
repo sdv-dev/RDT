@@ -365,8 +365,20 @@ class TestRegexGenerator:
         # Assert
         assert instance.data_length == 5
         assert instance._data_cardinality == 3
-        assert instance._unique_regex_values == ['AAAAA', 'AAAAB', 'AAAAC']
         assert instance.output_properties == {None: {'next_transformer': None}}
+
+    def test__reverse_transform_cardinality_rule_match(self):
+        """Test it when cardinality_rule is 'match'."""
+        # Setup
+        instance = RegexGenerator(cardinality_rule='match')
+        columns_data = pd.DataFrame({'col': ['1', '2', '3', '2', '1']})
+
+        # Run
+        instance.fit(columns_data, 'col')
+        instance._reverse_transform(columns_data)
+
+        # Assert
+        assert instance._unique_regex_values == ['AAAAA', 'AAAAB', 'AAAAC']
 
     def test__fit_cardinality_rule_match_with_regex_format(self):
         """Test it when cardinality_rule is 'match'."""
@@ -380,8 +392,20 @@ class TestRegexGenerator:
         # Assert
         assert instance.data_length == 5
         assert instance._data_cardinality == 3
-        assert instance._unique_regex_values == ['1', '2', '3']
         assert instance.output_properties == {None: {'next_transformer': None}}
+
+    def test__reverse_transform_cardinality_rule_match_with_regex_format(self):
+        """Test it when cardinality_rule is 'match'."""
+        # Setup
+        instance = RegexGenerator(cardinality_rule='match', regex_format='[1-5]{1}')
+        columns_data = pd.DataFrame({'col': ['1', '2', '3', '2', '1']})
+
+        # Run
+        instance.fit(columns_data, 'col')
+        instance._reverse_transform(columns_data)
+
+        # Assert
+        assert instance._unique_regex_values == ['1', '2', '3']
 
     def test__fit_cardinality_rule_match_with_nans(self):
         """Test it when cardinality_rule is 'match'."""
@@ -395,8 +419,20 @@ class TestRegexGenerator:
         # Assert
         assert instance.data_length == 8
         assert instance._data_cardinality == 4
-        assert instance._unique_regex_values == ['1', '2', '3', '4']
         assert instance.output_properties == {None: {'next_transformer': None}}
+
+    def test__reverse_transform_cardinality_rule_match_with_nans(self):
+        """Test it when cardinality_rule is 'match'."""
+        # Setup
+        instance = RegexGenerator(cardinality_rule='match', regex_format='[1-5]{1}')
+        columns_data = pd.DataFrame({'col': ['1', '2', '3', '2', '1', np.nan, None, np.nan]})
+
+        # Run
+        instance.fit(columns_data, 'col')
+        instance._reverse_transform(columns_data)
+
+        # Assert
+        assert instance._unique_regex_values == ['1', '2', '3', '4']
 
     def test__fit_cardinality_rule_match_with_nans_too_many_values(self):
         """Test it when cardinality_rule is 'match'."""
@@ -410,8 +446,20 @@ class TestRegexGenerator:
         # Assert
         assert instance.data_length == 5
         assert instance._data_cardinality == 4
-        assert instance._unique_regex_values == ['1', '2', '3', '4']
         assert instance.output_properties == {None: {'next_transformer': None}}
+
+    def test__reverse_transform_cardinality_rule_match_with_nans_too_many_values(self):
+        """Test it when cardinality_rule is 'match'."""
+        # Setup
+        instance = RegexGenerator(cardinality_rule='match', regex_format='[1-3]{1}')
+        columns_data = pd.DataFrame({'col': ['1', '2', '3', '2', '4']})
+
+        # Run
+        instance.fit(columns_data, 'col')
+        instance._reverse_transform(columns_data)
+
+        # Assert
+        assert instance._unique_regex_values == ['1', '2', '3', '4']
 
     def test__fit_cardinality_rule_match_with_too_many_values_str(self):
         """Test it when cardinality_rule is 'match'."""
@@ -425,8 +473,20 @@ class TestRegexGenerator:
         # Assert
         assert instance.data_length == 6
         assert instance._data_cardinality == 5
-        assert instance._unique_regex_values == ['a', 'b', 'a(0)', 'b(0)', 'a(1)']
         assert instance.output_properties == {None: {'next_transformer': None}}
+
+    def test__reverse_transform_cardinality_rule_match_with_too_many_values_str(self):
+        """Test it when cardinality_rule is 'match'."""
+        # Setup
+        instance = RegexGenerator(cardinality_rule='match', regex_format='[a-b]{1}')
+        columns_data = pd.DataFrame({'col': ['a', 'b', 'c', 'b', 'd', 'f']})
+
+        # Run
+        instance.fit(columns_data, 'col')
+        instance._reverse_transform(columns_data)
+
+        # Assert
+        assert instance._unique_regex_values == ['a', 'b', 'a(0)', 'b(0)', 'a(1)']
 
     def test__transform(self):
         """Test the ``_transform`` method.

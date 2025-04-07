@@ -206,7 +206,6 @@ class RegexGenerator(BaseTransformer):
         if self.cardinality_rule == 'match':
             is_nan = int(pd.isna(data).any())  # nans count as a unique value
             self._data_cardinality = data.nunique() + is_nan
-            self._unique_regex_values = self._generate_unique_regex_values()
 
     def _transform(self, _data):
         """Drop the input column by returning ``None``."""
@@ -262,7 +261,7 @@ class RegexGenerator(BaseTransformer):
     def _generate_as_many_as_possible(self, num_samples):
         """Generate samples.
 
-        Generate values following the regex until either the sample size is reached or
+        Generate values following the regex until either the ``num_samples`` is reached or
         the generator is exhausted.
         """
         generated_values = []
@@ -326,6 +325,8 @@ class RegexGenerator(BaseTransformer):
         """
         if hasattr(self, 'cardinality_rule'):
             unique_condition = self.cardinality_rule == 'unique'
+            if self.cardinality_rule == 'match' and self._unique_regex_values is None:
+                self._unique_regex_values = self._generate_unique_regex_values()
         else:
             unique_condition = self.enforce_uniqueness
 
