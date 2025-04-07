@@ -369,7 +369,6 @@ class WarnDict(dict):
 
 
 def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinality_rule):
-    result = cardinality_rule
     if enforce_uniqueness is not None:
         warnings.warn(
             "The 'enforce_uniqueness' parameter is no longer supported. "
@@ -377,6 +376,6 @@ def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinal
             FutureWarning,
         )
         if enforce_uniqueness and cardinality_rule is None:
-            result = 'unique'
+            return 'unique'
 
-    return result
+    return cardinality_rule
