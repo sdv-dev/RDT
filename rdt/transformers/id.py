@@ -160,8 +160,6 @@ class RegexGenerator(BaseTransformer):
         self.cardinality_rule = _handle_enforce_uniqueness_and_cardinality_rule(
             enforce_uniqueness, cardinality_rule
         )
-        self._data_cardinality = None
-        self._unique_regex_values = None
         self.data_length = None
         self.generator = None
         if generation_order not in ['alphanumeric', 'scrambled']:
