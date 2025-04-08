@@ -226,23 +226,23 @@ class RegexGenerator(BaseTransformer):
         self.reset_randomization()
         self.data_length = len(data)
 
-        if self.cardinality_rule == 'match':
-            is_nan = int(pd.isna(data).any())  # nans count as a unique value
-            self._data_cardinality = data.nunique() + is_nan
-
-        elif self.cardinality_rule == 'scale':
+        if hasattr(self, 'cardinality_rule'):
             data = fill_nan_with_none(data)
-            sorted_counts, sorted_frequencies = self._get_cardinality_frequency(data)
-            self._data_cardinality_scale = {
-                'num_repetitions': sorted_counts,
-                'frequency': sorted_frequencies,
-            }
+            if self.cardinality_rule == 'match':
+                self._data_cardinality = data.nunique(dropna=False)
+
+            elif self.cardinality_rule == 'scale':
+                sorted_counts, sorted_frequencies = self._get_cardinality_frequency(data)
+                self._data_cardinality_scale = {
+                    'num_repetitions': sorted_counts,
+                    'frequency': sorted_frequencies,
+                }
 
     def _transform(self, _data):
         """Drop the input column by returning ``None``."""
         return None
 
-    def _warn_not_enough_unique_values(self, sample_size, unique_condition, match_cardinality):
+    def _warn_not_enough_unique_values(self, sample_size, unique_condition, match_condition):
         """Warn the user that the regex cannot generate enough unique values.
 
         Args:
@@ -250,7 +250,7 @@ class RegexGenerator(BaseTransformer):
                 Number of samples to be generated.
             unique_condition (bool):
                 Whether or not to enforce uniqueness.
-            match_cardinality (bool):
+            match_condition (bool):
                 Whether or not to match the cardinality of the data.
         """
         warned = False
@@ -280,7 +280,7 @@ class RegexGenerator(BaseTransformer):
                 f'values (only {max(remaining, 0)} unique values left).'
             )
 
-        if match_cardinality:
+        if match_condition:
             if self._data_cardinality > sample_size:
                 warnings.warn(
                     f'Only {sample_size} values can be generated. Cannot match the cardinality '
@@ -441,12 +441,13 @@ class RegexGenerator(BaseTransformer):
         """
         if hasattr(self, 'cardinality_rule'):
             unique_condition = self.cardinality_rule == 'unique'
-            if self.cardinality_rule == 'match' and self._unique_regex_values is None:
+            match_condition = self.cardinality_rule == 'match'
+            if match_condition and self._unique_regex_values is None:
                 self._unique_regex_values = self._generate_unique_regexes()
         else:
             unique_condition = self.enforce_uniqueness
+            match_condition = False
 
-        match_condition = self._unique_regex_values is not None
         num_samples = len(data) if (data is not None and len(data)) else self.data_length
         self._warn_not_enough_unique_values(num_samples, unique_condition, match_condition)
         samples = self._sample(num_samples, unique_condition)
