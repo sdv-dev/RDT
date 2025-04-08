@@ -240,7 +240,7 @@ class RegexGenerator(BaseTransformer):
         """Drop the input column by returning ``None``."""
         return None
 
-    def _warn_not_enough_unique_values(self, sample_size, unique_condition, match_condition):
+    def _warn_not_enough_unique_values(self, sample_size, unique_condition, match_cardinality):
         """Warn the user that the regex cannot generate enough unique values.
 
         Args:
@@ -248,7 +248,7 @@ class RegexGenerator(BaseTransformer):
                 Number of samples to be generated.
             unique_condition (bool):
                 Whether or not to enforce uniqueness.
-            match_condition (bool):
+            match_cardinality (bool):
                 Whether or not to match the cardinality of the data.
         """
         warned = False
@@ -278,7 +278,7 @@ class RegexGenerator(BaseTransformer):
                 f'values (only {max(remaining, 0)} unique values left).'
             )
 
-        if match_condition:
+        if match_cardinality:
             if self._data_cardinality > sample_size:
                 warnings.warn(
                     f'Only {sample_size} values can be generated. Cannot match the cardinality '
@@ -303,7 +303,7 @@ class RegexGenerator(BaseTransformer):
 
         return samples
 
-    def _sample_cyclic(self, num_samples, template_samples):
+    def _sample_from_template(self, num_samples, template_samples):
         """Sample num_samples values from template_samples in a cycle.
 
         Eg: num_samples = 5, template_samples = ['a', 'b']
@@ -316,7 +316,7 @@ class RegexGenerator(BaseTransformer):
         """Sample num_samples values following the 'match' cardinality rule."""
         samples = self._unique_regex_values[:num_samples]
         if num_samples > len(samples):
-            new_samples = self._sample_cyclic(num_samples - len(samples), samples)
+            new_samples = self._sample_from_template(num_samples - len(samples), samples)
             samples.extend(new_samples)
 
         return samples
@@ -408,7 +408,7 @@ class RegexGenerator(BaseTransformer):
             if unique_condition:
                 new_samples = self._sample_fallback(num_samples - len(samples), samples)
             else:
-                new_samples = self._sample_cyclic(num_samples - len(samples), samples)
+                new_samples = self._sample_from_template(num_samples - len(samples), samples)
             samples.extend(new_samples)
 
         return samples
@@ -439,15 +439,15 @@ class RegexGenerator(BaseTransformer):
         """
         if hasattr(self, 'cardinality_rule'):
             unique_condition = self.cardinality_rule == 'unique'
-            match_condition = self.cardinality_rule == 'match'
-            if match_condition and self._unique_regex_values is None:
+            match_cardinality = self.cardinality_rule == 'match'
+            if match_cardinality and self._unique_regex_values is None:
                 self._unique_regex_values = self._generate_unique_regexes()
         else:
             unique_condition = self.enforce_uniqueness
-            match_condition = False
+            match_cardinality = False
 
         num_samples = len(data) if (data is not None and len(data)) else self.data_length
-        self._warn_not_enough_unique_values(num_samples, unique_condition, match_condition)
+        self._warn_not_enough_unique_values(num_samples, unique_condition, match_cardinality)
         samples = self._sample(num_samples, unique_condition)
 
         if getattr(self, 'generation_order', 'alphanumeric') == 'scrambled':
