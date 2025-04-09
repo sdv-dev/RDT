@@ -15,7 +15,11 @@ import pandas as pd
 from rdt.errors import TransformerInputError, TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.categorical import LabelEncoder
-from rdt.transformers.utils import _handle_enforce_uniqueness_and_cardinality_rule
+from rdt.transformers.utils import (
+    _get_cardinality_frequency,
+    _handle_enforce_uniqueness_and_cardinality_rule,
+    _sample_repetitions,
+)
 
 
 class AnonymizedFaker(BaseTransformer):
@@ -38,6 +42,8 @@ class AnonymizedFaker(BaseTransformer):
         cardinality_rule (str):
             If ``'unique'`` enforce that every created value is unique.
             If ``'match'`` match the cardinality of the data seen during fit.
+            If set to 'scale', the generated data will match the number of repetitions that
+              each value is allowed to have.
             If ``None`` do not consider cardinality.
             Defaults to ``None``.
         enforce_uniqueness (bool):
@@ -118,6 +124,8 @@ class AnonymizedFaker(BaseTransformer):
         missing_value_generation='random',
     ):
         super().__init__()
+        self._data_cardinality_scale = None
+        self._remaining_samples = {'value': None, 'repetitions': 0}
         self._data_cardinality = None
         self.data_length = None
         self.enforce_uniqueness = enforce_uniqueness
@@ -182,10 +190,14 @@ class AnonymizedFaker(BaseTransformer):
         self.faker = faker.Faker(self.locales)
         self.faker.seed_instance(self._faker_random_seed)
 
+        if hasattr(self, 'cardinality_rule') and self.cardinality_rule == 'scale':
+            self._remaining_samples['repetitions'] = 0
+            np.random.seed(self.random_seed)
+
     def _function(self):
         """Return the result of calling the ``faker`` function."""
         try:
-            if self.cardinality_rule in {'unique', 'match'}:
+            if self.cardinality_rule in {'unique', 'match', 'scale'}:
                 faker_attr = self.faker.unique
             else:
                 faker_attr = self.faker
@@ -222,45 +234,45 @@ class AnonymizedFaker(BaseTransformer):
         self._set_faker_seed(data)
         self.data_length = len(data)
         if self.missing_value_generation == 'random':
-            self._nan_frequency = data.isna().sum() / len(data)
+            self._nan_frequency = data.isna().sum() / len(data) if len(data) > 0 else 0.0
 
         if self.cardinality_rule == 'match':
             # remove nans from data
             self._data_cardinality = len(data.dropna().unique())
 
+        if self.cardinality_rule == 'scale':
+            sorted_counts, sorted_frequencies = _get_cardinality_frequency(data.dropna())
+            self._data_cardinality_scale = {
+                'num_repetitions': sorted_counts,
+                'frequency': sorted_frequencies,
+            }
+
     def _transform(self, _data):
         """Drop the input column by returning ``None``."""
         return None
 
+    def _generate_cardinality_scale_values(self, remaining_samples):
+        """Generate sampled values while ensuring each unique category appears at least once."""
+        if self._remaining_samples['repetitions'] >= remaining_samples:
+            self._remaining_samples['repetitions'] -= remaining_samples
+            return [self._remaining_samples['value']] * remaining_samples
+
+        samples = [self._remaining_samples['value']] * self._remaining_samples['repetitions']
+        self._remaining_samples['repetitions'] = 0
+
+        while len(samples) < remaining_samples:
+            new_samples, self._remaining_samples = _sample_repetitions(
+                remaining_samples - len(samples),
+                self._function(),
+                self._data_cardinality_scale.copy(),
+                self._remaining_samples.copy(),
+            )
+            samples.extend(new_samples)
+
+        return np.array(samples, dtype=object)
+
     def _get_unique_categories(self, samples):
         return np.array([self._function() for _ in range(samples)], dtype=object)
-
-    def _reverse_transform_cardinality_rule_match(self, sample_size):
-        """Reverse transform the data when the cardinality rule is 'match'."""
-        num_nans = self._calculate_num_nans(sample_size)
-        reverse_transformed = self._generate_nans(num_nans)
-
-        if sample_size <= num_nans:
-            return reverse_transformed
-
-        remaining_samples = sample_size - num_nans
-        sampled_values = self._generate_cardinality_match_values(remaining_samples)
-
-        reverse_transformed = np.concatenate([reverse_transformed, sampled_values])
-        np.random.shuffle(reverse_transformed)
-
-        return reverse_transformed
-
-    def _calculate_num_nans(self, sample_size):
-        """Calculate the number of NaN values to generate."""
-        if self.missing_value_generation == 'random':
-            return int(self._nan_frequency * sample_size)
-
-        return 0
-
-    def _generate_nans(self, num_nans):
-        """Generate an array of NaN values."""
-        return np.full(num_nans, np.nan, dtype=object)
 
     def _generate_cardinality_match_values(self, remaining_samples):
         """Generate sampled values while ensuring each unique category appears at least once."""
@@ -295,6 +307,36 @@ class AnonymizedFaker(BaseTransformer):
 
         return np.array(reverse_transformed, dtype=object)
 
+    def _calculate_num_nans(self, sample_size):
+        """Calculate the number of NaN values to generate."""
+        if self.missing_value_generation == 'random':
+            return int(self._nan_frequency * sample_size)
+
+        return 0
+
+    def _generate_nans(self, num_nans):
+        """Generate an array of NaN values."""
+        return np.full(num_nans, np.nan, dtype=object)
+
+    def _reverse_transform_cardinality_rules(self, sample_size):
+        """Reverse transform the data when the cardinality rule is 'match' or 'scale'."""
+        num_nans = self._calculate_num_nans(sample_size)
+        reverse_transformed = self._generate_nans(num_nans)
+
+        if sample_size <= num_nans:
+            return reverse_transformed
+
+        remaining_samples = sample_size - num_nans
+        if self.cardinality_rule == 'match':
+            sampled_values = self._generate_cardinality_match_values(remaining_samples)
+        else:
+            sampled_values = self._generate_cardinality_scale_values(remaining_samples)
+
+        reverse_transformed = np.concatenate([reverse_transformed, sampled_values])
+        np.random.shuffle(reverse_transformed)
+
+        return reverse_transformed
+
     def _reverse_transform(self, data):
         """Generate new anonymized data using a ``faker.provider.function``.
 
@@ -310,19 +352,25 @@ class AnonymizedFaker(BaseTransformer):
         else:
             sample_size = self.data_length
 
-        if hasattr(self, 'cardinality_rule') and self.cardinality_rule == 'match':
-            reverse_transformed = self._reverse_transform_cardinality_rule_match(sample_size)
+        if hasattr(self, 'cardinality_rule') and self.cardinality_rule in {'match', 'scale'}:
+            reverse_transformed = self._reverse_transform_cardinality_rules(sample_size)
         else:
             reverse_transformed = self._reverse_transform_with_fallback(sample_size)
 
-        if self.missing_value_generation == 'random' and not pd.isna(reverse_transformed).any():
+        if self.missing_value_generation == 'random' and pd.notna(reverse_transformed).all():
             num_nans = int(self._nan_frequency * sample_size)
             nan_indices = np.random.choice(sample_size, num_nans, replace=False)
             reverse_transformed[nan_indices] = np.nan
 
         return reverse_transformed
 
-    def _set_fitted_parameters(self, column_name, nan_frequency=0.0, cardinality=None):
+    def _set_fitted_parameters(
+        self,
+        column_name,
+        nan_frequency=0.0,
+        cardinality=None,
+        cardinality_scale=None,
+    ):
         """Manually set the parameters on the transformer to get it into a fitted state.
 
         Args:
@@ -334,6 +382,12 @@ class AnonymizedFaker(BaseTransformer):
             cardinality (int or None):
                 The number of unique values to generate if cardinality rule is set to
                 'match'.
+            cardinality_scale (dict or None):
+                The frequency of each number of repetitions in the data:
+                {
+                    'num_repetitions': list of int,
+                    'frequency': list of float,
+                }
         """
         self.reset_randomization()
         self.columns = [column_name]
@@ -344,7 +398,14 @@ class AnonymizedFaker(BaseTransformer):
                     'Cardinality "match" rule must specify a cardinality value.'
                 )
 
+        if self.cardinality_rule == 'scale':
+            if not cardinality_scale:
+                raise TransformerInputError(
+                    'Cardinality "scale" rule must specify a cardinality value.'
+                )
+
         self._data_cardinality = cardinality
+        self._data_cardinality_scale = cardinality_scale
         self._nan_frequency = nan_frequency
 
     def __repr__(self):
