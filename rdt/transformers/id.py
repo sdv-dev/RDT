@@ -8,7 +8,9 @@ import pandas as pd
 
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import (
+    _get_cardinality_frequency,
     _handle_enforce_uniqueness_and_cardinality_rule,
+    _sample_repetitions,
     fill_nan_with_none,
     strings_from_regex,
 )
@@ -185,6 +187,10 @@ class RegexGenerator(BaseTransformer):
         self.generator, self.generator_size = strings_from_regex(self.regex_format)
         self.generated = 0
 
+        if hasattr(self, 'cardinality_rule') and self.cardinality_rule == 'scale':
+            self._remaining_samples['repetitions'] = 0
+            np.random.seed(self.random_seed)
+
     def _sample_fallback(self, num_samples, template_samples):
         """Sample num_samples values such that they are all unique, disregarding the regex."""
         try:
@@ -204,16 +210,6 @@ class RegexGenerator(BaseTransformer):
 
             return samples[:num_samples]
 
-    def _get_cardinality_frequency(self, data):
-        """Get number of repetitions and their frequencies."""
-        value_counts = data.value_counts(dropna=False)
-        repetition_counts = value_counts.value_counts().sort_index()
-        total = repetition_counts.sum()
-        frequencies = (repetition_counts / total).tolist()
-        repetitions = repetition_counts.index.tolist()
-
-        return repetitions, frequencies
-
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -230,7 +226,7 @@ class RegexGenerator(BaseTransformer):
                 self._data_cardinality = data.nunique(dropna=False)
 
             elif self.cardinality_rule == 'scale':
-                sorted_counts, sorted_frequencies = self._get_cardinality_frequency(data)
+                sorted_counts, sorted_frequencies = _get_cardinality_frequency(data)
                 self._data_cardinality_scale = {
                     'num_repetitions': sorted_counts,
                     'frequency': sorted_frequencies,
@@ -321,21 +317,6 @@ class RegexGenerator(BaseTransformer):
 
         return samples
 
-    def _sample_repetitions(self, num_samples, value):
-        """Sample a number of repetitions for a given value."""
-        repetitions = np.random.choice(
-            self._data_cardinality_scale['num_repetitions'],
-            p=self._data_cardinality_scale['frequency'],
-        )
-        if repetitions <= num_samples:
-            samples = [value] * repetitions
-        else:
-            samples = [value] * num_samples
-            self._remaining_samples['repetitions'] = repetitions - num_samples
-            self._remaining_samples['value'] = value
-
-        return samples
-
     def _sample_scale_fallback(self, num_samples, template_samples):
         """Sample num_samples values, disregarding the regex, for the cardinality rule 'scale'."""
         warnings.warn(
@@ -345,8 +326,12 @@ class RegexGenerator(BaseTransformer):
         samples = []
         fallback_samples = self._sample_fallback(num_samples, template_samples)
         while num_samples > len(samples):
-            fallback_sample = fallback_samples.pop(0)
-            new_samples = self._sample_repetitions(num_samples - len(samples), fallback_sample)
+            new_samples, self._remaining_samples = _sample_repetitions(
+                num_samples - len(samples),
+                fallback_samples.pop(0),
+                self._data_cardinality_scale.copy(),
+                self._remaining_samples.copy(),
+            )
             samples.extend(new_samples)
 
         return samples
@@ -369,7 +354,12 @@ class RegexGenerator(BaseTransformer):
                 else:
                     break
 
-            new_samples = self._sample_repetitions(num_samples - len(samples), value)
+            new_samples, self._remaining_samples = _sample_repetitions(
+                num_samples - len(samples),
+                value,
+                self._data_cardinality_scale.copy(),
+                self._remaining_samples.copy(),
+            )
             samples.extend(new_samples)
 
         return samples, template_samples
