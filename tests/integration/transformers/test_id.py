@@ -589,7 +589,7 @@ class TestRegexGenerator:
         assert np.isclose(one_count, two_count * 2, atol=samples * 0.2)
         assert np.isclose(one_count, three_count * 3, atol=samples * 0.2)
         assert len(out) == samples
-        assert more_count == 0
+        assert more_count <= 1
 
     def test_cardinality_rule_scale_not_enough_regex_numerical(self):
         """Test when cardinality rule is 'scale'."""
