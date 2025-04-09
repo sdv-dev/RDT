@@ -1,4 +1,5 @@
 import pickle
+import re
 import warnings
 from io import BytesIO
 
@@ -6,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from rdt.errors import InvalidConfigError
 from rdt.hyper_transformer import HyperTransformer
 from rdt.transformers import (
     FrequencyEncoder,
@@ -780,3 +782,46 @@ def test_ordered_label_encoder_numerical_nans_no_warning():
         reverse = transformer.reverse_transform(transformed)
 
     pd.testing.assert_frame_equal(reverse, data)
+
+
+categorical_transformers = [
+    UniformEncoder(),
+    OrderedUniformEncoder(order=[1, 'two', 3, 'four', None]),
+    LabelEncoder(),
+    OrderedLabelEncoder(order=[1, 'two', 3, 'four', None]),
+]
+
+
+@pytest.mark.parametrize('sdtype', ['id', 'text'])
+@pytest.mark.parametrize('transformer', categorical_transformers)
+def test_categorical_transformers_with_id_sdtype(sdtype, transformer):
+    # Setup
+    data = pd.DataFrame({
+        'col': [1, 'two', 3, 'four', None],
+    })
+    hyper_transformer = HyperTransformer()
+    config = {'sdtypes': {'col': sdtype}, 'transformers': {'col': transformer}}
+
+    # Run
+    hyper_transformer.set_config(config)
+    hyper_transformer.fit(data)
+    transformed = hyper_transformer.transform(data)
+    reverse_transformed = hyper_transformer.reverse_transform(transformed)
+
+    # Assert
+    pd.testing.assert_frame_equal(data, reverse_transformed)
+
+
+@pytest.mark.parametrize('sdtype', ['id', 'text'])
+@pytest.mark.parametrize('transformer', [FrequencyEncoder(), OneHotEncoder()])
+def test_unsupported_categorical_transformers_with_id_sdtype(sdtype, transformer):
+    # Setup
+    hyper_transformer = HyperTransformer()
+    config = {'sdtypes': {'col': sdtype}, 'transformers': {'col': transformer}}
+    expected_invalid_error = re.escape(
+        "Some transformers you've assigned are not compatible with the sdtypes. "
+        "Please change the following columns: ['col']"
+    )
+    # Run
+    with pytest.raises(InvalidConfigError, match=expected_invalid_error):
+        hyper_transformer.set_config(config)
