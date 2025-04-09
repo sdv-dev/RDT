@@ -9,6 +9,7 @@ import pandas as pd
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import (
     _handle_enforce_uniqueness_and_cardinality_rule,
+    fill_nan_with_none,
     strings_from_regex,
 )
 
@@ -106,8 +107,10 @@ class RegexGenerator(BaseTransformer):
         cardinality_rule (str):
             Rule that the generated data must follow.
             - If set to 'unique', the generated data must be unique.
-            - If set to 'match', the generated data must have the exact same cardinality
-              (# of unique values) as the real data.
+            - If set to 'match', the generated data will have the exact same cardinality
+              (number of unique values) as the real data.
+            - If set to 'scale', the generated data will match the number of repetitions that
+              each value is allowed to have.
             - If set to ``None``, then the generated data may contain duplicates.
             Defaults to ``None``.
         generation_order (str):
@@ -157,16 +160,24 @@ class RegexGenerator(BaseTransformer):
         self.cardinality_rule = _handle_enforce_uniqueness_and_cardinality_rule(
             enforce_uniqueness, cardinality_rule
         )
-        self._data_cardinality = None
-        self._unique_regex_values = None
         self.data_length = None
         self.generator = None
-        self.generator_size = None
-        self.generated = None
         if generation_order not in ['alphanumeric', 'scrambled']:
             raise ValueError("generation_order must be one of 'alphanumeric' or 'scrambled'.")
 
         self.generation_order = generation_order
+
+        # Used when cardinality_rule is 'scale'
+        self._data_cardinality_scale = None
+        self._remaining_samples = {'value': None, 'repetitions': 0}
+
+        # Used when cardinality_rule is 'match'
+        self._data_cardinality = None
+        self._unique_regex_values = None
+
+        # Used otherwise
+        self.generator_size = None
+        self.generated = None
 
     def reset_randomization(self):
         """Create a new generator and reset the generated values counter."""
@@ -174,8 +185,8 @@ class RegexGenerator(BaseTransformer):
         self.generator, self.generator_size = strings_from_regex(self.regex_format)
         self.generated = 0
 
-    def _generate_fallback_samples(self, num_samples, template_samples):
-        """Generate values such that they are all unique, disregarding the regex."""
+    def _sample_fallback(self, num_samples, template_samples):
+        """Sample num_samples values such that they are all unique, disregarding the regex."""
         try:
             # Integer-based fallback: attempt to convert the last template sample to an integer
             # and then generate values in a sequential manner.
@@ -187,26 +198,21 @@ class RegexGenerator(BaseTransformer):
             # samples as a base and appends a counter to make each value unique.
             counter = 0
             samples = []
-            while num_samples > 0:
+            while num_samples > len(samples):
                 samples.extend([f'{i}({counter})' for i in template_samples[:num_samples]])
-                num_samples -= len(template_samples)
                 counter += 1
 
-            return samples
+            return samples[:num_samples]
 
-    def _generate_unique_regex_values(self):
-        regex_values = []
-        try:
-            while len(regex_values) < self._data_cardinality:
-                regex_values.append(next(self.generator))
-        except (RuntimeError, StopIteration):
-            fallback_samples = self._generate_fallback_samples(
-                num_samples=self._data_cardinality - len(regex_values),
-                template_samples=regex_values,
-            )
-            regex_values.extend(fallback_samples)
+    def _get_cardinality_frequency(self, data):
+        """Get number of repetitions and their frequencies."""
+        value_counts = data.value_counts(dropna=False)
+        repetition_counts = value_counts.value_counts().sort_index()
+        total = repetition_counts.sum()
+        frequencies = (repetition_counts / total).tolist()
+        repetitions = repetition_counts.index.tolist()
 
-        return regex_values
+        return repetitions, frequencies
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -218,9 +224,17 @@ class RegexGenerator(BaseTransformer):
         self.reset_randomization()
         self.data_length = len(data)
 
-        if self.cardinality_rule == 'match':
-            is_nan = int(pd.isna(data).any())  # nans count as a unique value
-            self._data_cardinality = data.nunique() + is_nan
+        if hasattr(self, 'cardinality_rule'):
+            data = fill_nan_with_none(data)
+            if self.cardinality_rule == 'match':
+                self._data_cardinality = data.nunique(dropna=False)
+
+            elif self.cardinality_rule == 'scale':
+                sorted_counts, sorted_frequencies = self._get_cardinality_frequency(data)
+                self._data_cardinality_scale = {
+                    'num_repetitions': sorted_counts,
+                    'frequency': sorted_frequencies,
+                }
 
     def _transform(self, _data):
         """Drop the input column by returning ``None``."""
@@ -273,60 +287,145 @@ class RegexGenerator(BaseTransformer):
             if sample_size > self.generator_size and self._data_cardinality > self.generator_size:
                 warnings.warn(warn_msg)
 
-    def _generate_as_many_as_possible(self, num_samples):
+    def _sample_from_generator(self, num_samples):
         """Generate samples.
 
-        Generate values following the regex until either the ``num_samples`` is reached or
+        Generate values following the regex until either the sample size is reached or
         the generator is exhausted.
         """
-        generated_values = []
+        samples = []
         try:
-            while len(generated_values) < num_samples:
-                generated_values.append(next(self.generator))
+            while len(samples) < num_samples:
+                samples.append(next(self.generator))
                 self.generated += 1
         except (RuntimeError, StopIteration):
             pass
 
-        return generated_values
+        return samples
 
-    def _generate_num_samples(self, num_samples, template_samples):
-        """Generate num_samples values from template_samples.
+    def _sample_from_template(self, num_samples, template_samples):
+        """Sample num_samples values from template_samples in a cycle.
 
         Eg: num_samples = 5, template_samples = ['a', 'b']
         The output will be ['a', 'b', 'a', 'b', 'a']
         """
-        if num_samples <= 0:
-            return []
-
         repeats = num_samples // len(template_samples) + 1
         return np.tile(template_samples, repeats)[:num_samples].tolist()
 
-    def _generate_match_cardinality(self, num_samples):
-        """Generate values until the sample size is reached, while respecting the cardinality."""
-        template_samples = self._unique_regex_values[:num_samples]
-        samples = self._generate_num_samples(num_samples - len(template_samples), template_samples)
+    def _sample_match(self, num_samples):
+        """Sample num_samples values following the 'match' cardinality rule."""
+        samples = self._unique_regex_values[:num_samples]
+        if num_samples > len(samples):
+            new_samples = self._sample_from_template(num_samples - len(samples), samples)
+            samples.extend(new_samples)
 
-        return template_samples + samples
+        return samples
 
-    def _generate_samples(self, num_samples, match_cardinality_values, unique_condition):
-        """Generate samples until the sample size is reached."""
-        if match_cardinality_values is not None:
-            return self._generate_match_cardinality(num_samples)
+    def _sample_repetitions(self, num_samples, value):
+        """Sample a number of repetitions for a given value."""
+        repetitions = np.random.choice(
+            self._data_cardinality_scale['num_repetitions'],
+            p=self._data_cardinality_scale['frequency'],
+        )
+        if repetitions <= num_samples:
+            samples = [value] * repetitions
+        else:
+            samples = [value] * num_samples
+            self._remaining_samples['repetitions'] = repetitions - num_samples
+            self._remaining_samples['value'] = value
+
+        return samples
+
+    def _sample_scale_fallback(self, num_samples, template_samples):
+        """Sample num_samples values, disregarding the regex, for the cardinality rule 'scale'."""
+        warnings.warn(
+            f"The regex for '{self.get_input_column()}' cannot generate enough samples. "
+            'Additional values may not exactly follow the provided regex.'
+        )
+        samples = []
+        fallback_samples = self._sample_fallback(num_samples, template_samples)
+        while num_samples > len(samples):
+            fallback_sample = fallback_samples.pop(0)
+            new_samples = self._sample_repetitions(num_samples - len(samples), fallback_sample)
+            samples.extend(new_samples)
+
+        return samples
+
+    def _sample_repetitions_from_generator(self, num_samples):
+        """Sample num_samples values from the generator, or until the generator is exhausted."""
+        samples = [self._remaining_samples['value']] * self._remaining_samples['repetitions']
+        self._remaining_samples['repetitions'] = 0
+
+        template_samples = []
+        while num_samples > len(samples):
+            try:
+                value = next(self.generator)
+                template_samples.append(value)
+            except (RuntimeError, StopIteration):
+                # If the generator is exhausted and no samples have been generated yet, reset it
+                if len(template_samples) == 0:
+                    self.reset_randomization()
+                    continue
+                else:
+                    break
+
+            new_samples = self._sample_repetitions(num_samples - len(samples), value)
+            samples.extend(new_samples)
+
+        return samples, template_samples
+
+    def _sample_scale(self, num_samples):
+        """Sample num_samples values following the 'scale' cardinality rule."""
+        if self._remaining_samples['repetitions'] > num_samples:
+            self._remaining_samples['repetitions'] -= num_samples
+            return [self._remaining_samples['value']] * num_samples
+
+        samples, template_samples = self._sample_repetitions_from_generator(num_samples)
+        if num_samples > len(samples):
+            new_samples = self._sample_scale_fallback(num_samples - len(samples), template_samples)
+            samples.extend(new_samples)
+
+        return samples
+
+    def _sample(self, num_samples, unique_condition):
+        """Sample num_samples values."""
+        if num_samples <= 0:
+            return []
+
+        if hasattr(self, 'cardinality_rule'):
+            if self.cardinality_rule == 'match':
+                return self._sample_match(num_samples)
+
+            if self.cardinality_rule == 'scale':
+                return self._sample_scale(num_samples)
 
         # If there aren't enough values left in the generator, reset it
         if num_samples > self.generator_size - self.generated:
             self.reset_randomization()
 
-        samples = self._generate_as_many_as_possible(num_samples)
-        num_samples -= len(samples)
-        if num_samples > 0:
+        samples = self._sample_from_generator(num_samples)
+        if num_samples > len(samples):
             if unique_condition:
-                new_samples = self._generate_fallback_samples(num_samples, samples)
+                new_samples = self._sample_fallback(num_samples - len(samples), samples)
             else:
-                new_samples = self._generate_num_samples(num_samples, samples)
+                new_samples = self._sample_from_template(num_samples - len(samples), samples)
             samples.extend(new_samples)
 
         return samples
+
+    def _generate_unique_regexes(self):
+        regex_values = []
+        try:
+            while len(regex_values) < self._data_cardinality:
+                regex_values.append(next(self.generator))
+        except (RuntimeError, StopIteration):
+            fallback_samples = self._sample_fallback(
+                num_samples=self._data_cardinality - len(regex_values),
+                template_samples=regex_values,
+            )
+            regex_values.extend(fallback_samples)
+
+        return regex_values
 
     def _reverse_transform(self, data):
         """Generate new data using the provided ``regex_format``.
@@ -340,24 +439,16 @@ class RegexGenerator(BaseTransformer):
         """
         if hasattr(self, 'cardinality_rule'):
             unique_condition = self.cardinality_rule == 'unique'
-            if self.cardinality_rule == 'match' and self._unique_regex_values is None:
-                self._unique_regex_values = self._generate_unique_regex_values()
+            match_cardinality = self.cardinality_rule == 'match'
+            if match_cardinality and self._unique_regex_values is None:
+                self._unique_regex_values = self._generate_unique_regexes()
         else:
             unique_condition = self.enforce_uniqueness
+            match_cardinality = False
 
-        if hasattr(self, '_unique_regex_values'):
-            match_cardinality_values = self._unique_regex_values
-        else:
-            match_cardinality_values = None
-
-        if data is not None and len(data):
-            num_samples = len(data)
-        else:
-            num_samples = self.data_length
-
-        match_condition = match_cardinality_values is not None
-        self._warn_not_enough_unique_values(num_samples, unique_condition, match_condition)
-        samples = self._generate_samples(num_samples, match_cardinality_values, unique_condition)
+        num_samples = len(data) if (data is not None and len(data)) else self.data_length
+        self._warn_not_enough_unique_values(num_samples, unique_condition, match_cardinality)
+        samples = self._sample(num_samples, unique_condition)
 
         if getattr(self, 'generation_order', 'alphanumeric') == 'scrambled':
             np.random.shuffle(samples)
