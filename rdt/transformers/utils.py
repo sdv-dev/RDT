@@ -379,3 +379,30 @@ def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinal
             return 'unique'
 
     return cardinality_rule
+
+
+def _get_cardinality_frequency(data):
+    """Get number of repetitions of values in the data and their frequencies."""
+    value_counts = data.value_counts(dropna=False)
+    repetition_counts = value_counts.value_counts().sort_index()
+    total = repetition_counts.sum()
+    frequencies = (repetition_counts / total).tolist()
+    repetitions = repetition_counts.index.tolist()
+
+    return repetitions, frequencies
+
+
+def _sample_repetitions(num_samples, value, data_cardinality_scale, remaining_samples):
+    """Sample a number of repetitions for a given value."""
+    repetitions = np.random.choice(
+        data_cardinality_scale['num_repetitions'],
+        p=data_cardinality_scale['frequency'],
+    )
+    if repetitions <= num_samples:
+        samples = [value] * repetitions
+    else:
+        samples = [value] * num_samples
+        remaining_samples['repetitions'] = repetitions - num_samples
+        remaining_samples['value'] = value
+
+    return samples, remaining_samples
