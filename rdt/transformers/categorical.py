@@ -40,7 +40,7 @@ class UniformEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'categorical'
-    SUPPORTED_SDTYPES = ['categorical', 'boolean', 'id', 'text']
+    SUPPORTED_SDTYPES = ['categorical', 'boolean']
     frequencies = None
     intervals = None
     dtype = None
@@ -733,7 +733,7 @@ class LabelEncoder(BaseTransformer):
     """
 
     INPUT_SDTYPE = 'categorical'
-    SUPPORTED_SDTYPES = ['categorical', 'boolean', 'id', 'text']
+    SUPPORTED_SDTYPES = ['categorical', 'boolean']
     values_to_categories = None
     categories_to_values = None
     dtype = 'O'

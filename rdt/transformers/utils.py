@@ -369,17 +369,3 @@ class WarnDict(dict):
         phased out.
         """
         return self.get(sdtype)
-
-
-def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinality_rule):
-    result = cardinality_rule
-    if enforce_uniqueness is not None:
-        warnings.warn(
-            "The 'enforce_uniqueness' parameter is no longer supported. "
-            "Please use the 'cardinality_rule' parameter instead.",
-            FutureWarning,
-        )
-        if enforce_uniqueness and cardinality_rule is None:
-            result = 'unique'
-
-    return result

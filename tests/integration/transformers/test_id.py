@@ -4,12 +4,12 @@ import numpy as np
 import pandas as pd
 
 from rdt import HyperTransformer, get_demo
-from rdt.transformers.id import IndexGenerator, RegexGenerator
+from rdt.transformers.id import IDGenerator, RegexGenerator
 
 
-class TestIndexGenerator:
+class TestIDGenerator:
     def test_end_to_end(self):
-        """End to end test of the ``IndexGenerator``."""
+        """End to end test of the ``IDGenerator``."""
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
@@ -17,7 +17,7 @@ class TestIndexGenerator:
         })
 
         # Run
-        transformer = IndexGenerator(prefix='id_', starting_value=100, suffix='_X')
+        transformer = IDGenerator(prefix='id_', starting_value=100, suffix='_X')
         transformed = transformer.fit_transform(data, 'id')
         reverse_transform = transformer.reverse_transform(transformed)
         reverse_transform_2 = transformer.reverse_transform(transformed)
@@ -173,7 +173,7 @@ class TestRegexGenerator:
     def test_called_multiple_times(self):
         """Test the ``RegexGenerator`` with short regex and called multiple times.
 
-        This test ensures that when ``cardinality_rule`` is ``None`` this generator will
+        This test ensures that when ``enforce_uniqueness`` is ``False`` this generator will
         continue to work.
         """
         # Setup
@@ -223,11 +223,11 @@ class TestRegexGenerator:
         })
         pd.testing.assert_frame_equal(third_reverse_transform, expected_reverse_transformed)
 
-    def test_called_multiple_times_cardinality_rule_unique(self):
-        """Test calling multiple times when ``cardinality_rule`` is ``unique``."""
+    def test_called_multiple_times_enforce_uniqueness(self):
+        """Test that calling multiple times with ``enforce_uniqueness`` returns unique values."""
         # Setup
         data = pd.DataFrame({'my_column': np.arange(10)})
-        generator = RegexGenerator(cardinality_rule='unique')
+        generator = RegexGenerator(enforce_uniqueness=True)
 
         # Run
         transformed_data = generator.fit_transform(data, 'my_column')
@@ -303,13 +303,13 @@ class TestRegexGenerator:
         pd.testing.assert_frame_equal(transformed, expected_transformed)
         pd.testing.assert_frame_equal(reverse_transform, expected_reverse_transformed)
 
-    def test_cardinality_rule_unique_not_enough_values_categorical(self):
-        """Test with cardinality_rule='unique' but insufficient regex values."""
+    def test_enforce_uniqueness_not_enough_values_categorical(self):
+        """Test with enforce_uniqueness=True but insufficient regex values."""
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
         })
-        instance = RegexGenerator('id_[a-b]{1}', cardinality_rule='unique')
+        instance = RegexGenerator('id_[a-b]{1}', enforce_uniqueness=True)
 
         # Run
         transformed = instance.fit_transform(data, 'id')
@@ -319,13 +319,13 @@ class TestRegexGenerator:
         expected = pd.DataFrame({'id': ['id_a', 'id_b', 'id_a(0)', 'id_b(0)', 'id_a(1)']})
         pd.testing.assert_frame_equal(reverse_transform, expected)
 
-    def test_cardinality_rule_not_enough_values_numerical(self):
-        """Test with cardinality_rule='unique' but insufficient regex values."""
+    def test_enforce_uniqueness_not_enough_values_numerical(self):
+        """Test with enforce_uniqueness=True but insufficient regex values."""
         # Setup
         data = pd.DataFrame({
             'id': [1, 2, 3, 4, 5],
         })
-        instance = RegexGenerator('[2-3]{1}', cardinality_rule='unique')
+        instance = RegexGenerator('[2-3]{1}', enforce_uniqueness=True)
 
         # Run
         transformed = instance.fit_transform(data, 'id')

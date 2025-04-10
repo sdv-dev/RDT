@@ -7,15 +7,12 @@ import numpy as np
 import pandas as pd
 
 from rdt.transformers.base import BaseTransformer
-from rdt.transformers.utils import (
-    _handle_enforce_uniqueness_and_cardinality_rule,
-    strings_from_regex,
-)
+from rdt.transformers.utils import strings_from_regex
 
 LOGGER = logging.getLogger(__name__)
 
 
-class IndexGenerator(BaseTransformer):
+class IDGenerator(BaseTransformer):
     """Generate an ID column.
 
     This transformer generates an ID column based on a given prefix, starting value and suffix.
@@ -75,21 +72,6 @@ class IndexGenerator(BaseTransformer):
         return pd.Series(values)
 
 
-class IDGenerator(IndexGenerator):
-    """Deprecated class name for ``IndexGenerator``.
-
-    Class to ensure backwards compatibility with previous versions of RDT.
-    """
-
-    def __init__(self, prefix=None, starting_value=0, suffix=None):
-        warnings.warn(
-            "The 'IDGenerator' has been renamed to 'IndexGenerator'. Please update the"
-            'name to ensure compatibility with future versions of RDT.',
-            FutureWarning,
-        )
-        super().__init__(prefix, starting_value, suffix)
-
-
 class RegexGenerator(BaseTransformer):
     """RegexGenerator transformer.
 
@@ -100,13 +82,9 @@ class RegexGenerator(BaseTransformer):
         regex (str):
             String representing the regex function.
         enforce_uniqueness (bool):
-            **DEPRECATED** Whether or not to ensure that the new generated data is all unique.
-            If it isn't possible to create the requested number of rows, then an error will
-            be raised. Defaults to ``None``.
-        cardinality_rule (str):
-            Rule that the generated data must follow. If set to ``unique``, the generated
-            data must be unique. If set to ``None``, then the generated data may contain
-            duplicates. Defaults to ``None``.
+            Whether or not to ensure that the new generated data is all unique. If it isn't
+            possible to create the requested number of rows, then an error will be raised.
+            Defaults to ``False``.
         generation_order (str):
             String defining how to generate the output. If set to ``alphanumeric``, it will
             generate the output in alphanumeric order (ie. 'aaa', 'aab' or '1', '2'...). If
@@ -144,16 +122,13 @@ class RegexGenerator(BaseTransformer):
     def __init__(
         self,
         regex_format='[A-Za-z]{5}',
-        cardinality_rule=None,
+        enforce_uniqueness=False,
         generation_order='alphanumeric',
-        enforce_uniqueness=None,
     ):
         super().__init__()
         self.output_properties = {None: {'next_transformer': None}}
+        self.enforce_uniqueness = enforce_uniqueness
         self.regex_format = regex_format
-        self.cardinality_rule = _handle_enforce_uniqueness_and_cardinality_rule(
-            enforce_uniqueness, cardinality_rule
-        )
         self.data_length = None
         self.generator = None
         self.generator_size = None
@@ -183,18 +158,16 @@ class RegexGenerator(BaseTransformer):
         """Drop the input column by returning ``None``."""
         return None
 
-    def _warn_not_enough_unique_values(self, sample_size, unique_condition):
+    def _warn_not_enough_unique_values(self, sample_size):
         """Warn the user that the regex cannot generate enough unique values.
 
         Args:
             sample_size (int):
                 Number of samples to be generated.
-            unique_condition (bool):
-                Whether or not to enforce uniqueness.
         """
         warned = False
         if sample_size > self.generator_size:
-            if unique_condition:
+            if self.enforce_uniqueness:
                 warnings.warn(
                     f"The regex for '{self.get_input_column()}' can only generate "
                     f'{self.generator_size} unique values. Additional values may not exactly '
@@ -212,7 +185,7 @@ class RegexGenerator(BaseTransformer):
                 )
 
         remaining = self.generator_size - self.generated
-        if sample_size > remaining and unique_condition and not warned:
+        if sample_size > remaining and self.enforce_uniqueness and not warned:
             warnings.warn(
                 f'The regex generator is not able to generate {sample_size} new unique '
                 f'values (only {max(remaining, 0)} unique values left).'
@@ -228,17 +201,12 @@ class RegexGenerator(BaseTransformer):
         Returns:
             pandas.Series
         """
-        if hasattr(self, 'cardinality_rule'):
-            unique_condition = self.cardinality_rule == 'unique'
-        else:
-            unique_condition = self.enforce_uniqueness
-
         if data is not None and len(data):
             sample_size = len(data)
         else:
             sample_size = self.data_length
 
-        self._warn_not_enough_unique_values(sample_size, unique_condition)
+        self._warn_not_enough_unique_values(sample_size)
 
         remaining = self.generator_size - self.generated
         if sample_size > remaining:
@@ -257,7 +225,7 @@ class RegexGenerator(BaseTransformer):
         reverse_transformed = generated_values[:]
 
         if len(reverse_transformed) < sample_size:
-            if unique_condition:
+            if self.enforce_uniqueness:
                 try:
                     remaining_samples = sample_size - len(reverse_transformed)
                     start = int(generated_values[-1]) + 1
