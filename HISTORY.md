@@ -1,5 +1,17 @@
 # History
 
+## v1.16.0 - 2025-04-10
+
+### New Features
+
+* Allow sdtype `id` columns to use some of the categorical transformers - Issue [#953](https://github.com/sdv-dev/RDT/issues/953) by @frances-h
+* For `RegexGenerator`, update the `enforce_uniqueness` parameter to `cardinality_rule` - Issue [#949](https://github.com/sdv-dev/RDT/issues/949) by @R-Palazzo
+* Rename `IDGenerator` transformer to `IndexGenerator` - Issue [#947](https://github.com/sdv-dev/RDT/issues/947) by @gsheni
+
+### Bugs Fixed
+
+* Synthetic data contains all nulls with some RDTs, with min/max enforcement enabled, and null column learning enabled - Issue [#939](https://github.com/sdv-dev/RDT/issues/939) by @R-Palazzo
+
 ## v1.15.1 - 2025-04-02
 
 ### Bugs Fixed
