@@ -15,6 +15,7 @@ import pandas as pd
 from rdt.errors import TransformerInputError, TransformerProcessingError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.categorical import LabelEncoder
+from rdt.transformers.utils import _handle_enforce_uniqueness_and_cardinality_rule
 
 
 class AnonymizedFaker(BaseTransformer):
@@ -113,7 +114,7 @@ class AnonymizedFaker(BaseTransformer):
         function_kwargs=None,
         locales=None,
         cardinality_rule=None,
-        enforce_uniqueness=False,
+        enforce_uniqueness=None,
         missing_value_generation='random',
     ):
         super().__init__()
@@ -121,14 +122,9 @@ class AnonymizedFaker(BaseTransformer):
         self.data_length = None
         self.enforce_uniqueness = enforce_uniqueness
         self.cardinality_rule = cardinality_rule.lower() if cardinality_rule else None
-        if enforce_uniqueness:
-            warnings.warn(
-                "The 'enforce_uniqueness' parameter is no longer supported. "
-                "Please use the 'cardinality_rule' parameter instead.",
-                FutureWarning,
-            )
-            if not self.cardinality_rule:
-                self.cardinality_rule = 'unique'
+        self.cardinality_rule = _handle_enforce_uniqueness_and_cardinality_rule(
+            enforce_uniqueness, cardinality_rule
+        )
 
         self.provider_name = provider_name if provider_name else 'BaseProvider'
         if self.provider_name != 'BaseProvider' and function_name is None:
