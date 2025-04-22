@@ -8,6 +8,7 @@ from copy import deepcopy
 
 import pandas as pd
 
+from rdt._utils import _validate_unique_transformer_instances
 from rdt.errors import (
     ConfigNotSetError,
     InvalidConfigError,
@@ -180,6 +181,8 @@ class HyperTransformer:
                 f'Invalid transformers for columns: {invalid_transformers_columns}. '
                 'Please assign an rdt transformer instance to each column name.'
             )
+
+        _validate_unique_transformer_instances(column_name_to_transformer)
 
     @staticmethod
     def _validate_sdtypes(sdtypes):
@@ -496,6 +499,33 @@ class HyperTransformer:
         if self._fitted:
             warnings.warn(self._REFIT_MESSAGE)
 
+    def _validate_updated_transformer_unique(self, column_name, transformer):
+        """Validate the transformer being updated is not reused in the config."""
+        if (
+            transformer in self.field_transformers.values()
+            and self.field_transformers.get(column_name) != transformer
+        ):
+            existing_column = [
+                column
+                for column, existing_transformer in self.field_transformers.items()
+                if transformer == existing_transformer
+            ][0]
+            column_name = (
+                f"column ('{column_name}')"
+                if isinstance(column_name, str)
+                else f'columns {str(column_name)}'
+            )
+            existing_column = (
+                f"column ('{existing_column}')"
+                if isinstance(existing_column, str)
+                else f'columns {str(existing_column)}'
+            )
+            raise InvalidConfigError(
+                f'The transformer for {column_name} is already assigned to '
+                f'{existing_column}. Please create different transformer objects for '
+                'each assignment.'
+            )
+
     def update_transformers(self, column_name_to_transformer):
         """Update any of the transformers assigned to each of the column names.
 
@@ -514,6 +544,9 @@ class HyperTransformer:
         self._validate_transformers(column_name_to_transformer)
 
         for column_name, transformer in column_name_to_transformer.items():
+            if transformer is not None:
+                self._validate_updated_transformer_unique(column_name, transformer)
+
             columns = column_name if isinstance(column_name, tuple) else (column_name,)
             for column in columns:
                 if transformer is not None:
