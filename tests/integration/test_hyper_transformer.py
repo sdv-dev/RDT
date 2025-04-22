@@ -958,6 +958,39 @@ class TestHyperTransformer:
         # Run and Assert
         ht.set_config(config)
 
+    def test_set_config_with_duplicated_transformers(self):
+        """Test ``set_config`` errors if the same transformer is used more than once."""
+        # Setup
+        transformer = UniformEncoder()
+        multi_column_transformer = DummyMultiColumnTransformerNumerical()
+        config = {
+            'transformers': {
+                'categorical_col1': transformer,
+                'categorical_col2': transformer,
+                ('numerical_col1', 'numerical_col2'): multi_column_transformer,
+                ('numerical_col3', 'numerical_col4'): multi_column_transformer,
+            },
+            'sdtypes': {
+                'categorical_col1': 'categorical',
+                'categorical_col2': 'categorical',
+                'numerical_col1': 'numerical',
+                'numerical_col2': 'numerical',
+                'numerical_col3': 'numerical',
+                'numerical_col4': 'numerical',
+            },
+        }
+        ht = HyperTransformer()
+
+        # Run and Assert
+        expected_msg = re.escape(
+            "The same transformer instances are being assigned to columns ('categorical_col1', "
+            "'categorical_col2'), columns (('numerical_col1', 'numerical_col2'), "
+            "('numerical_col3', 'numerical_col4')). Please create different transformer objects "
+            'for each assignment.'
+        )
+        with pytest.raises(InvalidConfigError, match=expected_msg):
+            ht.set_config(config)
+
     def test_chained_transformers(self):
         """Test when a transformer is chained to another transformer.
 
@@ -1779,6 +1812,61 @@ class TestHyperTransformer:
 
         assert repr(new_config) == repr(expected_config)
         assert ht._multi_column_fields == expected_multi_columns
+
+    def test_update_transformers_reused_transformer_instance(self):
+        """Test ``update_transformers`` errors if duplicate transformer instance is used."""
+        # Setup
+        transformer = UniformEncoder()
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'categorical',
+            },
+            'transformers': {'A': UniformEncoder(), 'B': transformer, 'C': None},
+        }
+
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run and Assert
+        expected_msg = re.escape(
+            "The transformer for column ('C') is already assigned to column ('B'). "
+            'Please create different transformer objects for each assignment.'
+        )
+        with pytest.raises(InvalidConfigError, match=expected_msg):
+            ht.update_transformers({'C': transformer})
+
+    def test_update_transformers_reused_multi_column_transformer_instance(self):
+        """Test ``update_transformers`` errors with duplicated multi-column transformer instance."""
+        # Setup
+        transformer = DummyMultiColumnTransformerNumerical()
+        dict_config = {
+            'sdtypes': {
+                'A': 'categorical',
+                'B': 'categorical',
+                'C': 'categorical',
+                'D': 'categorical',
+            },
+            'transformers': {
+                ('A', 'B'): transformer,
+                'C': None,
+                'D': None,
+            },
+        }
+
+        config = Config(dict_config)
+        ht = HyperTransformer()
+        ht.set_config(config)
+
+        # Run and Assert
+        expected_msg = re.escape(
+            "The transformer for columns ('C', 'D') is already assigned to columns ('A', 'B'). "
+            'Please create different transformer objects for each assignment.'
+        )
+        with pytest.raises(InvalidConfigError, match=expected_msg):
+            ht.update_transformers({('C', 'D'): transformer})
 
     def test_remove_transformer(self):
         """Test ``remove_transformer`` with multi column transformer."""
