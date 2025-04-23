@@ -5,6 +5,7 @@ import re
 import tempfile
 from unittest.mock import Mock, call, patch
 
+import faker
 import numpy as np
 import pandas as pd
 import pytest
@@ -629,7 +630,7 @@ class TestAnonymizedFaker:
         assert set(result) == {'a', 'b', 'c'}
 
     def test__reverse_transform_cardinality_rule_missing_attribute(self):
-        """Test it when the ``cardinality_rule`` attribute is missing."""
+        """Test that when the ``cardinality_rule`` attribute is missing."""
         # Setup
         instance = Mock()
         delattr(instance, 'cardinality_rule')
@@ -640,7 +641,31 @@ class TestAnonymizedFaker:
         AnonymizedFaker._reverse_transform(instance, None)
 
         # Assert
+        instance._reverse_transform_with_fallback.assert_called_once_with(3)
+
+    def test__reverse_transform_with_fallback_handles_uniqueness_exception(self):
+        """Test that when we reverse transform with fallback we handle uniqueness."""
+        # Setup
+        instance = AnonymizedFaker()
+        instance.get_input_column = Mock(return_value='test_column')
+        instance._function = Mock(
+            side_effect=['val1', 'val2', faker.exceptions.UniquenessException()]
+        )
+        instance._fallback_function = Mock(side_effect=['fallback1', 'fallback2', 'fallback3'])
+        sample_size = 5
+
+        # Run and Assert
+        warning_msg = re.escape(
+            "Unable to generate enough unique values for column 'test_column' in "
+            'a human-readable format. Additional values may be created randomly.'
+        )
+        with pytest.warns(UserWarning, match=warning_msg):
+            result = instance._reverse_transform_with_fallback(sample_size)
+
+        # Assert
         assert instance._function.call_count == 3
+        assert instance._fallback_function.call_count == 3
+        assert result.tolist() == ['val1', 'val2', 'fallback1', 'fallback2', 'fallback3']
 
     def test__reverse_transform_with_nans(self):
         """Test that ``_reverse_transform`` generates NaNs."""
@@ -684,10 +709,10 @@ class TestAnonymizedFaker:
 
         # Run / Assert
         error_msg = re.escape(
-            'The Faker function you specified is not able to generate 4 unique '
-            "values. Please use a different Faker function for column ('a')."
+            "Unable to generate enough unique values for column 'a' in "
+            'a human-readable format. Additional values may be created randomly.'
         )
-        with pytest.raises(TransformerProcessingError, match=error_msg):
+        with pytest.warns(UserWarning, match=error_msg):
             instance._reverse_transform(data)
 
     def test__reverse_transform_size_is_length_of_data(self):
@@ -948,7 +973,7 @@ class TestPseudoAnonymizedFaker:
         """Test the ``_fit`` method.
 
         Test that when calling the ``_fit`` method and the ``instance._function`` is not
-        generating enough unique values raises an error.
+        generating enough unique values uses the fallback function.
 
         Setup:
             -Instance of ``PseudoAnonymizedFaker``.
@@ -968,12 +993,11 @@ class TestPseudoAnonymizedFaker:
         data = pd.Series(['a', 'b', 'c', 'd'])
 
         # Run / Assert
-        error_msg = (
-            'The Faker function you specified is not able to generate '
-            '4 unique values. Please use a different '
-            'Faker function for this column.'
+        warning_msg = re.escape(
+            "Unable to generate enough unique values for column 'col' in "
+            'a human-readable format. Additional values may be created randomly.'
         )
-        with pytest.raises(TransformerProcessingError, match=error_msg):
+        with pytest.warns(UserWarning, match=warning_msg):
             instance._fit(data)
 
     def test__transform(self):

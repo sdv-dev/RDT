@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.errors import TransformerProcessingError
 from rdt.transformers.pii import AnonymizedFaker, PseudoAnonymizedFaker
 
 
@@ -158,12 +157,11 @@ class TestAnonymizedFaker:
         # Assert
         assert len(reverse_transform['job'].unique()) == 500
 
-        error_msg = re.escape(
-            'The Faker function you specified is not able to generate 500 unique '
-            'values. Please use a different Faker function for column '
-            "('job')."
+        warning_msg = re.escape(
+            "Unable to generate enough unique values for column 'job' in "
+            'a human-readable format. Additional values may be created randomly.'
         )
-        with pytest.raises(TransformerProcessingError, match=error_msg):
+        with pytest.warns(UserWarning, match=warning_msg):
             instance.reverse_transform(transformed)
 
         instance.reset_randomization()
@@ -265,12 +263,11 @@ class TestAnonymizedFaker:
         # Assert
         assert len(reverse_transform['job'].unique()) == 500
 
-        error_msg = re.escape(
-            'The Faker function you specified is not able to generate 500 unique '
-            'values. Please use a different Faker function for column '
-            "('job')."
+        warning_msg = re.escape(
+            "Unable to generate enough unique values for column 'job' in "
+            'a human-readable format. Additional values may be created randomly.'
         )
-        with pytest.raises(TransformerProcessingError, match=error_msg):
+        with pytest.warns(UserWarning, match=warning_msg):
             instance.reverse_transform(transformed)
 
         instance.reset_randomization()
