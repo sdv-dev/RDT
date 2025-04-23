@@ -2611,6 +2611,23 @@ class TestHyperTransformer(TestCase):
         assert str(ht.field_transformers) == str(expected_field_transformers)
         assert ht._multi_column_fields == expected_multi_column_fieds
 
+    def test__validate_updated_transformer_unique(self):
+        """Test method errors if an updated transformer already exists in the config."""
+        # Setup
+        transformer = FrequencyEncoder()
+        instance = HyperTransformer()
+        instance.field_transformers = {'existing_column': transformer, 'my_column': object()}
+
+        # Run and Assert
+        instance._validate_updated_transformer_unique('existing_column', transformer)
+        expected_message = re.escape(
+            "The transformer for column ('my_column') is already assigned to "
+            "column ('existing_column'). Please create different transformer objects for "
+            'each assignment.'
+        )
+        with pytest.raises(InvalidConfigError, match=expected_message):
+            instance._validate_updated_transformer_unique('my_column', transformer)
+
     def test_update_transformers_with_multi_column(self):
         """Test ``update_transformers`` with a multi-column transformer."""
         # Setup
@@ -3335,6 +3352,25 @@ class TestHyperTransformer(TestCase):
         error_msg = re.escape(
             "Invalid transformers for columns: ['col2']. "
             'Please assign an rdt transformer instance to each column name.'
+        )
+        with pytest.raises(InvalidConfigError, match=error_msg):
+            instance._validate_transformers(column_name_to_transformer)
+
+    def test__validate_transformers_reused_instances(self):
+        """Test ``_validate_transformers`` with reused transformer isntances."""
+        # Setup
+        instance = HyperTransformer()
+        duplicated_transformer = FrequencyEncoder()
+        column_name_to_transformer = {
+            'col1': duplicated_transformer,
+            'col2': duplicated_transformer,
+            'col3': None,
+        }
+
+        # Run / Assert
+        error_msg = re.escape(
+            "The same transformer instance is being assigned to columns ('col1', 'col2'). "
+            'Please create different transformer objects for each assignment.'
         )
         with pytest.raises(InvalidConfigError, match=error_msg):
             instance._validate_transformers(column_name_to_transformer)
