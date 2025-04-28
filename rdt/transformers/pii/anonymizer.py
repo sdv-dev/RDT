@@ -201,7 +201,7 @@ class AnonymizedFaker(BaseTransformer):
 
     def _fallback_function(self):
         """Return the result of calling a fallback ``faker`` function."""
-        return getattr(self.faker.unique, 'bothify')(text='??????')
+        return self.faker.unique.bothify(text='??????')
 
     def _set_faker_seed(self, data):
         hash_value = self.get_input_column()
