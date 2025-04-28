@@ -199,6 +199,10 @@ class AnonymizedFaker(BaseTransformer):
 
         return result
 
+    def _fallback_function(self):
+        """Return the result of calling a fallback ``faker`` function."""
+        return self.faker.unique.bothify(text='??????')
+
     def _set_faker_seed(self, data):
         hash_value = self.get_input_column()
         for value in data.head(5):
@@ -274,6 +278,23 @@ class AnonymizedFaker(BaseTransformer):
 
         return np.concatenate((unique_categories, extra_samples))
 
+    def _reverse_transform_with_fallback(self, sample_size):
+        try:
+            reverse_transformed = []
+            for _ in range(sample_size):
+                reverse_transformed.append(self._function())
+
+        except faker.exceptions.UniquenessException:
+            warnings.warn(
+                f"Unable to generate enough unique values for column '{self.get_input_column()}' "
+                'in a human-readable format. Additional values may be created randomly.'
+            )
+            remaining_samples = sample_size - len(reverse_transformed)
+            for _ in range(remaining_samples):
+                reverse_transformed.append(self._fallback_function())
+
+        return np.array(reverse_transformed, dtype=object)
+
     def _reverse_transform(self, data):
         """Generate new anonymized data using a ``faker.provider.function``.
 
@@ -289,21 +310,10 @@ class AnonymizedFaker(BaseTransformer):
         else:
             sample_size = self.data_length
 
-        try:
-            if hasattr(self, 'cardinality_rule') and self.cardinality_rule == 'match':
-                reverse_transformed = self._reverse_transform_cardinality_rule_match(sample_size)
-            else:
-                reverse_transformed = np.array(
-                    [self._function() for _ in range(sample_size)],
-                    dtype=object,
-                )
-
-        except faker.exceptions.UniquenessException as exception:
-            raise TransformerProcessingError(
-                f'The Faker function you specified is not able to generate {sample_size} unique '
-                'values. Please use a different Faker function for column '
-                f"('{self.get_input_column()}')."
-            ) from exception
+        if hasattr(self, 'cardinality_rule') and self.cardinality_rule == 'match':
+            reverse_transformed = self._reverse_transform_cardinality_rule_match(sample_size)
+        else:
+            reverse_transformed = self._reverse_transform_with_fallback(sample_size)
 
         if self.missing_value_generation == 'random' and not pd.isna(reverse_transformed).any():
             num_nans = int(self._nan_frequency * sample_size)
@@ -435,15 +445,8 @@ class PseudoAnonymizedFaker(AnonymizedFaker):
         self._set_faker_seed(columns_data)
         unique_values = columns_data[columns_data.notna()].unique()
         unique_data_length = len(unique_values)
-        try:
-            generated_values = [self._function() for _ in range(unique_data_length)]
-        except faker.exceptions.UniquenessException as exception:
-            raise TransformerProcessingError(
-                'The Faker function you specified is not able to generate '
-                f'{unique_data_length} unique values. Please use a different '
-                'Faker function for this column.'
-            ) from exception
 
+        generated_values = self._reverse_transform_with_fallback(unique_data_length)
         generated_values = list(set(generated_values))
         self._mapping_dict = dict(zip(unique_values, generated_values))
         self._reverse_mapping_dict = dict(zip(generated_values, unique_values))
