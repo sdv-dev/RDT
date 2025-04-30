@@ -200,6 +200,28 @@ class UnixTimestampEncoder(BaseTransformer):
         data = self._transform_helper(data)
         return self.null_transformer.transform(data)
 
+    def _convert_data_to_pandas_datetime(self, data):
+        use_utc = '%z' in self.datetime_format.lower() if self.datetime_format else False
+        datetime_data = pd.to_datetime(data, utc=use_utc)
+        return datetime_data
+
+    def _handle_datetime_formatting(self, datetime_data):
+        if self.datetime_format:
+            return self._format_datetime(datetime_data)
+        elif is_numeric_dtype(self._dtype):
+            datetime_data = pd.to_numeric(datetime_data.astype('object'), errors='coerce')
+            return datetime_data.astype(self._dtype)
+
+        return datetime_data
+
+    def _format_datetime(self, datetime_data):
+        if is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
+            return pd.to_datetime(
+                datetime_data.dt.strftime(self.datetime_format), format=self.datetime_format
+            )
+
+        return datetime_data.dt.strftime(self.datetime_format).astype(self._dtype)
+
     def _reverse_transform(self, data):
         """Convert float values back to datetimes.
 
@@ -214,19 +236,8 @@ class UnixTimestampEncoder(BaseTransformer):
         if self.enforce_min_max_values:
             data = data.clip(self._min_value, self._max_value)
 
-        datetime_data = pd.to_datetime(data)
-        if self.datetime_format:
-            if is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
-                datetime_data = pd.to_datetime(
-                    datetime_data.dt.strftime(self.datetime_format),
-                    format=self.datetime_format,
-                )
-            else:
-                datetime_data = datetime_data.dt.strftime(self.datetime_format).astype(self._dtype)
-        elif is_numeric_dtype(self._dtype):
-            datetime_data = pd.to_numeric(datetime_data.astype('object'), errors='coerce')
-            datetime_data = datetime_data.astype(self._dtype)
-
+        datetime_data = self._convert_data_to_pandas_datetime(data)
+        datetime_data = self._handle_datetime_formatting(datetime_data)
         return datetime_data
 
 
