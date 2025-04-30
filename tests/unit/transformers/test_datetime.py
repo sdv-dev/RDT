@@ -605,6 +605,95 @@ class TestUnixTimestampEncoder:
         assert transformer._max_value is None
         assert transformer._dtype == 'object'
 
+    def test__convert_data_to_pandas_datetime_with_utc(self):
+        """Test `_convert_data_to_pandas_datetime` applies UTC when %z is in format."""
+        # Setup
+        transformer = UnixTimestampEncoder()
+        transformer.datetime_format = '%Y-%m-%d %H:%M:%S%z'
+        data = pd.Series([1.706668341234567e18])
+
+        # Run
+        result = transformer._convert_data_to_pandas_datetime(data)
+
+        # Assert
+        assert str(result.dt.tz) == 'UTC'
+
+    def test__convert_data_to_pandas_datetime_without_utc(self):
+        """Test _convert_data_to_pandas_datetime without UTC when no %z in format."""
+        # Setup
+        transformer = UnixTimestampEncoder()
+        transformer.datetime_format = '%Y-%m-%d %H:%M:%S'
+        data = pd.Series([1.706668341234567e18])
+
+        # Run
+        result = transformer._convert_data_to_pandas_datetime(data)
+
+        # Assert
+        assert result.dt.tz is None
+
+    def test__handle_datetime_formatting_with_format_strftime_like(self):
+        """Test `_handle_datetime_formatting` applies formatting when `datetime_format` is set."""
+        # Setup
+        transformer = UnixTimestampEncoder()
+        transformer.datetime_format = '%b %d, %Y'
+        transformer._dtype = 'object'
+        data = pd.to_datetime(['2025-04-30'])
+
+        # Run
+        result = transformer._handle_datetime_formatting(pd.Series(data))
+
+        # Assert
+        expected = pd.Series(['Apr 30, 2025'])
+        pd.testing.assert_series_equal(result, expected)
+
+    def test__handle_datetime_formatting_with_numeric_dtype(self):
+        """Test `_handle_datetime_formatting` coerces to numeric when `_dtype` is numeric."""
+        # Setup
+        transformer = UnixTimestampEncoder()
+        transformer.datetime_format = None
+        transformer._dtype = 'float64'
+        data = pd.to_datetime(['2025-04-30'])
+
+        # Run
+        result = transformer._handle_datetime_formatting(pd.Series(data))
+
+        # Assert
+        assert result.dtype == 'float64'
+
+    def test__format_datetime_strftime_only(self):
+        """Test `_format_datetime` returns formatted strings when dtype is object."""
+        # Setup
+        transformer = UnixTimestampEncoder()
+        transformer.datetime_format = '%Y-%m-%d'
+        transformer._dtype = 'object'
+        data = pd.to_datetime(['2025-01-01'])
+
+        # Run
+        result = transformer._format_datetime(pd.Series(data))
+
+        # Assert
+        expected = pd.Series(['2025-01-01'], dtype='object')
+        pd.testing.assert_series_equal(result, expected)
+
+    def test__reverse_transform_calls_chain_of_steps(self):
+        # Setup
+        instance = Mock()
+        data_object = object()
+        instance.enforce_min_max_values = False
+
+        # Run
+        result = UnixTimestampEncoder._reverse_transform(instance, data_object)
+
+        # Assert
+        instance._reverse_transform_helper.assert_called_once_with(data_object)
+        instance._convert_data_to_pandas_datetime.assert_called_once_with(
+            instance._reverse_transform_helper.return_value
+        )
+        instance._handle_datetime_formatting.assert_called_once_with(
+            instance._convert_data_to_pandas_datetime.return_value
+        )
+        assert result == instance._handle_datetime_formatting.return_value
+
 
 class TestOptimizedTimestampEncoder:
     def test___init__(self):
