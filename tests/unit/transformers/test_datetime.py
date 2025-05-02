@@ -733,7 +733,9 @@ class TestUnixTimestampEncoder:
         instance._has_multiple_timezones = True
 
         # Run
-        warning_msg = 'Mixed timezones are supported only in SDV Enterprise.'
+        warning_msg = (
+            'Mixed timezones are not supported in SDV Community. Data will be converted to UTC.'
+        )
         with pytest.warns(UserWarning, match=warning_msg):
             UnixTimestampEncoder._warn_if_mixed_timezones(instance)
 

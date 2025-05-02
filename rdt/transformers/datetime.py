@@ -86,7 +86,6 @@ class UnixTimestampEncoder(BaseTransformer):
             try:
                 self._learn_has_multiple_timezones(data)
                 parsed_data = self._to_datetime(data)
-                self._warn_if_mixed_timezones()
                 return parsed_data
 
             except ValueError as error:
@@ -109,7 +108,9 @@ class UnixTimestampEncoder(BaseTransformer):
 
     def _warn_if_mixed_timezones(self):
         if self._has_multiple_timezones:
-            warnings.warn('Mixed timezones are supported only in SDV Enterprise.')
+            warnings.warn(
+                'Mixed timezones are not supported in SDV Community. Data will be converted to UTC.'
+            )
 
     def _raise_appropiate_conversion_error(self, error):
         message = str(error)
@@ -165,6 +166,8 @@ class UnixTimestampEncoder(BaseTransformer):
         transformed = self._transform_helper(data)
 
         self._learn_timezone_offest(data)
+        self._warn_if_mixed_timezones()
+
         if self.enforce_min_max_values:
             self._min_value = transformed.min()
             self._max_value = transformed.max()
