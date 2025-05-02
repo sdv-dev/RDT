@@ -1,9 +1,10 @@
+import datetime
 import re
 import sre_parse
 import warnings
 from decimal import Decimal
 from sre_constants import MAXREPEAT
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
@@ -13,9 +14,12 @@ from rdt.transformers.utils import (
     WarnDict,
     _any,
     _cast_to_type,
+    _get_utc_offset,
     _handle_enforce_uniqueness_and_cardinality_rule,
     _max_repeat,
+    _safe_parse_datetime,
     check_nan_in_transform,
+    data_has_multiple_timezones,
     fill_nan_with_none,
     flatten_column_list,
     learn_rounding_digits,
@@ -493,3 +497,107 @@ def test__handle_enforce_uniqueness_and_cardinality_rule():
     assert result_1 is None
     assert result_2 == 'unique'
     assert result_3 == 'other'
+
+
+def test__safe_parse_datetime():
+    """Test the ``_safe_parse_datetime`` function.
+
+    Setup:
+        - Use a string datetime with timezone offset.
+        - Use a pandas.Timestamp and a datetime.datetime object.
+    Input:
+        - A mix of string and datetime-like inputs.
+    Output:
+        - Parsed datetime or original datetime-like value.
+    """
+    # Setup
+    str_input = '2023-01-01 12:00:00+0200'
+    dt_input = datetime.datetime(2023, 1, 1, 12, 0)
+    ts_input = pd.Timestamp(dt_input)
+
+    # Run
+    res_str = _safe_parse_datetime(str_input)
+    res_dt = _safe_parse_datetime(dt_input)
+    res_ts = _safe_parse_datetime(ts_input)
+    res_invalid = _safe_parse_datetime('not-a-date')
+
+    # Assert
+    assert res_str.isoformat() == '2023-01-01T12:00:00+02:00'
+    assert res_dt == dt_input
+    assert res_ts == ts_input
+    assert res_invalid is None
+
+
+def test__get_utc_offset():
+    """Test the ``_get_utc_offset`` function.
+
+    Setup:
+        - Use aware and naive datetime objects.
+    Input:
+        - Datetime objects with and without timezone info.
+    Output:
+        - UTC offset as timedelta or None.
+    """
+    # Setup
+    aware = datetime.datetime(
+        2023, 1, 1, 12, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=2))
+    )
+    naive = datetime.datetime(2023, 1, 1, 12, 0)
+
+    # Run
+    res_aware = _get_utc_offset(aware)
+    res_naive = _get_utc_offset(naive)
+    res_invalid = _get_utc_offset(None)
+
+    # Assert
+    assert res_aware == datetime.timedelta(hours=2)
+    assert res_naive is None
+    assert res_invalid is None
+
+
+def test_data_has_multiple_timezones():
+    """Test the ``data_has_multiple_timezones`` function.
+
+    Setup:
+        - Provide datetime strings with different timezone offsets.
+    Input:
+        - A pandas Series of datetime strings.
+    Output:
+        - True if timezones differ, False otherwise.
+    """
+    # Setup
+    data_mixed = pd.Series(['2023-01-01 12:00:00+0200', '2023-01-01 12:00:00+0300'])
+    data_uniform = pd.Series(['2023-01-01 12:00:00+0200', '2023-01-02 12:00:00+0200'])
+    data_invalid = pd.Series(['invalid', 'still bad'])
+
+    # Run
+    res_mixed = data_has_multiple_timezones(data_mixed)
+    res_uniform = data_has_multiple_timezones(data_uniform)
+    res_invalid = data_has_multiple_timezones(data_invalid)
+
+    # Assert
+    assert res_mixed is True
+    assert res_uniform is False
+    assert res_invalid is False
+
+
+@patch('rdt.transformers.utils._safe_parse_datetime')
+def test_data_has_multiple_timezones_error_out(mock__safe_parse):
+    """Test the ``data_has_multiple_timezones`` function.
+
+    Setup:
+        - Provide datetime strings with different timezone offsets.
+    Input:
+        - A pandas Series of datetime strings.
+    Output:
+        - True if timezones differ, False otherwise.
+    """
+    # Setup
+    mock__safe_parse.side_effect = ValueError('Bad input')
+    data_invalid = pd.Series(['invalid', 'still bad'])
+
+    # Run
+    res_invalid = data_has_multiple_timezones(data_invalid)
+
+    # Assert
+    assert res_invalid is False

@@ -319,15 +319,10 @@ class TestUnixTimestampEncoder:
     def test_datetime_strings_with_timezone_offset(self):
         """Ensure datetime strings with timezone offsets (%z) are correctly parsed and normalized.
 
-        This test verifies that datetime strings with timezone offsets (e.g., '+0200') are:
-            - Properly parsed using the '%z' directive.
-            - Converted to UTC during transformation.
-            - Reverse-transformed back into strings using the same format,
-              with the offset normalized to '+0000'.
-
-        The test also asserts that the time is adjusted correctly to UTC (e.g., 08:32+0200
-        becomes 06:32+0000), and that the reverse-transformed output matches
-        the expected normalized strings.
+        The test ensures:
+            - Input datetimes with %z format are parsed correctly.
+            - Transformation and reverse transformation preserve original values and offsets.
+            - Output remains string-typed (not timezone-aware datetime objects).
         """
         # Setup
         data = pd.DataFrame({
@@ -342,9 +337,9 @@ class TestUnixTimestampEncoder:
         reverse_transformed = transformer.reverse_transform(transformed)
 
         # Assert
-        assert all(reverse_transformed['my_datetime_col'].str.endswith('+0000'))
+        assert all(reverse_transformed['my_datetime_col'].str.endswith('+0200'))
         expected_data = pd.DataFrame({
-            'my_datetime_col': ['2025-02-04 06:32:20+0000', '2025-01-13 06:32:21+0000']
+            'my_datetime_col': ['2025-02-04 08:32:20+0200', '2025-01-13 08:32:21+0200']
         })
         pd.testing.assert_frame_equal(expected_data, reverse_transformed)
         assert not is_datetime64tz_dtype(reverse_transformed)
@@ -405,6 +400,35 @@ class TestUnixTimestampEncoder:
         assert is_datetime64_ns_dtype(reverse_transformed['my_datetime_col'])
         assert not is_datetime64tz_dtype(reverse_transformed['my_datetime_col'])
         pd.testing.assert_frame_equal(data, reverse_transformed)
+
+    def test_mixed_timezone_data(self):
+        """Ensure that mixed timezone datetime values are converted to UTC during transformation.
+
+        This test verifies that:
+            - Datetime values with mixed timezones are properly converted to UTC.
+            - The reverse-transformed data returns as UTC, maintaining the correct format and dtype.
+            - The datetime column is preserved as timezone-naive after reverse transformation.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'my_datetime_col': ['2025-02-04 08:32:21+0200', '2025-01-13 08:32:21-0500']
+        })
+
+        datetime_format = '%Y-%m-%d %H:%M:%S%z'
+        transformer = UnixTimestampEncoder(datetime_format=datetime_format)
+
+        # Run
+        transformer.fit(data, column='my_datetime_col')
+        transformer.set_random_state(np.random.RandomState(42), 'reverse_transform')
+        transformed = transformer.transform(data)
+        reverse_transformed = transformer.reverse_transform(transformed)
+
+        # Assert
+        assert not is_datetime64tz_dtype(reverse_transformed['my_datetime_col'])
+        expected_result = pd.DataFrame({
+            'my_datetime_col': ['2025-02-04 06:32:21+0000', '2025-01-13 13:32:21+0000']
+        })
+        pd.testing.assert_frame_equal(expected_result, reverse_transformed)
 
 
 class TestOptimizedTimestampEncoder:

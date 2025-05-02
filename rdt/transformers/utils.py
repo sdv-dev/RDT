@@ -1,5 +1,6 @@
 """Tools to generate strings from regular expressions."""
 
+import datetime
 import logging
 import re
 import string
@@ -10,6 +11,7 @@ from decimal import Decimal
 
 import numpy as np
 import pandas as pd
+from dateutil import parser
 
 import sre_parse  # isort:skip
 
@@ -383,3 +385,39 @@ def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinal
             result = 'unique'
 
     return result
+
+
+def _safe_parse_datetime(value):
+    if isinstance(value, (pd.Timestamp, datetime.datetime)):
+        return value
+    try:
+        return parser.parse(value)
+    except Exception:
+        return None
+
+
+def _get_utc_offset(dt):
+    try:
+        return dt.utcoffset()
+    except Exception:
+        return None
+
+
+def data_has_multiple_timezones(data):
+    """Check if a Series of datetime values contains multiple timezones.
+
+    Args:
+        data (pd.Series):
+            Series of datetime strings or datetime objects.
+
+    Returns:
+        bool:
+            True if multiple timezones are detected, False otherwise.
+    """
+    try:
+        parsed_datetimes = data.apply(_safe_parse_datetime).dropna()
+        offsets = parsed_datetimes.apply(_get_utc_offset).dropna()
+        return offsets.nunique() > 1
+
+    except Exception:
+        return False

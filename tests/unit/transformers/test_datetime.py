@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from dateutil.tz import tzoffset
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.datetime import (
@@ -605,19 +606,6 @@ class TestUnixTimestampEncoder:
         assert transformer._max_value is None
         assert transformer._dtype == 'object'
 
-    def test__convert_data_to_pandas_datetime_with_utc(self):
-        """Test `_convert_data_to_pandas_datetime` applies UTC when %z is in format."""
-        # Setup
-        transformer = UnixTimestampEncoder()
-        transformer.datetime_format = '%Y-%m-%d %H:%M:%S%z'
-        data = pd.Series([1.706668341234567e18])
-
-        # Run
-        result = transformer._convert_data_to_pandas_datetime(data)
-
-        # Assert
-        assert str(result.dt.tz) == 'UTC'
-
     def test__convert_data_to_pandas_datetime_without_utc(self):
         """Test _convert_data_to_pandas_datetime without UTC when no %z in format."""
         # Setup
@@ -630,6 +618,36 @@ class TestUnixTimestampEncoder:
 
         # Assert
         assert result.dt.tz is None
+
+    def test__convert_data_to_pandas_datetime_with_multiple_timezones(self):
+        """Test `_convert_data_to_pandas_datetime` with multiple timezones."""
+        # Setup
+        transformer = UnixTimestampEncoder()
+        transformer.datetime_format = '%Y-%m-%d %H:%M:%S%Z'
+        transformer._has_multiple_timezones = True
+        data = pd.Series([1.706668341234567e18])
+
+        # Run
+        result = transformer._convert_data_to_pandas_datetime(data)
+
+        # Assert
+        assert str(result.dt.tz) == 'UTC'
+
+    def test__convert_data_to_pandas_datetime_with_timezone(self):
+        """Test `_convert_data_to_pandas_datetime` with a single timezone."""
+        # Setup
+        transformer = UnixTimestampEncoder()
+        transformer.datetime_format = '%Y-%m-%d %H:%M:%S%z'
+        transformer._timezone_offset = tzoffset(name='EDT', offset=-5 * 3600)
+        transformer._has_multiple_timezones = False
+        data = pd.Series([1.706668341234567e18])
+
+        # Run
+        result = transformer._convert_data_to_pandas_datetime(data)
+
+        # Assert
+        assert str(result.dt.tz) == "tzoffset('EDT', -18000)"
+        assert result.dt.strftime('%z').iloc[0] == '-0500'
 
     def test__handle_datetime_formatting_with_format_strftime_like(self):
         """Test `_handle_datetime_formatting` applies formatting when `datetime_format` is set."""
@@ -676,6 +694,7 @@ class TestUnixTimestampEncoder:
         pd.testing.assert_series_equal(result, expected)
 
     def test__reverse_transform_calls_chain_of_steps(self):
+        """Test that `_reverse_transform` calls a series methods in order."""
         # Setup
         instance = Mock()
         data_object = object()
@@ -693,6 +712,67 @@ class TestUnixTimestampEncoder:
             instance._convert_data_to_pandas_datetime.return_value
         )
         assert result == instance._handle_datetime_formatting.return_value
+
+    def test__convert_to_datetime_has_multiple_timezones(self):
+        """Test the `_convert_to_datetime` method returns the input data when no need to convert."""
+        # Setup
+        instance = Mock()
+        data_object = object()
+        instance._needs_datetime_conversion.return_value = False
+
+        # Run
+        result = UnixTimestampEncoder._convert_to_datetime(instance, data_object)
+
+        # Assert
+        assert data_object == result
+
+    def test__warn_if_mixed_timezones(self):
+        """Test that a warning is being shown when the data contains mixed timezones."""
+        # Setup
+        instance = Mock()
+        instance._has_multiple_timezones = True
+
+        # Run
+        warning_msg = 'Mixed timezones are supported only in SDV Enterprise.'
+        with pytest.warns(UserWarning, match=warning_msg):
+            UnixTimestampEncoder._warn_if_mixed_timezones(instance)
+
+    def test__learn_timezone_offest_sets_timezone_offset(self):
+        """Test that `_learn_timezone_offest` sets `_timezone_offset` correctly.
+
+        Setup:
+            - Instance with `datetime_format` including `%z` and `_has_multiple_timezones=False`.
+            - Input data contains one or more valid datetime strings with timezone offset.
+        Input:
+            - A list of datetime strings with one valid `%z`-formatted entry.
+        Output:
+            - `_timezone_offset` is set to the tzinfo of the first valid datetime.
+        """
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance.datetime_format = '%Y-%m-%d %H:%M:%S%z'
+        instance._has_multiple_timezones = False
+        data = [None, 'invalid-date', '2025-04-01 14:00:00+0300', '2025-04-02 14:00:00+0300']
+
+        # Run
+        UnixTimestampEncoder._learn_timezone_offest(instance, data)
+
+        # Assert
+        assert instance._timezone_offset.utcoffset(None).total_seconds() == 10800
+
+    def test__learn_timezone_offest_with_no_valid_dates(self):
+        """Test that `_learn_timezone_offest` with no valid data."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance.datetime_format = '%Y-%m-%d %H:%M:%S%z'
+        instance._has_multiple_timezones = False
+        data = [None, 'not-a-date', '---']
+
+        # Run
+        UnixTimestampEncoder._learn_timezone_offest(instance, data)
+
+        # Assert
+        assert instance._timezone_offset is None
 
 
 class TestOptimizedTimestampEncoder:
