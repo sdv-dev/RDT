@@ -776,6 +776,133 @@ class TestUnixTimestampEncoder:
         # Assert
         assert instance._timezone_offset is None
 
+    @patch('rdt.transformers.datetime.data_has_multiple_timezones')
+    def test__learn_has_multiple_timezones_with_no_valid_timezones(self, mock_data_has_multiple_tz):
+        """Test that `_learn_has_multiple_timezones` handles data with no valid timezones."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance.datetime_format = '%Y-%m-%d %H:%M:%S%z'
+        data = pd.Series([None, 'not-a-date', '---'])
+        mock_data_has_multiple_tz.return_value = False
+
+        # Run
+        UnixTimestampEncoder._learn_has_multiple_timezones(instance, data)
+
+        # Assert
+        assert instance._has_multiple_timezones is False
+        mock_data_has_multiple_tz.assert_called_once_with(data)
+
+    @patch('rdt.transformers.datetime.is_numeric_dtype')
+    def test__needs_datetime_conversion_with_non_numeric_data(self, mock_pd_is_numeric_dtype):
+        """Test that `_needs_datetime_conversion` returns True for non-numeric data."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance.datetime_format = '%Y-%m-%d'
+        data = pd.Series(['2023-10-15', '2023-10-16'])
+
+        # Run
+        result = instance._needs_datetime_conversion(data)
+
+        # Assert
+        assert result is True
+        mock_pd_is_numeric_dtype.assert_not_called()
+
+    @patch('rdt.transformers.datetime.is_numeric_dtype', return_value=True)
+    def test__needs_datetime_conversion_with_numeric_data(self, mock_pd_is_numeric_dtype):
+        """Test that `_needs_datetime_conversion` returns False for numeric data with no format."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance.datetime_format = None
+        data = pd.Series([1234567890, 1234567891])
+
+        # Run
+        result = instance._needs_datetime_conversion(data)
+
+        # Assert
+        assert result is False
+        mock_pd_is_numeric_dtype.assert_called_once_with(data)
+
+    @patch('rdt.transformers.datetime.pd.to_datetime')
+    def test__to_datetime_with_no_timezones(self, mock_pd_to_datetime):
+        """Test that `_to_datetime` converts data without timezones."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance._has_multiple_timezones = False
+        instance.datetime_format = '%Y-%m-%d'
+        data = pd.Series(['2023-10-15', '2023-10-16'])
+        mock_pd_to_datetime.return_value = pd.Series([
+            pd.Timestamp('2023-10-15'),
+            pd.Timestamp('2023-10-16'),
+        ])
+
+        # Run
+        result = instance._to_datetime(data)
+
+        # Assert
+        expected = pd.Series([pd.Timestamp('2023-10-15'), pd.Timestamp('2023-10-16')])
+        pd.testing.assert_series_equal(result, expected)
+        mock_pd_to_datetime.assert_called_once_with(data, format='%Y-%m-%d', utc=False)
+
+    @patch('rdt.transformers.datetime.pd.to_datetime')
+    def test__to_datetime_with_multiple_timezones(self, mock_pd_to_datetime):
+        """Test that `_to_datetime` converts data to UTC with multiple timezones."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance._has_multiple_timezones = True
+        instance.datetime_format = '%Y-%m-%d %H:%M:%S%z'
+        data = pd.Series(['2023-10-15 14:30:00+0200', '2023-10-15 14:30:00-0500'])
+        mock_pd_to_datetime.return_value = pd.Series([
+            pd.Timestamp('2023-10-15 12:30:00+0000', tz='UTC'),
+            pd.Timestamp('2023-10-15 19:30:00+0000', tz='UTC'),
+        ])
+
+        # Run
+        result = instance._to_datetime(data)
+
+        # Assert
+        expected = pd.Series([
+            pd.Timestamp('2023-10-15 12:30:00+0000', tz='UTC'),
+            pd.Timestamp('2023-10-15 19:30:00+0000', tz='UTC'),
+        ])
+        pd.testing.assert_series_equal(result, expected)
+        mock_pd_to_datetime.assert_called_once_with(data, format='%Y-%m-%d %H:%M:%S%z', utc=True)
+
+    def test__get_pandas_datetime_format_with_format_windows(self):
+        """Test that `_get_pandas_datetime_format` converts format to pandas-compatible."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance.datetime_format = '%Y-%#m-%-d'
+
+        # Run
+        result = instance._get_pandas_datetime_format()
+
+        # Assert
+        assert result == '%Y-%m-%d'
+
+    def test__get_pandas_datetime_format_with_format_unix(self):
+        """Test that `_get_pandas_datetime_format` converts format to pandas-compatible."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance.datetime_format = '%Y-%-m-%-d'
+
+        # Run
+        result = instance._get_pandas_datetime_format()
+
+        # Assert
+        assert result == '%Y-%m-%d'
+
+    def test__get_pandas_datetime_format_with_no_format(self):
+        """Test that `_get_pandas_datetime_format` returns None when no format is set."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance.datetime_format = None
+
+        # Run
+        result = instance._get_pandas_datetime_format()
+
+        # Assert
+        assert result is None
+
 
 class TestOptimizedTimestampEncoder:
     def test___init__(self):

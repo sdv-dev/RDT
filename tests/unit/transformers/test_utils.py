@@ -9,11 +9,14 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
+from dateutil import parser
+from zoneinfo import ZoneInfo
 
 from rdt.transformers.utils import (
     WarnDict,
     _any,
     _cast_to_type,
+    _extract_timezone_from_a_string,
     _get_utc_offset,
     _handle_enforce_uniqueness_and_cardinality_rule,
     _max_repeat,
@@ -499,6 +502,42 @@ def test__handle_enforce_uniqueness_and_cardinality_rule():
     assert result_3 == 'other'
 
 
+def test__extract_timezone_from_a_string_with_valid_timezone():
+    """Test that `_extract_timezone_from_a_string` extracts a valid timezone from a string."""
+    # Setup
+    dt_str = '2023-10-15 14:30:00 XYZ'
+
+    # Run
+    result = _extract_timezone_from_a_string(dt_str)
+
+    # Assert
+    assert result == 'XYZ'
+
+
+def test__extract_timezone_from_a_string_with_no_timezone():
+    """Test that `_extract_timezone_from_a_string` returns None when no timezone is present."""
+    # Setup
+    dt_str = '2023-10-15 14:30:00'
+
+    # Run
+    result = _extract_timezone_from_a_string(dt_str)
+
+    # Assert
+    assert result is None
+
+
+def test__extract_timezone_from_a_string_with_timezone_object():
+    """Test that `_extract_timezone_from_a_string` returns None when no timezone is present."""
+    # Setup
+    timestamp = pd.to_datetime('2021-04-04 23:00:10 UTC')
+
+    # Run
+    result = _extract_timezone_from_a_string(timestamp.tz)
+
+    # Assert
+    assert result == 'UTC'
+
+
 def test__safe_parse_datetime():
     """Test the ``_safe_parse_datetime`` function.
 
@@ -526,6 +565,22 @@ def test__safe_parse_datetime():
     assert res_dt == dt_input
     assert res_ts == ts_input
     assert res_invalid is None
+
+
+def test__safe_parse_datetime_with_unrecognized_timezone_and_warning():
+    """Test that `_safe_parse_datetime` handles unrecognized timezone."""
+    # Setup
+    value = '2023-10-15 14:30:00 XYZ'
+    warn = True
+    expected_dt = parser.parse('2023-10-15 14:30:00').replace(tzinfo=ZoneInfo('UTC'))
+
+    # Run
+    warning_msg = "Timezone 'XYZ' is not understood so it will be converted to 'UTC'."
+    with pytest.warns(UserWarning, match=warning_msg):
+        result = _safe_parse_datetime(value, warn=warn)
+
+    # Assert
+    assert result == expected_dt
 
 
 def test__get_utc_offset():

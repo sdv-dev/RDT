@@ -4,14 +4,13 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from dateutil import parser
 from pandas.api.types import is_datetime64_dtype, is_numeric_dtype
 from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
-from rdt.transformers.utils import data_has_multiple_timezones
+from rdt.transformers.utils import _safe_parse_datetime, data_has_multiple_timezones
 
 
 class UnixTimestampEncoder(BaseTransformer):
@@ -76,6 +75,7 @@ class UnixTimestampEncoder(BaseTransformer):
         self._timezone_offset = None
 
     def _learn_has_multiple_timezones(self, data):
+        """Determines if the data contains multiple timezones and stores the result."""
         if not isinstance(data, pd.Series):
             data = data.to_series()
 
@@ -94,15 +94,18 @@ class UnixTimestampEncoder(BaseTransformer):
         return data
 
     def _needs_datetime_conversion(self, data):
+        """Determines if the data requires datetime conversion."""
         return self.datetime_format is not None or not is_numeric_dtype(data)
 
     def _to_datetime(self, data):
+        """Converts data to datetime using the instance's datetime format."""
         datetime_format = self._get_pandas_datetime_format()
         return pd.to_datetime(data, format=datetime_format, utc=self._has_multiple_timezones)
 
     def _get_pandas_datetime_format(self):
+        """Converts the instance's datetime format to a pandas-compatible format."""
         if self.datetime_format:
-            return self.datetime_format.replace('%-', '%')
+            return self.datetime_format.replace('%#', '%').replace('%-', '%')
 
         return None
 
@@ -139,16 +142,17 @@ class UnixTimestampEncoder(BaseTransformer):
         return data
 
     def _learn_timezone_offest(self, data):
+        """Extracts and stores the timezone offset from the first valid datetime in the data."""
         has_timezone = self.datetime_format and '%z' in self.datetime_format.lower()
         if has_timezone and not self._has_multiple_timezones:
             for val in data:
                 if pd.notna(val):
                     try:
-                        dt = parser.parse(str(val))
+                        dt = _safe_parse_datetime(str(val), warn=True)
                         self._timezone_offset = dt.tzinfo
                         break
 
-                    except (ValueError, TypeError):
+                    except (ValueError, TypeError, AttributeError):
                         self._timezone_offset = None
 
     def _fit(self, data):
@@ -231,6 +235,7 @@ class UnixTimestampEncoder(BaseTransformer):
         return self.null_transformer.transform(data)
 
     def _convert_data_to_pandas_datetime(self, data):
+        """Converts data to pandas datetime, applying UTC or specific timezone offset if set."""
         if hasattr(self, '_has_multiple_timezones') and self._has_multiple_timezones:
             return pd.to_datetime(data, utc=True)
 
@@ -241,6 +246,7 @@ class UnixTimestampEncoder(BaseTransformer):
         return pd.to_datetime(data)
 
     def _handle_datetime_formatting(self, datetime_data):
+        """Formats datetime data based on datetime format or converts to numeric if needed."""
         if self.datetime_format:
             return self._format_datetime(datetime_data)
 
@@ -251,6 +257,7 @@ class UnixTimestampEncoder(BaseTransformer):
         return datetime_data
 
     def _format_datetime(self, datetime_data):
+        """Formats datetime data to string or datetime using learned datatime format and dtype."""
         if is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
             return pd.to_datetime(
                 datetime_data.dt.strftime(self.datetime_format), format=self.datetime_format
