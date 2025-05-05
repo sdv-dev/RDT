@@ -1,5 +1,6 @@
 """Tools to generate strings from regular expressions."""
 
+import datetime
 import logging
 import re
 import string
@@ -10,6 +11,9 @@ from decimal import Decimal
 
 import numpy as np
 import pandas as pd
+from dateutil import parser
+from dateutil.parser import UnknownTimezoneWarning
+from dateutil.tz import UTC
 
 import sre_parse  # isort:skip
 
@@ -383,3 +387,82 @@ def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinal
             result = 'unique'
 
     return result
+
+
+def _extract_timezone_from_a_string(dt_str):
+    if not isinstance(dt_str, str):
+        dt_str = str(dt_str)
+
+    match = re.search(r'\b([A-Z]{2,5})\b', dt_str)
+    return match.group(1) if match else None
+
+
+def _safe_parse_datetime(value, warn=False):
+    """Safely parse a value into a datetime object, handling invalid inputs.
+
+    Converts the input `value` into a `datetime.datetime` object using `dateutil.parser.parse`.
+    If the input is already a `pandas.Timestamp` or `datetime.datetime`, it is returned unchanged.
+    Unrecognized timezones are converted to UTC, with an optional warning. Returns `pd.NaT` if
+    parsing fails or the input is invalid.
+
+    Args:
+        value (Any):
+            Value to parse into a datetime. Accepts strings, `pandas.Timestamp`,
+            `datetime.datetime`, or types compatible with `dateutil.parser.parse`.
+        warn (bool):
+            If True, warns when an unrecognized timezone is converted to UTC.
+            Defaults to False.
+
+    Returns:
+        datetime.datetime | pd.NaT:
+            Parsed `datetime.datetime` object with unrecognized timezones
+            set to UTC, or `pd.NaT` if parsing fails.
+    """
+    if isinstance(value, (pd.Timestamp, datetime.datetime)):
+        return value
+
+    try:
+        with warnings.catch_warnings(record=True) as captured_warnings:
+            dt = parser.parse(value)
+
+        if any(issubclass(warned.category, UnknownTimezoneWarning) for warned in captured_warnings):
+            input_timezone = _extract_timezone_from_a_string(value)
+            if warn:
+                warnings.warn(
+                    f"Timezone '{input_timezone}' is not understood so it will be converted "
+                    "to 'UTC'.",
+                )
+
+            return dt.replace(tzinfo=UTC)
+
+        return dt
+
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
+def _get_utc_offset(dt):
+    try:
+        return dt.utcoffset()
+    except AttributeError:
+        return None
+
+
+def data_has_multiple_timezones(data):
+    """Check if a Series of datetime values contains multiple timezones.
+
+    Args:
+        data (pd.Series):
+            Series of datetime strings or datetime objects.
+
+    Returns:
+        bool:
+            True if multiple timezones are detected, False otherwise.
+    """
+    try:
+        parsed_datetimes = data.apply(_safe_parse_datetime).dropna()
+        offsets = parsed_datetimes.apply(_get_utc_offset).dropna()
+        return offsets.nunique() > 1
+
+    except ValueError:
+        return False

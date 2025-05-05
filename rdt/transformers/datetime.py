@@ -1,5 +1,7 @@
 """Transformer for datetime data."""
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_datetime64_dtype, is_numeric_dtype
@@ -8,6 +10,7 @@ from pandas.core.tools.datetimes import _guess_datetime_format_for_array
 from rdt.errors import TransformerInputError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
+from rdt.transformers.utils import _safe_parse_datetime, data_has_multiple_timezones
 
 
 class UnixTimestampEncoder(BaseTransformer):
@@ -68,43 +71,56 @@ class UnixTimestampEncoder(BaseTransformer):
 
         self.datetime_format = datetime_format
         self._dtype = None
+        self._has_multiple_timezones = False
+        self._timezone_offset = None
+
+    def _learn_has_multiple_timezones(self, data):
+        """Determines if the data contains multiple timezones and stores the result."""
+        if not isinstance(data, pd.Series):
+            data = data.to_series()
+
+        self._has_multiple_timezones = data_has_multiple_timezones(data)
 
     def _convert_to_datetime(self, data):
-        """Convert datetime column into datetime dtype.
-
-        Convert the datetime column to datetime dtype using the ``datetime_format``.
-        All non-numeric columns will automatically be cast to datetimes. Numeric columns
-        with a ``datetime_format`` will be treated as strings and cast to datetime. Numeric
-        columns without a ``datetime_format`` will be treated as already converted datetimes.
-
-        Args:
-            data (pandas.Series):
-                The datetime column.
-
-        Raises:
-            - ``TypeError`` if data cannot be converted to datetime.
-            - ``ValueError`` if data does not match the specified datetime format
-
-        Returns:
-            pandas.Series:
-                The datetime column converted to the datetime dtype.
-        """
-        if self.datetime_format or not is_numeric_dtype(data):
+        if self._needs_datetime_conversion(data):
             try:
-                pandas_datetime_format = None
-                if self.datetime_format:
-                    pandas_datetime_format = self.datetime_format.replace('%-', '%')
-
-                data = pd.to_datetime(data, format=pandas_datetime_format)
+                self._learn_has_multiple_timezones(data)
+                parsed_data = self._to_datetime(data)
+                return parsed_data
 
             except ValueError as error:
-                if 'Unknown string' in str(error) or 'Unknown datetime string' in str(error):
-                    message = 'Data must be of dtype datetime, or castable to datetime.'
-                    raise TypeError(message) from None
-
-                raise ValueError('Data does not match specified datetime format.') from None
+                self._raise_appropiate_conversion_error(error)
 
         return data
+
+    def _needs_datetime_conversion(self, data):
+        """Determines if the data requires datetime conversion."""
+        return self.datetime_format is not None or not is_numeric_dtype(data)
+
+    def _to_datetime(self, data):
+        """Converts data to datetime using the instance's datetime format."""
+        datetime_format = self._get_pandas_datetime_format()
+        return pd.to_datetime(data, format=datetime_format, utc=self._has_multiple_timezones)
+
+    def _get_pandas_datetime_format(self):
+        """Converts the instance's datetime format to a pandas-compatible format."""
+        if self.datetime_format:
+            return self.datetime_format.replace('%#', '%').replace('%-', '%')
+
+        return None
+
+    def _warn_if_mixed_timezones(self):
+        if self._has_multiple_timezones:
+            warnings.warn(
+                'Mixed timezones are not supported in SDV Community. Data will be converted to UTC.'
+            )
+
+    def _raise_appropiate_conversion_error(self, error):
+        message = str(error)
+        if 'Unknown string' in message or 'Unknown datetime string' in message:
+            raise TypeError('Data must be of dtype datetime, or castable to datetime.') from None
+
+        raise ValueError('Data does not match specified datetime format.') from None
 
     def _transform_helper(self, datetimes):
         """Transform datetime values to integer."""
@@ -125,6 +141,20 @@ class UnixTimestampEncoder(BaseTransformer):
         data = np.round(data.astype(np.float64))
         return data
 
+    def _learn_timezone_offest(self, data):
+        """Extracts and stores the timezone offset from the first valid datetime in the data."""
+        has_timezone = self.datetime_format and '%z' in self.datetime_format.lower()
+        if has_timezone and not self._has_multiple_timezones:
+            for val in data:
+                if pd.notna(val):
+                    try:
+                        dt = _safe_parse_datetime(str(val), warn=True)
+                        self._timezone_offset = dt.tzinfo
+                        break
+
+                    except (ValueError, TypeError, AttributeError):
+                        self._timezone_offset = None
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -138,6 +168,10 @@ class UnixTimestampEncoder(BaseTransformer):
             self.datetime_format = _guess_datetime_format_for_array(datetime_array)
 
         transformed = self._transform_helper(data)
+
+        self._learn_timezone_offest(data)
+        self._warn_if_mixed_timezones()
+
         if self.enforce_min_max_values:
             self._min_value = transformed.min()
             self._max_value = transformed.max()
@@ -200,6 +234,37 @@ class UnixTimestampEncoder(BaseTransformer):
         data = self._transform_helper(data)
         return self.null_transformer.transform(data)
 
+    def _convert_data_to_pandas_datetime(self, data):
+        """Converts data to pandas datetime, applying UTC or specific timezone offset if set."""
+        if hasattr(self, '_has_multiple_timezones') and self._has_multiple_timezones:
+            return pd.to_datetime(data, utc=True)
+
+        elif hasattr(self, '_timezone_offset') and self._timezone_offset is not None:
+            datime_data = pd.to_datetime(data, utc=True)
+            return datime_data.dt.tz_convert(self._timezone_offset)
+
+        return pd.to_datetime(data)
+
+    def _handle_datetime_formatting(self, datetime_data):
+        """Formats datetime data based on datetime format or converts to numeric if needed."""
+        if self.datetime_format:
+            return self._format_datetime(datetime_data)
+
+        elif is_numeric_dtype(self._dtype):
+            datetime_data = pd.to_numeric(datetime_data.astype('object'), errors='coerce')
+            return datetime_data.astype(self._dtype)
+
+        return datetime_data
+
+    def _format_datetime(self, datetime_data):
+        """Formats datetime data to string or datetime using learned datatime format and dtype."""
+        if is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
+            return pd.to_datetime(
+                datetime_data.dt.strftime(self.datetime_format), format=self.datetime_format
+            )
+
+        return datetime_data.dt.strftime(self.datetime_format).astype(self._dtype)
+
     def _reverse_transform(self, data):
         """Convert float values back to datetimes.
 
@@ -214,19 +279,8 @@ class UnixTimestampEncoder(BaseTransformer):
         if self.enforce_min_max_values:
             data = data.clip(self._min_value, self._max_value)
 
-        datetime_data = pd.to_datetime(data)
-        if self.datetime_format:
-            if is_datetime64_dtype(self._dtype) and '.%f' not in self.datetime_format:
-                datetime_data = pd.to_datetime(
-                    datetime_data.dt.strftime(self.datetime_format),
-                    format=self.datetime_format,
-                )
-            else:
-                datetime_data = datetime_data.dt.strftime(self.datetime_format).astype(self._dtype)
-        elif is_numeric_dtype(self._dtype):
-            datetime_data = pd.to_numeric(datetime_data.astype('object'), errors='coerce')
-            datetime_data = datetime_data.astype(self._dtype)
-
+        datetime_data = self._convert_data_to_pandas_datetime(data)
+        datetime_data = self._handle_datetime_formatting(datetime_data)
         return datetime_data
 
 
