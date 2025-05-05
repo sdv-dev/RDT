@@ -9,8 +9,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pandas as pd
 import pytest
-from dateutil import parser
-from zoneinfo import ZoneInfo
+from dateutil import parser, tz
 
 from rdt.transformers.utils import (
     WarnDict,
@@ -572,7 +571,7 @@ def test__safe_parse_datetime_with_unrecognized_timezone_and_warning():
     # Setup
     value = '2023-10-15 14:30:00 XYZ'
     warn = True
-    expected_dt = parser.parse('2023-10-15 14:30:00').replace(tzinfo=ZoneInfo('UTC'))
+    expected_dt = parser.parse('2023-10-15 14:30:00').replace(tzinfo=tz.tzoffset('UTC', 0))
 
     # Run
     warning_msg = "Timezone 'XYZ' is not understood so it will be converted to 'UTC'."
