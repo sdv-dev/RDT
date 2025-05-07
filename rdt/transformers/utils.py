@@ -437,7 +437,7 @@ def _safe_parse_datetime(value, warn=False):
 
         return dt
 
-    except (ValueError, TypeError, AttributeError):
+    except (ValueError, TypeError, AttributeError, OverflowError):
         return None
 
 
