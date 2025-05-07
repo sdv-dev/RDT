@@ -548,17 +548,20 @@ def test__safe_parse_datetime():
     """
     # Setup
     str_input = '2023-01-01 12:00:00+0200'
+    str_input_no_format = '20220902110443000000'
     dt_input = datetime.datetime(2023, 1, 1, 12, 0)
     ts_input = pd.Timestamp(dt_input)
 
     # Run
     res_str = _safe_parse_datetime(str_input)
+    res_str_no_format = _safe_parse_datetime(str_input_no_format)
     res_dt = _safe_parse_datetime(dt_input)
     res_ts = _safe_parse_datetime(ts_input)
     res_invalid = _safe_parse_datetime('not-a-date')
 
     # Assert
     assert res_str.isoformat() == '2023-01-01T12:00:00+02:00'
+    assert res_str_no_format is None
     assert res_dt == dt_input
     assert res_ts == ts_input
     assert res_invalid is None
