@@ -368,7 +368,7 @@ class TestRegexGenerator:
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__fit_cardinality_rule_match(self):
-        """Test it when cardinality_rule is 'match'."""
+        """Test the fit method when cardinality_rule is 'match'."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match')
         columns_data = pd.Series(['1', '2', '3', '2', '1'])
@@ -382,7 +382,7 @@ class TestRegexGenerator:
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__reverse_transform_cardinality_rule_match(self):
-        """Test it when cardinality_rule is 'match'."""
+        """Test the reverse transform method when cardinality_rule is 'match'."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match')
         columns_data = pd.DataFrame({'col': ['1', '2', '3', '2', '1']})
@@ -395,7 +395,7 @@ class TestRegexGenerator:
         assert instance._unique_regex_values == ['AAAAA', 'AAAAB', 'AAAAC']
 
     def test__fit_cardinality_rule_match_with_regex_format(self):
-        """Test it when cardinality_rule is 'match'."""
+        """Test the fit method when cardinality_rule is 'match' and regex_format is provided."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match', regex_format='[1-5]{1}')
         columns_data = pd.Series(['1', '2', '3', '2', '1'])
@@ -409,7 +409,7 @@ class TestRegexGenerator:
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__reverse_transform_cardinality_rule_match_with_regex_format(self):
-        """Test it when cardinality_rule is 'match'."""
+        """Test reverse transform when cardinality_rule is 'match' and regex_format is provided."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match', regex_format='[1-5]{1}')
         columns_data = pd.DataFrame({'col': ['1', '2', '3', '2', '1']})
@@ -422,7 +422,7 @@ class TestRegexGenerator:
         assert instance._unique_regex_values == ['1', '2', '3']
 
     def test__fit_cardinality_rule_match_with_nans(self):
-        """Test it when cardinality_rule is 'match'."""
+        """Test the fit method when cardinality_rule is 'match' and there are nans."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match', regex_format='[1-5]{1}')
         columns_data = pd.Series(['1', '2', '3', '2', '1', np.nan, None, np.nan])
@@ -436,7 +436,7 @@ class TestRegexGenerator:
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__reverse_transform_cardinality_rule_match_with_nans(self):
-        """Test it when cardinality_rule is 'match'."""
+        """Test the reverse transform method when cardinality_rule is 'match' and there are nans."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match', regex_format='[1-5]{1}')
         columns_data = pd.DataFrame({'col': ['1', '2', '3', '2', '1', np.nan, None, np.nan]})
@@ -449,7 +449,7 @@ class TestRegexGenerator:
         assert instance._unique_regex_values == ['1', '2', '3', '4']
 
     def test__fit_cardinality_rule_match_with_nans_too_many_values(self):
-        """Test it when cardinality_rule is 'match'."""
+        """Test the fit method when cardinality_rule is 'match' and values don't follow regex."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match', regex_format='[1-3]{1}')
         columns_data = pd.Series(['1', '2', '3', '2', '4'])
@@ -463,7 +463,7 @@ class TestRegexGenerator:
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__reverse_transform_cardinality_rule_match_with_nans_too_many_values(self):
-        """Test it when cardinality_rule is 'match'."""
+        """Test reverse transform when cardinality_rule is 'match' and values don't follow regex."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match', regex_format='[1-3]{1}')
         columns_data = pd.DataFrame({'col': ['1', '2', '3', '2', '4']})
@@ -476,7 +476,7 @@ class TestRegexGenerator:
         assert instance._unique_regex_values == ['1', '2', '3', '4']
 
     def test__fit_cardinality_rule_match_with_too_many_values_str(self):
-        """Test it when cardinality_rule is 'match'."""
+        """Test fit when cardinality_rule is 'match' and string values don't follow regex."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match', regex_format='[a-b]{1}')
         columns_data = pd.Series(['a', 'b', 'c', 'b', 'd', 'f'])
@@ -490,7 +490,7 @@ class TestRegexGenerator:
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__reverse_transform_cardinality_rule_match_with_too_many_values_str(self):
-        """Test it when cardinality_rule is 'match'."""
+        """Test reverse transform when cardinality_rule='match' and strings don't follow regex."""
         # Setup
         instance = RegexGenerator(cardinality_rule='match', regex_format='[a-b]{1}')
         columns_data = pd.DataFrame({'col': ['a', 'b', 'c', 'b', 'd', 'f']})
@@ -505,7 +505,7 @@ class TestRegexGenerator:
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__fit_cardinality_rule_scale(self):
-        """Test it when cardinality_rule is 'scale'."""
+        """Test fit when cardinality_rule is 'scale'."""
         # Setup
         instance = RegexGenerator(cardinality_rule='scale')
         columns_data = pd.Series(['1', '2', '3', '4', '5', '5', '6', '6', '7', '7', '7', '7'])
@@ -522,7 +522,7 @@ class TestRegexGenerator:
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__fit_cardinality_rule_scale_nans(self):
-        """Test it when cardinality_rule is 'scale'."""
+        """Test fit when cardinality_rule is 'scale' and there are nans."""
         # Setup
         instance = RegexGenerator(cardinality_rule='scale')
         columns_data = pd.Series([np.nan, np.nan, None, None, '1', 2])
@@ -539,7 +539,7 @@ class TestRegexGenerator:
         assert instance.output_properties == {None: {'next_transformer': None}}
 
     def test__fit_cardinality_rule_scale_only_nans(self):
-        """Test it when cardinality_rule is 'scale'."""
+        """Test fit when cardinality_rule is 'scale' and there are only nans."""
         # Setup
         instance = RegexGenerator(cardinality_rule='scale')
         columns_data = pd.Series([np.nan, np.nan, None, None, float('nan'), float('nan')])
@@ -972,7 +972,7 @@ class TestRegexGenerator:
         assert value_counts.sum() == 150
 
     def test__reverse_transform_scale_empty_data(self):
-        """Test when cardinality rule is 'scale'."""
+        """Test when cardinality rule is 'scale' and the data is empty."""
         # Setup
         data = pd.DataFrame({'col': []})
         instance = RegexGenerator(regex_format='[A-Z]', cardinality_rule='scale')
@@ -986,7 +986,7 @@ class TestRegexGenerator:
         assert out.size == 0
 
     def test__reverse_transform_scale_not_enough_regex(self):
-        """Test when cardinality rule is 'scale'."""
+        """Test when cardinality rule is 'scale' and the regex cannot generate enough samples."""
         # Setup
         data = pd.DataFrame({'col': ['A'] * 50 + ['B'] * 50 + ['C'] * 50})
         instance = RegexGenerator(regex_format='[A-B]', cardinality_rule='scale')
@@ -1014,7 +1014,7 @@ class TestRegexGenerator:
         assert value_counts.sum() == 150
 
     def test__reverse_transform_scale_not_enough_regex_multiple_calls(self):
-        """Test when cardinality rule is 'scale'."""
+        """Test with cardinality_rule='scale' and multiple calls with not enough regex."""
         # Setup
         data = pd.DataFrame({'col': ['A'] * 50 + ['B'] * 50 + ['C'] * 50})
         instance = RegexGenerator(regex_format='[A-B]', cardinality_rule='scale')
@@ -1044,7 +1044,7 @@ class TestRegexGenerator:
             assert value_counts.sum() == 150
 
     def test__reverse_transform_scale_remaining_values(self):
-        """Test when cardinality rule is 'scale'."""
+        """Test with cardinality_rule='scale' and a call has remaining values for next call."""
         # Setup
         data = pd.DataFrame({'col': ['A'] * 10 + ['B'] * 3})
         instance = RegexGenerator(regex_format='[A-B]', cardinality_rule='scale')
@@ -1059,7 +1059,7 @@ class TestRegexGenerator:
         assert set(out2).issubset({'A', 'B', 'A(0)', 'B(0)', 'B(1)', 'B(2)', 'B(3)'})
 
     def test__reverse_transform_scale_many_remaining_values(self):
-        """Test when cardinality rule is 'scale'."""
+        """Test with cardinality_rule='scale' and a call has many remaining values for next call."""
         # Setup
         data = pd.DataFrame({'col': ['A'] * 100})
         instance = RegexGenerator(regex_format='[A-B]', cardinality_rule='scale')

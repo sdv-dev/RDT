@@ -385,6 +385,11 @@ def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinal
         if enforce_uniqueness and cardinality_rule is None:
             return 'unique'
 
+    if cardinality_rule not in ['unique', 'match', 'scale', None]:
+        raise ValueError(
+            "The 'cardinality_rule' parameter must be one of 'unique', 'match', 'scale', or None."
+        )
+
     return cardinality_rule
 
 
