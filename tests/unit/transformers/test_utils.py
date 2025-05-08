@@ -479,26 +479,24 @@ def test_warn_dict_get():
 
 def test__handle_enforce_uniqueness_and_cardinality_rule():
     """Test that ``_handle_enforce_uniqueness_and_cardinality_rule`` works as expected."""
-    # Setup
-    enforce_uniqueness = None
-    cardinality_rule = None
+    # Run and Assert
+    assert _handle_enforce_uniqueness_and_cardinality_rule(None, None) is None
+
     expected_message = re.escape(
         "The 'enforce_uniqueness' parameter is no longer supported. "
         "Please use the 'cardinality_rule' parameter instead."
     )
-
-    # Run
-    result_1 = _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinality_rule)
     with pytest.warns(FutureWarning, match=expected_message):
-        result_2 = _handle_enforce_uniqueness_and_cardinality_rule(True, None)
+        assert _handle_enforce_uniqueness_and_cardinality_rule(True, None) == 'unique'
 
-    with pytest.warns(FutureWarning, match=expected_message):
-        result_3 = _handle_enforce_uniqueness_and_cardinality_rule(True, 'other')
+    err_msg = "The 'cardinality_rule' parameter must be one of 'unique', 'match', 'scale', or None."
+    with pytest.raises(ValueError, match=err_msg):
+        _handle_enforce_uniqueness_and_cardinality_rule(None, 'invalid')
 
-    # Assert
-    assert result_1 is None
-    assert result_2 == 'unique'
-    assert result_3 == 'other'
+    assert _handle_enforce_uniqueness_and_cardinality_rule(None, 'unique') == 'unique'
+    assert _handle_enforce_uniqueness_and_cardinality_rule(None, 'match') == 'match'
+    assert _handle_enforce_uniqueness_and_cardinality_rule(None, 'scale') == 'scale'
+    assert _handle_enforce_uniqueness_and_cardinality_rule(None, None) is None
 
 
 def test__extract_timezone_from_a_string_with_valid_timezone():

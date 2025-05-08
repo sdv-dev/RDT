@@ -581,21 +581,21 @@ class TestAnonymizedFaker:
         AnonymizedFaker._reverse_transform(instance, None)
 
         # Assert
-        instance._reverse_transform_cardinality_rule_match.assert_called_once_with(3)
+        instance._reverse_transform_cardinality_rules.assert_called_once_with(3)
 
-    def test__reverse_transform_cardinality_rule_match_only_nans(self):
+    def test__reverse_transform_cardinality_rules_only_nans(self):
         """Test it with only nans."""
         # Setup
         instance = AnonymizedFaker()
         instance._nan_frequency = 1
 
         # Run
-        result = instance._reverse_transform_cardinality_rule_match(3)
+        result = instance._reverse_transform_cardinality_rules(3)
 
         # Assert
         assert pd.isna(result).all()
 
-    def test__reverse_transform_cardinality_rule_match_no_missing_value(self):
+    def test__reverse_transform_cardinality_rules_no_missing_value(self):
         """Test it with default values."""
         # Setup
         instance = AnonymizedFaker(missing_value_generation=None)
@@ -604,16 +604,37 @@ class TestAnonymizedFaker:
         instance._unique_categories = ['a', 'b', 'c']
         function = Mock()
         function.side_effect = ['a', 'b', 'c']
-
+        instance.cardinality_rule = 'match'
         instance._function = function
 
         # Run
-        result = instance._reverse_transform_cardinality_rule_match(3)
+        result = instance._reverse_transform_cardinality_rules(3)
 
         # Assert
         assert set(result) == set(['a', 'b', 'c'])
 
-    def test__reverse_transform_cardinality_rule_match_not_enough_unique(self):
+    def test__reverse_transform_cardinality_rules_scale(self):
+        """Test it with scale cardinality."""
+        # Setup
+        instance = AnonymizedFaker(missing_value_generation=None)
+        instance._data_cardinality = 2
+        instance._nan_frequency = 0
+        instance._data_cardinality_scale = {
+            'num_repetitions': [1, 2, 3],
+            'frequency': [0.1, 0.2, 0.7],
+        }
+        function = Mock()
+        function.side_effect = ['a', 'b', 'c']
+        instance.cardinality_rule = 'scale'
+        instance._function = function
+
+        # Run
+        result = instance._reverse_transform_cardinality_rules(3)
+
+        # Assert
+        assert set(result).issubset(set(['a', 'b', 'c']))
+
+    def test__reverse_transform_cardinality_rules_not_enough_unique(self):
         """Test it when there are not enough unique values."""
         # Setup
         instance = AnonymizedFaker()
@@ -622,9 +643,10 @@ class TestAnonymizedFaker:
         function = Mock()
         function.side_effect = ['a', 'b', 'c', 'd']
         instance._function = function
+        instance.cardinality_rule = 'match'
 
         # Run
-        result = instance._reverse_transform_cardinality_rule_match(6)
+        result = instance._reverse_transform_cardinality_rules(6)
 
         # Assert
         assert set(result) == {'a', 'b', 'c'}
@@ -747,28 +769,112 @@ class TestAnonymizedFaker:
         assert function.call_args_list == [call(), call(), call()]
         np.testing.assert_array_equal(result, np.array(['a', 'b', 'c']))
 
+    def test__reverse_transform_scale(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 50 + ['B'] * 100})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+        instance.fit(data, 'col')
+
+        # Run
+        out = instance._reverse_transform(data)
+
+        # Assert
+        assert out[out == 'KAab'].size in {50, 100, 150}
+        assert out[out == 'qOSU'].size in {0, 50, 100}
+
+    def test__reverse_transform_scale_multiple_calls(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 50 + ['B'] * 50 + ['C'] * 50})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+        instance.fit(data, 'col')
+
+        # Run
+        out1 = instance._reverse_transform(data)
+        out2 = instance._reverse_transform(data)
+        instance.reset_randomization()
+        out3 = instance._reverse_transform(data)
+
+        # Assert
+        assert out1[out1 == 'KAab'].size == 50
+        assert out1[out1 == 'qOSU'].size == 50
+        assert out1[out1 == 'CPmg'].size == 50
+
+        assert out2[out2 == 'urbw'].size == 50
+        assert out2[out2 == 'JEWW'].size == 50
+        assert out2[out2 == 'LRyt'].size == 50
+
+        assert out3[out3 == 'KAab'].size == 50
+        assert out3[out3 == 'qOSU'].size == 50
+        assert out1[out1 == 'CPmg'].size == 50
+
+    def test__reverse_transform_scale_remaining_values(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 10 + ['B'] * 3})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+        instance.fit(data, 'col')
+
+        # Run
+        out1 = instance._reverse_transform(data.head(8))
+        out2 = instance._reverse_transform(data)
+
+        # Assert
+        assert out1[out1 == 'qOSU'].size == 3
+        assert out1[out1 == 'KAab'].size == 5
+        assert out2[out2 == 'KAab'].size == 5
+        assert out2[out2 == 'CPmg'].size == 8
+
+    def test__reverse_transform_scale_many_remaining_values(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 100})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+        instance.fit(data, 'col')
+
+        # Run
+        out1 = instance._reverse_transform(data.head(10))
+        out2 = instance._reverse_transform(data.head(10))
+
+        # Assert
+        assert np.array_equal(out1, np.array(['qOSU'] * 10))
+        assert np.array_equal(out2, np.array(['qOSU'] * 10))
+
     def test__set_fitted_parameters(self):
         """Test ``_set_fitted_parameters`` sets the required parameters for transformer."""
         # Setup
         transformer = AnonymizedFaker()
-        transformer.cardinality_rule = 'match'
         frequency = 0.30
         cardinality = 3
         column_name = 'mock'
-        error_msg = re.escape('Cardinality "match" rule must specify a cardinality value.')
 
         # Run
+        transformer.cardinality_rule = 'match'
+        error_msg = re.escape('Cardinality "match" rule must specify a cardinality value.')
+        with pytest.raises(TransformerInputError, match=error_msg):
+            transformer._set_fitted_parameters(column_name, nan_frequency=frequency)
+
+        transformer.cardinality_rule = 'scale'
+        error_msg = re.escape('Cardinality "scale" rule must specify a cardinality value.')
         with pytest.raises(TransformerInputError, match=error_msg):
             transformer._set_fitted_parameters(column_name, nan_frequency=frequency)
 
         transformer._set_fitted_parameters(
-            column_name, nan_frequency=frequency, cardinality=cardinality
+            column_name,
+            nan_frequency=frequency,
+            cardinality=cardinality,
+            cardinality_scale={'num_repetitions': [1, 2, 3], 'frequency': [0.1, 0.2, 0.7]},
         )
 
         # Assert
         assert transformer._nan_frequency == frequency
         assert transformer._data_cardinality == cardinality
         assert transformer.columns == [column_name]
+        assert transformer._data_cardinality_scale == {
+            'num_repetitions': [1, 2, 3],
+            'frequency': [0.1, 0.2, 0.7],
+        }
 
     def test___repr__default(self):
         """Test the ``__repr__`` method.

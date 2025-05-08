@@ -376,7 +376,6 @@ class WarnDict(dict):
 
 
 def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinality_rule):
-    result = cardinality_rule
     if enforce_uniqueness is not None:
         warnings.warn(
             "The 'enforce_uniqueness' parameter is no longer supported. "
@@ -384,9 +383,14 @@ def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinal
             FutureWarning,
         )
         if enforce_uniqueness and cardinality_rule is None:
-            result = 'unique'
+            return 'unique'
 
-    return result
+    if cardinality_rule not in ['unique', 'match', 'scale', None]:
+        raise ValueError(
+            "The 'cardinality_rule' parameter must be one of 'unique', 'match', 'scale', or None."
+        )
+
+    return cardinality_rule
 
 
 def _extract_timezone_from_a_string(dt_str):
@@ -478,3 +482,30 @@ def data_has_multiple_timezones(data, datetime_format=None):
 
     except ValueError:
         return False
+
+
+def _get_cardinality_frequency(data):
+    """Get number of repetitions of values in the data and their frequencies."""
+    value_counts = data.value_counts(dropna=False)
+    repetition_counts = value_counts.value_counts().sort_index()
+    total = repetition_counts.sum()
+    frequencies = (repetition_counts / total).tolist()
+    repetitions = repetition_counts.index.tolist()
+
+    return repetitions, frequencies
+
+
+def _sample_repetitions(num_samples, value, data_cardinality_scale, remaining_samples):
+    """Sample a number of repetitions for a given value."""
+    repetitions = np.random.choice(
+        data_cardinality_scale['num_repetitions'],
+        p=data_cardinality_scale['frequency'],
+    )
+    if repetitions <= num_samples:
+        samples = [value] * repetitions
+    else:
+        samples = [value] * num_samples
+        remaining_samples['repetitions'] = repetitions - num_samples
+        remaining_samples['value'] = value
+
+    return samples, remaining_samples
