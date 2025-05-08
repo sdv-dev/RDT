@@ -550,23 +550,31 @@ def test__safe_parse_datetime():
     """
     # Setup
     str_input = '2023-01-01 12:00:00+0200'
-    str_input_no_format = '20220902110443000000'
+    str_input_format = '20220902110443000000'
+    str_empty = ''
     dt_input = datetime.datetime(2023, 1, 1, 12, 0)
     ts_input = pd.Timestamp(dt_input)
+    str_format_tz = '2023-10-15 14:30:00 XYZ'
 
     # Run
     res_str = _safe_parse_datetime(str_input)
-    res_str_no_format = _safe_parse_datetime(str_input_no_format)
+    res_str_format = _safe_parse_datetime(str_input_format, datetime_format='%Y%m%d%H%M%S%f')
+    res_str_format_wrong = _safe_parse_datetime(str_input_format, datetime_format='%Y%m%d%H%M%S')
     res_dt = _safe_parse_datetime(dt_input)
     res_ts = _safe_parse_datetime(ts_input)
     res_invalid = _safe_parse_datetime('not-a-date')
+    res_empty = _safe_parse_datetime(str_empty)
+    res_str_format_wrong_tz = _safe_parse_datetime(str_format_tz, datetime_format='%Y%m%d%H%M%S')
 
     # Assert
     assert res_str.isoformat() == '2023-01-01T12:00:00+02:00'
-    assert res_str_no_format is None
+    assert res_str_format.isoformat() == '2022-09-02T11:04:43'
+    assert res_str_format_wrong is None
     assert res_dt == dt_input
     assert res_ts == ts_input
     assert res_invalid is None
+    assert res_empty is None
+    assert res_str_format_wrong_tz.isoformat() == '2023-10-15T14:30:00+00:00'
 
 
 def test__safe_parse_datetime_with_unrecognized_timezone_and_warning():

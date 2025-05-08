@@ -316,6 +316,30 @@ class TestUnixTimestampEncoder:
         pd.testing.assert_frame_equal(data, reverse_transformed)
         assert not is_datetime64tz_dtype(reverse_transformed['my_datetime_col'])
 
+    def test_datetime_strings_large_numbers(self):
+        """Ensure it runs for strings of large numbers."""
+        # Setup
+        data = pd.DataFrame({
+            'my_datetime_col': ['20220902110443000001 UTC', '20220902110443000000 UTC']
+        })
+        transformer = UnixTimestampEncoder(datetime_format='%Y%m%d%H%M%S%f %Z')
+
+        # Run
+        transformer.fit(data, column='my_datetime_col')
+        transformer.set_random_state(np.random.RandomState(42), 'reverse_transform')
+        transformed = transformer.transform(data)
+        reverse_transformed = transformer.reverse_transform(transformed)
+
+        # Assert
+        assert not reverse_transformed['my_datetime_col'].iloc[0].endswith('UTC')
+        assert not reverse_transformed['my_datetime_col'].iloc[1].endswith('UTC')
+
+        expected_data = data = pd.DataFrame({
+            'my_datetime_col': ['20220902110443000001 ', '20220902110443000000 ']
+        })
+        pd.testing.assert_frame_equal(expected_data, reverse_transformed)
+        assert not is_datetime64tz_dtype(reverse_transformed['my_datetime_col'])
+
     def test_datetime_strings_with_timezone_offset(self):
         """Ensure datetime strings with timezone offsets (%z) are correctly parsed and normalized.
 
