@@ -790,7 +790,9 @@ class TestUnixTimestampEncoder:
 
         # Assert
         assert instance._has_multiple_timezones is False
-        mock_data_has_multiple_tz.assert_called_once_with(data)
+        mock_data_has_multiple_tz.assert_called_once_with(
+            data, datetime_format=instance.datetime_format
+        )
 
     @patch('rdt.transformers.datetime.is_numeric_dtype')
     def test__needs_datetime_conversion_with_non_numeric_data(self, mock_pd_is_numeric_dtype):

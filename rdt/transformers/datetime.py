@@ -79,7 +79,9 @@ class UnixTimestampEncoder(BaseTransformer):
         if not isinstance(data, pd.Series):
             data = data.to_series()
 
-        self._has_multiple_timezones = data_has_multiple_timezones(data)
+        self._has_multiple_timezones = data_has_multiple_timezones(
+            data, datetime_format=self.datetime_format
+        )
 
     def _convert_to_datetime(self, data):
         if self._needs_datetime_conversion(data):
@@ -148,7 +150,9 @@ class UnixTimestampEncoder(BaseTransformer):
             for val in data:
                 if pd.notna(val):
                     try:
-                        dt = _safe_parse_datetime(str(val), warn=True)
+                        dt = _safe_parse_datetime(
+                            str(val), warn=True, datetime_format=self.datetime_format
+                        )
                         self._timezone_offset = dt.tzinfo
                         break
 

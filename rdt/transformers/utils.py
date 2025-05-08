@@ -401,7 +401,7 @@ def _extract_timezone_from_a_string(dt_str):
     return match.group(1) if match else None
 
 
-def _safe_parse_datetime(value, warn=False):
+def _safe_parse_datetime(value, warn=False, datetime_format=None):
     """Safely parse a value into a datetime object, handling invalid inputs.
 
     Converts the input `value` into a `datetime.datetime` object using `dateutil.parser.parse`.
@@ -416,6 +416,9 @@ def _safe_parse_datetime(value, warn=False):
         warn (bool):
             If True, warns when an unrecognized timezone is converted to UTC.
             Defaults to False.
+        datetime_format (str):
+            Format of the datetime string.
+            Defaults to None.
 
     Returns:
         datetime.datetime | pd.NaT:
@@ -426,6 +429,10 @@ def _safe_parse_datetime(value, warn=False):
         return value
 
     try:
+        # Strings of large numbers cause parser.parse to overflow
+        if isinstance(value, str) and value.isdigit() and datetime_format:
+            return pd.to_datetime(value, format=datetime_format)
+
         with warnings.catch_warnings(record=True) as captured_warnings:
             dt = parser.parse(value)
 
@@ -441,7 +448,7 @@ def _safe_parse_datetime(value, warn=False):
 
         return dt
 
-    except (ValueError, TypeError, AttributeError, OverflowError):
+    except (ValueError, TypeError, AttributeError):
         return None
 
 
@@ -452,19 +459,24 @@ def _get_utc_offset(dt):
         return None
 
 
-def data_has_multiple_timezones(data):
+def data_has_multiple_timezones(data, datetime_format=None):
     """Check if a Series of datetime values contains multiple timezones.
 
     Args:
         data (pd.Series):
             Series of datetime strings or datetime objects.
+        datetime_format (str):
+            Format of the datetime string.
+            Defaults to None.
 
     Returns:
         bool:
             True if multiple timezones are detected, False otherwise.
     """
     try:
-        parsed_datetimes = data.apply(_safe_parse_datetime).dropna()
+        parsed_datetimes = data.apply(
+            _safe_parse_datetime, datetime_format=datetime_format
+        ).dropna()
         offsets = parsed_datetimes.apply(_get_utc_offset).dropna()
         return offsets.nunique() > 1
 
