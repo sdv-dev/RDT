@@ -776,23 +776,19 @@ class TestUnixTimestampEncoder:
         # Assert
         assert instance._timezone_offset is None
 
-    @patch('rdt.transformers.datetime.data_has_multiple_timezones')
-    def test__learn_has_multiple_timezones_with_no_valid_timezones(self, mock_data_has_multiple_tz):
+    def test__learn_has_multiple_timezones_with_no_valid_timezones(self):
         """Test that `_learn_has_multiple_timezones` handles data with no valid timezones."""
         # Setup
         instance = UnixTimestampEncoder()
         instance.datetime_format = '%Y-%m-%d %H:%M:%S%z'
         data = pd.Series([None, 'not-a-date', '---'])
-        mock_data_has_multiple_tz.return_value = False
 
         # Run
-        UnixTimestampEncoder._learn_has_multiple_timezones(instance, data)
+        result = UnixTimestampEncoder._learn_has_multiple_timezones(instance, data)
 
         # Assert
         assert instance._has_multiple_timezones is False
-        mock_data_has_multiple_tz.assert_called_once_with(
-            data, datetime_format=instance.datetime_format
-        )
+        assert result is None
 
     @patch('rdt.transformers.datetime.is_numeric_dtype')
     def test__needs_datetime_conversion_with_non_numeric_data(self, mock_pd_is_numeric_dtype):

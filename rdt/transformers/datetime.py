@@ -74,43 +74,6 @@ class UnixTimestampEncoder(BaseTransformer):
         self._has_multiple_timezones = False
         self._timezone_offset = None
 
-    def _learn_has_multiple_timezones(self, data):
-        """Determines if the data contains multiple timezones and stores the result."""
-        if not isinstance(data, pd.Series):
-            data = data.to_series()
-
-        self._has_multiple_timezones = data_has_multiple_timezones(
-            data, datetime_format=self.datetime_format
-        )
-
-    def _convert_to_datetime(self, data):
-        if self._needs_datetime_conversion(data):
-            try:
-                self._learn_has_multiple_timezones(data)
-                parsed_data = self._to_datetime(data)
-                return parsed_data
-
-            except ValueError as error:
-                self._raise_appropiate_conversion_error(error)
-
-        return data
-
-    def _needs_datetime_conversion(self, data):
-        """Determines if the data requires datetime conversion."""
-        return self.datetime_format is not None or not is_numeric_dtype(data)
-
-    def _to_datetime(self, data):
-        """Converts data to datetime using the instance's datetime format."""
-        datetime_format = self._get_pandas_datetime_format()
-        return pd.to_datetime(data, format=datetime_format, utc=self._has_multiple_timezones)
-
-    def _get_pandas_datetime_format(self):
-        """Converts the instance's datetime format to a pandas-compatible format."""
-        if self.datetime_format:
-            return self.datetime_format.replace('%#', '%').replace('%-', '%')
-
-        return None
-
     def _warn_if_mixed_timezones(self):
         if self._has_multiple_timezones:
             warnings.warn(
@@ -123,25 +86,6 @@ class UnixTimestampEncoder(BaseTransformer):
             raise TypeError('Data must be of dtype datetime, or castable to datetime.') from None
 
         raise ValueError('Data does not match specified datetime format.') from None
-
-    def _transform_helper(self, datetimes):
-        """Transform datetime values to integer."""
-        datetimes = self._convert_to_datetime(datetimes)
-        nulls = datetimes.isna()
-        integers = pd.to_numeric(datetimes, errors='coerce').to_numpy().astype(np.float64)
-        integers[nulls] = np.nan
-        transformed = pd.Series(integers)
-
-        return transformed
-
-    def _reverse_transform_helper(self, data):
-        """Transform integer values back into datetimes."""
-        if not isinstance(data, np.ndarray):
-            data = data.to_numpy()
-
-        data = self.null_transformer.reverse_transform(data)
-        data = np.round(data.astype(np.float64))
-        return data
 
     def _learn_timezone_offest(self, data):
         """Extracts and stores the timezone offset from the first valid datetime in the data."""
@@ -159,6 +103,53 @@ class UnixTimestampEncoder(BaseTransformer):
                     except (ValueError, TypeError, AttributeError):
                         self._timezone_offset = None
 
+    def _learn_has_multiple_timezones(self, data):
+        """Determines if the data contains multiple timezones and stores the result."""
+        if not isinstance(data, pd.Series):
+            data = data.to_series()
+
+        self._has_multiple_timezones = data_has_multiple_timezones(
+            data, datetime_format=self.datetime_format
+        )
+
+    def _needs_datetime_conversion(self, data):
+        """Determines if the data requires datetime conversion."""
+        return self.datetime_format is not None or not is_numeric_dtype(data)
+
+    def _get_pandas_datetime_format(self):
+        """Converts the instance's datetime format to a pandas-compatible format."""
+        if self.datetime_format:
+            return self.datetime_format.replace('%#', '%').replace('%-', '%')
+
+        return None
+
+    def _to_datetime(self, data):
+        """Converts data to datetime using the instance's datetime format."""
+        return pd.to_datetime(
+            data,
+            format=self._get_pandas_datetime_format(),
+            utc=getattr(self, '_has_multiple_timezones', False),  # Backward compatibility
+        )
+
+    def _convert_to_datetime(self, data):
+        if self._needs_datetime_conversion(data):
+            try:
+                return self._to_datetime(data)
+            except ValueError as error:
+                self._raise_appropiate_conversion_error(error)
+
+        return data
+
+    def _transform_helper(self, datetimes):
+        """Transform datetime values to integer."""
+        datetimes = self._convert_to_datetime(datetimes)
+        nulls = datetimes.isna()
+        integers = pd.to_numeric(datetimes, errors='coerce').to_numpy().astype(np.float64)
+        integers[nulls] = np.nan
+        transformed = pd.Series(integers)
+
+        return transformed
+
     def _fit(self, data):
         """Fit the transformer to the data.
 
@@ -171,8 +162,8 @@ class UnixTimestampEncoder(BaseTransformer):
             datetime_array = data[data.notna()].astype(str).to_numpy()
             self.datetime_format = _guess_datetime_format_for_array(datetime_array)
 
+        self._learn_has_multiple_timezones(data)
         transformed = self._transform_helper(data)
-
         self._learn_timezone_offest(data)
         self._warn_if_mixed_timezones()
 
@@ -268,6 +259,15 @@ class UnixTimestampEncoder(BaseTransformer):
             )
 
         return datetime_data.dt.strftime(self.datetime_format).astype(self._dtype)
+
+    def _reverse_transform_helper(self, data):
+        """Transform integer values back into datetimes."""
+        if not isinstance(data, np.ndarray):
+            data = data.to_numpy()
+
+        data = self.null_transformer.reverse_transform(data)
+        data = np.round(data.astype(np.float64))
+        return data
 
     def _reverse_transform(self, data):
         """Convert float values back to datetimes.

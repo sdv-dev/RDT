@@ -331,11 +331,49 @@ class TestUnixTimestampEncoder:
         reverse_transformed = transformer.reverse_transform(transformed)
 
         # Assert
-        assert not reverse_transformed['my_datetime_col'].iloc[0].endswith('UTC')
-        assert not reverse_transformed['my_datetime_col'].iloc[1].endswith('UTC')
-
         expected_data = data = pd.DataFrame({
             'my_datetime_col': ['20220902110443000001 ', '20220902110443000000 ']
+        })
+        pd.testing.assert_frame_equal(expected_data, reverse_transformed)
+        assert not is_datetime64tz_dtype(reverse_transformed['my_datetime_col'])
+
+    def test_datetime_strings_large_numbers_no_timezone(self):
+        """Ensure it runs for strings of large numbers when no timezone is given."""
+        # Setup
+        data = pd.DataFrame({'my_datetime_col': ['20220902110443000001', '20220902110443000000']})
+        transformer = UnixTimestampEncoder(datetime_format='%Y%m%d%H%M%S%f')
+
+        # Run
+        transformer.fit(data, column='my_datetime_col')
+        transformer.set_random_state(np.random.RandomState(42), 'reverse_transform')
+        transformed = transformer.transform(data)
+        reverse_transformed = transformer.reverse_transform(transformed)
+
+        # Assert
+        expected_data = data = pd.DataFrame({
+            'my_datetime_col': ['20220902110443000001', '20220902110443000000']
+        })
+        pd.testing.assert_frame_equal(expected_data, reverse_transformed)
+        assert not is_datetime64tz_dtype(reverse_transformed['my_datetime_col'])
+
+    def test_datetime_strings_large_numbers_with_timezone_offset(self):
+        """Ensure it runs for strings of large numbers with timezone offset."""
+        # Setup
+        data = pd.DataFrame({
+            'my_datetime_col': ['20220902110443000001+0200', '20220902110443000000+0200']
+        })
+        transformer = UnixTimestampEncoder(datetime_format='%Y%m%d%H%M%S%f%z')
+
+        # Run
+        transformer.fit(data, column='my_datetime_col')
+        transformer.set_random_state(np.random.RandomState(42), 'reverse_transform')
+        transformed = transformer.transform(data)
+        reverse_transformed = transformer.reverse_transform(transformed)
+
+        # Assert
+        # The timezone offset is 2 hours, so the datetime should be 2 hours behind
+        expected_data = data = pd.DataFrame({
+            'my_datetime_col': ['20220902090443000001', '20220902090443000000']
         })
         pd.testing.assert_frame_equal(expected_data, reverse_transformed)
         assert not is_datetime64tz_dtype(reverse_transformed['my_datetime_col'])
