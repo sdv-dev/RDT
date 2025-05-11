@@ -563,6 +563,7 @@ def test__safe_parse_datetime():
     res_invalid = _safe_parse_datetime('not-a-date')
     res_empty = _safe_parse_datetime(str_empty)
     res_str_format_wrong_tz = _safe_parse_datetime(str_format_tz, datetime_format='%Y%m%d%H%M%S')
+    res_large_number_no_format = _safe_parse_datetime(str_input_format)
 
     # Assert
     assert res_str.isoformat() == '2023-01-01T12:00:00+02:00'
@@ -573,6 +574,7 @@ def test__safe_parse_datetime():
     assert res_invalid is None
     assert res_empty is None
     assert res_str_format_wrong_tz.isoformat() == '2023-10-15T14:30:00+00:00'
+    assert res_large_number_no_format is None
 
 
 def test__safe_parse_datetime_with_unrecognized_timezone_and_warning():

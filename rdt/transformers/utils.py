@@ -429,12 +429,16 @@ def _safe_parse_datetime(value, warn=False, datetime_format=None):
         return value
 
     try:
-        # Strings of large numbers cause parser.parse to overflow
-        if isinstance(value, str) and value.isdigit() and datetime_format:
-            return pd.to_datetime(value, format=datetime_format)
-
         with warnings.catch_warnings(record=True) as captured_warnings:
-            dt = parser.parse(value)
+            try:
+                dt = parser.parse(value)
+
+            # Strings of large numbers cause parser.parse to overflow
+            except OverflowError as error:
+                if not datetime_format:
+                    raise error
+                value = str(pd.to_datetime(value, format=datetime_format))
+                dt = parser.parse(str(value))
 
         if any(issubclass(warned.category, UnknownTimezoneWarning) for warned in captured_warnings):
             input_timezone = _extract_timezone_from_a_string(value)
@@ -448,7 +452,7 @@ def _safe_parse_datetime(value, warn=False, datetime_format=None):
 
         return dt
 
-    except (ValueError, TypeError, AttributeError):
+    except (ValueError, TypeError, AttributeError, OverflowError):
         return None
 
 
