@@ -80,7 +80,7 @@ class UnixTimestampEncoder(BaseTransformer):
                 'Mixed timezones are not supported in SDV Community. Data will be converted to UTC.'
             )
 
-    def _raise_appropiate_conversion_error(self, error):
+    def _raise_appropriate_conversion_error(self, error):
         message = str(error)
         if 'Unknown string' in message or 'Unknown datetime string' in message:
             raise TypeError('Data must be of dtype datetime, or castable to datetime.') from None
@@ -139,7 +139,7 @@ class UnixTimestampEncoder(BaseTransformer):
             try:
                 return self._to_datetime(data)
             except ValueError as error:
-                self._raise_appropiate_conversion_error(error)
+                self._raise_appropriate_conversion_error(error)
 
         return data
 
