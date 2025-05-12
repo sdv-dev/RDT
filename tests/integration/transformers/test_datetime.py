@@ -332,7 +332,7 @@ class TestUnixTimestampEncoder:
 
         # Assert
         expected_data = data = pd.DataFrame({
-            'my_datetime_col': ['20220902110443000001 ', '20220902110443000000 ']
+            'my_datetime_col': ['20220902110443000001 UTC', '20220902110443000000 UTC']
         })
         pd.testing.assert_frame_equal(expected_data, reverse_transformed)
         assert not is_datetime64tz_dtype(reverse_transformed['my_datetime_col'])
@@ -373,7 +373,7 @@ class TestUnixTimestampEncoder:
         # Assert
         # The timezone offset is 2 hours, so the datetime should be 2 hours behind
         expected_data = data = pd.DataFrame({
-            'my_datetime_col': ['20220902090443000001', '20220902090443000000']
+            'my_datetime_col': ['20220902110443000001+0200', '20220902110443000000+0200']
         })
         pd.testing.assert_frame_equal(expected_data, reverse_transformed)
         assert not is_datetime64tz_dtype(reverse_transformed['my_datetime_col'])
@@ -451,6 +451,34 @@ class TestUnixTimestampEncoder:
             ])
         })
         transformer = UnixTimestampEncoder(datetime_format=None)
+
+        # Run
+        transformer.fit(data, column='my_datetime_col')
+        transformer.set_random_state(np.random.RandomState(42), 'reverse_transform')
+        transformed = transformer.transform(data)
+        reverse_transformed = transformer.reverse_transform(transformed)
+
+        # Assert
+        assert is_datetime64_ns_dtype(reverse_transformed['my_datetime_col'])
+        assert not is_datetime64tz_dtype(reverse_transformed['my_datetime_col'])
+        pd.testing.assert_frame_equal(data, reverse_transformed)
+
+    def test_datetime_objects_without_timezone_but_with_format(self):
+        """Ensure datetime objects without timezone are correctly handled when a format is given.
+
+        This test verifies that naive datetime64 values (i.e., without timezone info) are:
+            - Properly transformed and reverse-transformed without introducing any timezone.
+            - Preserved with a timezone-naive dtype (`datetime64[ns]`) throughout.
+            - Returned exactly as the original input after the reverse transformation.
+        """
+        # Setup
+        data = pd.DataFrame({
+            'my_datetime_col': pd.to_datetime([
+                '2025-02-04 08:32:21.123456',
+                '2025-01-13 08:32:21.123456',
+            ])
+        })
+        transformer = UnixTimestampEncoder(datetime_format='%Y-%m-%d %H:%M:%S.%f')
 
         # Run
         transformer.fit(data, column='my_datetime_col')

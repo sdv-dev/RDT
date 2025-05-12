@@ -776,6 +776,33 @@ class TestUnixTimestampEncoder:
         # Assert
         assert instance._timezone_offset is None
 
+    def test__learn_has_multiple_timezones_no_z_format(self):
+        """Test it when datetime format does not contain %z."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        instance.datetime_format = '%Y-%m-%d %H:%M:%S'
+        data = pd.Series(['2025-01-01 00:00:00', '2025-01-01 00:00:00'])
+
+        # Run
+        result = UnixTimestampEncoder._learn_has_multiple_timezones(instance, data)
+
+        # Assert
+        assert instance._has_multiple_timezones is False
+        assert result is None
+
+    def test__learn_has_multiple_timezones_not_series(self):
+        """Test it when data is not a series."""
+        # Setup
+        instance = UnixTimestampEncoder()
+        data = pd.Index(['2025-01-01 00:00:00'], name='datetime')
+
+        # Run
+        result = UnixTimestampEncoder._learn_has_multiple_timezones(instance, data)
+
+        # Assert
+        assert instance._has_multiple_timezones is False
+        assert result is None
+
     def test__learn_has_multiple_timezones_with_no_valid_timezones(self):
         """Test that `_learn_has_multiple_timezones` handles data with no valid timezones."""
         # Setup

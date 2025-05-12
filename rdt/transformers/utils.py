@@ -12,7 +12,7 @@ from decimal import Decimal
 import numpy as np
 import pandas as pd
 from dateutil import parser
-from dateutil.parser import UnknownTimezoneWarning
+from dateutil.parser import ParserError, UnknownTimezoneWarning
 from dateutil.tz import UTC
 
 import sre_parse  # isort:skip
@@ -434,7 +434,7 @@ def _safe_parse_datetime(value, warn=False, datetime_format=None):
                 dt = parser.parse(value)
 
             # Strings of large numbers cause parser.parse to overflow
-            except OverflowError as error:
+            except (OverflowError, ParserError) as error:
                 if not datetime_format:
                     raise error
                 value = str(pd.to_datetime(value, format=datetime_format))

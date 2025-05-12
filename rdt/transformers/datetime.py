@@ -105,6 +105,9 @@ class UnixTimestampEncoder(BaseTransformer):
 
     def _learn_has_multiple_timezones(self, data):
         """Determines if the data contains multiple timezones and stores the result."""
+        if self.datetime_format and '%z' not in self.datetime_format.lower():
+            return
+
         if not isinstance(data, pd.Series):
             data = data.to_series()
 
