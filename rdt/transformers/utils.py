@@ -438,7 +438,7 @@ def _safe_parse_datetime(value, warn=False, datetime_format=None):
                 if not datetime_format:
                     raise error
                 value = str(pd.to_datetime(value, format=datetime_format))
-                dt = parser.parse(str(value))
+                dt = parser.parse(value)
 
         if any(issubclass(warned.category, UnknownTimezoneWarning) for warned in captured_warnings):
             input_timezone = _extract_timezone_from_a_string(value)
