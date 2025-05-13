@@ -1,5 +1,20 @@
 # History
 
+## v1.17.0 - 2025-05-13
+
+### New Features
+
+* AnonymizedFaker should have a fallback in the case that it's unable to generate enough unique values - Issue [#981](https://github.com/sdv-dev/RDT/issues/981) by @pvk-developer
+* HyperTransformer should ensure that transformer instances are not reused - Issue [#965](https://github.com/sdv-dev/RDT/issues/965) by @frances-h
+* For `AnonymizedFaker`, add an option for `cardinality_rule='scale'` to scale up the cardinality based on the real data - Issue [#954](https://github.com/sdv-dev/RDT/issues/954) by @fealho
+* For `RegexGenerator`, add an option for `cardinality_rule='scale'` to scale up the cardinality based on the real data - Issue [#952](https://github.com/sdv-dev/RDT/issues/952) by @fealho
+* For `RegexGenerator`, add add an option for `cardinality_rule='match'` to match the exact cardinality - Issue [#950](https://github.com/sdv-dev/RDT/issues/950) by @fealho
+
+### Bugs Fixed
+
+* `_safe_parse_datetime` causes `OverflowError` for large numbers - Issue [#991](https://github.com/sdv-dev/RDT/issues/991) by @fealho
+* For datetimes: Reverse transformed data no longer includes my timezone - Issue [#987](https://github.com/sdv-dev/RDT/issues/987) by @pvk-developer
+
 ## v1.16.0 - 2025-04-10
 
 ### New Features
