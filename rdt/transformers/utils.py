@@ -1,5 +1,6 @@
 """Tools to generate strings from regular expressions."""
 
+import datetime
 import logging
 import re
 import string
@@ -10,6 +11,9 @@ from decimal import Decimal
 
 import numpy as np
 import pandas as pd
+from dateutil import parser
+from dateutil.parser import ParserError, UnknownTimezoneWarning
+from dateutil.tz import UTC
 
 import sre_parse  # isort:skip
 
@@ -372,7 +376,6 @@ class WarnDict(dict):
 
 
 def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinality_rule):
-    result = cardinality_rule
     if enforce_uniqueness is not None:
         warnings.warn(
             "The 'enforce_uniqueness' parameter is no longer supported. "
@@ -380,6 +383,133 @@ def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinal
             FutureWarning,
         )
         if enforce_uniqueness and cardinality_rule is None:
-            result = 'unique'
+            return 'unique'
 
-    return result
+    if cardinality_rule not in ['unique', 'match', 'scale', None]:
+        raise ValueError(
+            "The 'cardinality_rule' parameter must be one of 'unique', 'match', 'scale', or None."
+        )
+
+    return cardinality_rule
+
+
+def _extract_timezone_from_a_string(dt_str):
+    if not isinstance(dt_str, str):
+        dt_str = str(dt_str)
+
+    match = re.search(r'\b([A-Z]{2,5})\b', dt_str)
+    return match.group(1) if match else None
+
+
+def _safe_parse_datetime(value, warn=False, datetime_format=None):
+    """Safely parse a value into a datetime object, handling invalid inputs.
+
+    Converts the input `value` into a `datetime.datetime` object using `dateutil.parser.parse`.
+    If the input is already a `pandas.Timestamp` or `datetime.datetime`, it is returned unchanged.
+    Unrecognized timezones are converted to UTC, with an optional warning. Returns `pd.NaT` if
+    parsing fails or the input is invalid.
+
+    Args:
+        value (Any):
+            Value to parse into a datetime. Accepts strings, `pandas.Timestamp`,
+            `datetime.datetime`, or types compatible with `dateutil.parser.parse`.
+        warn (bool):
+            If True, warns when an unrecognized timezone is converted to UTC.
+            Defaults to False.
+        datetime_format (str):
+            Format of the datetime string.
+            Defaults to None.
+
+    Returns:
+        datetime.datetime | pd.NaT:
+            Parsed `datetime.datetime` object with unrecognized timezones
+            set to UTC, or `pd.NaT` if parsing fails.
+    """
+    if isinstance(value, (pd.Timestamp, datetime.datetime)):
+        return value
+
+    try:
+        with warnings.catch_warnings(record=True) as captured_warnings:
+            try:
+                dt = parser.parse(value)
+
+            # Strings of large numbers cause parser.parse to overflow
+            except (OverflowError, ParserError) as error:
+                if not datetime_format:
+                    raise error
+                value = str(pd.to_datetime(value, format=datetime_format))
+                dt = parser.parse(value)
+
+        if any(issubclass(warned.category, UnknownTimezoneWarning) for warned in captured_warnings):
+            input_timezone = _extract_timezone_from_a_string(value)
+            if warn:
+                warnings.warn(
+                    f"Timezone '{input_timezone}' is not understood so it will be converted "
+                    "to 'UTC'.",
+                )
+
+            return dt.replace(tzinfo=UTC)
+
+        return dt
+
+    except (ValueError, TypeError, AttributeError, OverflowError):
+        return None
+
+
+def _get_utc_offset(dt):
+    try:
+        return dt.utcoffset()
+    except AttributeError:
+        return None
+
+
+def data_has_multiple_timezones(data, datetime_format=None):
+    """Check if a Series of datetime values contains multiple timezones.
+
+    Args:
+        data (pd.Series):
+            Series of datetime strings or datetime objects.
+        datetime_format (str):
+            Format of the datetime string.
+            Defaults to None.
+
+    Returns:
+        bool:
+            True if multiple timezones are detected, False otherwise.
+    """
+    try:
+        parsed_datetimes = data.apply(
+            _safe_parse_datetime, datetime_format=datetime_format
+        ).dropna()
+        offsets = parsed_datetimes.apply(_get_utc_offset).dropna()
+        return offsets.nunique() > 1
+
+    except ValueError:
+        return False
+
+
+def _get_cardinality_frequency(data):
+    """Get number of repetitions of values in the data and their frequencies."""
+    value_counts = data.value_counts(dropna=False)
+    repetition_counts = value_counts.value_counts().sort_index()
+    total = repetition_counts.sum()
+    frequencies = (repetition_counts / total).tolist()
+    repetitions = repetition_counts.index.tolist()
+
+    return repetitions, frequencies
+
+
+def _sample_repetitions(num_samples, value, data_cardinality_scale, remaining_samples):
+    """Sample a number of repetitions for a given value."""
+    repetitions = np.random.choice(
+        data_cardinality_scale['num_repetitions'],
+        p=data_cardinality_scale['frequency'],
+    )
+    if repetitions <= num_samples:
+        samples = [value] * repetitions
+    else:
+        samples = [value] * num_samples
+        remaining_samples['repetitions'] = repetitions - num_samples
+        remaining_samples['value'] = value
+
+    return samples, remaining_samples

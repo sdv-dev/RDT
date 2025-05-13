@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.errors import TransformerProcessingError
 from rdt.transformers.pii import AnonymizedFaker, PseudoAnonymizedFaker
 
 
@@ -158,12 +157,11 @@ class TestAnonymizedFaker:
         # Assert
         assert len(reverse_transform['job'].unique()) == 500
 
-        error_msg = re.escape(
-            'The Faker function you specified is not able to generate 500 unique '
-            'values. Please use a different Faker function for column '
-            "('job')."
+        warning_msg = re.escape(
+            "Unable to generate enough unique values for column 'job' in "
+            'a human-readable format. Additional values may be created randomly.'
         )
-        with pytest.raises(TransformerProcessingError, match=error_msg):
+        with pytest.warns(UserWarning, match=warning_msg):
             instance.reverse_transform(transformed)
 
         instance.reset_randomization()
@@ -265,12 +263,11 @@ class TestAnonymizedFaker:
         # Assert
         assert len(reverse_transform['job'].unique()) == 500
 
-        error_msg = re.escape(
-            'The Faker function you specified is not able to generate 500 unique '
-            'values. Please use a different Faker function for column '
-            "('job')."
+        warning_msg = re.escape(
+            "Unable to generate enough unique values for column 'job' in "
+            'a human-readable format. Additional values may be created randomly.'
         )
-        with pytest.raises(TransformerProcessingError, match=error_msg):
+        with pytest.warns(UserWarning, match=warning_msg):
             instance.reverse_transform(transformed)
 
         instance.reset_randomization()
@@ -320,6 +317,183 @@ class TestAnonymizedFaker:
 
         # Assert
         assert set(first_reverse_transformed['name']) == set(second_reverse_transformed['name'])
+
+    def test_cardinality_rule_scale(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 50 + ['B'] * 100})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+
+        # Run
+        transformed = instance.fit_transform(data, 'col')
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        assert set(out['col']) == {'KAab', 'qOSU'}
+
+        value_counts = out['col'].value_counts()
+        assert value_counts['KAab'] == 50
+        assert value_counts['qOSU'] == 100
+
+    def test_cardinality_rule_scale_nans(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': [np.nan] * 50 + ['B'] * 100})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+
+        # Run
+        transformed = instance.fit_transform(data, 'col')
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        value_counts = out['col'].value_counts()
+        assert value_counts['MGWz'] == 100
+        assert out['col'].isna().sum() == 50
+
+    def test_cardinality_rule_scale_one_value(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 50})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+
+        # Run
+        transformed = instance.fit_transform(data, 'col')
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        pd.testing.assert_frame_equal(out, pd.DataFrame({'col': ['qOSU'] * 50}))
+
+    def test_cardinality_rule_scale_one_value_many_transform(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': ['A'] * 50})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+
+        # Run
+        instance.fit_transform(data, 'col')
+        out = instance.reverse_transform(pd.DataFrame(index=range(200)))
+
+        # Assert
+        value_counts = out['col'].value_counts()
+        assert value_counts['qOSU'] == 50
+        assert value_counts['JEWW'] == 50
+        assert value_counts['KAab'] == 50
+        assert value_counts['CPmg'] == 50
+
+    def test_cardinality_rule_scale_empty_data(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        data = pd.DataFrame({'col': []})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+
+        # Run
+        transformed = instance.fit_transform(data, 'col')
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        pd.testing.assert_frame_equal(out, data, check_dtype=False)
+
+    def test_cardinality_rule_scale_proportions(self):
+        """Test when cardinality rule is 'scale'."""
+        # Setup
+        once = list(range(1000))
+        twice = [i // 2 for i in range(2000, 3000)]
+        thrice = [i // 3 for i in range(4500, 5500)]
+        data = pd.DataFrame({'col': once + twice + thrice})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+
+        # Run
+        transformed = instance.fit_transform(data, 'col')
+        out = instance.reverse_transform(transformed)
+
+        # Assert
+        value_counts = out['col'].value_counts()
+        one_count = (value_counts == 1).sum()
+        two_count = (value_counts == 2).sum()
+        three_count = (value_counts == 3).sum()
+        more_count = (value_counts > 3).sum()
+
+        assert 900 < one_count < 1100
+        assert 400 < two_count < 600
+        assert 233 < three_count < 433
+        assert len(out) == 3000
+        assert more_count == 0
+
+    def assert_proportions(self, out, samples):
+        value_counts = out['col'].value_counts()
+        one_count = (value_counts == 1).sum()
+        two_count = (value_counts == 2).sum()
+        three_count = (value_counts == 3).sum()
+        more_count = (value_counts > 3).sum()
+
+        assert np.isclose(one_count, two_count * 2, atol=samples * 0.2)
+        assert np.isclose(one_count, three_count * 3, atol=samples * 0.2)
+        assert len(out) == samples
+        assert more_count <= 1
+
+    def test_cardinality_rule_scale_called_multiple_times(self):
+        """Test calling multiple times when ``cardinality_rule`` is ``scale``."""
+        # Setup
+        once = list(range(1000))
+        twice = [i // 2 for i in range(2000, 3000)]
+        thrice = [i // 3 for i in range(4500, 5500)]
+        data = pd.DataFrame({'col': once + twice + thrice})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+
+        # Run
+        transformed_data = instance.fit_transform(data, 'col')
+        first_reverse_transform = instance.reverse_transform(transformed_data.head(500))
+        second_reverse_transform = instance.reverse_transform(transformed_data.head(1000))
+        third_reverse_transform = instance.reverse_transform(transformed_data.head(2000))
+        fourth_reverse_transform = instance.reverse_transform(transformed_data.head(1111))
+
+        # Assert
+        self.assert_proportions(first_reverse_transform, 500)
+        self.assert_proportions(second_reverse_transform, 1000)
+        self.assert_proportions(third_reverse_transform, 2000)
+        self.assert_proportions(fourth_reverse_transform, 1111)
+        self.assert_proportions(
+            pd.concat([
+                first_reverse_transform,
+                second_reverse_transform,
+                third_reverse_transform,
+                fourth_reverse_transform,
+            ]),
+            4611,
+        )
+
+        first_set = set(first_reverse_transform['col'])
+        second_set = set(second_reverse_transform['col'])
+        third_set = set(third_reverse_transform['col'])
+        fourth_set = set(fourth_reverse_transform['col'])
+
+        assert len(first_set.intersection(second_set)) <= 1
+        assert len(first_set.intersection(third_set)) <= 1
+        assert len(first_set.intersection(fourth_set)) <= 1
+        assert len(second_set.intersection(third_set)) <= 1
+        assert len(second_set.intersection(fourth_set)) <= 1
+        assert len(third_set.intersection(fourth_set)) <= 1
+
+    def test_cardinality_rule_scale_called_multiple_times_remaining_samples(self):
+        """Test calling multiple times when ``cardinality_rule`` is ``scale``."""
+        # Setup
+        hundred = [i // 100 for i in range(1000)]
+        two_hundred = [i // 200 for i in range(2000, 3000)]
+        data = pd.DataFrame({'col': hundred + two_hundred})
+        instance = AnonymizedFaker(cardinality_rule='scale')
+
+        # Run
+        transformed_data = instance.fit_transform(data, 'col')
+        first_out = instance.reverse_transform(transformed_data.head(250))
+        remaining_value = instance._remaining_samples['value']
+        remaining_samples = instance._remaining_samples['repetitions']
+        second_out = instance.reverse_transform(transformed_data)
+
+        # Assert
+        assert len(first_out) == 250
+        assert len(first_out[first_out['col'] == remaining_value]) == 50
+        assert len(second_out['col']) == 2_000
+        assert len(second_out[second_out['col'] == remaining_value]) == remaining_samples
 
 
 class TestPsuedoAnonymizedFaker:

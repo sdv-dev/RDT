@@ -110,4 +110,4 @@ ENV/
 .DS_Store
 
 # Vim
-.*.swp
+*.swp
