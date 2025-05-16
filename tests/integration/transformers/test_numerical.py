@@ -483,6 +483,7 @@ class TestGaussianNormalizer:
 
 class TestClusterBasedNormalizer:
     def generate_data(self):
+        np.random.set_state(np.random.RandomState(42).get_state())
         data1 = np.random.normal(loc=5, scale=1, size=100)
         data2 = np.random.normal(loc=-5, scale=1, size=100)
         data = np.concatenate([data1, data2])
