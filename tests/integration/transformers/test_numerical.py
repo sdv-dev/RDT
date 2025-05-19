@@ -341,6 +341,7 @@ class TestFloatFormatter:
 
 class TestGaussianNormalizer:
     def test_stats(self):
+        np.random.set_state(np.random.RandomState(42).get_state())
         data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['a'])
         column = 'a'
 
