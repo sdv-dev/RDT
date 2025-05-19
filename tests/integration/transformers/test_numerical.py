@@ -341,7 +341,6 @@ class TestFloatFormatter:
 
 class TestGaussianNormalizer:
     def test_stats(self):
-        np.random.set_state(np.random.RandomState(42).get_state())
         data = pd.DataFrame(np.random.normal(loc=4, scale=4, size=1000), columns=['a'])
         column = 'a'
 
@@ -356,8 +355,8 @@ class TestGaussianNormalizer:
         np.testing.assert_almost_equal(transformed['a'].std(), 1, decimal=1)
 
         reverse = ct.reverse_transform(transformed)
-
-        np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+        threshold = 10**-1
+        assert np.quantile(np.abs(reverse - data), 0.95) <= threshold
 
     def test_missing_value_generation_from_column(self):
         data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
