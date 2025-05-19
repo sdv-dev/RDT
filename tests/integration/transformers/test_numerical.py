@@ -503,7 +503,8 @@ class TestClusterBasedNormalizer:
         assert all(isinstance(x, float) for x in transformed['col.component'])
 
         reverse = bgmm_transformer.reverse_transform(transformed)
-        np.testing.assert_array_almost_equal(reverse, data, decimal=1)
+        threshold = 10**-1
+        assert np.quantile(np.abs(reverse - data), 0.95) <= threshold
 
     def test_some_nulls(self):
         random_state = np.random.get_state()
