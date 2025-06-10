@@ -276,7 +276,7 @@ class GaussianNormalizer(FloatFormatter):
             Whether or not to clip the data returned by ``reverse_transform`` to the min and
             max values seen during ``fit``. Defaults to ``False``.
         distribution (copulas.univariate.Univariate or str):
-            Copulas univariate distribution to use. Defaults to ``truncated_gaussian``.
+            Copulas univariate distribution to use. Defaults to ``truncnorm``.
             Options include:
 
                 * ``norm``: Use a Gaussian distribution.
@@ -334,7 +334,7 @@ class GaussianNormalizer(FloatFormatter):
         model_missing_values=None,
         learn_rounding_scheme=False,
         enforce_min_max_values=False,
-        distribution='truncated_gaussian',
+        distribution='truncnorm',
         missing_value_generation='random',
     ):
         # Using missing_value_replacement='mean' as the default instead of random
