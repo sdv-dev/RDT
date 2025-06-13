@@ -354,23 +354,22 @@ class TestBaseTransformer:
         """Test that the ``__repr__`` method returns the class name and parameters.
 
         The ``_repr__`` method should return the class name followed by all non-default
-        parameters wrapped in paranthesis.
+        parameters wrapped in parentheses.
 
         Setup:
             - Create a dummy class which inherits from the ``BaseTransformer`` where:
-                - The class has one required parameter in its ``__init__``.
-                - The class has four optional parameters in its ``__init__`` method.
+                - The class has one required parameter in it's ``__init__`` method.
+                - The class has four optional parameters in it's ``__init__`` method.
                 - The class instance only sets three parameters (1 of which is required).
         """
 
         # Setup
         class Dummy(BaseTransformer):
-            def __init__(self, param0, param1=None, param2=None, param3=None, param4=False):
+            def __init__(self, param0, param1=None, param2=None, param3=None):
                 self.param0 = param0
                 self.param1 = param1
                 self.param2 = param2
                 self.param3 = param3
-                self.param4 = param4
 
         transformer = Dummy(param0='required', param2='value', param3=True)
 
@@ -379,6 +378,26 @@ class TestBaseTransformer:
 
         # Assert
         assert text == "Dummy(param0='required', param2='value', param3=True)"
+
+    def test__repr__with_bool_parameters(self):
+        """Test that the ``__repr__`` method returns the class name and parameters.
+
+        The ``_repr__`` method should return the class name followed by all non-default
+        parameters wrapped in parentheses and not include default boolean parameters.
+        """
+        # Setup
+        class Dummy(BaseTransformer):
+            def __init__(self, param0, param1=False):
+                self.param0 = param0
+                self.param1 = param1
+
+        transformer = Dummy(param0='required')
+
+        # Run
+        text = repr(transformer)
+
+        # Assert
+        assert text == "Dummy(param0='required')"
 
     def test__str__(self):
         """Test the ``__str__`` method.

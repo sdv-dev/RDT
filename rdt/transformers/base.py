@@ -336,7 +336,7 @@ class BaseTransformer:
         default_values_list = args.defaults or []
         default_arg_to_value = {}
         if default_values_list:
-            default_keys = keys[-len(default_values_list) :]
+            default_keys = keys[-len(default_values_list):]
             default_arg_to_value = dict(zip(default_keys, default_values_list))
 
         if default_arg_to_value == instanced:
