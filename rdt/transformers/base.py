@@ -333,13 +333,17 @@ class BaseTransformer:
             if key != 'model_missing_values' and hasattr(self, key)  # Remove after deprecation
         }
 
-        defaults = args.defaults or []
-        defaults = dict(zip(keys, defaults))
-        if defaults == instanced:
+        default_values_list = args.defaults or []
+        default_arg_to_value = {}
+        if default_values_list:
+            default_keys = keys[-len(default_values_list) :]
+            default_arg_to_value = dict(zip(default_keys, default_values_list))
+
+        if default_arg_to_value == instanced:
             return f'{class_name}()'
 
         for arg, value in instanced.items():
-            if arg not in defaults or defaults[arg] != value:
+            if arg not in default_arg_to_value or default_arg_to_value[arg] != value:
                 custom_args.append(f'{arg}={repr(value)}')
 
         args_string = ', '.join(custom_args)

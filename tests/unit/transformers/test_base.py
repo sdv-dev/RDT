@@ -358,17 +358,19 @@ class TestBaseTransformer:
 
         Setup:
             - Create a dummy class which inherits from the ``BaseTransformer`` where:
-                - The class has two parameters in its ``__init__`` method with default values.
-                - The class instance only sets one of them.
+                - The class has one required parameter in its ``__init__``.
+                - The class has four optional parameters in its ``__init__`` method.
+                - The class instance only sets three parameters (1 of which is required).
         """
 
         # Setup
         class Dummy(BaseTransformer):
-            def __init__(self, param0, param1=None, param2=None, param3=None):
+            def __init__(self, param0, param1=None, param2=None, param3=None, param4=False):
                 self.param0 = param0
                 self.param1 = param1
                 self.param2 = param2
                 self.param3 = param3
+                self.param4 = param4
 
         transformer = Dummy(param0='required', param2='value', param3=True)
 
