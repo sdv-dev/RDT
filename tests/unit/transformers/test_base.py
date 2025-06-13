@@ -359,8 +359,8 @@ class TestBaseTransformer:
         Setup:
             - Create a dummy class which inherits from the ``BaseTransformer`` where:
                 - The class has one required parameter in it's ``__init__`` method.
-                - The class has four optional parameters in it's ``__init__`` method.
-                - The class instance only sets three parameters (1 of which is required).
+                - The class has three optional parameters in it's ``__init__`` method.
+                - The class instance only sets 2 optional parameters.
         """
 
         # Setup
