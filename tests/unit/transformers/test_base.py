@@ -385,6 +385,7 @@ class TestBaseTransformer:
         The ``_repr__`` method should return the class name followed by all non-default
         parameters wrapped in parentheses and not include default boolean parameters.
         """
+
         # Setup
         class Dummy(BaseTransformer):
             def __init__(self, param0, param1=False):
