@@ -354,12 +354,13 @@ class TestBaseTransformer:
         """Test that the ``__repr__`` method returns the class name and parameters.
 
         The ``_repr__`` method should return the class name followed by all non-default
-        parameters wrapped in paranthesis.
+        parameters wrapped in parentheses.
 
         Setup:
             - Create a dummy class which inherits from the ``BaseTransformer`` where:
-                - The class has two parameters in its ``__init__`` method with default values.
-                - The class instance only sets one of them.
+                - The class has one required parameter in it's ``__init__`` method.
+                - The class has three optional parameters in it's ``__init__`` method.
+                - The class instance only sets 2 optional parameters.
         """
 
         # Setup
@@ -377,6 +378,27 @@ class TestBaseTransformer:
 
         # Assert
         assert text == "Dummy(param0='required', param2='value', param3=True)"
+
+    def test__repr__with_bool_parameters(self):
+        """Test that the ``__repr__`` method returns the class name and parameters.
+
+        The ``_repr__`` method should return the class name followed by all non-default
+        parameters wrapped in parentheses and not include default boolean parameters.
+        """
+
+        # Setup
+        class Dummy(BaseTransformer):
+            def __init__(self, param0, param1=False):
+                self.param0 = param0
+                self.param1 = param1
+
+        transformer = Dummy(param0='required')
+
+        # Run
+        text = repr(transformer)
+
+        # Assert
+        assert text == "Dummy(param0='required')"
 
     def test__str__(self):
         """Test the ``__str__`` method.
