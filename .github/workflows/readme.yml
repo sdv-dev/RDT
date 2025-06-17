@@ -4,7 +4,11 @@ on:
   push:
   pull_request:
     types: [opened, reopened]
-
+    
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
 jobs:
   readme:
     runs-on: ${{ matrix.os }}
