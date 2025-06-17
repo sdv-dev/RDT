@@ -3,7 +3,10 @@ name: Release
 on:
   release:
     types: [published]
-
+    branches:
+      - main
+      - stable
+      
   workflow_dispatch:
     inputs:
       candidate:
@@ -24,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.candidate && 'main' || 'stable' }}
+          ref: ${{ inputs.candidate && 'stable' || 'main' }}
 
       - name: Set up latest Python
         uses: actions/setup-python@v5
