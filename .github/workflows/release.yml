@@ -1,26 +1,24 @@
 name: Release
 
 on:
-  release:
-    types: [published]
-    branches:
-      - main
-      - stable
   pull_request:
     types: [opened, reopened]
-    
-  workflow_dispatch:
-    inputs:
-      candidate:
-        description: 'Release candidate.'
-        required: true
-        type: boolean
-        default: true
-      test_pypi:
-        description: 'Test PyPI.'
-        type: boolean
-        default: false
-
+  # release:
+  #   types: [published]
+  #   branches:
+  #     - main
+  #     - stable
+  # workflow_dispatch:
+  #   inputs:
+  #     candidate:
+  #       description: 'Release candidate.'
+  #       required: true
+  #       type: boolean
+  #       default: true
+  #     test_pypi:
+  #       description: 'Test PyPI.'
+  #       type: boolean
+  #       default: false
 jobs:
   release:
     runs-on: ubuntu-latest
