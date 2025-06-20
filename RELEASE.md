@@ -115,7 +115,7 @@ git push --set-upstream origin test-rdt-X.Y.Z
 
 ## Milestone
 
-It's important check that the GitHub and milestone issues are up to date with the release.
+It's important to check that the GitHub and milestone issues are up to date with the release.
 
 You neet to check that:
 
