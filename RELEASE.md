@@ -14,50 +14,31 @@ The process of releasing a new version involves several steps:
 
 6. [Milestone](#milestone)
 
-7. [HISTORY.md](#history.md)
+7. [Update HISTORY](#update-history)
 
-8. [Distribution](#distribution)
+8. [Check the release](#check-the-release)
 
-9. [Making the release](#making-the-release)
+8. [Update stable branch and bump version](#update-stable-branch-and-bump-version)
 
-9.1. [Tag and release to PyPI](#tag-and-release-to-pypi)
+10. [Create the Release on GitHub](#create-the-release-on-github)
 
-9.2. [Update the release on GitHub](#update-the-release-on-github)
+11. [Close milestone and create new milestone](#close-milestone-and-create-new-milestone)
 
 ## Install RDT from source
 
 Clone the project and install the development requirements before start the release process. Alternatively, with your virtualenv activated.
 
 ```bash
-git clone https://github.com/sdv-dev/RDT
+git clone https://github.com/sdv-dev/RDT.git
 cd RDT
 git checkout main
 make install-develop
+make install-readme
 ```
 
 ## Linting and tests
 
-Execute ALL the tests and linting, tests must end with no errors:
-
-```bash
-make test-all
-```
-
-This command will use tox to execute the unittests with different environments, see tox.ini configuration.
-
-To be able to run this you will need the different python versions used in the tox.ini file.
-
-At the end, you will see an output like this:
-
-```
-_____________________________________________ summary ______________________________________________
-  py35: commands succeeded
-  py36: commands succeeded
-  lint: commands succeeded
-  docs: commands succeeded
-```
-
-To run the tests over your python version:
+Execute the tests and linting. The tests must end with no errors:
 
 ```bash
 make test && make lint
@@ -66,14 +47,16 @@ make test && make lint
 And you will see something like this:
 
 ```
-================================== 41 passed, 5 skipped in 1.29s ===================================
+Coverage XML written to file ./integration_cov.xml
+============ 242 passed, 166 warnings, 134 subtests passed in 9.88s ============
+....
 invoke lint
 No broken requirements found.
 All checks passed!
-73 files already formatted
+80 files already formatted
 ```
 
-The execution has finished with no errors and 5 tests skipped.
+The execution has finished with no errors, 0 test skipped and 166 warnings.
 
 ## Documentation
 
@@ -97,6 +80,7 @@ make docs
 2. Select the `Release` action.
 3. Run it on the main branch. Make sure `Release candidate` is checked and `Test PyPI` is not.
 4. Check on [PyPI][rdt-pypi] to assure the release candidate was successfully uploaded.
+  - You should see X.Y.ZdevN PRE-RELEASE
 
 [actions]: https://github.com/sdv-dev/RDT/actions
 [rdt-pypi]: https://pypi.org/project/RDT/#history
@@ -113,7 +97,7 @@ Before doing the actual release, we need to test that the candidate works with S
 git checkout -b test-rdt-X.Y.Z
 ```
 
-2. Update the pyproject.toml to set the minimum version of RDT to be the same as the version of the release. For example, 
+2. Update the pyproject.toml to set the minimum version of RDT to be the same as the version of the release. For example,
 
 ```toml
 'rdt>=X.Y.Z.dev0'
@@ -129,24 +113,22 @@ git push --set-upstream origin test-rdt-X.Y.Z
 
 [sdv-actions]: https://github.com/sdv-dev/SDV/actions
 
-
 ## Milestone
 
-It's important check that the git hub and milestone issues are up to date with the release.
+It's important check that the GitHub and milestone issues are up to date with the release.
 
-You need to check that:
+You neet to check that:
 
-* The milestone for the current release exists.
+- The milestone for the current release exists.
+- All the issues closed since the latest release are associated to the milestone. If they are not, associate them
+- All the issues associated to the milestone are closed. If there are open issues but the milestone needs to
+  be released anyway, move them to the next milestone.
+- All the issues in the milestone are assigned to at least one person.
+- All the pull requests closed since the latest release are associated to an issue. If necessary, create issues
+  and assign them to the milestone. Also assigne the person who opened the issue to them.
 
-* All the issues closed since the latest release are associated to the milestone. If they are not, associate them.
-
-* All the issues associated to the milestone are closed. If there are open issues but the milestone needs to be released anyway, move them to the next milestone.
-
-* All the issues in the milestone are assigned to at least one person.
-
-* All the pull requests closed since the latest release are associated to an issue. If necessary, create issues and assign them to the milestone. Also assigne the person who opened the issue to them.
-
-## HISTORY.md
+## Update HISTORY
+Run the [Release Prep](https://github.com/sdv-dev/RDT/actions/workflows/prepare_release.yml) workflow. This workflow will create a pull request with updates to HISTORY.md
 
 Make sure HISTORY.md is updated with the issues of the milestone:
 
@@ -172,66 +154,42 @@ The issue list per milestone can be found [here][milestones].
 
 [milestones]: https://github.com/sdv-dev/RDT/milestones
 
-## Distribution
+Put the pull request up for review and get 2 approvals to merge into `main`.
 
-Generate the distribution executing:
-
-```bash
-make dist
-```
-
-This will create a `dist` and `build` directories. The `dist` directory contains the library installer.
-
-```
-dist/
-├── rdt-<version>-py2.py3-none-any.whl
-└── rdt-<version>.tar.gz
-```
-
-Now, create a new virtualenv with the distributed file generated and run the README.md examples:
-
-1. Create the rdt-test directory (out of the RDT directory):
-
-```bash
-mkdir rdt-test
-cd rdt-test
-```
-
-2. Create a new virtuelenv and activate it:
-
-```bash
-virtualenv -p $(which python3.6) .venv
-source .venv/bin/activate
-```
-
-3. Install the wheel distribution:
-
-```bash
-pip install /path/to/rdt/dist/<rdt-distribution-version-any>.whl
-```
-
-4. Now you are ready to execute the README.md examples.
-
-## Making the release
-
-At the end, we need to make the release. First, check if the release can be made:
+## Check the release
+Once HISTORY.md has been updated on `main`, check if the release can be made:
 
 ```bash
 make check-release
 ```
 
-### Tag and release to PyPI
+## Update stable branch and bump version
+The `stable` branch needs to updated with the changes from `main` and the verison needs to be bumped.
+Depending on the type of release, run one of the following:
 
-Once we are sure that the release can be made we can use different commands depending on the type of release that we want to make:
-
-* `make release`: This will relase a patch, which is the most common type of release. Use this when the changes are bugfixes or enhancements that do not modify the existing user API. Changes that modify the user API to add new features but that do not modify the usage of the previous features can also be released as a patch.
-
+* `make release`: This will release a patch, which is the most common type of release. Use this when the changes are bugfixes or enhancements that do not modify the existing user API. Changes that modify the user API to add new features but that do not modify the usage of the previous features can also be released as a patch.
 * `make release-minor`: This will release the next minor version. Use this if the changes modify the existing user API in any way, even if it is backwards compatible. Minor backwards incompatible changes can also be released as minor versions while the library is still in beta state. After the major version 1 has been released, minor version can only be used to add backwards compatible API changes.
-
 * `make release-major`: This will release the next major version. Use this to if the changes modify the user API in a backwards incompatible way after the major version 1 has been released.
 
-### Update the release on GitHub
+Running one of these will **push commits directly** to `main`.
+At the end, you should see the 2 commits on `main` on (from oldest to newest):
+- `make release-tag: Merge branch 'main' into stable`
+- `Bump version: X.Y.Z.devN → X.Y.Z`
 
-Once the tag and the release to PyPI has been made, go to GitHub and edit the freshly created "tag" to add the title and release notes, which should be exactly the same that we added to the HISTORY.md file.
+## Create the Release on GitHub
 
-Finaly, close the milestone and, if it does not exit, create the next one.
+After the update to HISTORY.md is merged into `main` and the version is bumped, it is time to [create the release GitHub](https://github.com/sdv-dev/RDT/releases/new).
+- Create a new tag with the version number with a v prefix (e.g. v0.3.1)
+- The target should be the `main` branch
+- Release title is the same as the tag (e.g. v0.3.1)
+- This is not a pre-release (`Set as a pre-release` should be unchecked)
+
+Click `Publish release`, which will kickoff the release workflow and automatically upload the package to public PyPI.
+
+The release workflow will create a pull request and auto-merge it into `main` that bumps to the next development release. You should see 1 commit on main on:
+- `Bump version: X.Y.Z → X.Y.Z.dev0`
+
+## Close milestone and create new milestone
+
+Finaly, **close the milestone** and, if it does not exist, **create the next milestone**.
+
