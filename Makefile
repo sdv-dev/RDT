@@ -76,6 +76,9 @@ install-test: clean-build clean-pyc ## install the package and test dependencies
 install-develop: clean-build clean-pyc ## install the package in editable mode and dependencies for development
 	pip install -e .[dev]
 
+.PHONY: install-readme
+install-readme: clean-build clean-pyc ## install the package in editable mode and readme dependencies for developement
+	pip install -e .[readme]
 
 # LINT TARGETS
 
@@ -108,10 +111,6 @@ test-performance: ## run performance tests
 
 .PHONY: test
 test: test-unit test-integration test-readme ## test everything that needs test dependencies
-
-.PHONY: test-all
-test-all: ## test using tox
-	tox -r
 
 .PHONY: test-repo
 test-repo: lint test-unit test-integration test-readme test-performance ## test everything
@@ -166,7 +165,7 @@ git-push-tags-stable: ## Push tags and stable to github
 
 .PHONY: bumpversion-release
 bumpversion-release: ## Bump the version to the next release
-	bump-my-version bump release
+	bump-my-version bump release --no-tag
 
 .PHONY: bumpversion-patch
 bumpversion-patch: ## Bump the version to the next patch
@@ -230,7 +229,7 @@ check-release: check-clean check-candidate check-main check-history ## Check if 
 
 .PHONY: release
 release: check-release git-merge-main-stable bumpversion-release git-push-tags-stable \
-	publish git-merge-stable-main bumpversion-patch git-push
+	git-merge-stable-main bumpversion-patch git-push
 
 .PHONY: release-test
 release-test: check-release git-merge-main-stable bumpversion-release bumpversion-revert
