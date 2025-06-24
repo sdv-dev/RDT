@@ -87,7 +87,7 @@ class UnixTimestampEncoder(BaseTransformer):
 
         raise ValueError('Data does not match specified datetime format.') from None
 
-    def _learn_timezone_offest(self, data):
+    def _learn_timezone_offset(self, data):
         """Extracts and stores the timezone offset from the first valid datetime in the data."""
         has_timezone = self.datetime_format and '%z' in self.datetime_format.lower()
         if has_timezone and not self._has_multiple_timezones:
@@ -167,7 +167,7 @@ class UnixTimestampEncoder(BaseTransformer):
 
         self._learn_has_multiple_timezones(data)
         transformed = self._transform_helper(data)
-        self._learn_timezone_offest(data)
+        self._learn_timezone_offset(data)
         self._warn_if_mixed_timezones()
 
         if self.enforce_min_max_values:
@@ -333,22 +333,6 @@ class OptimizedTimestampEncoder(UnixTimestampEncoder):
     """
 
     divider = None
-
-    def __init__(
-        self,
-        missing_value_replacement='mean',
-        model_missing_values=None,
-        datetime_format=None,
-        missing_value_generation='random',
-        enforce_min_max_values=False,
-    ):
-        super().__init__(
-            missing_value_replacement=missing_value_replacement,
-            missing_value_generation=missing_value_generation,
-            enforce_min_max_values=enforce_min_max_values,
-            model_missing_values=model_missing_values,
-            datetime_format=datetime_format,
-        )
 
     def _find_divider(self, transformed):
         self.divider = 1
