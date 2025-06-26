@@ -1,5 +1,25 @@
 # History
 
+## v1.17.1 - 2025-06-26
+
+### Bugs Fixed
+
+* BaseTransformer repr method showing parameters with default values - Issue [#1004](https://github.com/sdv-dev/RDT/issues/1004) by @gsheni
+* Change default distribution for `GaussianNormalizer` to `truncnorm` - Issue [#997](https://github.com/sdv-dev/RDT/issues/997) by @fealho
+
+### Internal
+
+* `OptimizedTimestampEncoder`: Remove `__init__` function - Issue [#1011](https://github.com/sdv-dev/RDT/issues/1011) by @pvk-developer
+* UnixTimestampEncoder: Typo in a private method `_learn_timezone_offest` - Issue [#1009](https://github.com/sdv-dev/RDT/issues/1009) by @pvk-developer
+* Add workflow to release RDT on PyPI - Issue [#1007](https://github.com/sdv-dev/RDT/issues/1007) by @gsheni
+* Check pyproject for release candidate dependencies - Issue [#1001](https://github.com/sdv-dev/RDT/issues/1001) by @rwedge
+* Fragile Test: TestClusterBasedNormalizer::test_dataframe - Issue [#969](https://github.com/sdv-dev/RDT/issues/969) by @pvk-developer
+* Fragile test: TestGaussianNormalizer::test_stats - Issue [#910](https://github.com/sdv-dev/RDT/issues/910) by @pvk-developer
+
+### Maintenance
+
+* Update python setup step in workflows to use latest python version - Issue [#904](https://github.com/sdv-dev/RDT/issues/904) by @frances-h
+
 ## v1.17.0 - 2025-05-13
 
 ### New Features

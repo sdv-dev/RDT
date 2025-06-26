@@ -1,4 +1,5 @@
 import re
+import warnings
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
@@ -784,16 +785,22 @@ class TestFloatFormatter(TestCase):
 class TestGaussianNormalizer:
     def test___init__super_attrs(self):
         """super() arguments are properly passed and set as attributes."""
-        ct = GaussianNormalizer(
-            missing_value_generation='random',
-            learn_rounding_scheme=False,
-            enforce_min_max_values=False,
-        )
+        with warnings.catch_warnings(record=True) as warning_list:
+            warnings.simplefilter('always')
+            ct = GaussianNormalizer(
+                missing_value_generation='random',
+                learn_rounding_scheme=False,
+                enforce_min_max_values=False,
+            )
+
+        # Assert no warnings were raised
+        assert len(warning_list) == 0
 
         assert ct.missing_value_replacement == 'mean'
         assert ct.missing_value_generation == 'random'
         assert ct.learn_rounding_scheme is False
         assert ct.enforce_min_max_values is False
+        assert ct._distribution is copulas.univariate.TruncatedGaussian
 
     def test___init__str_distr(self):
         """If distribution is a str, it is resolved using the _DISTRIBUTIONS dict."""

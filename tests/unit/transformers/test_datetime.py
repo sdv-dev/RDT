@@ -739,8 +739,8 @@ class TestUnixTimestampEncoder:
         with pytest.warns(UserWarning, match=warning_msg):
             UnixTimestampEncoder._warn_if_mixed_timezones(instance)
 
-    def test__learn_timezone_offest_sets_timezone_offset(self):
-        """Test that `_learn_timezone_offest` sets `_timezone_offset` correctly.
+    def test__learn_timezone_offset_sets_timezone_offset(self):
+        """Test that `_learn_timezone_offset` sets `_timezone_offset` correctly.
 
         Setup:
             - Instance with `datetime_format` including `%z` and `_has_multiple_timezones=False`.
@@ -757,13 +757,13 @@ class TestUnixTimestampEncoder:
         data = [None, 'invalid-date', '2025-04-01 14:00:00+0300', '2025-04-02 14:00:00+0300']
 
         # Run
-        UnixTimestampEncoder._learn_timezone_offest(instance, data)
+        UnixTimestampEncoder._learn_timezone_offset(instance, data)
 
         # Assert
         assert instance._timezone_offset.utcoffset(None).total_seconds() == 10800
 
-    def test__learn_timezone_offest_with_no_valid_dates(self):
-        """Test that `_learn_timezone_offest` with no valid data."""
+    def test__learn_timezone_offset_with_no_valid_dates(self):
+        """Test that `_learn_timezone_offset` with no valid data."""
         # Setup
         instance = UnixTimestampEncoder()
         instance.datetime_format = '%Y-%m-%d %H:%M:%S%z'
@@ -771,7 +771,7 @@ class TestUnixTimestampEncoder:
         data = [None, 'not-a-date', '---']
 
         # Run
-        UnixTimestampEncoder._learn_timezone_offest(instance, data)
+        UnixTimestampEncoder._learn_timezone_offset(instance, data)
 
         # Assert
         assert instance._timezone_offset is None
