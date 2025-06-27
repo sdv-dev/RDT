@@ -153,22 +153,20 @@ Depending on the type of release, run one of the following:
 * `make release-major`: This will release the next major version. Use this to if the changes modify the user API in a backwards incompatible way after the major version 1 has been released.
 
 Running one of these will **push commits directly** to `main`.
-At the end, you should see the 2 commits on `main` on (from oldest to newest):
+At the end, you should see the 3 commits on `main` on (from oldest to newest):
 - `make release-tag: Merge branch 'main' into stable`
 - `Bump version: X.Y.Z.devN → X.Y.Z`
+- `Bump version: X.Y.Z -> X.Y.A.dev0`
 
 ## Create the Release on GitHub
 
 After the update to HISTORY.md is merged into `main` and the version is bumped, it is time to [create the release GitHub](https://github.com/sdv-dev/RDT/releases/new).
 - Create a new tag with the version number with a v prefix (e.g. v0.3.1)
-- The target should be the `main` branch
+- The target should be the `stable` branch
 - Release title is the same as the tag (e.g. v0.3.1)
 - This is not a pre-release (`Set as a pre-release` should be unchecked)
 
 Click `Publish release`, which will kickoff the release workflow and automatically upload the package to public PyPI.
-
-The release workflow will create a pull request and auto-merge it into `main` that bumps to the next development release. You should see 1 commit on main on:
-- `Bump version: X.Y.Z → X.Y.Z.dev0`
 
 ## Close milestone and create new milestone
 
