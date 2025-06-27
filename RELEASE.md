@@ -58,22 +58,6 @@ All checks passed!
 
 The execution has finished with no errors, 0 test skipped and 166 warnings.
 
-## Documentation
-
-The documentation must be up to date and generated with:
-
-```bash
-make view-docs
-```
-
-Read the documentation to ensure all the changes are reflected in the documentation.
-
-Alternatively, you can simply generate the documentation using the command:
-
-```bash
-make docs
-```
-
 ## Make a release candidate
 
 1. On the RDT GitHub page, navigate to the [Actions][actions] tab.
