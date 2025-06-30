@@ -166,7 +166,7 @@ After the update to HISTORY.md is merged into `main` and the version is bumped, 
 - Release title is the same as the tag (e.g. v0.3.1)
 - This is not a pre-release (`Set as a pre-release` should be unchecked)
 
-Click `Publish release`, which will kickoff the release workflow and automatically upload the package to public PyPI.
+Click `Publish release`, which will kickoff the release workflow and automatically upload the package to [public PyPI](https://pypi.org/project/rdt/).
 
 ## Close milestone and create new milestone
 
