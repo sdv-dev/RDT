@@ -1,6 +1,7 @@
 """Transformers for numerical data."""
 
 import copy
+import logging
 import warnings
 from importlib import import_module
 
@@ -12,6 +13,8 @@ from rdt.errors import InvalidDataError, TransformerInputError
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.utils import learn_rounding_digits, logit, sigmoid
+
+LOGGER = logging.getLogger(__name__)
 
 EPSILON = np.finfo(np.float32).eps
 INTEGER_BOUNDS = {
@@ -300,6 +303,8 @@ class GaussianNormalizer(FloatFormatter):
     """
 
     _univariate = None
+    _fallback_distribution = 'norm'
+    _learned_distribution_name = None
     _DEPRECATED_DISTRIBUTIONS_MAPPING = {
         'gaussian': 'norm',
         'student_t': 't',
@@ -359,7 +364,14 @@ class GaussianNormalizer(FloatFormatter):
                 )
                 distribution = self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]
 
+            self._learned_distribution_name = distribution
             distribution = self._distributions[distribution]
+
+        else:
+            distribution_name_map = {v: k for k, v in self._distributions.items()}
+            self._learned_distribution_name = distribution_name_map.get(
+                distribution if isinstance(distribution, type) else type(distribution), 'unknown'
+            )
 
         self._distribution = distribution
 
@@ -390,7 +402,16 @@ class GaussianNormalizer(FloatFormatter):
 
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
-            self._univariate.fit(data)
+            try:
+                self._univariate.fit(data)
+            except Exception:
+                LOGGER.info(
+                    f"Unable to fit the distribution '{self._learned_distribution_name}'. "
+                    f"Falling back to '{self._fallback_distribution}'."
+                )
+                self._learned_distribution_name = self._fallback_distribution
+                self._univariate = self._distributions[self._fallback_distribution]()
+                self._univariate.fit(data)
 
     def _copula_transform(self, data):
         cdf = self._univariate.cdf(data)
@@ -433,6 +454,24 @@ class GaussianNormalizer(FloatFormatter):
             data = self._univariate.ppf(scipy.stats.norm.cdf(data))
 
         return super()._reverse_transform(data)
+
+    @property
+    def learned_distribution(self):
+        """Get the learned distribution name and parameters.
+
+        Returns:
+            dict:
+                A dictionary containing the distribution name and parameters.
+        """
+        if self._univariate is None:
+            raise ValueError('The transformer has not been fitted yet.')
+
+        if hasattr(self._univariate, 'to_dict') and self._univariate.to_dict is not None:
+            parameters = self._univariate.to_dict()
+        else:
+            parameters = {}
+
+        return {'distribution': self._learned_distribution_name, 'parameters': parameters}
 
 
 class ClusterBasedNormalizer(FloatFormatter):
