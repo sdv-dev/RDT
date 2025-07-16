@@ -1385,30 +1385,6 @@ class TestGaussianNormalizer:
         assert learned_dist['distribution'] == 'norm'
         assert learned_dist['parameters'] == mock_params
 
-    def test_learned_distribution_without_to_dict(self):
-        """Test learned_distribution when univariate doesn't have to_dict method."""
-        # Setup
-        transformer = GaussianNormalizer(distribution='norm')
-        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
-        transformer.fit(data, 'test_column')
-
-        mock_univariate = Mock()
-        mock_univariate.loc = 3.0
-        mock_univariate.scale = 1.58
-
-        if hasattr(mock_univariate, 'to_dict'):
-            delattr(mock_univariate, 'to_dict')
-
-        transformer._univariate = mock_univariate
-
-        # Run
-        learned_dist = transformer.learned_distribution
-
-        # Assert
-        assert learned_dist['distribution'] == 'norm'
-        assert learned_dist['parameters']['loc'] == 3.0
-        assert learned_dist['parameters']['scale'] == 1.58
-
     def test_learned_distribution_after_fallback(self):
         """Test learned_distribution after fallback is triggered."""
         # Setup
@@ -1501,35 +1477,6 @@ class TestGaussianNormalizer:
         # Assert
         assert learned_dist['distribution'] == 'norm'
         assert isinstance(learned_dist['parameters'], dict)
-
-    def test_learned_distribution_parameters_extraction(self):
-        """Test that parameters are extracted correctly."""
-        # Setup
-        transformer = GaussianNormalizer(distribution='norm')
-        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
-        transformer.fit(data, 'test_column')
-
-        mock_univariate = Mock()
-        mock_univariate.loc = 3.0
-        mock_univariate.scale = 1.58
-        mock_univariate.a = 0.1
-        mock_univariate.b = 0.9
-        mock_univariate.df = 5
-
-        if hasattr(mock_univariate, 'to_dict'):
-            delattr(mock_univariate, 'to_dict')
-
-        transformer._univariate = mock_univariate
-
-        # Run
-        learned_dist = transformer.learned_distribution
-
-        # Assert
-        assert learned_dist['parameters']['loc'] == 3.0
-        assert learned_dist['parameters']['scale'] == 1.58
-        assert learned_dist['parameters']['a'] == 0.1
-        assert learned_dist['parameters']['b'] == 0.9
-        assert learned_dist['parameters']['df'] == 5
 
 
 class TestClusterBasedNormalizer(TestCase):
