@@ -1196,7 +1196,7 @@ class TestGaussianNormalizer:
     def test_normal_fit_no_fallback(self):
         """Test that normal fitting doesn't trigger fallback."""
         # Setup
-        transformer = GaussianNormalizer(distribution='norm')
+        transformer = GaussianNormalizer(distribution='beta')
         data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
 
         # Run
@@ -1205,7 +1205,7 @@ class TestGaussianNormalizer:
 
         # Assert
         mock_logger.assert_not_called()
-        assert transformer._learned_distribution_name == 'norm'
+        assert transformer._learned_distribution_name == 'beta'
 
     def test_fallback_triggered_on_exception(self):
         """Test that fallback is triggered when fitting fails."""
@@ -1375,7 +1375,7 @@ class TestGaussianNormalizer:
         data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
         transformer.fit(data, 'test_column')
 
-        mock_params = {'loc': 3.0, 'scale': 1.58}
+        mock_params = {'loc': 3.0, 'scale': 1.58, 'type': 'norm'}
         transformer._univariate.to_dict = Mock(return_value=mock_params)
 
         # Run

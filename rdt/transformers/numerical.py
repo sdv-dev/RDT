@@ -466,10 +466,10 @@ class GaussianNormalizer(FloatFormatter):
         if self._univariate is None:
             raise ValueError('The transformer has not been fitted yet.')
 
+        parameters = {}
         if hasattr(self._univariate, 'to_dict') and self._univariate.to_dict is not None:
             parameters = self._univariate.to_dict()
-        else:
-            parameters = {}
+            parameters.pop('type')
 
         return {'distribution': self._learned_distribution_name, 'parameters': parameters}
 
