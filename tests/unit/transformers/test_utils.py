@@ -16,6 +16,7 @@ from rdt.transformers.utils import (
     _any,
     _cast_to_type,
     _extract_timezone_from_a_string,
+    _fill_nan_with_none_series,
     _get_utc_offset,
     _handle_enforce_uniqueness_and_cardinality_rule,
     _max_repeat,
@@ -165,6 +166,43 @@ def test_fill_nan_with_none_no_warning():
     # Assert
     expected = pd.Series([1.0, 2.0, 3.0, None], dtype='object')
     pd.testing.assert_series_equal(result, expected)
+
+
+def test__fill_nan_with_none_series():
+    """Test the ``_fill_nan_with_none_series`` method."""
+    # Setup
+    series = pd.Series([1.0, 2.0, 3.0, np.nan], dtype='object')
+    categorical_serie = pd.Series(['a', 'b', 'c', 'd', np.nan], dtype='category')
+
+    # Run
+    result = _fill_nan_with_none_series(series)
+    result_categorical = _fill_nan_with_none_series(categorical_serie)
+
+    # Assert
+    expected_result = pd.Series([1.0, 2.0, 3.0, None], dtype='object')
+    pd.testing.assert_series_equal(result, expected_result)
+    expected_result_categorical = pd.Series(['a', 'b', 'c', 'd', None], dtype='category')
+    pd.testing.assert_series_equal(result_categorical, expected_result_categorical)
+
+
+def test_fill_nan_with_none_series():
+    """Test the `fill_nan_with_none_series` function."""
+    # Setup
+    series = pd.Series([1.0, 2.0, 3.0, np.nan], dtype='object')
+    data = pd.DataFrame({'col1': series})
+    data_2 = pd.DataFrame({'col1': series, 'col2': ['a', 'b', 'c', np.nan]})
+
+    # Run
+    result_series = _fill_nan_with_none_series(series)
+    result_data = fill_nan_with_none(data)
+    result_data_2 = fill_nan_with_none(data_2)
+
+    # Assert
+    expected_result = pd.Series([1.0, 2.0, 3.0, None], dtype='object')
+    expected_result_data_2 = pd.DataFrame({'col1': expected_result, 'col2': ['a', 'b', 'c', None]})
+    pd.testing.assert_series_equal(result_series, expected_result)
+    pd.testing.assert_frame_equal(result_data, pd.DataFrame({'col1': expected_result}))
+    pd.testing.assert_frame_equal(result_data_2, expected_result_data_2)
 
 
 def test_check_nan_in_transform():
