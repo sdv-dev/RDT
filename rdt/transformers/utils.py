@@ -8,11 +8,13 @@ import sys
 import warnings
 from collections import defaultdict
 from decimal import Decimal
+
 import numpy as np
 import pandas as pd
 from dateutil import parser
 from dateutil.parser import ParserError, UnknownTimezoneWarning
 from dateutil.tz import UTC
+
 import sre_parse  # isort:skip
 
 LOGGER = logging.getLogger(__name__)
@@ -177,13 +179,16 @@ def fill_nan_with_none(data):
     """Replace all nan values with None.
 
     Args:
-        data (pd.DataFrame or pd.Series)
+        data (pd.Series)
 
     Returns:
         data:
             Original data with nan values replaced by None.
     """
     sentinel = object()
+    if isinstance(data.dtype, pd.CategoricalDtype):
+        return data.where(~pd.isna(data), None)
+
     data = data.fillna(sentinel)
     return data.replace({sentinel: None})
 
