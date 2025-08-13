@@ -181,7 +181,9 @@ def test__fill_nan_with_none_series():
     # Assert
     expected_result = pd.Series([1.0, 2.0, 3.0, None], dtype='object')
     pd.testing.assert_series_equal(result, expected_result)
-    expected_result_categorical = pd.Series(['a', 'b', 'c', 'd', None], dtype='category')
+    expected_result_categorical = pd.Series(
+        pd.Categorical(['a', 'b', 'c', 'd', None], categories=['a', 'b', 'c', 'd'])
+    )
     pd.testing.assert_series_equal(result_categorical, expected_result_categorical)
 
 

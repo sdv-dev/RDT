@@ -177,8 +177,11 @@ def strings_from_regex(regex, max_repeat=16):
 
 def _fill_nan_with_none_series(data):
     sentinel = object()
-    if isinstance(data.dtype, pd.CategoricalDtype):
+    dtype = data.dtype
+    if isinstance(dtype, pd.CategoricalDtype):
         data = data.cat.add_categories([sentinel])
+        data = data.fillna(sentinel).replace({sentinel: None})
+        return pd.Series(pd.Categorical(data, categories=dtype.categories), index=data.index)
 
     return data.fillna(sentinel).replace({sentinel: None})
 
