@@ -1,5 +1,15 @@
 # History
 
+## v1.18.0 - 2025-08-14
+
+### New Features
+
+* Add a fallback distribution in `GaussianNormalizer` in case the given distribution fails - Issue [#945](https://github.com/sdv-dev/RDT/issues/945) by @fealho
+
+### Maintenance
+
+* Update release documentation based on recent release - Issue [#1016](https://github.com/sdv-dev/RDT/issues/1016) by @rwedge
+
 ## v1.17.1 - 2025-06-26
 
 ### Bugs Fixed

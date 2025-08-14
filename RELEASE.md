@@ -6,23 +6,21 @@ The process of releasing a new version involves several steps:
 
 2. [Linting and tests](#linting-and-tests)
 
-3. [Documentation](#documentation)
+3. [Make a release candidate](#make-a-release-candidate)
 
-4. [Make a release candidate](#make-a-release-candidate)
+4. [Integration with SDV](#integration-with-sdv)
 
-5. [Integration with SDV](#integration-with-sdv)
+5. [Milestone](#milestone)
 
-6. [Milestone](#milestone)
+6. [Update HISTORY](#update-history)
 
-7. [Update HISTORY](#update-history)
-
-8. [Check the release](#check-the-release)
+7. [Check the release](#check-the-release)
 
 8. [Update stable branch and bump version](#update-stable-branch-and-bump-version)
 
-10. [Create the Release on GitHub](#create-the-release-on-github)
+9. [Create the Release on GitHub](#create-the-release-on-github)
 
-11. [Close milestone and create new milestone](#close-milestone-and-create-new-milestone)
+10. [Close milestone and create new milestone](#close-milestone-and-create-new-milestone)
 
 ## Install RDT from source
 
@@ -33,7 +31,6 @@ git clone https://github.com/sdv-dev/RDT.git
 cd RDT
 git checkout main
 make install-develop
-make install-readme
 ```
 
 ## Linting and tests
@@ -57,22 +54,6 @@ All checks passed!
 ```
 
 The execution has finished with no errors, 0 test skipped and 166 warnings.
-
-## Documentation
-
-The documentation must be up to date and generated with:
-
-```bash
-make view-docs
-```
-
-Read the documentation to ensure all the changes are reflected in the documentation.
-
-Alternatively, you can simply generate the documentation using the command:
-
-```bash
-make docs
-```
 
 ## Make a release candidate
 
@@ -159,6 +140,7 @@ Put the pull request up for review and get 2 approvals to merge into `main`.
 ## Check the release
 Once HISTORY.md has been updated on `main`, check if the release can be made:
 
+
 ```bash
 make check-release
 ```
@@ -167,27 +149,25 @@ make check-release
 The `stable` branch needs to be updated with the changes from `main` and the version needs to be bumped.
 Depending on the type of release, run one of the following:
 
-* `make release`: This will release a patch, which is the most common type of release. Use this when the changes are bugfixes or enhancements that do not modify the existing user API. Changes that modify the user API to add new features but that do not modify the usage of the previous features can also be released as a patch.
-* `make release-minor`: This will release the next minor version. Use this if the changes modify the existing user API in any way, even if it is backwards compatible. Minor backwards incompatible changes can also be released as minor versions while the library is still in beta state. After the major version 1 has been released, minor version can only be used to add backwards compatible API changes.
-* `make release-major`: This will release the next major version. Use this to if the changes modify the user API in a backwards incompatible way after the major version 1 has been released.
+* `make release`: This will release the version that has already been bumped (patch, minor, or major). By default, this is typically a patch release. Use this when the changes are bugfixes or enhancements that do not modify the existing user API. Changes that modify the user API to add new features but that do not modify the usage of the previous features can also be released as a patch.
+* `make release-minor`: This will bump and release the next minor version. Use this if the changes modify the existing user API in any way, even if it is backwards compatible. Minor backwards incompatible changes can also be released as minor versions while the library is still in beta state. After the major version v1.0.0 has been released, minor version can only be used to add backwards compatible API changes.
+* `make release-major`: This will bump and release the next major version. Use this if the changes modify the user API in a backwards incompatible way after the major version v1.0.0 has been released.
 
 Running one of these will **push commits directly** to `main`.
-At the end, you should see the 2 commits on `main` on (from oldest to newest):
+At the end, you should see the 3 commits on `main` (from oldest to newest):
 - `make release-tag: Merge branch 'main' into stable`
 - `Bump version: X.Y.Z.devN → X.Y.Z`
+- `Bump version: X.Y.Z -> X.Y.A.dev0`
 
 ## Create the Release on GitHub
 
 After the update to HISTORY.md is merged into `main` and the version is bumped, it is time to [create the release GitHub](https://github.com/sdv-dev/RDT/releases/new).
 - Create a new tag with the version number with a v prefix (e.g. v0.3.1)
-- The target should be the `main` branch
+- The target should be the `stable` branch
 - Release title is the same as the tag (e.g. v0.3.1)
 - This is not a pre-release (`Set as a pre-release` should be unchecked)
 
-Click `Publish release`, which will kickoff the release workflow and automatically upload the package to public PyPI.
-
-The release workflow will create a pull request and auto-merge it into `main` that bumps to the next development release. You should see 1 commit on main on:
-- `Bump version: X.Y.Z → X.Y.Z.dev0`
+Click `Publish release`, which will kickoff the release workflow and automatically upload the package to [public PyPI](https://pypi.org/project/rdt/).
 
 ## Close milestone and create new milestone
 

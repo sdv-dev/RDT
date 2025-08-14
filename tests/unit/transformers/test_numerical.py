@@ -1185,6 +1185,299 @@ class TestGaussianNormalizer:
         captured = capsys.readouterr()
         assert captured.out == 'GaussianNormalizer()\n'
 
+    def test_fallback_distribution_attribute(self):
+        """Test that _fallback_distribution is set to 'norm'."""
+        # Setup
+        transformer = GaussianNormalizer()
+
+        # Assert
+        assert transformer._fallback_distribution == 'norm'
+
+    def test_normal_fit_no_fallback(self):
+        """Test that normal fitting doesn't trigger fallback."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='beta')
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        with patch('rdt.transformers.numerical.LOGGER.info') as mock_logger:
+            transformer.fit(data, 'test_column')
+
+        # Assert
+        mock_logger.assert_not_called()
+        assert transformer._learned_distribution_name == 'beta'
+
+    def test_fallback_triggered_on_exception(self):
+        """Test that fallback is triggered when fitting fails."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='beta')
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        with patch.object(transformer, '_get_univariate') as mock_get_univariate:
+            mock_univariate = Mock()
+            mock_univariate.fit.side_effect = Exception('Fitting failed')
+            mock_get_univariate.return_value = mock_univariate
+
+            with patch('rdt.transformers.numerical.LOGGER.info') as mock_logger:
+                transformer.fit(data, 'test_column')
+
+            # Assert
+            mock_logger.assert_called_once_with(
+                "Unable to fit the distribution 'beta'. Falling back to 'norm'."
+            )
+
+        assert transformer._learned_distribution_name == 'norm'
+
+    def test_fallback_with_string_distribution(self):
+        """Test fallback with string distribution."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='gamma')
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        with patch.object(transformer, '_get_univariate') as mock_get_univariate:
+            mock_univariate = Mock()
+            mock_univariate.fit.side_effect = Exception('Fitting failed')
+            mock_get_univariate.return_value = mock_univariate
+
+            with patch('rdt.transformers.numerical.LOGGER.info') as mock_logger:
+                transformer.fit(data, 'test_column')
+
+            # Assert
+            mock_logger.assert_called_once_with(
+                "Unable to fit the distribution 'gamma'. Falling back to 'norm'."
+            )
+
+        assert transformer._learned_distribution_name == 'norm'
+
+    def test_fallback_with_deprecated_distribution(self):
+        """Test fallback with deprecated distribution names."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='gaussian')
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        with patch.object(transformer, '_get_univariate') as mock_get_univariate:
+            mock_univariate = Mock()
+            mock_univariate.fit.side_effect = Exception('Fitting failed')
+            mock_get_univariate.return_value = mock_univariate
+
+            with patch('rdt.transformers.numerical.LOGGER.info') as mock_logger:
+                transformer.fit(data, 'test_column')
+
+            # Assert
+            mock_logger.assert_called_once_with(
+                "Unable to fit the distribution 'norm'. Falling back to 'norm'."
+            )
+
+        assert transformer._learned_distribution_name == 'norm'
+
+    def test_fallback_with_class_distribution(self):
+        """Test fallback with class distribution."""
+        # Setup
+        transformer = GaussianNormalizer(distribution=univariate.BetaUnivariate)
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        with patch.object(transformer, '_get_univariate') as mock_get_univariate:
+            mock_univariate = Mock()
+            mock_univariate.fit.side_effect = Exception('Fitting failed')
+            mock_get_univariate.return_value = mock_univariate
+
+            with patch('rdt.transformers.numerical.LOGGER.info') as mock_logger:
+                transformer.fit(data, 'test_column')
+
+            # Assert
+            mock_logger.assert_called_once_with(
+                "Unable to fit the distribution 'beta'. Falling back to 'norm'."
+            )
+
+        assert transformer._learned_distribution_name == 'norm'
+
+    def test_fallback_with_instance_distribution(self):
+        """Test fallback with instance distribution."""
+        # Setup
+        transformer = GaussianNormalizer(distribution=univariate.BetaUnivariate())
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        with patch.object(transformer, '_get_univariate') as mock_get_univariate:
+            mock_univariate = Mock()
+            mock_univariate.fit.side_effect = Exception('Fitting failed')
+            mock_get_univariate.return_value = mock_univariate
+
+            with patch('rdt.transformers.numerical.LOGGER.info') as mock_logger:
+                transformer.fit(data, 'test_column')
+
+            # Assert
+            mock_logger.assert_called_once_with(
+                "Unable to fit the distribution 'beta'. Falling back to 'norm'."
+            )
+
+        assert transformer._learned_distribution_name == 'norm'
+
+    def test_transform_reverse_transform_after_fallback(self):
+        """Test that transform and reverse_transform work after fallback."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='beta')
+        data = pd.DataFrame({'test_column': [0.1, 0.2, 0.3, 0.4, 0.5]})
+
+        # Run
+        with patch.object(transformer, '_get_univariate') as mock_get_univariate:
+            mock_univariate = Mock()
+            mock_univariate.fit.side_effect = Exception('Fitting failed')
+            mock_get_univariate.return_value = mock_univariate
+
+            with patch('rdt.transformers.numerical.LOGGER.info'):
+                transformer.fit(data, 'test_column')
+
+        transformed = transformer.transform(data)
+        reversed_data = transformer.reverse_transform(transformed)
+
+        # Assert
+        assert transformer._learned_distribution_name == 'norm'
+        assert isinstance(transformed, pd.DataFrame)
+        assert transformed.shape[0] == len(data)
+        assert isinstance(reversed_data, pd.DataFrame)
+        assert reversed_data.shape[0] == len(data)
+
+    def test_learned_distribution_before_fit(self):
+        """Test that learned_distribution raises error before fitting."""
+        # Setup
+        transformer = GaussianNormalizer()
+
+        # Assert
+        with pytest.raises(ValueError, match='The transformer has not been fitted yet'):
+            transformer.learned_distribution
+
+    def test_learned_distribution_after_fit(self):
+        """Test learned_distribution property after fitting."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='norm')
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        transformer.fit(data, 'test_column')
+        learned_dist = transformer.learned_distribution
+
+        # Assert
+        assert isinstance(learned_dist, dict)
+        assert 'distribution' in learned_dist
+        assert 'parameters' in learned_dist
+        assert learned_dist['distribution'] == 'norm'
+        assert isinstance(learned_dist['parameters'], dict)
+
+    def test_learned_distribution_with_to_dict(self):
+        """Test learned_distribution when univariate has to_dict method."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='norm')
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+        transformer.fit(data, 'test_column')
+
+        mock_params = {'loc': 3.0, 'scale': 1.58, 'type': 'norm'}
+        transformer._univariate.to_dict = Mock(return_value=mock_params)
+
+        # Run
+        learned_dist = transformer.learned_distribution
+
+        # Assert
+        assert learned_dist['distribution'] == 'norm'
+        assert learned_dist['parameters'] == mock_params
+
+    def test_learned_distribution_after_fallback(self):
+        """Test learned_distribution after fallback is triggered."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='beta')
+        data = pd.DataFrame({'test_column': [0.1, 0.2, 0.3, 0.4, 0.5]})
+
+        # Run
+        with patch.object(transformer, '_get_univariate') as mock_get_univariate:
+            mock_univariate = Mock()
+            mock_univariate.fit.side_effect = Exception('Fitting failed')
+            mock_get_univariate.return_value = mock_univariate
+
+            with patch('rdt.transformers.numerical.LOGGER.info'):
+                transformer.fit(data, 'test_column')
+
+        learned_dist = transformer.learned_distribution
+
+        # Assert
+        assert learned_dist['distribution'] == 'norm'
+        assert isinstance(learned_dist['parameters'], dict)
+
+    def test_learned_distribution_with_gamma(self):
+        """Test learned_distribution with gamma distribution."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='gamma')
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        transformer.fit(data, 'test_column')
+        learned_dist = transformer.learned_distribution
+
+        # Assert
+        assert learned_dist['distribution'] == 'gamma'
+        assert isinstance(learned_dist['parameters'], dict)
+
+    def test_learned_distribution_with_beta(self):
+        """Test learned_distribution with beta distribution."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='beta')
+        data = pd.DataFrame({'test_column': [0.1, 0.2, 0.3, 0.4, 0.5]})
+
+        # Run
+        transformer.fit(data, 'test_column')
+        learned_dist = transformer.learned_distribution
+
+        # Assert
+        assert learned_dist['distribution'] == 'beta'
+        assert isinstance(learned_dist['parameters'], dict)
+
+    def test_learned_distribution_with_t_distribution(self):
+        """Test learned_distribution with t distribution."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='t')
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        transformer.fit(data, 'test_column')
+        learned_dist = transformer.learned_distribution
+
+        # Assert
+        assert learned_dist['distribution'] == 't'
+        assert isinstance(learned_dist['parameters'], dict)
+
+    def test_learned_distribution_with_truncnorm(self):
+        """Test learned_distribution with truncnorm distribution."""
+        # Setup
+        transformer = GaussianNormalizer(distribution='truncnorm')
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        transformer.fit(data, 'test_column')
+        learned_dist = transformer.learned_distribution
+
+        # Assert
+        assert learned_dist['distribution'] == 'truncnorm'
+        assert isinstance(learned_dist['parameters'], dict)
+
+    def test_learned_distribution_with_deprecated_distribution(self):
+        """Test learned_distribution with deprecated distribution names."""
+        # Setup
+        with pytest.warns(FutureWarning):
+            transformer = GaussianNormalizer(distribution='gaussian')
+
+        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
+
+        # Run
+        transformer.fit(data, 'test_column')
+        learned_dist = transformer.learned_distribution
+
+        # Assert
+        assert learned_dist['distribution'] == 'norm'
+        assert isinstance(learned_dist['parameters'], dict)
+
 
 class TestClusterBasedNormalizer(TestCase):
     def test__get_current_random_seed_random_states_is_none(self):
