@@ -1,0 +1,12 @@
+[project]
+name = "rdt-download-tracker"
+description = "Package to track downloads of RDT"
+version = "1.18.1.dev0"
+readme = "README.md"
+
+[build-system]
+requires = [
+    "setuptools",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"

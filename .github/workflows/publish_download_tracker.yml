@@ -1,0 +1,36 @@
+name: Publish Download Tracker
+on:
+  release:
+    types: [published]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  publish-download-tracker:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        # with:
+        #   ref: 'stable'
+      - name: Set up latest Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: 'pyproject.toml'
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            python -m pip install .[dev]
+            python -m pip install -r ./scripts/rdt-download-tracker/requirements.txt
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4.3.1
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_DOWNLOAD_TRACKER_ROLE }}
+          role-session-name: UploadRDTDownloadTracker
+      - name: Create and upload
+        env:
+          DOWNLOAD_TRACKER_BUCKET: ${{ secrets.DOWNLOAD_TRACKER_BUCKET }}
+        run: |
+          python -m scripts.create_download_tracker
