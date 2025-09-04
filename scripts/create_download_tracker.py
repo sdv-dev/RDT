@@ -72,7 +72,13 @@ def _update_index_html(files, s3_client, dryrun=False):
         print('New index file:')  # noqa: T201 `print` found
         print(new_index)  # noqa: T201 `print` found
     else:
-        s3_client.put_object(Bucket=BUCKET, Key=index_file_path, Body=new_index)
+        s3_client.put_object(
+            Bucket=BUCKET,
+            Key=index_file_path,
+            Body=new_index,
+            ContentType='text/html',
+            CacheControl='no-cache'
+        )
 
 
 def upload_package(dryrun=False):
