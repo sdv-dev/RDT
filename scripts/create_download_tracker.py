@@ -77,7 +77,7 @@ def _update_index_html(files, s3_client, dryrun=False):
             Key=index_file_path,
             Body=new_index,
             ContentType='text/html',
-            CacheControl='no-cache'
+            CacheControl='no-cache',
         )
 
 
