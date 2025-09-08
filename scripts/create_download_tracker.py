@@ -106,8 +106,9 @@ def upload_package(dryrun=False):
         if dryrun:
             print(f'Uploading {file_name} as {dest} to bucket {BUCKET}')  # noqa: T201 `print` found
         else:
-            file_hash = _get_file_hash()
-            s3_client.upload_file(os.path.join('dist', file_name), BUCKET, dest)
+            filepath = os.path.join('dist', file_name)
+            file_hash = _get_file_hash(filepath)
+            s3_client.upload_file(filepath, BUCKET, dest)
             files_to_hashes[file_name] = file_hash
 
     _update_index_html(files_to_hashes, s3_client, dryrun)
