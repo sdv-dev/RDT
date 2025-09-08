@@ -1,6 +1,7 @@
 """Script that creates the rdt-download-tracker package."""
 
 import argparse
+import hashlib
 import logging
 import os
 
@@ -59,9 +60,9 @@ def _update_index_html(files, s3_client, dryrun=False):
     insertion_point = current_index_file.find('</body>')
     current_text = current_index_file[:insertion_point]
     text_list = [current_text]
-    for file in files:
+    for file, hash in files.items():
         download_link = f'https://{BUCKET}.s3.us-east-1.amazonaws.com/{S3_PACKAGE_PATH}{file}'
-        new_link = f"<a href='{download_link}'>{file}</a>"
+        new_link = f"<a href='{download_link}#sha256={hash}'>{file}</a>"
         if new_link not in current_text:
             text_list.append(new_link)
             text_list.append('<br>')
@@ -81,6 +82,15 @@ def _update_index_html(files, s3_client, dryrun=False):
         )
 
 
+def _get_file_hash(filepath):
+    h = hashlib.sha256()
+    with filepath.open('rb') as f:
+        for chunk in iter(lambda: f.read(8192), b''):
+            h.update(chunk)
+
+    return h.hexdigest()
+
+
 def upload_package(dryrun=False):
     """Uploads the built package to the S3 bucket.
 
@@ -90,14 +100,17 @@ def upload_package(dryrun=False):
     """
     s3_client = boto3.client('s3')
     files = os.listdir('dist')
+    files_to_hashes = {}
     for file_name in files:
         dest = os.path.join(S3_PACKAGE_PATH, file_name)
         if dryrun:
             print(f'Uploading {file_name} as {dest} to bucket {BUCKET}')  # noqa: T201 `print` found
         else:
+            file_hash = _get_file_hash()
             s3_client.upload_file(os.path.join('dist', file_name), BUCKET, dest)
+            files_to_hashes[file_name] = file_hash
 
-    _update_index_html(files, s3_client, dryrun)
+    _update_index_html(files_to_hashes, s3_client, dryrun)
 
 
 if __name__ == '__main__':
