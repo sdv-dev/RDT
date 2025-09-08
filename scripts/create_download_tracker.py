@@ -84,7 +84,7 @@ def _update_index_html(files, s3_client, dryrun=False):
 
 def _get_file_hash(filepath):
     h = hashlib.sha256()
-    with filepath.open('rb') as f:
+    with open(filepath, 'rb') as f:
         for chunk in iter(lambda: f.read(8192), b''):
             h.update(chunk)
 
