@@ -4,6 +4,19 @@ on:
     types: [published]
   pull_request:
   workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'The branch to create the download tracker package from.'
+        required: true
+        type: string
+        default: 'stable'
+  workflow_call:
+    inputs:
+      source_branch:
+        description: 'The branch to create the download tracker package from.'
+        required: true
+        type: string
+        default: 'stable'
 
 jobs:
   publish-download-tracker:
@@ -13,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         # with:
-        #   ref: 'stable'
+        #   ref: ${{ inputs.source_branch }}
       - name: Set up latest Python
         uses: actions/setup-python@v5
         with:
