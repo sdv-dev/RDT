@@ -1,4 +1,4 @@
-name: Publish
+name: Publish RDT
 on:   
   workflow_dispatch:
     inputs:
@@ -24,7 +24,7 @@ on:
         type: boolean
         default: false
 jobs:
-  release:
+  publish-rdt:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
