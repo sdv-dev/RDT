@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import logging
 import os
+from html.parser import HTMLParser
 
 import boto3
 import build
@@ -18,6 +19,40 @@ PROJECT_PATH = './scripts/rdt-download-tracker'
 BUCKET = os.getenv('DOWNLOAD_TRACKER_BUCKET', '')
 S3_PACKAGE_PATH = 'simple/rdt-download-tracker/'
 INDEX_FILE_NAME = 'index.html'
+
+
+class PackageIndexHTMLParser(HTMLParser):
+    """Class to parse package index html files."""
+
+    def __init__(self):
+        """Initialize html parser for a package index html.
+
+        This class stores parameters to track the different links and packages stored in the index.
+        """
+        super().__init__()
+        self.package_to_href = {}
+        self._current_href = None
+        self._in_a_tag = False
+
+    def handle_starttag(self, tag, attrs):
+        """Get current href if the tag is an 'a' tag."""
+        if tag == 'a':
+            self._in_a_tag = True
+            attrs_dict = dict(attrs)
+            href = attrs_dict.get('href')
+            if href:
+                self._current_href = href
+
+    def handle_endtag(self, tag):
+        """Reset tag information if the tag is an 'a' tag."""
+        if tag == 'a' and self._in_a_tag:
+            self._in_a_tag = False
+            self._current_href = None
+
+    def handle_data(self, data):
+        """Record href and package name if in an 'a' tag."""
+        if self._in_a_tag:
+            self.package_to_href[data] = self._current_href
 
 
 def _set_version(version):
@@ -44,8 +79,7 @@ def _load_local_index_file():
     return file
 
 
-def _update_index_html(files, s3_client, dryrun=False):
-    index_file_path = os.path.join(S3_PACKAGE_PATH, INDEX_FILE_NAME)
+def _get_index_file(s3_client, index_file_path, dryrun=False):
     if not dryrun:
         try:
             response = s3_client.get_object(Bucket=BUCKET, Key=index_file_path)
@@ -57,6 +91,10 @@ def _update_index_html(files, s3_client, dryrun=False):
     else:
         current_index_file = _load_local_index_file()
 
+    return current_index_file
+
+
+def _update_index_html(current_index_file, files, s3_client, index_file_path, dryrun=False):
     insertion_point = current_index_file.find('</body>')
     current_text = current_index_file[:insertion_point]
     text_list = [current_text]
@@ -91,6 +129,12 @@ def _get_file_hash(filepath):
     return h.hexdigest()
 
 
+def _get_links(index_file):
+    parser = PackageIndexHTMLParser()
+    parser.feed(index_file)
+    return parser.package_to_href
+
+
 def upload_package(dryrun=False):
     """Uploads the built package to the S3 bucket.
 
@@ -101,17 +145,23 @@ def upload_package(dryrun=False):
     s3_client = boto3.client('s3')
     files = os.listdir('dist')
     files_to_hashes = {}
+    index_file_path = os.path.join(S3_PACKAGE_PATH, INDEX_FILE_NAME)
+    current_index_file = _get_index_file(s3_client, index_file_path, dryrun)
+    links = _get_links(current_index_file)
     for file_name in files:
         dest = os.path.join(S3_PACKAGE_PATH, file_name)
         if dryrun:
             print(f'Uploading {file_name} as {dest} to bucket {BUCKET}')  # noqa: T201 `print` found
         else:
-            filepath = os.path.join('dist', file_name)
-            file_hash = _get_file_hash(filepath)
-            s3_client.upload_file(filepath, BUCKET, dest)
-            files_to_hashes[file_name] = file_hash
+            if file_name not in links:
+                filepath = os.path.join('dist', file_name)
+                file_hash = _get_file_hash(filepath)
+                s3_client.upload_file(filepath, BUCKET, dest)
+                files_to_hashes[file_name] = file_hash
+            else:
+                raise RuntimeError(f'The file {file_name} is already in this package index.')
 
-    _update_index_html(files_to_hashes, s3_client, dryrun)
+    _update_index_html(current_index_file, files_to_hashes, s3_client, index_file_path, dryrun)
 
 
 if __name__ == '__main__':
