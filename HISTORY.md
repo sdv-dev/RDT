@@ -1,5 +1,11 @@
 # History
 
+## v1.18.1 - 2025-09-11
+
+### Bugs Fixed
+
+* fill_nan_with_none produces pandas FutureWarning - Issue [#1027](https://github.com/sdv-dev/RDT/issues/1027) by @R-Palazzo
+
 ## v1.18.0 - 2025-08-14
 
 ### New Features

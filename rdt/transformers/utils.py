@@ -175,6 +175,17 @@ def strings_from_regex(regex, max_repeat=16):
     return _from_generators(generators, max_repeat), np.prod(sizes, dtype=np.complex128).real
 
 
+def _fill_nan_with_none_series(data):
+    sentinel = object()
+    dtype = data.dtype
+    if isinstance(dtype, pd.CategoricalDtype):
+        data = data.cat.add_categories([sentinel])
+        data = data.fillna(sentinel).replace({sentinel: None})
+        return pd.Series(pd.Categorical(data, categories=dtype.categories), index=data.index)
+
+    return data.fillna(sentinel).replace({sentinel: None})
+
+
 def fill_nan_with_none(data):
     """Replace all nan values with None.
 
@@ -185,7 +196,10 @@ def fill_nan_with_none(data):
         data:
             Original data with nan values replaced by None.
     """
-    return data.infer_objects().fillna(np.nan).replace([np.nan], [None])
+    if isinstance(data, pd.DataFrame):
+        return data.apply(_fill_nan_with_none_series)
+
+    return _fill_nan_with_none_series(data)
 
 
 def flatten_column_list(column_list):
