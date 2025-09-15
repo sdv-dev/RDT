@@ -156,7 +156,9 @@ def upload_package(dryrun=False):
             if file_name not in links:
                 filepath = os.path.join('dist', file_name)
                 file_hash = _get_file_hash(filepath)
-                s3_client.upload_file(filepath, BUCKET, dest)
+                s3_client.upload_file(
+                    filepath, BUCKET, dest, ExtraArgs={'ChecksumAlgorithm': 'SHA256'}
+                )
                 files_to_hashes[file_name] = file_hash
             else:
                 raise RuntimeError(f'The file {file_name} is already in this package index.')
