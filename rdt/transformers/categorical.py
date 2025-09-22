@@ -64,7 +64,7 @@ class UniformEncoder(BaseTransformer):
                     "The data must be of type string if order_by is 'alphabetical'."
                 )
         elif self.order_by == 'numerical_value':
-            if not np.issubdtype(unique_data.dtype.type, np.number):
+            if any(map(lambda item: not np.issubdtype(type(item), np.number), unique_data[~nans])):  # noqa: C417
                 raise TransformerInputError(
                     "The data must be numerical if order_by is 'numerical_value'."
                 )
