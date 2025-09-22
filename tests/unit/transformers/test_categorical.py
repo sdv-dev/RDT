@@ -207,7 +207,7 @@ class TestUniformEncoder:
         # Run
         transformer.fit(data=data, column='example')
 
-        # Asserts
+        # Assert
         expected_frequencies = {
             1: 0.25,
             2: 0.25,
