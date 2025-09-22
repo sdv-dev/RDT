@@ -183,7 +183,7 @@ def _fill_nan_with_none_series(data):
         data = data.fillna(sentinel).replace({sentinel: None})
         return pd.Series(pd.Categorical(data, categories=dtype.categories), index=data.index)
 
-    return data.fillna(sentinel).replace({sentinel: None})
+    return data.astype(object).fillna(sentinel).replace({sentinel: None})
 
 
 def fill_nan_with_none(data):
