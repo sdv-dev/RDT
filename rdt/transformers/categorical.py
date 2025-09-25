@@ -59,12 +59,12 @@ class UniformEncoder(BaseTransformer):
         nans = pd.isna(unique_data)
         if self.order_by == 'alphabetical':
             # pylint: disable=invalid-unary-operand-type
-            if any(map(lambda item: not isinstance(item, str), unique_data[~nans])):  # noqa: C417
+            if any(not isinstance(item, str) for item in unique_data[~nans]):
                 raise TransformerInputError(
                     "The data must be of type string if order_by is 'alphabetical'."
                 )
         elif self.order_by == 'numerical_value':
-            if not np.issubdtype(unique_data.dtype.type, np.number):
+            if any(not np.issubdtype(type(item), np.number) for item in unique_data[~nans]):
                 raise TransformerInputError(
                     "The data must be numerical if order_by is 'numerical_value'."
                 )
