@@ -198,6 +198,24 @@ class TestUniformEncoder:
         assert transformer.frequencies == expected_frequencies
         assert transformer.intervals == expected_intervals
 
+    def test_fit_with_nullable_integer_dtype(self):
+        """Test that the ``fit`` method works with nullable integer columns."""
+        # Setup
+        data = pd.DataFrame({'example': [1, 2, 3, None]}, dtype='Int64')
+        transformer = UniformEncoder()
+
+        # Run
+        transformer.fit(data=data, column='example')
+
+        # Assert
+        expected_frequencies = {
+            1: 0.25,
+            2: 0.25,
+            3: 0.25,
+            None: 0.25,
+        }
+        assert transformer.frequencies == expected_frequencies
+
     def test__set_fitted_parameters(self):
         """Test the ``_set_fitted_parameters`` method."""
         # Setup
