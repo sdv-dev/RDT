@@ -1,5 +1,15 @@
 # History
 
+## v1.18.2 - 2025-10-15
+
+### Bugs Fixed
+
+* Error when fitting using nullable integer data with categorical transformer - Issue [#1036](https://github.com/sdv-dev/RDT/issues/1036) by @R-Palazzo
+
+### Maintenance
+
+* Remove excluding Faker v37.11.0 when they have released the fix for python 3.9 - Issue [#1043](https://github.com/sdv-dev/RDT/issues/1043) by @R-Palazzo
+
 ## v1.18.1 - 2025-09-11
 
 ### Bugs Fixed
