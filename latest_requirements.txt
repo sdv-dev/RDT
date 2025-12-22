@@ -1,6 +1,6 @@
-Faker==38.2.0
+Faker==39.0.0
 copulas==0.12.3
-numpy==2.3.5
+numpy==2.4.0
 pandas==2.3.3
 scikit-learn==1.8.0
 scipy==1.16.3
