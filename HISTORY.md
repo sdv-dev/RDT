@@ -1,5 +1,15 @@
 # History
 
+## v1.19.0 - 2026-01-02
+
+### Internal
+
+* Faker `40.1.0` Breaks Backward Compatibility in `AnonymizedFaker` - Issue [#1057](https://github.com/sdv-dev/RDT/issues/1057) by @pvk-developer
+
+### Maintenance
+
+* Remove support for Python 3.8 - Issue [#1048](https://github.com/sdv-dev/RDT/issues/1048) by @fealho
+
 ## v1.18.2 - 2025-10-15
 
 ### Bugs Fixed
