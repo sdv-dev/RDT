@@ -197,7 +197,10 @@ class AnonymizedFaker(BaseTransformer):
     def _function(self):
         """Return the result of calling the ``faker`` function."""
         if not hasattr(self.faker.unique, '_excluded_types'):
-            setattr(self.faker.unique, '_excluded_types', ())  # The default is an empty tuple
+            # Faker v40.1.0 changed its uniqueness logic to rely on _excluded_types.
+            # Instances created before v40.1.0 don’t initialize this attribute,
+            # so accessing it can raise runtime errors.
+            setattr(self.faker.unique, '_excluded_types', ())
 
         try:
             if self.cardinality_rule in {'unique', 'match', 'scale'}:
