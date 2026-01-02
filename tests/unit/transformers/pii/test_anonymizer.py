@@ -101,7 +101,7 @@ class TestAnonymizedFaker:
             - The returned function, when called, has to call the `faker.<function_name>` function
               with the provided kwargs.
         """
-        # setup
+        # Setup
         instance = Mock()
         function = Mock()
         unique_function = Mock()
@@ -147,7 +147,7 @@ class TestAnonymizedFaker:
             - The returned function, when called, has to call the ``faker.unique.<function_name>``
               function with the provided kwargs.
         """
-        # setup
+        # Setup
         instance = Mock()
         function = Mock()
         unique_function = Mock()
@@ -169,7 +169,7 @@ class TestAnonymizedFaker:
 
     def test__function_cardinality_rule_match(self):
         """Test it when 'cardinality_rule' is 'match'."""
-        # setup
+        # Setup
         instance = Mock()
         function = Mock()
         unique_function = Mock()
@@ -191,7 +191,7 @@ class TestAnonymizedFaker:
 
     def test__function_cardinality_rule_missing_attribute(self):
         """Test it when ``cardinality_rule`` attribute is missing."""
-        # setup
+        # Setup
         instance = Mock()
         function = Mock()
         unique_function = Mock()
@@ -214,7 +214,7 @@ class TestAnonymizedFaker:
 
     def test__function_with_iterables_return(self):
         """Test that ``_function`` returns the values of the iterable."""
-        # setup
+        # Setup
         instance = Mock()
         instance.cardinality_rule = None
         function = Mock()
@@ -230,6 +230,32 @@ class TestAnonymizedFaker:
         # Assert
         function.assert_called_once_with(type='int')
         assert result == 'value_1, value_2'
+
+    def test__function_sets__excluded_types(self):
+        """Test that ``_function`` will set the `_excluded_types` attribute to `faker`."""
+
+        # Setup
+        class Dummy:
+            pass
+
+        instance = Mock()
+        instance.cardinality_rule = None
+        function = Mock()
+        function.return_value = ('value_1', 'value_2')
+        instance.faker.unique = Dummy()
+        assert hasattr(instance.faker.unique, '_excluded_types') is False
+
+        instance.faker.number = function
+        instance.function_name = 'number'
+        instance.function_kwargs = {'type': 'int'}
+
+        # Run
+        result = AnonymizedFaker._function(instance)
+
+        # Assert
+        function.assert_called_once_with(type='int')
+        assert result == 'value_1, value_2'
+        assert hasattr(instance.faker.unique, '_excluded_types')
 
     @patch('rdt.transformers.pii.anonymizer.importlib')
     @patch('rdt.transformers.pii.anonymizer.warnings')
