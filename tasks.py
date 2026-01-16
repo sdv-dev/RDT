@@ -74,6 +74,8 @@ def _get_minimum_versions(dependencies, python_version):
                 (spec.version for spec in req.specifier if spec.operator in ('>=', '==')),
                 existing_version,
             )
+            if isinstance(new_version, str):
+                new_version = Version(new_version)
             if new_version > existing_version:
                 min_versions[req.name] = (
                     f'{req.name}=={new_version}'  # Change when a valid newer version is found
