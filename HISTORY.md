@@ -1,5 +1,12 @@
 # History
 
+## v1.20.0 - 2026-01-23
+
+### Maintenance
+
+* Pin Pandas dependency below 3.0 - Issue [#1068](https://github.com/sdv-dev/RDT/issues/1068) by @rwedge
+* Support Python 3.14 - Issue [#1063](https://github.com/sdv-dev/RDT/issues/1063) by @gsheni
+
 ## v1.19.0 - 2026-01-02
 
 ### Internal
