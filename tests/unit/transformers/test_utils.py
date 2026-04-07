@@ -1,9 +1,8 @@
 import datetime
 import re
-import sre_parse
+import sys
 import warnings
 from decimal import Decimal
-from sre_constants import MAXREPEAT
 from unittest.mock import Mock, patch
 
 import numpy as np
@@ -11,6 +10,7 @@ import pandas as pd
 import pytest
 from dateutil import parser, tz
 
+import rdt.transformers.utils as utils_module
 from rdt.transformers.utils import (
     WarnDict,
     _any,
@@ -20,7 +20,9 @@ from rdt.transformers.utils import (
     _get_utc_offset,
     _handle_enforce_uniqueness_and_cardinality_rule,
     _max_repeat,
+    _parser,
     _safe_parse_datetime,
+    _subpattern,
     check_nan_in_transform,
     data_has_multiple_timezones,
     fill_nan_with_none,
@@ -112,7 +114,7 @@ def test__any():
 
 
 def test___max_repeat():
-    options = (0, MAXREPEAT, [(sre_parse.LITERAL, 10)])
+    options = (0, _parser.MAXREPEAT, [(_parser.LITERAL, 10)])
     _max_repeat(options, 16)
 
 
@@ -123,6 +125,76 @@ def test_strings_from_regex_very_large_regex():
 
     assert size == 173689027553046619421110743915454114823342474255318764491341273608665169920
     [next(generator) for _ in range(100_000)]
+
+
+def test_strings_from_regex_unnamed_subpattern():
+    """Test that it handles unnamed subpatterns."""
+    # Run
+    generator, size = strings_from_regex('ID_([0-9]{3})')
+
+    # Assert
+    assert size == 1000.0
+    results = list(generator)
+    assert results[0] == 'ID_000'
+    assert results[-1] == 'ID_999'
+    assert all(re.fullmatch(r'ID_([0-9]{3})', r) for r in results)
+
+
+def test_strings_from_regex_named_subpattern():
+    """Test that it handles named subpatterns."""
+    # Run
+    generator, size = strings_from_regex('ID_(?P<num>[0-9]{3})')
+
+    # Assert
+    assert size == 1000.0
+    results = list(generator)
+    assert results[0] == 'ID_000'
+    assert results[-1] == 'ID_999'
+    assert all(re.fullmatch(r'ID_(?P<num>[0-9]{3})', r) for r in results)
+
+
+def test_strings_from_regex_nested_subpatterns():
+    """Test that it handles nested subpatterns."""
+    # Run
+    generator, size = strings_from_regex('([A-Z]([0-9]))')
+
+    # Assert
+    assert size == 260.0
+    results = list(generator)
+    assert all(re.fullmatch(r'([A-Z]([0-9]))', r) for r in results)
+    assert 'A0' in results
+    assert 'Z9' in results
+
+
+def test__subpattern():
+    """Test it directly with a simple digit pattern."""
+    # Setup
+    parsed = _parser.parse(r'([0-9])')
+    _, subpattern_args = list(parsed)[0]
+
+    # Run
+    generator, size = _subpattern(subpattern_args, max_repeat=16)
+
+    # Assert
+    assert size == 10
+    assert list(generator) == ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+
+@pytest.mark.skipif(sys.version_info >= (3, 11), reason='only relevant on Python < 3.11')
+def test_parser_module_python_lt_311():
+    """Test that _parser falls back to sre_parse on Python < 3.11."""
+    # Setup
+    import sre_parse
+
+    # Assert
+    assert utils_module._parser is sre_parse
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason='only relevant on Python >= 3.11')
+def test_parser_module_python_gte_311():
+    """Test that _parser uses re._parser on Python >= 3.11."""
+    # Assert
+    assert utils_module._parser is re._parser
 
 
 def test_flatten_column_list():

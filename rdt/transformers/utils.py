@@ -15,7 +15,10 @@ from dateutil import parser
 from dateutil.parser import ParserError, UnknownTimezoneWarning
 from dateutil.tz import UTC
 
-import sre_parse  # isort:skip
+if sys.version_info >= (3, 11):  # isort:skip  # pragma: no cover
+    from re import _parser
+else:  # pragma: no cover
+    import sre_parse as _parser
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,7 +57,7 @@ def _any(options, max_repeat):
 
 def _max_repeat(options, max_repeat):
     min_, max_, options = options
-    if max_ == sre_parse.MAXREPEAT:
+    if max_ == _parser.MAXREPEAT:
         max_ = max_repeat
 
     option, args = options[0]
@@ -80,12 +83,12 @@ def _category_chars(regex):
 
 
 _CATEGORIES = {
-    sre_parse.CATEGORY_SPACE: _category_chars(re.compile(r'\s')),
-    sre_parse.CATEGORY_NOT_SPACE: _category_chars(re.compile(r'\S')),
-    sre_parse.CATEGORY_DIGIT: _category_chars(re.compile(r'\d')),
-    sre_parse.CATEGORY_NOT_DIGIT: _category_chars(re.compile(r'\D')),
-    sre_parse.CATEGORY_WORD: _category_chars(re.compile(r'\w')),
-    sre_parse.CATEGORY_NOT_WORD: _category_chars(re.compile(r'\W')),
+    _parser.CATEGORY_SPACE: _category_chars(re.compile(r'\s')),
+    _parser.CATEGORY_NOT_SPACE: _category_chars(re.compile(r'\S')),
+    _parser.CATEGORY_DIGIT: _category_chars(re.compile(r'\d')),
+    _parser.CATEGORY_NOT_DIGIT: _category_chars(re.compile(r'\D')),
+    _parser.CATEGORY_WORD: _category_chars(re.compile(r'\w')),
+    _parser.CATEGORY_NOT_WORD: _category_chars(re.compile(r'\W')),
 }
 
 
@@ -95,13 +98,31 @@ def _category(category, max_repeat):
     return iter(characters), len(characters)
 
 
+def _parse_pattern(pattern, max_repeat):
+    generators = []
+    sizes = []
+    for option, args in reversed(pattern):
+        if option != _parser.AT:
+            generator, size = _GENERATORS[option](args, max_repeat)
+            generators.append((generator, option, args))
+            sizes.append(size)
+
+    return _from_generators(generators, max_repeat), np.prod(sizes, dtype=np.complex128).real
+
+
+def _subpattern(args, max_repeat):
+    # args is (group_id, add_flags, del_flags, pattern)
+    return _parse_pattern(args[3], max_repeat)
+
+
 _GENERATORS = {
-    sre_parse.LITERAL: _literal,
-    sre_parse.IN: _in,
-    sre_parse.RANGE: _range,
-    sre_parse.ANY: _any,
-    sre_parse.MAX_REPEAT: _max_repeat,
-    sre_parse.CATEGORY: _category,
+    _parser.LITERAL: _literal,
+    _parser.IN: _in,
+    _parser.RANGE: _range,
+    _parser.ANY: _any,
+    _parser.MAX_REPEAT: _max_repeat,
+    _parser.CATEGORY: _category,
+    _parser.SUBPATTERN: _subpattern,
 }
 
 
@@ -149,8 +170,6 @@ def strings_from_regex(regex, max_repeat=16):
     the indicated regular expressions alongside an integer indicating the
     total length of the generator.
 
-    WARNING: Subpatterns are currently not supported.
-
     Args:
         regex (str):
             String representing a valid python regular expression.
@@ -163,16 +182,8 @@ def strings_from_regex(regex, max_repeat=16):
             * Generator that produces strings that match the given regex.
             * Total length of the generator.
     """
-    parsed = sre_parse.parse(regex, flags=sre_parse.SRE_FLAG_UNICODE)
-    generators = []
-    sizes = []
-    for option, args in reversed(parsed):
-        if option != sre_parse.AT:
-            generator, size = _GENERATORS[option](args, max_repeat)
-            generators.append((generator, option, args))
-            sizes.append(size)
-
-    return _from_generators(generators, max_repeat), np.prod(sizes, dtype=np.complex128).real
+    parsed = _parser.parse(regex, flags=_parser.SRE_FLAG_UNICODE)
+    return _parse_pattern(parsed, max_repeat)
 
 
 def _fill_nan_with_none_series(data):
