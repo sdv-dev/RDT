@@ -75,13 +75,13 @@ def get_transformer_name(transformer):
         transformer:
             A transformer class.
 
-    Raises:
-        ValueError:
-            Crashes when the transformer is not passed as a class.
-
     Returns:
         string:
             The path of the transformer.
+
+    Raises:
+        ValueError:
+            Crashes when the transformer is not passed as a class.
     """
     if inspect.isclass(transformer):
         return transformer.__module__ + '.' + transformer.get_name()
