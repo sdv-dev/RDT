@@ -1,5 +1,20 @@
 # History
 
+## v1.21.0 - 2026-04-10
+
+### New Features
+
+* Support subpatterns in `RegexGenerator` - Issue [#1079](https://github.com/sdv-dev/RDT/issues/1079) by @fealho
+
+### Internal
+
+* `sre_parse` raises `DeprecationWarning` - Issue [#1054](https://github.com/sdv-dev/RDT/issues/1054) by @fealho
+
+### Maintenance
+
+* Update README and other meta information to point to the DataCebo forum - Issue [#1073](https://github.com/sdv-dev/RDT/issues/1073) by @pvk-developer
+* Update license information in pyproject.toml to use new format - Issue [#1062](https://github.com/sdv-dev/RDT/issues/1062) by @pvk-developer
+
 ## v1.20.0 - 2026-01-23
 
 ### Maintenance

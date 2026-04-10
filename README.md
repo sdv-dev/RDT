@@ -9,7 +9,7 @@
 [![Unit Tests](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml/badge.svg)](https://github.com/sdv-dev/RDT/actions/workflows/unit.yml)
 [![Downloads](https://pepy.tech/badge/rdt)](https://pepy.tech/project/rdt)
 [![Coverage Status](https://codecov.io/gh/sdv-dev/RDT/branch/main/graph/badge.svg)](https://codecov.io/gh/sdv-dev/RDT)
-[![Slack](https://img.shields.io/badge/Community-Slack-blue?style=plastic&logo=slack)](https://bit.ly/sdv-slack-invite)
+[![Forum](https://img.shields.io/badge/Forum-Join%20now!-36C5F0)](https://forum.datacebo.com)
 
 <div align="left">
 <br/>

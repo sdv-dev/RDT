@@ -5,7 +5,6 @@ authors = [{ name = 'DataCebo, Inc.', email = 'info@sdv.dev' }]
 classifiers = [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
-    'License :: Free for non-commercial use',
     'Natural Language :: English',
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.9',
@@ -18,7 +17,8 @@ classifiers = [
 ]
 keywords = ['machine learning', 'synthetic data generation', 'benchmark', 'generative models']
 dynamic = ['version']
-license = { text = 'BSL-1.1' }
+license = 'BUSL-1.1'
+license-files = ['LICENSE']
 requires-python = '>=3.9,<3.15'
 readme = 'README.md'
 dependencies = [
@@ -52,7 +52,7 @@ dependencies = [
 "Issue Tracker" = "https://github.com/sdv-dev/RDT/issues"
 "Changes" = "https://github.com/sdv-dev/RDT/blob/main/HISTORY.md"
 "Twitter" = "https://twitter.com/sdv_dev"
-"Chat" = "https://bit.ly/sdv-slack-invite"
+"Chat" = "https://forum.datacebo.com/"
 
 [project.entry-points]
 rdt = { main = 'rdt.cli.__main__:main' }
@@ -101,7 +101,6 @@ readme = ['rundoc>=0.4.3,<0.5',]
 
 [tool.setuptools]
 include-package-data = true
-license-files = ['LICENSE']
 
 [tool.setuptools.packages.find]
 include = ['rdt', 'rdt.*']
@@ -151,7 +150,7 @@ collect_ignore = ['pyproject.toml']
 exclude_lines = ['NotImplementedError()']
 
 [tool.bumpversion]
-current_version = "1.20.0"
+current_version = "1.21.0.dev0"
 parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<release>[a-z]+)(?P<candidate>\d+))?'
 serialize = [
     '{major}.{minor}.{patch}.{release}{candidate}',
