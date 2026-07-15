@@ -55,6 +55,7 @@ class UniformEncoder(BaseTransformer):
     frequencies = None
     intervals = None
     dtype = None
+    missing_value_encoding = 'new_category'
 
     def __init__(self, order_by=None, missing_value_encoding='new_category'):
         super().__init__()
@@ -806,6 +807,7 @@ class LabelEncoder(BaseTransformer):
     values_to_categories = None
     categories_to_values = None
     dtype = 'O'
+    missing_value_encoding = 'new_category'
 
     def __init__(self, add_noise=False, order_by=None, missing_value_encoding='new_category'):
         super().__init__()
@@ -856,11 +858,10 @@ class LabelEncoder(BaseTransformer):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtype
-        data = data.infer_objects()
         if self.missing_value_encoding is None:
-            data = data[~pd.isna(data)]
+            data = data[~pd.isna(data)].infer_objects()
         else:
-            data = data.fillna(np.nan)
+            data = data.infer_objects().fillna(np.nan)
 
         unique_data = pd.unique(data)
         unique_data = self._order_categories(unique_data)
@@ -912,7 +913,8 @@ class LabelEncoder(BaseTransformer):
 
         if self.add_noise:
             mapped = mapped.astype(float)
-            mapped = np.random.uniform(mapped, mapped + 1)
+            notna = mapped.notna()
+            mapped.loc[notna] = np.random.uniform(mapped.loc[notna], mapped.loc[notna] + 1)
 
         return mapped
 

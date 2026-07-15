@@ -670,6 +670,25 @@ def test_label_encoder_order_by_numerical():
     pd.testing.assert_frame_equal(reverse, data)
 
 
+def test_label_encoder_with_numerical_value():
+    """Test setting numerical_value works with missing_value_encoding."""
+    # Setup
+    data = pd.DataFrame({'column_name': pd.Series([2, 1, pd.NA, 3], dtype='object')})
+    transformer = LabelEncoder(order_by='numerical_value', missing_value_encoding=None)
+
+    # Run
+    transformer.fit(data, 'column_name')
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    # Assert
+    expected = pd.DataFrame({'column_name': [1.0, 0.0, np.nan, 2.0]})
+    pd.testing.assert_frame_equal(transformed, expected)
+    pd.testing.assert_frame_equal(
+        reverse, pd.DataFrame({'column_name': [2, 1, np.nan, 3]}, dtype='object')
+    )
+
+
 def test_label_encoder_order_by_alphabetical():
     """Test the LabelEncoder appropriately transforms data if `order_by` is 'alphabetical'.
 
@@ -716,6 +735,22 @@ def test_label_encoder_add_noise():
 
     # Assert
     pd.testing.assert_frame_equal(reverse, data_test)
+
+
+def test_label_encoder_with_add_noise_and_missing_value_encoding():
+    """Test it with both add_noise and missing_value_encoding."""
+    # Setup
+    data = pd.DataFrame({'column_name': ['a', None, 'b']})
+    transformer = LabelEncoder(add_noise=True, missing_value_encoding=None)
+
+    # Run
+    transformer.fit(data, column='column_name')
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    # Assert
+    assert list(transformed['column_name'].isna()) == [False, True, False]
+    pd.testing.assert_frame_equal(reverse, pd.DataFrame({'column_name': ['a', np.nan, 'b']}))
 
 
 def test_ordered_label_encoder():
