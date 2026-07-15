@@ -39,6 +39,15 @@ class TestUniformEncoder:
         with pytest.raises(TransformerInputError, match=message):
             UniformEncoder(order_by='bad_value')
 
+    def test___init___bad_missing_value_encoding(self):
+        """Test that the ``__init__`` raises error if ``missing_value_encoding`` is invalid."""
+        # Run / Assert
+        message = (
+            "'missing_value_encoding' must be one of the following values: None or 'new_category'."
+        )
+        with pytest.raises(TransformerInputError, match=message):
+            UniformEncoder(missing_value_encoding='bad_value')
+
     def test__order_categories_alphabetical(self):
         """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
 
@@ -216,6 +225,21 @@ class TestUniformEncoder:
         }
         assert transformer.frequencies == expected_frequencies
 
+    def test__fit_missing_value_encoding_none(self):
+        """Test that missing values are ignored during fit when configured."""
+        # Setup
+        data = pd.Series(['foo', None, 'bar', np.nan])
+        transformer = UniformEncoder(missing_value_encoding=None)
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        expected_frequencies = {'foo': 0.5, 'bar': 0.5}
+        expected_intervals = {'foo': [0.0, 0.5], 'bar': [0.5, 1.0]}
+        assert transformer.frequencies == expected_frequencies
+        assert transformer.intervals == expected_intervals
+
     def test__set_fitted_parameters(self):
         """Test the ``_set_fitted_parameters`` method."""
         # Setup
@@ -262,6 +286,24 @@ class TestUniformEncoder:
         for key in transformer.intervals:
             assert (transformed.loc[data == key] >= transformer.intervals[key][0]).all()
             assert (transformed.loc[data == key] < transformer.intervals[key][1]).all()
+
+    def test__transform_missing_value_encoding_none(self):
+        """Test missing values are not encoded during transform when configured."""
+        # Setup
+        transformer = UniformEncoder(missing_value_encoding=None)
+        data = pd.Series(['foo', None, 'bar', np.nan])
+        transformer.frequencies = {'foo': 0.5, 'bar': 0.5}
+        transformer.intervals = {'foo': [0.0, 0.5], 'bar': [0.5, 1.0]}
+
+        # Run
+        transformed = transformer._transform(data)
+
+        # Assert
+        assert transformed.loc[[1, 3]].isna().all()
+        assert (transformed.loc[data == 'foo'] >= transformer.intervals['foo'][0]).all()
+        assert (transformed.loc[data == 'foo'] < transformer.intervals['foo'][1]).all()
+        assert (transformed.loc[data == 'bar'] >= transformer.intervals['bar'][0]).all()
+        assert (transformed.loc[data == 'bar'] < transformer.intervals['bar'][1]).all()
 
     def test__transform_user_warning(self):
         """Test the ``transform`` with unknown data.
@@ -424,6 +466,21 @@ class TestUniformEncoder:
         # Assert
         pd.testing.assert_series_equal(out, pd.Series([11, 12, np.nan, 13]))
 
+    def test__reverse_transform_empty_intervals(self):
+        """Test ``_reverse_transform``with nothing learned."""
+        # Setup
+        transformer = UniformEncoder(missing_value_encoding=None)
+        transformer.intervals = {}
+        transformer.dtype = 'object'
+        data = pd.Series([0.1, np.nan], name='column_name')
+
+        # Run
+        out = transformer._reverse_transform(data)
+
+        # Assert
+        expected = pd.Series([np.nan, np.nan], name='column_name')
+        pd.testing.assert_series_equal(out, expected, check_dtype=False)
+
 
 @pytest.fixture(autouse=True)
 def _setup_caplog(caplog):
@@ -471,6 +528,18 @@ class TestOrderedUniformEncoder:
 
         # Assert
         assert stringified_transformer == 'OrderedUniformEncoder(order=<CUSTOM>)'
+
+    def test___repr___missing_value_encoding_none(self):
+        """Test that the ``__repr__`` method prints non-default missing value encoding."""
+        # Setup
+        transformer = OrderedUniformEncoder(order=['VISA', 'AMEX'], missing_value_encoding=None)
+
+        # Run
+        stringified_transformer = transformer.__repr__()
+
+        # Assert
+        expected = 'OrderedUniformEncoder(order=<CUSTOM>, missing_value_encoding=None)'
+        assert stringified_transformer == expected
 
     def test__fit(self):
         """Test the ``_fit`` method."""
@@ -595,6 +664,19 @@ class TestOrderedUniformEncoder:
         )
         with pytest.raises(TransformerInputError, match=message):
             transformer._transform(data)
+
+    def test__fit_missing_value_encoding_none_order_without_missing_values(self):
+        """Test missing values are allowed outside the order when not encoded."""
+        # Setup
+        data = pd.Series(['a', None, 'b', np.nan])
+        transformer = OrderedUniformEncoder(order=['b', 'a'], missing_value_encoding=None)
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.frequencies == {'b': 0.5, 'a': 0.5}
+        assert transformer.intervals == {'b': [0.0, 0.5], 'a': [0.5, 1.0]}
 
 
 class TestFrequencyEncoder:
@@ -1946,6 +2028,15 @@ class TestLabelEncoder:
         with pytest.raises(TransformerInputError, match=message):
             LabelEncoder(order_by='bad_value')
 
+    def test___init___bad_missing_value_encoding(self):
+        """Test that the ``__init__`` raises error if ``missing_value_encoding`` is invalid."""
+        # Run / Assert
+        message = (
+            "'missing_value_encoding' must be one of the following values: None or 'new_category'."
+        )
+        with pytest.raises(TransformerInputError, match=message):
+            LabelEncoder(missing_value_encoding='bad_value')
+
     def test__order_categories_alphabetical(self):
         """Test the ``_order_categories`` method when ``order_by`` is 'alphabetical'.
 
@@ -2085,6 +2176,18 @@ class TestLabelEncoder:
         with pytest.raises(TransformerInputError, match=message):
             transformer._order_categories(arr)
 
+    def test__order_categories_empty(self):
+        """Test the ``_order_categories`` method with empty data."""
+        # Setup
+        transformer = LabelEncoder()
+        unique_data = np.array([])
+
+        # Run
+        ordered = transformer._order_categories(unique_data)
+
+        # Assert
+        np.testing.assert_array_equal(ordered, unique_data)
+
     def test__fit(self):
         """Test the ``_fit`` method.
 
@@ -2115,6 +2218,19 @@ class TestLabelEncoder:
         assert transformer.output_properties == {
             None: {'sdtype': 'float', 'next_transformer': None},
         }
+
+    def test__fit_missing_value_encoding_none(self):
+        """Test that missing values are ignored during fit when configured."""
+        # Setup
+        data = pd.Series(['foo', None, 'bar', np.nan])
+        transformer = LabelEncoder(missing_value_encoding=None)
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.values_to_categories == {0: 'foo', 1: 'bar'}
+        assert transformer.categories_to_values == {'foo': 0, 'bar': 1}
 
     def test__transform(self):
         """Test the ``_transform`` method.
@@ -2153,6 +2269,21 @@ class TestLabelEncoder:
         pd.testing.assert_series_equal(transformed[:-1], expected)
 
         assert 0 <= transformed[3] <= 2
+
+    def test__transform_missing_value_encoding_none(self):
+        """Test missing values are not encoded during transform when configured."""
+        # Setup
+        data = pd.Series(['foo', None, 'bar', np.nan])
+        transformer = LabelEncoder(missing_value_encoding=None)
+        transformer.categories_to_values = {'foo': 0, 'bar': 1}
+        transformer.values_to_categories = {0: 'foo', 1: 'bar'}
+
+        # Run
+        transformed = transformer._transform(data)
+
+        # Assert
+        expected = pd.Series([0.0, np.nan, 1.0, np.nan])
+        pd.testing.assert_series_equal(transformed, expected)
 
     def test__transform_add_noise(self):
         """Test the ``_transform`` method with ``add_noise``.
@@ -2250,6 +2381,21 @@ class TestLabelEncoder:
 
         # Assert
         pd.testing.assert_series_equal(out, pd.Series(['a', 'b', 'c']))
+
+    def test__reverse_transform_empty_values_to_categories(self):
+        """Test the ``_reverse_transform`` method when nothing was learned."""
+        # Setup
+        transformer = LabelEncoder(missing_value_encoding=None)
+        transformer.values_to_categories = {}
+        transformer.dtype = 'object'
+        data = pd.Series([0.0, np.nan], name='column_name')
+
+        # Run
+        out = transformer._reverse_transform(data)
+
+        # Assert
+        expected = pd.Series([np.nan, np.nan], name='column_name')
+        pd.testing.assert_series_equal(out, expected, check_dtype=False)
 
     @patch('rdt.transformers.categorical.check_nan_in_transform')
     @patch('rdt.transformers.categorical.try_convert_to_dtype')
@@ -2355,6 +2501,18 @@ class TestOrderedLabelEncoder:
         # Assert
         assert stringified_transformer == 'OrderedLabelEncoder(order=<CUSTOM>, add_noise=True)'
 
+    def test___repr___missing_value_encoding_none(self):
+        """Test that the ``__repr__`` method prints non-default missing value encoding."""
+        # Setup
+        transformer = OrderedLabelEncoder(order=['VISA', 'AMEX'], missing_value_encoding=None)
+
+        # Run
+        stringified_transformer = transformer.__repr__()
+
+        # Assert
+        expected = 'OrderedLabelEncoder(order=<CUSTOM>, missing_value_encoding=None)'
+        assert stringified_transformer == expected
+
     def test__fit(self):
         """Test the ``_fit`` method.
 
@@ -2405,6 +2563,19 @@ class TestOrderedLabelEncoder:
         )
         with pytest.raises(TransformerInputError, match=message):
             transformer._fit(data)
+
+    def test__fit_missing_value_encoding_none_order_without_missing_values(self):
+        """Test missing values are allowed outside the order when not encoded."""
+        # Setup
+        data = pd.Series(['a', None, 'b', np.nan])
+        transformer = OrderedLabelEncoder(order=['b', 'a'], missing_value_encoding=None)
+
+        # Run
+        transformer._fit(data)
+
+        # Assert
+        assert transformer.values_to_categories == {0: 'b', 1: 'a'}
+        assert transformer.categories_to_values == {'b': 0, 'a': 1}
 
 
 class TestCustomLabelEncoder:
