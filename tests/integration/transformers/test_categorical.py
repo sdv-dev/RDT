@@ -670,6 +670,25 @@ def test_label_encoder_order_by_numerical():
     pd.testing.assert_frame_equal(reverse, data)
 
 
+def test_label_encoder_with_numerical_value():
+    """Test setting numerical_value works with missing_value_encoding."""
+    # Setup
+    data = pd.DataFrame({'column_name': pd.Series([2, 1, pd.NA, 3], dtype='object')})
+    transformer = LabelEncoder(order_by='numerical_value', missing_value_encoding=None)
+
+    # Run
+    transformer.fit(data, 'column_name')
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    # Assert
+    expected = pd.DataFrame({'column_name': [1.0, 0.0, np.nan, 2.0]})
+    pd.testing.assert_frame_equal(transformed, expected)
+    pd.testing.assert_frame_equal(
+        reverse, pd.DataFrame({'column_name': [2, 1, np.nan, 3]}, dtype='object')
+    )
+
+
 def test_label_encoder_order_by_alphabetical():
     """Test the LabelEncoder appropriately transforms data if `order_by` is 'alphabetical'.
 
@@ -716,6 +735,22 @@ def test_label_encoder_add_noise():
 
     # Assert
     pd.testing.assert_frame_equal(reverse, data_test)
+
+
+def test_label_encoder_with_add_noise_and_missing_value_encoding():
+    """Test it with both add_noise and missing_value_encoding."""
+    # Setup
+    data = pd.DataFrame({'column_name': ['a', None, 'b']})
+    transformer = LabelEncoder(add_noise=True, missing_value_encoding=None)
+
+    # Run
+    transformer.fit(data, column='column_name')
+    transformed = transformer.transform(data)
+    reverse = transformer.reverse_transform(transformed)
+
+    # Assert
+    assert list(transformed['column_name'].isna()) == [False, True, False]
+    pd.testing.assert_frame_equal(reverse, pd.DataFrame({'column_name': ['a', np.nan, 'b']}))
 
 
 def test_ordered_label_encoder():
@@ -790,6 +825,188 @@ categorical_transformers = [
     LabelEncoder(),
     OrderedLabelEncoder(order=[1, 'two', 3, 'four', None]),
 ]
+
+
+@pytest.mark.parametrize(
+    'transformer',
+    [
+        UniformEncoder(missing_value_encoding=None),
+        OrderedUniformEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
+        LabelEncoder(missing_value_encoding=None),
+        OrderedLabelEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
+    ],
+)
+def test_categorical_transformers_missing_value_encoding_none(transformer):
+    """Test categorical transformers preserve missing values when configured to do so."""
+    # Setup
+    data = pd.DataFrame({'col': [1, None, 'two', np.nan, 3, 'four']})
+
+    # Run
+    transformer.fit(data, 'col')
+    transformed = transformer.transform(data)
+    reverse_transformed = transformer.reverse_transform(transformed)
+
+    # Assert
+    expected_missing_values = pd.Series([False, True, False, True, False, False], name='col')
+    pd.testing.assert_series_equal(transformed['col'].isna(), expected_missing_values)
+    pd.testing.assert_series_equal(reverse_transformed['col'].isna(), expected_missing_values)
+    pd.testing.assert_series_equal(
+        reverse_transformed.loc[~expected_missing_values, 'col'].reset_index(drop=True),
+        data.loc[~expected_missing_values, 'col'].reset_index(drop=True),
+        check_dtype=False,
+    )
+
+
+@pytest.mark.parametrize(
+    'transformer',
+    [
+        UniformEncoder(missing_value_encoding=None),
+        OrderedUniformEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
+        LabelEncoder(missing_value_encoding=None),
+        OrderedLabelEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
+    ],
+)
+def test_categorical_transformers_missing_value_encoding_none_when_nulls_not_seen(
+    transformer,
+):
+    """Test missing values remain missing when they were not seen during fitting."""
+    # Setup
+    fit_data = pd.DataFrame({'col': [1, 'two', 3, 'four']})
+    transform_data = pd.DataFrame({'col': [1, None, 'two', np.nan, 3, 'four']})
+
+    # Run
+    transformer.fit(fit_data, 'col')
+    with warnings.catch_warnings(record=True) as recorded_warnings:
+        transformed = transformer.transform(transform_data)
+
+    reverse_transformed = transformer.reverse_transform(transformed)
+
+    # Assert
+    assert len(recorded_warnings) == 0
+    expected_missing_values = pd.Series([False, True, False, True, False, False], name='col')
+    pd.testing.assert_series_equal(transformed['col'].isna(), expected_missing_values)
+    pd.testing.assert_series_equal(reverse_transformed['col'].isna(), expected_missing_values)
+    pd.testing.assert_series_equal(
+        reverse_transformed.loc[~expected_missing_values, 'col'].reset_index(drop=True),
+        transform_data.loc[~expected_missing_values, 'col'].reset_index(drop=True),
+        check_dtype=False,
+    )
+
+
+@pytest.mark.parametrize(
+    'transformer',
+    [
+        UniformEncoder(missing_value_encoding=None),
+        OrderedUniformEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
+        LabelEncoder(missing_value_encoding=None),
+        OrderedLabelEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
+    ],
+)
+def test_categorical_transformers_missing_value_encoding_none_all_missing(transformer):
+    """Test transformers with no learned categories keep missing values missing."""
+    # Setup
+    data = pd.DataFrame({'col': pd.Series([None, np.nan, pd.NA], dtype='object')})
+
+    # Run
+    transformer.fit(data, 'col')
+    transformed = transformer.transform(data)
+    reverse_transformed = transformer.reverse_transform(transformed)
+
+    # Assert
+    assert transformed['col'].isna().all()
+    assert reverse_transformed['col'].isna().all()
+    assert reverse_transformed.shape == data.shape
+
+
+@pytest.mark.parametrize(
+    'transformer',
+    [
+        UniformEncoder(missing_value_encoding=None),
+        OrderedUniformEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
+        LabelEncoder(missing_value_encoding=None),
+        OrderedLabelEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
+    ],
+)
+def test_categorical_transformers_missing_value_encoding_none_reverse_passes_nulls_through(
+    transformer,
+):
+    """Test missing values produced downstream stay missing during reverse transform."""
+    # Setup
+    data = pd.DataFrame({'col': [1, 'two', 3, 'four']})
+
+    # Run
+    transformer.fit(data, 'col')
+    transformed = transformer.transform(data)
+    transformed.loc[[1, 3], 'col'] = np.nan
+    reverse_transformed = transformer.reverse_transform(transformed)
+
+    # Assert
+    expected_missing_values = pd.Series([False, True, False, True], name='col')
+    pd.testing.assert_series_equal(reverse_transformed['col'].isna(), expected_missing_values)
+    pd.testing.assert_series_equal(
+        reverse_transformed.loc[~expected_missing_values, 'col'].reset_index(drop=True),
+        data.loc[~expected_missing_values, 'col'].reset_index(drop=True),
+        check_dtype=False,
+    )
+
+
+@pytest.mark.parametrize(
+    'transformer',
+    [
+        LabelEncoder(missing_value_encoding=None),
+        OrderedLabelEncoder(order=['a', 'b'], missing_value_encoding=None),
+    ],
+)
+def test_label_encoders_missing_value_encoding_none_with_category_dtype(transformer):
+    """Test label encoders keep transformed pandas category columns numeric."""
+    # Setup
+    data = pd.DataFrame({'col': pd.Series(['a', None, 'b'], dtype='category')})
+
+    # Run
+    transformer.fit(data, 'col')
+    transformed = transformer.transform(data)
+    reverse_transformed = transformer.reverse_transform(transformed)
+
+    # Assert
+    assert pd.api.types.is_numeric_dtype(transformed['col'])
+    expected_missing_values = pd.Series([False, True, False], name='col')
+    pd.testing.assert_series_equal(transformed['col'].isna(), expected_missing_values)
+    pd.testing.assert_series_equal(reverse_transformed['col'].isna(), expected_missing_values)
+    pd.testing.assert_series_equal(
+        reverse_transformed.loc[~expected_missing_values, 'col'].reset_index(drop=True),
+        data.loc[~expected_missing_values, 'col'].reset_index(drop=True),
+        check_dtype=False,
+    )
+
+
+@pytest.mark.parametrize(
+    'transformer',
+    [
+        UniformEncoder(),
+        OrderedUniformEncoder(order=[1, 'two', 3, 'four', None]),
+        LabelEncoder(),
+        OrderedLabelEncoder(order=[1, 'two', 3, 'four', None]),
+    ],
+)
+def test_categorical_transformers_default_missing_value_encoding_new_category(transformer):
+    """Test default missing value handling continues to encode missing as a category."""
+    # Setup
+    data = pd.DataFrame({'col': [1, None, 'two', np.nan, 3, 'four']})
+
+    # Run
+    transformer.fit(data, 'col')
+    transformed = transformer.transform(data)
+    reverse_transformed = transformer.reverse_transform(transformed)
+
+    # Assert
+    assert transformed['col'].notna().all()
+    expected_missing_values = pd.Series([False, True, False, True, False, False], name='col')
+    pd.testing.assert_series_equal(reverse_transformed['col'].isna(), expected_missing_values)
+    pd.testing.assert_series_equal(
+        reverse_transformed.loc[~expected_missing_values, 'col'].reset_index(drop=True),
+        data.loc[~expected_missing_values, 'col'].reset_index(drop=True),
+        check_dtype=False,
+    )
 
 
 @pytest.mark.parametrize('sdtype', ['id', 'text'])

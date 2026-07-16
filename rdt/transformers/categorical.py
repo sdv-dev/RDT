@@ -18,6 +18,13 @@ from rdt.transformers.utils import (
 LOGGER = logging.getLogger(__name__)
 
 
+def _validate_missing_value_encoding(missing_value_encoding):
+    if missing_value_encoding not in {'new_category', None}:
+        raise TransformerInputError(
+            "'missing_value_encoding' must be one of the following values: None or 'new_category'."
+        )
+
+
 class UniformEncoder(BaseTransformer):
     """Transformer for categorical data.
 
@@ -37,6 +44,10 @@ class UniformEncoder(BaseTransformer):
         order_by (str or None):
             String defining how to order the data before applying the labels. Options are
             'alphabetical', 'numerical' and ``None``. Defaults to ``None``.
+        missing_value_encoding (str or None):
+            How to encode missing values. If ``'new_category'``, missing values are encoded as
+            their own category. If ``None``, missing values are not encoded and remain missing.
+            Defaults to ``'new_category'``.
     """
 
     INPUT_SDTYPE = 'categorical'
@@ -44,8 +55,9 @@ class UniformEncoder(BaseTransformer):
     frequencies = None
     intervals = None
     dtype = None
+    missing_value_encoding = 'new_category'
 
-    def __init__(self, order_by=None):
+    def __init__(self, order_by=None, missing_value_encoding='new_category'):
         super().__init__()
         if order_by not in [None, 'alphabetical', 'numerical_value']:
             raise TransformerInputError(
@@ -53,7 +65,9 @@ class UniformEncoder(BaseTransformer):
                 "'alphabetical'"
             )
 
+        _validate_missing_value_encoding(missing_value_encoding)
         self.order_by = order_by
+        self.missing_value_encoding = missing_value_encoding
 
     def _order_categories(self, unique_data):
         nans = pd.isna(unique_data)
@@ -126,7 +140,11 @@ class UniformEncoder(BaseTransformer):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtypes
-        data = fill_nan_with_none(data)
+        if self.missing_value_encoding is None:
+            data = data[~pd.isna(data)]
+        else:
+            data = fill_nan_with_none(data)
+
         labels = pd.unique(data)
         labels = self._order_categories(labels)
         freq = data.value_counts(normalize=True, dropna=False)
@@ -166,8 +184,12 @@ class UniformEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
-        data_with_none = fill_nan_with_none(data)
-        unseen_indexes = ~(data_with_none.isin(self.frequencies))
+        if self.missing_value_encoding is None:
+            unseen_indexes = ~(data.isin(self.frequencies)) & ~pd.isna(data)
+        else:
+            data = fill_nan_with_none(data)
+            unseen_indexes = ~(data.isin(self.frequencies))
+
         if unseen_indexes.any():
             # Keep the 3 first unseen categories
             unseen_categories = list(data.loc[unseen_indexes].unique())
@@ -181,13 +203,19 @@ class UniformEncoder(BaseTransformer):
             )
 
             choices = list(self.frequencies.keys())
-            size = unseen_indexes.size
-            data_with_none[unseen_indexes] = np.random.choice(choices, size=size)
+            if choices:
+                size = unseen_indexes.size
+                data[unseen_indexes] = np.random.choice(choices, size=size)
 
         def map_labels(label):
             return np.random.uniform(self.intervals[label][0], self.intervals[label][1])
 
-        return data_with_none.map(map_labels).astype(float)
+        known_indexes = data.isin(self.frequencies)
+        result = pd.Series(np.nan, index=data.index, name=data.name, dtype=float)
+        if known_indexes.any():
+            result.loc[known_indexes] = data.loc[known_indexes].map(map_labels).astype(float)
+
+        return result
 
     def _reverse_transform(self, data):
         """Convert float values back to the original categorical values.
@@ -199,7 +227,14 @@ class UniformEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
-        check_nan_in_transform(data, self.dtype)
+        if self.missing_value_encoding == 'new_category':
+            check_nan_in_transform(data, self.dtype)
+
+        # If nothing was learned, reverse-transform everything to missing.
+        if self.intervals is not None and len(self.intervals) == 0:
+            result = pd.Series(np.nan, index=data.index, name=data.name)
+            return try_convert_to_dtype(result, self.dtype)
+
         data = data.clip(0, 1)
         bins = [0]
         labels = []
@@ -234,9 +269,15 @@ class OrderedUniformEncoder(UniformEncoder):
         order (list):
             A list of all the unique categories for the data. The order of the list determines the
             label that each category will get.
+        missing_value_encoding (str or None):
+            How to encode missing values. If ``'new_category'``, missing values are encoded as
+            their own category. If ``None``, missing values are not encoded and remain missing.
+            Defaults to ``'new_category'``.
     """
 
-    def __init__(self, order):
+    def __init__(self, order, missing_value_encoding='new_category'):
+        _validate_missing_value_encoding(missing_value_encoding)
+        self.missing_value_encoding = missing_value_encoding
         self.order = fill_nan_with_none(pd.Series(order))
         if not self.order.is_unique:
             error_msg = (
@@ -245,7 +286,7 @@ class OrderedUniformEncoder(UniformEncoder):
             )
             raise TransformerInputError(error_msg)
 
-        super().__init__()
+        super().__init__(missing_value_encoding=missing_value_encoding)
 
     def __repr__(self):
         """Represent initialization of transformer as text.
@@ -256,11 +297,25 @@ class OrderedUniformEncoder(UniformEncoder):
         """
         class_name = self.__class__.get_name()
         custom_args = ['order=<CUSTOM>']
+        if self.missing_value_encoding != 'new_category':
+            custom_args.append(f'missing_value_encoding={repr(self.missing_value_encoding)}')
+
         args_string = ', '.join(custom_args)
         return f'{class_name}({args_string})'
 
+    def _get_order(self):
+        if self.missing_value_encoding is None:
+            return self.order[~pd.isna(self.order)]
+
+        return self.order
+
     def _check_unknown_categories(self, data):
-        missing = list(data[~data.isin(self.order)].unique())
+        order = self._get_order()
+        unknown = ~data.isin(order)
+        if self.missing_value_encoding is None:
+            unknown &= ~pd.isna(data)
+
+        missing = list(data[unknown].unique())
         if len(missing) > 0:
             raise TransformerInputError(
                 f"Unknown categories '{missing}'. All possible categories must be defined in the "
@@ -278,13 +333,22 @@ class OrderedUniformEncoder(UniformEncoder):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtypes
-        data = fill_nan_with_none(data)
+        order = self._get_order()
+        if self.missing_value_encoding is None:
+            data = data[~pd.isna(data)]
+        else:
+            data = fill_nan_with_none(data)
+
         self._check_unknown_categories(data)
 
-        category_not_seen = set(self.order.dropna()) != set(data.dropna())
-        nans_not_seen = pd.isna(self.order).any() and not pd.isna(data).any()
+        category_not_seen = set(order.dropna()) != set(data.dropna())
+        nans_not_seen = (
+            self.missing_value_encoding == 'new_category'
+            and pd.isna(order).any()
+            and not pd.isna(data).any()
+        )
         if category_not_seen or nans_not_seen:
-            unseen_categories = [x for x in self.order if x not in data.array]
+            unseen_categories = [x for x in order if x not in data.array]
             categories_to_print = self._get_message_unseen_categories(unseen_categories)
             LOGGER.info(
                 "For column '%s', some of the provided category values were not present in the"
@@ -296,19 +360,21 @@ class OrderedUniformEncoder(UniformEncoder):
             freq = data.value_counts(normalize=True, dropna=False)
             freq = 0.9 * freq
             for category in unseen_categories:
-                freq[category] = 0.1 / len(unseen_categories)
+                freq.loc[category] = 0.1 / len(unseen_categories)
 
         else:
             freq = data.value_counts(normalize=True, dropna=False)
 
         nan_value = freq[np.nan] if np.nan in freq.index else None
-        freq = freq.reindex(self.order, fill_value=nan_value).array
+        freq = freq.reindex(order, fill_value=nan_value).array
 
-        self.frequencies, self.intervals = self._compute_frequencies_intervals(self.order, freq)
+        self.frequencies, self.intervals = self._compute_frequencies_intervals(order, freq)
 
     def _transform(self, data):
         """Map the category to a continuous value."""
-        data = fill_nan_with_none(data)
+        if self.missing_value_encoding == 'new_category':
+            data = fill_nan_with_none(data)
+
         self._check_unknown_categories(data)
         return super()._transform(data)
 
@@ -730,6 +796,10 @@ class LabelEncoder(BaseTransformer):
             - ``'numerical_value'``: Order the categories by numerical value.
             - ``'alphabetical'``: Order the categories alphabetically.
             - ``None``: Use the order that the categories appear in when fitting.
+        missing_value_encoding (str or None):
+            How to encode missing values. If ``'new_category'``, missing values are encoded as
+            their own category. If ``None``, missing values are not encoded and remain missing.
+            Defaults to ``'new_category'``.
     """
 
     INPUT_SDTYPE = 'categorical'
@@ -737,8 +807,9 @@ class LabelEncoder(BaseTransformer):
     values_to_categories = None
     categories_to_values = None
     dtype = 'O'
+    missing_value_encoding = 'new_category'
 
-    def __init__(self, add_noise=False, order_by=None):
+    def __init__(self, add_noise=False, order_by=None, missing_value_encoding='new_category'):
         super().__init__()
         self.add_noise = add_noise
         if order_by not in [None, 'alphabetical', 'numerical_value']:
@@ -747,9 +818,14 @@ class LabelEncoder(BaseTransformer):
                 "'alphabetical'"
             )
 
+        _validate_missing_value_encoding(missing_value_encoding)
         self.order_by = order_by
+        self.missing_value_encoding = missing_value_encoding
 
     def _order_categories(self, unique_data):
+        if len(unique_data) == 0:
+            return unique_data
+
         if self.order_by == 'alphabetical':
             if unique_data.dtype.type not in [np.str_, np.object_]:
                 raise TransformerInputError(
@@ -782,7 +858,12 @@ class LabelEncoder(BaseTransformer):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtype
-        unique_data = pd.unique(data.infer_objects().fillna(np.nan))
+        if self.missing_value_encoding is None:
+            data = data[~pd.isna(data)].infer_objects()
+        else:
+            data = data.infer_objects().fillna(np.nan)
+
+        unique_data = pd.unique(data)
         unique_data = self._order_categories(unique_data)
         self.values_to_categories = dict(enumerate(unique_data))
         self.categories_to_values = {
@@ -804,23 +885,36 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pd.Series
         """
-        mapped = data.infer_objects().fillna(np.nan).map(self.categories_to_values)
-        is_null = mapped.isna()
-        if is_null.any():
+        data = data.infer_objects()
+        if self.missing_value_encoding is None:
+            mapped = data.map(self.categories_to_values)
+            unseen_indexes = mapped.isna() & ~pd.isna(data)
+        else:
+            data = data.fillna(np.nan)
+            mapped = data.map(self.categories_to_values)
+            unseen_indexes = mapped.isna()
+
+        if unseen_indexes.any():
             # Select only the first 5 unseen categories to avoid flooding the console.
-            unseen_categories = set(data[is_null][:5])
+            unseen_categories = set(data[unseen_indexes][:5])
             warnings.warn(
-                f'The data contains {is_null.sum()} new categories that were not '
+                f'The data contains {unseen_indexes.sum()} new categories that were not '
                 f'seen in the original data (examples: {unseen_categories}). Assigning '
                 'them random values. If you want to model new categories, '
                 'please fit the transformer again with the new data.'
             )
 
-        mapped[is_null] = np.random.randint(len(self.categories_to_values), size=is_null.sum())
+        if unseen_indexes.any() and self.categories_to_values:
+            mapped[unseen_indexes] = np.random.randint(
+                len(self.categories_to_values), size=unseen_indexes.sum()
+            )
+
+        mapped = pd.to_numeric(mapped)
 
         if self.add_noise:
             mapped = mapped.astype(float)
-            mapped = np.random.uniform(mapped, mapped + 1)
+            notna = mapped.notna()
+            mapped.loc[notna] = np.random.uniform(mapped.loc[notna], mapped.loc[notna] + 1)
 
         return mapped
 
@@ -834,7 +928,14 @@ class LabelEncoder(BaseTransformer):
         Returns:
             pandas.Series
         """
-        check_nan_in_transform(data, self.dtype)
+        if self.missing_value_encoding == 'new_category':
+            check_nan_in_transform(data, self.dtype)
+
+        # If nothing was learned, reverse-transform everything to missing.
+        if self.values_to_categories is not None and len(self.values_to_categories) == 0:
+            result = pd.Series(np.nan, index=data.index, name=data.name)
+            return try_convert_to_dtype(result, self.dtype)
+
         if self.add_noise:
             data = np.floor(data)
 
@@ -860,9 +961,15 @@ class OrderedLabelEncoder(LabelEncoder):
         add_noise (bool):
             Whether to generate uniform noise around the label for each category.
             Defaults to ``False``.
+        missing_value_encoding (str or None):
+            How to encode missing values. If ``'new_category'``, missing values are encoded as
+            their own category. If ``None``, missing values are not encoded and remain missing.
+            Defaults to ``'new_category'``.
     """
 
-    def __init__(self, order, add_noise=False):
+    def __init__(self, order, add_noise=False, missing_value_encoding='new_category'):
+        _validate_missing_value_encoding(missing_value_encoding)
+        self.missing_value_encoding = missing_value_encoding
         self.order = pd.Series(order).fillna(np.nan)
         if not self.order.is_unique:
             err_msg = (
@@ -871,7 +978,7 @@ class OrderedLabelEncoder(LabelEncoder):
             )
             raise TransformerInputError(err_msg)
 
-        super().__init__(add_noise=add_noise)
+        super().__init__(add_noise=add_noise, missing_value_encoding=missing_value_encoding)
 
     def __repr__(self):
         """Represent initialization of transformer as text.
@@ -885,9 +992,17 @@ class OrderedLabelEncoder(LabelEncoder):
         custom_args.append('order=<CUSTOM>')
         if self.add_noise:
             custom_args.append(f'add_noise={self.add_noise}')
+        if self.missing_value_encoding != 'new_category':
+            custom_args.append(f'missing_value_encoding={repr(self.missing_value_encoding)}')
 
         args_string = ', '.join(custom_args)
         return f'{class_name}({args_string})'
+
+    def _get_order(self):
+        if self.missing_value_encoding is None:
+            return self.order[~pd.isna(self.order)]
+
+        return self.order
 
     def _fit(self, data):
         """Fit the transformer to the data.
@@ -901,16 +1016,27 @@ class OrderedLabelEncoder(LabelEncoder):
                 Data to fit the transformer to.
         """
         self.dtype = data.dtype
-        data = data.infer_objects().fillna(np.nan)
+        data = data.infer_objects()
+        if self.missing_value_encoding == 'new_category':
+            data = data.fillna(np.nan)
 
-        missing = list(data[~data.isin(self.order)].unique())
+        order = self._get_order()
+
+        unknown = ~data.isin(order)
+        if self.missing_value_encoding is None:
+            unknown &= ~pd.isna(data)
+
+        missing = list(data[unknown].unique())
         if len(missing) > 0:
             raise TransformerInputError(
                 f"Unknown categories '{missing}'. All possible categories must be defined in the "
                 "'order' parameter."
             )
 
-        self.values_to_categories = dict(enumerate(self.order))
+        if self.missing_value_encoding is None:
+            data = data[~pd.isna(data)]
+
+        self.values_to_categories = dict(enumerate(order))
         self.categories_to_values = {
             category: value for value, category in self.values_to_categories.items()
         }

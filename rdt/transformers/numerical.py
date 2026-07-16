@@ -457,7 +457,7 @@ class GaussianNormalizer(FloatFormatter):
 
     @property
     def learned_distribution(self):
-        """Get the learned distribution name and parameters.
+        """Learned distribution name and parameters.
 
         Returns:
             dict:
