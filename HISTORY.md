@@ -1,5 +1,15 @@
 # History
 
+## v1.21.1 - 2026-07-16
+
+### New Features
+
+* Allow categorical transformers to ignore missing values for forward and reverse - Issue [#1089](https://github.com/sdv-dev/RDT/issues/1089) by @fealho
+
+### Maintenance
+
+* Use Node.js 24 compatible github actions - Issue [#1085](https://github.com/sdv-dev/RDT/issues/1085) by @gsheni
+
 ## v1.21.0 - 2026-04-10
 
 ### New Features
