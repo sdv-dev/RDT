@@ -243,6 +243,27 @@ class TestRegexGenerator:
         pd.testing.assert_frame_equal(first_reverse_transform, expected_first_reverse_transform)
         pd.testing.assert_frame_equal(second_reverse_transform, expected_second_reverse_transform)
 
+    def test_called_multiple_times_cardinality_rule_unique_numerical_fallback(self):
+        """Test calling multiple times when ``cardinality_rule=unique`` with numerical fallback."""
+        # Setup
+        data = pd.DataFrame({'my_column': np.arange(10)})
+        generator = RegexGenerator(regex_format=r'\d', cardinality_rule='unique')
+
+        # Run
+        transformed = generator.fit_transform(data, 'my_column')
+        first_reverse_transform = generator.reverse_transform(transformed)
+        second_reverse_transform = generator.reverse_transform(transformed)
+
+        # Assert
+        expected_first_reverse_transform = pd.DataFrame({
+            'my_column': [str(value) for value in range(10)]
+        })
+        expected_second_reverse_transform = pd.DataFrame({
+            'my_column': [str(value) for value in range(10, 20)]
+        })
+        pd.testing.assert_frame_equal(first_reverse_transform, expected_first_reverse_transform)
+        pd.testing.assert_frame_equal(second_reverse_transform, expected_second_reverse_transform)
+
     def test_pickled(self, tmpdir):
         """Test that ensures that ``RegexGenerator`` can be pickled."""
         # Setup
@@ -422,8 +443,9 @@ class TestRegexGenerator:
         reverse_transform_none = instance_none.reverse_transform(transformed_none)
 
         # Assert
+        expected_unique = pd.DataFrame({'id': ['', '(0)', '(1)', '(2)', '(3)']})
         expected = pd.DataFrame({'id': ['', '', '', '', '']})
-        pd.testing.assert_frame_equal(reverse_transform_unique, expected)
+        pd.testing.assert_frame_equal(reverse_transform_unique, expected_unique)
         pd.testing.assert_frame_equal(reverse_transform_match, expected)
         pd.testing.assert_frame_equal(reverse_transform_none, expected)
 

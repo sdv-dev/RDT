@@ -183,6 +183,7 @@ class TestRegexGenerator:
             '_data_cardinality': None,
             '_data_cardinality_scale': None,
             '_remaining_samples': {'value': None, 'repetitions': 0},
+            '_last_generated_value': None,
         }
 
     @patch('rdt.transformers.id.strings_from_regex')
@@ -777,7 +778,10 @@ class TestRegexGenerator:
             "The regex for 'a' can only generate 3 "
             'unique values. Additional values may not exactly follow the provided regex.'
         )
-        np.testing.assert_array_equal(out, np.array(['1', '2', '3', '4', '5', '6']))
+        np.testing.assert_array_equal(
+            out,
+            np.array(['A', 'B', 'C', 'A(0)', 'B(0)', 'C(0)']),
+        )
 
     @patch('rdt.transformers.id.warnings')
     def test__reverse_transform_unique_not_enough_remaining(self, mock_warnings):
@@ -800,7 +804,10 @@ class TestRegexGenerator:
             'The regex generator is not able to generate 6 new unique '
             'values (only 1 unique values left).'
         )
-        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'F']))
+        np.testing.assert_array_equal(
+            out,
+            np.array(['A', 'A(0)', 'A(1)', 'A(2)', 'A(3)', 'A(4)']),
+        )
 
     @patch('rdt.transformers.id.LOGGER')
     def test__reverse_transform_info_message(self, mock_logger):
