@@ -1,5 +1,6 @@
 """Test for ID transformers."""
 
+import pickle
 import re
 import warnings
 from string import ascii_uppercase
@@ -183,7 +184,7 @@ class TestRegexGenerator:
             '_data_cardinality': None,
             '_data_cardinality_scale': None,
             '_remaining_samples': {'value': None, 'repetitions': 0},
-            '_last_generated_value': None,
+            '_fallback_counter': 0,
         }
 
     @patch('rdt.transformers.id.strings_from_regex')
@@ -239,6 +240,21 @@ class TestRegexGenerator:
         assert instance.generated == 0
         assert instance.generator_size == 26
         mock_strings_from_regex.assert_called_once_with('[A-Za-z]{5}')
+
+    def test__sample_fallback_after_pickling(self):
+        """Test continuing fallback sampling after pickling."""
+        # Setup
+        instance = RegexGenerator('A', cardinality_rule='unique')
+        instance.reset_randomization()
+        first_samples = instance._sample(2, unique_condition=True)
+
+        # Run
+        restored = pickle.loads(pickle.dumps(instance))
+        second_samples = restored._sample(2, unique_condition=True)
+
+        # Assert
+        assert first_samples == ['A', 'A(0)']
+        assert second_samples == ['A(1)', 'A(2)']
 
     def test___init__default(self):
         """Test the default instantiation of the transformer.
@@ -763,7 +779,7 @@ class TestRegexGenerator:
         # Setup
         instance = RegexGenerator('[1-3]', cardinality_rule='unique')
         instance.data_length = 6
-        generator = AsciiGenerator(5)
+        generator = iter(['1', '2', '3'])
         instance.generator = generator
         instance.generator_size = 3
         instance.generated = 0
@@ -778,10 +794,7 @@ class TestRegexGenerator:
             "The regex for 'a' can only generate 3 "
             'unique values. Additional values may not exactly follow the provided regex.'
         )
-        np.testing.assert_array_equal(
-            out,
-            np.array(['A', 'B', 'C', 'A(0)', 'B(0)', 'C(0)']),
-        )
+        np.testing.assert_array_equal(out, np.array(['1', '2', '3', '4', '5', '6']))
 
     @patch('rdt.transformers.id.warnings')
     def test__reverse_transform_unique_not_enough_remaining(self, mock_warnings):
@@ -804,10 +817,7 @@ class TestRegexGenerator:
             'The regex generator is not able to generate 6 new unique '
             'values (only 1 unique values left).'
         )
-        np.testing.assert_array_equal(
-            out,
-            np.array(['A', 'A(0)', 'A(1)', 'A(2)', 'A(3)', 'A(4)']),
-        )
+        np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'F']))
 
     @patch('rdt.transformers.id.LOGGER')
     def test__reverse_transform_info_message(self, mock_logger):

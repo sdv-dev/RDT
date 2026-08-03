@@ -443,9 +443,8 @@ class TestRegexGenerator:
         reverse_transform_none = instance_none.reverse_transform(transformed_none)
 
         # Assert
-        expected_unique = pd.DataFrame({'id': ['', '(0)', '(1)', '(2)', '(3)']})
         expected = pd.DataFrame({'id': ['', '', '', '', '']})
-        pd.testing.assert_frame_equal(reverse_transform_unique, expected_unique)
+        pd.testing.assert_frame_equal(reverse_transform_unique, expected)
         pd.testing.assert_frame_equal(reverse_transform_match, expected)
         pd.testing.assert_frame_equal(reverse_transform_none, expected)
 

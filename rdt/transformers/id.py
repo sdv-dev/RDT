@@ -2,6 +2,7 @@
 
 import logging
 import warnings
+from itertools import count
 
 import numpy as np
 import pandas as pd
@@ -132,29 +133,53 @@ class RegexGenerator(BaseTransformer):
         state.pop('generator')
         return state
 
+    def _create_numerical_fallback_generator(self):
+        """Create fallback generator."""
+        regex_generator, _ = strings_from_regex(self.regex_format)
+        last_template = ''
+        for _ in range(self.generated):
+            last_template = next(regex_generator)
+
+        try:
+            # count is like range, but generates infinite values
+            for value in count(int(last_template) + 1):
+                yield str(value)
+
+        except ValueError:
+            # Generate values like A(0), B(0), A(1), B(1), etc
+            for counter in count():
+                regex_generator, _ = strings_from_regex(self.regex_format)
+                for value in regex_generator:
+                    yield f'{value}({counter})'
+
+    def _create_fallback_generator(self):
+        """Create fallback generator.
+
+        NOTE: this is necessary to be overwritten in Enterprise.
+        """
+        return self._create_numerical_fallback_generator()
+
     def __setstate__(self, state):
         """Set the generator when pickling."""
         generator_size = state.get('generator_size')
         generated = state.get('generated')
-        last_generated_value = state.get('_last_generated_value')
         generator, size = strings_from_regex(state.get('regex_format'))
         if generator_size is None:
             state['generator_size'] = size
         if generated is None:
             state['generated'] = 0
-
-        if generated:
+        if '_fallback_counter' not in state:
+            state['_fallback_counter'] = 0
+        if generated and not state['_fallback_counter']:
             for _ in range(generated):
-                regex_value = next(generator)
-
-            if last_generated_value is None:
-                state['_last_generated_value'] = regex_value
-
-        elif '_last_generated_value' not in state:
-            state['_last_generated_value'] = None
+                next(generator)
 
         state['generator'] = generator
         self.__dict__ = state
+        if self._fallback_counter:
+            self.generator = self._create_fallback_generator()
+            for _ in range(self._fallback_counter):
+                next(self.generator)
 
     def __init__(
         self,
@@ -187,14 +212,14 @@ class RegexGenerator(BaseTransformer):
         # Used otherwise
         self.generator_size = None
         self.generated = None
-        self._last_generated_value = None
+        self._fallback_counter = 0
 
     def reset_randomization(self):
         """Create a new generator and reset the generated values counter."""
         super().reset_randomization()
         self.generator, self.generator_size = strings_from_regex(self.regex_format)
         self.generated = 0
-        self._last_generated_value = None
+        self._fallback_counter = 0
 
         if hasattr(self, 'cardinality_rule') and self.cardinality_rule == 'scale':
             self._remaining_samples['repetitions'] = 0
@@ -306,9 +331,6 @@ class RegexGenerator(BaseTransformer):
         except (RuntimeError, StopIteration):
             pass
 
-        if samples:
-            self._last_generated_value = samples[-1]
-
         return samples
 
     def _sample_from_template(self, num_samples, template_samples):
@@ -401,32 +423,29 @@ class RegexGenerator(BaseTransformer):
             if self.cardinality_rule == 'scale':
                 return self._sample_scale(num_samples)
 
+        if unique_condition and self._fallback_counter:
+            samples = [next(self.generator) for _ in range(num_samples)]
+            self._fallback_counter += len(samples)
+            return samples
+
         # If there aren't enough values left in the generator, reset it if cardinality_rule!=unique
         remaining = max(self.generator_size - self.generated, 0)
         if num_samples > remaining and not unique_condition:
             self.reset_randomization()
 
-        regex_sample_size = min(num_samples, remaining) if unique_condition else num_samples
-        samples = self._sample_from_generator(regex_sample_size)
+        samples = self._sample_from_generator(num_samples)
 
         # Need more samples than the generator can produce
         if num_samples > len(samples):
             if unique_condition:
-                last_generated_value = getattr(self, '_last_generated_value')
-                template_samples = samples or [
-                    '' if last_generated_value is None else last_generated_value
-                ]
-                new_samples = self._sample_fallback(
-                    num_samples - len(samples),
-                    template_samples,
-                )
+                fallback_size = num_samples - len(samples)
+                self.generator = self._create_fallback_generator()
+                new_samples = [next(self.generator) for _ in range(fallback_size)]
+                self._fallback_counter += len(new_samples)
             else:
                 new_samples = self._sample_from_template(num_samples - len(samples), samples)
 
             samples.extend(new_samples)
-
-        if samples:
-            self._last_generated_value = samples[-1]
 
         return samples
 
