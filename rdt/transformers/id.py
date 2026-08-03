@@ -152,13 +152,6 @@ class RegexGenerator(BaseTransformer):
                 for value in regex_generator:
                     yield f'{value}({counter})'
 
-    def _create_fallback_generator(self):
-        """Create fallback generator.
-
-        NOTE: this is necessary to be overwritten in Enterprise.
-        """
-        return self._create_numerical_fallback_generator()
-
     def __setstate__(self, state):
         """Set the generator when pickling."""
         generator_size = state.get('generator_size')
@@ -177,7 +170,7 @@ class RegexGenerator(BaseTransformer):
         state['generator'] = generator
         self.__dict__ = state
         if self._num_fallback_samples_generated:
-            self.generator = self._create_fallback_generator()
+            self.generator = self._create_numerical_fallback_generator()
             for _ in range(self._num_fallback_samples_generated):
                 next(self.generator)
 
@@ -227,6 +220,17 @@ class RegexGenerator(BaseTransformer):
 
     def _sample_fallback(self, num_samples, template_samples):
         """Sample num_samples values such that they are all unique, disregarding the regex."""
+        unique_condition = (
+            self.cardinality_rule == 'unique'
+            if hasattr(self, 'cardinality_rule')
+            else self.enforce_uniqueness
+        )
+        if unique_condition:
+            if not self._num_fallback_samples_generated:
+                self.generator = self._create_numerical_fallback_generator()
+
+            return [next(self.generator) for _ in range(num_samples)]
+
         try:
             # Integer-based fallback: attempt to convert the last template sample to an integer
             # and then generate values in a sequential manner.
@@ -427,7 +431,7 @@ class RegexGenerator(BaseTransformer):
                 return self._sample_scale(num_samples)
 
         if unique_condition and self._num_fallback_samples_generated:
-            samples = [next(self.generator) for _ in range(num_samples)]
+            samples = self._sample_fallback(num_samples, [])
             self._num_fallback_samples_generated += len(samples)
             return samples
 
@@ -442,8 +446,7 @@ class RegexGenerator(BaseTransformer):
         if num_samples > len(samples):
             if unique_condition:
                 fallback_size = num_samples - len(samples)
-                self.generator = self._create_fallback_generator()
-                new_samples = [next(self.generator) for _ in range(fallback_size)]
+                new_samples = self._sample_fallback(fallback_size, samples)
                 self._num_fallback_samples_generated += len(new_samples)
             else:
                 new_samples = self._sample_from_template(num_samples - len(samples), samples)
