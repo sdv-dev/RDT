@@ -184,7 +184,7 @@ class TestRegexGenerator:
             '_data_cardinality': None,
             '_data_cardinality_scale': None,
             '_remaining_samples': {'value': None, 'repetitions': 0},
-            '_fallback_counter': 0,
+            '_num_fallback_samples_generated': 0,
         }
 
     @patch('rdt.transformers.id.strings_from_regex')
@@ -747,6 +747,7 @@ class TestRegexGenerator:
 
         # Run
         out = instance._reverse_transform(columns_data)
+        instance._reverse_transform(columns_data)
 
         # Assert
         mock_warnings.warn.assert_called_once_with(

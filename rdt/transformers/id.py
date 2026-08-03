@@ -168,17 +168,17 @@ class RegexGenerator(BaseTransformer):
             state['generator_size'] = size
         if generated is None:
             state['generated'] = 0
-        if '_fallback_counter' not in state:
-            state['_fallback_counter'] = 0
-        if generated and not state['_fallback_counter']:
+        if '_num_fallback_samples_generated' not in state:
+            state['_num_fallback_samples_generated'] = 0
+        if generated and not state['_num_fallback_samples_generated']:
             for _ in range(generated):
                 next(generator)
 
         state['generator'] = generator
         self.__dict__ = state
-        if self._fallback_counter:
+        if self._num_fallback_samples_generated:
             self.generator = self._create_fallback_generator()
-            for _ in range(self._fallback_counter):
+            for _ in range(self._num_fallback_samples_generated):
                 next(self.generator)
 
     def __init__(
@@ -212,14 +212,14 @@ class RegexGenerator(BaseTransformer):
         # Used otherwise
         self.generator_size = None
         self.generated = None
-        self._fallback_counter = 0
+        self._num_fallback_samples_generated = 0
 
     def reset_randomization(self):
         """Create a new generator and reset the generated values counter."""
         super().reset_randomization()
         self.generator, self.generator_size = strings_from_regex(self.regex_format)
         self.generated = 0
-        self._fallback_counter = 0
+        self._num_fallback_samples_generated = 0
 
         if hasattr(self, 'cardinality_rule') and self.cardinality_rule == 'scale':
             self._remaining_samples['repetitions'] = 0
@@ -281,6 +281,9 @@ class RegexGenerator(BaseTransformer):
             match_cardinality (bool):
                 Whether or not to match the cardinality of the data.
         """
+        if unique_condition and self._num_fallback_samples_generated:
+            return
+
         warned = False
         warn_msg = (
             f"The regex for '{self.get_input_column()}' can only generate "
@@ -423,9 +426,9 @@ class RegexGenerator(BaseTransformer):
             if self.cardinality_rule == 'scale':
                 return self._sample_scale(num_samples)
 
-        if unique_condition and self._fallback_counter:
+        if unique_condition and self._num_fallback_samples_generated:
             samples = [next(self.generator) for _ in range(num_samples)]
-            self._fallback_counter += len(samples)
+            self._num_fallback_samples_generated += len(samples)
             return samples
 
         # If there aren't enough values left in the generator, reset it if cardinality_rule!=unique
@@ -441,7 +444,7 @@ class RegexGenerator(BaseTransformer):
                 fallback_size = num_samples - len(samples)
                 self.generator = self._create_fallback_generator()
                 new_samples = [next(self.generator) for _ in range(fallback_size)]
-                self._fallback_counter += len(new_samples)
+                self._num_fallback_samples_generated += len(new_samples)
             else:
                 new_samples = self._sample_from_template(num_samples - len(samples), samples)
 
