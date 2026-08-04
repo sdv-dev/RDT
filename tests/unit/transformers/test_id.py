@@ -1,5 +1,6 @@
 """Test for ID transformers."""
 
+import pickle
 import re
 import warnings
 from string import ascii_uppercase
@@ -183,6 +184,7 @@ class TestRegexGenerator:
             '_data_cardinality': None,
             '_data_cardinality_scale': None,
             '_remaining_samples': {'value': None, 'repetitions': 0},
+            '_num_fallback_samples_generated': 0,
         }
 
     @patch('rdt.transformers.id.strings_from_regex')
@@ -238,6 +240,21 @@ class TestRegexGenerator:
         assert instance.generated == 0
         assert instance.generator_size == 26
         mock_strings_from_regex.assert_called_once_with('[A-Za-z]{5}')
+
+    def test__sample_fallback_after_pickling(self):
+        """Test continuing fallback sampling after pickling."""
+        # Setup
+        instance = RegexGenerator('A', cardinality_rule='unique')
+        instance.reset_randomization()
+        first_samples = instance._sample(2, unique_condition=True)
+
+        # Run
+        restored = pickle.loads(pickle.dumps(instance))
+        second_samples = restored._sample(2, unique_condition=True)
+
+        # Assert
+        assert first_samples == ['A', 'A(0)']
+        assert second_samples == ['A(1)', 'A(2)']
 
     def test___init__default(self):
         """Test the default instantiation of the transformer.
@@ -730,6 +747,7 @@ class TestRegexGenerator:
 
         # Run
         out = instance._reverse_transform(columns_data)
+        instance._reverse_transform(columns_data)
 
         # Assert
         mock_warnings.warn.assert_called_once_with(
@@ -762,7 +780,7 @@ class TestRegexGenerator:
         # Setup
         instance = RegexGenerator('[1-3]', cardinality_rule='unique')
         instance.data_length = 6
-        generator = AsciiGenerator(5)
+        generator = iter(['1', '2', '3'])
         instance.generator = generator
         instance.generator_size = 3
         instance.generated = 0
