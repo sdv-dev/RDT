@@ -1,5 +1,11 @@
 # History
 
+## v1.22.0 - 2026-08-07
+
+### Bugs Fixed
+
+* `RegexGenerator` not generating unique values on consecutive `reverse_transform` calls - Issue [#1091](https://github.com/sdv-dev/RDT/issues/1091) by @fealho
+
 ## v1.21.2 - 2026-08-07
 
 ### Bugs Fixed
