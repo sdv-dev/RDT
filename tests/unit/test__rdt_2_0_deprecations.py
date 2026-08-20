@@ -57,6 +57,31 @@ def test_deprecated_parameters(class_, method, parameter):
 
 
 @pytest.mark.parametrize(
+    'class_, method, parameter, value, error',
+    [
+        *[
+            (
+                GaussianNormalizer,
+                '__init__',
+                'distribution',
+                value,
+                KeyError,
+            )
+            for value in ('gaussian', 'student_t', 'truncated_gaussian')
+        ],
+    ],
+)
+def test_deprecated_parameters_with_value(class_, method, parameter, value, error):
+    """Test that deprecated parameters raise an error."""
+    # Setup
+    instance = class_()
+
+    # Run and Assert
+    with pytest.raises(error):
+        getattr(instance, method)(**{parameter: value})
+
+
+@pytest.mark.parametrize(
     'class_, method, parameter',
     [
         (BaseTransformer, 'get_input_sdtype', None),

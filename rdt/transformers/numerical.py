@@ -291,11 +291,6 @@ class GaussianNormalizer(FloatFormatter):
     _univariate = None
     _fallback_distribution = 'norm'
     _learned_distribution_name = None
-    _DEPRECATED_DISTRIBUTIONS_MAPPING = {
-        'gaussian': 'norm',
-        'student_t': 't',
-        'truncated_gaussian': 'truncnorm',
-    }
 
     @staticmethod
     def _get_distributions():
@@ -339,15 +334,6 @@ class GaussianNormalizer(FloatFormatter):
 
         self._distributions = self._get_distributions()
         if isinstance(distribution, str):
-            if distribution in {'gaussian', 'student_t', 'truncated_gaussian'}:
-                warnings.warn(
-                    f"Future versions of RDT will not support '{distribution}' as an option. "
-                    f"Please use '{self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]}' "
-                    'instead.',
-                    FutureWarning,
-                )
-                distribution = self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]
-
             self._learned_distribution_name = distribution
             distribution = self._distributions[distribution]
 
