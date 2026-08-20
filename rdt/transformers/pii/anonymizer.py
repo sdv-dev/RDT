@@ -173,6 +173,7 @@ class AnonymizedFaker(BaseTransformer):
             'numerical',
             'datetime',
             'categorical',
+            'ordinal',
             'boolean',
             None,
         }

@@ -10,12 +10,9 @@ from functools import lru_cache
 from rdt.transformers.base import BaseMultiColumnTransformer, BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
 from rdt.transformers.categorical import (
-    CustomLabelEncoder,
     FrequencyEncoder,
     LabelEncoder,
     OneHotEncoder,
-    OrderedLabelEncoder,
-    OrderedUniformEncoder,
     UniformEncoder,
 )
 from rdt.transformers.datetime import (
@@ -31,6 +28,10 @@ from rdt.transformers.numerical import (
     LogScaler,
     LogitScaler,
 )
+from rdt.transformers.ordinal import (
+    OrderedLabelEncoder,
+    OrderedUniformEncoder,
+)
 from rdt.transformers.pii.anonymizer import (
     AnonymizedFaker,
     PseudoAnonymizedFaker,
@@ -42,7 +43,6 @@ __all__ = [
     'BaseMultiColumnTransformer',
     'BinaryEncoder',
     'ClusterBasedNormalizer',
-    'CustomLabelEncoder',
     'OrderedLabelEncoder',
     'FloatFormatter',
     'FrequencyEncoder',
