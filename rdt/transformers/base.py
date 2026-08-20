@@ -148,20 +148,6 @@ class BaseTransformer:
         return subclasses
 
     @classmethod
-    def get_input_sdtype(cls):
-        """Return the input sdtype supported by the transformer.
-
-        Returns:
-            string:
-                Accepted input sdtype of the transformer.
-        """
-        warnings.warn(
-            '`get_input_sdtype` is deprecated. Please use `get_supported_sdtypes` instead.',
-            FutureWarning,
-        )
-        return cls.get_supported_sdtypes()[0]
-
-    @classmethod
     def get_supported_sdtypes(cls):
         """Return the supported sdtypes by the transformer.
 
