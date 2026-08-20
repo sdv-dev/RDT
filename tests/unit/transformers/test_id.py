@@ -299,32 +299,6 @@ class TestRegexGenerator:
         with pytest.raises(ValueError, match=error_message):
             RegexGenerator(generation_order='afdsfd')
 
-    def test__init__with_enforce_uniqueness(self):
-        """Test that the ``enforce_uniqueness`` parameter is deprecated."""
-        # Setup
-        expected_message = re.escape(
-            "The 'enforce_uniqueness' parameter is no longer supported. "
-            "Please use the 'cardinality_rule' parameter instead."
-        )
-
-        # Run
-        with pytest.warns(FutureWarning, match=expected_message):
-            instance_1 = RegexGenerator(enforce_uniqueness=True, cardinality_rule='unique')
-
-        with pytest.warns(FutureWarning, match=expected_message):
-            RegexGenerator('A-Za-z', None, 'alphanumeric', True)
-
-        with pytest.warns(FutureWarning, match=expected_message):
-            instance_2 = RegexGenerator(enforce_uniqueness=True)
-
-        with pytest.warns(FutureWarning, match=expected_message):
-            instance_3 = RegexGenerator(enforce_uniqueness=False)
-
-        # Assert
-        assert instance_1.cardinality_rule == 'unique'
-        assert instance_2.cardinality_rule == 'unique'
-        assert instance_3.cardinality_rule is None
-
     @patch('rdt.transformers.id.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.id.strings_from_regex')
     def test_reset_randomization(self, mock_strings_from_regex, mock_base_reset):

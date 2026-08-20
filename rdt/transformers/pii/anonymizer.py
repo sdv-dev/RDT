@@ -17,7 +17,6 @@ from rdt.transformers.base import BaseTransformer
 from rdt.transformers.categorical import LabelEncoder
 from rdt.transformers.utils import (
     _get_cardinality_frequency,
-    _handle_enforce_uniqueness_and_cardinality_rule,
     _sample_repetitions,
 )
 
@@ -46,11 +45,6 @@ class AnonymizedFaker(BaseTransformer):
               each value is allowed to have.
             If ``None`` do not consider cardinality.
             Defaults to ``None``.
-        enforce_uniqueness (bool):
-            **DEPRECATED** Whether or not to ensure that the new anonymized data is all unique.
-            If it isn't possible to create the requested number of rows, then an error will be
-            raised.
-            Defaults to ``False``.
         missing_value_generation (str or None):
             The way missing values are being handled. There are two strategies:
 
@@ -120,7 +114,6 @@ class AnonymizedFaker(BaseTransformer):
         function_kwargs=None,
         locales=None,
         cardinality_rule=None,
-        enforce_uniqueness=None,
         missing_value_generation='random',
     ):
         super().__init__()
@@ -128,11 +121,7 @@ class AnonymizedFaker(BaseTransformer):
         self._remaining_samples = {'value': None, 'repetitions': 0}
         self._data_cardinality = None
         self.data_length = None
-        self.enforce_uniqueness = enforce_uniqueness
         self.cardinality_rule = cardinality_rule.lower() if cardinality_rule else None
-        self.cardinality_rule = _handle_enforce_uniqueness_and_cardinality_rule(
-            enforce_uniqueness, cardinality_rule
-        )
 
         self.provider_name = provider_name if provider_name else 'BaseProvider'
         if self.provider_name != 'BaseProvider' and function_name is None:
@@ -210,7 +199,9 @@ class AnonymizedFaker(BaseTransformer):
                 faker_attr = self.faker
 
         except AttributeError:
-            faker_attr = self.faker.unique if self.enforce_uniqueness else self.faker
+            faker_attr = (
+                self.faker.unique if getattr(self, 'enforce_uniqueness', False) else self.faker
+            )
 
         result = getattr(faker_attr, self.function_name)(**self.function_kwargs)
         if isinstance(result, Iterable) and not isinstance(result, str):
@@ -427,7 +418,6 @@ class AnonymizedFaker(BaseTransformer):
         args = inspect.getfullargspec(self.__init__)
         keys = args.args[1:]
         defaults = dict(zip(keys, args.defaults))
-        keys.remove('enforce_uniqueness')
         instanced = {key: getattr(self, key) for key in keys}
 
         defaults['function_name'] = None

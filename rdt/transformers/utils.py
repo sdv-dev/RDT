@@ -400,24 +400,6 @@ class WarnDict(dict):
         return self.get(sdtype)
 
 
-def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinality_rule):
-    if enforce_uniqueness is not None:
-        warnings.warn(
-            "The 'enforce_uniqueness' parameter is no longer supported. "
-            "Please use the 'cardinality_rule' parameter instead.",
-            FutureWarning,
-        )
-        if enforce_uniqueness and cardinality_rule is None:
-            return 'unique'
-
-    if cardinality_rule not in ['unique', 'match', 'scale', None]:
-        raise ValueError(
-            "The 'cardinality_rule' parameter must be one of 'unique', 'match', 'scale', or None."
-        )
-
-    return cardinality_rule
-
-
 def _extract_timezone_from_a_string(dt_str):
     if not isinstance(dt_str, str):
         dt_str = str(dt_str)

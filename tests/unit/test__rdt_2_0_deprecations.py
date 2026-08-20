@@ -5,11 +5,13 @@ import pytest
 
 from rdt.hyper_transformer import HyperTransformer
 from rdt.transformers import (
+    AnonymizedFaker,
     BaseTransformer,
     BinaryEncoder,
     ClusterBasedNormalizer,
     FloatFormatter,
     GaussianNormalizer,
+    RegexGenerator,
     UnixTimestampEncoder,
 )
 
@@ -30,6 +32,13 @@ from rdt.transformers import (
                 UnixTimestampEncoder,
                 GaussianNormalizer,
                 ClusterBasedNormalizer,
+            )
+        ],
+        *[
+            (class_, '__init__', 'enforce_uniqueness')
+            for class_ in (
+                RegexGenerator,
+                AnonymizedFaker,
             )
         ],
     ],

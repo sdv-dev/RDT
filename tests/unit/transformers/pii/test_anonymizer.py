@@ -121,14 +121,6 @@ class TestAnonymizedFaker:
         function.assert_called_once_with(type='int')
         assert result == 1
 
-    def test___init___enforce_uniqueness_exists(self):
-        """Test `enforce_uniqueness` attribute exists."""
-        # Run
-        instance = AnonymizedFaker()
-
-        # Assert
-        assert instance.enforce_uniqueness is None
-
     def test__function_cardinality_rule_unique(self):
         """Test that ``_function`` uses the ``faker.unique``.
 
@@ -198,7 +190,6 @@ class TestAnonymizedFaker:
         unique_function.return_value = 1
 
         delattr(instance, 'cardinality_rule')
-        instance.enforce_uniqueness = True
         instance.faker.unique.number = unique_function
         instance.faker.number = function
         instance.function_name = 'number'
@@ -394,8 +385,7 @@ class TestAnonymizedFaker:
 
     @patch('rdt.transformers.pii.anonymizer.faker')
     @patch('rdt.transformers.pii.anonymizer.AnonymizedFaker.check_provider_function')
-    @patch('rdt.transformers.pii.anonymizer._handle_enforce_uniqueness_and_cardinality_rule')
-    def test___init__custom(self, mock__handle, mock_check_provider_function, mock_faker):
+    def test___init__custom(self, mock_check_provider_function, mock_faker):
         """Test the instantiation of the transformer with custom parameters.
 
         Test that the transformer can be instantiated with a custom provider and function, and
@@ -417,16 +407,13 @@ class TestAnonymizedFaker:
               ``credit_card_full``.
             - the ``instance._function`` is ``instance.faker.credit_card_full``.
         """
-        # Setup
-        mock__handle.return_value = 'unique'
-
         # Run
         instance = AnonymizedFaker(
             provider_name='credit_card',
             function_name='credit_card_full',
             function_kwargs={'type': 'visa'},
             locales=['en_US', 'fr_FR'],
-            enforce_uniqueness=True,
+            cardinality_rule='unique',
         )
 
         # Assert
@@ -437,7 +424,6 @@ class TestAnonymizedFaker:
         assert instance.locales == ['en_US', 'fr_FR']
         mock_faker.Faker.assert_called_once_with(['en_US', 'fr_FR'])
         assert instance.cardinality_rule == 'unique'
-        mock__handle.assert_called_once_with(True, None)
 
     def test___init__no_function_name(self):
         """Test the instantiation of the transformer with custom parameters.

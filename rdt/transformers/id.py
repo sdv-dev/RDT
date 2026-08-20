@@ -10,7 +10,6 @@ import pandas as pd
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import (
     _get_cardinality_frequency,
-    _handle_enforce_uniqueness_and_cardinality_rule,
     _sample_repetitions,
     fill_nan_with_none,
     strings_from_regex,
@@ -88,10 +87,6 @@ class RegexGenerator(BaseTransformer):
     Args:
         regex_format (str):
             String representing the regex function.
-        enforce_uniqueness (bool):
-            **DEPRECATED** Whether or not to ensure that the new generated data is all unique.
-            If it isn't possible to create the requested number of rows, then an error will
-            be raised. Defaults to ``None``.
         cardinality_rule (str):
             Rule that the generated data must follow.
             - If set to 'unique', the generated data must be unique.
@@ -164,14 +159,11 @@ class RegexGenerator(BaseTransformer):
         regex_format='[A-Za-z]{5}',
         cardinality_rule=None,
         generation_order='alphanumeric',
-        enforce_uniqueness=None,
     ):
         super().__init__()
         self.output_properties = {None: {'next_transformer': None}}
         self.regex_format = regex_format
-        self.cardinality_rule = _handle_enforce_uniqueness_and_cardinality_rule(
-            enforce_uniqueness, cardinality_rule
-        )
+        self.cardinality_rule = cardinality_rule
         self.data_length = None
         self.generator = None
         if generation_order not in ['alphanumeric', 'scrambled']:
@@ -208,7 +200,7 @@ class RegexGenerator(BaseTransformer):
         unique_condition = (
             self.cardinality_rule == 'unique'
             if hasattr(self, 'cardinality_rule')
-            else self.enforce_uniqueness
+            else getattr(self, 'enforce_uniqueness', False)
         )
         if unique_condition:
             if not self._num_fallback_samples_generated:
@@ -470,7 +462,7 @@ class RegexGenerator(BaseTransformer):
             if match_cardinality and self._unique_regex_values is None:
                 self._unique_regex_values = self._generate_unique_regexes()
         else:
-            unique_condition = self.enforce_uniqueness
+            unique_condition = getattr(self, 'enforce_uniqueness', False)
             match_cardinality = False
 
         num_samples = len(data) if (data is not None and len(data)) else self.data_length
