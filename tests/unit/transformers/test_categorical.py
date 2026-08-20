@@ -19,6 +19,7 @@ RE_SSN = re.compile(r'\d\d\d-\d\d-\d\d\d\d')
 
 class TestUniformEncoder:
     """Test class for the UniformEncoder."""
+
     def test___init___bad_missing_value_encoding(self):
         """Test that the ``__init__`` raises error if ``missing_value_encoding`` is invalid."""
         # Run / Assert

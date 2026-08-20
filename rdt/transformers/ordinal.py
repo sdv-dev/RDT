@@ -79,8 +79,8 @@ class OrderedUniformEncoder(UniformEncoder):
                 order = order.sort_values()
             except TypeError:
                 warnings.warn(
-                    f"The data in column `{self.get_input_column()}` contains mixed dtypes and no "
-                    "`order` is provided. Defaulting to alphabetical order."
+                    f'The data in column `{self.get_input_column()}` contains mixed dtypes and no '
+                    '`order` is provided. Defaulting to alphabetical order.'
                 )
                 order = order.sort_values(key=lambda x: x.astype(str))
 
@@ -183,6 +183,7 @@ class OrderedLabelEncoder(LabelEncoder):
             their own category. If ``None``, missing values are not encoded and remain missing.
             Defaults to ``'new_category'``.
     """
+
     INPUT_SDTYPE = 'ordinal'
     SUPPORTED_SDTYPES = ['ordinal', 'categorical', 'boolean', 'id', 'text']
 
@@ -225,8 +226,8 @@ class OrderedLabelEncoder(LabelEncoder):
                 order = order.sort_values()
             except TypeError:
                 warnings.warn(
-                    f"The data in column `{self.get_input_column()}` contains mixed dtypes and no "
-                    "`order` is provided. Defaulting to alphabetical order."
+                    f'The data in column `{self.get_input_column()}` contains mixed dtypes and no '
+                    '`order` is provided. Defaulting to alphabetical order.'
                 )
                 order = order.sort_values(key=lambda x: x.astype(str))
 

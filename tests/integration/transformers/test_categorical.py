@@ -776,10 +776,13 @@ def test_label_encoders_missing_value_encoding_none_with_category_dtype():
     )
 
 
-@pytest.mark.parametrize('transformer', [
-    UniformEncoder(),
-    LabelEncoder(),
-])
+@pytest.mark.parametrize(
+    'transformer',
+    [
+        UniformEncoder(),
+        LabelEncoder(),
+    ],
+)
 def test_categorical_transformers_default_missing_value_encoding_new_category(transformer):
     """Test default missing value handling continues to encode missing as a category."""
     # Setup

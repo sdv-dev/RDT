@@ -1,4 +1,3 @@
-
 import warnings
 
 import numpy as np
@@ -276,10 +275,13 @@ def test_ordered_label_encoders_missing_value_encoding_none_with_category_dtype(
     )
 
 
-@pytest.mark.parametrize('transformer', [
-    OrderedUniformEncoder(order=[1, 'two', 3, 'four', None]),
-    OrderedLabelEncoder(order=[1, 'two', 3, 'four', None]),
-])
+@pytest.mark.parametrize(
+    'transformer',
+    [
+        OrderedUniformEncoder(order=[1, 'two', 3, 'four', None]),
+        OrderedLabelEncoder(order=[1, 'two', 3, 'four', None]),
+    ],
+)
 def test_ordinal_transformers_default_missing_value_encoding_new_category(transformer):
     """Test default missing value handling continues to encode missing as a category."""
     # Setup

@@ -111,7 +111,7 @@ class TestOrderedUniformEncoder:
         np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, np.nan]))
 
     def test__order_warns_mixed_dtypes(self):
-        """Test """
+        """Test transformer warns if the data contains mixed dtypes."""
         # Setup
         transformer = OrderedUniformEncoder(order=None)
         transformer.columns = ['column']
@@ -119,8 +119,8 @@ class TestOrderedUniformEncoder:
 
         # Run / Assert
         message = re.escape(
-            "The data in column `column` contains mixed dtypes and no "
-            "`order` is provided. Defaulting to alphabetical order."
+            'The data in column `column` contains mixed dtypes and no '
+            '`order` is provided. Defaulting to alphabetical order.'
         )
         with pytest.warns(UserWarning, match=message):
             ordered = transformer._get_order(arr)
@@ -329,7 +329,7 @@ class TestOrderedLabelEncoder:
         np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, np.nan]))
 
     def test__get_order_warns_mixed_dtypes(self):
-        """Test """
+        """Test the transformer warns if the data contains mixed dtypes."""
         # Setup
         transformer = OrderedLabelEncoder(order=None)
         transformer.columns = ['column']
@@ -337,8 +337,8 @@ class TestOrderedLabelEncoder:
 
         # Run / Assert
         message = re.escape(
-            "The data in column `column` contains mixed dtypes and no "
-            "`order` is provided. Defaulting to alphabetical order."
+            'The data in column `column` contains mixed dtypes and no '
+            '`order` is provided. Defaulting to alphabetical order.'
         )
         with pytest.warns(UserWarning, match=message):
             ordered = transformer._get_order(arr)
