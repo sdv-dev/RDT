@@ -1,3 +1,4 @@
+import importlib
 import re
 
 import pytest
@@ -61,3 +62,22 @@ def test_deprecated_methods(class_, method, parameter):
     # Run and Assert
     with pytest.raises(AttributeError, match=re.escape(expected_message)):
         getattr(instance, method)(**{parameter: 'value'} if parameter else {})
+
+
+@pytest.mark.parametrize(
+    'class_path',
+    [
+        'rdt.transformers.FrequencyEncoder',
+        'rdt.transformers.categorical.FrequencyEncoder',
+    ],
+)
+def test_deprecated_classes(class_path):
+    """Test that deprecated classes can no longer be imported."""
+    # Setup
+    module_path, class_name = class_path.rsplit('.', 1)
+    module = importlib.import_module(module_path)
+    expected_message = f"module '{module_path}' has no attribute '{class_name}'"
+
+    # Run and Assert
+    with pytest.raises(AttributeError, match=re.escape(expected_message)):
+        getattr(module, class_name)

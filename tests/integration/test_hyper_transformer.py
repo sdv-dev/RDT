@@ -22,7 +22,6 @@ from rdt.transformers import (
     BinaryEncoder,
     ClusterBasedNormalizer,
     FloatFormatter,
-    FrequencyEncoder,
     LabelEncoder,
     OneHotEncoder,
     RegexGenerator,
@@ -57,7 +56,7 @@ class DummyTransformerNotMLReady(BaseTransformer):
         self.output_properties = {
             None: {
                 'sdtype': 'datetime',
-                'next_transformer': FrequencyEncoder(),
+                'next_transformer': UniformEncoder(),
             }
         }
 
@@ -416,14 +415,14 @@ class TestHyperTransformer:
         # Assert
         expected_transformed = get_transformed_data()
         transformed_datetimes = [
-            0.8125,
-            0.8125,
-            0.3125,
-            0.3125,
-            0.3125,
-            0.8125,
-            0.3125,
-            0.3125,
+            0.07685450842732083,
+            0.05690074383292415,
+            0.6128118364691126,
+            0.5407800903723341,
+            0.5126664459072409,
+            0.1272438262115942,
+            0.8958119139449103,
+            0.644322077440101,
         ]
         expected_transformed['datetime'] = transformed_datetimes
         pd.testing.assert_frame_equal(transformed, expected_transformed)
@@ -457,7 +456,7 @@ class TestHyperTransformer:
                 'paid': 'boolean',
             },
             'transformers': {
-                'email_confirmed': FrequencyEncoder(),
+                'email_confirmed': UniformEncoder(),
                 'subscribed': OneHotEncoder(),
                 'paid': LabelEncoder(),
             },
@@ -582,7 +581,7 @@ class TestHyperTransformer:
         ht.set_config(
             config={
                 'sdtypes': {'integer': 'categorical'},
-                'transformers': {'integer': FrequencyEncoder()},
+                'transformers': {'integer': UniformEncoder()},
             }
         )
         ht.fit(data)
@@ -615,7 +614,7 @@ class TestHyperTransformer:
         ht.set_config(
             config={
                 'sdtypes': {'integers': 'categorical'},
-                'transformers': {'integers': FrequencyEncoder()},
+                'transformers': {'integers': UniformEncoder()},
             }
         )
 
@@ -860,19 +859,19 @@ class TestHyperTransformer:
         """Test the ``HyperTransformer`` supports multiple ``sdtypes`` for a ``Transformer``.
 
         Test that the ``HyperTransformer`` works with ``get_supported_sdtypes`` allowing us
-        to asign different transformer to a ``sdtype``. For example, a ``FrequencyEncoder`` to
+        to asign different transformer to a ``sdtype``. For example, a ``OneHotEncoder`` to
         a ``boolean`` sdtype.
 
         Setup:
             - Dataframe with multiple datatypes.
             - Instance of ``HyperTransformer``.
-            - Update the transformer for ``boolean`` sdtype to ``FrequencyEncoder()``.
+            - Update the transformer for ``boolean`` sdtype to ``OneHotEncoder()``.
 
         Run:
             - Run end to end the ``hypertransformer``.
 
         Assert:
-            - Assert that the ``FerquencyEncoder`` is used for the ``boolean`` data.
+            - Assert that the ``OneHotEncoder`` is used for the ``boolean`` data.
         """
         # Setup
         data = pd.DataFrame({
@@ -885,8 +884,7 @@ class TestHyperTransformer:
         ht.detect_initial_config(data)
         ht.update_transformers_by_sdtype(
             sdtype='boolean',
-            transformer_name='FrequencyEncoder',
-            transformer_parameters={'add_noise': True},
+            transformer_name='OneHotEncoder',
         )
 
         # Run
@@ -951,7 +949,7 @@ class TestHyperTransformer:
         # Setup
         config = {
             'transformers': {
-                'boolean_col': FrequencyEncoder(add_noise=True),
+                'boolean_col': OneHotEncoder(),
             },
             'sdtypes': {'boolean_col': 'boolean'},
         }
@@ -1159,24 +1157,24 @@ class TestHyperTransformer:
         assert ht.get_config()['transformers']['col'].new_attribute2 == '123'
 
         # if a transformer was set, it should use the provided instance
-        fe = FrequencyEncoder()
+        uniform_encoder = UniformEncoder()
         ht.set_config({
             'sdtypes': {'col': 'categorical'},
-            'transformers': {'col': fe},
+            'transformers': {'col': uniform_encoder},
         })
         ht.fit(data)
         transformer = ht.get_config()['transformers']['col']
-        assert transformer is fe
+        assert transformer is uniform_encoder
 
         # the three cases below make sure any form of acess to the field_transformers
         # correctly accesses and stores the actual transformers
-        fe = FrequencyEncoder()
-        ht.update_transformers({'col': fe})
+        uniform_encoder = UniformEncoder()
+        ht.update_transformers({'col': uniform_encoder})
         ht.fit(data)
         transformer = ht.get_config()['transformers']['col']
-        assert transformer is fe
+        assert transformer is uniform_encoder
 
-        ht.update_transformers_by_sdtype('categorical', transformer_name='FrequencyEncoder')
+        ht.update_transformers_by_sdtype('categorical', transformer_name='UniformEncoder')
         transformer = ht.get_config()['transformers']['col']
         transformer.new_attribute3 = 'abc'
         ht.fit(data)
@@ -1203,8 +1201,7 @@ class TestHyperTransformer:
         })
         ht.update_transformers_by_sdtype(
             'categorical',
-            transformer_name='FrequencyEncoder',
-            transformer_parameters={'add_noise': True},
+            transformer_name='LabelEncoder',
         )
 
         return ht
@@ -1261,13 +1258,7 @@ class TestHyperTransformer:
                 1.286486e-01,
             ],
             'balance.component': [0.0, 0, 0, 0, 0],
-            'card_type': [
-                0.17901105796558806,
-                0.3582933494588839,
-                0.6532481234958804,
-                0.8859678246550227,
-                0.4245315684590038,
-            ],
+            'card_type': [0, 0, 1, 2, 0],
         })
         expected_second_transformed = pd.DataFrame({
             'age': [18.0, 25.0, 54.0, 60.0, 31.0],
@@ -1286,13 +1277,7 @@ class TestHyperTransformer:
                 1.286486e-01,
             ],
             'balance.component': [0.0, 0, 0, 0, 0],
-            'card_type': [
-                0.3012879880691509,
-                0.2678513907358402,
-                0.7060422948755574,
-                0.9270899473086737,
-                0.3107417744890652,
-            ],
+            'card_type': [0, 0, 1, 2, 0],
         })
 
         ht1.fit(data)

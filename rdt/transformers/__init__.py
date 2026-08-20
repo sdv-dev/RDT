@@ -10,7 +10,6 @@ from functools import lru_cache
 from rdt.transformers.base import BaseMultiColumnTransformer, BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
 from rdt.transformers.categorical import (
-    FrequencyEncoder,
     LabelEncoder,
     OneHotEncoder,
     UniformEncoder,
@@ -45,7 +44,6 @@ __all__ = [
     'ClusterBasedNormalizer',
     'OrderedLabelEncoder',
     'FloatFormatter',
-    'FrequencyEncoder',
     'GaussianNormalizer',
     'LabelEncoder',
     'LogScaler',

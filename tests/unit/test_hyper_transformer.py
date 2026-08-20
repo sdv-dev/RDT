@@ -20,7 +20,6 @@ from rdt.transformers import (
     BaseMultiColumnTransformer,
     BinaryEncoder,
     FloatFormatter,
-    FrequencyEncoder,
     LabelEncoder,
     RegexGenerator,
     UniformEncoder,
@@ -523,7 +522,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformers = {
             'column1': FloatFormatter(),
-            'column2': FrequencyEncoder(),
+            'column2': UniformEncoder(),
         }
         sdtypes = {'column1': 'numerical', 'column2': 'numerical'}
         config = {'sdtypes': sdtypes, 'transformers': transformers}
@@ -541,7 +540,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformers = {
             'column1': FloatFormatter(),
-            'column2': FrequencyEncoder(),
+            'column2': UniformEncoder(),
             ('column2', 'column3'): None,
         }
         sdtypes = {
@@ -577,7 +576,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformers = {
             'column1': FloatFormatter(),
-            'column2': FrequencyEncoder(),
+            'column2': UniformEncoder(),
             'column3': None,
         }
         sdtypes = {
@@ -607,7 +606,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformers = {
             'column1': FloatFormatter(),
-            'column2': FrequencyEncoder(),
+            'column2': UniformEncoder(),
         }
         sdtypes = {'column1': 'numerical', 'column2': 'numerical'}
         config = {
@@ -638,7 +637,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformers = {
             'column1': FloatFormatter(),
-            'column2': FrequencyEncoder(),
+            'column2': UniformEncoder(),
         }
         config = {
             'transformers': transformers,
@@ -667,7 +666,7 @@ class TestHyperTransformer(TestCase):
         sdtypes = {'column1': 'numerical', 'column2': 'numerical'}
         transformers = {
             'column1': FloatFormatter(),
-            'column3': FrequencyEncoder(),
+            'column3': UniformEncoder(),
         }
         config = {
             'sdtypes': sdtypes,
@@ -697,7 +696,7 @@ class TestHyperTransformer(TestCase):
         sdtypes = {'column1': 'numerical', 'column2': 'unexpected'}
         transformers = {
             'column1': FloatFormatter(),
-            'column2': FrequencyEncoder(),
+            'column2': UniformEncoder(),
         }
         config = {
             'sdtypes': sdtypes,
@@ -758,7 +757,7 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ht.field_transformers = {
             'column1': FloatFormatter(),
-            'column2': FrequencyEncoder(),
+            'column2': UniformEncoder(),
         }
         ht.field_sdtypes = {'column1': 'numerical', 'column2': 'categorical'}
 
@@ -814,7 +813,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         transformers = {
             'column1': FloatFormatter(),
-            'column2': FrequencyEncoder(),
+            'column2': UniformEncoder(),
         }
         sdtypes = {'column1': 'numerical', 'column2': 'categorical'}
         config = {'sdtypes': sdtypes, 'transformers': transformers}
@@ -2075,7 +2074,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         ht = HyperTransformer()
         ht.field_transformers = {
-            'categorical_column': FrequencyEncoder(),
+            'categorical_column': UniformEncoder(),
             'numerical_column': FloatFormatter(),
         }
         ht.field_sdtypes = {
@@ -2110,7 +2109,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         ht = HyperTransformer()
         ht._fitted = True
-        ht.field_transformers = {'categorical_column': FrequencyEncoder()}
+        ht.field_transformers = {'categorical_column': UniformEncoder()}
         ht.field_sdtypes = {'categorical_column': 'categorical'}
 
         # Run
@@ -2240,7 +2239,7 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ff = FloatFormatter()
         ht.field_transformers = {
-            'categorical_column': FrequencyEncoder(),
+            'categorical_column': UniformEncoder(),
             'numerical_column': ff,
         }
         ht.field_sdtypes = {
@@ -2268,7 +2267,7 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         ff = FloatFormatter()
         ht.field_transformers = {
-            'categorical_column': FrequencyEncoder(),
+            'categorical_column': UniformEncoder(),
             'numerical_column': ff,
         }
         ht.field_sdtypes = {
@@ -2419,7 +2418,7 @@ class TestHyperTransformer(TestCase):
         instance.field_sdtypes = {'my_column': 'categorical'}
         instance.field_transformers = {'my_column': object()}
         instance._validate_transformers = Mock()
-        transformer = FrequencyEncoder()
+        transformer = UniformEncoder()
         column_name_to_transformer = {'my_column': transformer}
 
         # Run
@@ -2531,7 +2530,7 @@ class TestHyperTransformer(TestCase):
     def test__validate_updated_transformer_unique(self):
         """Test method errors if an updated transformer already exists in the config."""
         # Setup
-        transformer = FrequencyEncoder()
+        transformer = UniformEncoder()
         instance = HyperTransformer()
         instance.field_transformers = {'existing_column': transformer, 'my_column': object()}
 
@@ -2841,7 +2840,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         instance = HyperTransformer()
         instance.field_transformers = {
-            'a': FrequencyEncoder,
+            'a': UniformEncoder,
             'b': FloatFormatter,
         }
         instance.field_sdtypes = {'my_column': 'categorical'}
@@ -3260,7 +3259,7 @@ class TestHyperTransformer(TestCase):
         # Setup
         instance = HyperTransformer()
         column_name_to_transformer = {
-            'col1': FrequencyEncoder(),
+            'col1': UniformEncoder(),
             'col2': 'Unexpected',
             'col3': None,
         }
@@ -3277,7 +3276,7 @@ class TestHyperTransformer(TestCase):
         """Test ``_validate_transformers`` with reused transformer isntances."""
         # Setup
         instance = HyperTransformer()
-        duplicated_transformer = FrequencyEncoder()
+        duplicated_transformer = UniformEncoder()
         column_name_to_transformer = {
             'col1': duplicated_transformer,
             'col2': duplicated_transformer,
