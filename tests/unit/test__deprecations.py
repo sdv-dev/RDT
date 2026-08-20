@@ -70,6 +70,7 @@ def test_deprecated_methods(class_, method, parameter):
         'rdt.transformers.FrequencyEncoder',
         'rdt.transformers.categorical.FrequencyEncoder',
         'rdt.transformers.categorical.CustomLabelEncoder',
+        'rdt.transformers.id.IDGenerator',
     ],
 )
 def test_deprecated_classes(class_path):

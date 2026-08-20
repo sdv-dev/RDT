@@ -79,21 +79,6 @@ class IndexGenerator(BaseTransformer):
         return pd.Series(values)
 
 
-class IDGenerator(IndexGenerator):
-    """Deprecated class name for ``IndexGenerator``.
-
-    Class to ensure backwards compatibility with previous versions of RDT.
-    """
-
-    def __init__(self, prefix=None, starting_value=0, suffix=None):
-        warnings.warn(
-            "The 'IDGenerator' has been renamed to 'IndexGenerator'. Please update the"
-            'name to ensure compatibility with future versions of RDT.',
-            FutureWarning,
-        )
-        super().__init__(prefix, starting_value, suffix)
-
-
 class RegexGenerator(BaseTransformer):
     """RegexGenerator transformer.
 

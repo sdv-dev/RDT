@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.id import IDGenerator, IndexGenerator, RegexGenerator
+from rdt.transformers.id import IndexGenerator, RegexGenerator
 
 
 class AsciiGenerator:
@@ -143,17 +143,6 @@ class TestIndexGenerator:
             'prefix_102_suffix',
         ]
         assert transformer._counter == 3
-
-
-class TestIDGenerator:
-    def test___init__(self):
-        """Test the warning message for ``IDGenerator``."""
-        msg = re.escape(
-            "The 'IDGenerator' has been renamed to 'IndexGenerator'. Please update the"
-            'name to ensure compatibility with future versions of RDT.'
-        )
-        with pytest.warns(FutureWarning, match=msg):
-            IDGenerator(prefix='prefix_', starting_value=100, suffix='_suffix')
 
 
 class TestRegexGenerator:
