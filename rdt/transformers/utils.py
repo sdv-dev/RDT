@@ -6,6 +6,7 @@ import re
 import string
 import sys
 import warnings
+from collections import defaultdict
 from decimal import Decimal
 
 import numpy as np
@@ -22,6 +23,7 @@ else:  # pragma: no cover
 LOGGER = logging.getLogger(__name__)
 
 MAX_DECIMALS = sys.float_info.dig
+DEPRECATED_SDTYPES_MAPPING = {}
 
 
 def _literal(character, max_repeat):
@@ -363,6 +365,39 @@ def sigmoid(data, low, high):
     data = data * (high - low) + low
 
     return data
+
+
+class WarnDict(dict):
+    """Custom dictionary to raise a deprecation warning."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._warned = defaultdict()
+
+    def get(self, sdtype):
+        """Return the value for sdtype if sdtype is in the dictionary, else default.
+
+        If the sdtype is `text` raises a `DeprecationWarning` stating that it will be
+        phased out.
+        """
+        if sdtype in DEPRECATED_SDTYPES_MAPPING and not self._warned.get(sdtype):
+            new_sdtype = DEPRECATED_SDTYPES_MAPPING.get(sdtype)
+            warnings.warn(
+                f"The sdtype '{sdtype}' is deprecated and will be phased out. "
+                f"Please use '{new_sdtype}' instead.",
+                DeprecationWarning,
+            )
+            self._warned[sdtype] = True
+
+        return super().get(sdtype)
+
+    def __getitem__(self, sdtype):
+        """Return the value for sdtype if sdtype is in the dictionary.
+
+        If the sdtype is `text` raises a `DeprecationWarning` stating that it will be
+        phased out.
+        """
+        return self.get(sdtype)
 
 
 def _extract_timezone_from_a_string(dt_str):

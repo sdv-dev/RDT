@@ -1,6 +1,7 @@
 import datetime
 import re
 import sys
+import warnings
 from decimal import Decimal
 from unittest.mock import Mock, patch
 
@@ -11,6 +12,7 @@ from dateutil import parser, tz
 
 import rdt.transformers.utils as utils_module
 from rdt.transformers.utils import (
+    WarnDict,
     _any,
     _cast_to_type,
     _extract_timezone_from_a_string,
@@ -538,6 +540,54 @@ def test_sigmoid():
 
     # Assert
     assert res == expected_res
+
+
+@patch('rdt.transformers.utils.DEPRECATED_SDTYPES_MAPPING', new={'text': 'id'})
+def test_warn_dict():
+    """Test that ``WarnDict`` will raise a warning when called with `text`."""
+    # Setup
+    instance = WarnDict()
+    instance['text'] = 'text_transformer'
+
+    # Run
+    warning_msg = "The sdtype 'text' is deprecated and will be phased out. Please use 'id' instead."
+    with pytest.warns(DeprecationWarning, match=warning_msg):
+        result_access = instance['text']
+
+    # Run second time and no warning gets shown
+    with warnings.catch_warnings(record=True) as record:
+        result_access_no_warn = instance['text']
+        result_get_no_warn = instance.get('text')
+
+    # Assert
+    assert len(record) == 0
+    assert result_access == 'text_transformer'
+    assert result_access_no_warn == 'text_transformer'
+    assert result_get_no_warn == 'text_transformer'
+
+
+@patch('rdt.transformers.utils.DEPRECATED_SDTYPES_MAPPING', new={'text': 'id'})
+def test_warn_dict_get():
+    """Test that ``WarnDict`` will raise a warning when called with `text`."""
+    # Setup
+    instance = WarnDict()
+    instance['text'] = 'text_transformer'
+
+    # Run
+    warning_msg = "The sdtype 'text' is deprecated and will be phased out. Please use 'id' instead."
+    with pytest.warns(DeprecationWarning, match=warning_msg):
+        result_access = instance.get('text')
+
+    # Run second time and no warning gets shown
+    with warnings.catch_warnings(record=True) as record:
+        result_access_no_warn = instance['text']
+        result_get_no_warn = instance.get('text')
+
+    # Assert
+    assert len(record) == 0
+    assert result_access == 'text_transformer'
+    assert result_access_no_warn == 'text_transformer'
+    assert result_get_no_warn == 'text_transformer'
 
 
 def test__extract_timezone_from_a_string_with_valid_timezone():
