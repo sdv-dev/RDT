@@ -884,7 +884,9 @@ class TestHyperTransformer:
         ht = HyperTransformer()
         ht.detect_initial_config(data)
         ht.update_transformers_by_sdtype(
-            sdtype='boolean', transformer=FrequencyEncoder(add_noise=True)
+            sdtype='boolean',
+            transformer_name='FrequencyEncoder',
+            transformer_parameters={'add_noise': True},
         )
 
         # Run
@@ -2077,7 +2079,7 @@ class TestHyperTransformer:
         ),
         (
             'update_transformers_by_sdtype',
-            {'sdtype': 'boolean', 'transformer': UniformEncoder()},
+            {'sdtype': 'boolean', 'transformer_name': 'UniformEncoder'},
             expected_update,
         ),
         ('remove_transformers', {'column_names': 'C'}, expected_remove),
