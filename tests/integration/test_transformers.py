@@ -45,7 +45,6 @@ SDTYPE_TO_DTYPES = {
     'integer': ['i'],
     'numerical': ['f', 'i'],
     'pii': ['O', 'i', 'f'],
-    'text': ['O', 'i', 'f'],
 }
 
 

@@ -37,7 +37,7 @@ class IndexGenerator(BaseTransformer):
 
     IS_GENERATOR = True
     INPUT_SDTYPE = 'id'
-    SUPPORTED_SDTYPES = ['id', 'text']
+    SUPPORTED_SDTYPES = ['id']
 
     def __init__(self, prefix=None, starting_value=0, suffix=None):
         super().__init__()
@@ -105,7 +105,7 @@ class RegexGenerator(BaseTransformer):
 
     IS_GENERATOR = True
     INPUT_SDTYPE = 'id'
-    SUPPORTED_SDTYPES = ['id', 'text']
+    SUPPORTED_SDTYPES = ['id']
 
     def __getstate__(self):
         """Remove the generator when pickling."""

@@ -537,15 +537,14 @@ def test_categorical_transformers_default_missing_value_encoding_new_category(tr
     )
 
 
-@pytest.mark.parametrize('sdtype', ['id', 'text'])
 @pytest.mark.parametrize('transformer', categorical_transformers)
-def test_categorical_transformers_with_id_sdtype(sdtype, transformer):
+def test_categorical_transformers_with_id_sdtype(transformer):
     # Setup
     data = pd.DataFrame({
         'col': [1, 'two', 3, 'four', None],
     })
     hyper_transformer = HyperTransformer()
-    config = {'sdtypes': {'col': sdtype}, 'transformers': {'col': transformer}}
+    config = {'sdtypes': {'col': 'id'}, 'transformers': {'col': transformer}}
 
     # Run
     hyper_transformer.set_config(config)
@@ -557,11 +556,10 @@ def test_categorical_transformers_with_id_sdtype(sdtype, transformer):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-@pytest.mark.parametrize('sdtype', ['id', 'text'])
-def test_unsupported_categorical_transformers_with_id_sdtype(sdtype):
+def test_unsupported_categorical_transformers_with_id_sdtype():
     # Setup
     hyper_transformer = HyperTransformer()
-    config = {'sdtypes': {'col': sdtype}, 'transformers': {'col': OneHotEncoder()}}
+    config = {'sdtypes': {'col': 'id'}, 'transformers': {'col': OneHotEncoder()}}
     expected_invalid_error = re.escape(
         "Some transformers you've assigned are not compatible with the sdtypes. "
         "Please change the following columns: ['col']"

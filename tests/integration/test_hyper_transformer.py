@@ -921,8 +921,8 @@ class TestHyperTransformer:
         ht = HyperTransformer()
         ht.detect_initial_config(customers)
 
-        # credit_card and id are pii and text columns
-        ht.update_sdtypes({'credit_card': 'pii', 'id': 'text'})
+        # credit_card and id are pii and id columns
+        ht.update_sdtypes({'credit_card': 'pii', 'id': 'id'})
 
         ht.update_transformers({
             'credit_card': AnonymizedFaker(),
@@ -1180,7 +1180,7 @@ class TestHyperTransformer:
         ht.fit(data)
         assert ht.get_config()['transformers']['col'].new_attribute3 == 'abc'
 
-        ht.update_sdtypes({'col': 'text'})
+        ht.update_sdtypes({'col': 'id'})
         transformer = ht.get_config()['transformers']['col']
         transformer.new_attribute3 = 'abc'
         ht.fit(data)
@@ -1191,7 +1191,7 @@ class TestHyperTransformer:
         ht.detect_initial_config(data)
         ht.update_sdtypes({
             'credit_card': 'pii',
-            'name': 'text',
+            'name': 'id',
             'signup_day': 'datetime',
         })
         ht.update_transformers({
@@ -1417,7 +1417,7 @@ class TestHyperTransformer:
 
         # Run - simple run
         ht.detect_initial_config(data)
-        ht.update_sdtypes({'id1': 'pii', 'info': 'text'})
+        ht.update_sdtypes({'id1': 'pii', 'info': 'id'})
         ht.update_transformers({
             'id1': AnonymizedFaker(),
             'info': AnonymizedFaker(),

@@ -117,3 +117,16 @@ def test_deprecated_classes(class_path):
     # Run and Assert
     with pytest.raises(AttributeError, match=re.escape(expected_message)):
         getattr(module, class_name)
+
+
+def test_text_sdtype():
+    """Test that the text sdtype is no longer supported."""
+    # Setup
+    ht = HyperTransformer()
+    ht.field_sdtypes = {'col_text': 'text'}
+
+    # Run
+    supported_sdtypes = ht._get_supported_sdtypes()
+
+    # Assert
+    assert 'text' not in supported_sdtypes

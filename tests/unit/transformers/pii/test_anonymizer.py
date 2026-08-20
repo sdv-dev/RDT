@@ -457,8 +457,6 @@ class TestAnonymizedFaker:
             'boolean',
             'categorical',
         ]
-        text_mock = Mock()
-        text_mock.get_supported_sdtypes.return_value = ['text']
         phone_mock = Mock()
         phone_mock.get_supported_sdtypes.return_value = ['phone_number']
         pii_mock = Mock()
@@ -468,7 +466,6 @@ class TestAnonymizedFaker:
             categorical_mock,
             datetime_mock,
             boolean_mock,
-            text_mock,
             phone_mock,
             pii_mock,
         ]
@@ -480,7 +477,6 @@ class TestAnonymizedFaker:
         assert sorted(supported_sdtypes) == sorted([
             'phone_number',
             'pii',
-            'text',
         ])
 
     @patch('rdt.transformers.pii.anonymizer.BaseTransformer.reset_randomization')
