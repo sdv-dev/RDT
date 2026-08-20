@@ -111,16 +111,6 @@ class BaseTransformer:
             'reverse_transform': np.random.RandomState(self.random_seed + 1),
         }
 
-    @property
-    def model_missing_values(self):
-        """Whether or not a new column is being used to model missing values."""
-        warnings.warn(
-            "Future versions of RDT will not support the 'model_missing_values' parameter. "
-            "Please switch to using the 'missing_value_generation' parameter instead.",
-            FutureWarning,
-        )
-        return self.missing_value_generation == 'from_column'
-
     def _set_missing_value_generation(self, missing_value_generation):
         if missing_value_generation not in (None, 'from_column', 'random'):
             raise TransformerInputError(
@@ -129,18 +119,6 @@ class BaseTransformer:
             )
 
         self.missing_value_generation = missing_value_generation
-
-    def _set_model_missing_values(self, model_missing_values):
-        warnings.warn(
-            "Future versions of RDT will not support the 'model_missing_values' parameter. "
-            "Please switch to using the 'missing_value_generation' parameter to select your "
-            'strategy.',
-            FutureWarning,
-        )
-        if model_missing_values is True:
-            self._set_missing_value_generation('from_column')
-        elif model_missing_values is False:
-            self._set_missing_value_generation('random')
 
     @classmethod
     def get_name(cls):
@@ -327,11 +305,7 @@ class BaseTransformer:
         custom_args = []
         args = inspect.getfullargspec(self.__init__)
         keys = args.args[1:]
-        instanced = {
-            key: getattr(self, key)
-            for key in keys
-            if key != 'model_missing_values' and hasattr(self, key)  # Remove after deprecation
-        }
+        instanced = {key: getattr(self, key) for key in keys if hasattr(self, key)}
 
         default_values_list = args.defaults or []
         default_arg_to_default_value = {}

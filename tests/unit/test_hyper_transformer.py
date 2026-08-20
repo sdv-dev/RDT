@@ -1134,7 +1134,7 @@ class TestHyperTransformer(TestCase):
         ht = HyperTransformer()
         data = pd.DataFrame({'col': [1, np.nan, 3], 'col.is_null': [1, 2, 3]})
         ht.detect_initial_config(data)
-        ht.field_transformers['col'] = FloatFormatter(model_missing_values=True)
+        ht.field_transformers['col'] = FloatFormatter(missing_value_generation='from_column')
 
         # Run and Assert
         warn_msg = re.escape(

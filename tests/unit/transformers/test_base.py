@@ -274,68 +274,6 @@ class TestBaseTransformer:
         with pytest.raises(TransformerInputError, match=error_msg):
             BaseTransformer._set_missing_value_generation(instance, 'None')
 
-    @patch('rdt.transformers.base.warnings')
-    def test_model_missing_values(self, mock_warnings):
-        """Test ``model_missing_values`` property.
-
-        Test that when ``instance.model_missing_values`` is being called a ``boolean`` value
-        is returned whether ``missing_value_generation`` is ``from_column`` or not.
-        """
-        # Setup
-        instance = BaseTransformer()
-        instance.missing_value_generation = 'from_column'
-
-        # Run
-        result = instance.model_missing_values
-
-        # Assert
-        assert result is True
-        mock_warnings.warn.assert_called_once_with(
-            (
-                "Future versions of RDT will not support the 'model_missing_values' parameter. "
-                "Please switch to using the 'missing_value_generation' parameter instead."
-            ),
-            FutureWarning,
-        )
-
-    @patch('rdt.transformers.base.warnings')
-    def test__set_model_missing_values_true(self, mock_warnings):
-        """Test that a ``FutureWarning`` is being raised."""
-        # Setup
-        instance = Mock()
-        # Run
-        BaseTransformer._set_model_missing_values(instance, True)
-
-        # Assert
-        mock_warnings.warn.assert_called_once_with(
-            (
-                "Future versions of RDT will not support the 'model_missing_values' parameter. "
-                "Please switch to using the 'missing_value_generation' parameter to select your "
-                'strategy.'
-            ),
-            FutureWarning,
-        )
-        instance._set_missing_value_generation.assert_called_once_with('from_column')
-
-    @patch('rdt.transformers.base.warnings')
-    def test__set_model_missing_values_false(self, mock_warnings):
-        """Test that a ``FutureWarning`` is being raised."""
-        # Setup
-        instance = Mock()
-        # Run
-        BaseTransformer._set_model_missing_values(instance, False)
-
-        # Assert
-        mock_warnings.warn.assert_called_once_with(
-            (
-                "Future versions of RDT will not support the 'model_missing_values' parameter. "
-                "Please switch to using the 'missing_value_generation' parameter to select your "
-                'strategy.'
-            ),
-            FutureWarning,
-        )
-        instance._set_missing_value_generation.assert_called_once_with('random')
-
     def test___repr___no_parameters(self):
         """Test that the ``__str__`` method returns the class name.
 
