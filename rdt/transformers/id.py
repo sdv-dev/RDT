@@ -197,11 +197,7 @@ class RegexGenerator(BaseTransformer):
 
     def _sample_fallback(self, num_samples, template_samples):
         """Sample num_samples values such that they are all unique, disregarding the regex."""
-        unique_condition = (
-            self.cardinality_rule == 'unique'
-            if hasattr(self, 'cardinality_rule')
-            else getattr(self, 'enforce_uniqueness', False)
-        )
+        unique_condition = self.cardinality_rule == 'unique'
         if unique_condition:
             if not self._num_fallback_samples_generated:
                 self.generator = self._create_numerical_fallback_generator()
@@ -456,14 +452,10 @@ class RegexGenerator(BaseTransformer):
         Returns:
             pandas.Series
         """
-        if hasattr(self, 'cardinality_rule'):
-            unique_condition = self.cardinality_rule == 'unique'
-            match_cardinality = self.cardinality_rule == 'match'
-            if match_cardinality and self._unique_regex_values is None:
-                self._unique_regex_values = self._generate_unique_regexes()
-        else:
-            unique_condition = getattr(self, 'enforce_uniqueness', False)
-            match_cardinality = False
+        unique_condition = self.cardinality_rule == 'unique'
+        match_cardinality = self.cardinality_rule == 'match'
+        if match_cardinality and self._unique_regex_values is None:
+            self._unique_regex_values = self._generate_unique_regexes()
 
         num_samples = len(data) if (data is not None and len(data)) else self.data_length
         self._warn_not_enough_unique_values(num_samples, unique_condition, match_cardinality)

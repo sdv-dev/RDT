@@ -181,28 +181,6 @@ class TestAnonymizedFaker:
         unique_function.assert_called_once_with(type='int')
         assert result == 1
 
-    def test__function_cardinality_rule_missing_attribute(self):
-        """Test it when ``cardinality_rule`` attribute is missing."""
-        # Setup
-        instance = Mock()
-        function = Mock()
-        unique_function = Mock()
-        unique_function.return_value = 1
-
-        delattr(instance, 'cardinality_rule')
-        instance.faker.unique.number = unique_function
-        instance.faker.number = function
-        instance.function_name = 'number'
-        instance.function_kwargs = {'type': 'int'}
-
-        # Run
-        result = AnonymizedFaker._function(instance)
-
-        # Assert
-        function.assert_not_called()
-        unique_function.assert_called_once_with(type='int')
-        assert result == 1
-
     def test__function_with_iterables_return(self):
         """Test that ``_function`` returns the values of the iterable."""
         # Setup

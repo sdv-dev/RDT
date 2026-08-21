@@ -192,16 +192,10 @@ class AnonymizedFaker(BaseTransformer):
             # so accessing it can raise runtime errors.
             setattr(self.faker.unique, '_excluded_types', ())
 
-        try:
-            if self.cardinality_rule in {'unique', 'match', 'scale'}:
-                faker_attr = self.faker.unique
-            else:
-                faker_attr = self.faker
-
-        except AttributeError:
-            faker_attr = (
-                self.faker.unique if getattr(self, 'enforce_uniqueness', False) else self.faker
-            )
+        if self.cardinality_rule in {'unique', 'match', 'scale'}:
+            faker_attr = self.faker.unique
+        else:
+            faker_attr = self.faker
 
         result = getattr(faker_attr, self.function_name)(**self.function_kwargs)
         if isinstance(result, Iterable) and not isinstance(result, str):
