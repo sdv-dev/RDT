@@ -94,7 +94,6 @@ def _is_valid_transformer(transformer_name):
         'IdentityTransformer',
         'Dummy',
         'OrderedLabelEncoder',
-        'CustomLabelEncoder',
         'OrderedUniformEncoder',
         'BaseMultiColumnTransformer',
     ]
