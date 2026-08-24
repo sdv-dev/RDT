@@ -2270,7 +2270,7 @@ class TestHyperTransformer(TestCase):
                 'categorical',
                 transformer_name='LabelEncoder',
                 transformer_parameters={
-                    'order_by': [],
+                    'add_noise': [],
                     'order': [],
                     'false': [],
                 },
@@ -2363,14 +2363,14 @@ class TestHyperTransformer(TestCase):
         ht.update_transformers_by_sdtype(
             'categorical',
             transformer_name='LabelEncoder',
-            transformer_parameters={'order_by': 'alphabetical'},
+            transformer_parameters={'add_noise': True},
         )
 
         # Assert
         assert len(ht.field_transformers) == 2
         assert ht.field_transformers['numerical_column'] == ff
         assert isinstance(ht.field_transformers['categorical_column'], LabelEncoder)
-        assert ht.field_transformers['categorical_column'].order_by == 'alphabetical'
+        assert ht.field_transformers['categorical_column'].add_noise is True
 
     def test_create_multi_column_fields(self):
         """Test ``_create_multi_column_fields``."""
