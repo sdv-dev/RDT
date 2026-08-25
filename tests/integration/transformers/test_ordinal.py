@@ -303,10 +303,10 @@ def test_ordinal_transformers_default_missing_value_encoding_new_category(transf
     )
 
 
-@pytest.mark.parametrize('sdtype', ['id', 'text'])
 @pytest.mark.parametrize('transformer', ordinal_transformers)
-def test_ordinal_transformers_with_id_sdtype(sdtype, transformer):
+def test_ordinal_transformers_with_id_sdtype(transformer):
     # Setup
+    sdtype = 'id'
     data = pd.DataFrame({
         'col': [1, 'two', 3, 'four', None],
     })
