@@ -43,11 +43,6 @@ class FloatFormatter(BaseTransformer):
             replace them with the given value. If the strings ``'mean'`` or ``'mode'``
             are given, replace them with the corresponding aggregation and if ``'random'``
             replace each null value with a random value in the data range. Defaults to ``mean``.
-         model_missing_values (bool):
-            **DEPRECATED** Whether to create a new column to indicate which values were null or
-            not. The column will be created only if there are null values. If ``True``, create
-            the new column if there are null values. If ``False``, do not create the new column
-            even if there are null values. Defaults to ``False``.
         learn_rounding_scheme (bool):
             Whether or not to learn what place to round to based on the data seen during ``fit``.
             If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
@@ -81,7 +76,6 @@ class FloatFormatter(BaseTransformer):
     def __init__(
         self,
         missing_value_replacement='mean',
-        model_missing_values=None,
         learn_rounding_scheme=False,
         enforce_min_max_values=False,
         computer_representation='Float',
@@ -90,9 +84,6 @@ class FloatFormatter(BaseTransformer):
         super().__init__()
         self.missing_value_replacement = missing_value_replacement
         self._set_missing_value_generation(missing_value_generation)
-        if model_missing_values is not None:
-            self._set_model_missing_values(model_missing_values)
-
         self.learn_rounding_scheme = learn_rounding_scheme
         self.enforce_min_max_values = enforce_min_max_values
         self.computer_representation = computer_representation
@@ -266,11 +257,6 @@ class GaussianNormalizer(FloatFormatter):
     to :math:`u` and then to :math:`x`.
 
     Args:
-        model_missing_values (bool):
-            **DEPRECATED** Whether to create a new column to indicate which values were null or
-            not. The column will be created only if there are null values. If ``True``, create
-            the new column if there are null values. If ``False``, do not create the new column
-            even if there are null values. Defaults to ``False``.
         learn_rounding_scheme (bool):
             Whether or not to learn what place to round to based on the data seen during ``fit``.
             If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
@@ -305,11 +291,6 @@ class GaussianNormalizer(FloatFormatter):
     _univariate = None
     _fallback_distribution = 'norm'
     _learned_distribution_name = None
-    _DEPRECATED_DISTRIBUTIONS_MAPPING = {
-        'gaussian': 'norm',
-        'student_t': 't',
-        'truncated_gaussian': 'truncnorm',
-    }
 
     @staticmethod
     def _get_distributions():
@@ -336,7 +317,6 @@ class GaussianNormalizer(FloatFormatter):
 
     def __init__(
         self,
-        model_missing_values=None,
         learn_rounding_scheme=False,
         enforce_min_max_values=False,
         distribution='truncnorm',
@@ -346,7 +326,6 @@ class GaussianNormalizer(FloatFormatter):
         # as this may lead to different outcomes in certain synthesizers
         # affecting the synthesizers directly and this is out of scope for now.
         super().__init__(
-            model_missing_values=model_missing_values,
             missing_value_generation=missing_value_generation,
             missing_value_replacement='mean',
             learn_rounding_scheme=learn_rounding_scheme,
@@ -355,15 +334,6 @@ class GaussianNormalizer(FloatFormatter):
 
         self._distributions = self._get_distributions()
         if isinstance(distribution, str):
-            if distribution in {'gaussian', 'student_t', 'truncated_gaussian'}:
-                warnings.warn(
-                    f"Future versions of RDT will not support '{distribution}' as an option. "
-                    f"Please use '{self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]}' "
-                    'instead.',
-                    FutureWarning,
-                )
-                distribution = self._DEPRECATED_DISTRIBUTIONS_MAPPING[distribution]
-
             self._learned_distribution_name = distribution
             distribution = self._distributions[distribution]
 
@@ -483,11 +453,6 @@ class ClusterBasedNormalizer(FloatFormatter):
     based on the mean and std of the selected component.
 
     Args:
-        model_missing_values (bool):
-            **DEPRECATED** Whether to create a new column to indicate which values were null or
-            not. The column will be created only if there are null values. If ``True``, create
-            the new column if there are null values. If ``False``, do not create the new column
-            even if there are null values. Defaults to ``False``.
         learn_rounding_scheme (bool):
             Whether or not to learn what place to round to based on the data seen during ``fit``.
             If ``True``, the data returned by ``reverse_transform`` will be rounded to that place.
@@ -527,7 +492,6 @@ class ClusterBasedNormalizer(FloatFormatter):
 
     def __init__(
         self,
-        model_missing_values=None,
         learn_rounding_scheme=False,
         enforce_min_max_values=False,
         max_clusters=10,
@@ -538,7 +502,6 @@ class ClusterBasedNormalizer(FloatFormatter):
         # as this may lead to different outcomes in certain synthesizers
         # affecting the synthesizers directly and this is out of scope for now.
         super().__init__(
-            model_missing_values=model_missing_values,
             missing_value_generation=missing_value_generation,
             missing_value_replacement='mean',
             learn_rounding_scheme=learn_rounding_scheme,

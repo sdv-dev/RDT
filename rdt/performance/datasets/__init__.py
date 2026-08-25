@@ -9,7 +9,6 @@ from rdt.performance.datasets import (
     id,
     numerical,
     pii,
-    text,
 )
 from rdt.performance.datasets.base import BaseDatasetGenerator
 
@@ -20,7 +19,6 @@ __all__ = [
     'id',
     'numerical',
     'pii',
-    'text',
     'BaseDatasetGenerator',
 ]
 
