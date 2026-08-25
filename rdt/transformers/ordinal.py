@@ -38,7 +38,7 @@ class OrderedUniformEncoder(UniformEncoder):
     """
 
     INPUT_SDTYPE = 'ordinal'
-    SUPPORTED_SDTYPES = ['ordinal', 'categorical', 'boolean', 'id', 'text']
+    SUPPORTED_SDTYPES = ['ordinal', 'categorical', 'boolean', 'id']
 
     def __init__(self, order=None, missing_value_encoding='new_category'):
         _validate_missing_value_encoding(missing_value_encoding)
@@ -185,7 +185,7 @@ class OrderedLabelEncoder(LabelEncoder):
     """
 
     INPUT_SDTYPE = 'ordinal'
-    SUPPORTED_SDTYPES = ['ordinal', 'categorical', 'boolean', 'id', 'text']
+    SUPPORTED_SDTYPES = ['ordinal', 'categorical', 'boolean', 'id']
 
     def __init__(self, order=None, add_noise=False, missing_value_encoding='new_category'):
         _validate_missing_value_encoding(missing_value_encoding)
