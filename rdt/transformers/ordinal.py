@@ -85,10 +85,10 @@ class OrderedUniformEncoder(UniformEncoder):
                 order = order.sort_values(key=lambda x: x.astype(str))
 
             if pd.isna(data).any():
-                order = np.append(order, [np.nan])
+                order = pd.Series(np.append(order, [None]))
 
         if self.missing_value_encoding is None:
-            order = self.order[~pd.isna(self.order)]
+            order = self.order.dropna()
 
         return order
 

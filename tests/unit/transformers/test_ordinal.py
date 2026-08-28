@@ -32,7 +32,7 @@ class TestOrderedUniformEncoder:
         transformer = OrderedUniformEncoder(order=['b', 'c', 'a', None])
 
         # Asserts
-        pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', np.nan]))
+        pd.testing.assert_series_equal(transformer.order, pd.Series(['b', 'c', 'a', None]))
 
     def test___init___duplicate_categories(self):
         """Test the ``__init__`` method errors if duplicate categories provided.
@@ -108,7 +108,7 @@ class TestOrderedUniformEncoder:
         ordered = transformer._get_order(arr)
 
         # Assert
-        np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, np.nan]))
+        np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, None]))
 
     def test__order_warns_mixed_dtypes(self):
         """Test transformer warns if the data contains mixed dtypes."""
