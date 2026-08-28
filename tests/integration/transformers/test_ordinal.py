@@ -14,6 +14,27 @@ from rdt.transformers import (
 class TestOrderedUniformEncoder:
     """Test class for the OrderedUniformEncoder."""
 
+    def test_end_to_end(self):
+        """Test that transformer works end-to-end with default alphanumeric ordering."""
+        # Setup
+        data = pd.DataFrame({'column_name': [1.0, 2.0, 3.0, 2.0, np.nan, 1.0, 1.0, 0.0]})
+        transformer = OrderedUniformEncoder()
+        column = 'column_name'
+
+        # Run
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error', module='rdt.transformers.categorical')
+            transformer.fit(data, column)
+            learned_order = transformer._get_order(data['column_name'])
+            transformed = transformer.transform(data)
+            reverse = transformer.reverse_transform(transformed)
+            expected_order = pd.Series([0, 1, 2, 3, None], dtype='object')
+
+        # Asserts
+        pd.testing.assert_series_equal(reverse[column], data[column])
+        pd.testing.assert_series_equal(learned_order, expected_order)
+        assert set(transformer.intervals.keys()) == {0, 1, 2, 3, None}
+
     def test_order(self):
         """Test that the ``order`` parameter is respected."""
         # Setup
