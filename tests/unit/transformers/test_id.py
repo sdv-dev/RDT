@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from rdt.transformers.id import IDGenerator, IndexGenerator, RegexGenerator
+from rdt.transformers.id import IndexGenerator, RegexGenerator
 
 
 class AsciiGenerator:
@@ -143,17 +143,6 @@ class TestIndexGenerator:
             'prefix_102_suffix',
         ]
         assert transformer._counter == 3
-
-
-class TestIDGenerator:
-    def test___init__(self):
-        """Test the warning message for ``IDGenerator``."""
-        msg = re.escape(
-            "The 'IDGenerator' has been renamed to 'IndexGenerator'. Please update the"
-            'name to ensure compatibility with future versions of RDT.'
-        )
-        with pytest.warns(FutureWarning, match=msg):
-            IDGenerator(prefix='prefix_', starting_value=100, suffix='_suffix')
 
 
 class TestRegexGenerator:
@@ -309,32 +298,6 @@ class TestRegexGenerator:
         error_message = "generation_order must be one of 'alphanumeric' or 'scrambled'."
         with pytest.raises(ValueError, match=error_message):
             RegexGenerator(generation_order='afdsfd')
-
-    def test__init__with_enforce_uniqueness(self):
-        """Test that the ``enforce_uniqueness`` parameter is deprecated."""
-        # Setup
-        expected_message = re.escape(
-            "The 'enforce_uniqueness' parameter is no longer supported. "
-            "Please use the 'cardinality_rule' parameter instead."
-        )
-
-        # Run
-        with pytest.warns(FutureWarning, match=expected_message):
-            instance_1 = RegexGenerator(enforce_uniqueness=True, cardinality_rule='unique')
-
-        with pytest.warns(FutureWarning, match=expected_message):
-            RegexGenerator('A-Za-z', None, 'alphanumeric', True)
-
-        with pytest.warns(FutureWarning, match=expected_message):
-            instance_2 = RegexGenerator(enforce_uniqueness=True)
-
-        with pytest.warns(FutureWarning, match=expected_message):
-            instance_3 = RegexGenerator(enforce_uniqueness=False)
-
-        # Assert
-        assert instance_1.cardinality_rule == 'unique'
-        assert instance_2.cardinality_rule == 'unique'
-        assert instance_3.cardinality_rule is None
 
     @patch('rdt.transformers.id.BaseTransformer.reset_randomization')
     @patch('rdt.transformers.id.strings_from_regex')
@@ -819,40 +782,6 @@ class TestRegexGenerator:
             'values (only 1 unique values left).'
         )
         np.testing.assert_array_equal(out, np.array(['A', 'B', 'C', 'D', 'E', 'F']))
-
-    @patch('rdt.transformers.id.LOGGER')
-    def test__reverse_transform_info_message(self, mock_logger):
-        """Test the ``_reverse_transform`` method.
-
-        Validate that the ``_reverse_transform`` method logs an info message when
-        ``enforce_uniqueness`` is ``False`` and the ``instance.data_length`` is bigger than
-        ``instance.generator_size``.
-
-        In this test we also test the backward compatibility, so when the transformer
-        does not have the ``cardinality_rule`` attribute, it should use the ``enforce_uniqueness``
-        attribute. This is necessary to keep a coverage of 100%.
-        """
-        # Setup
-        instance = RegexGenerator('[A-Z]', cardinality_rule=None)
-        del instance.cardinality_rule
-        instance.enforce_uniqueness = False
-        instance.data_length = 6
-        instance.generator_size = 5
-        instance.generated = 0
-        instance.columns = ['a']
-        columns_data = pd.Series()
-
-        # Run
-        instance._reverse_transform(columns_data)
-
-        # Assert
-        expected_format = (
-            "The data has %s rows but the regex for '%s' can only create %s unique values. Some "
-            "values in '%s' may be repeated."
-        )
-        expected_args = (6, 'a', 5, 'a')
-
-        mock_logger.info.assert_called_once_with(expected_format, *expected_args)
 
     def test__reverse_transform_match_not_enough_values(self):
         """Test the case when there are not enough values to match the cardinality rule."""

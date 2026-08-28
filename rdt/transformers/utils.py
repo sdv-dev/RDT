@@ -23,7 +23,7 @@ else:  # pragma: no cover
 LOGGER = logging.getLogger(__name__)
 
 MAX_DECIMALS = sys.float_info.dig
-DEPRECATED_SDTYPES_MAPPING = {'text': 'id'}
+DEPRECATED_SDTYPES_MAPPING = {}
 
 
 def _literal(character, max_repeat):
@@ -398,24 +398,6 @@ class WarnDict(dict):
         phased out.
         """
         return self.get(sdtype)
-
-
-def _handle_enforce_uniqueness_and_cardinality_rule(enforce_uniqueness, cardinality_rule):
-    if enforce_uniqueness is not None:
-        warnings.warn(
-            "The 'enforce_uniqueness' parameter is no longer supported. "
-            "Please use the 'cardinality_rule' parameter instead.",
-            FutureWarning,
-        )
-        if enforce_uniqueness and cardinality_rule is None:
-            return 'unique'
-
-    if cardinality_rule not in ['unique', 'match', 'scale', None]:
-        raise ValueError(
-            "The 'cardinality_rule' parameter must be one of 'unique', 'match', 'scale', or None."
-        )
-
-    return cardinality_rule
 
 
 def _extract_timezone_from_a_string(dt_str):

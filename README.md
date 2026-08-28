@@ -110,7 +110,7 @@ Config:
     "transformers": {
         "last_login": "UnixTimestampEncoder()",
         "email_optin": "BinaryEncoder()",
-        "credit_card": "FrequencyEncoder()",
+        "credit_card": "UniformEncoder()",
         "age": "FloatFormatter()",
         "dollars_spent": "FloatFormatter()"
     }

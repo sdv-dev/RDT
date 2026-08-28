@@ -10,19 +10,15 @@ from functools import lru_cache
 from rdt.transformers.base import BaseMultiColumnTransformer, BaseTransformer
 from rdt.transformers.boolean import BinaryEncoder
 from rdt.transformers.categorical import (
-    CustomLabelEncoder,
-    FrequencyEncoder,
     LabelEncoder,
     OneHotEncoder,
-    OrderedLabelEncoder,
-    OrderedUniformEncoder,
     UniformEncoder,
 )
 from rdt.transformers.datetime import (
     OptimizedTimestampEncoder,
     UnixTimestampEncoder,
 )
-from rdt.transformers.id import IDGenerator, IndexGenerator, RegexGenerator
+from rdt.transformers.id import IndexGenerator, RegexGenerator
 from rdt.transformers.null import NullTransformer
 from rdt.transformers.numerical import (
     ClusterBasedNormalizer,
@@ -31,21 +27,22 @@ from rdt.transformers.numerical import (
     LogScaler,
     LogitScaler,
 )
+from rdt.transformers.ordinal import (
+    OrderedLabelEncoder,
+    OrderedUniformEncoder,
+)
 from rdt.transformers.pii.anonymizer import (
     AnonymizedFaker,
     PseudoAnonymizedFaker,
 )
-from rdt.transformers.utils import WarnDict
 
 __all__ = [
     'BaseTransformer',
     'BaseMultiColumnTransformer',
     'BinaryEncoder',
     'ClusterBasedNormalizer',
-    'CustomLabelEncoder',
     'OrderedLabelEncoder',
     'FloatFormatter',
-    'FrequencyEncoder',
     'GaussianNormalizer',
     'LabelEncoder',
     'LogScaler',
@@ -56,7 +53,6 @@ __all__ = [
     'RegexGenerator',
     'AnonymizedFaker',
     'PseudoAnonymizedFaker',
-    'IDGenerator',
     'IndexGenerator',
     'get_transformer_name',
     'get_transformer_class',
@@ -94,15 +90,14 @@ TRANSFORMERS = {
     for transformer in BaseTransformer.get_subclasses()
 }
 
-DEFAULT_TRANSFORMERS = WarnDict(
-    boolean=UniformEncoder(),
-    categorical=UniformEncoder(),
-    datetime=UnixTimestampEncoder(),
-    id=RegexGenerator(),
-    numerical=FloatFormatter(),
-    pii=AnonymizedFaker(),
-    text=RegexGenerator(),
-)
+DEFAULT_TRANSFORMERS = {
+    'boolean': UniformEncoder(),
+    'categorical': UniformEncoder(),
+    'datetime': UnixTimestampEncoder(),
+    'id': RegexGenerator(),
+    'numerical': FloatFormatter(),
+    'pii': AnonymizedFaker(),
+}
 
 
 @lru_cache()
