@@ -10,7 +10,6 @@ import pandas as pd
 from rdt.transformers.base import BaseTransformer
 from rdt.transformers.utils import (
     _get_cardinality_frequency,
-    _handle_enforce_uniqueness_and_cardinality_rule,
     _sample_repetitions,
     fill_nan_with_none,
     strings_from_regex,
@@ -38,7 +37,7 @@ class IndexGenerator(BaseTransformer):
 
     IS_GENERATOR = True
     INPUT_SDTYPE = 'id'
-    SUPPORTED_SDTYPES = ['id', 'text']
+    SUPPORTED_SDTYPES = ['id']
 
     def __init__(self, prefix=None, starting_value=0, suffix=None):
         super().__init__()
@@ -79,21 +78,6 @@ class IndexGenerator(BaseTransformer):
         return pd.Series(values)
 
 
-class IDGenerator(IndexGenerator):
-    """Deprecated class name for ``IndexGenerator``.
-
-    Class to ensure backwards compatibility with previous versions of RDT.
-    """
-
-    def __init__(self, prefix=None, starting_value=0, suffix=None):
-        warnings.warn(
-            "The 'IDGenerator' has been renamed to 'IndexGenerator'. Please update the"
-            'name to ensure compatibility with future versions of RDT.',
-            FutureWarning,
-        )
-        super().__init__(prefix, starting_value, suffix)
-
-
 class RegexGenerator(BaseTransformer):
     """RegexGenerator transformer.
 
@@ -103,10 +87,6 @@ class RegexGenerator(BaseTransformer):
     Args:
         regex_format (str):
             String representing the regex function.
-        enforce_uniqueness (bool):
-            **DEPRECATED** Whether or not to ensure that the new generated data is all unique.
-            If it isn't possible to create the requested number of rows, then an error will
-            be raised. Defaults to ``None``.
         cardinality_rule (str):
             Rule that the generated data must follow.
             - If set to 'unique', the generated data must be unique.
@@ -125,7 +105,7 @@ class RegexGenerator(BaseTransformer):
 
     IS_GENERATOR = True
     INPUT_SDTYPE = 'id'
-    SUPPORTED_SDTYPES = ['id', 'text']
+    SUPPORTED_SDTYPES = ['id']
 
     def __getstate__(self):
         """Remove the generator when pickling."""
@@ -179,14 +159,11 @@ class RegexGenerator(BaseTransformer):
         regex_format='[A-Za-z]{5}',
         cardinality_rule=None,
         generation_order='alphanumeric',
-        enforce_uniqueness=None,
     ):
         super().__init__()
         self.output_properties = {None: {'next_transformer': None}}
         self.regex_format = regex_format
-        self.cardinality_rule = _handle_enforce_uniqueness_and_cardinality_rule(
-            enforce_uniqueness, cardinality_rule
-        )
+        self.cardinality_rule = cardinality_rule
         self.data_length = None
         self.generator = None
         if generation_order not in ['alphanumeric', 'scrambled']:
@@ -220,11 +197,7 @@ class RegexGenerator(BaseTransformer):
 
     def _sample_fallback(self, num_samples, template_samples):
         """Sample num_samples values such that they are all unique, disregarding the regex."""
-        unique_condition = (
-            self.cardinality_rule == 'unique'
-            if hasattr(self, 'cardinality_rule')
-            else self.enforce_uniqueness
-        )
+        unique_condition = self.cardinality_rule == 'unique'
         if unique_condition:
             if not self._num_fallback_samples_generated:
                 self.generator = self._create_numerical_fallback_generator()
@@ -479,14 +452,10 @@ class RegexGenerator(BaseTransformer):
         Returns:
             pandas.Series
         """
-        if hasattr(self, 'cardinality_rule'):
-            unique_condition = self.cardinality_rule == 'unique'
-            match_cardinality = self.cardinality_rule == 'match'
-            if match_cardinality and self._unique_regex_values is None:
-                self._unique_regex_values = self._generate_unique_regexes()
-        else:
-            unique_condition = self.enforce_uniqueness
-            match_cardinality = False
+        unique_condition = self.cardinality_rule == 'unique'
+        match_cardinality = self.cardinality_rule == 'match'
+        if match_cardinality and self._unique_regex_values is None:
+            self._unique_regex_values = self._generate_unique_regexes()
 
         num_samples = len(data) if (data is not None and len(data)) else self.data_length
         self._warn_not_enough_unique_values(num_samples, unique_condition, match_cardinality)

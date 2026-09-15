@@ -1,7 +1,6 @@
 import pickle
 import re
 import warnings
-from io import BytesIO
 
 import numpy as np
 import pandas as pd
@@ -10,11 +9,8 @@ import pytest
 from rdt.errors import InvalidConfigError
 from rdt.hyper_transformer import HyperTransformer
 from rdt.transformers import (
-    FrequencyEncoder,
     LabelEncoder,
     OneHotEncoder,
-    OrderedLabelEncoder,
-    OrderedUniformEncoder,
     UniformEncoder,
 )
 
@@ -45,7 +41,7 @@ class TestUniformEncoder:
         # Setup
         data = pd.DataFrame({'column_name': [1, 2, 3, 2, 1, 1, 1]})
         column = 'column_name'
-        transformer = UniformEncoder(order_by='numerical_value')
+        transformer = UniformEncoder()
 
         # Run
         transformer.fit(data, column)
@@ -221,322 +217,6 @@ class TestUniformEncoder:
             pd.testing.assert_frame_equal(transform1, transform3)
 
 
-class TestOrderedUniformEncoder:
-    """Test class for the OrderedUniformEncoder."""
-
-    def test_order(self):
-        """Test that the ``order`` parameter is respected."""
-        # Setup
-        data = pd.DataFrame({'column_name': [1, 2, 3, 2, np.nan, 1, 1]})
-        transformer = OrderedUniformEncoder(order=[2, 3, np.nan, 1])
-        column = 'column_name'
-
-        # Run
-        transformer.fit(data, column)
-        transformed = transformer.transform(data)
-        reverse = transformer.reverse_transform(transformed)
-        expected_order = pd.Series([2, 3, np.nan, 1], dtype=object)
-
-        # Asserts
-        pd.testing.assert_series_equal(reverse[column], data[column])
-        pd.testing.assert_series_equal(transformer.order, expected_order)
-
-    def test_string(self):
-        """Test that the transformer works with string labels."""
-        # Setup
-        data = pd.DataFrame({'column_name': ['b', 'a', 'c', 'a', np.nan, 'b', 'b']})
-        transformer = OrderedUniformEncoder(order=['a', 'c', np.nan, 'b'])
-        column = 'column_name'
-
-        # Run
-        transformer.fit(data, column)
-        transformed = transformer.transform(data)
-        reverse = transformer.reverse_transform(transformed)
-
-        # Asserts
-        pd.testing.assert_series_equal(reverse[column], data[column])
-
-    def test_mixt_dtype(self):
-        """Test that the transformer works with mixture of dtypes labels."""
-        # Setup
-        data = pd.DataFrame({'column_name': [1, 'a', 'c', 'a', np.nan, 1, 1]})
-        transformer = OrderedUniformEncoder(order=['a', 'c', np.nan, 1])
-        column = 'column_name'
-
-        # Run
-        transformer.fit(data, column)
-        transformed = transformer.transform(data)
-        reverse = transformer.reverse_transform(transformed)
-
-        # Asserts
-        pd.testing.assert_series_equal(reverse[column], data[column])
-
-
-def test_frequency_encoder_numerical_nans():
-    """Ensure FrequencyEncoder works on numerical + nan only columns."""
-
-    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
-    column = 'column_name'
-
-    transformer = FrequencyEncoder()
-    transformer.fit(data, column)
-    transformed = transformer.transform(data)
-    reverse = transformer.reverse_transform(transformed)
-
-    pd.testing.assert_frame_equal(reverse, data)
-
-
-def test_frequency_encoder_numerical_nans_no_warning():
-    """Ensure FrequencyEncoder does not emit FutureWarning with nan values.
-
-    Related to Issue #793 (https://github.com/sdv-dev/RDT/issues/793)
-    """
-    # Setup
-    data = pd.DataFrame({'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')})
-    column = 'column_name'
-
-    # Run and Assert
-    transformer = FrequencyEncoder()
-    with warnings.catch_warnings():
-        warnings.simplefilter('error', FutureWarning)
-        transformer.fit(data, column)
-        transformed = transformer.transform(data)
-        reverse = transformer.reverse_transform(transformed)
-
-    pd.testing.assert_frame_equal(reverse, data)
-
-
-def test_frequency_encoder_unseen_transform_data():
-    """Ensure FrequencyEncoder works when data to transform wasn't seen during fit."""
-
-    fit_data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
-    transform_data = pd.DataFrame([1, 2, np.nan, 3], columns=['column_name'])
-    column = 'column_name'
-
-    transformer = FrequencyEncoder()
-    transformer.fit(fit_data, column)
-    transformed = transformer.transform(transform_data)
-    reverse = transformer.reverse_transform(transformed)
-
-    pd.testing.assert_frame_equal(reverse[:3], transform_data[:3])
-    assert reverse.iloc[3][0] in {1, 2} or pd.isna(reverse.iloc[3])[0]
-
-
-def test_frequency_encoder_unseen_transform_nan():
-    """Ensure FrequencyEncoder works when np.nan to transform wasn't seen during fit."""
-
-    fit_data = pd.DataFrame([1.0, 2.0, 3.0], columns=['column_name'])
-    transform_data = pd.DataFrame([1, 2, 3, np.nan], columns=['column_name'])
-    column = 'column_name'
-
-    transformer = FrequencyEncoder()
-    transformer.fit(fit_data, column)
-    transformed = transformer.transform(transform_data)
-    reverse = transformer.reverse_transform(transformed)
-    pd.testing.assert_frame_equal(reverse[:3], transform_data[:3])
-    assert reverse.iloc[3][0] in {1, 2, 3}
-
-
-def test_frequency_encoder_pickle_nans():
-    """Ensure that FrequencyEncoder can be pickled and loaded with nan value."""
-    # setup
-    data = pd.DataFrame([1, 2, float('nan'), np.nan], columns=['column_name'])
-    column = 'column_name'
-
-    transformer = FrequencyEncoder()
-    transformer.fit(data, column)
-    transformed = transformer.transform(data)
-
-    # create pickle file on memory
-    bytes_io = BytesIO()
-    pickle.dump(transformer, bytes_io)
-    # rewind
-    bytes_io.seek(0)
-
-    # run
-    pickled_transformer = pickle.load(bytes_io)
-
-    # assert
-    pickle_transformed = pickled_transformer.transform(data)
-    pd.testing.assert_frame_equal(pickle_transformed, transformed)
-
-
-def test_frequency_encoder_strings():
-    """Test the FrequencyEncoder on string data.
-
-    Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform on string data. Expect that the reverse transformed data
-    is the same as the input.
-
-    Input:
-        - 4 rows of string data
-    Output:
-        - The reverse transformed data
-    """
-    # setup
-    data = pd.DataFrame(['a', 'b', 'a', 'c'], columns=['column_name'])
-    column = 'column_name'
-    transformer = FrequencyEncoder()
-
-    # run
-    transformer.fit(data, column)
-    reverse = transformer.reverse_transform(transformer.transform(data))
-
-    # assert
-    pd.testing.assert_frame_equal(data, reverse)
-
-
-def test_frequency_encoder_strings_2_categories():
-    """Test the FrequencyEncoder on string data.
-
-    Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform on string data, when there are 2 categories of strings with
-    the same value counts. Expect that the reverse transformed data is the
-    same as the input.
-
-    Input:
-        - 4 rows of string data
-    Output:
-        - The reverse transformed data
-    """
-    # setup
-    data = pd.DataFrame(['a', 'b', 'a', 'b'], columns=['column_name'])
-    column = 'column_name'
-    transformer = FrequencyEncoder()
-
-    transformer.fit(data, column)
-    reverse = transformer.reverse_transform(transformer.transform(data))
-
-    # assert
-    pd.testing.assert_frame_equal(data, reverse)
-
-
-def test_frequency_encoder_integers():
-    """Test the FrequencyEncoder on integer data.
-
-    Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform on integer data. Expect that the reverse transformed data is the
-    same as the input.
-
-    Input:
-        - 4 rows of int data
-    Output:
-        - The reverse transformed data
-    """
-    # setup
-    data = pd.DataFrame([1, 2, 3, 2], columns=['column_name'])
-    column = 'column_name'
-    transformer = FrequencyEncoder()
-
-    # run
-    transformer.fit(data, column)
-    reverse = transformer.reverse_transform(transformer.transform(data))
-
-    # assert
-    pd.testing.assert_frame_equal(data, reverse)
-
-
-def test_frequency_encoder_bool():
-    """Test the FrequencyEncoder on boolean data.
-
-    Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform on boolean data. Expect that the reverse transformed data is the
-    same as the input.
-
-    Input:
-        - 4 rows of bool data
-    Output:
-        - The reverse transformed data
-    """
-    # setup
-    data = pd.DataFrame([True, False, True, False], columns=['column_name'])
-    column = 'column_name'
-    transformer = FrequencyEncoder()
-
-    # run
-    transformer.fit(data, column)
-    reverse = transformer.reverse_transform(transformer.transform(data))
-
-    # assert
-    pd.testing.assert_frame_equal(data, reverse)
-
-
-def test_frequency_encoder_mixed():
-    """Test the FrequencyEncoder on mixed type data.
-
-    Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform on mixed type data. Expect that the reverse transformed data is
-    the same as the input.
-
-    Input:
-        - 4 rows of mixed data
-    Output:
-        - The reverse transformed data
-    """
-    # setup
-    data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
-    column = 'column_name'
-    transformer = FrequencyEncoder()
-
-    # run
-    transformer.fit(data, column)
-    reverse = transformer.reverse_transform(transformer.transform(data))
-
-    # assert
-    pd.testing.assert_frame_equal(data, reverse)
-
-
-def test_frequency_encoder_mixed_more_rows():
-    """Test the FrequencyEncoder on mixed type data.
-
-    Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform on mixed type data, when there is a larger number of rows.
-    Expect that the reverse transformed data is the same as the input.
-
-    Input:
-        - 4 rows of mixed data
-    Output:
-        - The reverse transformed data
-    """
-    # setup
-    data = pd.DataFrame([True, 'a', 1, None], columns=['column_name'])
-    column = 'column_name'
-    transform_data = pd.DataFrame(['a', 1, None, 'a', True, 1], columns=['column_name'])
-    transformer = FrequencyEncoder()
-
-    # run
-    transformer.fit(data, column)
-    transformed = transformer.transform(transform_data)
-    reverse = transformer.reverse_transform(transformed)
-
-    # assert
-    pd.testing.assert_frame_equal(transform_data, reverse)
-
-
-def test_frequency_encoder_noise():
-    """Test the FrequencyEncoder with ``add_noise``.
-
-    Ensure that the FrequencyEncoder can fit, transform, and reverse
-    transform when ``add_noise = True``.
-
-    Input:
-        - Many rows of int data
-    Output:
-        - The reverse transformed data
-    """
-    # setup
-    data = pd.DataFrame(np.random.choice(a=range(100), size=10000), columns=['column_name'])
-    column = 'column_name'
-    transformer = FrequencyEncoder(add_noise=True)
-
-    # run
-    transformer.fit(data, column)
-    reverse = transformer.reverse_transform(transformer.transform(data))
-
-    # assert
-    pd.testing.assert_frame_equal(data, reverse)
-
-
 def test_one_hot_numerical_nans():
     """Ensure OneHotEncoder works on numerical + nan only columns."""
 
@@ -648,33 +328,11 @@ def test_label_encoder_numerical_nans_no_warning():
     pd.testing.assert_frame_equal(reverse, data)
 
 
-def test_label_encoder_order_by_numerical():
-    """Test the LabelEncoder appropriately transforms data if `order_by` is 'numerical_value'.
-
-    Input:
-        - pandas.DataFrame of numeric data.
-
-    Output:
-        - Transformed data should map labels to values based on numerical order.
-    """
-
-    data = pd.DataFrame([5, np.nan, 3.11, 100, 67.8, -2.5], columns=['column_name'])
-
-    transformer = LabelEncoder(order_by='numerical_value')
-    transformer.fit(data, 'column_name')
-    transformed = transformer.transform(data)
-    reverse = transformer.reverse_transform(transformed)
-
-    expected = pd.DataFrame([2, 5, 1, 4, 3, 0], columns=['column_name'])
-    pd.testing.assert_frame_equal(transformed, expected)
-    pd.testing.assert_frame_equal(reverse, data)
-
-
 def test_label_encoder_with_numerical_value():
     """Test setting numerical_value works with missing_value_encoding."""
     # Setup
     data = pd.DataFrame({'column_name': pd.Series([2, 1, pd.NA, 3], dtype='object')})
-    transformer = LabelEncoder(order_by='numerical_value', missing_value_encoding=None)
+    transformer = LabelEncoder(missing_value_encoding=None)
 
     # Run
     transformer.fit(data, 'column_name')
@@ -682,33 +340,11 @@ def test_label_encoder_with_numerical_value():
     reverse = transformer.reverse_transform(transformed)
 
     # Assert
-    expected = pd.DataFrame({'column_name': [1.0, 0.0, np.nan, 2.0]})
+    expected = pd.DataFrame({'column_name': [0.0, 1.0, np.nan, 2.0]})
     pd.testing.assert_frame_equal(transformed, expected)
     pd.testing.assert_frame_equal(
         reverse, pd.DataFrame({'column_name': [2, 1, np.nan, 3]}, dtype='object')
     )
-
-
-def test_label_encoder_order_by_alphabetical():
-    """Test the LabelEncoder appropriately transforms data if `order_by` is 'alphabetical'.
-
-    Input:
-        - pandas.DataFrame of string data.
-
-    Output:
-        - Transformed data should map labels to values based on alphabetical order.
-    """
-
-    data = pd.DataFrame(['one', 'two', np.nan, 'three', 'four'], columns=['column_name'])
-
-    transformer = LabelEncoder(order_by='alphabetical')
-    transformer.fit(data, 'column_name')
-    transformed = transformer.transform(data)
-    reverse = transformer.reverse_transform(transformed)
-
-    expected = pd.DataFrame([1, 3, 4, 2, 0], columns=['column_name'])
-    pd.testing.assert_frame_equal(transformed, expected)
-    pd.testing.assert_frame_equal(reverse, data)
 
 
 def test_label_encoder_add_noise():
@@ -753,89 +389,13 @@ def test_label_encoder_with_add_noise_and_missing_value_encoding():
     pd.testing.assert_frame_equal(reverse, pd.DataFrame({'column_name': ['a', np.nan, 'b']}))
 
 
-def test_ordered_label_encoder():
-    """Test the OrderedLabelEncoder end to end.
-
-    Input:
-        - pandas.DataFrame of different types of data.
-
-    Output:
-        - Transformed data should have values based on the provided order.
-        - Reverse transformed data should match the input
-    """
-
-    data = pd.DataFrame(['two', 3, 1, np.nan, 'zero'], columns=['column_name'])
-    transformer = OrderedLabelEncoder(order=['zero', 1, 'two', 3, np.nan])
-    transformer.fit(data, 'column_name')
-
-    transformed = transformer.transform(data)
-    reverse = transformer.reverse_transform(transformed)
-
-    expected = pd.DataFrame([2, 3, 1, 4, 0], columns=['column_name'])
-    pd.testing.assert_frame_equal(transformed, expected)
-    pd.testing.assert_frame_equal(reverse, data)
-
-
-def test_ordered_label_encoder_nans():
-    """The the OrderedLabelEncoder with missing values.
-
-    Input:
-        - pandas.DataFrame of different types of data and different types of missing values.
-
-    Output:
-        - Transformed data should have values based on the provided order.
-        - Reverse transformed data should match the input
-    """
-
-    data = pd.DataFrame(['two', 3, 1, np.nan, 'zero', None], columns=['column_name'])
-    transformer = OrderedLabelEncoder(order=['zero', 1, 'two', 3, None])
-    transformer.fit(data, 'column_name')
-
-    transformed = transformer.transform(data)
-    reverse = transformer.reverse_transform(transformed)
-
-    expected = pd.DataFrame([2, 3, 1, 4, 0, 4], columns=['column_name'])
-    pd.testing.assert_frame_equal(transformed, expected)
-    pd.testing.assert_frame_equal(reverse, data)
-
-
-def test_ordered_label_encoder_numerical_nans_no_warning():
-    """Ensure OrderedLabelEncoder does not emit FutureWarning with nan values.
-
-    Related to Issue #793 (https://github.com/sdv-dev/RDT/issues/793)
-    """
-    # Setup
-    data = pd.DataFrame({'column_name': pd.Series([1, 2, float('nan'), np.nan], dtype='object')})
-    column = 'column_name'
-
-    # Run and Assert
-    transformer = OrderedLabelEncoder(order=[1, 2, np.nan])
-    with warnings.catch_warnings():
-        warnings.simplefilter('error', FutureWarning)
-        transformer.fit(data, column)
-        transformed = transformer.transform(data)
-        reverse = transformer.reverse_transform(transformed)
-
-    pd.testing.assert_frame_equal(reverse, data)
-
-
 categorical_transformers = [
-    UniformEncoder(),
-    OrderedUniformEncoder(order=[1, 'two', 3, 'four', None]),
-    LabelEncoder(),
-    OrderedLabelEncoder(order=[1, 'two', 3, 'four', None]),
+    UniformEncoder(missing_value_encoding=None),
+    LabelEncoder(missing_value_encoding=None),
 ]
 
 
-@pytest.mark.parametrize(
-    'transformer',
-    [
-        UniformEncoder(missing_value_encoding=None),
-        OrderedUniformEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
-        LabelEncoder(missing_value_encoding=None),
-        OrderedLabelEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
-    ],
-)
+@pytest.mark.parametrize('transformer', categorical_transformers)
 def test_categorical_transformers_missing_value_encoding_none(transformer):
     """Test categorical transformers preserve missing values when configured to do so."""
     # Setup
@@ -857,15 +417,7 @@ def test_categorical_transformers_missing_value_encoding_none(transformer):
     )
 
 
-@pytest.mark.parametrize(
-    'transformer',
-    [
-        UniformEncoder(missing_value_encoding=None),
-        OrderedUniformEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
-        LabelEncoder(missing_value_encoding=None),
-        OrderedLabelEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
-    ],
-)
+@pytest.mark.parametrize('transformer', categorical_transformers)
 def test_categorical_transformers_missing_value_encoding_none_when_nulls_not_seen(
     transformer,
 ):
@@ -893,15 +445,7 @@ def test_categorical_transformers_missing_value_encoding_none_when_nulls_not_see
     )
 
 
-@pytest.mark.parametrize(
-    'transformer',
-    [
-        UniformEncoder(missing_value_encoding=None),
-        OrderedUniformEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
-        LabelEncoder(missing_value_encoding=None),
-        OrderedLabelEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
-    ],
-)
+@pytest.mark.parametrize('transformer', categorical_transformers)
 def test_categorical_transformers_missing_value_encoding_none_all_missing(transformer):
     """Test transformers with no learned categories keep missing values missing."""
     # Setup
@@ -918,15 +462,7 @@ def test_categorical_transformers_missing_value_encoding_none_all_missing(transf
     assert reverse_transformed.shape == data.shape
 
 
-@pytest.mark.parametrize(
-    'transformer',
-    [
-        UniformEncoder(missing_value_encoding=None),
-        OrderedUniformEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
-        LabelEncoder(missing_value_encoding=None),
-        OrderedLabelEncoder(order=[1, 'two', 3, 'four'], missing_value_encoding=None),
-    ],
-)
+@pytest.mark.parametrize('transformer', categorical_transformers)
 def test_categorical_transformers_missing_value_encoding_none_reverse_passes_nulls_through(
     transformer,
 ):
@@ -950,17 +486,11 @@ def test_categorical_transformers_missing_value_encoding_none_reverse_passes_nul
     )
 
 
-@pytest.mark.parametrize(
-    'transformer',
-    [
-        LabelEncoder(missing_value_encoding=None),
-        OrderedLabelEncoder(order=['a', 'b'], missing_value_encoding=None),
-    ],
-)
-def test_label_encoders_missing_value_encoding_none_with_category_dtype(transformer):
+def test_label_encoders_missing_value_encoding_none_with_category_dtype():
     """Test label encoders keep transformed pandas category columns numeric."""
     # Setup
     data = pd.DataFrame({'col': pd.Series(['a', None, 'b'], dtype='category')})
+    transformer = LabelEncoder(missing_value_encoding=None)
 
     # Run
     transformer.fit(data, 'col')
@@ -983,9 +513,7 @@ def test_label_encoders_missing_value_encoding_none_with_category_dtype(transfor
     'transformer',
     [
         UniformEncoder(),
-        OrderedUniformEncoder(order=[1, 'two', 3, 'four', None]),
         LabelEncoder(),
-        OrderedLabelEncoder(order=[1, 'two', 3, 'four', None]),
     ],
 )
 def test_categorical_transformers_default_missing_value_encoding_new_category(transformer):
@@ -1009,15 +537,14 @@ def test_categorical_transformers_default_missing_value_encoding_new_category(tr
     )
 
 
-@pytest.mark.parametrize('sdtype', ['id', 'text'])
 @pytest.mark.parametrize('transformer', categorical_transformers)
-def test_categorical_transformers_with_id_sdtype(sdtype, transformer):
+def test_categorical_transformers_with_id_sdtype(transformer):
     # Setup
     data = pd.DataFrame({
         'col': [1, 'two', 3, 'four', None],
     })
     hyper_transformer = HyperTransformer()
-    config = {'sdtypes': {'col': sdtype}, 'transformers': {'col': transformer}}
+    config = {'sdtypes': {'col': 'id'}, 'transformers': {'col': transformer}}
 
     # Run
     hyper_transformer.set_config(config)
@@ -1029,12 +556,10 @@ def test_categorical_transformers_with_id_sdtype(sdtype, transformer):
     pd.testing.assert_frame_equal(data, reverse_transformed)
 
 
-@pytest.mark.parametrize('sdtype', ['id', 'text'])
-@pytest.mark.parametrize('transformer', [FrequencyEncoder(), OneHotEncoder()])
-def test_unsupported_categorical_transformers_with_id_sdtype(sdtype, transformer):
+def test_unsupported_categorical_transformers_with_id_sdtype():
     # Setup
     hyper_transformer = HyperTransformer()
-    config = {'sdtypes': {'col': sdtype}, 'transformers': {'col': transformer}}
+    config = {'sdtypes': {'col': 'id'}, 'transformers': {'col': OneHotEncoder()}}
     expected_invalid_error = re.escape(
         "Some transformers you've assigned are not compatible with the sdtypes. "
         "Please change the following columns: ['col']"
