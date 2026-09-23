@@ -73,7 +73,9 @@ class OrderedUniformEncoder(UniformEncoder):
 
     def _get_order(self, data):
         order = self.order
-        if self.order is None:
+        data_has_nans = pd.isna(data).any()
+        order_has_nans = pd.isna(order).any() if order is not None else False
+        if order is None:
             order = pd.Series(data).dropna().drop_duplicates()
             try:
                 order = order.sort_values()
@@ -84,11 +86,11 @@ class OrderedUniformEncoder(UniformEncoder):
                 )
                 order = order.sort_values(key=lambda x: x.astype(str))
 
-            if pd.isna(data).any():
-                order = pd.Series(np.append(order, [None]))
+        if data_has_nans and not order_has_nans:
+            order = pd.Series(np.append(order, [None]))
 
         if self.missing_value_encoding is None:
-            order = self.order.dropna()
+            order = order.dropna()
 
         return order
 

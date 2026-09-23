@@ -110,6 +110,20 @@ class TestOrderedUniformEncoder:
         # Assert
         np.testing.assert_array_equal(ordered, np.array([-2.5, 3.11, 5, 67.8, 100, None]))
 
+    def test__get_order_with_order_and_nans(self):
+        """Test the ``_get_order`` method with a predefined order and null values."""
+        # Setup
+        transformer = OrderedUniformEncoder(order=['LOW', 'MEDIUM', 'HIGH'])
+        arr = np.array(['LOW', 'MEDIUM', 'HIGH', np.nan, 'LOW'], dtype='object')
+
+        # Run
+        ordered = transformer._get_order(arr)
+
+        # Assert
+        np.testing.assert_array_equal(
+            ordered, np.array(['LOW', 'MEDIUM', 'HIGH', None], dtype='object')
+        )
+
     def test__order_warns_mixed_dtypes(self):
         """Test transformer warns if the data contains mixed dtypes."""
         # Setup
