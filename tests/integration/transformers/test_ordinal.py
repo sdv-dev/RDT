@@ -52,6 +52,25 @@ class TestOrderedUniformEncoder:
         pd.testing.assert_series_equal(reverse[column], data[column])
         pd.testing.assert_series_equal(transformer.order, expected_order)
 
+    def test_without_nan_in_order(self):
+        """Test end to end with data with NaNs and no NaNs in the order."""
+        # Setup
+        data = pd.DataFrame({'column_name': [1, 2, 3, 2, np.nan, 1, 1]})
+        transformer = OrderedUniformEncoder(order=[2, 3, 1])
+        column = 'column_name'
+
+        # Run
+        transformer.fit(data, column)
+        transformed = transformer.transform(data)
+        reverse = transformer.reverse_transform(transformed)
+        expected_order = pd.Series([2, 3, 1], dtype=object)
+        order_with_nan = transformer._get_order(data['column_name'])
+
+        # Asserts
+        pd.testing.assert_series_equal(reverse[column], data[column])
+        pd.testing.assert_series_equal(transformer.order, expected_order)
+        pd.testing.assert_series_equal(order_with_nan, pd.Series([2, 3, 1, None], dtype=object))
+
     def test_string(self):
         """Test that the transformer works with string labels."""
         # Setup
