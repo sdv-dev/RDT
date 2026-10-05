@@ -1,4 +1,4 @@
-Faker==40.39.0
+Faker==40.40.0
 copulas==0.14.1
 numpy==2.5.3
 pandas==2.3.3
