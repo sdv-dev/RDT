@@ -288,7 +288,7 @@ class HyperTransformer:
             warnings.warn(self._REFIT_MESSAGE)
 
     def _validate_update_transformers_by_sdtype(
-        self, sdtype, transformer, transformer_name, transformer_parameters
+        self, sdtype, transformer_name, transformer_parameters
     ):
         if not self.field_sdtypes:
             raise ConfigNotSetError(
@@ -296,59 +296,24 @@ class HyperTransformer:
                 'pre-populate all the sdtypes and transformers from your dataset.'
             )
 
-        if transformer_name is None:
-            if transformer is None:
-                raise InvalidConfigError("Missing required parameter 'transformer_name'.")
-
-            if not isinstance(transformer, BaseTransformer):
-                raise InvalidConfigError(
-                    'Invalid transformer. Please input an rdt transformer object.'
-                )
-
-            if sdtype not in transformer.get_supported_sdtypes():
-                raise InvalidConfigError(
-                    "The transformer you've assigned is incompatible with the sdtype."
-                )
-
-        else:
-            if (
-                transformer_name not in get_class_by_transformer_name()
-                or sdtype
-                not in get_class_by_transformer_name()[transformer_name].get_supported_sdtypes()
-            ):
-                raise InvalidConfigError(
-                    f"Invalid transformer name '{transformer_name}' for the '{sdtype}' sdtype."
-                )
-
-            if transformer_parameters is not None:
-                transformer = get_class_by_transformer_name()[transformer_name]
-                valid = inspect.signature(transformer).parameters
-                invalid_parameters = {arg for arg in transformer_parameters if arg not in valid}
-                if invalid_parameters:
-                    raise TransformerInputError(
-                        f'Invalid parameters {tuple(sorted(invalid_parameters))} '
-                        f"for the '{transformer_name}'."
-                    )
-
-    def _warn_update_transformers_by_sdtype(self, transformer, transformer_name):
-        if self._fitted:
-            warnings.warn(self._REFIT_MESSAGE)
-
-        if transformer_name is not None:
-            if transformer is not None:
-                warnings.warn(
-                    "The 'transformer' parameter will no longer be supported in future versions "
-                    "of the RDT. Using the 'transformer_name' parameter instead.",
-                    FutureWarning,
-                )
-
-        else:
-            warnings.warn(
-                "The 'transformer' parameter will no longer be supported in future versions "
-                "of the RDT. Please use the 'transformer_name' and 'transformer_parameters' "
-                'parameters instead.',
-                FutureWarning,
+        if (
+            transformer_name not in get_class_by_transformer_name()
+            or sdtype
+            not in get_class_by_transformer_name()[transformer_name].get_supported_sdtypes()
+        ):
+            raise InvalidConfigError(
+                f"Invalid transformer name '{transformer_name}' for the '{sdtype}' sdtype."
             )
+
+        if transformer_parameters is not None:
+            transformer = get_class_by_transformer_name()[transformer_name]
+            valid = inspect.signature(transformer).parameters
+            invalid_parameters = {arg for arg in transformer_parameters if arg not in valid}
+            if invalid_parameters:
+                raise TransformerInputError(
+                    f'Invalid parameters {tuple(sorted(invalid_parameters))} '
+                    f"for the '{transformer_name}'."
+                )
 
     def _remove_column_in_multi_column_fields(self, column):
         """Remove a column that is part of a multi-column field.
@@ -401,42 +366,35 @@ class HyperTransformer:
     def update_transformers_by_sdtype(
         self,
         sdtype,
-        transformer=None,
         transformer_name=None,
         transformer_parameters=None,
     ):
         """Update the transformers for the specified ``sdtype``.
 
-        Given an ``sdtype`` and a ``transformer``, change all the fields of the ``sdtype``
+        Given an ``sdtype`` and a ``transformer_name``, change all the fields of the ``sdtype``
         to use the given transformer.
 
         Args:
             sdtype (str):
                 Semantic data type for the transformer.
-            transformer (rdt.transformers.BaseTransformer):
-                Transformer class or instance to be used for the given ``sdtype``.
-                Note: this parameter is deprecated, use ``transformer_name`` and
-                ``transformer_parameters`` instead.
             transformer_name (str):
                 A string with the class name of the transformer.
             transformer_parameters (dict):
                 A dict of the kwargs of the transformer.
         """
         self._validate_update_transformers_by_sdtype(
-            sdtype, transformer, transformer_name, transformer_parameters
+            sdtype, transformer_name, transformer_parameters
         )
-        self._warn_update_transformers_by_sdtype(transformer, transformer_name)
+        if self._fitted:
+            warnings.warn(self._REFIT_MESSAGE)
 
-        transformer_instance = transformer
+        if transformer_parameters is not None:
+            transformer_instance = get_class_by_transformer_name()[transformer_name](
+                **transformer_parameters
+            )
 
-        if transformer_name is not None:
-            if transformer_parameters is not None:
-                transformer_instance = get_class_by_transformer_name()[transformer_name](
-                    **transformer_parameters
-                )
-
-            else:
-                transformer_instance = get_class_by_transformer_name()[transformer_name]()
+        else:
+            transformer_instance = get_class_by_transformer_name()[transformer_name]()
 
         for field, field_sdtype in self.field_sdtypes.items():
             if field_sdtype == sdtype:

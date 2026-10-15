@@ -32,20 +32,6 @@ class TestUnixTimestampEncoder:
         assert transformer.datetime_format == '%M-%d-%Y'
         assert transformer.enforce_min_max_values is True
 
-    def test___init__with_model_missing_values(self):
-        """Test the ``__init__`` method and the passed arguments are stored as attributes."""
-        # Run
-        transformer = UnixTimestampEncoder(
-            missing_value_replacement='mode',
-            model_missing_values=False,
-            datetime_format='%M-%d-%Y',
-        )
-
-        # Asserts
-        assert transformer.missing_value_replacement == 'mode'
-        assert transformer.missing_value_generation == 'random'
-        assert transformer.datetime_format == '%M-%d-%Y'
-
     def test__convert_to_datetime(self):
         """Test the ``_convert_to_datetime`` method.
 
@@ -230,12 +216,12 @@ class TestUnixTimestampEncoder:
         datetimes = transformer.null_transformer.reverse_transform.mock_calls[0][1][0]
         np.testing.assert_array_equal(data.to_numpy(), datetimes)
 
-    def test__reverse_transform_helper_model_missing_values_true(self):
+    def test__reverse_transform_helper_missing_value_generation_from_column(self):
         """Test the ``_reverse_transform_helper`` with null values.
 
         Setup:
             - Mock the ``instance.null_transformer``.
-            - Set the ``model_missing_values``.
+            - Set the ``missing_value_generation`` to ``from_column``.
 
         Input:
             - a pandas series.
@@ -248,7 +234,7 @@ class TestUnixTimestampEncoder:
         """
         # Setup
         data = pd.to_datetime(['2020-01-01', '2020-02-01', '2020-03-01'])
-        transformer = UnixTimestampEncoder(model_missing_values=True)
+        transformer = UnixTimestampEncoder(missing_value_generation='from_column')
         transformer.null_transformer = Mock()
         transformer.null_transformer.reverse_transform.return_value = pd.Series([1, 2, 3])
 

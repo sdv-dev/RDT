@@ -132,25 +132,7 @@ class TestFloatFormatter:
         # Assert
         pd.testing.assert_frame_equal(result[['col1', 'col2']], data)
 
-    def test_model_missing_value(self):
-        """Test that we are still able to use ``model_missing_value``."""
-        # Setup
-        data = pd.DataFrame([1, 2, 1, 2, np.nan, 1], columns=['a'])
-        column = 'a'
-
-        # Run
-        nt = FloatFormatter('mean', True)
-        nt.fit(data, column)
-        transformed = nt.transform(data)
-        reverse = nt.reverse_transform(transformed)
-
-        # Assert
-        assert isinstance(transformed, pd.DataFrame)
-        assert transformed.shape == (6, 2)
-        assert list(transformed.iloc[:, 1]) == [0, 0, 0, 0, 1, 0]
-        np.testing.assert_array_almost_equal(reverse, data, decimal=2)
-
-    def test_missing_value_replacement_set_to_random_and_model_missing_values(
+    def test_missing_value_replacement_set_to_random(
         self,
     ):
         """Test that we are still able to use ``missing_value_replacement`` when is ``random``."""
@@ -158,7 +140,7 @@ class TestFloatFormatter:
         data = pd.DataFrame({'a': [1, 2, 3, np.nan, np.nan, 4]})
 
         # Run
-        ft = FloatFormatter('random', True)
+        ft = FloatFormatter('random', missing_value_generation='from_column')
         ft.fit(data, 'a')
         transformed = ft.transform(data)
         reverse = ft.reverse_transform(transformed)

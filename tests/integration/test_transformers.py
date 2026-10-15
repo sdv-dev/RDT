@@ -45,7 +45,6 @@ SDTYPE_TO_DTYPES = {
     'integer': ['i'],
     'numerical': ['f', 'i'],
     'pii': ['O', 'i', 'f'],
-    'text': ['O', 'i', 'f'],
 }
 
 
@@ -94,7 +93,6 @@ def _is_valid_transformer(transformer_name):
         'IdentityTransformer',
         'Dummy',
         'OrderedLabelEncoder',
-        'CustomLabelEncoder',
         'OrderedUniformEncoder',
         'BaseMultiColumnTransformer',
     ]

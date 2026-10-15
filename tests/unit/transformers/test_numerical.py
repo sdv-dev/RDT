@@ -815,21 +815,6 @@ class TestGaussianNormalizer:
 
         assert ct._distribution is univariate
 
-    def test___init__deprecated_distributions_warning(self):
-        """Test it warns when using deprecated distributions."""
-        # Run and Assert
-        dists = zip(
-            ['gaussian', 'student_t', 'truncated_gaussian'],
-            ['norm', 't', 'truncnorm'],
-        )
-        for deprecated, distribution in dists:
-            err_msg = re.escape(
-                f"Future versions of RDT will not support '{deprecated}' as an option. "
-                f"Please use '{distribution}' instead."
-            )
-            with pytest.warns(FutureWarning, match=err_msg):
-                GaussianNormalizer(distribution=deprecated)
-
     def test__get_distributions_copulas_not_installed(self):
         """Test the ``_get_distributions`` method when copulas is not installed.
 
@@ -1251,28 +1236,6 @@ class TestGaussianNormalizer:
 
         assert transformer._learned_distribution_name == 'norm'
 
-    def test_fallback_with_deprecated_distribution(self):
-        """Test fallback with deprecated distribution names."""
-        # Setup
-        transformer = GaussianNormalizer(distribution='gaussian')
-        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
-
-        # Run
-        with patch.object(transformer, '_get_univariate') as mock_get_univariate:
-            mock_univariate = Mock()
-            mock_univariate.fit.side_effect = Exception('Fitting failed')
-            mock_get_univariate.return_value = mock_univariate
-
-            with patch('rdt.transformers.numerical.LOGGER.info') as mock_logger:
-                transformer.fit(data, 'test_column')
-
-            # Assert
-            mock_logger.assert_called_once_with(
-                "Unable to fit the distribution 'norm'. Falling back to 'norm'."
-            )
-
-        assert transformer._learned_distribution_name == 'norm'
-
     def test_fallback_with_class_distribution(self):
         """Test fallback with class distribution."""
         # Setup
@@ -1460,22 +1423,6 @@ class TestGaussianNormalizer:
 
         # Assert
         assert learned_dist['distribution'] == 'truncnorm'
-        assert isinstance(learned_dist['parameters'], dict)
-
-    def test_learned_distribution_with_deprecated_distribution(self):
-        """Test learned_distribution with deprecated distribution names."""
-        # Setup
-        with pytest.warns(FutureWarning):
-            transformer = GaussianNormalizer(distribution='gaussian')
-
-        data = pd.DataFrame({'test_column': [1, 2, 3, 4, 5]})
-
-        # Run
-        transformer.fit(data, 'test_column')
-        learned_dist = transformer.learned_distribution
-
-        # Assert
-        assert learned_dist['distribution'] == 'norm'
         assert isinstance(learned_dist['parameters'], dict)
 
 

@@ -20,14 +20,6 @@ class TestBinaryEncoder(TestCase):
         assert transformer.missing_value_replacement == 'mode', error_message
         assert transformer.missing_value_generation == 'random', error_generation
 
-    def test___init___model_missing_value_passed(self):
-        """Test when model missing value is passed to the init."""
-        # Run
-        transformer = BinaryEncoder(model_missing_values=True)
-
-        # Assert
-        transformer.missing_value_generation == 'from_column'
-
     def test__fit_missing_value_replacement_not_ignore(self):
         """Test _fit missing_value_replacement not equal to ignore"""
         # Setup

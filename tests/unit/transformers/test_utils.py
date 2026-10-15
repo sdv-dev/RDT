@@ -18,7 +18,6 @@ from rdt.transformers.utils import (
     _extract_timezone_from_a_string,
     _fill_nan_with_none_series,
     _get_utc_offset,
-    _handle_enforce_uniqueness_and_cardinality_rule,
     _max_repeat,
     _parser,
     _safe_parse_datetime,
@@ -543,6 +542,7 @@ def test_sigmoid():
     assert res == expected_res
 
 
+@patch('rdt.transformers.utils.DEPRECATED_SDTYPES_MAPPING', new={'text': 'id'})
 def test_warn_dict():
     """Test that ``WarnDict`` will raise a warning when called with `text`."""
     # Setup
@@ -566,6 +566,7 @@ def test_warn_dict():
     assert result_get_no_warn == 'text_transformer'
 
 
+@patch('rdt.transformers.utils.DEPRECATED_SDTYPES_MAPPING', new={'text': 'id'})
 def test_warn_dict_get():
     """Test that ``WarnDict`` will raise a warning when called with `text`."""
     # Setup
@@ -587,28 +588,6 @@ def test_warn_dict_get():
     assert result_access == 'text_transformer'
     assert result_access_no_warn == 'text_transformer'
     assert result_get_no_warn == 'text_transformer'
-
-
-def test__handle_enforce_uniqueness_and_cardinality_rule():
-    """Test that ``_handle_enforce_uniqueness_and_cardinality_rule`` works as expected."""
-    # Run and Assert
-    assert _handle_enforce_uniqueness_and_cardinality_rule(None, None) is None
-
-    expected_message = re.escape(
-        "The 'enforce_uniqueness' parameter is no longer supported. "
-        "Please use the 'cardinality_rule' parameter instead."
-    )
-    with pytest.warns(FutureWarning, match=expected_message):
-        assert _handle_enforce_uniqueness_and_cardinality_rule(True, None) == 'unique'
-
-    err_msg = "The 'cardinality_rule' parameter must be one of 'unique', 'match', 'scale', or None."
-    with pytest.raises(ValueError, match=err_msg):
-        _handle_enforce_uniqueness_and_cardinality_rule(None, 'invalid')
-
-    assert _handle_enforce_uniqueness_and_cardinality_rule(None, 'unique') == 'unique'
-    assert _handle_enforce_uniqueness_and_cardinality_rule(None, 'match') == 'match'
-    assert _handle_enforce_uniqueness_and_cardinality_rule(None, 'scale') == 'scale'
-    assert _handle_enforce_uniqueness_and_cardinality_rule(None, None) is None
 
 
 def test__extract_timezone_from_a_string_with_valid_timezone():
