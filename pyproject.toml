@@ -62,7 +62,7 @@ copulas = [
     "copulas>=0.12.1;python_version<'3.14'",
     "copulas>=0.14.0;python_version>='3.14'",
 ]
-pyarrow = ['pyarrow>=17.0.0',]
+pyarrow = ['pyarrow>=18.0.0',]
 test = [
     'rdt[pyarrow]',
     'rdt[copulas]',

@@ -89,7 +89,9 @@ def install_minimum(c):
     with open('pyproject.toml', 'rb') as pyproject_file:
         pyproject_data = tomli.load(pyproject_file)
 
-    dependencies = pyproject_data.get('project', {}).get('dependencies', [])
+    pyproject_dict = pyproject_data.get('project', {})
+    dependencies = pyproject_dict.get('dependencies', [])
+    dependencies += pyproject_dict.get('optional-dependencies', {}).get('pyarrow', [])
     python_version = '.'.join(map(str, sys.version_info[:2]))
     minimum_versions = _get_minimum_versions(dependencies, python_version)
 
