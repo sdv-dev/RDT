@@ -153,7 +153,7 @@ collect_ignore = ['pyproject.toml']
 exclude_lines = ['NotImplementedError()']
 
 [tool.bumpversion]
-current_version = "2.0.0"
+current_version = "2.0.1.dev0"
 parse = '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(\.(?P<release>[a-z]+)(?P<candidate>\d+))?'
 serialize = [
     '{major}.{minor}.{patch}.{release}{candidate}',
