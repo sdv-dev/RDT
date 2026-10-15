@@ -1,5 +1,21 @@
 # History
 
+## v2.0.0 - 2026-10-15
+
+### New Features
+
+* RDT 2.0: Create a new `ordinal` sdtype & update the transformers that are allowed for it - Issue [#1103](https://github.com/sdv-dev/RDT/issues/1103) by @frances-h
+* RDT 2.0: Remove all deprecated functionality - Issue [#1102](https://github.com/sdv-dev/RDT/issues/1102) by @R-Palazzo
+
+### Bugs Fixed
+
+* [Fix] OrderedUniformEncoder should handle data containing NaNs even when NaN is not included in the order parameter. - Issue [#1112](https://github.com/sdv-dev/RDT/issues/1112) by @R-Palazzo
+* RDT 2.0: UniformEncoder errors sorting alphanumerically and null values present - Issue [#1108](https://github.com/sdv-dev/RDT/issues/1108) by @frances-h
+
+### Internal
+
+* Minimum tests workflow failing - Issue [#1116](https://github.com/sdv-dev/RDT/issues/1116) by @frances-h
+
 ## v1.22.0 - 2026-08-07
 
 ### Bugs Fixed
