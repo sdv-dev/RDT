@@ -1,5 +1,11 @@
 # History
 
+## v2.1.0 - 2026-10-29
+
+### Maintenance
+
+* Remove Python 3.9 support - Issue [#1120](https://github.com/sdv-dev/RDT/issues/1120) by @rwedge
+
 ## v2.0.0 - 2026-10-15
 
 ### New Features
